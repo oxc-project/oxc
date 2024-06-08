@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn ban_tslint_comment_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -48,7 +48,7 @@ impl Rule for BanTslintComment {
 
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),
-                    || Fix::delete(comment_span),
+                    |fixer| fixer.delete_range(comment_span),
                 );
             }
         }

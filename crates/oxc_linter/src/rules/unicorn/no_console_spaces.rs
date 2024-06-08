@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 
@@ -8,7 +10,7 @@ use crate::{
     ast_util::{call_expr_method_callee_info, is_method_call},
     context::LintContext,
     rule::Rule,
-    AstNode, Fix,
+    AstNode,
 };
 
 fn no_console_spaces_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
@@ -116,25 +118,23 @@ fn check_literal_leading(i: usize, literal: &str) -> bool {
 fn check_literal_trailing(i: usize, literal: &str, call_expr_arg_len: usize) -> bool {
     i != call_expr_arg_len - 1 && literal.ends_with(' ')
 }
-fn report_diagnostic(
+fn report_diagnostic<'a>(
     direction: &'static str,
-    ident: &str,
+    ident: &'a str,
     span: Span,
-    literal_raw: &str,
+    literal_raw: &'a str,
     is_template_lit: bool,
-    ctx: &LintContext,
+    ctx: &LintContext<'a>,
 ) {
-    let (start, end) =
-        if is_template_lit { (span.start, span.end) } else { (span.start + 1, span.end - 1) };
+    let span = if is_template_lit { span } else { Span::new(span.start + 1, span.end - 1) };
 
-    let fix = if is_template_lit {
-        format!("`{}`", literal_raw.trim())
-    } else {
-        literal_raw.trim().to_string()
-    };
-
-    ctx.diagnostic_with_fix(no_console_spaces_diagnostic(direction, ident, span), || {
-        Fix::new(fix, Span::new(start, end))
+    ctx.diagnostic_with_fix(no_console_spaces_diagnostic(direction, ident, span), |fixer| {
+        let content = if is_template_lit {
+            Cow::Owned(format!("`{}`", literal_raw.trim()))
+        } else {
+            Cow::Borrowed(literal_raw.trim())
+        };
+        fixer.replace(span, content)
     });
 }
 

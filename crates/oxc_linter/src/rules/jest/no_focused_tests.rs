@@ -6,7 +6,6 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
@@ -77,9 +76,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     }
 
     if name.starts_with('f') {
-        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), || {
-            let start = call_expr.span.start;
-            Fix::delete(Span::new(start, start + 1))
+        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), |fixer| {
+            fixer.delete_range(Span::sized(call_expr.span.start, 1))
         });
 
         return;
@@ -87,15 +85,12 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
     let only_node = members.iter().find(|member| member.is_name_equal("only"));
     if let Some(only_node) = only_node {
-        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), || {
-            let span = only_node.span;
-            let start = span.start - 1;
-            let end = if matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
-                span.end
-            } else {
-                span.end + 1
-            };
-            Fix::delete(Span::new(start, end))
+        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(call_expr.span), |fixer| {
+            let mut span = only_node.span.expand_left(1);
+            if !matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
+                span = span.expand_right(1);
+            }
+            fixer.delete_range(span)
         });
     }
 }

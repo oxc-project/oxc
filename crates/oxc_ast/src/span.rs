@@ -2,6 +2,33 @@ use oxc_span::{GetSpan, Span};
 
 use crate::ast::*;
 
+macro_rules! impl_get_span {
+    ($Ty:ident) => {
+        impl<'a> GetSpan for $Ty<'a> {
+            #[inline]
+            fn span(&self) -> Span {
+                self.span
+            }
+        }
+    };
+}
+
+impl_get_span!(Directive);
+impl_get_span!(SpreadElement);
+
+impl_get_span!(IdentifierReference);
+impl_get_span!(LabelIdentifier);
+impl_get_span!(RegExpLiteral);
+
+impl_get_span!(TemplateElement);
+impl_get_span!(CallExpression);
+impl_get_span!(AssignmentExpression);
+impl_get_span!(BinaryExpression);
+
+impl_get_span!(TSTypeLiteral);
+impl_get_span!(TSTypeReference);
+impl_get_span!(TSTypeAliasDeclaration);
+
 impl<'a> GetSpan for Statement<'a> {
     fn span(&self) -> Span {
         match self {
@@ -94,12 +121,6 @@ impl<'a> GetSpan for Expression<'a> {
     }
 }
 
-impl<'a> GetSpan for Directive<'a> {
-    fn span(&self) -> Span {
-        self.span
-    }
-}
-
 impl<'a> GetSpan for BindingPatternKind<'a> {
     fn span(&self) -> Span {
         match self {
@@ -122,11 +143,7 @@ impl<'a> GetSpan for BindingPattern<'a> {
     }
 }
 
-impl<'a> GetSpan for BindingProperty<'a> {
-    fn span(&self) -> Span {
-        self.span
-    }
-}
+impl_get_span!(BindingProperty);
 
 impl<'a> GetSpan for ClassElement<'a> {
     fn span(&self) -> Span {
@@ -347,11 +364,7 @@ impl<'a> GetSpan for Argument<'a> {
     }
 }
 
-impl<'a> GetSpan for ArrayExpression<'a> {
-    fn span(&self) -> Span {
-        self.span
-    }
-}
+impl_get_span!(ArrayExpression);
 
 impl<'a> GetSpan for ArrayExpressionElement<'a> {
     fn span(&self) -> Span {

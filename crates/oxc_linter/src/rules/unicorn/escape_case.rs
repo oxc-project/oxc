@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn escape_case_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.").with_labels([span0.into()])
@@ -125,8 +125,8 @@ impl Rule for EscapeCase {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());
                 if let Some(fixed) = check_case(text, false) {
-                    ctx.diagnostic_with_fix(escape_case_diagnostic(*span), || {
-                        Fix::new(fixed, *span)
+                    ctx.diagnostic_with_fix(escape_case_diagnostic(*span), |fixer| {
+                        fixer.replace(*span, fixed)
                     });
                 }
             }
@@ -135,8 +135,8 @@ impl Rule for EscapeCase {
                     if let Some(fixed) =
                         check_case(quasi.span.source_text(ctx.source_text()), false)
                     {
-                        ctx.diagnostic_with_fix(escape_case_diagnostic(quasi.span), || {
-                            Fix::new(fixed, quasi.span)
+                        ctx.diagnostic_with_fix(escape_case_diagnostic(quasi.span), |fixer| {
+                            fixer.replace(quasi.span, fixed)
                         });
                     }
                 });
@@ -144,8 +144,8 @@ impl Rule for EscapeCase {
             AstKind::RegExpLiteral(regex) => {
                 let text = regex.span.source_text(ctx.source_text());
                 if let Some(fixed) = check_case(text, true) {
-                    ctx.diagnostic_with_fix(escape_case_diagnostic(regex.span), || {
-                        Fix::new(fixed, regex.span)
+                    ctx.diagnostic_with_fix(escape_case_diagnostic(regex.span), |fixer| {
+                        fixer.replace(regex.span, fixed)
                     });
                 }
             }

@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_spread_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -161,11 +161,11 @@ impl Rule for PreferSpread {
 
                 ctx.diagnostic_with_fix(
                     prefer_spread_diagnostic(call_expr.span, "string.split()"),
-                    || {
+                    |fixer| {
                         let callee_obj = member_expr.object().without_parenthesized();
-                        Fix::new(
-                            format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
+                        fixer.replace(
                             call_expr.span,
+                            format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
                         )
                     },
                 );

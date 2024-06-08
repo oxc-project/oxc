@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn comparison_with_na_n(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
@@ -90,13 +90,13 @@ impl Rule for UseIsnan {
             }
             AstKind::BinaryExpression(expr) if expr.operator.is_equality() => {
                 if is_nan_identifier(&expr.left) {
-                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.left.span()), || {
-                        Fix::new(make_equality_fix(true, expr, ctx), expr.span)
+                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.left.span()), |fixer| {
+                        fixer.replace(expr.span, make_equality_fix(true, expr, ctx))
                     });
                 }
                 if is_nan_identifier(&expr.right) {
-                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.right.span()), || {
-                        Fix::new(make_equality_fix(false, expr, ctx), expr.span)
+                    ctx.diagnostic_with_fix(comparison_with_na_n(expr.right.span()), |fixer| {
+                        fixer.replace(expr.span, make_equality_fix(false, expr, ctx))
                     });
                 }
             }

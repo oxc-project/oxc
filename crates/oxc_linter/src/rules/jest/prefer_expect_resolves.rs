@@ -9,7 +9,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::{Fix, RuleFixer},
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_expect_jest_fn_call, ParsedExpectFnCall,
@@ -107,22 +107,22 @@ impl PreferExpectResolves {
             return;
         };
 
-        ctx.diagnostic_with_fix(expect_resolves(await_expr.span), || {
-            let content = Self::build_code(&jest_expect_fn_call, call_expr, ident.span, ctx);
-            Fix::new(content, call_expr.span)
+        ctx.diagnostic_with_fix(expect_resolves(await_expr.span), |fixer| {
+            Self::fix(fixer, &jest_expect_fn_call, call_expr, ident.span)
         });
     }
 
-    fn build_code<'a>(
-        jest_expect_fn_call: &ParsedExpectFnCall,
+    fn fix<'c, 'a: 'c>(
+        fixer: RuleFixer<'c, 'a>,
+        jest_expect_fn_call: &ParsedExpectFnCall<'a>,
         call_expr: &CallExpression<'a>,
         ident_span: Span,
-        ctx: &LintContext<'a>,
-    ) -> String {
-        let mut formatter = ctx.codegen();
+    ) -> Fix<'a> {
+        let mut formatter = fixer.codegen();
         let first = call_expr.arguments.first().unwrap();
         let Argument::AwaitExpression(await_expr) = first else {
-            return formatter.into_source_text();
+            // return formatter.into_source_text();
+            return fixer.replace(call_expr.span, formatter);
         };
 
         let offset = match &await_expr.argument {
@@ -140,9 +140,9 @@ impl PreferExpectResolves {
         formatter.print_hard_space();
         formatter.print_str(jest_expect_fn_call.local.as_bytes());
         formatter.print(b'(');
-        formatter.print_str(arg_span.source_text(ctx.source_text()).as_bytes());
+        formatter.print_str(fixer.source_range(arg_span));
         formatter.print_str(b".resolves");
-        formatter.into_source_text()
+        fixer.replace(call_expr.span, formatter)
     }
 }
 

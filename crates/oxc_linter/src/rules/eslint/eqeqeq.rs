@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint(eqeqeq): Expected {x1} and instead saw {x0}"))
@@ -120,10 +120,11 @@ impl Rule for Eqeqeq {
         if is_type_of_binary_bool || are_literals_and_same_type_bool {
             ctx.diagnostic_with_fix(
                 eqeqeq_diagnostic(operator, preferred_operator, operator_span),
-                || {
+                |fixer| {
                     let start = binary_expr.left.span().end;
                     let end = binary_expr.right.span().start;
-                    Fix::new(preferred_operator_with_padding, Span::new(start, end))
+                    let span = Span::new(start, end);
+                    fixer.replace(span, preferred_operator_with_padding)
                 },
             );
         } else {

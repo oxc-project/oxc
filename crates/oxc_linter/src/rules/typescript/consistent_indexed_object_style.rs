@@ -1,12 +1,12 @@
 use oxc_ast::{
-    ast::{TSSignature, TSType, TSTypeName, TSTypeReference},
+    ast::{TSSignature, TSType, TSTypeName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -219,47 +219,33 @@ impl Rule for ConsistentIndexedObjectStyle {
                     return;
                 }
 
-                let fixer = fix_for_index_signature(ctx, tref);
-                match fixer {
-                    Some(fix) => {
-                        ctx.diagnostic_with_fix(
-                            consistent_indexed_object_style_diagnostic(
-                                "index signature",
-                                "record",
-                                tref.span,
-                            ),
-                            || fix,
-                        );
-                    }
-                    None => {
-                        ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                if let Some(TSType::TSStringKeyword(first)) =
+                    &tref.type_parameters.as_ref().and_then(|params| params.params.first())
+                {
+                    ctx.diagnostic_with_fix(
+                        consistent_indexed_object_style_diagnostic(
                             "index signature",
                             "record",
                             tref.span,
-                        ));
-                    }
+                        ),
+                        |fixer| {
+                            let key = fixer.source_range(first.span);
+                            let params_span = Span::new(first.span.end + 2, tref.span.end - 1);
+                            let params = fixer.source_range(params_span);
+                            let content = format!("{{ [key: {key}]: {params} }}");
+                            fixer.replace(tref.span, content)
+                        },
+                    );
+                } else {
+                    ctx.diagnostic(consistent_indexed_object_style_diagnostic(
+                        "index signature",
+                        "record",
+                        tref.span,
+                    ));
                 }
             }
         }
     }
-}
-
-fn fix_for_index_signature<'a>(
-    ctx: &LintContext<'a>,
-    tref: &TSTypeReference<'a>,
-) -> Option<Fix<'a>> {
-    let params = &tref.type_parameters.as_ref()?;
-
-    let end = tref.span.end;
-    let start = tref.span.start;
-
-    let TSType::TSStringKeyword(first) = &params.params[0] else {
-        return None;
-    };
-
-    let key = &ctx.source_text()[first.span.start as usize..first.span.end as usize];
-    let params = &ctx.source_text()[(first.span.end + 2) as usize..(end - 1) as usize];
-    Some(Fix::new(format!("{{ [key: {key}]: {params} }}"), Span::new(start, end)))
 }
 
 #[test]

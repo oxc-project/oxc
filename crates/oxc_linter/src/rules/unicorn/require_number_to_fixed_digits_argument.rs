@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn require_number_to_fixed_digits_argument_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument")
@@ -61,15 +61,15 @@ impl Rule for RequireNumberToFixedDigitsArgument {
 
                     ctx.diagnostic_with_fix(
                         require_number_to_fixed_digits_argument_diagnostic(parenthesis_span),
-                        || {
+                        |fixer| {
                             let modified_code = {
-                                let mut formatter = ctx.codegen();
+                                let mut formatter = fixer.codegen();
 
                                 let mut parenthesis_span_without_right_one = parenthesis_span;
                                 parenthesis_span_without_right_one.end -= 1;
 
-                                let span_source_code = parenthesis_span_without_right_one
-                                    .source_text(ctx.source_text());
+                                let span_source_code =
+                                    fixer.source_range(parenthesis_span_without_right_one);
 
                                 formatter.print_str(span_source_code.as_bytes());
                                 formatter.print_str(b"0)");
@@ -77,7 +77,7 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                                 formatter.into_source_text()
                             };
 
-                            Fix::new(modified_code, parenthesis_span)
+                            fixer.replace(parenthesis_span, modified_code)
                         },
                     );
                 }

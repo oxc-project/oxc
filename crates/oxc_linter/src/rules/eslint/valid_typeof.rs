@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use phf::{phf_set, Set};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn not_string(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
     let mut d = OxcDiagnostic::warn(
@@ -110,7 +110,7 @@ impl Rule for ValidTypeof {
                             sibling.span(),
                         )
                     },
-                    || Fix::new("\"undefined\"", sibling.span()),
+                    |fixer| fixer.replace(sibling.span(), "\"undefined\""),
                 );
                 return;
             }

@@ -8,7 +8,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_empty_array_expression, is_empty_object_expression},
-    AstNode, Fix,
+    AstNode,
 };
 
 fn known_method(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
@@ -109,17 +109,17 @@ impl Rule for PreferPrototypeMethods {
                 || unknown_method(method_expr.span(), constructor_name),
                 |method_name| known_method(method_expr.span(), constructor_name, method_name),
             ),
-            || {
+            |fixer| {
                 let span = object_expr.span();
                 let need_padding = span.start >= 1
                     && ctx.source_text().as_bytes()[span.start as usize - 1].is_ascii_alphabetic();
-                Fix::new(
+                fixer.replace(
+                    span,
                     format!(
                         "{}{}.prototype",
                         if need_padding { " " } else { "" },
                         constructor_name
                     ),
-                    span,
                 )
             },
         );

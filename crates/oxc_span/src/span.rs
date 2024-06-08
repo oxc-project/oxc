@@ -56,6 +56,35 @@ impl Span {
         Self { start, end }
     }
 
+    /// Create a new empty [`Span`] that starts and ends at an offset position.
+    ///
+    /// # Examples
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let fifth = Span::empty(5);
+    /// assert!(fifth.is_empty());
+    /// assert_eq!(fifth, Span::sized(5, 0));
+    /// assert_eq!(fifth, Span::new(5, 5));
+    /// ```
+    pub fn empty(at: u32) -> Self {
+        Self { start: at, end: at }
+    }
+
+    /// Create a new [`Span`] starting at `start` and covering `size` characters.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let span = Span::sized(2, 4);
+    /// assert_eq!(span.size(), 4);
+    /// assert_eq!(span, Span::new(2, 6));
+    /// ```
+    pub const fn sized(start: u32, size: u32) -> Self {
+        Self::new(start, start + size)
+    }
+
     /// Get the number of characters covered by the [`Span`].
     ///
     /// # Example
@@ -102,6 +131,62 @@ impl Span {
         Self::new(self.start.min(other.start), self.end.max(other.end))
     }
 
+    /// Create a [`Span`] that has its start position moved to the left by
+    /// `offset` bytes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(5, 10);
+    /// assert_eq!(a.expand_left(5), Span::new(0, 10));
+    /// ```
+    ///
+    /// ## Bounds
+    ///
+    /// The leftmost bound of the span is clamped to 0. It is safe to call this
+    /// method with a value larger than the start position.
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(0, 5);
+    /// assert_eq!(a.expand_left(5), Span::new(0, 5));
+    /// ```
+    #[must_use]
+    pub fn expand_left(self, offset: u32) -> Self {
+        Self::new(self.start.saturating_sub(offset), self.end)
+    }
+
+    /// Create a [`Span`] that has its end position moved to the right by
+    /// `offset` bytes.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(5, 10);
+    /// assert_eq!(a.expand_right(5), Span::new(5, 15));
+    /// ```
+    ///
+    /// ## Bounds
+    ///
+    /// The rightmost bound of the span is clamped to `u32::MAX`. It is safe to
+    /// call this method with a value larger than the end position.
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(0, u32::MAX);
+    /// assert_eq!(a.expand_right(5), Span::new(0, u32::MAX));
+    /// ```
+    #[must_use]
+    pub fn expand_right(self, offset: u32) -> Self {
+        Self::new(self.start, self.end.saturating_add(offset))
+    }
+
     /// Get a snippet of text from a source string that the [`Span`] covers.
     ///
     /// # Example
@@ -139,6 +224,11 @@ impl From<Span> for LabeledSpan {
 /// Get the span for an AST node
 pub trait GetSpan {
     fn span(&self) -> Span;
+}
+impl GetSpan for Span {
+    fn span(&self) -> Span {
+        *self
+    }
 }
 
 #[cfg(test)]

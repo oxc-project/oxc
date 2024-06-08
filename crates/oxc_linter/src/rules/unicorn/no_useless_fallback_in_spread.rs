@@ -5,9 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
 
-use crate::{
-    ast_util::outermost_paren_parent, context::LintContext, fixer::Fix, rule::Rule, AstNode,
-};
+use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_fallback_in_spread_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals")
@@ -80,9 +78,9 @@ impl Rule for NoUselessFallbackInSpread {
         let diagnostic = no_useless_fallback_in_spread_diagnostic(spread_element.span);
 
         if can_fix(&logical_expression.left) {
-            ctx.diagnostic_with_fix(diagnostic, || {
-                let left_text = ctx.source_range(logical_expression.left.span());
-                Fix::new(format!("...{left_text}"), spread_element.span)
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                let left_text = fixer.source_range(logical_expression.left.span());
+                fixer.replace(spread_element.span, format!("...{left_text}"))
             });
         } else {
             ctx.diagnostic(diagnostic);
