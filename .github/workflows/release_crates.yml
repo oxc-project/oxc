@@ -24,7 +24,9 @@ jobs:
     name: Release crates
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4 # required for git tag push
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }} # required for git tag push
 
       - uses: Boshen/setup-rust@main
         with:
@@ -43,7 +45,5 @@ jobs:
 
       - name: Tag and Push
         run: |
-          git config user.name Boshen
-          git config user.email Boshen@users.noreply.github.com
           git tag ${{ steps.run.outputs.TAG }}
           git push origin tag ${{ steps.run.outputs.TAG }}
