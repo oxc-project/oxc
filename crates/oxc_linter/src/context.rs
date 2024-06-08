@@ -3,7 +3,7 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
-use oxc_span::SourceType;
+use oxc_span::{SourceType, Span};
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -81,8 +81,15 @@ impl<'a> LintContext<'a> {
         &self.disable_directives
     }
 
+    /// Source code of the file being linted.
     pub fn source_text(&self) -> &'a str {
         self.semantic().source_text()
+    }
+
+    /// Get a snippet of source text covered by the given [`Span`]. For details,
+    /// see [`Span::source_text`].
+    pub fn source_range(&self, span: Span) -> &'a str {
+        span.source_text(self.semantic().source_text())
     }
 
     pub fn source_type(&self) -> &SourceType {
@@ -132,10 +139,14 @@ impl<'a> LintContext<'a> {
         }
     }
 
+    /// Report a lint rule violation.
+    ///
+    /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic, None));
     }
 
+    /// Report a lint rule violation and provide an automatic fix.
     pub fn diagnostic_with_fix<F: FnOnce() -> Fix<'a>>(&self, diagnostic: OxcDiagnostic, fix: F) {
         if self.fix {
             self.add_diagnostic(Message::new(diagnostic, Some(fix())));

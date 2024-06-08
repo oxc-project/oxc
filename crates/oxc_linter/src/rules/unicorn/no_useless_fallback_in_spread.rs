@@ -81,7 +81,7 @@ impl Rule for NoUselessFallbackInSpread {
 
         if can_fix(&logical_expression.left) {
             ctx.diagnostic_with_fix(diagnostic, || {
-                let left_text = logical_expression.left.span().source_text(ctx.source_text());
+                let left_text = ctx.source_range(logical_expression.left.span());
                 Fix::new(format!("...{left_text}"), spread_element.span)
             });
         } else {
@@ -96,6 +96,7 @@ fn can_fix(left: &Expression<'_>) -> bool {
         Expression::Identifier(ident) => !BANNED_IDENTIFIERS.contains(&ident.name.as_str()),
         Expression::LogicalExpression(expr) => can_fix(&expr.left),
         Expression::ObjectExpression(_)
+        | Expression::ChainExpression(_)
         | Expression::CallExpression(_)
         | Expression::StaticMemberExpression(_)
         | Expression::ComputedMemberExpression(_) => true,
@@ -158,7 +159,9 @@ fn test() {
     let fix = vec![
         //
         (r"const object = {...(foo || {})}", r"const object = {...foo}"),
+        (r"const object = {...(foo?.bar || {})}", r"const object = {...foo?.bar}"),
         (r"const object = {...(foo() || {})}", r"const object = {...foo()}"),
+        (r"const object = {...(foo?.bar() || {})}", r"const object = {...foo?.bar()}"),
         (r"const object = {...((foo && {}) || {})}", "const object = {...(foo && {})}"),
         (r"const object = {...(0 || {})}", r"const object = {...(0 || {})}"),
         (r"const object = {...(NaN || {})}", r"const object = {...(NaN || {})}"),

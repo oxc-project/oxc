@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         match_expression, Argument, ArrayExpression, ArrayExpressionElement, CallExpression,
-        Expression,
+        Expression, SpreadElement,
     },
     AstKind,
 };
@@ -15,42 +15,43 @@ use crate::{
         get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
     },
     context::LintContext,
+    fixer::Fix,
     rule::Rule,
     AstNode,
 };
 
-fn spread_in_list(span0: Span, x1: &str) -> OxcDiagnostic {
+fn spread_in_list(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new {x1} unnecessarily."))
         .with_help("Consider removing the spread operator.")
-        .with_labels([span0.into()])
+        .with_labels([span.into()])
 }
 
-fn spread_in_arguments(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_labels([span0.into()])
+fn spread_in_arguments(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.").with_help("This function accepts a rest parameter, it's unnecessary to create a new array and then spread it. Instead, supply the arguments directly.\nFor example, replace `foo(...[1, 2, 3])` with `foo(1, 2, 3)`.").with_labels([span.into()])
 }
 
-fn iterable_to_array(span0: Span, x1: &str) -> OxcDiagnostic {
+fn iterable_to_array(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-useless-spread): `{x1}` accepts an iterable, so it's unnecessary to convert the iterable to an array."))
         .with_help("Consider removing the spread operator.")
-        .with_labels([span0.into()])
+        .with_labels([span.into()])
 }
 
-fn iterable_to_array_in_for_of(span0: Span) -> OxcDiagnostic {
+fn iterable_to_array_in_for_of(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
         .with_help("`for…of` can iterate over iterable, it's unnecessary to convert to an array.")
-        .with_labels([span0.into()])
+        .with_labels([span.into()])
 }
 
-fn iterable_to_array_in_yield_star(span0: Span) -> OxcDiagnostic {
+fn iterable_to_array_in_yield_star(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
         .with_help("`yield*` can delegate to another iterable, so it's unnecessary to convert the iterable to an array.")
-        .with_labels([span0.into()])
+        .with_labels([span.into()])
 }
 
-fn clone_array(span0: Span, x1: &str) -> OxcDiagnostic {
+fn clone_array(span: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.")
         .with_help(format!("`{x1}` returns a new array. Spreading it into an array expression to create a new array is redundant."))
-        .with_labels([span0.into()])
+        .with_labels([span.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -140,39 +141,49 @@ impl Rule for NoUselessSpread {
 }
 
 fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    if matches!(node.kind(), AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_)) {
-        let Some(parent) = outermost_paren_parent(node, ctx) else {
+    if !matches!(node.kind(), AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_)) {
+        return;
+    }
+    let Some(parent) = outermost_paren_parent(node, ctx) else {
+        return;
+    };
+
+    if let AstKind::SpreadElement(spread_elem) = parent.kind() {
+        let Some(parent_parent) = outermost_paren_parent(parent, ctx) else {
             return;
         };
 
-        if let AstKind::SpreadElement(spread_elem) = parent.kind() {
-            let Some(parent_parent) = outermost_paren_parent(parent, ctx) else {
-                return;
-            };
+        let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
 
-            let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
-
-            match node.kind() {
-                AstKind::ObjectExpression(_) => {
-                    // { ...{ } }
-                    if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
-                        ctx.diagnostic(spread_in_list(span, "object"));
+        match node.kind() {
+            AstKind::ObjectExpression(_) => {
+                // { ...{ } }
+                if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
+                    ctx.diagnostic(spread_in_list(span, "object"));
+                }
+            }
+            AstKind::ArrayExpression(array_expr) => match parent_parent.kind() {
+                // ...[ ]
+                AstKind::ArrayExpressionElement(_) => {
+                    let diagnostic = spread_in_list(span, "array");
+                    if let Some(outer_array) = ctx.nodes().parent_kind(parent_parent.id()) {
+                        ctx.diagnostic_with_fix(diagnostic, || {
+                            fix_replace(ctx, &outer_array, array_expr)
+                        });
+                    } else {
+                        ctx.diagnostic(diagnostic);
                     }
                 }
-                AstKind::ArrayExpression(_) => match parent_parent.kind() {
-                    // ...[ ]
-                    AstKind::ArrayExpressionElement(_) => {
-                        ctx.diagnostic(spread_in_list(span, "array"));
-                    }
-                    // foo(...[ ])
-                    AstKind::Argument(_) => {
-                        ctx.diagnostic(spread_in_arguments(span));
-                    }
-                    _ => {}
-                },
-                _ => {
-                    unreachable!()
+                // foo(...[ ])
+                AstKind::Argument(_) => {
+                    ctx.diagnostic_with_fix(spread_in_arguments(span), || {
+                        fix_by_removing_spread(ctx, array_expr, spread_elem)
+                    });
                 }
+                _ => {}
+            },
+            _ => {
+                unreachable!()
             }
         }
     }
@@ -247,10 +258,10 @@ fn check_useless_iterable_to_array<'a>(
             {
                 return;
             }
-            ctx.diagnostic(iterable_to_array(
-                span,
-                get_new_expr_ident_name(new_expr).unwrap_or("unknown"),
-            ));
+            ctx.diagnostic_with_fix(
+                iterable_to_array(span, get_new_expr_ident_name(new_expr).unwrap_or("unknown")),
+                || fix_by_removing_spread(ctx, &new_expr.arguments[0], spread_elem),
+            );
         }
         AstKind::CallExpression(call_expr) => {
             if !((is_method_call(
@@ -289,10 +300,13 @@ fn check_useless_iterable_to_array<'a>(
                 return;
             }
 
-            ctx.diagnostic(iterable_to_array(
-                span,
-                &get_method_name(call_expr).unwrap_or_else(|| "unknown".into()),
-            ));
+            ctx.diagnostic_with_fix(
+                iterable_to_array(
+                    span,
+                    &get_method_name(call_expr).unwrap_or_else(|| "unknown".into()),
+                ),
+                || fix_by_removing_spread(ctx, array_expr, spread_elem),
+            );
         }
         _ => {}
     }
@@ -349,7 +363,9 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
             },
         );
 
-        ctx.diagnostic(clone_array(span, &method));
+        ctx.diagnostic_with_fix(clone_array(span, &method), || {
+            fix_by_removing_spread(ctx, array_expr, spread_elem)
+        });
     }
 
     if let Expression::AwaitExpression(await_expr) = &spread_elem.argument {
@@ -366,11 +382,32 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
             let method_name =
                 call_expr.callee.get_member_expr().unwrap().static_property_name().unwrap();
 
-            ctx.diagnostic(clone_array(span, &format!("Promise.{method_name}")));
+            ctx.diagnostic_with_fix(clone_array(span, &format!("Promise.{method_name}")), || {
+                fix_by_removing_spread(ctx, array_expr, spread_elem)
+            });
         }
     }
 }
 
+fn fix_replace<'a, T: GetSpan, U: GetSpan>(
+    ctx: &LintContext<'a>,
+    target: &T,
+    replacement: &U,
+) -> Fix<'a> {
+    let replacement = ctx.source_range(replacement.span());
+    Fix::new(replacement, target.span())
+}
+
+/// Creates a fix that replaces `[...spread]` with `spread`
+fn fix_by_removing_spread<'a, S: GetSpan>(
+    ctx: &LintContext<'a>,
+    iterable: &S,
+    spread: &SpreadElement<'a>,
+) -> Fix<'a> {
+    Fix::new(ctx.source_range(spread.argument.span()), iterable.span())
+}
+
+/// Checks if `node` is `[...(expr)]`
 fn is_single_array_spread(node: &ArrayExpression) -> bool {
     node.elements.len() == 1 && matches!(node.elements[0], ArrayExpressionElement::SpreadElement(_))
 }
@@ -569,5 +606,16 @@ fn test() {
         ",
     ];
 
-    Tester::new(NoUselessSpread::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("[...[1,2,3]]", "[1,2,3]"),
+        ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
+        ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
+        (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),
+        (r"const promise = Promise.any([...iterable])", r"const promise = Promise.any(iterable)"),
+        (r"[...Array.from(iterable)]", r"Array.from(iterable)"),
+        (r"new Map([...iterable])", r"new Map(iterable)"),
+        (r"new Map([ ...((iterable)) ])", r"new Map(((iterable)))"),
+        // (r"new Map(...[...iterable])", r"new Map(iterable)"),
+    ];
+    Tester::new(NoUselessSpread::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
