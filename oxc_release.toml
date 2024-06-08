@@ -6,5 +6,10 @@ name            = "crates"
 versioned_files = ["Cargo.toml", "npm/oxc-parser/package.json", "wasm/parser/package.json"]
 
 [[releases]]
-name            = "oxlint"
-versioned_files = ["apps/oxlint/Cargo.toml", "crates/oxc_linter/Cargo.toml", "npm/oxlint/package.json", "editors/vscode/package.json"]
+name = "oxlint"
+versioned_files = [
+  "apps/oxlint/Cargo.toml",
+  "crates/oxc_linter/Cargo.toml",
+  "editors/vscode/package.json",
+  "npm/oxlint/package.json",
+]
