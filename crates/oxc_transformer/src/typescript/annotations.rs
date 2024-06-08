@@ -90,8 +90,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         let mut module_count = 0;
         let mut removed_count = 0;
 
-        // let mut type_identifier_names = self.type_identifier_names.clone();
-
         program.body.retain_mut(|stmt| {
             // fix namespace/export-type-only/input.ts
             // The namespace is type only. So if its name appear in the ExportNamedDeclaration, we should remove it.
