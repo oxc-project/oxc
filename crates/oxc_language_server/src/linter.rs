@@ -305,7 +305,7 @@ impl IsolatedLintHandler {
 
             let lint_ctx = LintContext::new(
                 path.to_path_buf().into_boxed_path(),
-                &Rc::new(semantic_ret.semantic),
+                Rc::new(semantic_ret.semantic),
             );
 
             let result = linter.run(lint_ctx);

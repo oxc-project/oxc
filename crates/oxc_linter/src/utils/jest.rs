@@ -317,15 +317,15 @@ mod test {
         let semantic_ret = Rc::new(semantic_ret);
 
         let path = Path::new("foo.js");
-        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        let ctx = LintContext::new(Box::from(path), Rc::clone(&semantic_ret));
         assert!(!super::is_jest_file(&ctx));
 
         let path = Path::new("foo.test.js");
-        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        let ctx = LintContext::new(Box::from(path), Rc::clone(&semantic_ret));
         assert!(super::is_jest_file(&ctx));
 
         let path = Path::new("__tests__/foo/test.spec.js");
-        let ctx = LintContext::new(Box::from(path), &semantic_ret);
+        let ctx = LintContext::new(Box::from(path), semantic_ret);
         assert!(super::is_jest_file(&ctx));
     }
 }

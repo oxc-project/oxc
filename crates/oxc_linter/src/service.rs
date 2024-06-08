@@ -351,7 +351,7 @@ impl Runtime {
         };
 
         let lint_ctx =
-            LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
+            LintContext::new(path.to_path_buf().into_boxed_path(), Rc::new(semantic_ret.semantic));
         self.linter.run(lint_ctx)
     }
 

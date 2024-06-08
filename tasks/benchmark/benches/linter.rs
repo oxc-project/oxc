@@ -47,7 +47,10 @@ fn bench_linter(criterion: &mut Criterion) {
                 let linter = Linter::from_options(lint_options).unwrap();
                 let semantic = Rc::new(semantic_ret.semantic);
                 b.iter(|| {
-                    linter.run(LintContext::new(PathBuf::from("").into_boxed_path(), &semantic))
+                    linter.run(LintContext::new(
+                        PathBuf::from("").into_boxed_path(),
+                        Rc::clone(&semantic),
+                    ))
                 });
             },
         );

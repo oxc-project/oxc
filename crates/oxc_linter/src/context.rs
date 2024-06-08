@@ -34,11 +34,11 @@ pub struct LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
-    pub fn new(file_path: Box<Path>, semantic: &Rc<Semantic<'a>>) -> Self {
+    pub fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
         Self {
-            semantic: Rc::clone(semantic),
+            semantic,
             diagnostics: RefCell::new(vec![]),
             disable_directives: Rc::new(disable_directives),
             fix: false,
