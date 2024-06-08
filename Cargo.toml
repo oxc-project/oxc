@@ -136,7 +136,7 @@ tempfile            = "3.10.1"
 tokio               = "1"
 tower-lsp           = "0.20.0"
 trybuild            = "1.0.93"
-unicode-id-start    = "1.1.2"
+unicode-id-start    = "1" # Relaxed version so the user can decide which unicode version to use.
 ureq                = { version = "2.9.6", default-features = false }
 url                 = "2.5.0"
 walkdir             = "2.5.0"
