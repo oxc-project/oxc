@@ -341,7 +341,6 @@ impl<'a> GetSpan for Argument<'a> {
     }
 }
 
-// impl_get_span!(ArrayExpression);
 impl<'a> GetSpan for ArrayExpression<'a> {
     fn span(&self) -> Span {
         self.span
