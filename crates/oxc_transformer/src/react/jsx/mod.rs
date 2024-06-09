@@ -517,12 +517,18 @@ impl<'a> ReactJsx<'a> {
     /// ### Fragment
     /// React.createElement(React.Fragment, null, ...children)
     ///
+    // TODO: This function branches repeatedly on whether `e` is an element or a fragment.
+    // Split it into 2 functions `transform_jsx_element` and `transform_jsx_fragment`
+    // and move common logic into separate functions that they both call, to make the code here
+    // more straight line.
     fn transform_jsx<'b>(
         &mut self,
         e: &JSXElementOrFragment<'a, 'b>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let is_fragment = e.is_fragment();
+        // TODO: Can calculate this later when iterating over attributes,
+        // rather than iterating over attributes twice
         let has_key_after_props_spread = e.has_key_after_props_spread();
         // If has_key_after_props_spread is true, we need to fallback to `createElement` same behavior as classic runtime
         let is_classic = self.bindings.is_classic() || has_key_after_props_spread;
@@ -558,6 +564,8 @@ impl<'a> ReactJsx<'a> {
                         }
                     }
                     JSXAttributeItem::Attribute(attr) => {
+                        // TODO: Check only once here if is `JSXAttributeName::Identifier`,
+                        // rather than the repeated `is_identifier()` and `is_key()` calls
                         if attr.is_identifier("__self") {
                             self_attr_span = Some(attr.name.span());
                         } else if attr.is_identifier("__source") {
@@ -576,6 +584,7 @@ impl<'a> ReactJsx<'a> {
                             }
                         }
                     }
+                    // TODO: Remove this match arm by moving the `if` clause in arm above
                     JSXAttributeItem::SpreadAttribute(_) => {}
                 }
 
@@ -742,6 +751,8 @@ impl<'a> ReactJsx<'a> {
                 if self.options.throw_if_namespace {
                     self.ctx.error(diagnostics::namespace_does_not_support(namespaced.span));
                 }
+                // TODO: This `Atom` can reference source text, rather than generating new string.
+                // Or maybe `JSXNamespacedName` should just be a single `Atom` anyway.
                 let name = self.ast().new_atom(&namespaced.to_string());
                 let string_literal = StringLiteral::new(namespaced.span, name);
                 self.ast().literal_string_expression(string_literal)

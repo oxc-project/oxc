@@ -117,6 +117,7 @@ impl ScopeTree {
     }
 
     pub fn find_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
+        // TODO: Calculate hash of `name` only once rather than repeatedly on each turn of the loop
         for scope_id in self.ancestors(scope_id) {
             if let Some(symbol_id) = self.bindings[scope_id].get(name) {
                 return Some(*symbol_id);
