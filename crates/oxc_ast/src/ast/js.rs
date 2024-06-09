@@ -2438,6 +2438,14 @@ impl<'a> FormalParameters<'a> {
     pub fn parameters_count(&self) -> usize {
         self.items.len() + self.rest.as_ref().map_or(0, |_| 1)
     }
+
+    /// Iterates over all bound parameters, including rest parameters.
+    pub fn iter_bindings(&self) -> impl Iterator<Item = &BindingPattern<'a>> + '_ {
+        self.items
+            .iter()
+            .map(|param| &param.pattern)
+            .chain(self.rest.iter().map(|rest| &rest.argument))
+    }
 }
 
 #[visited_node]
@@ -2633,14 +2641,42 @@ impl<'a> Class<'a> {
         }
     }
 
+    /// `true` if this [`Class`] is an expression.
+    ///
+    /// For example,
+    /// ```ts
+    /// var Foo = class { /* ... */ }
+    /// ```
     pub fn is_expression(&self) -> bool {
         self.r#type == ClassType::ClassExpression
     }
 
+    /// `true` if this [`Class`] is a declaration statement.
+    ///
+    /// For example,
+    /// ```ts
+    /// class Foo {
+    ///   // ...
+    /// }
+    /// ```
+    ///
+    /// Not to be confused with [`Class::is_declare`].
     pub fn is_declaration(&self) -> bool {
         self.r#type == ClassType::ClassDeclaration
     }
 
+    /// `true` if this [`Class`] is being within a typescript declaration file
+    /// or `declare` statement.
+    ///
+    /// For example,
+    /// ```ts
+    /// declare global {
+    ///   declare class Foo {
+    ///    // ...
+    ///   }
+    /// }
+    ///
+    /// Not to be confused with [`Class::is_declaration`].
     pub fn is_declare(&self) -> bool {
         self.modifiers.contains(ModifierKind::Declare)
     }
