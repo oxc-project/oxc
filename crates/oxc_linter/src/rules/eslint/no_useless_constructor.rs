@@ -28,13 +28,55 @@ pub struct NoUselessConstructor;
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow unnecessary constructors
     ///
-    /// ### Why is this bad?
+    /// This rule flags class constructors that can be safely removed without
+    /// changing how the class works.
+    ///
+    /// ES2015 provides a default class constructor if one is not specified. As
+    /// such, it is unnecessary to provide an empty constructor or one that
+    /// simply delegates into its parent class, as in the following examples:
     ///
     ///
     /// ### Example
+    ///
+    /// Examples of **incorrect** code for this rule:
     /// ```javascript
+    /// class A {
+    ///     constructor () {
+    ///     }
+    /// }
+    ///
+    /// class B extends A {
+    ///     constructor (...args) {
+    ///       super(...args);
+    ///     }
+    /// }
     /// ```
+    ///
+    /// Examples of **correct** code for this rule:
+    /// ```javascript
+    /// class A { }
+    ///
+    /// class B {
+    ///     constructor () {
+    ///         doSomething();
+    ///     }
+    /// }
+    ///
+    /// class C extends A {
+    ///     constructor() {
+    ///         super('foo');
+    ///     }
+    /// }
+    ///
+    /// class D extends A {
+    ///     constructor() {
+    ///         super();
+    ///         doSomething();
+    ///     }
+    /// }
+    ///```
     NoUselessConstructor,
     suspicious,
 );
