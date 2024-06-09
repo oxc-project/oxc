@@ -1,7 +1,10 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+// Silence erroneous warnings from Rust Analyzer for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use std::hash::{Hash, Hasher};
+use std::{
+    hash::{Hash, Hasher},
+    ops::{Index, IndexMut, Range},
+};
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 
@@ -95,7 +98,7 @@ impl Span {
     /// assert_eq!(Span::new(0, 5).size(), 5);
     /// assert_eq!(Span::new(5, 10).size(), 5);
     /// ```
-    pub fn size(&self) -> u32 {
+    pub const fn size(&self) -> u32 {
         debug_assert!(self.start <= self.end);
         self.end - self.start
     }
@@ -110,7 +113,7 @@ impl Span {
     /// assert!(Span::new(5, 5).is_empty());
     /// assert!(!Span::new(0, 5).is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         debug_assert!(self.start <= self.end);
         self.start == self.end
     }
@@ -155,8 +158,37 @@ impl Span {
     /// assert_eq!(a.expand_left(5), Span::new(0, 5));
     /// ```
     #[must_use]
-    pub fn expand_left(self, offset: u32) -> Self {
+    pub const fn expand_left(self, offset: u32) -> Self {
         Self::new(self.start.saturating_sub(offset), self.end)
+    }
+
+    /// Create a [`Span`] that has its start position moved to the right by
+    /// `offset` bytes.
+    ///
+    /// It is a logical error to shrink the start of the [`Span`] past its end
+    /// position.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(5, 10);
+    /// let shrunk = a.shrink_left(5);
+    /// assert_eq!(shrunk, Span::new(10, 10));
+    ///
+    /// // Shrinking past the end of the span is a logical error that will panic
+    /// // in debug builds.
+    /// std::panic::catch_unwind(|| {
+    ///    shrunk.shrink_left(5);
+    /// });
+    /// ```
+    ///
+    #[must_use]
+    pub const fn shrink_left(self, offset: u32) -> Self {
+        let start = self.start.saturating_add(offset);
+        debug_assert!(start <= self.end);
+        Self::new(self.start.saturating_add(offset), self.end)
     }
 
     /// Create a [`Span`] that has its end position moved to the right by
@@ -183,8 +215,36 @@ impl Span {
     /// assert_eq!(a.expand_right(5), Span::new(0, u32::MAX));
     /// ```
     #[must_use]
-    pub fn expand_right(self, offset: u32) -> Self {
+    pub const fn expand_right(self, offset: u32) -> Self {
         Self::new(self.start, self.end.saturating_add(offset))
+    }
+
+    /// Create a [`Span`] that has its end position moved to the left by
+    /// `offset` bytes.
+    ///
+    /// It is a logical error to shrink the end of the [`Span`] past its start
+    /// position.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_span::Span;
+    ///
+    /// let a = Span::new(5, 10);
+    /// let shrunk = a.shrink_right(5);
+    /// assert_eq!(shrunk, Span::new(5, 5));
+    ///
+    /// // Shrinking past the start of the span is a logical error that will panic
+    /// // in debug builds.
+    /// std::panic::catch_unwind(|| {
+    ///    shrunk.shrink_right(5);
+    /// });
+    /// ```
+    #[must_use]
+    pub const fn shrink_right(self, offset: u32) -> Self {
+        let end = self.end.saturating_sub(offset);
+        debug_assert!(self.start <= end);
+        Self::new(self.start, end)
     }
 
     /// Get a snippet of text from a source string that the [`Span`] covers.
@@ -200,6 +260,28 @@ impl Span {
     /// ```
     pub fn source_text<'a>(&self, source_text: &'a str) -> &'a str {
         &source_text[self.start as usize..self.end as usize]
+    }
+}
+
+impl Index<Span> for str {
+    type Output = str;
+    #[inline]
+    fn index(&self, index: Span) -> &Self::Output {
+        &self[index.start as usize..index.end as usize]
+    }
+}
+
+impl IndexMut<Span> for str {
+    #[inline]
+    fn index_mut(&mut self, index: Span) -> &mut Self::Output {
+        &mut self[index.start as usize..index.end as usize]
+    }
+}
+
+impl From<Range<u32>> for Span {
+    #[inline]
+    fn from(range: Range<u32>) -> Self {
+        Self::new(range.start, range.end)
     }
 }
 

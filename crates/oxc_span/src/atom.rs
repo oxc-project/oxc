@@ -1,9 +1,15 @@
-use std::{borrow::Borrow, fmt, hash, ops::Deref};
+use std::{
+    borrow::Borrow,
+    fmt, hash,
+    ops::{Deref, Index},
+};
 
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
 use compact_str::CompactString;
+
+use crate::Span;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -12,7 +18,7 @@ export type Atom = string;
 export type CompactStr = string;
 "#;
 
-/// Maximum length for inline string, which can be created with `CompactStr::new_const`.
+/// Maximum length for inline string, which can be created with [`CompactStr::new_const`].
 pub const MAX_INLINE_LEN: usize = 16;
 
 /// An inlinable string for oxc_allocator.
@@ -258,6 +264,14 @@ impl<T: AsRef<str>> PartialEq<T> for CompactStr {
 impl PartialEq<CompactStr> for &str {
     fn eq(&self, other: &CompactStr) -> bool {
         *self == other.as_str()
+    }
+}
+
+impl Index<Span> for CompactStr {
+    type Output = str;
+
+    fn index(&self, index: Span) -> &Self::Output {
+        &self.0[index]
     }
 }
 

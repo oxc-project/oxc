@@ -288,7 +288,7 @@ fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
                 let mut collected = vec![];
 
                 for prop in &obj_pat.properties {
-                    let name = prop.key.name().expect("Object key");
+                    let Some(name) = prop.key.name() else { continue };
 
                     match get_param_name(&prop.value, false) {
                         ParamKind::Single(param) => {
