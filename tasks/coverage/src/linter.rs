@@ -65,10 +65,8 @@ fn get_result(
         Parser::new(&allocator, source_text, source_type).parse();
 
     if panicked {
-        let error_string = errors
-            .get(0)
-            .map(ToString::to_string)
-            .unwrap_or_else(|| "(No error diagnostic)".to_string());
+        let error_string =
+            errors.first().map_or_else(|| "(No error diagnostic)".to_string(), ToString::to_string);
         let msg = format!("Parser panicked on first pass: {error_string}");
         do_write_failure(true, vec![], vec![], "(Not fixed)", false, vec![]);
         return TestResult::ParseError(msg, panicked);
@@ -113,10 +111,8 @@ fn get_result(
         Parser::new(&allocator, &fixes.fixed_code, source_type).parse();
 
     if !errors.is_empty() {
-        let error_string = errors
-            .get(0)
-            .map(ToString::to_string)
-            .unwrap_or_else(|| "(No error diagnostic)".to_string());
+        let error_string =
+            errors.first().map_or_else(|| "(No error diagnostic)".to_string(), ToString::to_string);
         let msg = format!("Parser panicked on second pass: {error_string}");
         do_write_failure(
             false,
@@ -162,6 +158,7 @@ fn get_result(
     TestResult::Passed
 }
 
+#[allow(clippy::too_many_arguments)]
 fn write_failure(
     case_name: &str,
     file_name: &Path,
@@ -184,9 +181,9 @@ fn write_failure(
         (false, false) => ".ts",
     };
 
-    fs::write(dir.join(format!("original{}", ext)), source_text)
+    fs::write(dir.join(format!("original{ext}")), source_text)
         .expect("Error writing original source file");
-    fs::write(dir.join(format!("fixed_source{}", ext)), source_after_fixes)
+    fs::write(dir.join(format!("fixed_source{ext}")), source_after_fixes)
         .expect("Error writing fixed source file");
 
     let file =
@@ -208,7 +205,7 @@ fn write_failure(
             if $list.is_empty() {
                 writeln!(w, "None")?;
             } else {
-                for el in &$list {
+                for el in $list {
                     writeln!(w, "{:#?}", el)?;
                 }
             }
@@ -220,12 +217,12 @@ fn write_failure(
     writeln!(w, "file name: {}", file_name.display())?;
     writeln!(w, "source type:\n{source_type:#?}\n")?;
     writeln!(w, "fixes applied: {}", fixes.len())?;
-    writeln!(w, "parser panicked before: {}", parser_panicked_before)?;
+    writeln!(w, "parser panicked before: {parser_panicked_before}")?;
     writeln!(w, "semantic errors before: {}", semantic_errors_before.len())?;
-    writeln!(w, "parser panicked after: {}", parser_panicked_after)?;
+    writeln!(w, "parser panicked after: {parser_panicked_after}")?;
     writeln!(w, "semantic errors after: {}", semantic_errors_after.len())?;
     print_header_sep!()?;
-    w.write(b"\n")?;
+    writeln!(w)?;
 
     writeln!(w, "fixes applied:")?;
     print_list!(fixes);

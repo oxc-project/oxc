@@ -135,16 +135,10 @@ fn is_argument_only_used_in_recursion<'a>(
     has_references && is_used_only_in_recursion
 }
 
-fn is_function_maybe_reassigned<'a>(
-    function_id: SymbolId,
-    ctx: &'a LintContext<'_>,
-) -> bool {
+fn is_function_maybe_reassigned(function_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     let mut is_maybe_reassigned = false;
 
-    for reference in ctx
-        .semantic()
-        .symbol_references(function_id)
-    {
+    for reference in ctx.semantic().symbol_references(function_id) {
         if let Some(AstKind::SimpleAssignmentTarget(_)) =
             ctx.nodes().parent_kind(reference.node_id())
         {
