@@ -22,7 +22,7 @@
     "oxc"
   ],
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.90.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
@@ -115,14 +115,14 @@
     "fmt:js": "prettier --write ./**/*.{js,ts,json}"
   },
   "devDependencies": {
-    "@types/node": "^20.11.5",
+    "@types/node": "^20.14.2",
     "@types/vscode": "1.80.0",
-    "@vscode/vsce": "^2.22.0",
+    "@vscode/vsce": "^2.27.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.21.0",
-    "ovsx": "^0.9.0",
-    "prettier": "^3.2.4",
-    "typescript": "^5.3.3"
+    "esbuild": "^0.21.5",
+    "ovsx": "^0.9.1",
+    "prettier": "^3.3.1",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"
