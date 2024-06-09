@@ -20,6 +20,7 @@ fn main() {
         "prettier" => args.run_prettier(),
         "transformer" => args.run_transformer(),
         "minifier" => args.run_minifier(),
+        "linter" => args.run_linter(),
         "v8_test262_status" => args.run_sync_v8_test262_status(),
         _ => args.run_all(),
     };

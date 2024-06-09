@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -73,7 +74,10 @@ impl Rule for OnlyUsedInRecursion {
             return;
         }
 
-        if is_function_maybe_reassigned(function_id, ctx) {
+        let Some(function_symbol_id) = function_id.symbol_id.get() else {
+            return;
+        };
+        if is_function_maybe_reassigned(function_symbol_id, ctx) {
             return;
         }
 
@@ -132,14 +136,14 @@ fn is_argument_only_used_in_recursion<'a>(
 }
 
 fn is_function_maybe_reassigned<'a>(
-    function_id: &'a BindingIdentifier,
+    function_id: SymbolId,
     ctx: &'a LintContext<'_>,
 ) -> bool {
     let mut is_maybe_reassigned = false;
 
     for reference in ctx
         .semantic()
-        .symbol_references(function_id.symbol_id.get().expect("`symbol_id` should be set"))
+        .symbol_references(function_id)
     {
         if let Some(AstKind::SimpleAssignmentTarget(_)) =
             ctx.nodes().parent_kind(reference.node_id())

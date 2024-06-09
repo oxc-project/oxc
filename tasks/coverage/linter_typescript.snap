@@ -1,0 +1,45 @@
+commit: 64d2eeea
+
+linter_typescript Summary:
+AST Parsed     : 5217/5243 (99.50%)
+Positive Passed: 5211/5243 (99.39%)
+Expect to Parse: "compiler/bom-utf16be.ts"
+Parser panicked on first pass: Invalid Character `￾`Expect to Parse: "compiler/breakTarget3.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "compiler/breakTarget4.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "compiler/commentsAtEndOfFile1.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "compiler/continueTarget3.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "compiler/continueTarget4.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "compiler/duplicateLabel3.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "compiler/duplicateLabel4.ts"
+Parser panicked on second pass: Unexpected tokenExpect to run correctly: "compiler/inheritedOverloadedSpecializedSignatures.ts"
+But got a runtime error: 3 more semantic errors occurred after fixing lint errors than before (3 vs 0)
+
+Expect to Parse: "compiler/sourceMapValidationLabeled.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "compiler/toStringOnPrimitives.ts"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
+Parser panicked on second pass: Classes may not have a static property named prototypeExpect to Parse: "conformance/es6/propertyAccess/propertyAccessNumericLiterals.es6.ts"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
+Parser panicked on second pass: Cannot use `await` as an identifier in an async contextExpect to run correctly: "conformance/interfaces/declarationMerging/twoMergedInterfacesWithDifferingOverloads2.ts"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to Parse: "conformance/parser/ecmascript5/Fuzz/parser768531.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget3.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/parser/ecmascript5/Statements/BreakStatements/parser_breakTarget4.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget3.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/parser/ecmascript5/Statements/ContinueStatements/parser_continueTarget4.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel3.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/parser/ecmascript5/Statements/LabeledStatements/parser_duplicateLabel4.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/breakStatements/doWhileBreakStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/breakStatements/forBreakStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/breakStatements/forInBreakStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/breakStatements/whileBreakStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/continueStatements/doWhileContinueStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/continueStatements/forContinueStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/continueStatements/forInContinueStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "conformance/statements/continueStatements/whileContinueStatements.ts"
+Parser panicked on second pass: Unexpected tokenExpect to run correctly: "conformance/types/objectTypeLiteral/callSignatures/callSignaturesThatDifferOnlyByReturnType3.ts"
+But got a runtime error: 2 more semantic errors occurred after fixing lint errors than before (2 vs 0)
+
+Expect to run correctly: "conformance/types/objectTypeLiteral/callSignatures/identicalCallSignatures3.ts"
+But got a runtime error: 2 more semantic errors occurred after fixing lint errors than before (2 vs 0)
+

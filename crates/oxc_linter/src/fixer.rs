@@ -25,7 +25,7 @@ pub struct FixResult<'a> {
     pub messages: Vec<Message<'a>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Message<'a> {
     pub error: OxcDiagnostic,
     pub start: u32,

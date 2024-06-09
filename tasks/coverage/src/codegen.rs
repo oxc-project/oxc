@@ -43,7 +43,7 @@ fn write_failure(
     parser_result2: &str,
     source_text2: &str,
 ) {
-    let base_path = Path::new(&format!("./tasks/coverage/failures/{case_name}"))
+    let base_path = Path::new(&format!("./tasks/coverage/failures/codegen/{case_name}"))
         .join(file_name)
         .join(result_type);
     let _ = std::fs::create_dir_all(&base_path);

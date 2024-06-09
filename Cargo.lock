@@ -1378,6 +1378,7 @@ dependencies = [
  "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
+ "oxc_linter",
  "oxc_minifier",
  "oxc_parser",
  "oxc_prettier",

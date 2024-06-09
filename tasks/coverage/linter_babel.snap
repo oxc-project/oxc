@@ -1,0 +1,28 @@
+commit: 4bd1b2c2
+
+linter_babel Summary:
+AST Parsed     : 2079/2099 (99.05%)
+Positive Passed: 2077/2099 (98.95%)
+Expect to Parse: "annex-b/enabled/3.1-sloppy-labeled-functions/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "annex-b/enabled/3.1-sloppy-labeled-functions-multiple-labels/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "core/categorized/label-kind-switch/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "core/categorized/labeled-block-statement-regex/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "core/uncategorised/257/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "core/uncategorised/258/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "core/uncategorised/319/input.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "core/uncategorised/323/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "core/uncategorised/327/input.js"
+Parser panicked on second pass: TS1108: A 'return' statement can only be used within a function bodyExpect to Parse: "core/uncategorised/328/input.js"
+Parser panicked on second pass: TS1108: A 'return' statement can only be used within a function bodyExpect to Parse: "es2015/let/let-block-with-newline/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "es2015/statements/label-valid-func-non-strict/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "es2015/statements/label-valid-var/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "es2015/uncategorised/34/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "esprima/es2015-arrow-function/migrated_0006/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "esprima/statement-labelled/migrated_0002/input.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
+Parser panicked on first pass: Expected `<` but found `EOF`Expect to Parse: "typescript/interface/get-set-properties/input.ts"
+Parser panicked on first pass: Expected `(` but found `:`Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
+Parser panicked on first pass: Expected `,` but found `extends`Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel-7/input.ts"
+Parser panicked on first pass: Expected `,` but found `extends`Expect to Parse: "typescript/types/const-type-parameters/input.ts"
+Parser panicked on first pass: Unexpected tokenExpect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
+Parser panicked on first pass: Unexpected token

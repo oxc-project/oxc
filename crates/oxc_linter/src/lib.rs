@@ -28,6 +28,7 @@ use oxc_semantic::AstNode;
 pub use crate::{
     config::OxlintConfig,
     context::LintContext,
+    fixer::{Fixer, Message},
     options::{AllowWarnDeny, LintOptions},
     rule::{RuleCategory, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
@@ -35,7 +36,6 @@ pub use crate::{
 use crate::{
     config::{OxlintEnv, OxlintGlobals, OxlintSettings},
     fixer::Fix,
-    fixer::{Fixer, Message},
     rules::RuleEnum,
     table::RuleTable,
 };

@@ -76,6 +76,16 @@ impl Test262Case {
     fn compute_should_fail(meta: &MetaData) -> bool {
         meta.negative.as_ref().filter(|n| n.phase == Phase::Parse).is_some()
     }
+
+    pub fn source_type(&self) -> SourceType {
+        SourceType::default().with_module(self.has_flag(TestFlag::Module)).with_always_strict(
+            self.has_flag(TestFlag::OnlyStrict)
+                || !(self.has_flag(TestFlag::NoStrict) || self.has_flag(TestFlag::Raw)),
+        )
+    }
+    fn has_flag(&self, flag: TestFlag) -> bool {
+        self.meta.flags.contains(&flag)
+    }
 }
 
 impl Case for Test262Case {

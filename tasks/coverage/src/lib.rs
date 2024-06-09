@@ -9,6 +9,7 @@ mod test262_meta;
 mod typescript;
 // Tools
 mod codegen;
+mod linter;
 mod minifier;
 mod prettier;
 mod sourcemap;
@@ -16,6 +17,7 @@ mod transformer;
 
 use std::{fs, path::PathBuf, process::Command, time::Duration};
 
+use linter::{LinterBabelCase, LinterMiscCase, LinterTest262Case, LinterTypeScriptCase};
 use oxc_tasks_common::agent;
 use runtime::{CodegenRuntimeTest262Case, V8_TEST_262_FAILED_TESTS_PATH};
 use similar::DiffableStr;
@@ -62,6 +64,7 @@ impl AppArgs {
         self.run_transformer();
         // self.run_codegen_runtime();
         self.run_minifier();
+        self.run_linter();
     }
 
     pub fn run_parser(&self) {
@@ -91,6 +94,13 @@ impl AppArgs {
         BabelSuite::<TransformerBabelCase>::new().run("transformer_babel", self);
         TypeScriptSuite::<TransformerTypeScriptCase>::new().run("transformer_typescript", self);
         MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self);
+    }
+
+    pub fn run_linter(&self) {
+        Test262Suite::<LinterTest262Case>::new().run("linter_test262", self);
+        BabelSuite::<LinterBabelCase>::new().run("linter_babel", self);
+        TypeScriptSuite::<LinterTypeScriptCase>::new().run("linter_typescript", self);
+        MiscSuite::<LinterMiscCase>::new().run("linter_misc", self);
     }
 
     /// # Panics

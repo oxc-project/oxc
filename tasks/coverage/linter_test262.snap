@@ -1,0 +1,160 @@
+commit: 17ba9aea
+
+linter_test262 Summary:
+AST Parsed     : 45176/45289 (99.75%)
+Positive Passed: 45161/45289 (99.72%)
+Expect to Parse: "annexB/language/statements/labeled/function-declaration.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-default-radix.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-1.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-10.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-11.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-12.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-13.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-14.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-15.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-16.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-17.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-18.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-19.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-2.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-20.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-21.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-22.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-23.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-24.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-25.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-26.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-27.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-28.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-29.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-3.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-30.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-31.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-32.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-33.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-34.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-35.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-36.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-37.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-4.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-5.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-6.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-7.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-8.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-9.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/Number/prototype/toString/numeric-literal-tostring-radix-poisoned.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "built-ins/encodeURI/S15.1.3.3_A2.2_T1.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "built-ins/encodeURIComponent/S15.1.3.4_A2.2_T1.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/asi/S7.9_A1.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/asi/S7.9_A10_T10.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/asi/S7.9_A10_T11.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/asi/S7.9_A10_T12.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/asi/S7.9_A2.js"
+Parser panicked on second pass: Unexpected tokenExpect to run correctly: "language/expressions/delete/non-reference-return-true.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to Parse: "language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-typeerror.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/catch/nested-block-labeled-eval-rqstd-abrupt-urierror.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/catch/nested-block-labeled-eval-script-code-target.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/catch/nested-block-labeled-file-does-not-exist.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-ambiguous-import.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/catch/nested-block-labeled-instn-iee-err-circular.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/catch/nested-block-labeled-specifier-tostring-abrupt-rejects.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/syntax/valid/nested-block-labeled-empty-str-is-valid-assign-expr.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-assertions-trailing-comma-first.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-assertions-trailing-comma-second.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-attributes-trailing-comma-first.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/syntax/valid/nested-block-labeled-import-attributes-trailing-comma-second.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/syntax/valid/nested-block-labeled-nested-imports.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/syntax/valid/nested-block-labeled-script-code-valid.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-gtbndng-indirect-update-dflt.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-gtbndng-indirect-update.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/usage/syntax-nested-block-labeled-eval-script-code-host-resolves-module-code.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/usage/syntax-nested-block-labeled-is-call-expression-square-brackets.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/usage/syntax-nested-block-labeled-returns-thenable.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/dynamic-import/usage/syntax-nested-block-labeled-specifier-tostring.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/expressions/property-accessors/S11.2.1_A3_T2.js"
+Parser panicked on second pass: Invalid characters after numberExpect to run correctly: "language/literals/numeric/S7.8.3_A2.2_T1.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A2.2_T2.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A2.2_T7.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A2.2_T8.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.3_T1.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.3_T2.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.3_T7.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.3_T8.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.4_T1.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.4_T2.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.4_T7.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to run correctly: "language/literals/numeric/S7.8.3_A3.4_T8.js"
+But got a runtime error: 1 more semantic errors occurred after fixing lint errors than before (1 vs 0)
+
+Expect to Parse: "language/literals/string/S7.8.4_A6.3_T1.js"
+Parser panicked on second pass: Invalid Character ``Expect to Parse: "language/module-code/import-assertions/eval-gtbndng-indirect-faux-assertion.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-block-with-labels.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-array-literal-with-item.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-array-literal.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-arrow-function-assignment-expr.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-arrow-function-functionbody.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-block-with-labels.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-block.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-expr-arrow-function-boolean-literal.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-let-declaration.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-regexp-literal-flags.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/block-with-statment-regexp-literal.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/class-block-with-labels.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statementList/fn-block-with-labels.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/break/S12.8_A3.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/break/S12.8_A4_T1.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/break/S12.8_A4_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/break/S12.8_A4_T3.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/break/S12.8_A7.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/break/S12.8_A9_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/break/line-terminators.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/continue/S12.7_A7.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/continue/S12.7_A9_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/continue/line-terminators.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/debugger/statement.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/do-while/S12.6.1_A4_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/do-while/S12.6.1_A4_T3.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/do-while/S12.6.1_A4_T4.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/for/S12.6.3_A11.1_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/for/S12.6.3_A11_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/for/S12.6.3_A12.1_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/for/S12.6.3_A12_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/labeled/let-block-with-newline.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/labeled/let-identifier-with-newline.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/labeled/tco.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/labeled/value-await-non-module-escaped.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/labeled/value-await-non-module.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/labeled/value-yield-non-strict-escaped.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/labeled/value-yield-non-strict.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/let/dstr/obj-init-null.js"
+Parser panicked on second pass: Missing initializer in destructuring declarationExpect to Parse: "language/statements/variable/dstr/obj-init-null.js"
+Parser panicked on second pass: Missing initializer in destructuring declarationExpect to Parse: "language/statements/while/S12.6.2_A4_T2.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/while/S12.6.2_A4_T3.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/statements/while/S12.6.2_A4_T4.js"
+Parser panicked on second pass: Unexpected tokenExpect to Parse: "language/types/reference/get-value-prop-base-primitive.js"
+Parser panicked on second pass: Invalid characters after numberExpect to Parse: "language/types/reference/put-value-prop-base-primitive.js"
+Parser panicked on second pass: Invalid characters after number
