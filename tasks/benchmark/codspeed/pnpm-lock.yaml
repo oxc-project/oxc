@@ -9,13 +9,13 @@ importers:
   .:
     devDependencies:
       axios:
-        specifier: ^1.6.8
+        specifier: ^1.7.2
         version: 1.7.2
       express:
         specifier: ^4.19.2
         version: 4.19.2
       tar:
-        specifier: ^7.0.1
+        specifier: ^7.2.0
         version: 7.2.0
 
 packages:
