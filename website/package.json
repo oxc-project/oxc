@@ -34,8 +34,8 @@
     "wasm-pack": "^0.12.1"
   },
   "engines": {
-    "node": ">=16.20.2",
-    "pnpm": ">=8.15.8"
+    "node": ">=20.14.0",
+    "pnpm": ">=9.2.0"
   },
   "packageManager": "pnpm@9.2.0"
 }
