@@ -49,12 +49,6 @@ impl<'a> ES2015<'a> {
         }
     }
 
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
-        if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_declaration(decl);
-        }
-    }
-
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.transform_expression(expr);
@@ -67,9 +61,15 @@ impl<'a> ES2015<'a> {
         }
     }
 
-    pub fn transform_declaration_on_exit(&mut self, decl: &mut Declaration<'a>) {
+    pub fn transform_function(&mut self, func: &mut Function<'a>) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_declaration_on_exit(decl);
+            self.arrow_functions.transform_function(func);
+        }
+    }
+
+    pub fn transform_function_on_exit(&mut self, func: &mut Function<'a>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.transform_function_on_exit(func);
         }
     }
 

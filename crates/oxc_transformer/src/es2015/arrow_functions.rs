@@ -183,12 +183,8 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
-            Expression::ArrowFunctionExpression(_) => {
-                self.stacks.push(true);
-            }
-            Expression::FunctionExpression(_) => self.stacks.push(false),
-            _ => {}
+        if matches!(expr, Expression::ArrowFunctionExpression(_)) {
+            self.stacks.push(true);
         }
     }
 
@@ -209,23 +205,16 @@ impl<'a> ArrowFunctions<'a> {
                 *expr = self.transform_arrow_function_expression(arrow_function_expr);
                 self.stacks.pop();
             }
-            Expression::FunctionExpression(_) => {
-                self.stacks.pop();
-            }
             _ => {}
         }
     }
 
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.push(false);
-        }
+    pub fn transform_function(&mut self, _func: &mut Function<'a>) {
+        self.stacks.push(false);
     }
 
-    pub fn transform_declaration_on_exit(&mut self, decl: &mut Declaration<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.pop();
-        }
+    pub fn transform_function_on_exit(&mut self, _func: &mut Function<'a>) {
+        self.stacks.pop();
     }
 
     pub fn transform_class(&mut self, _class: &mut Class<'a>) {

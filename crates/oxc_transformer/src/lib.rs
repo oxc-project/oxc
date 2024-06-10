@@ -183,6 +183,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_function(func);
+        self.x3_es2015.transform_function(func);
+    }
+
+    fn exit_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_function_on_exit(func);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -254,11 +259,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_declaration(decl, ctx);
-        self.x3_es2015.transform_declaration(decl);
-    }
-
-    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.transform_declaration_on_exit(decl);
     }
 
     fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
