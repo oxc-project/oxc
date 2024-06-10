@@ -15,10 +15,6 @@ const SELF: &str = "__self";
 ///
 /// In: `<sometag />`
 /// Out: `<sometag __self={this} />`
-///
-/// TODO:
-/// *. Omit adding `this` in some conditions
-///    <https://github.com/babel/babel/blob/9cd048b5ad45eafd157c4f9968343e36170a66c1/packages/babel-plugin-transform-react-jsx-self/src/index.ts#L78>
 pub struct ReactJsxSelf<'a> {
     ctx: Ctx<'a>,
 }
