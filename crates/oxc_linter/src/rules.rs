@@ -135,6 +135,7 @@ mod typescript {
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
+    pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
@@ -517,6 +518,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_this_alias,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
+    typescript::no_useless_empty_export,
     typescript::no_var_requires,
     typescript::prefer_as_const,
     typescript::prefer_for_of,
