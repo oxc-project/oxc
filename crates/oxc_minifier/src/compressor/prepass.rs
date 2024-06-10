@@ -4,6 +4,7 @@ use oxc_ast::visit::walk_mut::{walk_expression_mut, walk_statements_mut};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 
+#[derive(Clone, Copy)]
 pub struct Prepass<'a> {
     ast: AstBuilder<'a>,
 }
@@ -17,7 +18,7 @@ impl<'a> Prepass<'a> {
         self.visit_program(program);
     }
 
-    fn strip_parenthesized_expression(&self, expr: &mut Expression<'a>) {
+    fn strip_parenthesized_expression(self, expr: &mut Expression<'a>) {
         if let Expression::ParenthesizedExpression(paren_expr) = expr {
             *expr = self.ast.move_expression(&mut paren_expr.expression);
             self.strip_parenthesized_expression(expr);
