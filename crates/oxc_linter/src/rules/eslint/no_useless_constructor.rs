@@ -123,8 +123,8 @@ fn lint_empty_constructor<'a>(
     if !body.statements.is_empty() {
         return;
     }
-    ctx.diagnostic_with_fix(no_empty_constructor(constructor.span), || {
-        Fix::delete(constructor.span)
+    ctx.diagnostic_with_fix(no_empty_constructor(constructor.span), |fixer| {
+        fixer.delete_range(constructor.span)
     });
 }
 
@@ -143,8 +143,8 @@ fn lint_redundant_super_call<'a>(
     if is_only_simple_params(params)
         && (is_spread_arguments(super_args) || is_passing_through(params, super_args))
     {
-        ctx.diagnostic_with_fix(no_redundant_super_call(constructor.span), || {
-            Fix::delete(constructor.span)
+        ctx.diagnostic_with_fix(no_redundant_super_call(constructor.span), |fixer| {
+            fixer.delete_range(constructor.span)
         });
     }
 }
