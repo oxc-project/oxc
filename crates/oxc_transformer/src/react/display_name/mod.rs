@@ -63,6 +63,7 @@ impl<'a> ReactDisplayName<'a> {
                 // `{foo: React.createClass({})}`
                 Ancestor::ObjectPropertyValue(prop) => {
                     if let Some(name) = prop.key().static_name() {
+                        // TODO: Get existing `Atom` and clone it, instead of allocating a new `Atom`
                         FinderRet::Found(ctx.ast.new_atom(&name))
                     } else {
                         FinderRet::Stop
