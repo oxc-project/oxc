@@ -128,7 +128,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
       - name: Check output types
         run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
 
@@ -263,7 +263,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           registry-url: 'https://registry.npmjs.org'
 
       - name: Check Conformance
