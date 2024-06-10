@@ -25,6 +25,8 @@ pub struct ArrowFunctionsOptions {
 ///
 /// * <https://babeljs.io/docs/babel-plugin-transform-arrow-functions>
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-arrow-functions>
+//
+// TODO: The `spec` option is not currently supported. Add support for it.
 pub struct ArrowFunctions<'a> {
     ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
