@@ -1,3 +1,4 @@
+mod diagnostics;
 mod display_name;
 mod jsx;
 mod jsx_self;

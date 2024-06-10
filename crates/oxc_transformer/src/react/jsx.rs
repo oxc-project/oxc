@@ -1,5 +1,3 @@
-mod diagnostics;
-
 use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec;
@@ -18,6 +16,7 @@ use crate::{
     helpers::module_imports::NamedImport,
 };
 
+use super::diagnostics;
 use super::utils::get_line_column;
 pub use super::{
     jsx_self::ReactJsxSelf,
