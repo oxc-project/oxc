@@ -412,8 +412,8 @@ impl<'a> ReactJsx<'a> {
         self.ctx.source_type.is_script()
     }
 
-    fn ast(&self) -> &AstBuilder<'a> {
-        &self.ctx.ast
+    fn ast(&self) -> AstBuilder<'a> {
+        self.ctx.ast
     }
 }
 
