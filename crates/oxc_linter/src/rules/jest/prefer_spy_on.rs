@@ -13,7 +13,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::RuleFixer,
     rule::Rule,
     utils::{get_node_name, parse_general_jest_fn_call, PossibleJestNode},
 };
@@ -111,7 +111,7 @@ impl PreferSpyOn {
 
         ctx.diagnostic_with_fix(
             use_jest_spy_on(Span::new(call_expr.span.start, first_fn_member.span.end)),
-            || {
+            |fixer| {
                 let (end, has_mock_implementation) = if jest_fn_call.members.len() > 1 {
                     let second = &jest_fn_call.members[1];
                     let has_mock_implementation = jest_fn_call
@@ -127,8 +127,8 @@ impl PreferSpyOn {
                     )
                 };
                 let content =
-                    Self::build_code(call_expr, left_assign, has_mock_implementation, ctx);
-                Fix::new(content, Span::new(assign_expr.span.start, end))
+                    Self::build_code(call_expr, left_assign, has_mock_implementation, fixer);
+                fixer.replace(Span::new(assign_expr.span.start, end), content)
             },
         );
     }
@@ -137,9 +137,9 @@ impl PreferSpyOn {
         call_expr: &'a CallExpression<'a>,
         left_assign: &MemberExpression,
         has_mock_implementation: bool,
-        ctx: &LintContext,
+        fixer: RuleFixer<'_, 'a>,
     ) -> String {
-        let mut formatter = ctx.codegen();
+        let mut formatter = fixer.codegen();
         formatter.print_str(b"jest.spyOn(");
 
         match left_assign {

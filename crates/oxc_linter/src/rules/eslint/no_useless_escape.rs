@@ -6,7 +6,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint(no-useless-escape): Unnecessary escape character {x0:?}"))
@@ -84,8 +84,8 @@ fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize
 
         if !is_within_jsx_attribute_item(node_id, ctx) {
             let span = Span::new(offset - 1, offset + len);
-            ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), || {
-                Fix::new(c.to_string(), span)
+            ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
+                fixer.replace(span, c.to_string())
             });
         }
     }

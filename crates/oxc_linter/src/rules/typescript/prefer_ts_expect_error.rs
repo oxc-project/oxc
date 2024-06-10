@@ -4,7 +4,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::fixer::Fix;
 use crate::{context::LintContext, rule::Rule};
 
 fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
@@ -56,18 +55,18 @@ impl Rule for PreferTsExpectError {
 
             if kind.is_single_line() {
                 let comment_span = Span::new(span.start - 2, span.end);
-                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), || {
-                    Fix::new(
-                        format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
+                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
+                    fixer.replace(
                         comment_span,
+                        format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             } else {
                 let comment_span = Span::new(span.start - 2, span.end + 2);
-                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), || {
-                    Fix::new(
-                        format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
+                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
+                    fixer.replace(
                         comment_span,
+                        format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             }

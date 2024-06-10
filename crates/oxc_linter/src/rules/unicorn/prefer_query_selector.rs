@@ -88,8 +88,8 @@ impl Rule for PreferQuerySelector {
             );
 
             if argument_expr.is_null() {
-                return ctx.diagnostic_with_fix(diagnostic, || {
-                    return Fix::new(*preferred_selector, property_span);
+                return ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                    fixer.replace(property_span, *preferred_selector)
                 });
             }
 
@@ -106,15 +106,18 @@ impl Rule for PreferQuerySelector {
             };
 
             if let Some(literal_value) = literal_value {
-                return ctx.diagnostic_with_fix(diagnostic, || {
+                return ctx.diagnostic_with_fix(diagnostic, |fixer| {
                     if literal_value.is_empty() {
                         return Fix::new(*preferred_selector, property_span);
                     }
 
-                    let source_text = argument_expr.span().source_text(ctx.source_text());
+                    // let source_text =
+                    // argument_expr.span().source_text(ctx.source_text());
+                    let source_text = fixer.source_range(argument_expr.span());
                     let quotes_symbol = source_text.chars().next().unwrap();
                     let sharp = if cur_property_name.eq(&"getElementById") { "#" } else { "" };
-                    return Fix::new(format!("{preferred_selector}({quotes_symbol}{sharp}{literal_value}{quotes_symbol}"), property_span.merge(&argument_expr.span()));
+                    let span = property_span.merge(&argument_expr.span());
+                    return fixer.replace(span, format!("{preferred_selector}({quotes_symbol}{sharp}{literal_value}{quotes_symbol}"));
                 });
             }
 

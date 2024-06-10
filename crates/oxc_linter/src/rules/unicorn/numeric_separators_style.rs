@@ -9,7 +9,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn numeric_separators_style_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -98,7 +98,7 @@ impl Rule for NumericSeparatorsStyle {
                 if formatted != number.raw {
                     ctx.diagnostic_with_fix(
                         numeric_separators_style_diagnostic(number.span),
-                        || Fix::new(formatted, number.span),
+                        |fixer| fixer.replace(number.span, formatted),
                     );
                 }
             }
@@ -114,7 +114,7 @@ impl Rule for NumericSeparatorsStyle {
                 if formatted.len() != number.span.size() as usize {
                     ctx.diagnostic_with_fix(
                         numeric_separators_style_diagnostic(number.span),
-                        || Fix::new(formatted, number.span),
+                        |fixer| fixer.replace(number.span, formatted),
                     );
                 }
             }

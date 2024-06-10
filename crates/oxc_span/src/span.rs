@@ -307,6 +307,11 @@ impl From<Span> for LabeledSpan {
 pub trait GetSpan {
     fn span(&self) -> Span;
 }
+impl GetSpan for Span {
+    fn span(&self) -> Span {
+        *self
+    }
+}
 
 #[cfg(test)]
 mod test {

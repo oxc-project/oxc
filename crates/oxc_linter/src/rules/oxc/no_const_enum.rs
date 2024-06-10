@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_const_enum_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("oxc(no-const-enum): Unexpected const enum")
@@ -47,21 +47,20 @@ impl Rule for NoConstEnum {
                 return;
             };
 
-            ctx.diagnostic_with_fix(no_const_enum_diagnostic(const_enum.span), || {
+            ctx.diagnostic_with_fix(no_const_enum_diagnostic(const_enum.span), |fixer| {
                 // const enum Color { Red, Green, Blue }
                 // ^
                 let start = const_enum.span.start;
 
                 // const enum Color { Red, Green, Blue }
                 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-                let text = Span::new(start, enum_decl.span.end).source_text(ctx.source_text());
+                let text = fixer.source_range(Span::new(start, enum_decl.span.end));
 
                 // const  enum Color { Red, Green, Blue }
                 //  ^^^^^^
                 let offset = u32::try_from(text.find("enum").unwrap_or(1)).unwrap_or(1); // 1 is the default offset
 
-                let end = start + offset;
-                Fix::delete(Span::new(start, end))
+                fixer.delete_range(Span::sized(start, offset))
             });
         }
     }

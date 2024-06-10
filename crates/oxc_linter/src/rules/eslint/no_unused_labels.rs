@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_labels_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-unused-labels): Disallow unused labels")
@@ -51,7 +51,7 @@ impl Rule for NoUnusedLabels {
                 // e.g. A: /* Comment */ function foo(){}
                 ctx.diagnostic_with_fix(
                     no_unused_labels_diagnostic(stmt.label.name.as_str(), stmt.label.span),
-                    || Fix::delete(stmt.label.span),
+                    |fixer| fixer.delete_range(stmt.label.span),
                 );
             }
         }

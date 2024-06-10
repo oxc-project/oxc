@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_method_call, context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn no_single_promise_in_promise_methods_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.{x1}()` is unnecessary."))
@@ -85,8 +85,8 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             .expect("callee is a static property");
 
         let diagnostic = no_single_promise_in_promise_methods_diagnostic(info.0, info.1);
-        ctx.diagnostic_with_fix(diagnostic, || {
-            let elem_text = first.span().source_text(ctx.source_text());
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            let elem_text = fixer.source_range(first.span());
 
             let is_directly_in_await = ctx
                 .semantic()
@@ -101,9 +101,9 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             let call_span = call_expr.span;
 
             if is_directly_in_await {
-                Fix::new(elem_text, call_span)
+                fixer.replace(call_span, elem_text)
             } else {
-                Fix::new(format!("Promise.resolve({elem_text})"), call_span)
+                fixer.replace(call_span, format!("Promise.resolve({elem_text})"))
             }
         });
     }

@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn uppercase_prefix(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.")
@@ -83,7 +83,7 @@ impl Rule for NumberLiteralCase {
         };
 
         if let Some((diagnostic, fixed_literal)) = check_number_literal(raw_literal, raw_span) {
-            ctx.diagnostic_with_fix(diagnostic, || Fix::new(fixed_literal, raw_span));
+            ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(raw_span, fixed_literal));
         }
     }
 }

@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use phf::{phf_map, Map};
 use std::borrow::Cow;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn deprecated_function(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -129,7 +129,7 @@ impl Rule for NoDeprecatedFunctions {
             if jest_version_num >= *base_version {
                 ctx.diagnostic_with_fix(
                     deprecated_function(&node_name, replacement, mem_expr.span()),
-                    || Fix::new(*replacement, mem_expr.span()),
+                    |fixer| fixer.replace(mem_expr.span(), *replacement),
                 );
             }
         }

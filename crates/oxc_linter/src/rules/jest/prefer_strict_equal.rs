@@ -1,6 +1,5 @@
 use crate::{
     context::LintContext,
-    fixer::Fix,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
@@ -65,16 +64,14 @@ impl PreferStrictEqual {
         };
 
         if matcher_name.eq("toEqual") {
-            ctx.diagnostic_with_fix(use_to_strict_equal(matcher.span), || {
-                let mut formatter = ctx.codegen();
-                formatter.print_str(
-                    matcher
-                        .span
-                        .source_text(ctx.source_text())
-                        .replace(matcher_name.to_string().as_str(), "toStrictEqual")
-                        .as_bytes(),
-                );
-                Fix::new(formatter.into_source_text(), matcher.span)
+            ctx.diagnostic_with_fix(use_to_strict_equal(matcher.span), |fixer| {
+                let replacement = match fixer.source_range(matcher.span).chars().next().unwrap() {
+                    '\'' => "'toStrictEqual'",
+                    '"' => "\"toStrictEqual\"",
+                    '`' => "`toStrictEqual`",
+                    _ => "toStrictEqual",
+                };
+                fixer.replace(matcher.span, replacement)
             });
         }
     }

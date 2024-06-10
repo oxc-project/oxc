@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn empty_brace_spaces_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed")
@@ -47,7 +47,7 @@ impl Rule for EmptyBraceSpaces {
                 {
                     ctx.diagnostic_with_fix(
                         empty_brace_spaces_diagnostic(static_block.span),
-                        || Fix::new("static {}", static_block.span),
+                        |fixer| fixer.replace(static_block.span, "static {}"),
                     );
                 }
             }
@@ -88,7 +88,9 @@ fn remove_empty_braces_spaces(ctx: &LintContext, is_empty_body: bool, span: Span
 
     if is_empty_body && end - start > 2 && !ctx.semantic().trivias().has_comments_between(span) {
         // length of "{}"
-        ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), || Fix::new("{}", span));
+        ctx.diagnostic_with_fix(empty_brace_spaces_diagnostic(span), |fixer| {
+            fixer.replace(span, "{}")
+        });
     }
 }
 

@@ -1,8 +1,8 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, SPAN};
 
-use crate::{context::LintContext, rule::Rule, Fix};
+use crate::{context::LintContext, rule::Rule};
 
 fn unexpected_unicode_bom_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(unicode-bom): Unexpected Unicode BOM (Byte Order Mark)")
@@ -59,14 +59,14 @@ impl Rule for UnicodeBom {
         let has_bomb = source.starts_with('﻿');
 
         if has_bomb && matches!(self.bom_option, BomOptionType::Never) {
-            ctx.diagnostic_with_fix(unexpected_unicode_bom_diagnostic(Span::new(0, 0)), || {
-                return Fix::delete(Span::new(0, 3));
+            ctx.diagnostic_with_fix(unexpected_unicode_bom_diagnostic(SPAN), |fixer| {
+                return fixer.delete_range(Span::new(0, 3));
             });
         }
 
         if !has_bomb && matches!(self.bom_option, BomOptionType::Always) {
-            ctx.diagnostic_with_fix(expected_unicode_bom_diagnostic(Span::new(0, 0)), || {
-                return Fix::new("﻿", Span::new(0, 0));
+            ctx.diagnostic_with_fix(expected_unicode_bom_diagnostic(SPAN), |fixer| {
+                return fixer.replace(SPAN, "﻿");
             });
         }
     }
