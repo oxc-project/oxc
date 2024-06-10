@@ -1,4 +1,3 @@
-use crate::Fix;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 
@@ -97,8 +96,8 @@ impl Rule for NoExplicitAny {
         }
 
         if self.fix_to_unknown {
-            ctx.diagnostic_with_fix(no_explicit_any_diagnostic(any.span), || {
-                Fix::new("unknown", any.span)
+            ctx.diagnostic_with_fix(no_explicit_any_diagnostic(any.span), |fixer| {
+                fixer.replace(any.span, "unknown")
             });
         } else {
             ctx.diagnostic(no_explicit_any_diagnostic(any.span));

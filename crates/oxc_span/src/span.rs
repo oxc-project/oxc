@@ -74,7 +74,7 @@ impl Span {
         Self { start: at, end: at }
     }
 
-    /// Create a new [`Span`] starting at `start` and covering `size` characters.
+    /// Create a new [`Span`] starting at `start` and covering `size` bytes.
     ///
     /// # Example
     /// ```
@@ -88,7 +88,7 @@ impl Span {
         Self::new(start, start + size)
     }
 
-    /// Get the number of characters covered by the [`Span`].
+    /// Get the number of bytes covered by the [`Span`].
     ///
     /// # Example
     /// ```
@@ -306,6 +306,11 @@ impl From<Span> for LabeledSpan {
 /// Get the span for an AST node
 pub trait GetSpan {
     fn span(&self) -> Span;
+}
+impl GetSpan for Span {
+    fn span(&self) -> Span {
+        *self
+    }
 }
 
 #[cfg(test)]

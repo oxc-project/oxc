@@ -1,5 +1,3 @@
-mod diagnostics;
-
 use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec;
@@ -18,6 +16,7 @@ use crate::{
     helpers::module_imports::NamedImport,
 };
 
+use super::diagnostics;
 use super::utils::get_line_column;
 pub use super::{
     jsx_self::ReactJsxSelf,
@@ -412,8 +411,8 @@ impl<'a> ReactJsx<'a> {
         self.ctx.source_type.is_script()
     }
 
-    fn ast(&self) -> &AstBuilder<'a> {
-        &self.ctx.ast
+    fn ast(&self) -> AstBuilder<'a> {
+        self.ctx.ast
     }
 }
 
@@ -457,15 +456,6 @@ impl<'a, 'b> JSXElementOrFragment<'a, 'b> {
         match self {
             Self::Element(e) => e.span,
             Self::Fragment(e) => e.span,
-        }
-    }
-
-    fn attributes(&self) -> Option<&'b Vec<'a, JSXAttributeItem<'a>>> {
-        match self {
-            Self::Element(e) if !e.opening_element.attributes.is_empty() => {
-                Some(&e.opening_element.attributes)
-            }
-            _ => None,
         }
     }
 
@@ -534,21 +524,19 @@ impl<'a> ReactJsx<'a> {
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
 
-        let attributes = e.attributes();
-        let attributes_len = attributes.map_or(0, |attrs| attrs.len());
-
         // The object properties for the second argument of `React.createElement`
         let mut properties = self.ast().new_vec();
 
         let mut self_attr_span = None;
         let mut source_attr_span = None;
 
-        if let Some(attributes) = attributes {
+        if let JSXElementOrFragment::Element(e) = e {
+            let attributes = &e.opening_element.attributes;
             for attribute in attributes {
                 match attribute {
                     // optimize `{...prop}` to `prop` in static mode
                     JSXAttributeItem::SpreadAttribute(spread)
-                        if is_classic && attributes_len == 1 =>
+                        if is_classic && attributes.len() == 1 =>
                     {
                         // deopt if spreading an object with `__proto__` key
                         if !matches!(&spread.argument, Expression::ObjectExpression(o) if o.has_proto())

@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -69,7 +69,7 @@ impl Rule for NoZeroFractions {
             } else {
                 zero_fraction(number_literal.span, &fmt)
             },
-            || Fix::new(fmt, number_literal.span),
+            |fixer| fixer.replace(number_literal.span, fmt),
         );
     }
 }

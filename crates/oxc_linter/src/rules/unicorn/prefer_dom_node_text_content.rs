@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_dom_node_text_content_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.")
@@ -44,9 +44,10 @@ impl Rule for PreferDomNodeTextContent {
         if let AstKind::MemberExpression(member_expr) = node.kind() {
             if let Some((span, name)) = member_expr.static_property_info() {
                 if name == "innerText" && !member_expr.is_computed() {
-                    ctx.diagnostic_with_fix(prefer_dom_node_text_content_diagnostic(span), || {
-                        Fix::new("textContent", span)
-                    });
+                    ctx.diagnostic_with_fix(
+                        prefer_dom_node_text_content_diagnostic(span),
+                        |fixer| fixer.replace(span, "textContent"),
+                    );
                 }
             }
         }

@@ -1,13 +1,9 @@
 use lazy_static::lazy_static;
-use oxc_ast::{
-    ast::{BindingPattern, BindingPatternKind, Expression, FormalParameters, MethodDefinitionKind},
-    AstKind,
-};
+use oxc_ast::{ast::MethodDefinitionKind, AstKind};
 use oxc_diagnostics::LabeledSpan;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
-use oxc_span::Span;
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
@@ -17,8 +13,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_function_nearest_jsdoc_node, should_ignore_as_avoid, should_ignore_as_internal,
-        should_ignore_as_private,
+        collect_params, get_function_nearest_jsdoc_node, should_ignore_as_avoid,
+        should_ignore_as_internal, should_ignore_as_private, ParamKind,
     },
 };
 
@@ -256,118 +252,6 @@ impl Rule for RequireParam {
             );
         }
     }
-}
-
-#[derive(Debug, Clone)]
-struct Param {
-    span: Span,
-    name: String,
-    is_rest: bool,
-}
-
-#[derive(Debug, Clone)]
-enum ParamKind {
-    Single(Param),
-    Nested(Vec<Param>),
-}
-
-fn collect_params(params: &FormalParameters) -> Vec<ParamKind> {
-    // NOTE: Property level `is_rest` is implemented.
-    //   - fn(a, { b1, ...b2 })
-    //                 ^^^^^
-    // But Object|Array level `is_rest` is not implemented
-    //   - fn(a, ...{ b })
-    //           ^^^^   ^
-    // Tests are not covering these cases...
-    fn get_param_name(pattern: &BindingPattern, is_rest: bool) -> ParamKind {
-        match &pattern.kind {
-            BindingPatternKind::BindingIdentifier(ident) => {
-                ParamKind::Single(Param { span: ident.span, name: ident.name.to_string(), is_rest })
-            }
-            BindingPatternKind::ObjectPattern(obj_pat) => {
-                let mut collected = vec![];
-
-                for prop in &obj_pat.properties {
-                    let Some(name) = prop.key.name() else { continue };
-
-                    match get_param_name(&prop.value, false) {
-                        ParamKind::Single(param) => {
-                            collected.push(Param { name: format!("{name}"), ..param });
-                        }
-                        ParamKind::Nested(params) => {
-                            collected.push(Param {
-                                span: prop.span,
-                                name: format!("{name}"),
-                                is_rest: false,
-                            });
-
-                            for param in params {
-                                collected.push(Param {
-                                    name: format!("{name}.{}", param.name),
-                                    ..param
-                                });
-                            }
-                        }
-                    }
-                }
-
-                if let Some(rest) = &obj_pat.rest {
-                    match get_param_name(&rest.argument, true) {
-                        ParamKind::Single(param) => collected.push(param),
-                        ParamKind::Nested(params) => collected.extend(params),
-                    }
-                }
-
-                ParamKind::Nested(collected)
-            }
-            BindingPatternKind::ArrayPattern(arr_pat) => {
-                let mut collected = vec![];
-
-                for (idx, elm) in arr_pat.elements.iter().enumerate() {
-                    let name = format!("\"{idx}\"");
-
-                    if let Some(pat) = elm {
-                        match get_param_name(pat, false) {
-                            ParamKind::Single(param) => collected.push(Param { name, ..param }),
-                            ParamKind::Nested(params) => collected.extend(params),
-                        }
-                    }
-                }
-
-                if let Some(rest) = &arr_pat.rest {
-                    match get_param_name(&rest.argument, true) {
-                        ParamKind::Single(param) => collected.push(param),
-                        ParamKind::Nested(params) => collected.extend(params),
-                    }
-                }
-
-                ParamKind::Nested(collected)
-            }
-            BindingPatternKind::AssignmentPattern(assign_pat) => match &assign_pat.right {
-                Expression::Identifier(_) => get_param_name(&assign_pat.left, false),
-                _ => {
-                    // TODO: If `config.useDefaultObjectProperties` = true,
-                    // collect default parameters from `assign_pat.right` like:
-                    // { prop = { a: 1, b: 2 }} => [prop, prop.a, prop.b]
-                    //     get_param_name(&assign_pat.left, false)
-                    // }
-                    get_param_name(&assign_pat.left, false)
-                }
-            },
-        }
-    }
-
-    let mut collected =
-        params.items.iter().map(|param| get_param_name(&param.pattern, false)).collect::<Vec<_>>();
-
-    if let Some(rest) = &params.rest {
-        match get_param_name(&rest.argument, true) {
-            ParamKind::Single(param) => collected.push(ParamKind::Single(param)),
-            ParamKind::Nested(params) => collected.push(ParamKind::Nested(params)),
-        }
-    }
-
-    collected
 }
 
 fn collect_tags<'a>(

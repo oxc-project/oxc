@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_div_regex_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -38,8 +38,9 @@ impl Rule for NoDivRegex {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::RegExpLiteral(lit) = node.kind() {
             if lit.regex.pattern.starts_with('=') {
-                ctx.diagnostic_with_fix(no_div_regex_diagnostic(lit.span), || {
-                    Fix::new("[=]", Span::new(lit.span.start + 1, lit.span.start + 2))
+                ctx.diagnostic_with_fix(no_div_regex_diagnostic(lit.span), |fixer| {
+                    let span = Span::sized(lit.span.start + 1, 1);
+                    fixer.replace(span, "[=]")
                 });
             }
         }

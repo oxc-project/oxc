@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, Fix};
+use crate::{context::LintContext, rule::Rule};
 
 fn no_jasmine_globals_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jest(no-jasmine-globals): {x0:?}"))
@@ -87,9 +87,9 @@ fn diagnostic_assign_expr<'a>(expr: &'a AssignmentExpression<'a>, ctx: &LintCont
             if let Expression::NumericLiteral(number_literal) = &expr.right {
                 ctx.diagnostic_with_fix(
                     no_jasmine_globals_diagnostic(COMMON_ERROR_TEXT, COMMON_HELP_TEXT, span),
-                    || {
+                    |fixer| {
                         let content = format!("jest.setTimeout({})", number_literal.value);
-                        Fix::new(content, expr.span)
+                        fixer.replace(expr.span, content)
                     },
                 );
                 return;
@@ -119,7 +119,7 @@ fn diagnostic_call_expr<'a>(expr: &'a CallExpression<'a>, ctx: &LintContext) {
                 if jasmine_property.available_in_jest_expect() {
                     ctx.diagnostic_with_fix(
                         no_jasmine_globals_diagnostic(error, help, span),
-                        || Fix::new("expect", member_expr.object().span()),
+                        |fixer| fixer.replace(member_expr.object().span(), "expect"),
                     );
                 } else {
                     ctx.diagnostic(no_jasmine_globals_diagnostic(error, help, span));

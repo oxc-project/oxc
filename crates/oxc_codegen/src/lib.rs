@@ -15,7 +15,7 @@ mod gen_ts;
 mod operator;
 mod sourcemap_builder;
 
-use std::ops::Range;
+use std::{borrow::Cow, ops::Range};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -522,5 +522,22 @@ fn choose_quote(s: &str) -> char {
         '"'
     } else {
         '\''
+    }
+}
+
+impl From<CodegenReturn> for String {
+    fn from(val: CodegenReturn) -> Self {
+        val.source_text
+    }
+}
+
+impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for String {
+    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
+        val.into_source_text()
+    }
+}
+impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for Cow<'a, str> {
+    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
+        Cow::Owned(val.into_source_text())
     }
 }

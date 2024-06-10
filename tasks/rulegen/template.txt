@@ -43,5 +43,12 @@ fn test() {
         {{fail_cases}}
     ];
 
+    {{#if fix_cases}}
+    let fix = vec![
+        {{fix_cases}}
+    ];
+    Tester::new({{pascal_rule_name}}::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    {{else}}
     Tester::new({{pascal_rule_name}}::NAME, pass, fail).test_and_snapshot();
+    {{/if}}
 }

@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_hex_escape_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -73,16 +73,16 @@ impl Rule for NoHexEscape {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());
                 if let Some(fixed) = check_escape(&text[1..text.len() - 1]) {
-                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(*span), || {
-                        Fix::new(format!("'{fixed}'"), *span)
+                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(*span), |fixer| {
+                        fixer.replace(*span, format!("'{fixed}'"))
                     });
                 }
             }
             AstKind::TemplateLiteral(TemplateLiteral { quasis, .. }) => {
                 quasis.iter().for_each(|quasi| {
                     if let Some(fixed) = check_escape(quasi.span.source_text(ctx.source_text())) {
-                        ctx.diagnostic_with_fix(no_hex_escape_diagnostic(quasi.span), || {
-                            Fix::new(fixed, quasi.span)
+                        ctx.diagnostic_with_fix(no_hex_escape_diagnostic(quasi.span), |fixer| {
+                            fixer.replace(quasi.span, fixed)
                         });
                     }
                 });
@@ -90,8 +90,8 @@ impl Rule for NoHexEscape {
             AstKind::RegExpLiteral(regex) => {
                 let text = regex.span.source_text(ctx.source_text());
                 if let Some(fixed) = check_escape(&text[1..text.len() - 1]) {
-                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), || {
-                        Fix::new(format!("/{fixed}/"), regex.span)
+                    ctx.diagnostic_with_fix(no_hex_escape_diagnostic(regex.span), |fixer| {
+                        fixer.replace(regex.span, format!("/{fixed}/"))
                     });
                 }
             }

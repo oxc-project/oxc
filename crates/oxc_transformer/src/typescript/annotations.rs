@@ -63,7 +63,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, name: &Atom<'a>) -> Statement<'a> {
-        let ast = &self.ctx.ast;
+        let ast = self.ctx.ast;
 
         ast.expression_statement(
             SPAN,

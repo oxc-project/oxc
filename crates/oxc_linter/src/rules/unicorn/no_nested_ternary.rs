@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn unparenthesized_nested_ternary(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.")
@@ -86,17 +86,14 @@ impl Rule for NoNestedTernary {
                 if let AstKind::ParenthesizedExpression(_) = parent_node.kind() {
                     return;
                 }
-                ctx.diagnostic_with_fix(unparenthesized_nested_ternary(cond_expr.span), || {
-                    Fix::new(
-                        format!("({})", cond_expr.span.source_text(ctx.source_text())),
-                        cond_expr.span,
-                    )
+                ctx.diagnostic_with_fix(unparenthesized_nested_ternary(cond_expr.span), |fixer| {
+                    let content = format!("({})", fixer.source_range(cond_expr.span));
+                    fixer.replace(cond_expr.span, content)
                 });
             }
-            2 => {
+            _ => {
                 ctx.diagnostic(deeply_nested_ternary(cond_expr.span));
             }
-            _ => unreachable!(),
         }
     }
 }

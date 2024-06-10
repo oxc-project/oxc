@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 fn comment(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("typescript-eslint(ban-ts-comment): Do not use @ts-{x0} because it alters compilation errors.")).with_labels([span1.into()])
@@ -142,7 +142,7 @@ impl Rule for BanTsComment {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().trivias().comments();
         for (kind, span) in comments {
-            let raw = span.source_text(ctx.semantic().source_text());
+            let raw = ctx.source_range(span);
             if let Some(captures) = find_ts_comment_directive(raw, kind.is_single_line()) {
                 // safe to unwrap, if capture success, it can always capture one of the four directives
                 let (directive, description) = (captures.0, captures.1);
@@ -164,10 +164,10 @@ impl Rule for BanTsComment {
                             if directive == "ignore" {
                                 ctx.diagnostic_with_fix(
                                     ignore_instead_of_expect_error(span),
-                                    || {
-                                        Fix::new(
-                                            raw.replace("@ts-ignore", "@ts-expect-error"),
+                                    |fixer| {
+                                        fixer.replace(
                                             span,
+                                            raw.replace("@ts-ignore", "@ts-expect-error"),
                                         )
                                     },
                                 );

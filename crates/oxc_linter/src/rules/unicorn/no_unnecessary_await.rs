@@ -4,7 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unnecessary_await_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -66,11 +66,7 @@ impl Rule for NoUnnecessaryAwait {
                         expr.span.start,
                         expr.span.start + 5,
                     )),
-                    || {
-                        let mut codegen = String::new();
-                        codegen.push_str(expr.argument.span().source_text(ctx.source_text()));
-                        Fix::new(codegen, expr.span)
-                    },
+                    |fixer| fixer.replace(expr.span, fixer.source_range(expr.argument.span())),
                 );
             };
         }

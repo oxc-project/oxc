@@ -15,7 +15,7 @@ use crate::{
         get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
     },
     context::LintContext,
-    fixer::Fix,
+    fixer::{Fix, RuleFixer},
     rule::Rule,
     AstNode,
 };
@@ -167,8 +167,8 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 AstKind::ArrayExpressionElement(_) => {
                     let diagnostic = spread_in_list(span, "array");
                     if let Some(outer_array) = ctx.nodes().parent_kind(parent_parent.id()) {
-                        ctx.diagnostic_with_fix(diagnostic, || {
-                            fix_replace(ctx, &outer_array, array_expr)
+                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                            fix_replace(fixer, &outer_array, array_expr)
                         });
                     } else {
                         ctx.diagnostic(diagnostic);
@@ -176,8 +176,8 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
                 }
                 // foo(...[ ])
                 AstKind::Argument(_) => {
-                    ctx.diagnostic_with_fix(spread_in_arguments(span), || {
-                        fix_by_removing_spread(ctx, array_expr, spread_elem)
+                    ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
+                        fix_by_removing_spread(fixer, array_expr, spread_elem)
                     });
                 }
                 _ => {}
@@ -260,7 +260,7 @@ fn check_useless_iterable_to_array<'a>(
             }
             ctx.diagnostic_with_fix(
                 iterable_to_array(span, get_new_expr_ident_name(new_expr).unwrap_or("unknown")),
-                || fix_by_removing_spread(ctx, &new_expr.arguments[0], spread_elem),
+                |fixer| fix_by_removing_spread(fixer, &new_expr.arguments[0], spread_elem),
             );
         }
         AstKind::CallExpression(call_expr) => {
@@ -305,7 +305,7 @@ fn check_useless_iterable_to_array<'a>(
                     span,
                     &get_method_name(call_expr).unwrap_or_else(|| "unknown".into()),
                 ),
-                || fix_by_removing_spread(ctx, array_expr, spread_elem),
+                |fixer| fix_by_removing_spread(fixer, array_expr, spread_elem),
             );
         }
         _ => {}
@@ -363,8 +363,8 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
             },
         );
 
-        ctx.diagnostic_with_fix(clone_array(span, &method), || {
-            fix_by_removing_spread(ctx, array_expr, spread_elem)
+        ctx.diagnostic_with_fix(clone_array(span, &method), |fixer| {
+            fix_by_removing_spread(fixer, array_expr, spread_elem)
         });
     }
 
@@ -382,29 +382,30 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
             let method_name =
                 call_expr.callee.get_member_expr().unwrap().static_property_name().unwrap();
 
-            ctx.diagnostic_with_fix(clone_array(span, &format!("Promise.{method_name}")), || {
-                fix_by_removing_spread(ctx, array_expr, spread_elem)
-            });
+            ctx.diagnostic_with_fix(
+                clone_array(span, &format!("Promise.{method_name}")),
+                |fixer| fix_by_removing_spread(fixer, array_expr, spread_elem),
+            );
         }
     }
 }
 
 fn fix_replace<'a, T: GetSpan, U: GetSpan>(
-    ctx: &LintContext<'a>,
+    fixer: RuleFixer<'_, 'a>,
     target: &T,
     replacement: &U,
 ) -> Fix<'a> {
-    let replacement = ctx.source_range(replacement.span());
-    Fix::new(replacement, target.span())
+    let replacement = fixer.source_range(replacement.span());
+    fixer.replace(target.span(), replacement)
 }
 
 /// Creates a fix that replaces `[...spread]` with `spread`
 fn fix_by_removing_spread<'a, S: GetSpan>(
-    ctx: &LintContext<'a>,
+    fixer: RuleFixer<'_, 'a>,
     iterable: &S,
     spread: &SpreadElement<'a>,
 ) -> Fix<'a> {
-    Fix::new(ctx.source_range(spread.argument.span()), iterable.span())
+    fixer.replace(iterable.span(), fixer.source_range(spread.argument.span()))
 }
 
 /// Checks if `node` is `[...(expr)]`

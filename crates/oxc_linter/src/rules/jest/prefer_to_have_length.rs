@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::RuleFixer,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
@@ -146,24 +146,24 @@ impl PreferToHaveLength {
             return;
         }
 
-        ctx.diagnostic_with_fix(use_to_have_length(matcher.span), || {
-            let code = Self::build_code(static_mem_expr, kind, property_name, ctx);
+        ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
+            let code = Self::build_code(fixer, static_mem_expr, kind, property_name);
             let end = if call_expr.arguments.len() > 0 {
                 call_expr.arguments.first().unwrap().span().start
             } else {
                 matcher.span.end
             };
-            Fix::new(code, Span::new(call_expr.span.start, end - 1))
+            fixer.replace(Span::new(call_expr.span.start, end - 1), code)
         });
     }
 
-    fn build_code(
-        mem_expr: &MemberExpression,
+    fn build_code<'a>(
+        fixer: RuleFixer<'_, 'a>,
+        mem_expr: &MemberExpression<'a>,
         kind: Option<&str>,
         property_name: Option<&str>,
-        ctx: &LintContext<'_>,
     ) -> String {
-        let mut formatter = ctx.codegen();
+        let mut formatter = fixer.codegen();
         let Expression::Identifier(prop_ident) = mem_expr.object() else {
             return formatter.into_source_text();
         };

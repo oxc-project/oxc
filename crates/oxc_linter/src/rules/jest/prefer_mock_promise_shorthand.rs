@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, utils::get_node_name};
+use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, utils::get_node_name};
 
 fn use_mock_shorthand(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-mock-promise-shorthand): Prefer mock resolved/rejected shorthands for promises").with_help(format!("Prefer {x0:?}")).with_labels([span1.into()])
@@ -127,7 +127,7 @@ impl PreferMockPromiseShorthand {
         property_span: Span,
         arg_span: Option<Span>,
         arg_expr: &'a Expression<'a>,
-        ctx: &LintContext,
+        ctx: &LintContext<'a>,
     ) {
         let Expression::CallExpression(call_expr) = arg_expr else {
             return;
@@ -142,7 +142,7 @@ impl PreferMockPromiseShorthand {
             if is_once { "mockResolvedValueOnce" } else { "mockResolvedValue" };
         let mock_promise_reject =
             if is_once { "mockRejectedValueOnce" } else { "mockRejectedValue" };
-        let prefer_name =
+        let prefer_name: &'static str =
             if arg_name.ends_with("reject") { mock_promise_reject } else { mock_promise_resolve };
         let fix_span = arg_span.unwrap_or(call_expr.span);
 
@@ -150,9 +150,10 @@ impl PreferMockPromiseShorthand {
         if call_expr.arguments.len() <= 1 {
             ctx.diagnostic_with_fix(
                 use_mock_shorthand(Atom::from(prefer_name).as_str(), property_span),
-                || {
-                    let content = Self::fix(prefer_name, call_expr, ctx);
-                    Fix::new(content, Span::new(property_span.start, fix_span.end))
+                |fixer| {
+                    let content = Self::fix(fixer, prefer_name, call_expr);
+                    let span = Span::new(property_span.start, fix_span.end);
+                    fixer.replace(span, content)
                 },
             );
         } else {
@@ -160,9 +161,13 @@ impl PreferMockPromiseShorthand {
         }
     }
 
-    fn fix(prefer_name: &str, call_expr: &CallExpression, ctx: &LintContext) -> String {
-        let mut content = ctx.codegen();
-        content.print_str(prefer_name.as_bytes());
+    fn fix<'a>(
+        fixer: RuleFixer<'_, 'a>,
+        prefer_name: &'a str,
+        call_expr: &CallExpression<'a>,
+    ) -> String {
+        let mut content = fixer.codegen();
+        content.print_str(prefer_name);
         content.print(b'(');
         if call_expr.arguments.is_empty() {
             content.print_str(b"undefined");

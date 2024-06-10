@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct ArrayType(Box<ArrayTypeConfig>);
@@ -202,15 +202,12 @@ fn check_and_report_error_generic(
         return;
     };
 
-    ctx.diagnostic_with_fix(diagnostic, || {
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let type_text =
             &source_text[element_type_span.start as usize..element_type_span.end as usize];
         let array_type_identifier = if is_readonly { "ReadonlyArray" } else { "Array" };
 
-        Fix::new(
-            array_type_identifier.to_string() + "<" + type_text + ">",
-            Span::new(type_reference_span.start, type_reference_span.end),
-        )
+        fixer.replace(type_reference_span, format!("{array_type_identifier}<{type_text}>"))
     });
 }
 
@@ -234,7 +231,7 @@ fn check_and_report_error_array(
     if matches!(config, ArrayOption::Generic) {
         return;
     }
-    let readonly_prefix: &str = if is_readonly_array_type { "readonly " } else { "" };
+    let readonly_prefix: &'static str = if is_readonly_array_type { "readonly " } else { "" };
     let class_name = if is_readonly_array_type { "ReadonlyArray" } else { "Array" };
     let type_params = &ts_type_reference.type_parameters;
 
@@ -248,8 +245,8 @@ fn check_and_report_error_array(
                 ts_type_reference.span,
             ),
         };
-        ctx.diagnostic_with_fix(diagnostic, || {
-            Fix::new(readonly_prefix.to_string() + "any[]", ts_type_reference.span)
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            fixer.replace(ts_type_reference.span, readonly_prefix.to_string() + "any[]")
         });
         return;
     }
@@ -276,17 +273,6 @@ fn check_and_report_error_array(
         return;
     };
 
-    let type_text =
-        &ctx.source_text()[element_type_span.start as usize..element_type_span.end as usize];
-
-    let mut start = String::from(if parent_parens { "(" } else { "" });
-    start.push_str(readonly_prefix);
-    start.push_str(if type_parens { "(" } else { "" });
-
-    let mut end = String::from(if type_parens { ")" } else { "" });
-    end.push_str("[]");
-    end.push_str(if parent_parens { ")" } else { "" });
-
     let message_type = get_message_type(first_type_param, ctx.source_text());
     let diagnostic = match config {
         ArrayOption::Array => {
@@ -299,8 +285,17 @@ fn check_and_report_error_array(
             ts_type_reference.span,
         ),
     };
-    ctx.diagnostic_with_fix(diagnostic, || {
-        Fix::new(start + type_text + end.as_str(), ts_type_reference.span)
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+        let mut start = String::from(if parent_parens { "(" } else { "" });
+        start.push_str(readonly_prefix);
+        start.push_str(if type_parens { "(" } else { "" });
+
+        let mut end = String::from(if type_parens { ")" } else { "" });
+        end.push_str("[]");
+        end.push_str(if parent_parens { ")" } else { "" });
+
+        let type_text = fixer.source_range(element_type_span);
+        fixer.replace(ts_type_reference.span, start + type_text + end.as_str())
     });
 }
 
