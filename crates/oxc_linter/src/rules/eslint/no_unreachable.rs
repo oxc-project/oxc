@@ -1,12 +1,12 @@
+use std::hash::BuildHasherDefault;
+
 use itertools::Itertools;
 use oxc_ast::{ast::VariableDeclarationKind, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    petgraph::visit::{depth_first_search, Control, DfsEvent},
-    AstNode, EdgeType,
-};
+use oxc_semantic::{AstNode, BasicBlockId};
 use oxc_span::{GetSpan, Span};
+use rustc_hash::{FxHashMap, FxHasher};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -28,34 +28,21 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnreachable {
-    // fn run_once(&self, ctx: &LintContext) {
-    //     let Some(root) = ctx.nodes().root_node() else { unreachable!() };
-    //     let AstKind::Program(program) = root.kind() else { unreachable!() };
-    //     let graph = &ctx.semantic().cfg().graph;
-    //     let result = depth_first_search(graph, Some(root.cfg_id()), |event| match event {
-    //         DfsEvent::TreeEdge(a, b) => {
-    //             let unreachable = !graph.edges_connecting(a, b).any(|edge| {
-    //                 !matches!(
-    //                     edge.weight(),
-    //                     EdgeType::NewFunction | EdgeType::Unreachable | EdgeType::Join
-    //                 )
-    //             });
-    //
-    //             if unreachable {
-    //                 Control::Prune
-    //             } else if b == to {
-    //                 return Control::Break(true);
-    //             } else {
-    //                 Control::Continue
-    //             }
-    //         }
-    //         _ => Control::Continue,
-    //     });
-    //     dbg!(result);
-    //     panic!();
-    // }
+    fn run_once(&self, ctx: &LintContext) {
+        let nodes = ctx.nodes();
+        let mut cache = FxHashMap::with_capacity_and_hasher(
+            nodes.len(),
+            BuildHasherDefault::<FxHasher>::default(),
+        );
 
-    fn run(&self, node: &AstNode, ctx: &LintContext) {
+        for node in ctx.nodes().iter() {
+            Self::is_reachabale(node, ctx, &mut cache);
+        }
+    }
+}
+
+impl NoUnreachable {
+    fn is_reachabale(node: &AstNode, ctx: &LintContext, cache: &mut FxHashMap<BasicBlockId, bool>) {
         // exit early if we are not visiting a statement.
         if !node.kind().is_statement() {
             return;
@@ -76,6 +63,10 @@ impl Rule for NoUnreachable {
             return;
         }
 
+        if matches!(cache.get(&node.cfg_id()), Some(false)) {
+            return ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
+        }
+
         let nodes = ctx.nodes();
         let Some(parent) = nodes
             .ancestors(node.id())
@@ -85,9 +76,14 @@ impl Rule for NoUnreachable {
             unreachable!()
         };
 
-        if !ctx.semantic().cfg().is_reachabale_deepscan(parent.cfg_id(), node.cfg_id(), nodes) {
-            return ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
-        }
+        let is_reachable =
+            if ctx.semantic().cfg().is_reachabale_deepscan(parent.cfg_id(), node.cfg_id(), nodes) {
+                true
+            } else {
+                ctx.diagnostic(no_unreachable_diagnostic(node.kind().span()));
+                false
+            };
+        cache.insert(node.cfg_id(), is_reachable);
     }
 }
 

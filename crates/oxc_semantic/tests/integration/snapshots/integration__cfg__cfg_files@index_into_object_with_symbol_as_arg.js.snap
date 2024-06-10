@@ -4,5 +4,9 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/index_into_object_with_symbol_as_arg.js
 ---
 bb0: {
+
+}
+
+bb1: {
 	statement
 }

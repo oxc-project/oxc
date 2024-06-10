@@ -8,13 +8,21 @@ bb0: {
 }
 
 bb1: {
-	return <value>
+
 }
 
 bb2: {
-	unreachable
+
 }
 
 bb3: {
+	return <value>
+}
+
+bb4: {
+	unreachable
+}
+
+bb5: {
 
 }

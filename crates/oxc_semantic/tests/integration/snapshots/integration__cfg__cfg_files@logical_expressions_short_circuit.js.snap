@@ -4,15 +4,15 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/logical_expressions_short_circuit.js
 ---
 bb0: {
-	statement
+
 }
 
 bb1: {
-	condition
+	statement
 }
 
 bb2: {
-
+	condition
 }
 
 bb3: {
@@ -20,20 +20,20 @@ bb3: {
 }
 
 bb4: {
-	statement
-	statement
+
 }
 
 bb5: {
 	statement
+	statement
 }
 
 bb6: {
-	condition
+	statement
 }
 
 bb7: {
-
+	condition
 }
 
 bb8: {
@@ -41,7 +41,7 @@ bb8: {
 }
 
 bb9: {
-	statement
+
 }
 
 bb10: {
@@ -49,11 +49,11 @@ bb10: {
 }
 
 bb11: {
-	condition
+	statement
 }
 
 bb12: {
-
+	condition
 }
 
 bb13: {
@@ -61,9 +61,13 @@ bb13: {
 }
 
 bb14: {
-	statement
+
 }
 
 bb15: {
+	statement
+}
+
+bb16: {
 
 }

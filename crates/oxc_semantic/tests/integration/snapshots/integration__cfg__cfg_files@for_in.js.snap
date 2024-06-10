@@ -8,26 +8,34 @@ bb0: {
 }
 
 bb1: {
-	statement
-	statement
+
 }
 
 bb2: {
-	condition
+
 }
 
 bb3: {
-
+	statement
+	statement
 }
 
 bb4: {
-	statement
+	condition
 }
 
 bb5: {
-	statement
+
 }
 
 bb6: {
+	statement
+}
+
+bb7: {
+	statement
+}
+
+bb8: {
 
 }

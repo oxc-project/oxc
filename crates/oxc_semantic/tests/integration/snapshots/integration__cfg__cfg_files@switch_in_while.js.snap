@@ -4,43 +4,47 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/switch_in_while.js
 ---
 bb0: {
-	statement
+
 }
 
 bb1: {
-	condition
+	statement
 }
 
 bb2: {
-	statement
-	statement
+	condition
 }
 
 bb3: {
-
+	statement
+	statement
 }
 
 bb4: {
+
+}
+
+bb5: {
 	statement
 	continue
 }
 
-bb5: {
+bb6: {
 	unreachable
 }
 
-bb6: {
-
-}
-
 bb7: {
-	statement
+
 }
 
 bb8: {
-
+	statement
 }
 
 bb9: {
+
+}
+
+bb10: {
 
 }

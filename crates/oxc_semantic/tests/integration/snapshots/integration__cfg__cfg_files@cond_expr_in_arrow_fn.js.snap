@@ -4,7 +4,7 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/cond_expr_in_arrow_fn.js
 ---
 bb0: {
-	statement
+
 }
 
 bb1: {
@@ -12,17 +12,25 @@ bb1: {
 }
 
 bb2: {
-	condition
+
 }
 
 bb3: {
-
+	statement
 }
 
 bb4: {
-
+	condition
 }
 
 bb5: {
+
+}
+
+bb6: {
+
+}
+
+bb7: {
 
 }

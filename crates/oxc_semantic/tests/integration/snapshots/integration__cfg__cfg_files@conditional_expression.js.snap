@@ -4,15 +4,15 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/conditional_expression.js
 ---
 bb0: {
-	statement
+
 }
 
 bb1: {
-	condition
+	statement
 }
 
 bb2: {
-
+	condition
 }
 
 bb3: {
@@ -20,5 +20,9 @@ bb3: {
 }
 
 bb4: {
+
+}
+
+bb5: {
 	statement
 }

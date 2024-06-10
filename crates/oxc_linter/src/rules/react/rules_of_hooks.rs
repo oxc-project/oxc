@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    algo, petgraph::visit::Control, AstNodeId, AstNodes, EdgeType, InstructionKind,
+    algo, petgraph::visit::Control, AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
@@ -254,7 +254,10 @@ fn has_conditional_path_accept_throw(
     let to_graph_id = to.cfg_id();
     let cfg = ctx.semantic().cfg();
     let graph = &cfg.graph;
-    if graph.edges(to_graph_id).any(|it| matches!(it.weight(), EdgeType::Error)) {
+    if graph
+        .edges(to_graph_id)
+        .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
+    {
         // TODO: We are simplifying here, There is a real need for a trait like `MayThrow` that
         // would provide a method `may_throw`, since not everything may throw and break the control flow.
         return true;
@@ -287,8 +290,8 @@ fn has_conditional_path_accept_throw(
     }
     // All nodes should be able to reach the hook node, Otherwise we have a conditional/branching flow.
     algo::dijkstra(graph, from_graph_id, Some(to_graph_id), |e| match e.weight() {
-        EdgeType::NewFunction /* | EdgeType::Error(ErrorEdgeKind::Implicit) */ => 1,
-        EdgeType::Error
+        EdgeType::NewFunction | EdgeType::Error(ErrorEdgeKind::Implicit) => 1,
+        EdgeType::Error(ErrorEdgeKind::Explicit)
         | EdgeType::Join
         | EdgeType::Finalize
         | EdgeType::Jump
