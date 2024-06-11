@@ -75,6 +75,7 @@ impl ScopeTree {
         self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }
 
+    #[inline]
     pub fn root_scope_id(&self) -> ScopeId {
         ScopeId::new(0)
     }

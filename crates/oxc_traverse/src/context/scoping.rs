@@ -185,6 +185,11 @@ impl TraverseScoping {
         self.generate_uid(name, self.current_scope_id, flags)
     }
 
+    /// Generate UID in root scope.
+    pub fn generate_uid_in_root_scope(&mut self, name: &str, flags: SymbolFlags) -> SymbolId {
+        self.generate_uid(name, self.scopes.root_scope_id(), flags)
+    }
+
     /// Create a reference bound to a `SymbolId`
     pub fn create_bound_reference(
         &mut self,

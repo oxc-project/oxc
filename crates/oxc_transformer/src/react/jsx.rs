@@ -118,9 +118,8 @@ impl<'a> AutomaticScriptBindings<'a> {
         front: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let root_scope_id = ctx.scopes().root_scope_id();
         let symbol_id =
-            ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+            ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
         let variable_name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(variable_name.clone(), None, symbol_id);
@@ -220,8 +219,7 @@ impl<'a> AutomaticModuleBindings<'a> {
         source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let root_scope_id = ctx.scopes().root_scope_id();
-        let symbol_id = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+        let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::FunctionScopedVariable);
         let local = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
