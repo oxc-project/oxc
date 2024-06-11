@@ -43,11 +43,18 @@ pub struct ArrowFunctions<'a> {
     is_in_arrow: bool,
     // `ScopeId` of current vars block (i.e. program, function, class static block, TS module block)
     current_var_scope_id: ScopeId,
-    // Stack of blocks which need a `var _this = this` statement inserted in them.
-    // `ScopeId` of the block, and `SymbolId` of the binding for `_this`.
-    var_scopes_stack: Vec<(ScopeId, SymbolId)>,
-    // UID for `_this` var
-    this_var: Option<Atom<'a>>,
+    // Stack of blocks which need a `var _this = this;` statement inserted in them
+    var_scopes: Vec<VarScope<'a>>,
+}
+
+#[derive(Clone)]
+struct VarScope<'a> {
+    // `ScopeId` of block which `this` is bound in
+    scope_id: ScopeId,
+    // `SymbolId` of the binding for `_this`
+    symbol_id: SymbolId,
+    // `_this` var name
+    name: Atom<'a>,
 }
 
 impl<'a> ArrowFunctions<'a> {
@@ -56,8 +63,7 @@ impl<'a> ArrowFunctions<'a> {
             _options: options,
             is_in_arrow: false,
             current_var_scope_id: ScopeId::new(0), // Dummy value, overwritten in `enter_program`
-            var_scopes_stack: vec![],
-            this_var: None,
+            var_scopes: vec![],
         }
     }
 
@@ -191,17 +197,6 @@ impl<'a> ArrowFunctions<'a> {
         ident.name = replacement.name;
     }
 
-    /// Get var for `_this`.
-    /// By definition, it's impossible for there to be more than 1 `this` binding accessible from
-    /// any position in AST. So we can use the same var name for every `_this` in the AST,
-    /// rather than generating a separate UID for each one.
-    fn get_this_var(&mut self, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
-        if self.this_var.is_none() {
-            self.this_var = Some(ctx.ast.new_atom(&ctx.find_uid_name("this")));
-        }
-        self.this_var.as_ref().unwrap().clone()
-    }
-
     /// Update current var scope to parent var scope when exiting a function or other var block.
     ///
     /// # Panics
@@ -224,34 +219,31 @@ impl<'a> ArrowFunctions<'a> {
     ///
     /// If this is first `this` in an arrow function found in AST, generate UID for `_this` var.
     /// If this is first `this` in an arrow function found for this particular `this`, create a Symbol
-    /// for it, and record that in `var_scopes_stack`. This signals to `exit_function` etc to
+    /// for it, and record that in `var_scopes`. This signals to `exit_function` etc to
     /// insert a `var _this = this;` statement using that `SymbolId`.
     fn create_this_ident(
         &mut self,
         span: Span,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        let this_var = self.get_this_var(ctx);
-        let this_var_compact = this_var.to_compact_str();
-
         // Get or create symbol for `_this` in this context
-        let symbol_id = self.get_this_symbol_id_for_current_scope().unwrap_or_else(|| {
+        let (symbol_id, name) = self.get_this_symbol_for_current_scope().unwrap_or_else(|| {
             // No existing symbol for `_this` in this context.
-            // Create one + record it in `var_scopes_stack`.
+            // Create one + record it in `var_scopes`.
+            // TODO(improve-on-babel): By definition, it's impossible for there to be more than 1 `this`
+            // binding accessible from any position in AST. So we could use the same var name for every
+            // `_this` in the AST, rather than generating a separate UID for each one.
             let scope_id = self.current_var_scope_id;
-            let symbol_id = ctx.create_binding(
-                this_var_compact.clone(),
-                scope_id,
-                SymbolFlags::FunctionScopedVariable,
-            );
-            self.var_scopes_stack.push((scope_id, symbol_id));
-            symbol_id
+            let symbol_id = ctx.generate_uid("this", scope_id, SymbolFlags::FunctionScopedVariable);
+            let name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
+            self.var_scopes.push(VarScope { scope_id, symbol_id, name: name.clone() });
+            (symbol_id, name)
         });
 
         // Reference is always read-only because `this` cannot be assigned to
         let reference_id =
-            ctx.create_bound_reference(this_var_compact, symbol_id, ReferenceFlag::Read);
-        IdentifierReference::new_read(span, this_var, Some(reference_id))
+            ctx.create_bound_reference(name.to_compact_str(), symbol_id, ReferenceFlag::Read);
+        IdentifierReference::new_read(span, name, Some(reference_id))
     }
 
     /// Add `var _this = this;` statement at top of statements block if required.
@@ -272,15 +264,14 @@ impl<'a> ArrowFunctions<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         // Check if need to add to block
-        let Some(symbol_id) = self.get_this_symbol_id_for_current_scope() else {
+        let Some((symbol_id, name)) = self.get_this_symbol_for_current_scope() else {
             return;
         };
 
         // Remove from stack
-        self.var_scopes_stack.pop();
+        self.var_scopes.pop();
 
         // Insert `var _this = this;` statement at top of block
-        let name = self.this_var.as_ref().unwrap().clone();
         let binding_ident =
             BindingIdentifier { span: SPAN, name, symbol_id: Cell::new(Some(symbol_id)) };
         let binding_pattern =
@@ -303,12 +294,12 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     /// Get `SymbolId` for `_this` var in current vars block (if there is one)
-    fn get_this_symbol_id_for_current_scope(&self) -> Option<SymbolId> {
-        match self.var_scopes_stack.last() {
-            Some(&(scope_id, symbol_id)) if scope_id == self.current_var_scope_id => {
-                Some(symbol_id)
-            }
-            _ => None,
+    fn get_this_symbol_for_current_scope(&self) -> Option<(SymbolId, Atom<'a>)> {
+        let var_scope = self.var_scopes.last()?;
+        if var_scope.scope_id == self.current_var_scope_id {
+            Some((var_scope.symbol_id, var_scope.name.clone()))
+        } else {
+            None
         }
     }
 
