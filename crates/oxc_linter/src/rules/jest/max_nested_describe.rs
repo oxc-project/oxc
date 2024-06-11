@@ -152,18 +152,19 @@ impl MaxNestedDescribe {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-
-        if is_type_of_jest_fn_call(
+        let is_describe_call = is_type_of_jest_fn_call(
             call_expr,
             possible_jest_node,
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Describe)],
-        ) && !describes_hooks_depth.contains(&scope_id)
+        );
+
+        if is_describe_call && !describes_hooks_depth.contains(&scope_id)
         {
             describes_hooks_depth.push(scope_id);
         }
 
-        if describes_hooks_depth.len() > self.max {
+        if is_describe_call && describes_hooks_depth.len() > self.max {
             ctx.diagnostic(exceeded_max_depth(
                 describes_hooks_depth.len(),
                 self.max,
