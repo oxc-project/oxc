@@ -186,8 +186,6 @@ ignored = ["napi", "oxc_traverse"]
 # and we don't rely on it for debugging that much.
 debug = false
 
-[profile.dev.package]
-oxc_linter = { debug = true }
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
