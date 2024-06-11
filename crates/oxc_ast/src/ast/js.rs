@@ -2523,7 +2523,10 @@ impl<'a> FunctionBody<'a> {
 }
 
 /// Arrow Function Definitions
-#[visited_node(scope(ScopeFlags::Function | ScopeFlags::Arrow))]
+#[visited_node(
+    scope(ScopeFlags::Function | ScopeFlags::Arrow),
+    strict_if(self.body.has_use_strict_directive())
+)]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
