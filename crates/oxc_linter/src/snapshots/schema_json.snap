@@ -14,6 +14,9 @@ expression: json
     "globals": {
       "$ref": "#/definitions/OxlintGlobals"
     },
+    "parserOptions": {
+      "$ref": "#/definitions/OxlintParseOptions"
+    },
     "rules": {
       "description": "See [Oxlint Rules](./rules)",
       "allOf": [
@@ -188,6 +191,21 @@ expression: json
       "type": "object",
       "additionalProperties": {
         "$ref": "#/definitions/GlobalValue"
+      }
+    },
+    "OxlintParseOptions": {
+      "type": "object",
+      "properties": {
+        "emitDecoratorMetadata": {
+          "description": "This option allow you to tell parser to act as if `emitDecoratorMetadata: true` is set in `tsconfig.json`.",
+          "default": false,
+          "type": "boolean"
+        },
+        "experimentalDecorators": {
+          "description": "This option allow you to tell parser to act as if `experimentalDecorators: true` is set in `tsconfig.json`.",
+          "default": false,
+          "type": "boolean"
+        }
       }
     },
     "OxlintRules": {

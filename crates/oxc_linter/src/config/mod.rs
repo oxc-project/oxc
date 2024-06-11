@@ -1,5 +1,6 @@
 mod env;
 mod globals;
+mod parser_options;
 mod rules;
 mod settings;
 
@@ -13,7 +14,7 @@ use serde::Deserialize;
 use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
 
 pub use self::{
-    env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules,
+    env::OxlintEnv, globals::OxlintGlobals, parser_options::OxlintParseOptions, rules::OxlintRules,
     settings::jsdoc::JSDocPluginSettings, settings::OxlintSettings,
 };
 
@@ -56,6 +57,9 @@ pub struct OxlintConfig {
     pub(crate) settings: OxlintSettings,
     pub(crate) env: OxlintEnv,
     pub(crate) globals: OxlintGlobals,
+
+    #[serde(rename = "parserOptions")]
+    pub(crate) parser_options: OxlintParseOptions,
 }
 
 impl OxlintConfig {
@@ -208,14 +212,20 @@ mod test {
                 },
             },
             "env": { "browser": true, },
-            "globals": { "foo": "readonly", }
+            "globals": { "foo": "readonly", },
+            "parserOptions": {
+                "emitDecoratorMetadata": true,
+                "experimentalDecorators": true
+            }
         }));
         assert!(config.is_ok());
 
-        let OxlintConfig { rules, settings, env, globals } = config.unwrap();
+        let OxlintConfig { rules, settings, env, globals, parser_options } = config.unwrap();
         assert!(!rules.is_empty());
         assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
         assert_eq!(env.iter().count(), 1);
         assert!(globals.is_enabled("foo"));
+        assert!(parser_options.emit_decorator_metadata);
+        assert!(parser_options.experimental_decorators);
     }
 }

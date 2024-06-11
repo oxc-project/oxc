@@ -50,6 +50,30 @@ Add or remove global variables.
 
 
 
+## parserOptions
+
+type: `object`
+
+
+
+
+### parserOptions.emitDecoratorMetadata
+
+type: `boolean`
+
+This option allow you to tell parser to act as if `emitDecoratorMetadata: true` is set in `tsconfig.json`.
+
+
+
+### parserOptions.experimentalDecorators
+
+type: `boolean`
+
+This option allow you to tell parser to act as if `experimentalDecorators: true` is set in `tsconfig.json`.
+
+
+
+
 ## rules
 
 
