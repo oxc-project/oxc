@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -48,7 +51,7 @@ fn get_result(
         source_path,
         source_type,
         source_text,
-        &parse_result1.trivias,
+        Rc::new(parse_result1.trivias),
         options.clone(),
     )
     .build(&mut program);
@@ -79,7 +82,7 @@ fn get_result(
         source_path,
         source_type,
         &source_text1,
-        &parse_result2.trivias,
+        Rc::new(parse_result2.trivias),
         options,
     )
     .build(&mut program);
