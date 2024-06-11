@@ -43,9 +43,9 @@ impl<'a> ES2015<'a> {
         }
     }
 
-    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
+    pub fn transform_jsx_element_name(&mut self, elem: &mut JSXElementName<'a>) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_jsx_opening_element(elem);
+            self.arrow_functions.transform_jsx_element_name(elem);
         }
     }
 
