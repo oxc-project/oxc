@@ -296,6 +296,13 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.generate_uid_in_root_scope(name, flags)
     }
 
+    /// Find a variable name which can be used as a UID.
+    ///
+    /// This is a shortcut for `ctx.scoping.find_uid_name`.
+    pub fn find_uid_name(&self, name: &str) -> CompactString {
+        self.scoping.find_uid_name(name)
+    }
+
     /// Create a reference bound to a `SymbolId`.
     ///
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.

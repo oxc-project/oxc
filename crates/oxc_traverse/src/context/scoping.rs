@@ -190,6 +190,77 @@ impl TraverseScoping {
         self.generate_uid(name, self.scopes.root_scope_id(), flags)
     }
 
+    /// Find a variable name which can be used as a UID.
+    ///
+    /// # Panics
+    /// Panics if cannot find UID.
+    /// Can only happen if AST contains bindings which include every one of
+    /// `_<name>`, `_<name>2`, `_<name>3` .. `_<name>4294967295` (`u32::MAX`).
+    /// If AST came from parser this is impossible, because source text is limited to `u32::MAX`.
+    /// If AST was generated programmatically, it's *theoretically* possible,
+    /// but in practice never going to happen.
+    pub fn find_uid_name(&self, name: &str) -> CompactString {
+        let mut name = create_uid_name_base(name);
+
+        // Try the name without a numerical postfix (i.e. plain `_temp`)
+        if self.name_is_unique(&name) {
+            return name;
+        }
+
+        // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
+        // operations to a minimum for postfixes up to 99 - using `replace_range` on a single
+        // `CompactStr`, rather than generating a new string on each attempt.
+        // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
+
+        // Try single-digit postfixes (i.e. `_temp2`, `_temp3` ... `_temp9`)
+        name.push('2');
+        if self.name_is_unique(&name) {
+            return name;
+        }
+        for c in b'3'..=b'9' {
+            name.replace_range(name.len() - 1.., str::from_utf8(&[c]).unwrap());
+            if self.name_is_unique(&name) {
+                return name;
+            }
+        }
+
+        // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
+        name.replace_range(name.len() - 1.., "1");
+        name.push('0');
+        let mut c1 = b'1';
+        loop {
+            if self.name_is_unique(&name) {
+                return name;
+            }
+            for c2 in b'1'..=b'9' {
+                name.replace_range(name.len() - 1.., str::from_utf8(&[c2]).unwrap());
+                if self.name_is_unique(&name) {
+                    return name;
+                }
+            }
+            if c1 == b'9' {
+                break;
+            }
+            c1 += 1;
+            name.replace_range(name.len() - 2.., str::from_utf8(&[c1, b'0']).unwrap());
+        }
+
+        // Try longer postfixes (`_temp100` upwards)
+        let name_base = {
+            name.pop();
+            name.pop();
+            &*name
+        };
+        for n in 100..=usize::MAX {
+            let name = format_compact!("{}{}", name_base, n);
+            if self.name_is_unique(&name) {
+                return name;
+            }
+        }
+
+        panic!("Cannot generate UID");
+    }
+
     /// Create a reference bound to a `SymbolId`
     pub fn create_bound_reference(
         &mut self,
@@ -260,69 +331,6 @@ impl TraverseScoping {
     #[inline]
     pub(crate) fn set_current_scope_id(&mut self, scope_id: ScopeId) {
         self.current_scope_id = scope_id;
-    }
-
-    /// Find a variable name which can be used as a UID
-    fn find_uid_name(&self, name: &str) -> CompactString {
-        let mut name = create_uid_name_base(name);
-
-        // Try the name without a numerical postfix (i.e. plain `_temp`)
-        if self.name_is_unique(&name) {
-            return name;
-        }
-
-        // It's fairly common that UIDs may need a numerical postfix, so we try to keep string
-        // operations to a minimum for postfixes up to 99 - using `replace_range` on a single
-        // `CompactStr`, rather than generating a new string on each attempt.
-        // Postfixes greater than 99 should be very uncommon, so don't bother optimizing.
-
-        // Try single-digit postfixes (i.e. `_temp1`, `_temp2` ... `_temp9`)
-        name.push('2');
-        if self.name_is_unique(&name) {
-            return name;
-        }
-        for c in b'3'..=b'9' {
-            name.replace_range(name.len() - 1.., str::from_utf8(&[c]).unwrap());
-            if self.name_is_unique(&name) {
-                return name;
-            }
-        }
-
-        // Try double-digit postfixes (i.e. `_temp10` ... `_temp99`)
-        name.replace_range(name.len() - 1.., "1");
-        name.push('0');
-        let mut c1 = b'1';
-        loop {
-            if self.name_is_unique(&name) {
-                return name;
-            }
-            for c2 in b'1'..=b'9' {
-                name.replace_range(name.len() - 1.., str::from_utf8(&[c2]).unwrap());
-                if self.name_is_unique(&name) {
-                    return name;
-                }
-            }
-            if c1 == b'9' {
-                break;
-            }
-            c1 += 1;
-            name.replace_range(name.len() - 2.., str::from_utf8(&[c1, b'0']).unwrap());
-        }
-
-        // Try longer postfixes (`_temp100` upwards)
-        let name_base = {
-            name.pop();
-            name.pop();
-            &*name
-        };
-        for n in 100..=usize::MAX {
-            let name = format_compact!("{}{}", name_base, n);
-            if self.name_is_unique(&name) {
-                return name;
-            }
-        }
-
-        panic!("Cannot generate UID");
     }
 
     fn name_is_unique(&self, name: &str) -> bool {
