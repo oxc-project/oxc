@@ -44,6 +44,11 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessEmptyExport {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let module_record = ctx.semantic().module_record();
+        if module_record.not_esm || !module_record.export_default_duplicated.is_empty() {
+            return;
+        }
+
         match node.kind() {
             AstKind::Program(program) => {
                 check_node(&program.body, ctx);
