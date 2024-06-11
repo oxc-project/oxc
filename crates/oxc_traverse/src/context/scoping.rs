@@ -56,7 +56,7 @@ impl TraverseScoping {
         &mut self.symbols
     }
 
-    /// Walk up trail of scopes to find a scope.
+    /// Walk up trail of scopes to find a scope, starting with current scope.
     ///
     /// `finder` is called with `ScopeId`.
     ///
@@ -68,7 +68,37 @@ impl TraverseScoping {
     where
         F: Fn(ScopeId) -> FinderRet<O>,
     {
-        let mut scope_id = self.current_scope_id;
+        self.find_scope_starting_with(self.current_scope_id, finder)
+    }
+
+    /// Walk up trail of scopes to find a scope, starting with parent of current scope.
+    ///
+    /// `finder` is called with `ScopeId`.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    pub fn find_parent_scope<F, O>(&self, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeId) -> FinderRet<O>,
+    {
+        let parent_scope_id = self.scopes.get_parent_id(self.current_scope_id)?;
+        self.find_scope_starting_with(parent_scope_id, finder)
+    }
+
+    /// Walk up trail of scopes to find a scope, starting with provided scope.
+    ///
+    /// `finder` is called with `ScopeId`.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    pub fn find_scope_starting_with<F, O>(&self, mut scope_id: ScopeId, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeId) -> FinderRet<O>,
+    {
         loop {
             match finder(scope_id) {
                 FinderRet::Found(res) => return Some(res),
@@ -175,9 +205,7 @@ impl TraverseScoping {
         let name = CompactStr::new(&self.find_uid_name(name));
 
         // Add binding to scope
-        let symbol_id = self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id);
-        self.scopes.add_binding(scope_id, name, symbol_id);
-        symbol_id
+        self.create_binding(name, scope_id, flags)
     }
 
     /// Generate UID in current scope.
@@ -259,6 +287,18 @@ impl TraverseScoping {
         }
 
         panic!("Cannot generate UID");
+    }
+
+    /// Create a binding in scope.
+    pub fn create_binding(
+        &mut self,
+        name: CompactStr,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        let symbol_id = self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id);
+        self.scopes.add_binding(scope_id, name, symbol_id);
+        symbol_id
     }
 
     /// Create a reference bound to a `SymbolId`

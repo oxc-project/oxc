@@ -1,9 +1,16 @@
-use oxc_allocator::Vec;
-use oxc_ast::ast::*;
-use oxc_span::{Atom, SPAN};
+use std::cell::Cell;
+
 use serde::Deserialize;
 
-use crate::context::Ctx;
+use oxc_allocator::Vec as ArenaVec;
+use oxc_ast::ast::*;
+use oxc_span::{Atom, Span, SPAN};
+use oxc_syntax::{
+    reference::ReferenceFlag,
+    scope::ScopeId,
+    symbol::{SymbolFlags, SymbolId},
+};
+use oxc_traverse::{FinderRet, TraverseCtx};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 pub struct ArrowFunctionsOptions {
@@ -27,100 +34,139 @@ pub struct ArrowFunctionsOptions {
 /// * <https://github.com/babel/babel/tree/main/packages/babel-plugin-transform-arrow-functions>
 //
 // TODO: The `spec` option is not currently supported. Add support for it.
+// TODO: Does not currently handle correctly:
+// * Arrow function in a function's params. `function foo(f = () => this) {}`
+// * Arrow function in a class field initializer. `class C { foo = () => this }`
 pub struct ArrowFunctions<'a> {
-    ctx: Ctx<'a>,
     _options: ArrowFunctionsOptions,
-    uid: usize,
-    has_this: bool,
-    /// Stack to keep track of whether we are inside an arrow function or not.
-    stacks: std::vec::Vec<bool>,
-    // var _this = this;
-    this_statements: std::vec::Vec<Option<Statement<'a>>>,
+    // `true` if currently in an arrow function
+    is_in_arrow: bool,
+    // `ScopeId` of current vars block (i.e. program, function, class static block, TS module block)
+    current_var_scope_id: ScopeId,
+    // Stack of blocks which need a `var _this = this` statement inserted in them.
+    // `ScopeId` of the block, and `SymbolId` of the binding for `_this`.
+    var_scopes_stack: Vec<(ScopeId, SymbolId)>,
+    // UID for `_this` var
+    this_var: Option<Atom<'a>>,
 }
 
 impl<'a> ArrowFunctions<'a> {
-    pub fn new(options: ArrowFunctionsOptions, ctx: Ctx<'a>) -> Self {
+    pub fn new(options: ArrowFunctionsOptions) -> Self {
         Self {
-            ctx,
             _options: options,
-            uid: 0,
-            has_this: false,
-            stacks: vec![],
-            this_statements: vec![],
+            is_in_arrow: false,
+            current_var_scope_id: ScopeId::new(0), // Dummy value, overwritten in `enter_program`
+            var_scopes_stack: vec![],
+            this_var: None,
         }
     }
 
-    fn is_inside_arrow_function(&self) -> bool {
-        self.stacks.last().copied().unwrap_or(false)
+    // Visitors for AST nodes which are vars blocks (i.e. `this` is bound in them).
+    // These visitors:
+    // 1. Update `self.current_var_scope_id` on entry / exit.
+    // 2. Insert `var _this = this;` statement if required.
+
+    pub fn transform_program(&mut self, _program: &Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.current_var_scope_id = ctx.current_scope_id();
     }
 
-    fn get_this_name(&self) -> Atom<'a> {
-        let uid = if self.uid == 1 { String::new() } else { self.uid.to_string() };
-        self.ctx.ast.new_atom(&format!("_this{uid}"))
+    pub fn transform_program_on_exit(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.add_var_statement_to_block(&mut program.body, ctx);
+        // No point updating `current_var_scope_id`
     }
 
-    fn mark_this_as_found(&mut self) {
-        if !self.has_this {
-            self.has_this = true;
-            self.uid += 1;
+    pub fn transform_function(&mut self, _func: &Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.current_var_scope_id = ctx.current_scope_id();
+    }
+
+    pub fn transform_function_on_exit(
+        &mut self,
+        func: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Some(body) = func.body.as_mut() {
+            self.add_var_statement_to_block(&mut body.statements, ctx);
+        }
+        self.update_current_var_scope(ctx);
+    }
+
+    pub fn transform_static_block(&mut self, _block: &StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.current_var_scope_id = ctx.current_scope_id();
+    }
+
+    pub fn transform_static_block_on_exit(
+        &mut self,
+        block: &mut StaticBlock<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.add_var_statement_to_block(&mut block.body, ctx);
+        self.update_current_var_scope(ctx);
+    }
+
+    pub fn transform_ts_module_block(
+        &mut self,
+        _block: &mut TSModuleBlock<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.current_var_scope_id = ctx.current_scope_id();
+    }
+
+    pub fn transform_ts_module_block_on_exit(
+        &mut self,
+        block: &mut TSModuleBlock<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.add_var_statement_to_block(&mut block.body, ctx);
+        self.update_current_var_scope(ctx);
+    }
+
+    // Visitors for arrow functions.
+    // Update `self.is_in_arrow` on entry/exit + transform arrow function to full function
+
+    pub fn transform_arrow_function_expression(
+        &mut self,
+        _arrow_function_expr: &ArrowFunctionExpression<'a>,
+    ) {
+        self.is_in_arrow = true;
+    }
+
+    pub fn transform_expression_on_exit(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if let Expression::ArrowFunctionExpression(arrow_function_expr) = expr {
+            *expr = self.transform_arrow_function(arrow_function_expr, ctx);
         }
     }
 
-    pub fn transform_statements(&mut self, _stmts: &mut Vec<'a, Statement<'a>>) {
-        self.this_statements.push(None);
-    }
+    /// Replace `this` in arrow function with `_this`
+    pub fn transform_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let span = if let Expression::ThisExpression(this_expr) = expr {
+            this_expr.span
+        } else {
+            return;
+        };
 
-    /// ```ts
-    /// function a(){
-    ///    () => console.log(this);
-    /// }
-    /// // to
-    /// function a(){
-    ///   var _this = this;
-    ///  (function() { return console.log(_this); });
-    /// }
-    /// ```
-    /// Insert the var _this = this; statement outside the arrow function
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        // Insert the var _this = this;
-        if let Some(Some(stmt)) = self.this_statements.pop() {
-            stmts.insert(0, stmt);
+        if !self.is_in_arrow {
+            return;
         }
 
-        if self.has_this {
-            let binding_pattern = self.ctx.ast.binding_pattern(
-                self.ctx
-                    .ast
-                    .binding_pattern_identifier(BindingIdentifier::new(SPAN, self.get_this_name())),
-                None,
-                false,
-            );
-
-            let variable_declarator = self.ctx.ast.variable_declarator(
-                SPAN,
-                VariableDeclarationKind::Var,
-                binding_pattern,
-                Some(self.ctx.ast.this_expression(SPAN)),
-                false,
-            );
-
-            let stmt = self.ctx.ast.variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Var,
-                self.ctx.ast.new_vec_single(variable_declarator),
-                Modifiers::empty(),
-            );
-
-            let stmt = Statement::VariableDeclaration(stmt);
-            // store it, insert it in last statements
-            self.this_statements.last_mut().unwrap().replace(stmt);
-            self.has_this = false;
-        }
+        let ident = self.create_this_ident(span, ctx);
+        *expr = ctx.ast.identifier_reference_expression(ident);
     }
 
-    /// Change <this></this> to <_this></_this>, and mark it as found
-    pub fn transform_jsx_element_name(&mut self, name: &mut JSXElementName<'a>) {
-        if !self.is_inside_arrow_function() {
+    /// Change `this` in `<this>` or `</this>` to `_this`.
+    pub fn transform_jsx_element_name(
+        &mut self,
+        name: &mut JSXElementName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !self.is_in_arrow {
             return;
         }
 
@@ -131,97 +177,188 @@ impl<'a> ArrowFunctions<'a> {
             }
             JSXElementName::NamespacedName(_) => return,
         };
-        if ident.name == "this" {
-            self.mark_this_as_found();
-            ident.name = self.get_this_name();
+        if ident.name != "this" {
+            return;
+        }
+
+        // We can't produce a proper identifier with a `ReferenceId` because `JSXIdentifier`
+        // lacks that field. https://github.com/oxc-project/oxc/issues/3528
+        // So generate a reference and just use its name.
+        // If JSX transform is enabled, that transform runs before this and will have converted
+        // this to a proper `ThisExpression`, and this visitor won't run.
+        // So only a problem if JSX transform is disabled.
+        let replacement = self.create_this_ident(SPAN, ctx);
+        ident.name = replacement.name;
+    }
+
+    /// Get var for `_this`.
+    /// By definition, it's impossible for there to be more than 1 `this` binding accessible from
+    /// any position in AST. So we can use the same var name for every `_this` in the AST,
+    /// rather than generating a separate UID for each one.
+    fn get_this_var(&mut self, ctx: &mut TraverseCtx<'a>) -> Atom<'a> {
+        if self.this_var.is_none() {
+            self.this_var = Some(ctx.ast.new_atom(&ctx.find_uid_name("this")));
+        }
+        self.this_var.as_ref().unwrap().clone()
+    }
+
+    /// Update current var scope to parent var scope when exiting a function or other var block.
+    ///
+    /// # Panics
+    /// Panics if called in program scope. Don't do that!
+    fn update_current_var_scope(&mut self, ctx: &mut TraverseCtx<'a>) {
+        let current_scope_id = ctx.current_scope_id();
+        let parent_scope_id = ctx.scopes().get_parent_id(current_scope_id).unwrap();
+        let parent_var_scope_id = ctx
+            .find_scope_starting_with(parent_scope_id, |scope_id| {
+                match ctx.scopes().get_flags(scope_id) {
+                    flags if flags.is_var() => FinderRet::Found(scope_id),
+                    _ => FinderRet::Continue,
+                }
+            })
+            .unwrap();
+        self.current_var_scope_id = parent_var_scope_id;
+    }
+
+    /// Create `IdentifierReference` for `_this`.
+    ///
+    /// If this is first `this` in an arrow function found in AST, generate UID for `_this` var.
+    /// If this is first `this` in an arrow function found for this particular `this`, create a Symbol
+    /// for it, and record that in `var_scopes_stack`. This signals to `exit_function` etc to
+    /// insert a `var _this = this;` statement using that `SymbolId`.
+    fn create_this_ident(
+        &mut self,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> IdentifierReference<'a> {
+        let this_var = self.get_this_var(ctx);
+        let this_var_compact = this_var.to_compact_str();
+
+        // Get or create symbol for `_this` in this context
+        let symbol_id = self.get_this_symbol_id_for_current_scope().unwrap_or_else(|| {
+            // No existing symbol for `_this` in this context.
+            // Create one + record it in `var_scopes_stack`.
+            let scope_id = self.current_var_scope_id;
+            let symbol_id = ctx.create_binding(
+                this_var_compact.clone(),
+                scope_id,
+                SymbolFlags::FunctionScopedVariable,
+            );
+            self.var_scopes_stack.push((scope_id, symbol_id));
+            symbol_id
+        });
+
+        // Reference is always read-only because `this` cannot be assigned to
+        let reference_id =
+            ctx.create_bound_reference(this_var_compact, symbol_id, ReferenceFlag::Read);
+        IdentifierReference::new_read(span, this_var, Some(reference_id))
+    }
+
+    /// Add `var _this = this;` statement at top of statements block if required.
+    ///
+    /// ```js
+    /// function a() {
+    ///   return () => console.log(this);
+    /// }
+    /// // to
+    /// function a() {
+    ///   var _this = this;
+    ///   return function() { return console.log(_this); };
+    /// }
+    /// ```
+    fn add_var_statement_to_block(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // Check if need to add to block
+        let Some(symbol_id) = self.get_this_symbol_id_for_current_scope() else {
+            return;
+        };
+
+        // Remove from stack
+        self.var_scopes_stack.pop();
+
+        // Insert `var _this = this;` statement at top of block
+        let name = self.this_var.as_ref().unwrap().clone();
+        let binding_ident =
+            BindingIdentifier { span: SPAN, name, symbol_id: Cell::new(Some(symbol_id)) };
+        let binding_pattern =
+            ctx.ast.binding_pattern(ctx.ast.binding_pattern_identifier(binding_ident), None, false);
+        let variable_declarator = ctx.ast.variable_declarator(
+            SPAN,
+            VariableDeclarationKind::Var,
+            binding_pattern,
+            Some(ctx.ast.this_expression(SPAN)),
+            false,
+        );
+        let stmt = ctx.ast.variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ctx.ast.new_vec_single(variable_declarator),
+            Modifiers::empty(),
+        );
+        let stmt = Statement::VariableDeclaration(stmt);
+        stmts.insert(0, stmt);
+    }
+
+    /// Get `SymbolId` for `_this` var in current vars block (if there is one)
+    fn get_this_symbol_id_for_current_scope(&self) -> Option<SymbolId> {
+        match self.var_scopes_stack.last() {
+            Some(&(scope_id, symbol_id)) if scope_id == self.current_var_scope_id => {
+                Some(symbol_id)
+            }
+            _ => None,
         }
     }
 
-    fn transform_arrow_function_expression(
+    fn transform_arrow_function(
         &mut self,
         arrow_function_expr: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
-        let mut body = self.ctx.ast.copy(&arrow_function_expr.body);
+        // Convert arrow function to full function
+        let mut body = ctx.ast.copy(&arrow_function_expr.body);
 
         if arrow_function_expr.expression {
             let first_stmt = body.statements.remove(0);
             if let Statement::ExpressionStatement(stmt) = first_stmt {
-                let return_statement = self
-                    .ctx
-                    .ast
-                    .return_statement(stmt.span, Some(self.ctx.ast.copy(&stmt.expression)));
+                let return_statement =
+                    ctx.ast.return_statement(stmt.span, Some(ctx.ast.copy(&stmt.expression)));
                 body.statements.push(return_statement);
             }
         }
 
-        let new_function = self.ctx.ast.function(
-            FunctionType::FunctionExpression,
-            arrow_function_expr.span,
-            None,
-            false,
-            arrow_function_expr.r#async,
-            None,
-            self.ctx.ast.copy(&arrow_function_expr.params),
-            Some(body),
-            self.ctx.ast.copy(&arrow_function_expr.type_parameters),
-            self.ctx.ast.copy(&arrow_function_expr.return_type),
-            Modifiers::empty(),
-        );
+        let new_function = Function {
+            r#type: FunctionType::FunctionExpression,
+            span: arrow_function_expr.span,
+            id: None,
+            generator: false,
+            r#async: arrow_function_expr.r#async,
+            this_param: None,
+            params: ctx.ast.copy(&arrow_function_expr.params),
+            body: Some(body),
+            type_parameters: ctx.ast.copy(&arrow_function_expr.type_parameters),
+            return_type: ctx.ast.copy(&arrow_function_expr.return_type),
+            modifiers: Modifiers::empty(),
+            scope_id: Cell::new(arrow_function_expr.scope_id.get()),
+        };
 
-        Expression::FunctionExpression(new_function)
-    }
+        let func = Expression::FunctionExpression(ctx.alloc(new_function));
 
-    pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
-        match expr {
-            Expression::ArrowFunctionExpression(_) => {
-                self.stacks.push(true);
-            }
-            Expression::FunctionExpression(_) => self.stacks.push(false),
-            _ => {}
+        // Check if another arrow function above this, or if we're no longer in an arrow function.
+        // NB: Arrow function's scope has already been exited, as we're in `exit_expression`.
+        let is_not_in_arrow = ctx
+            .find_scope(|scope_id| match ctx.scopes().get_flags(scope_id) {
+                flags if flags.is_arrow() => FinderRet::Stop,
+                flags if flags.is_var() => FinderRet::Found(()),
+                _ => FinderRet::Continue,
+            })
+            .is_some();
+        if is_not_in_arrow {
+            self.is_in_arrow = false;
         }
-    }
 
-    pub fn transform_expression_on_exit(&mut self, expr: &mut Expression<'a>) {
-        match expr {
-            Expression::ThisExpression(this_expr) => {
-                if !self.is_inside_arrow_function() {
-                    return;
-                }
-
-                self.mark_this_as_found();
-                *expr = self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
-                    this_expr.span,
-                    self.get_this_name(),
-                ));
-            }
-            Expression::ArrowFunctionExpression(arrow_function_expr) => {
-                *expr = self.transform_arrow_function_expression(arrow_function_expr);
-                self.stacks.pop();
-            }
-            Expression::FunctionExpression(_) => {
-                self.stacks.pop();
-            }
-            _ => {}
-        }
-    }
-
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.push(false);
-        }
-    }
-
-    pub fn transform_declaration_on_exit(&mut self, decl: &mut Declaration<'a>) {
-        if let Declaration::FunctionDeclaration(_) = decl {
-            self.stacks.pop();
-        }
-    }
-
-    pub fn transform_class(&mut self, _class: &mut Class<'a>) {
-        self.stacks.push(false);
-    }
-
-    pub fn transform_class_on_exit(&mut self, _class: &mut Class<'a>) {
-        self.stacks.pop();
+        func
     }
 }

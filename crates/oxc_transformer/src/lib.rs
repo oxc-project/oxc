@@ -101,9 +101,11 @@ impl<'a> Transformer<'a> {
 impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_program(program, ctx);
+        self.x3_es2015.transform_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_program_on_exit(program, ctx);
         self.x1_react.transform_program_on_exit(program);
         self.x0_typescript.transform_program_on_exit(program, ctx);
     }
@@ -116,6 +118,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_arrow_expression(expr);
+        self.x3_es2015.transform_arrow_function_expression(expr);
     }
 
     fn enter_binding_pattern(&mut self, pat: &mut BindingPattern<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -129,15 +132,18 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_class(class);
-        self.x3_es2015.transform_class(class);
-    }
-
-    fn exit_class(&mut self, class: &mut Class<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.transform_class_on_exit(class);
     }
 
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_class_body(body);
+    }
+
+    fn enter_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_static_block(block, ctx);
+    }
+
+    fn exit_static_block(&mut self, block: &mut StaticBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_static_block_on_exit(block, ctx);
     }
 
     fn enter_export_named_declaration(
@@ -151,11 +157,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_expression(expr);
         self.x1_react.transform_expression(expr, ctx);
-        self.x3_es2015.transform_expression(expr);
+        self.x3_es2015.transform_expression(expr, ctx);
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.transform_expression_on_exit(expr);
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_expression_on_exit(expr, ctx);
     }
 
     fn enter_simple_assignment_target(
@@ -182,8 +188,13 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_formal_parameter(param);
     }
 
-    fn enter_function(&mut self, func: &mut Function<'a>, _ctx: &mut TraverseCtx<'a>) {
+    fn enter_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_function(func);
+        self.x3_es2015.transform_function(func, ctx);
+    }
+
+    fn exit_function(&mut self, func: &mut Function<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_function_on_exit(func, ctx);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -203,12 +214,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x1_react.transform_jsx_opening_element(elem, ctx);
     }
 
-    fn enter_jsx_element_name(
-        &mut self,
-        elem: &mut JSXElementName<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.x3_es2015.transform_jsx_element_name(elem);
+    fn enter_jsx_element_name(&mut self, elem: &mut JSXElementName<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_jsx_element_name(elem, ctx);
     }
 
     fn enter_method_definition(
@@ -239,13 +246,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_property_definition(def);
     }
 
-    fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.enter_statements(stmts);
-    }
-
     fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_statements_on_exit(stmts);
-        self.x3_es2015.exit_statements(stmts);
     }
 
     fn enter_tagged_template_expression(
@@ -262,11 +264,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_declaration(decl, ctx);
-        self.x3_es2015.transform_declaration(decl);
-    }
-
-    fn exit_declaration(&mut self, decl: &mut Declaration<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.transform_declaration_on_exit(decl);
     }
 
     fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -292,5 +289,13 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         _ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_module_declaration(decl);
+    }
+
+    fn enter_ts_module_block(&mut self, block: &mut TSModuleBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_ts_module_block(block, ctx);
+    }
+
+    fn exit_ts_module_block(&mut self, block: &mut TSModuleBlock<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_ts_module_block_on_exit(block, ctx);
     }
 }

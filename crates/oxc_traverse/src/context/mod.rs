@@ -1,3 +1,5 @@
+use compact_str::CompactString;
+
 use oxc_allocator::{Allocator, Box};
 use oxc_ast::AstBuilder;
 use oxc_semantic::{ScopeTree, SymbolTable};
@@ -241,7 +243,7 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.symbols_mut()
     }
 
-    /// Walk up trail of scopes to find a scope.
+    /// Walk up trail of scopes to find a scope, starting with current scope.
     ///
     /// `finder` is called with `ScopeId`.
     ///
@@ -256,6 +258,40 @@ impl<'a> TraverseCtx<'a> {
         F: Fn(ScopeId) -> FinderRet<O>,
     {
         self.scoping.find_scope(finder)
+    }
+
+    /// Walk up trail of scopes to find a scope, starting with parent of current scope.
+    ///
+    /// `finder` is called with `ScopeId`.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    ///
+    /// This is a shortcut for `ctx.scoping.find_parent_scope`.
+    pub fn find_parent_scope<F, O>(&self, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeId) -> FinderRet<O>,
+    {
+        self.scoping.find_parent_scope(finder)
+    }
+
+    /// Walk up trail of scopes to find a scope, starting with provided scope.
+    ///
+    /// `finder` is called with `ScopeId`.
+    ///
+    /// `finder` should return:
+    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
+    /// * `FinderRet::Stop` to stop walking and return `None`.
+    /// * `FinderRet::Continue` to continue walking up.
+    ///
+    /// This is a shortcut for `ctx.scoping.find_scope_starting_with`.
+    pub fn find_scope_starting_with<F, O>(&self, scope_id: ScopeId, finder: F) -> Option<O>
+    where
+        F: Fn(ScopeId) -> FinderRet<O>,
+    {
+        self.scoping.find_scope_starting_with(scope_id, finder)
     }
 
     /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
@@ -301,6 +337,18 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.find_uid_name`.
     pub fn find_uid_name(&self, name: &str) -> CompactString {
         self.scoping.find_uid_name(name)
+    }
+
+    /// Create a binding in scope.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_binding`.
+    pub fn create_binding(
+        &mut self,
+        name: CompactStr,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+    ) -> SymbolId {
+        self.scoping.create_binding(name, scope_id, flags)
     }
 
     /// Create a reference bound to a `SymbolId`.
