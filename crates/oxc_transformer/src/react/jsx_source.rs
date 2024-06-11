@@ -85,6 +85,9 @@ impl<'a> ReactJsxSource<'a> {
         let key = JSXAttributeName::Identifier(
             self.ctx.ast.alloc(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into())),
         );
+        // TODO: We shouldn't calculate line + column from scratch each time as it's expensive.
+        // Build a table of byte indexes of each line's start on first usage, and save it.
+        // Then calculate line and column from that.
         let (line, column) = get_line_column(elem.span.start, self.ctx.source_text);
         let object = self.get_source_object(line, column, ctx);
         let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::from(object));
