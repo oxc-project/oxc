@@ -203,6 +203,16 @@ impl<'a> ArrowFunctions<'a> {
     /// Panics if called in program scope. Don't do that!
     fn update_current_var_scope(&mut self, ctx: &mut TraverseCtx<'a>) {
         let current_scope_id = ctx.current_scope_id();
+        // TODO: This panics for fixture
+        // `coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/members-reserved-words`
+        // ```ts
+        // enum E {
+        //   const,
+        //   default
+        // }
+        // ```
+        // Presumably problem is that TS transform has converted enum to a function
+        // but `current_scope_id` is out of sync, or TS transform hasn't set scope ID for function
         let parent_scope_id = ctx.scopes().get_parent_id(current_scope_id).unwrap();
         let parent_var_scope_id = ctx
             .find_scope_starting_with(parent_scope_id, |scope_id| {
