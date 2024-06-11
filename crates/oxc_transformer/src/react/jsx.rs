@@ -1,19 +1,19 @@
-use std::{cell::Cell, rc::Rc};
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
-    reference::{ReferenceFlag, ReferenceId},
-    symbol::{SymbolFlags, SymbolId},
+    reference::ReferenceFlag,
+    symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
 use oxc_traverse::TraverseCtx;
 
 use crate::{
     context::{Ctx, TransformCtx},
-    helpers::module_imports::NamedImport,
+    helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
 };
 
 use super::diagnostics;
@@ -233,24 +233,6 @@ impl<'a> AutomaticModuleBindings<'a> {
 #[inline]
 fn get_import_source<'a>(jsx_runtime_importer: &Atom<'a>, react_importer_len: u32) -> Atom<'a> {
     Atom::from(&jsx_runtime_importer.as_str()[..react_importer_len as usize])
-}
-
-#[derive(Clone)]
-pub struct BoundIdentifier<'a> {
-    pub name: Atom<'a>,
-    pub symbol_id: SymbolId,
-}
-
-impl<'a> BoundIdentifier<'a> {
-    /// Create `IdentifierReference` referencing this binding which is read from
-    fn create_read_reference(&self, ctx: &mut TraverseCtx) -> IdentifierReference<'a> {
-        let reference_id = ctx.create_bound_reference(
-            self.name.to_compact_str(),
-            self.symbol_id,
-            ReferenceFlag::Read,
-        );
-        create_read_identifier_reference(SPAN, self.name.clone(), Some(reference_id))
-    }
 }
 
 /// Pragma used in classic mode
@@ -1012,22 +994,7 @@ fn get_read_identifier_reference<'a>(
 ) -> IdentifierReference<'a> {
     let reference_id =
         ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlag::Read);
-    create_read_identifier_reference(span, name, Some(reference_id))
-}
-
-/// Create `IdentifierReference` which is read from
-#[inline]
-fn create_read_identifier_reference(
-    span: Span,
-    name: Atom,
-    reference_id: Option<ReferenceId>,
-) -> IdentifierReference {
-    IdentifierReference {
-        span,
-        name,
-        reference_id: Cell::new(reference_id),
-        reference_flag: ReferenceFlag::Read,
-    }
+    IdentifierReference::new_read(span, name, Some(reference_id))
 }
 
 fn create_static_member_expression<'a>(

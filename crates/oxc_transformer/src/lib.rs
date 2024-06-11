@@ -19,6 +19,7 @@ mod react;
 mod typescript;
 
 mod helpers {
+    pub mod bindings;
     pub mod module_imports;
 }
 

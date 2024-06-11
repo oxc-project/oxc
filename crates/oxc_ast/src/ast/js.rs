@@ -462,6 +462,15 @@ impl<'a> IdentifierReference<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
     }
+
+    pub fn new_read(span: Span, name: Atom<'a>, reference_id: Option<ReferenceId>) -> Self {
+        Self {
+            span,
+            name,
+            reference_id: Cell::new(reference_id),
+            reference_flag: ReferenceFlag::Read,
+        }
+    }
 }
 
 /// Binding Identifier
