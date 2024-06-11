@@ -37,21 +37,22 @@ impl<'a> ReactDisplayName<'a> {
         let name = ctx.find_ancestor(|ancestor| {
             match ancestor {
                 // `foo = React.createClass({})`
-                Ancestor::AssignmentExpressionRight(assign_expr) => match &assign_expr.left() {
+                Ancestor::AssignmentExpressionRight(assign_expr) => match assign_expr.left() {
                     AssignmentTarget::AssignmentTargetIdentifier(ident) => {
                         FinderRet::Found(ident.name.clone())
                     }
-                    target => {
-                        if let Some(target) = target.as_member_expression() {
-                            if let Some(name) = target.static_property_name() {
-                                FinderRet::Found(ctx.ast.new_atom(name))
-                            } else {
-                                FinderRet::Stop
-                            }
-                        } else {
-                            FinderRet::Stop
+                    AssignmentTarget::StaticMemberExpression(expr) => {
+                        FinderRet::Found(expr.property.name.clone())
+                    }
+                    // Babel does not handle computed member expressions e.g. `foo["bar"]`,
+                    // so we diverge from Babel here, but that's probably an improvement
+                    AssignmentTarget::ComputedMemberExpression(expr) => {
+                        match expr.static_property_name() {
+                            Some(name) => FinderRet::Found(name),
+                            None => FinderRet::Stop,
                         }
                     }
+                    _ => FinderRet::Stop,
                 },
                 // `let foo = React.createClass({})`
                 Ancestor::VariableDeclaratorInit(declarator) => match &declarator.id().kind {
@@ -62,6 +63,9 @@ impl<'a> ReactDisplayName<'a> {
                 },
                 // `{foo: React.createClass({})}`
                 Ancestor::ObjectPropertyValue(prop) => {
+                    // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
+                    // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
+                    // so we diverge from Babel here, but that's probably an improvement
                     if let Some(name) = prop.key().static_name() {
                         FinderRet::Found(ctx.ast.new_atom(&name))
                     } else {

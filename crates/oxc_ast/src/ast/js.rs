@@ -810,17 +810,9 @@ impl<'a> MemberExpression<'a> {
 
     pub fn static_property_name(&self) -> Option<&str> {
         match self {
-            MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some(&lit.value),
-                Expression::TemplateLiteral(lit) => {
-                    if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some(&lit.quasis[0].value.raw)
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
+            MemberExpression::ComputedMemberExpression(expr) => {
+                expr.static_property_name().map(|name| name.as_str())
+            }
             MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -881,6 +873,20 @@ pub struct ComputedMemberExpression<'a> {
     pub object: Expression<'a>,
     pub expression: Expression<'a>,
     pub optional: bool, // for optional chaining
+}
+
+impl<'a> ComputedMemberExpression<'a> {
+    pub fn static_property_name(&self) -> Option<Atom<'a>> {
+        match &self.expression {
+            Expression::StringLiteral(lit) => Some(lit.value.clone()),
+            Expression::TemplateLiteral(lit)
+                if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
+            {
+                Some(lit.quasis[0].value.raw.clone())
+            }
+            _ => None,
+        }
+    }
 }
 
 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
