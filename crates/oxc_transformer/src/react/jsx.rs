@@ -44,7 +44,6 @@ pub struct ReactJsx<'a> {
 
     // States
     bindings: Bindings<'a>,
-    can_add_filename_statement: bool,
 }
 
 /// Bindings for different import options
@@ -363,7 +362,6 @@ impl<'a> ReactJsx<'a> {
             jsx_self: ReactJsxSelf::new(Rc::clone(&ctx)),
             jsx_source: ReactJsxSource::new(ctx),
             bindings,
-            can_add_filename_statement: false,
         }
     }
 
@@ -400,8 +398,8 @@ impl<'a> ReactJsx<'a> {
 impl<'a> ReactJsx<'a> {
     pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.bindings.is_classic() {
-            if self.can_add_filename_statement {
-                program.body.insert(0, self.jsx_source.get_var_file_name_statement());
+            if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
+                program.body.insert(0, stmt);
             }
             return;
         }
@@ -413,8 +411,8 @@ impl<'a> ReactJsx<'a> {
             .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
             .map_or(0, |i| i + 1);
 
-        if self.can_add_filename_statement {
-            program.body.insert(index, self.jsx_source.get_var_file_name_statement());
+        if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
+            program.body.insert(index, stmt);
             // If source type is module then we need to add the import statement after the var file name statement
             // Follow the same behavior as babel
             if !self.is_script() {
@@ -599,10 +597,9 @@ impl<'a> ReactJsx<'a> {
                 if let Some(span) = source_attr_span {
                     self.jsx_source.report_error(span);
                 } else {
-                    self.can_add_filename_statement = true;
                     let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
                     properties.push(
-                        self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column),
+                        self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
                     );
                 }
             }
@@ -655,9 +652,8 @@ impl<'a> ReactJsx<'a> {
                     if let Some(span) = source_attr_span {
                         self.jsx_source.report_error(span);
                     } else {
-                        self.can_add_filename_statement = true;
                         let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
-                        let expr = self.jsx_source.get_source_object(line, column);
+                        let expr = self.jsx_source.get_source_object(line, column, ctx);
                         arguments.push(Argument::from(expr));
                     }
                 }

@@ -96,13 +96,13 @@ impl<'a> React<'a> {
     pub fn transform_jsx_opening_element(
         &mut self,
         elem: &mut JSXOpeningElement<'a>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
         if self.jsx_self_plugin && self.jsx.jsx_self.can_add_self_attribute(ctx) {
             self.jsx.jsx_self.transform_jsx_opening_element(elem);
         }
         if self.jsx_source_plugin {
-            self.jsx.jsx_source.transform_jsx_opening_element(elem);
+            self.jsx.jsx_source.transform_jsx_opening_element(elem, ctx);
         }
     }
 }
