@@ -149,6 +149,7 @@ mod typescript {
 mod jest {
     pub mod expect_expect;
     pub mod max_expects;
+    pub mod max_nested_describe;
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
@@ -529,6 +530,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_literal_enum_member,
     jest::expect_expect,
     jest::max_expects,
+    jest::max_nested_describe,
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
