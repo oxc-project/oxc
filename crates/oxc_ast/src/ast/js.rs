@@ -3083,6 +3083,22 @@ pub enum ImportDeclarationSpecifier<'a> {
     ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>),
 }
 
+impl<'a> ImportDeclarationSpecifier<'a> {
+    pub fn name(&self) -> CompactStr {
+        match self {
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                specifier.local.name.to_compact_str()
+            }
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                specifier.local.name.to_compact_str()
+            }
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                specifier.local.name.to_compact_str()
+            }
+        }
+    }
+}
+
 // import {imported} from "source"
 // import {imported as local} from "source"
 #[visited_node]
