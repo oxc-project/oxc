@@ -56,7 +56,12 @@ pub struct CoverageReport<'a, T> {
 pub trait Suite<T: Case> {
     fn run(&mut self, name: &str, args: &AppArgs) {
         self.read_test_cases(name, args);
-        self.get_test_cases_mut().par_iter_mut().for_each(Case::run);
+        self.get_test_cases_mut().par_iter_mut().for_each(|case| {
+            if args.debug {
+                println!("{:?}", case.path());
+            }
+            case.run();
+        });
         self.run_coverage(name, args);
     }
 

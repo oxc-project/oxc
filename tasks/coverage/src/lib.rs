@@ -44,6 +44,7 @@ pub fn project_root() -> PathBuf {
 
 #[derive(Debug, Default)]
 pub struct AppArgs {
+    pub debug: bool,
     pub filter: Option<String>,
     pub detail: bool,
     /// Print mismatch diff
