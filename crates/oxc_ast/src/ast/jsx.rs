@@ -133,9 +133,30 @@ pub struct JSXMemberExpression<'a> {
 
 impl<'a> JSXMemberExpression<'a> {
     pub fn get_object_identifier(&self) -> &JSXIdentifier {
-        match &self.object {
-            JSXMemberExpressionObject::Identifier(ident) => ident,
-            JSXMemberExpressionObject::MemberExpression(expr) => expr.get_object_identifier(),
+        let mut member_expr = self;
+        loop {
+            match &member_expr.object {
+                JSXMemberExpressionObject::Identifier(ident) => {
+                    break ident;
+                }
+                JSXMemberExpressionObject::MemberExpression(expr) => {
+                    member_expr = expr;
+                }
+            }
+        }
+    }
+
+    pub fn get_object_identifier_mut(&mut self) -> &mut JSXIdentifier<'a> {
+        let mut member_expr = self;
+        loop {
+            match &mut member_expr.object {
+                JSXMemberExpressionObject::Identifier(ident) => {
+                    break &mut *ident;
+                }
+                JSXMemberExpressionObject::MemberExpression(expr) => {
+                    member_expr = expr;
+                }
+            }
         }
     }
 }
