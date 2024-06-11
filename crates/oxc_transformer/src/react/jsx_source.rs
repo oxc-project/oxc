@@ -131,7 +131,7 @@ impl<'a> ReactJsxSource<'a> {
             self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
         };
 
-        let mut properties = self.ctx.ast.new_vec();
+        let mut properties = self.ctx.ast.new_vec_with_capacity(3);
         properties.push(ObjectPropertyKind::ObjectProperty(filename));
         properties.push(ObjectPropertyKind::ObjectProperty(line_number));
         properties.push(ObjectPropertyKind::ObjectProperty(column_number));
