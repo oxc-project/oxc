@@ -146,15 +146,17 @@ impl<'a> ArrowFunctions<'a> {
         if arrow_function_expr.expression {
             let first_stmt = body.statements.remove(0);
             if let Statement::ExpressionStatement(stmt) = first_stmt {
-                let return_statement =
-                    self.ctx.ast.return_statement(SPAN, Some(self.ctx.ast.copy(&stmt.expression)));
+                let return_statement = self
+                    .ctx
+                    .ast
+                    .return_statement(stmt.span, Some(self.ctx.ast.copy(&stmt.expression)));
                 body.statements.push(return_statement);
             }
         }
 
         let new_function = self.ctx.ast.function(
             FunctionType::FunctionExpression,
-            SPAN,
+            arrow_function_expr.span,
             None,
             false,
             arrow_function_expr.r#async,
@@ -181,14 +183,14 @@ impl<'a> ArrowFunctions<'a> {
 
     pub fn transform_expression_on_exit(&mut self, expr: &mut Expression<'a>) {
         match expr {
-            Expression::ThisExpression(_) => {
+            Expression::ThisExpression(this_expr) => {
                 if !self.is_inside_arrow_function() {
                     return;
                 }
 
                 self.mark_this_as_found();
                 *expr = self.ctx.ast.identifier_reference_expression(IdentifierReference::new(
-                    SPAN,
+                    this_expr.span,
                     self.get_this_name(),
                 ));
             }
