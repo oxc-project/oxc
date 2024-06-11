@@ -158,7 +158,7 @@ expression: sort_imports
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:35]
- 1 │ import { b } from 'b'; /* comment line 1 
+ 1 │ import { b } from 'b'; /* comment line 1
  2 │                 comment line 2 */ import { a } from 'a';
    ·                                   ──────────────────────
    ╰────
@@ -172,7 +172,7 @@ expression: sort_imports
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:32]
- 1 │     import { b } from 
+ 1 │     import { b } from
  2 │ ╭─▶             'b'; /* comment */ import
  3 │ ╰─▶              { a } from 'a';
    ╰────
@@ -193,7 +193,7 @@ expression: sort_imports
 
   ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:3:25]
- 2 │             
+ 2 │ 
  3 │             import { c, a } from 'c';
    ·                         ─
    ╰────

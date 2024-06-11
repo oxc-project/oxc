@@ -307,7 +307,7 @@ impl SortImports {
             let specifiers_span = specifiers[0].span.merge(&specifiers[specifiers.len() - 1].span);
             ctx.diagnostic_with_fix(
                 sort_members_alphabetically_diagnostic(unsorted_name, unsorted_span),
-                || {
+                |fixer| {
                     // import { a, b,      c, d } from 'foo.js'
                     //            ^  ^^^^^^  ^
                     let mut paddings: Vec<&str> = specifiers
@@ -344,7 +344,7 @@ impl SortImports {
                         },
                     );
 
-                    Fix::new(sorted_text, specifiers_span)
+                    fixer.replace(specifiers_span, sorted_text)
                 },
             );
         } else {
@@ -555,7 +555,7 @@ fn test() {
         ("import a, * as b from 'foo.js';", None),
         (
             "import * as a from 'foo.js';
-            
+
             import b from 'bar.js';",
             None,
         ),
@@ -572,20 +572,20 @@ fn test() {
         ("import React, {Component} from 'react';", None),
         (
             "import b from 'b';
-        
+
             import a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (
             "import a from 'a';
-            
+
             import 'b';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (
             "import { b } from 'b';
-            
-            
+
+
             import { a } from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
@@ -603,30 +603,30 @@ fn test() {
         ),
         (
             "import { b } from 'b';/*
-                comment 
+                comment
             */import { a } from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (
             "import b from
             'b';
-            
+
             import
                 a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (
             "import c from 'c';
-            
+
             import a from 'a';
             import b from 'b';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (
             "import c from 'c';
-            
+
             import b from 'b';
-            
+
             import a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
@@ -733,7 +733,7 @@ fn test() {
             Some(serde_json::json!([{ "allowSeparatedGroups": false }])),
         ),
         (
-            "import { b } from 'b'; /* comment line 1 
+            "import { b } from 'b'; /* comment line 1
                 comment line 2 */ import { a } from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": false }])),
         ),
@@ -744,13 +744,13 @@ fn test() {
             Some(serde_json::json!([{ "allowSeparatedGroups": false }])),
         ),
         (
-            "import { b } from 
+            "import { b } from
             'b'; /* comment */ import
              { a } from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": false }])),
         ),
         (
-            "import { b } from 
+            "import { b } from
             'b';
             import
                 { a } from 'a';",
@@ -758,14 +758,14 @@ fn test() {
         ),
         (
             "import c from 'c';
-            
+
             import b from 'b';
             import a from 'a';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
         (
             "import b from 'b';
-            
+
             import { c, a } from 'c';",
             Some(serde_json::json!([{ "allowSeparatedGroups": true }])),
         ),
@@ -796,11 +796,11 @@ fn test() {
         (
             "
               import b from 'b';
-              
+
               import { c, a } from 'c';",
             "
               import b from 'b';
-              
+
               import { a, c } from 'c';",
             None,
         ),
