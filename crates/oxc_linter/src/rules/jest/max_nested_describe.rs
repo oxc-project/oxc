@@ -159,8 +159,7 @@ impl MaxNestedDescribe {
             &[JestFnKind::General(JestGeneralFnKind::Describe)],
         );
 
-        if is_describe_call && !describes_hooks_depth.contains(&scope_id)
-        {
+        if is_describe_call && !describes_hooks_depth.contains(&scope_id) {
             describes_hooks_depth.push(scope_id);
         }
 
