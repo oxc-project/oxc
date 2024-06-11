@@ -65,6 +65,11 @@ impl<'a> ReactJsxSource<'a> {
         elem: &mut JSXOpeningElement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        // Don't add `__source` if this node was generated
+        if elem.span.is_unspanned() {
+            return;
+        }
+
         // Check if `__source` attribute already exists
         for item in &elem.attributes {
             if let JSXAttributeItem::Attribute(attribute) = item {
