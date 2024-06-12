@@ -4,6 +4,15 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.14.0] - 2024-06-12
+
+### Refactor
+
+- 84304b4 linter: Add a `ctx.module_record()` method (#3637) (Boshen)
+- 7d61832 semantic: Pass `Rc` by value (#3586) (overlookmotel)
+- 5793ff1 transformer: Replace `&’a Trivias` with `Rc<Trivias>` (#3580) (Dunqing)
+- 60cbdec traverse: `generate_uid_in_root_scope` method (#3611) (overlookmotel)
+
 ## [0.13.4] - 2024-06-07
 
 ### Bug Fixes
