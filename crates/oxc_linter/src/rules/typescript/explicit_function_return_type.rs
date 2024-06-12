@@ -57,8 +57,7 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     ExplicitFunctionReturnType,
-    restriction, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc-project.github.io/docs/contribute/linter.html#rule-category> for details
+    restriction,
 );
 
 fn explicit_function_return_type_diagnostic(span0: Span) -> OxcDiagnostic {
@@ -113,6 +112,7 @@ impl Rule for ExplicitFunctionReturnType {
                 .unwrap_or(false),
         }))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(func) => {
@@ -265,6 +265,7 @@ impl ExplicitFunctionReturnType {
         let Expression::UnaryExpression(unary_expr) = expr else { return false };
         matches!(unary_expr.operator, UnaryOperator::Void)
     }
+
     fn is_allowed_function<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
         match node.kind() {
             AstKind::Function(func) => {
@@ -298,6 +299,7 @@ impl ExplicitFunctionReturnType {
             _ => false,
         }
     }
+
     fn check_parent_for_is_allowed_function<'a>(
         &self,
         node: &AstNode<'a>,
@@ -310,25 +312,25 @@ impl ExplicitFunctionReturnType {
                     return false;
                 };
 
-                return self.allowed_names.contains(id.name.as_str());
+                self.allowed_names.contains(id.name.as_str())
             }
             AstKind::MethodDefinition(def) => {
                 let Some(name) = def.key.name() else { return false };
-                return def.key.is_identifier()
+                def.key.is_identifier()
                     && !def.computed
-                    && self.allowed_names.contains(name.as_str());
+                    && self.allowed_names.contains(name.as_str())
             }
             AstKind::PropertyDefinition(def) => {
                 let Some(name) = def.key.name() else { return false };
-                return def.key.is_identifier()
+                def.key.is_identifier()
                     && !def.computed
-                    && self.allowed_names.contains(name.as_str());
+                    && self.allowed_names.contains(name.as_str())
             }
             AstKind::ObjectProperty(prop) => {
                 let Some(name) = prop.key.name() else { return false };
-                return prop.key.is_identifier()
+                prop.key.is_identifier()
                     && !prop.computed
-                    && self.allowed_names.contains(name.as_str());
+                    && self.allowed_names.contains(name.as_str())
             }
             _ => false,
         }
@@ -357,6 +359,7 @@ impl ExplicitFunctionReturnType {
                     | AstKind::PropertyDefinition(_)
             )
     }
+
     fn returns_const_assertion_directly(&self, node: &AstNode) -> bool {
         if !self.allow_direct_const_assertion_in_arrow_functions {
             return false;
@@ -549,6 +552,7 @@ fn is_typed_jsx(node: &AstNode) -> bool {
 fn is_function(expr: &Expression) -> bool {
     matches!(expr, Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_))
 }
+
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else { return false };
 
@@ -594,6 +598,7 @@ fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 
     false
 }
+
 fn all_return_statements_are_functions(node: &AstNode) -> bool {
     match node.kind() {
         AstKind::ArrowFunctionExpression(arrow_func_expr) => {
