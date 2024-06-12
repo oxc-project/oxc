@@ -35,7 +35,7 @@ declare_oxc_lint!(
 
 impl Rule for NoMocksImport {
     fn run_once(&self, ctx: &LintContext) {
-        let module_records = ctx.semantic().module_record();
+        let module_records = ctx.module_record();
 
         for import_entry in &module_records.import_entries {
             let module_specifier = import_entry.module_request.name().as_str();

@@ -64,7 +64,7 @@ impl Rule for Namespace {
         }
     }
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         module_record.import_entries.iter().for_each(|entry| {
             let (source, module) = match &entry.import_name {
                 ImportImportName::NamespaceObject => {

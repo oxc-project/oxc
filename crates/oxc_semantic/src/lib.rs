@@ -105,8 +105,8 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    pub fn module_record(&self) -> &Arc<ModuleRecord> {
-        &self.module_record
+    pub fn module_record(&self) -> &ModuleRecord {
+        self.module_record.as_ref()
     }
 
     pub fn symbols(&self) -> &SymbolTable {

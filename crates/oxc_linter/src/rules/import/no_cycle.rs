@@ -98,7 +98,7 @@ impl Rule for NoCycle {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
 
         let needle = &module_record.resolved_absolute_path;
         let cwd = std::env::current_dir().unwrap();

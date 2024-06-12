@@ -3,6 +3,7 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::{SourceType, Span};
+use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -169,6 +170,10 @@ impl<'a> LintContext<'a> {
 
     pub fn symbols(&self) -> &SymbolTable {
         self.semantic().symbols()
+    }
+
+    pub fn module_record(&self) -> &ModuleRecord {
+        self.semantic().module_record()
     }
 
     /* JSDoc */

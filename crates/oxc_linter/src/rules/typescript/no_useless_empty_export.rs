@@ -44,7 +44,7 @@ impl Rule for NoUselessEmptyExport {
         if decl.declaration.is_some() || !decl.specifiers.is_empty() {
             return;
         }
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         if module_record.exported_bindings.is_empty()
             && module_record.local_export_entries.is_empty()
             && module_record.indirect_export_entries.is_empty()
