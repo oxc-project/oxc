@@ -99,8 +99,8 @@ export interface ParseResult {
   errors: Array<string>
 }
 export interface Comment {
-  type: string
-  value: 'Line' | 'Block'
+  type: 'Line' | 'Block'
+  value: string
   start: number
   end: number
 }

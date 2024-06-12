@@ -41,8 +41,8 @@ pub struct ParseResult {
 
 #[napi(object)]
 pub struct Comment {
-    pub r#type: &'static str,
     #[napi(ts_type = "'Line' | 'Block'")]
+    pub r#type: &'static str,
     pub value: String,
     pub start: u32,
     pub end: u32,
