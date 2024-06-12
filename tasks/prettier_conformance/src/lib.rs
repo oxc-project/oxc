@@ -383,7 +383,7 @@ impl TestRunner {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
         let ret = Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
-        Prettier::new(&allocator, source_text, &ret.trivias, prettier_options).build(&ret.program)
+        Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
     }
 }
 

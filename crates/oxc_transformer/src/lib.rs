@@ -62,7 +62,7 @@ impl<'a> Transformer<'a> {
         source_path: &Path,
         source_type: SourceType,
         source_text: &'a str,
-        trivias: Rc<Trivias>,
+        trivias: Trivias,
         options: TransformOptions,
     ) -> Self {
         let ctx = Rc::new(TransformCtx::new(

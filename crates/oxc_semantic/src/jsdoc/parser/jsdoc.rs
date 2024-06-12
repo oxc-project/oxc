@@ -36,8 +36,6 @@ impl<'a> JSDoc<'a> {
 
 #[cfg(test)]
 mod test {
-    use std::rc::Rc;
-
     use crate::{Semantic, SemanticBuilder};
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
@@ -48,7 +46,7 @@ mod test {
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(Rc::new(ret.trivias))
+            .with_trivias(ret.trivias)
             .build(program)
             .semantic;
         semantic

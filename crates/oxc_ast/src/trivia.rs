@@ -2,7 +2,8 @@
 
 use std::{
     collections::btree_map::{BTreeMap, Range},
-    ops::RangeBounds,
+    ops::{Deref, RangeBounds},
+    sync::Arc,
 };
 
 use oxc_span::Span;
@@ -38,17 +39,28 @@ impl CommentKind {
 
 pub type TriviasMap = BTreeMap<u32, Comment>;
 
+#[derive(Debug, Clone, Default)]
+pub struct Trivias(Arc<TriviasImpl>);
+
 #[derive(Debug, Default)]
-pub struct Trivias {
+pub struct TriviasImpl {
     /// Keyed by span.start
     comments: TriviasMap,
 
     irregular_whitespaces: Vec<Span>,
 }
 
+impl Deref for Trivias {
+    type Target = TriviasImpl;
+
+    fn deref(&self) -> &Self::Target {
+        self.0.as_ref()
+    }
+}
+
 impl Trivias {
-    pub fn new(comments: TriviasMap, irregular_whitespaces: Vec<Span>) -> Self {
-        Self { comments, irregular_whitespaces }
+    pub fn new(comments: TriviasMap, irregular_whitespaces: Vec<Span>) -> Trivias {
+        Self(Arc::new(TriviasImpl { comments, irregular_whitespaces }))
     }
 
     pub fn comments(&self) -> impl Iterator<Item = (CommentKind, Span)> + '_ {

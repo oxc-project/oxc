@@ -20,7 +20,7 @@ fn bench_prettier(criterion: &mut Criterion) {
                     let _ = Prettier::new(
                         &allocator2,
                         source_text,
-                        &ret.trivias,
+                        ret.trivias,
                         PrettierOptions::default(),
                     )
                     .build(&ret.program);

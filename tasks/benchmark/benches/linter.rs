@@ -29,7 +29,7 @@ fn bench_linter(criterion: &mut Criterion) {
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
                 let semantic_ret = SemanticBuilder::new(source_text, source_type)
-                    .with_trivias(Rc::new(ret.trivias))
+                    .with_trivias(ret.trivias)
                     .build_module_record(PathBuf::new(), program)
                     .build(program);
                 let filter = vec![
