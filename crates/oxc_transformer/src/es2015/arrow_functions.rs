@@ -1,6 +1,10 @@
+use std::cell::Cell;
+
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
+use oxc_syntax::scope::ScopeFlags;
+use oxc_traverse::TraverseCtx;
 use serde::Deserialize;
 
 use crate::context::Ctx;
@@ -140,6 +144,7 @@ impl<'a> ArrowFunctions<'a> {
     fn transform_arrow_function_expression(
         &mut self,
         arrow_function_expr: &mut ArrowFunctionExpression<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Expression<'a> {
         let mut body = self.ctx.ast.copy(&arrow_function_expr.body);
 
@@ -154,21 +159,39 @@ impl<'a> ArrowFunctions<'a> {
             }
         }
 
-        let new_function = self.ctx.ast.function(
-            FunctionType::FunctionExpression,
-            arrow_function_expr.span,
-            None,
-            false,
-            arrow_function_expr.r#async,
-            None,
-            self.ctx.ast.copy(&arrow_function_expr.params),
-            Some(body),
-            self.ctx.ast.copy(&arrow_function_expr.type_parameters),
-            self.ctx.ast.copy(&arrow_function_expr.return_type),
-            Modifiers::empty(),
-        );
+        // There shouldn't need to be a conditional here. Every arrow function should have a scope ID.
+        // But at present TS transforms don't seem to set `scope_id` in some cases, so this test case
+        // fails if just unwrap `scope_id`:
+        // `typescript/tests/cases/compiler/classFieldSuperAccessible.ts`.
+        // ```ts
+        // class D {
+        //   accessor b = () => {}
+        // }
+        // ```
+        // TODO: Change to `arrow_function_expr.scope_id.get().unwrap()` once scopes are correct
+        // in TS transforms.
+        let scope_id = arrow_function_expr.scope_id.get();
+        if let Some(scope_id) = scope_id {
+            let flags = ctx.scopes_mut().get_flags_mut(scope_id);
+            *flags &= !ScopeFlags::Arrow;
+        }
 
-        Expression::FunctionExpression(new_function)
+        let new_function = Function {
+            r#type: FunctionType::FunctionExpression,
+            span: arrow_function_expr.span,
+            id: None,
+            generator: false,
+            r#async: arrow_function_expr.r#async,
+            this_param: None,
+            params: self.ctx.ast.copy(&arrow_function_expr.params),
+            body: Some(body),
+            type_parameters: self.ctx.ast.copy(&arrow_function_expr.type_parameters),
+            return_type: self.ctx.ast.copy(&arrow_function_expr.return_type),
+            modifiers: Modifiers::empty(),
+            scope_id: Cell::new(scope_id),
+        };
+
+        Expression::FunctionExpression(self.ctx.ast.alloc(new_function))
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
@@ -181,7 +204,11 @@ impl<'a> ArrowFunctions<'a> {
         }
     }
 
-    pub fn transform_expression_on_exit(&mut self, expr: &mut Expression<'a>) {
+    pub fn transform_expression_on_exit(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         match expr {
             Expression::ThisExpression(this_expr) => {
                 if !self.is_inside_arrow_function() {
@@ -195,7 +222,7 @@ impl<'a> ArrowFunctions<'a> {
                 ));
             }
             Expression::ArrowFunctionExpression(arrow_function_expr) => {
-                *expr = self.transform_arrow_function_expression(arrow_function_expr);
+                *expr = self.transform_arrow_function_expression(arrow_function_expr, ctx);
                 self.stacks.pop();
             }
             Expression::FunctionExpression(_) => {

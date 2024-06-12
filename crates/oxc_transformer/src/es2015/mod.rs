@@ -6,6 +6,7 @@ pub use options::ES2015Options;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
+use oxc_traverse::TraverseCtx;
 use std::rc::Rc;
 
 use crate::context::Ctx;
@@ -61,9 +62,13 @@ impl<'a> ES2015<'a> {
         }
     }
 
-    pub fn transform_expression_on_exit(&mut self, expr: &mut Expression<'a>) {
+    pub fn transform_expression_on_exit(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_expression_on_exit(expr);
+            self.arrow_functions.transform_expression_on_exit(expr, ctx);
         }
     }
 

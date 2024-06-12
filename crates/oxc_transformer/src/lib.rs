@@ -154,8 +154,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x3_es2015.transform_expression(expr);
     }
 
-    fn exit_expression(&mut self, expr: &mut Expression<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x3_es2015.transform_expression_on_exit(expr);
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x3_es2015.transform_expression_on_exit(expr, ctx);
     }
 
     fn enter_simple_assignment_target(
