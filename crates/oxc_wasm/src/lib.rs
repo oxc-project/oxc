@@ -234,9 +234,15 @@ impl Oxc {
 
         if run_options.transform() {
             let options = TransformOptions::default();
-            let result =
-                Transformer::new(&allocator, &path, source_type, source_text, ret.trivias, options)
-                    .build(program);
+            let result = Transformer::new(
+                &allocator,
+                &path,
+                source_type,
+                source_text,
+                ret.trivias.clone(),
+                options,
+            )
+            .build(program);
             if let Err(errs) = result {
                 self.save_diagnostics(errs);
             }
@@ -273,9 +279,13 @@ impl Oxc {
             ..CodegenOptions::default()
         };
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new("", source_text, codegen_options, None).build(program).source_text
+            Codegen::<true>::new("", source_text, ret.trivias, codegen_options)
+                .build(program)
+                .source_text
         } else {
-            Codegen::<false>::new("", source_text, codegen_options, None).build(program).source_text
+            Codegen::<false>::new("", source_text, ret.trivias, codegen_options)
+                .build(program)
+                .source_text
         };
 
         Ok(())

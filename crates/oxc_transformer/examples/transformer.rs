@@ -46,11 +46,18 @@ fn main() {
         },
         ..Default::default()
     };
-    Transformer::new(&allocator, path, source_type, &source_text, ret.trivias, transform_options)
-        .build(&mut program)
-        .unwrap();
+    Transformer::new(
+        &allocator,
+        path,
+        source_type,
+        &source_text,
+        ret.trivias.clone(),
+        transform_options,
+    )
+    .build(&mut program)
+    .unwrap();
 
-    let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
+    let printed = Codegen::<false>::new("", &source_text, ret.trivias, CodegenOptions::default())
         .build(&program)
         .source_text;
     println!("Transformed:\n");

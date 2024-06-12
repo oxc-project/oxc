@@ -38,14 +38,15 @@ fn main() -> std::io::Result<()> {
 
 fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: bool) -> String {
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, source_text, source_type).parse().program;
-    let program = allocator.alloc(program);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = allocator.alloc(ret.program);
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
     Minifier::new(options).build(&allocator, program);
     if whitespace {
-        Codegen::<true>::new("", source_text, CodegenOptions::default(), None).build(program)
+        Codegen::<true>::new("", source_text, ret.trivias, CodegenOptions::default()).build(program)
     } else {
-        Codegen::<false>::new("", source_text, CodegenOptions::default(), None).build(program)
+        Codegen::<false>::new("", source_text, ret.trivias, CodegenOptions::default())
+            .build(program)
     }
     .source_text
 }

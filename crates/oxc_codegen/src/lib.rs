@@ -37,6 +37,8 @@ pub use crate::{
 };
 // use crate::mangler::Mangler;
 
+pub type MoveCommentMap = FxHashMap<u32, (u32, Comment)>;
+
 #[derive(Debug, Default, Clone, Copy)]
 pub struct CodegenOptions {
     /// Pass in the filename to enable source map support.
@@ -66,8 +68,11 @@ pub struct CodegenReturn {
 }
 
 pub struct Codegen<'a, const MINIFY: bool> {
-    #[allow(unused)]
     options: CodegenOptions,
+
+    source_code: &'a str,
+
+    trivias: Trivias,
 
     // mangler: Option<Mangler>,
     /// Output Code
@@ -90,17 +95,13 @@ pub struct Codegen<'a, const MINIFY: bool> {
     /// Track the current indentation level
     indentation: u8,
 
+    // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
-    comment_gen_related: Option<CommentGenRelated>,
-    source_code: &'a str,
-}
 
-pub struct CommentGenRelated {
-    pub trivials: Trivias,
     /// The key of map is the node start position,
     /// the first element of value is the start of the comment
     /// the second element of value includes the end of the comment and comment kind.
-    pub move_comment_map: FxHashMap<u32, (u32, Comment)>,
+    move_comment_map: MoveCommentMap,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -114,8 +115,8 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     pub fn new(
         source_name: &str,
         source_code: &'a str,
+        trivias: Trivias,
         options: CodegenOptions,
-        comment_gen_related: Option<CommentGenRelated>,
     ) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
@@ -130,6 +131,8 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
         Self {
             options,
+            source_code,
+            trivias,
             // mangler: None,
             code: Vec::with_capacity(capacity),
             needs_semicolon: false,
@@ -142,8 +145,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             start_of_default_export: 0,
             indentation: 0,
             sourcemap_builder,
-            comment_gen_related,
-            source_code,
+            move_comment_map: MoveCommentMap::default(),
         }
     }
 
@@ -205,27 +207,19 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     ///  }, b = 10000;
     /// ```
     pub fn move_comment(&mut self, position: u32, full_comment_info: (u32, Comment)) {
-        if let Some(comment_gen_related) = &mut self.comment_gen_related {
-            comment_gen_related.move_comment_map.insert(position, full_comment_info);
-        }
+        self.move_comment_map.insert(position, full_comment_info);
     }
 
     pub fn try_get_leading_comment(&self, start: u32) -> Option<(&u32, &Comment)> {
-        self.comment_gen_related.as_ref().and_then(|comment_gen_related| {
-            comment_gen_related.trivials.comments_range(0..start).next_back()
-        })
+        self.trivias.comments_range(0..start).next_back()
     }
 
     pub fn try_take_moved_comment(&mut self, node_start: u32) -> Option<(u32, Comment)> {
-        self.comment_gen_related.as_mut().and_then(|comment_gen_related| {
-            comment_gen_related.move_comment_map.remove(&node_start)
-        })
+        self.move_comment_map.remove(&node_start)
     }
 
     pub fn try_get_leading_comment_from_move_map(&self, start: u32) -> Option<&(u32, Comment)> {
-        self.comment_gen_related
-            .as_ref()
-            .and_then(|comment_gen_related| comment_gen_related.move_comment_map.get(&start))
+        self.move_comment_map.get(&start)
     }
 
     fn print_soft_space(&mut self) {

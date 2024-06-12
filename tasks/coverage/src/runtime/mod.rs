@@ -140,10 +140,10 @@ impl Case for CodegenRuntimeTest262Case {
                 let is_only_strict = self.base.meta().flags.contains(&TestFlag::OnlyStrict);
                 let source_type = SourceType::default().with_module(is_module);
                 let allocator = Allocator::default();
-                let program = Parser::new(&allocator, source_text, source_type).parse().program;
+                let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let mut text =
-                    Codegen::<false>::new("", source_text, CodegenOptions::default(), None)
-                        .build(&program)
+                    Codegen::<false>::new("", source_text, ret.trivias, CodegenOptions::default())
+                        .build(&ret.program)
                         .source_text;
                 if is_only_strict {
                     text = format!("\"use strict\";\n{text}");

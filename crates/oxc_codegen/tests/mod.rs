@@ -2,26 +2,15 @@ use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use rustc_hash::FxHashMap;
 
 fn test(source_text: &str, expected: &str, options: Option<CodegenOptions>) {
     let allocator = Allocator::default();
     let source_type = SourceType::default().with_module(true);
-    let parse_return = Parser::new(&allocator, source_text, source_type).parse();
-    let program = parse_return.program;
-    let program = allocator.alloc(program);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = allocator.alloc(ret.program);
     let options = options.unwrap_or_default();
-    let result = Codegen::<false>::new(
-        "",
-        source_text,
-        options,
-        Some(oxc_codegen::CommentGenRelated {
-            trivials: parse_return.trivias,
-            move_comment_map: FxHashMap::default(),
-        }),
-    )
-    .build(program)
-    .source_text;
+    let result =
+        Codegen::<false>::new("", source_text, ret.trivias, options).build(program).source_text;
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
@@ -31,11 +20,12 @@ fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
         .with_typescript(true)
         .with_typescript_definition(is_typescript_definition)
         .with_module(true);
-    let program = Parser::new(&allocator, source_text, source_type).parse().program;
-    let program = allocator.alloc(program);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = allocator.alloc(ret.program);
     let codegen_options = CodegenOptions { enable_typescript: true, ..CodegenOptions::default() };
-    let result =
-        Codegen::<false>::new("", source_text, codegen_options, None).build(program).source_text;
+    let result = Codegen::<false>::new("", source_text, ret.trivias, codegen_options)
+        .build(program)
+        .source_text;
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 

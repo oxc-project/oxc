@@ -132,8 +132,8 @@ impl Case for SourcemapCase {
         let codegen_ret = Codegen::<false>::new(
             self.path.to_string_lossy().as_ref(),
             source_text,
+            ret.trivias,
             codegen_options,
-            None,
         )
         .build(&ret.program);
 
