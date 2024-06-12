@@ -394,6 +394,7 @@ mod jsdoc {
     pub mod no_defaults;
     pub mod require_param;
     pub mod require_param_description;
+    pub mod require_param_name;
     pub mod require_param_type;
     pub mod require_property;
     pub mod require_property_description;
@@ -766,6 +767,7 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::no_defaults,
     jsdoc::require_param,
     jsdoc::require_param_description,
+    jsdoc::require_param_name,
     jsdoc::require_param_type,
     jsdoc::require_property,
     jsdoc::require_property_type,
