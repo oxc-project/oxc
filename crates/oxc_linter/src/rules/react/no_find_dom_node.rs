@@ -81,7 +81,7 @@ fn test() {
               render: function() {
                 return <div>Hello</div>;
               }
-            });              
+            });
             ",
             None,
         ),
@@ -189,7 +189,7 @@ fn test() {
               render() {
                 return <div>Hello</div>;
               }
-            }            
+            }
             ",
             None,
         ),

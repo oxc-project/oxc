@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 161
 expression: prefer_hooks_on_top
 ---
   ⚠ eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.

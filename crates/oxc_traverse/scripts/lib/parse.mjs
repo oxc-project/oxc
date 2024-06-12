@@ -84,7 +84,7 @@ function parseStruct(name, rawName, lines, scopeArgs, filename, startLineIndex) 
         const [, rawName, name, rawTypeName] = match,
             typeName = rawTypeName.replace(/<'a>/g, '').replace(/<'a, ?/g, '<'),
             {name: innerTypeName, wrappers} = typeAndWrappers(typeName);
-        
+
         fields.push({name, typeName, rawName, rawTypeName, innerTypeName, wrappers});
     }
     return {kind: 'struct', name, rawName, fields, scopeArgs};
@@ -144,7 +144,7 @@ function parseScopeArgs(argsStr, filename, lineIndex) {
                 }
             }
             assert(bracketCount === 0);
-            
+
             args[key] = argsStr.slice(0, index).trim();
             argsStr = argsStr.slice(index + 1);
             if (argsStr === '') break;

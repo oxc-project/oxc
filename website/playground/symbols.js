@@ -14,9 +14,9 @@
  */
 let cacheSymbols = null
 /**
- * 
- * @param {SymbolTable} symbols 
- * @returns 
+ *
+ * @param {SymbolTable} symbols
+ * @returns
  */
 export const renderSymbols = (symbols) => {
   const target = []

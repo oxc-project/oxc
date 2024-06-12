@@ -1,19 +1,19 @@
-Original   -> Minified   -> Gzip      
+Original   -> Minified   -> Gzip
 72.14 kB   -> 39.58 kB   -> 10.83 kB   react.development.js
 
-173.90 kB  -> 95.37 kB   -> 24.37 kB   moment.js 
+173.90 kB  -> 95.37 kB   -> 24.37 kB   moment.js
 
-287.63 kB  -> 140.16 kB  -> 39.82 kB   jquery.js 
+287.63 kB  -> 140.16 kB  -> 39.82 kB   jquery.js
 
-342.15 kB  -> 189.85 kB  -> 55.32 kB   vue.js    
+342.15 kB  -> 189.85 kB  -> 55.32 kB   vue.js
 
-544.10 kB  -> 144.63 kB  -> 35.31 kB   lodash.js 
+544.10 kB  -> 144.63 kB  -> 35.31 kB   lodash.js
 
-555.77 kB  -> 390.47 kB  -> 102.94 kB  d3.js     
+555.77 kB  -> 390.47 kB  -> 102.94 kB  d3.js
 
 977.19 kB  -> 603.47 kB  -> 138.53 kB  bundle.min.js
 
-1.25 MB    -> 929.41 kB  -> 189.96 kB  three.js  
+1.25 MB    -> 929.41 kB  -> 189.96 kB  three.js
 
 2.14 MB    -> 1.41 MB    -> 217.64 kB  victory.js
 
