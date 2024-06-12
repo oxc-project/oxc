@@ -1,9 +1,10 @@
 use std::cell::Cell;
 
 use oxc_ast::ast::{BindingIdentifier, IdentifierReference};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     reference::ReferenceFlag,
+    scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
 use oxc_traverse::TraverseCtx;
@@ -16,22 +17,43 @@ pub struct BoundIdentifier<'a> {
 }
 
 impl<'a> BoundIdentifier<'a> {
-    /// Create `BoundIdentifier` for new binding in root scope
-    pub fn new_root_uid(name: &str, flags: SymbolFlags, ctx: &mut TraverseCtx<'a>) -> Self {
-        let symbol_id = ctx.generate_uid_in_root_scope(name, flags);
+    /// Create `BoundIdentifier` for new binding
+    pub fn new_uid(
+        name: &str,
+        scope_id: ScopeId,
+        flags: SymbolFlags,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Self {
+        let symbol_id = ctx.generate_uid(name, scope_id, flags);
         let name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
         Self { name, symbol_id }
+    }
+
+    /// Create `BoundIdentifier` for new binding in root scope
+    pub fn new_root_uid(name: &str, flags: SymbolFlags, ctx: &mut TraverseCtx<'a>) -> Self {
+        let scope_id = ctx.scopes().root_scope_id();
+        Self::new_uid(name, scope_id, flags, ctx)
     }
 
     /// Create `IdentifierReference` referencing this binding which is read from
     /// in current scope
     pub fn create_read_reference(&self, ctx: &mut TraverseCtx) -> IdentifierReference<'a> {
+        self.create_spanned_read_reference(SPAN, ctx)
+    }
+
+    /// Create `IdentifierReference` referencing this binding which is read from
+    /// in current scope
+    pub fn create_spanned_read_reference(
+        &self,
+        span: Span,
+        ctx: &mut TraverseCtx,
+    ) -> IdentifierReference<'a> {
         let reference_id = ctx.create_bound_reference(
             self.name.to_compact_str(),
             self.symbol_id,
             ReferenceFlag::Read,
         );
-        IdentifierReference::new_read(SPAN, self.name.clone(), Some(reference_id))
+        IdentifierReference::new_read(span, self.name.clone(), Some(reference_id))
     }
 
     /// Create `BindingIdentifier` for this binding
