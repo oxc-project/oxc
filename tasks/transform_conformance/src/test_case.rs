@@ -1,7 +1,6 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
 use oxc_allocator::Allocator;
@@ -177,7 +176,7 @@ pub trait TestCase {
             path,
             source_type,
             &source_text,
-            Rc::new(ret.trivias),
+            ret.trivias,
             transform_options.clone(),
         )
         .build(&mut program);
@@ -271,7 +270,7 @@ impl TestCase for ConformanceTestCase {
                         &self.path,
                         source_type,
                         &input,
-                        Rc::new(ret.trivias),
+                        ret.trivias,
                         transform_options.clone(),
                     );
                     let result = transformer.build(&mut program);

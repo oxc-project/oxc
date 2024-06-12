@@ -20,12 +20,12 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let allocator = Allocator::default();
     let ParserReturn { program, trivias, .. } =
         Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
-    let source_text1 = Prettier::new(&allocator, source_text, &trivias, options).build(&program);
+    let source_text1 = Prettier::new(&allocator, source_text, trivias, options).build(&program);
 
     let allocator = Allocator::default();
     let ParserReturn { program, trivias, .. } =
         Parser::new(&allocator, &source_text1, source_type).preserve_parens(false).parse();
-    let source_text2 = Prettier::new(&allocator, &source_text1, &trivias, options).build(&program);
+    let source_text2 = Prettier::new(&allocator, &source_text1, trivias, options).build(&program);
 
     if source_text1 == source_text2 {
         TestResult::Passed

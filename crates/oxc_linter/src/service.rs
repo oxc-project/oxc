@@ -264,7 +264,7 @@ impl Runtime {
 
         let program = allocator.alloc(ret.program);
 
-        let trivias = Rc::new(ret.trivias);
+        let trivias = ret.trivias;
 
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
