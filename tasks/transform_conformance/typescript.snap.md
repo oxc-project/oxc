@@ -481,7 +481,7 @@ var E = (E => {
 
   × Expected `,` but found `;`
     ╭─[typescript/tests/cases/conformance/enums/enumErrors.ts:48:18]
- 47 │ 
+ 47 │
  48 │     postSemicolon;
     ·                  ┬
     ·                  ╰── `,` expected

@@ -125,7 +125,7 @@ fn test() {
          			interface Foo {
          			  props: string;
          			}
-        
+
          			function bar() {
          			  return class Foo {};
          			}
@@ -137,7 +137,7 @@ fn test() {
          			interface Foo {
          			  props: string;
          			}
-        
+
          			(function bar() {
          			  class Foo {}
          			})();
@@ -149,7 +149,7 @@ fn test() {
          			declare global {
          			  interface Foo {}
          			}
-        
+
          			class Foo {}
          			    ",
             None,

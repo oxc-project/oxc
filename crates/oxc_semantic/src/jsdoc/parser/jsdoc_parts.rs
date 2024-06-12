@@ -247,7 +247,7 @@ mod test {
             (
                 "
  extra text
-* 
+*
 ",
                 "extra text",
             ),
