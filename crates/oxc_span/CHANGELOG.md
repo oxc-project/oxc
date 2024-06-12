@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.6] - 2024-06-12
+
+### Features
+
+- 129f91e span: Port over more methods from TextRange (#3592) (Don Isaac)
+
+### Bug Fixes
+
+- d65202d span: Correct doc comments (#3608) (overlookmotel)
+- 9e8f4d6 transformer: Do not add `__source` for generated nodes (#3614) (overlookmotel)
+
+### Refactor
+
+- f98f777 linter: Add rule fixer (#3589) (Don Isaac)
+
 ## [0.13.4] - 2024-06-07
 
 ### Performance

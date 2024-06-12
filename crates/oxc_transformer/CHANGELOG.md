@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.6] - 2024-06-12
+
+### Bug Fixes
+
+- 35e267b transformer: Arrow function transform use UIDs for `_this` vars (#3634) (overlookmotel)
+- 39bdebc transformer: Arrow func transform maintain scope ID (#3633) (overlookmotel)
+- 5cb7e6a transformer: Arrow func transform use correct spans (#3630) (overlookmotel)
+- 0c4ccb4 transformer: Arrow function transform alter `</this>` (#3627) (overlookmotel)
+- 8d237c4 transformer: JSX source calculate correct column when Unicode chars (#3615) (overlookmotel)
+- 9e8f4d6 transformer: Do not add `__source` for generated nodes (#3614) (overlookmotel)
+- 0fb4c35 transformer: Use UID for JSX source filename var (#3612) (overlookmotel)
+
+### Performance
+
+- 3a59294 transformer: React display name transform reduce Atom allocations (#3616) (overlookmotel)
+- f4c1389 transformer: Create `Vec` with capacity (#3613) (overlookmotel)
+
+### Refactor
+
+- 08f1010 ast: Make `AstBuilder` `Copy` (#3602) (overlookmotel)
+- 89bcbd5 transformer: Move `BoundIdentifier` into helpers (#3610) (overlookmotel)
+- 5793ff1 transformer: Replace `&’a Trivias` with `Rc<Trivias>` (#3580) (Dunqing)
+- 509871f transformer: Comment for unimplemented `spec` option in arrow fns transform (#3618) (overlookmotel)
+- 4b2e3a7 transformer: Fix indentation (#3617) (overlookmotel)
+- 3467e3d transformer: Remove outdated comment (#3606) (overlookmotel)
+- a799225 transformer: Flatten file structure for React transform (#3604) (overlookmotel)
+- 70f31a8 transformer: Reduce branching in JSX transform (#3596) (overlookmotel)
+- 3ae567d transformer: Remove dead code (#3588) (overlookmotel)
+- 60cbdec traverse: `generate_uid_in_root_scope` method (#3611) (overlookmotel)
+
 ## [0.13.4] - 2024-06-07
 
 ### Features

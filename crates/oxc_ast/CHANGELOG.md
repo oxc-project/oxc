@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.13.6] - 2024-06-12
+
+### Features
+
+- f6d9ca6 linter: Add `eslint/sort-imports` rule (#3568) (Wang Wenzhe)
+
+### Bug Fixes
+
+- f8f6d33 ast: Correct `visited_node` attr for strict mode of arrow fns (#3635) (overlookmotel)
+
+### Performance
+
+- 3a59294 transformer: React display name transform reduce Atom allocations (#3616) (overlookmotel)
+
+### Refactor
+
+- 0f92521 ast: Replace recursion with loop (#3626) (overlookmotel)
+- 08f1010 ast: Make `AstBuilder` `Copy` (#3602) (overlookmotel)
+- f98f777 linter: Add rule fixer (#3589) (Don Isaac)
+- 89bcbd5 transformer: Move `BoundIdentifier` into helpers (#3610) (overlookmotel)
+
 ## [0.13.4] - 2024-06-07
 
 ### Features
