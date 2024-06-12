@@ -30,3 +30,4 @@ labeledby = "labeledby"
 
 [default.extend-identifiers]
 IIFEs = "IIFEs"
+allowIIFEs = "allowIIFEs"
