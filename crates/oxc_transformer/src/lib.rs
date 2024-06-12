@@ -201,7 +201,14 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     ) {
         self.x0_typescript.transform_jsx_opening_element(elem);
         self.x1_react.transform_jsx_opening_element(elem, ctx);
-        self.x3_es2015.transform_jsx_opening_element(elem);
+    }
+
+    fn enter_jsx_element_name(
+        &mut self,
+        elem: &mut JSXElementName<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x3_es2015.transform_jsx_element_name(elem);
     }
 
     fn enter_method_definition(

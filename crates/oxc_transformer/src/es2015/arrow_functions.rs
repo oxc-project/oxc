@@ -119,34 +119,21 @@ impl<'a> ArrowFunctions<'a> {
     }
 
     /// Change <this></this> to <_this></_this>, and mark it as found
-    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
+    pub fn transform_jsx_element_name(&mut self, name: &mut JSXElementName<'a>) {
         if !self.is_inside_arrow_function() {
             return;
         }
 
-        let mut change_ident = |ident: &mut JSXIdentifier<'a>| {
-            if ident.name == "this" {
-                self.mark_this_as_found();
-                ident.name = self.get_this_name();
+        let ident = match name {
+            JSXElementName::Identifier(ident) => ident,
+            JSXElementName::MemberExpression(member_expr) => {
+                member_expr.get_object_identifier_mut()
             }
+            JSXElementName::NamespacedName(_) => return,
         };
-        match &mut elem.name {
-            JSXElementName::Identifier(ref mut ident) => change_ident(ident),
-            JSXElementName::MemberExpression(ref mut member) => {
-                let mut member_expr = member;
-                loop {
-                    match &mut member_expr.object {
-                        JSXMemberExpressionObject::Identifier(ident) => {
-                            change_ident(ident);
-                            break;
-                        }
-                        JSXMemberExpressionObject::MemberExpression(expr) => {
-                            member_expr = expr;
-                        }
-                    }
-                }
-            }
-            JSXElementName::NamespacedName(_) => {}
+        if ident.name == "this" {
+            self.mark_this_as_found();
+            ident.name = self.get_this_name();
         }
     }
 
