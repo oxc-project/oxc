@@ -276,6 +276,7 @@ impl GetterReturn {
                         | InstructionKind::Break(_)
                         | InstructionKind::Continue(_)
                         | InstructionKind::Iteration(_)
+                        | InstructionKind::Condition
                         | InstructionKind::Statement => {}
                     }
                 }

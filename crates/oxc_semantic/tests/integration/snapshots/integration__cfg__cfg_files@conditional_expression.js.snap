@@ -12,7 +12,7 @@ bb1: {
 }
 
 bb2: {
-
+	condition
 }
 
 bb3: {
@@ -20,5 +20,9 @@ bb3: {
 }
 
 bb4: {
+
+}
+
+bb5: {
 	statement
 }

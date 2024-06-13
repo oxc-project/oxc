@@ -20,7 +20,7 @@ bb3: {
 }
 
 bb4: {
-
+	condition
 }
 
 bb5: {
@@ -28,31 +28,35 @@ bb5: {
 }
 
 bb6: {
-	statement
-	return <value>
+
 }
 
 bb7: {
-	unreachable
-}
-
-bb8: {
 	statement
 	return <value>
 }
 
-bb9: {
+bb8: {
 	unreachable
 }
 
-bb10: {
+bb9: {
+	statement
 	return <value>
 }
 
-bb11: {
+bb10: {
 	unreachable
 }
 
+bb11: {
+	return <value>
+}
+
 bb12: {
+	unreachable
+}
+
+bb13: {
 
 }

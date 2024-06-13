@@ -8,7 +8,7 @@ digraph {
     1 [ label = "" ]
     2 [ label = "" ]
     3 [ label = "ForStatement\nVariableDeclaration" ]
-    4 [ label = "" ]
+    4 [ label = "Condition(test)" ]
     5 [ label = "" ]
     6 [ label = "ExpressionStatement" ]
     7 [ label = "ExpressionStatement" ]

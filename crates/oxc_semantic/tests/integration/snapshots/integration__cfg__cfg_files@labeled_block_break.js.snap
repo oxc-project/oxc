@@ -26,16 +26,16 @@ bb4: {
 }
 
 bb5: {
+	condition
+}
+
+bb6: {
 	statement
 	break <label>
 }
 
-bb6: {
-	unreachable
-}
-
 bb7: {
-
+	unreachable
 }
 
 bb8: {
@@ -43,5 +43,9 @@ bb8: {
 }
 
 bb9: {
+
+}
+
+bb10: {
 
 }

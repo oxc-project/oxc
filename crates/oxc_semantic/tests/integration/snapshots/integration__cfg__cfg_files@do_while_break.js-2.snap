@@ -13,7 +13,7 @@ digraph {
     6 [ label = "DoWhileStatement" ]
     7 [ label = "BlockStatement\nbreak" ]
     8 [ label = "unreachable" ]
-    9 [ label = "" ]
+    9 [ label = "Condition(true)" ]
     10 [ label = "" ]
     11 [ label = "" ]
     12 [ label = "" ]
