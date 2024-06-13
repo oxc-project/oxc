@@ -25,7 +25,7 @@ The Oxidation Compiler is creating a collection of high-performance tools for Ja
 
 Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
 
-See more at [oxc-project.github.io](https://oxc-project.github.io)!
+See more at [oxc.rs](https://oxc.rs)!
 
 ## 🙋Who's using Oxc?
 
