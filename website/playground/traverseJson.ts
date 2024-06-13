@@ -1,15 +1,16 @@
+import { SyntaxNode } from "@lezer/common";
 
-let typeFilter = ["JsonText", "Object", "Property", "Array"];
-/**
- * @param {import('@lezer/common').SyntaxNode} node
- * @returns {import('@lezer/common').SyntaxNode}
- *
- * */
-export function findMostInnerNodeForPosition(node, offset, source) {
+const typeFilter = ["JsonText", "Object", "Property", "Array"];
+
+export function findMostInnerNodeForPosition(
+  node: SyntaxNode,
+  offset: number,
+  source: string
+): SyntaxNode | undefined {
 	if (!typeFilter.includes(node.name)) {
 		return;
 	}
-	let targetNode;
+	let targetNode: SyntaxNode | undefined;
 	if (node.name === "Object") {
 		let span = getSpanOfNode(node, source);
 		if (Object.keys(span).length > 0) {
@@ -36,11 +37,11 @@ export function findMostInnerNodeForPosition(node, offset, source) {
  * @param {import('@lezer/common').SyntaxNode} node
  * @param {string} source
  * */
-function getSpanOfNode(node, source) {
-	let span = {};
-	let child = node.firstChild;
-	while (child) {
-		if (child.name === "Property" && child.firstChild.name === "PropertyName") {
+function getSpanOfNode(node: SyntaxNode, source: string) {
+	let span = {} as Record<string, number>;
+
+	for (let child = node.firstChild; !!child; child = child.nextSibling) {
+		if (child.name === "Property" && child.firstChild?.name === "PropertyName") {
 			let { from, to } = child.firstChild;
 			let name = source.slice(from + 1, to - 1);
 			if (["start", "end"].includes(name)) {
@@ -50,7 +51,7 @@ function getSpanOfNode(node, source) {
 				}
 			}
 		}
-		child = child.nextSibling;
 	}
+
 	return span;
 }

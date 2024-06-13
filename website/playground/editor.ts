@@ -1,6 +1,14 @@
-// Go down and find the `start` and `end` keys
-export  function getStartAndEnd(view, cursor) {
-  let start, end;
+import type { TreeCursor } from "@lezer/common";
+import type { EditorView } from "codemirror";
+
+/**
+ * Go down and find the `start` and `end` keys
+ */ 
+export function getStartAndEnd(
+  view: EditorView,
+  cursor: TreeCursor
+): [start: number | undefined, end: number | undefined] {
+  let start: number | undefined, end: number | undefined;
   while (true) {
     if (
       !start &&
@@ -27,6 +35,6 @@ export  function getStartAndEnd(view, cursor) {
   return [start, end]
 }
 
-export const convertToUtf8 = (sourceTextUtf8, d) => {
+export const convertToUtf8 = (sourceTextUtf8: ArrayBuffer, d: number) => {
   return new TextDecoder().decode(sourceTextUtf8.slice(0, d)).length;
 }

@@ -7,7 +7,8 @@
     "dev": "pnpm run wasm-dev && concurrently 'vite' 'cd .. && cargo watch --workdir website -s \"pnpm run wasm-dev\"'",
     "wasm-dev": "wasm-pack build --out-dir ../../npm/oxc-wasm --target web --dev --scope oxc ../crates/oxc_wasm",
     "build": "pnpm run wasm-build && vite build --base=https://oxc-project.github.io/oxc/",
-    "wasm-build": "wasm-pack build --out-dir ../../npm/oxc-wasm --target web --release --scope oxc ../crates/oxc_wasm"
+    "wasm-build": "wasm-pack build --out-dir ../../npm/oxc-wasm --target web --release --scope oxc ../crates/oxc_wasm",
+    "lint": "oxlint"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.16.2",
@@ -27,7 +28,10 @@
     "lzma": "^2.3.2"
   },
   "devDependencies": {
+    "@types/lodash.throttle": "^4.1.9",
+    "@types/lzma": "^2.3.0",
     "@lezer/common": "^1.2.1",
+    "oxlint": "link:../apps/oxlint",
     "@oxc/oxc_wasm": "link:../npm/oxc-wasm",
     "concurrently": "^8.2.2",
     "vite": "^5.2.13",
