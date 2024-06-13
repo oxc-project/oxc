@@ -1,3 +1,5 @@
+mod meta;
+
 use std::path::{Path, PathBuf};
 
 use oxc_span::SourceType;
@@ -7,7 +9,7 @@ use crate::{
     suite::{Case, Suite, TestResult},
 };
 
-pub use crate::test262_meta::{MetaData, Phase, TestFlag};
+pub use self::meta::{MetaData, Phase, TestFlag};
 
 const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
 

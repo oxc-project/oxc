@@ -5,7 +5,6 @@ mod suite;
 mod babel;
 mod misc;
 mod test262;
-mod test262_meta;
 mod typescript;
 // Tools
 mod codegen;
