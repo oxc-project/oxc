@@ -29,5 +29,5 @@ seeked    = "seeked"
 labeledby = "labeledby"
 
 [default.extend-identifiers]
-IIFEs = "IIFEs"
+IIFEs      = "IIFEs"
 allowIIFEs = "allowIIFEs"
