@@ -32,7 +32,7 @@ use crate::{
         TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
         TransformerTypeScriptCase,
     },
-    typescript::{TypeScriptCase, TypeScriptSuite},
+    typescript::{TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase},
 };
 
 /// # Panics
@@ -91,6 +91,10 @@ impl AppArgs {
         BabelSuite::<TransformerBabelCase>::new().run("transformer_babel", self);
         TypeScriptSuite::<TransformerTypeScriptCase>::new().run("transformer_typescript", self);
         MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self);
+    }
+
+    pub fn run_transipler(&self) {
+        TranspileRunner::<TypeScriptTranspileCase>::new().run("transpile", self);
     }
 
     /// # Panics

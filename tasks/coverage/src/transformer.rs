@@ -17,20 +17,6 @@ use crate::{
     typescript::TypeScriptCase,
 };
 
-fn get_default_transformer_options() -> TransformOptions {
-    TransformOptions {
-        typescript: TypeScriptOptions::default(),
-        es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
-        react: ReactOptions {
-            jsx_plugin: true,
-            jsx_self_plugin: true,
-            jsx_source_plugin: true,
-            ..Default::default()
-        },
-        ..Default::default()
-    }
-}
-
 /// Runs the transformer and make sure it doesn't crash.
 fn get_result(
     source_text: &str,
@@ -111,6 +97,20 @@ fn get_result(
         TestResult::Passed
     } else {
         TestResult::Mismatch(source_text1.clone(), source_text2)
+    }
+}
+
+fn get_default_transformer_options() -> TransformOptions {
+    TransformOptions {
+        typescript: TypeScriptOptions::default(),
+        es2015: ES2015Options { arrow_function: Some(ArrowFunctionsOptions::default()) },
+        react: ReactOptions {
+            jsx_plugin: true,
+            jsx_self_plugin: true,
+            jsx_source_plugin: true,
+            ..Default::default()
+        },
+        ..Default::default()
     }
 }
 
