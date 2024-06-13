@@ -1,40 +1,6 @@
+import type { SymbolTable } from "@oxc/oxc_wasm";
+
 type Span = { start: number; end: number }
-export interface SymbolTable {
-  /**
-   * The spans of the symbols.
-   */
-  spans: Span[]
-  /**
-   * The names of the symbols.
-   */
-  names: string[]
-  /**
-   * The flags of the symbols.
-   */
-  flags: string[]
-  /**
-   * The scope IDs of the symbols.
-   */
-  scopeIds: number[]
-  /**
-   * The declarations of the symbols.
-   */
-  declarations: number[]
-  /**
-   * The resolved references of the symbols.
-   */
-  resolvedReferences: Array<number[]>
-  /**
-   * The references of the symbols.
-   */
-  references: Array<{
-    span: Span
-    name: string
-    nodeId: number
-    symbolId: number | null
-    flag: string
-  }>
-}
 
 type RenderedSymbol = {
     name: string

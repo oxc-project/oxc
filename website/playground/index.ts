@@ -7,6 +7,7 @@ import {
   EditorSelection,
   Compartment,
   RangeSet,
+  type Range,
 } from "@codemirror/state";
 import  { convertToUtf8, getStartAndEnd } from './editor.ts'
 import  { findMostInnerNodeForPosition } from './traverseJson.ts'
@@ -446,13 +447,13 @@ class Playground {
     instance.dispatch(transaction);
   }
 
-  highlightEditorRange(view, range) {
+  highlightEditorRange(view: EditorView, range: Range<unknown> | Range<unknown>[]) {
     let ranges = Array.isArray(range) ? range : [range];
     ranges = ranges.filter((range) => range.from !== 0 || range.to !== 0);
     if (ranges.length === 0) {
       return;
     }
-    const addHighlight = StateEffect.define({
+    const addHighlight = StateEffect.define<Range<any>>({
       map: ({ from, to }, change) => ({
         from: change.mapPos(from),
         to: change.mapPos(to),
@@ -484,7 +485,7 @@ class Playground {
     view.dispatch({ effects });
   }
 
-  getTextFromView(view, from, to) {
+  getTextFromView(view: EditorView, from: number, to?: number) {
     return view.state.doc.sliceString(from, to);
   }
 
