@@ -3,7 +3,7 @@ use crate::{BasicBlockId, EdgeType};
 use super::ControlFlowGraphBuilder;
 
 bitflags::bitflags! {
-    #[derive(Debug, Clone, Copy, PartialEq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct CtxFlags: u8 {
         /// Anything above a `FUNCTION` is unreachable.
         const FUNCTION = 1;
