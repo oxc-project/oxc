@@ -21,6 +21,7 @@ pub struct CompilerSettings {
     pub strict: bool,
     pub jsx: Vec<String>, // 'react', 'preserve'
     pub declaration: bool,
+    pub emit_declaration_only: bool,
     pub always_strict: bool, // Ensure 'use strict' is always emitted.
     pub allow_unreachable_code: bool,
     pub allow_unused_labels: bool,
@@ -35,6 +36,10 @@ impl CompilerSettings {
             strict: Self::value_to_boolean(options.get("strict"), false),
             jsx: Self::split_value_options(options.get("jsx")),
             declaration: Self::value_to_boolean(options.get("declaration"), false),
+            emit_declaration_only: Self::value_to_boolean(
+                options.get("emitDeclarationOnly"),
+                false,
+            ),
             always_strict: Self::value_to_boolean(options.get("alwaysstrict"), false),
             allow_unreachable_code: Self::value_to_boolean(
                 options.get("allowunreachablecode"),
@@ -69,6 +74,7 @@ pub struct TestUnitData {
     pub content: String,
 }
 
+#[derive(Debug)]
 pub struct TestCaseContent {
     pub tests: Vec<TestUnitData>,
     pub settings: CompilerSettings,

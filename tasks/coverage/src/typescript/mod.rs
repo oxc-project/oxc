@@ -1,4 +1,5 @@
 mod meta;
+mod transpile_runner;
 
 use std::path::{Path, PathBuf};
 
@@ -10,6 +11,7 @@ use crate::{
 };
 
 use self::meta::TestCaseContent;
+pub use self::transpile_runner::{TranspileRunner, TypeScriptTranspileCase};
 
 const TESTS_ROOT: &str = "tasks/coverage/typescript/tests/";
 
