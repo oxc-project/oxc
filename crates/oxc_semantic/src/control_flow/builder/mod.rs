@@ -7,9 +7,8 @@ pub use context::{CtxCursor, CtxFlags};
 use petgraph::Direction;
 
 use super::{
-    AstNodeId, BasicBlock, BasicBlockId, CompactStr, ControlFlowGraph, EdgeType, ErrorEdgeKind,
-    Graph, Instruction, InstructionKind, IterationInstructionKind, LabeledInstruction,
-    PreservedExpressionState, Register,
+    AstNodeId, BasicBlock, BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph,
+    Instruction, InstructionKind, IterationInstructionKind, LabeledInstruction,
 };
 
 #[derive(Debug, Default)]
@@ -25,27 +24,6 @@ pub struct ControlFlowGraphBuilder<'a> {
     error_path: Vec<ErrorHarness>,
     /// Stack of finalizers, the top most element is always the appropriate one for current node.
     finalizers: Vec<BasicBlockId>,
-    // note: this should only land in the big box for all things that take arguments
-    // ie: callexpression, arrayexpression, etc
-    // todo: add assert that it is used every time?
-    pub use_this_register: Option<Register>,
-    pub next_free_register: u32,
-    pub store_assignments_into_this_array: Vec<Vec<Register>>,
-    pub store_final_assignments_into_this_array: Vec<Vec<Register>>,
-    // indexes of spreads in the store_assignments_into_this_array
-    pub spread_indices: Vec<Vec<usize>>,
-    // computed member expressions are only executed when we reach
-    // that part of the chain, so we keep this vec to patch them in later
-    pub should_save_stores_for_patching: bool,
-    pub saved_store: Option<usize>,
-    pub basic_blocks_with_breaks: Vec<Vec<BasicBlockId>>,
-    pub basic_blocks_with_continues: Vec<Vec<BasicBlockId>>,
-    // node indexes of the basic blocks of switch case conditions
-    pub switch_case_conditions: Vec<Vec<BasicBlockId>>,
-    pub next_label: Option<CompactStr>,
-    pub label_to_ast_node_ix: Vec<(CompactStr, AstNodeId)>,
-    pub ast_node_to_break_continue: Vec<(AstNodeId, usize, Option<usize>)>,
-    pub after_throw_block: Option<BasicBlockId>,
 }
 
 impl<'a> ControlFlowGraphBuilder<'a> {
@@ -241,27 +219,6 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         node_id: Option<AstNodeId>,
     ) {
         self.basic_block_mut(block).instructions.push(Instruction { kind, node_id });
-    }
-
-    #[must_use]
-    pub fn preserve_expression_state(&mut self) -> PreservedExpressionState {
-        let use_this_register = self.use_this_register.take();
-        let mut store_final_assignments_into_this_array = vec![];
-        std::mem::swap(
-            &mut store_final_assignments_into_this_array,
-            &mut self.store_final_assignments_into_this_array,
-        );
-
-        // DO NOT preserve: saved_stores, should_save_stores_for_patching
-        // should_save_stores_for_patching must always be active to catch
-        // all stores, preserving will mess it up.
-        PreservedExpressionState { use_this_register, store_final_assignments_into_this_array }
-    }
-
-    pub fn restore_expression_state(&mut self, mut preserved_state: PreservedExpressionState) {
-        self.use_this_register = preserved_state.use_this_register.take();
-        self.store_final_assignments_into_this_array =
-            preserved_state.store_final_assignments_into_this_array;
     }
 
     pub fn enter_statement(&mut self, stmt: AstNodeId) {
