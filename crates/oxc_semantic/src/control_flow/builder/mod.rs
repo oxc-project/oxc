@@ -52,11 +52,15 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         ControlFlowGraph { graph: self.graph, basic_blocks: self.basic_blocks }
     }
 
-    /// # Panics
     pub fn current_basic_block(&mut self) -> &mut BasicBlock {
+        self.basic_block_mut(self.current_node_ix)
+    }
+
+    /// # Panics
+    pub fn basic_block_mut(&mut self, basic_block: BasicBlockId) -> &mut BasicBlock {
         let idx = *self
             .graph
-            .node_weight(self.current_node_ix)
+            .node_weight(basic_block)
             .expect("expected `self.current_node_ix` to be a valid node index in self.graph");
         self.basic_blocks
             .get_mut(idx)
@@ -145,6 +149,10 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         );
     }
 
+    pub fn append_condition_to(&mut self, block: BasicBlockId, node: Option<AstNodeId>) {
+        self.push_instruction_to(block, InstructionKind::Condition, node);
+    }
+
     pub fn append_iteration(&mut self, node: Option<AstNodeId>, kind: IterationInstructionKind) {
         self.push_instruction(InstructionKind::Iteration(kind), node);
     }
@@ -195,7 +203,17 @@ impl<'a> ControlFlowGraphBuilder<'a> {
 
     #[inline]
     pub(self) fn push_instruction(&mut self, kind: InstructionKind, node_id: Option<AstNodeId>) {
-        self.current_basic_block().instructions.push(Instruction { kind, node_id });
+        self.push_instruction_to(self.current_node_ix, kind, node_id);
+    }
+
+    #[inline]
+    pub(self) fn push_instruction_to(
+        &mut self,
+        block: BasicBlockId,
+        kind: InstructionKind,
+        node_id: Option<AstNodeId>,
+    ) {
+        self.basic_block_mut(block).instructions.push(Instruction { kind, node_id });
     }
 
     #[must_use]

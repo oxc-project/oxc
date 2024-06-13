@@ -27,6 +27,17 @@ impl<'a, 'b> DebugDotContext<'a, 'b> {
     fn debug_ast_kind(self, id: AstNodeId) -> String {
         self.0.kind(id).debug_name().into_owned()
     }
+
+    fn try_eval_literal(self, id: AstNodeId) -> Option<String> {
+        match self.0.kind(id) {
+            AstKind::NumericLiteral(lit) => Some(lit.value.to_string()),
+            AstKind::BooleanLiteral(lit) => Some(lit.value.to_string()),
+            AstKind::StringLiteral(lit) => Some(lit.value.to_string()),
+            AstKind::BigintLiteral(lit) => Some(lit.raw.to_string()),
+            AstKind::NullLiteral(_) => Some("null".to_string()),
+            _ => None,
+        }
+    }
 }
 
 impl<'a, 'b> From<&'b AstNodes<'a>> for DebugDotContext<'a, 'b> {
@@ -76,12 +87,13 @@ impl DisplayDot for Instruction {
             InstructionKind::Statement => "statement",
             InstructionKind::Unreachable => "unreachable",
             InstructionKind::Throw => "throw",
+            InstructionKind::Condition => "condition",
+            InstructionKind::Iteration(IterationInstructionKind::Of) => "iteration <of>",
+            InstructionKind::Iteration(IterationInstructionKind::In) => "iteration <in>",
             InstructionKind::Break(LabeledInstruction::Labeled) => "break <label>",
             InstructionKind::Break(LabeledInstruction::Unlabeled) => "break",
             InstructionKind::Continue(LabeledInstruction::Labeled) => "continue <label>",
             InstructionKind::Continue(LabeledInstruction::Unlabeled) => "continue",
-            InstructionKind::Iteration(IterationInstructionKind::Of) => "iteration <of>",
-            InstructionKind::Iteration(IterationInstructionKind::In) => "iteration <in>",
             InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
                 "return <implicit undefined>"
             }
@@ -136,6 +148,12 @@ impl DebugDot for Instruction {
             }
             InstructionKind::Unreachable => "unreachable".to_string(),
             InstructionKind::Throw => "throw".to_string(),
+            InstructionKind::Condition => self.node_id.map_or("None".to_string(), |id| {
+                format!(
+                    "Condition({})",
+                    ctx.try_eval_literal(id).unwrap_or_else(|| ctx.debug_ast_kind(id))
+                )
+            }),
             InstructionKind::Iteration(ref kind) => {
                 format!(
                     "Iteration({} {} {})",

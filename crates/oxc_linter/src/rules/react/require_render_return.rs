@@ -127,6 +127,7 @@ fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
                     | InstructionKind::Break(_)
                     | InstructionKind::Continue(_)
                     | InstructionKind::Iteration(_)
+                    | InstructionKind::Condition
                     | InstructionKind::Statement => {}
                 }
             }

@@ -148,6 +148,7 @@ pub enum InstructionKind {
     Break(LabeledInstruction),
     Continue(LabeledInstruction),
     Throw,
+    Condition,
     Iteration(IterationInstructionKind),
 }
 #[derive(Debug, Clone)]

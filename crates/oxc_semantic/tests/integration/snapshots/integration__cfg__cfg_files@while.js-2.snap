@@ -8,7 +8,7 @@ digraph {
     1 [ label = "" ]
     2 [ label = "" ]
     3 [ label = "WhileStatement" ]
-    4 [ label = "" ]
+    4 [ label = "Condition(LogicalExpression)" ]
     5 [ label = "" ]
     6 [ label = "" ]
     7 [ label = "BlockStatement\nreturn <value>" ]
