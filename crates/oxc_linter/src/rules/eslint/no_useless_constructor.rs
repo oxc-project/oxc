@@ -9,7 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_constructor(constructor_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-useless-constructor): Empty constructors are unnecessary")
