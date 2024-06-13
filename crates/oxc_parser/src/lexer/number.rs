@@ -1,8 +1,6 @@
 //! Parsing utilities for converting Javascript numbers to Rust f64
 //! code copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
 
-use static_assertions::const_assert_eq;
-
 use num_bigint::BigInt;
 use num_traits::Num as _;
 use std::borrow::Cow;
@@ -68,8 +66,11 @@ fn parse_binary(s: &str) -> f64 {
         debug_assert!(c == b'0' || c == b'1');
         c & 1
     }
-    const_assert_eq!(byte_to_value(b'0'), 0);
-    const_assert_eq!(byte_to_value(b'1'), 1);
+    #[cfg(test)]
+    {
+        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
+        static_assertions::const_assert_eq!(byte_to_value(b'1'), 1);
+    }
 
     debug_assert!(!s.is_empty());
 
@@ -91,8 +92,11 @@ fn parse_octal(s: &str) -> f64 {
         debug_assert!(c >= b'0' && c <= b'7');
         c & 7
     }
-    const_assert_eq!(byte_to_value(b'0'), 0);
-    const_assert_eq!(byte_to_value(b'7'), 7);
+    #[cfg(test)]
+    {
+        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
+        static_assertions::const_assert_eq!(byte_to_value(b'7'), 7);
+    }
 
     debug_assert!(!s.is_empty());
 
@@ -126,12 +130,15 @@ fn parse_hex(s: &str) -> f64 {
             (c & 15) + 9 // A-F or a-f
         }
     }
-    const_assert_eq!(byte_to_value(b'0'), 0);
-    const_assert_eq!(byte_to_value(b'9'), 9);
-    const_assert_eq!(byte_to_value(b'A'), 10);
-    const_assert_eq!(byte_to_value(b'F'), 15);
-    const_assert_eq!(byte_to_value(b'a'), 10);
-    const_assert_eq!(byte_to_value(b'f'), 15);
+    #[cfg(test)]
+    {
+        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
+        static_assertions::const_assert_eq!(byte_to_value(b'9'), 9);
+        static_assertions::const_assert_eq!(byte_to_value(b'A'), 10);
+        static_assertions::const_assert_eq!(byte_to_value(b'F'), 15);
+        static_assertions::const_assert_eq!(byte_to_value(b'a'), 10);
+        static_assertions::const_assert_eq!(byte_to_value(b'f'), 15);
+    }
 
     debug_assert!(!s.is_empty());
 

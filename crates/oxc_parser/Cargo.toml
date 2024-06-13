@@ -25,20 +25,20 @@ oxc_ast         = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_diagnostics = { workspace = true }
 
-assert-unchecked  = { workspace = true }
-bitflags          = { workspace = true }
-num-bigint        = { workspace = true }
-num-traits        = { workspace = true }
-rustc-hash        = { workspace = true }
-seq-macro         = { workspace = true }
-static_assertions = { workspace = true }
+assert-unchecked = { workspace = true }
+bitflags         = { workspace = true }
+num-bigint       = { workspace = true }
+num-traits       = { workspace = true }
+rustc-hash       = { workspace = true }
+seq-macro        = { workspace = true }
 
 memchr = { workspace = true }
 
 [dev-dependencies]
-oxc_ast    = { workspace = true, features = ["serialize"] }
-serde_json = { workspace = true }
-ouroboros  = { workspace = true } # for `multi-thread` example
+oxc_ast           = { workspace = true, features = ["serialize"] }
+serde_json        = { workspace = true }
+ouroboros         = { workspace = true } # for `multi-thread` example
+static_assertions = { workspace = true }
 
 [features]
 # Expose Lexer for benchmarks

@@ -39,7 +39,7 @@ pub struct Token {
     _padding2: u32,
 }
 
-#[cfg(target_pointer_width = "64")]
+#[cfg(all(test, target_pointer_width = "64"))]
 mod size_asserts {
     static_assertions::assert_eq_size!(super::Token, [u8; 16]);
 }

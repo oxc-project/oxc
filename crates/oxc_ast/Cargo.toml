@@ -33,6 +33,7 @@ serde_json = { workspace = true, optional = true }
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 
+[dev-dependencies]
 static_assertions = { workspace = true }
 
 [features]
