@@ -116,11 +116,12 @@ pub enum CallType {
 #[derive(Debug)]
 pub struct BasicBlock {
     pub instructions: Vec<Instruction>,
+    pub unreachable: bool,
 }
 
 impl BasicBlock {
     fn new() -> Self {
-        BasicBlock { instructions: Vec::new() }
+        BasicBlock { instructions: Vec::new(), unreachable: false }
     }
 
     pub fn instructions(&self) -> &Vec<Instruction> {
