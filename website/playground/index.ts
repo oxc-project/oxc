@@ -121,14 +121,14 @@ type EditorViewKind =
   | 'symbol'
 
 class Playground {
-  oxc;
+  oxc: Oxc;
   sourceTextUtf8 // source text in Uint8Array, for converting from utf8 to utf16 span
 
-  runOptions;
-  parserOptions;
-  codegenOptions;
-  linterOptions;
-  minifierOptions;
+  runOptions: OxcRunOptions;
+  parserOptions: OxcParserOptions;
+  codegenOptions: OxcCodegenOptions;
+  linterOptions: OxcLinterOptions;
+  minifierOptions: OxcMinifierOptions;
 
   editor: EditorView;
   viewer: EditorView;
@@ -703,7 +703,7 @@ function addHorizontalResize() {
     }
     globalThis.document.body.style.cursor = 'col-resize';
 
-    const moveHandler = event => {
+    const moveHandler = (event: MouseEvent) => {
       event.preventDefault();
       const newPosition = ( event.pageX - offset) / size * 100;
       // Using 99% as the max value prevents the divider from disappearing

@@ -28,6 +28,8 @@
     "lzma": "^2.3.2"
   },
   "devDependencies": {
+    "@types/lodash.throttle": "^4.1.9",
+    "@types/lzma": "^2.3.0",
     "@lezer/common": "^1.2.1",
     "oxlint": "link:../apps/oxlint",
     "@oxc/oxc_wasm": "link:../npm/oxc-wasm",

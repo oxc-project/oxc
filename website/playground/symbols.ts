@@ -1,22 +1,32 @@
-/**
- * @typedef {Object} SymbolTable
- * @property {Array<{start: number, end: number}>} spans - The spans of the symbols.
- * @property {string[]} names - The names of the symbols.
- * @property {string[]} flags - The flags of the symbols.
- * @property {number[]} scopeIds - The scope IDs of the symbols.
- * @property {number[]} declarations - The declarations of the symbols.
- * @property {Array<number[]>} resolvedReferences - The resolved references of the symbols.
- * @property {Array<{span: {start: number, end: number}, name: string, node_id: number, symbol_id: number|null, flag: string}>} references - The references of the symbols.
- */
-
 type Span = { start: number; end: number }
 export interface SymbolTable {
+  /**
+   * The spans of the symbols.
+   */
   spans: Span[]
+  /**
+   * The names of the symbols.
+   */
   names: string[]
+  /**
+   * The flags of the symbols.
+   */
   flags: string[]
+  /**
+   * The scope IDs of the symbols.
+   */
   scopeIds: number[]
+  /**
+   * The declarations of the symbols.
+   */
   declarations: number[]
+  /**
+   * The resolved references of the symbols.
+   */
   resolvedReferences: Array<number[]>
+  /**
+   * The references of the symbols.
+   */
   references: Array<{
     span: Span
     name: string
