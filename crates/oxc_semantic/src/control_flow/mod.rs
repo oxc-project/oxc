@@ -1,17 +1,19 @@
 mod builder;
 mod dot;
 
+use itertools::Itertools;
+use oxc_ast::AstKind;
 use oxc_span::CompactStr;
 use oxc_syntax::operator::{
     AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
 };
 use petgraph::{
     stable_graph::NodeIndex,
-    visit::{depth_first_search, Control, DfsEvent},
-    Graph,
+    visit::{depth_first_search, Control, DfsEvent, EdgeRef},
+    Direction, Graph,
 };
 
-use crate::AstNodeId;
+use crate::{AstNodeId, AstNodes};
 
 pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::{DebugDot, DebugDotContext, DisplayDot};
@@ -240,8 +242,8 @@ impl ControlFlowGraph {
                 if !matches!(filter_result, Control::Continue) {
                     return filter_result;
                 }
-                let unreachable = graph.edges_connecting(a, b).all(|edge| {
-                    matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                let unreachable = !graph.edges_connecting(a, b).any(|edge| {
+                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
                 });
 
                 if unreachable {
@@ -256,6 +258,91 @@ impl ControlFlowGraph {
         })
         .break_value()
         .unwrap_or(false)
+    }
+
+    /// Returns `None` the given node isn't the cyclic point of an infinite loop.
+    /// Otherwise returns `Some(loop_start, loop_end)`.
+    pub fn is_infinite_loop_start(
+        &self,
+        node: BasicBlockId,
+        nodes: &AstNodes,
+    ) -> Option<(BasicBlockId, BasicBlockId)> {
+        enum EvalConstConditionResult {
+            NotFound,
+            Fail,
+            Eval(bool),
+        }
+        fn try_eval_const_condition(
+            instruction: &Instruction,
+            nodes: &AstNodes,
+        ) -> EvalConstConditionResult {
+            use EvalConstConditionResult::{Eval, Fail, NotFound};
+            match instruction {
+                Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
+                    match nodes.kind(*id) {
+                        AstKind::BooleanLiteral(lit) => Eval(lit.value),
+                        _ => Fail,
+                    }
+                }
+                _ => NotFound,
+            }
+        }
+
+        fn get_jump_target(
+            graph: &Graph<usize, EdgeType>,
+            node: BasicBlockId,
+        ) -> Option<BasicBlockId> {
+            graph
+                .edges_directed(node, Direction::Outgoing)
+                .find_or_first(|e| matches!(e.weight(), EdgeType::Jump))
+                .map(|it| it.target())
+        }
+
+        let basic_block = self.basic_block(node);
+        let mut backedges = self
+            .graph
+            .edges_directed(node, Direction::Incoming)
+            .filter(|e| matches!(e.weight(), EdgeType::Backedge));
+
+        // if this node doesn't have an backedge it isn't a loop starting point.
+        let backedge = backedges.next()?;
+
+        debug_assert!(
+            backedges.next().is_none(),
+            "there should only be one backedge to each basic block."
+        );
+
+        // if instructions are empty we might be in a `for(;;)`.
+        if basic_block.instructions().is_empty()
+            && !self
+                .graph
+                .edges_directed(node, Direction::Outgoing)
+                .any(|e| matches!(e.weight(), EdgeType::Backedge))
+        {
+            return get_jump_target(&self.graph, node).map(|it| (it, node));
+        }
+
+        // if there are more than one instruction in this block it can't be a valid loop start.
+        let Ok(only_instruction) = basic_block.instructions().iter().exactly_one() else {
+            return None;
+        };
+
+        // if there is exactly one and it is a condition instruction we are in a loop so we
+        // check the condition to infer if it is always true.
+        if let EvalConstConditionResult::Eval(true) =
+            try_eval_const_condition(only_instruction, nodes)
+        {
+            get_jump_target(&self.graph, node).map(|it| (it, node))
+        } else if let EvalConstConditionResult::Eval(true) =
+            self.basic_block(backedge.source()).instructions().iter().exactly_one().map_or_else(
+                |_| EvalConstConditionResult::NotFound,
+                |it| try_eval_const_condition(it, nodes),
+            )
+        {
+            get_jump_target(&self.graph, node).map(|it| (node, it))
+        } else {
+            None
+        }
     }
 
     pub fn is_cyclic(&self, node: BasicBlockId) -> bool {
