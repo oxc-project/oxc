@@ -225,7 +225,7 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if !ctx.semantic().cfg().is_reachabale(func_cfg_id, node_cfg_id) {
+        if !ctx.semantic().cfg().is_reachable(func_cfg_id, node_cfg_id) {
             // There should always be a control flow path between a parent and child node.
             // If there is none it means we always do an early exit before reaching our hook call.
             // In some cases it might mean that we are operating on an invalid `cfg` but in either
@@ -302,7 +302,7 @@ fn has_conditional_path_accept_throw(
     .into_iter()
     .filter(|(_, val)| *val == 0)
     .any(|(f, _)| {
-        !cfg.is_reachabale_filtered(f, to_graph_id, |it| {
+        !cfg.is_reachable_filtered(f, to_graph_id, |it| {
             if cfg
                 .basic_block(it)
                 .instructions()
