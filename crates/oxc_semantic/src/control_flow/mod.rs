@@ -222,11 +222,11 @@ impl ControlFlowGraph {
         self.basic_blocks.get_mut(ix).expect("expected a valid node id in self.basic_blocks")
     }
 
-    pub fn is_reachabale(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
-        self.is_reachabale_filtered(from, to, |_| Control::Continue)
+    pub fn is_reachable(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
+        self.is_reachable_filtered(from, to, |_| Control::Continue)
     }
 
-    pub fn is_reachabale_filtered<F: Fn(BasicBlockId) -> Control<bool>>(
+    pub fn is_reachable_filtered<F: Fn(BasicBlockId) -> Control<bool>>(
         &self,
         from: BasicBlockId,
         to: BasicBlockId,
@@ -352,21 +352,4 @@ impl ControlFlowGraph {
         })
         .is_err()
     }
-
-    pub fn has_conditional_path(&self, from: BasicBlockId, to: BasicBlockId) -> bool {
-        let graph = &self.graph;
-        // All nodes should be able to reach the `to` node, Otherwise we have a conditional/branching flow.
-        petgraph::algo::dijkstra(graph, from, Some(to), |e| match e.weight() {
-            EdgeType::NewFunction | EdgeType::Error(_) | EdgeType::Finalize | EdgeType::Join => 1,
-            EdgeType::Jump | EdgeType::Unreachable | EdgeType::Backedge | EdgeType::Normal => 0,
-        })
-        .into_iter()
-        .filter(|(_, val)| *val == 0)
-        .any(|(f, _)| !self.is_reachabale(f, to))
-    }
-}
-
-pub struct PreservedExpressionState {
-    pub use_this_register: Option<Register>,
-    pub store_final_assignments_into_this_array: Vec<Vec<Register>>,
 }

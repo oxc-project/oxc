@@ -18,7 +18,7 @@ use crate::{
     class::ClassTableBuilder,
     control_flow::{
         ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
-        IterationInstructionKind, Register, ReturnInstructionKind,
+        IterationInstructionKind, ReturnInstructionKind,
     },
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
@@ -541,13 +541,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn visit_debugger_statement(&mut self, stmt: &DebuggerStatement) {
         let kind = AstKind::DebuggerStatement(self.alloc(stmt));
         self.enter_node(kind);
-
-        /* cfg */
-        // just take the next_label since it should be taken by the next
-        // statement regardless of whether the statement can use it or not
-        self.cfg.next_label.take();
-        /* cfg */
-
         self.leave_node(kind);
     }
 
@@ -1006,10 +999,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.visit_label_identifier(&stmt.label);
 
-        /* cfg */
-        self.cfg.next_label = Some(stmt.label.name.to_compact_str());
-        /* cfg */
-
         self.visit_statement(&stmt.body);
 
         /* cfg */
@@ -1373,8 +1362,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         func.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
-        let preserved = self.cfg.preserve_expression_state();
-
         let before_function_graph_ix = self.cfg.current_node_ix;
         let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
@@ -1398,7 +1385,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        self.cfg.restore_expression_state(preserved);
         self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
         self.cfg.release_error_harness(error_harness);
         let after_function_graph_ix = self.cfg.new_basic_block_normal();
@@ -1435,11 +1421,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.enter_node(kind);
 
-        /* cfg */
-        let preserved = self.cfg.preserve_expression_state();
-        self.cfg.store_final_assignments_into_this_array.push(vec![]);
-        /* cfg */
-
         if let Some(id) = &class.id {
             self.visit_binding_identifier(id);
         }
@@ -1454,14 +1435,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type_parameter_instantiation(super_parameters);
         }
         self.visit_class_body(&class.body);
-
-        /* cfg */
-        let _elements = self.cfg.store_final_assignments_into_this_array.pop().expect(
-            "expected there to be atleast one vec in the store_final_assignments_into_this_arrays",
-        );
-        self.cfg.restore_expression_state(preserved);
-        self.cfg.spread_indices.push(vec![]);
-        /* cfg */
 
         self.leave_node(kind);
         if is_class_expr {
@@ -1485,7 +1458,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         expr.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
-        let preserved = self.cfg.preserve_expression_state();
         let current_node_ix = self.cfg.current_node_ix;
         let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
@@ -1500,15 +1472,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         self.cfg.add_edge(current_node_ix, function_graph_ix, EdgeType::NewFunction);
-        if expr.expression {
-            self.cfg.store_assignments_into_this_array.push(vec![]);
-            self.cfg.use_this_register = Some(Register::Return);
-        }
         /* cfg */
+
         self.visit_function_body(&expr.body);
 
         /* cfg */
-        self.cfg.restore_expression_state(preserved);
         self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
         self.cfg.release_error_harness(error_harness);
         self.cfg.current_node_ix = current_node_ix;
