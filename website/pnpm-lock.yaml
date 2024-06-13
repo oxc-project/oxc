@@ -63,6 +63,9 @@ importers:
       concurrently:
         specifier: ^8.2.2
         version: 8.2.2
+      oxlint:
+        specifier: link:../apps/oxlint
+        version: link:../apps/oxlint
       vite:
         specifier: ^5.2.13
         version: 5.2.13

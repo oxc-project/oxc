@@ -8,15 +8,15 @@ import {
   Compartment,
   RangeSet,
 } from "@codemirror/state";
-import  { convertToUtf8, getStartAndEnd } from './editor.js'
-import  { findMostInnerNodeForPosition } from './traverseJson.js'
+import  { convertToUtf8, getStartAndEnd } from './editor.ts'
+import  { findMostInnerNodeForPosition } from './traverseJson.ts'
 import { parser } from '@lezer/json'
 import { javascript, javascriptLanguage } from "@codemirror/lang-javascript";
 import { rust, rustLanguage } from "@codemirror/lang-rust";
 import { json, jsonLanguage } from "@codemirror/lang-json";
 import { vscodeKeymap } from "@replit/codemirror-vscode-keymap";
 import { githubDark } from "@ddietr/codemirror-themes/github-dark";
-import { linter, lintGutter } from "@codemirror/lint";
+import { type Diagnostic, linter, lintGutter } from "@codemirror/lint";
 import { language, syntaxTree } from "@codemirror/language";
 import { autocompletion } from "@codemirror/autocomplete";
 import { indentWithTab, deleteLine } from "@codemirror/commands";
@@ -39,7 +39,7 @@ import { getSymbolAndReferencesSpan, renderSymbols } from "./symbols.js";
 const placeholderText = `
 import React, { useEffect, useRef } from 'react'
 
-const DummyComponent:React.FC = () => {
+const DummyComponent: React.FC = () => {
   const ref = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -47,10 +47,10 @@ const DummyComponent:React.FC = () => {
   }, [])
 
   return (
-      <div>{Boolean(ref.current) ?? (
-        <input type="text" ref={ref} />
-      )}
-      </div>
+    <div>{Boolean(ref.current) ?? (
+      <input type="text" ref={ref} />
+    )}
+    </div>
   )
 }
 
@@ -60,7 +60,7 @@ export default DummyComponent
 const STORAGE_KEY_CODE = "playground.code";
 const ACTIVE_TAB_STORAGE_KEY_CODE = "playground.activeTab";
 
-const getStringFromStorage = (whatToGet) => {
+const getStringFromStorage = (whatToGet: string) => {
   try {
     return localStorage.getItem(whatToGet);
   } catch (_e) {
@@ -68,7 +68,7 @@ const getStringFromStorage = (whatToGet) => {
   }
 };
 
-const setStringToStorage = (whatToSet, value) => {
+const setStringToStorage = (whatToSet: string, value: string) => {
   try {
     localStorage.setItem(whatToSet, value);
   } catch (_e) {
@@ -77,7 +77,7 @@ const setStringToStorage = (whatToSet, value) => {
 };
 
 const tabBtnsBindClick = (callback) => {
-  const buttons = document.querySelectorAll('.header.controls button');
+  const buttons = document.querySelectorAll<HTMLButtonElement>('.header.controls button');
   buttons.forEach(btn => {
     btn.onclick = (e) => {
       callback(e?.target?.id);
@@ -87,7 +87,7 @@ const tabBtnsBindClick = (callback) => {
 
 const switchActiveTab = (tab) => {
   const buttons = document.querySelectorAll('.header.controls button');
-  let targetBtn = null;
+  let targetBtn: Element | null = null;
   buttons.forEach(btn => {
     btn.classList.remove('active')
     if (tab === btn.id) {
@@ -109,6 +109,17 @@ const initActiveTab = () => {
   btn.classList.add('active');
 }
 
+type EditorViewKind =
+  | 'ast'
+  | 'codegen'
+  | 'format'
+  | 'ir'
+  | 'minify'
+  | 'prettier-ir'
+  | 'prettier'
+  | 'scope'
+  | 'symbol'
+
 class Playground {
   oxc;
   sourceTextUtf8 // source text in Uint8Array, for converting from utf8 to utf16 span
@@ -119,12 +130,13 @@ class Playground {
   linterOptions;
   minifierOptions;
 
-  editor;
-  viewer;
-  currentView = "ast"; // "ast" | "format" | "minify" | "ir"
-  languageConf;
-  urlParams;
-  viewerIsEditableConf;
+  editor: EditorView;
+  viewer: EditorView;
+  currentView: EditorViewKind = "ast"; // "ast" | "format" | "minify" | "ir"
+  languageConf: Compartment;
+  linterConf: Compartment;
+  urlParams: URLParams;
+  viewerIsEditableConf: Compartment;
 
   constructor() {
     this.languageConf = new Compartment();
@@ -133,7 +145,7 @@ class Playground {
     this.linterConf = new Compartment();
     this.editor = this.initEditor();
     this.viewer = this.initViewer();
-    this.currentView = getStringFromStorage(ACTIVE_TAB_STORAGE_KEY_CODE) || "ast";
+    this.currentView = (getStringFromStorage(ACTIVE_TAB_STORAGE_KEY_CODE) as EditorViewKind | null) || "ast";
   }
 
   initOxc() {
@@ -156,7 +168,7 @@ class Playground {
     return linter(() => this.updateDiagnostics(), { delay: 0 })
   }
 
-  runOxc(text) {
+  runOxc(text: string | undefined) {
     const sourceText = text;
     this.urlParams.updateCode(sourceText);
     this.oxc.sourceText = sourceText;
@@ -328,7 +340,7 @@ class Playground {
       this.minifierOptions,
     );
     const elapsed = new Date() - start;
-    document.getElementById("duration").innerText = `${elapsed}ms`;
+    document.getElementById("duration")!.innerText = `${elapsed}ms`;
   }
 
   currentLanguage() {
@@ -343,8 +355,12 @@ class Playground {
     }
   }
 
-  updatePanel(diagnostics) {
+  updatePanel(diagnostics: Diagnostic[]) {
     const panel = document.getElementById("panel");
+    if (!panel) {
+      console.error(new Error('No #panel found'))
+      return
+    }
     panel.innerText = diagnostics
       .map((d) => {
         const emoji = {
@@ -358,7 +374,7 @@ class Playground {
     panel.scrollTop = panel.scrollHeight;
   }
 
-  updateView(view) {
+  updateView(view?: EditorViewKind) {
     view = view || this.currentView;
     this.currentView = view;
 
@@ -369,7 +385,7 @@ class Playground {
     this.runOptions.format = false;
     this.runOptions.minify = false;
 
-    let text;
+    let text: string;
     switch (this.currentView) {
       case "ast":
         this.run();
@@ -415,12 +431,15 @@ class Playground {
         this.run();
         text = this.oxc.formattedText;
         break;
+      default:
+        console.warn('Unknown view', this.currentView)
+        return
     }
 
     this.updateEditorText(this.viewer, text);
   }
 
-  updateEditorText(instance, text) {
+  updateEditorText(instance: EditorView, text: string) {
     const transaction = instance.state.update({
       changes: { from: 0, to: instance.state.doc.length, insert: text },
     });
@@ -475,7 +494,7 @@ class Playground {
   });
 
   // Highlight the editor by searching for `start` and `end` values.
-  highlightEditorFromViewer(e, view) {
+  highlightEditorFromViewer(e: MouseEvent, view: EditorView) {
     if (this.currentView === 'symbol') {
       const pos = view.posAtCoords(e);
       const tree = syntaxTree(view.state);
