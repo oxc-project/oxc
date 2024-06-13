@@ -210,7 +210,7 @@ impl Case for TransformerTypeScriptCase {
         let mut options = get_default_transformer_options();
         let mut source_type = self.base.source_type();
         // handle @jsx: react, `react` of behavior is match babel following options
-        if self.base.meta().options.jsx.last().is_some_and(|jsx| jsx == "react") {
+        if self.base.meta().settings.jsx.last().is_some_and(|jsx| jsx == "react") {
             source_type = source_type.with_module(true);
             options.react.runtime = ReactJsxRuntime::Classic;
         }
