@@ -21,7 +21,7 @@ digraph {
     6 -> 2 [ label = "Error(Implicit)" ]
     7 -> 2 [ label = "Error(Implicit)" ]
     3 -> 4 [ label = "Normal" ]
-    4 -> 6 [ label = "Normal" ]
+    4 -> 6 [ label = "Jump" ]
     6 -> 5 [ label = "Backedge" ]
     5 -> 4 [ label = "Backedge" ]
     4 -> 7 [ label = "Normal" ]

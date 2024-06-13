@@ -275,6 +275,7 @@ impl GetterReturn {
                         // Ignore irrelevant elements.
                         | InstructionKind::Break(_)
                         | InstructionKind::Continue(_)
+                        | InstructionKind::Iteration(_)
                         | InstructionKind::Statement => {}
                     }
                 }
