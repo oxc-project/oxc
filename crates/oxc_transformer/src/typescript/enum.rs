@@ -535,6 +535,16 @@ impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
                 None
             }
             Expression::Identifier(ident) => {
+                // If the identifier is binding in current/parent scopes,
+                // and it is not a member of the enum,
+                // we don't need to rename it.
+                // `var c = 1; enum A { a = c }` -> `var c = 1; enum A { a = c }
+                if !self.previous_enum_members.contains_key(&ident.name)
+                    && self.ctx.scopes().has_binding(self.ctx.current_scope_id(), &ident.name)
+                {
+                    return;
+                }
+
                 // TODO: shadowed case, e.g. let ident = 1; ident; // ident is not an enum
                 // enum_name.identifier
                 let ident_reference = IdentifierReference::new(SPAN, self.enum_name.clone());
