@@ -19,6 +19,7 @@ mod react;
 mod typescript;
 
 mod helpers {
+    pub mod bindings;
     pub mod module_imports;
 }
 
@@ -61,7 +62,7 @@ impl<'a> Transformer<'a> {
         source_path: &Path,
         source_type: SourceType,
         source_text: &'a str,
-        trivias: &'a Trivias,
+        trivias: Rc<Trivias>,
         options: TransformOptions,
     ) -> Self {
         let ctx = Rc::new(TransformCtx::new(

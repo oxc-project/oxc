@@ -230,6 +230,8 @@ fn should_attach_jsdoc(kind: &AstKind) -> bool {
 
 #[cfg(test)]
 mod test {
+    use std::rc::Rc;
+
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
@@ -246,7 +248,7 @@ mod test {
         let ret = Parser::new(allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
+            .with_trivias(Rc::new(ret.trivias))
             .build(program)
             .semantic;
         semantic

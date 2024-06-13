@@ -1,104 +1,10 @@
+commit: 17ba9aea
+
 codegen_runtime_test262 Summary:
-AST Parsed     : 19407/19407 (100.00%)
-Positive Passed: 19262/19407 (99.25%)
+AST Parsed     : 18685/18685 (100.00%)
+Positive Passed: 18586/18685 (99.47%)
 Expect to run correctly: "annexB/built-ins/String/prototype/substr/surrogate-pairs.js"
 But got a runtime error: Test262Error: start: 1 Expected SameValue(«�», «\udf06») to be true
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-block-decl-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-block-decl-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-else-decl-a-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-else-decl-b-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-else-stmt-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-decl-no-else-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-if-stmt-else-decl-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-switch-case-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-switch-case-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-switch-dflt-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/direct/global-switch-dflt-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-block-decl-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-block-decl-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-else-decl-a-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-else-decl-b-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-else-stmt-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-decl-no-else-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-if-stmt-else-decl-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-switch-case-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-switch-case-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-switch-dflt-eval-global-existing-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "annexB/language/eval-code/indirect/global-switch-dflt-eval-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
 
 Expect to run correctly: "annexB/language/global-code/block-decl-global-init.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
@@ -122,48 +28,6 @@ Expect to run correctly: "annexB/language/global-code/switch-case-global-init.js
 But got a runtime error: Test262Error: descriptor should be enumerable
 
 Expect to run correctly: "annexB/language/global-code/switch-dflt-global-init.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/direct/non-definable-global-function.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/eval-code/direct/non-definable-global-generator.js"
-But got a runtime error: Test262Error: Expected true but got false
-
-Expect to run correctly: "language/eval-code/direct/var-env-func-init-global-new.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/direct/var-env-func-init-global-update-configurable.js"
-But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should be writable
-
-Expect to run correctly: "language/eval-code/direct/var-env-func-init-global-update-non-configurable.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/direct/var-env-var-init-global-exstng.js"
-But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should not be configurable
-
-Expect to run correctly: "language/eval-code/direct/var-env-var-init-global-new.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/indirect/non-definable-global-function.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/indirect/non-definable-global-generator.js"
-But got a runtime error: Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
-
-Expect to run correctly: "language/eval-code/indirect/var-env-func-init-global-new.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/indirect/var-env-func-init-global-update-configurable.js"
-But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should be writable
-
-Expect to run correctly: "language/eval-code/indirect/var-env-func-init-global-update-non-configurable.js"
-But got a runtime error: Test262Error: descriptor should be enumerable
-
-Expect to run correctly: "language/eval-code/indirect/var-env-var-init-global-exstng.js"
-But got a runtime error: Test262Error: descriptor should be enumerable; descriptor should not be configurable
-
-Expect to run correctly: "language/eval-code/indirect/var-env-var-init-global-new.js"
 But got a runtime error: Test262Error: descriptor should be enumerable
 
 Expect to run correctly: "language/expressions/assignment/fn-name-lhs-cover.js"

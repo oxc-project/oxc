@@ -5,6 +5,7 @@ use std::{
     panic::UnwindSafe,
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    rc::Rc,
 };
 
 use console::Style;
@@ -55,7 +56,12 @@ pub struct CoverageReport<'a, T> {
 pub trait Suite<T: Case> {
     fn run(&mut self, name: &str, args: &AppArgs) {
         self.read_test_cases(name, args);
-        self.get_test_cases_mut().par_iter_mut().for_each(Case::run);
+        self.get_test_cases_mut().par_iter_mut().for_each(|case| {
+            if args.debug {
+                println!("{:?}", case.path());
+            }
+            case.run();
+        });
         self.run_coverage(name, args);
     }
 
@@ -327,7 +333,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
 
         let program = allocator.alloc(parser_ret.program);
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(parser_ret.trivias)
+            .with_trivias(Rc::new(parser_ret.trivias))
             .with_check_syntax_error(true)
             .build_module_record(PathBuf::new(), program)
             .build(program);

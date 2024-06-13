@@ -174,8 +174,8 @@ fn report_error(name: &str, err: &serde_json::Error, is_preset: bool, errors: &m
 #[test]
 fn test_deny_unknown_fields() {
     let options = serde_json::json!({
-      "plugins": [["transform-react-jsx", { "runtime": "automatic", "filter": 1 }]],
-      "sourceType": "module"
+        "plugins": [["transform-react-jsx", { "runtime": "automatic", "filter": 1 }]],
+        "sourceType": "module"
     });
     let babel_options = serde_json::from_value::<BabelOptions>(options).unwrap();
     let result = TransformOptions::from_babel_options(&babel_options);

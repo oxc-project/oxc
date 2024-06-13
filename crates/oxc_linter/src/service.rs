@@ -264,10 +264,12 @@ impl Runtime {
 
         let program = allocator.alloc(ret.program);
 
+        let trivias = Rc::new(ret.trivias);
+
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
         let semantic_builder = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
+            .with_trivias(trivias)
             .with_check_syntax_error(check_syntax_errors)
             .build_module_record(path.to_path_buf(), program);
         let module_record = semantic_builder.module_record();

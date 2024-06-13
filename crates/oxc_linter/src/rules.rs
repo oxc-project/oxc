@@ -112,6 +112,7 @@ mod eslint {
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
+    pub mod sort_imports;
     pub mod symbol_description;
     pub mod unicode_bom;
     pub mod use_isnan;
@@ -149,6 +150,7 @@ mod typescript {
 mod jest {
     pub mod expect_expect;
     pub mod max_expects;
+    pub mod max_nested_describe;
     pub mod no_alias_methods;
     pub mod no_commented_out_tests;
     pub mod no_conditional_expect;
@@ -392,6 +394,8 @@ mod jsdoc {
     pub mod implements_on_classes;
     pub mod no_defaults;
     pub mod require_param;
+    pub mod require_param_description;
+    pub mod require_param_name;
     pub mod require_param_type;
     pub mod require_property;
     pub mod require_property_description;
@@ -493,6 +497,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::radix,
     eslint::require_yield,
     eslint::symbol_description,
+    eslint::sort_imports,
     eslint::unicode_bom,
     eslint::use_isnan,
     eslint::valid_typeof,
@@ -528,6 +533,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_literal_enum_member,
     jest::expect_expect,
     jest::max_expects,
+    jest::max_nested_describe,
     jest::no_alias_methods,
     jest::no_commented_out_tests,
     jest::no_conditional_expect,
@@ -762,6 +768,8 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::implements_on_classes,
     jsdoc::no_defaults,
     jsdoc::require_param,
+    jsdoc::require_param_description,
+    jsdoc::require_param_name,
     jsdoc::require_param_type,
     jsdoc::require_property,
     jsdoc::require_property_type,

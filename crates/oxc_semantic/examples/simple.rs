@@ -1,4 +1,4 @@
-use std::{env, path::Path, sync::Arc};
+use std::{env, path::Path, rc::Rc, sync::Arc};
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
@@ -23,7 +23,7 @@ fn main() -> std::io::Result<()> {
 
     let semantic = SemanticBuilder::new(&source_text, source_type)
         .with_check_syntax_error(true)
-        .with_trivias(ret.trivias)
+        .with_trivias(Rc::new(ret.trivias))
         .build(program);
 
     if !semantic.errors.is_empty() {

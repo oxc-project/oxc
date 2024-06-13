@@ -1,19 +1,19 @@
-use std::{cell::Cell, rc::Rc};
+use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     identifier::{is_irregular_whitespace, is_line_terminator},
-    reference::{ReferenceFlag, ReferenceId},
-    symbol::{SymbolFlags, SymbolId},
+    reference::ReferenceFlag,
+    symbol::SymbolFlags,
     xml_entities::XML_ENTITIES,
 };
 use oxc_traverse::TraverseCtx;
 
 use crate::{
     context::{Ctx, TransformCtx},
-    helpers::module_imports::NamedImport,
+    helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
 };
 
 use super::diagnostics;
@@ -44,7 +44,6 @@ pub struct ReactJsx<'a> {
 
     // States
     bindings: Bindings<'a>,
-    can_add_filename_statement: bool,
 }
 
 /// Bindings for different import options
@@ -118,9 +117,8 @@ impl<'a> AutomaticScriptBindings<'a> {
         front: bool,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let root_scope_id = ctx.scopes().root_scope_id();
         let symbol_id =
-            ctx.generate_uid(variable_name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+            ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
         let variable_name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(variable_name.clone(), None, symbol_id);
@@ -220,8 +218,7 @@ impl<'a> AutomaticModuleBindings<'a> {
         source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let root_scope_id = ctx.scopes().root_scope_id();
-        let symbol_id = ctx.generate_uid(name, root_scope_id, SymbolFlags::FunctionScopedVariable);
+        let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::FunctionScopedVariable);
         let local = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
@@ -233,24 +230,6 @@ impl<'a> AutomaticModuleBindings<'a> {
 #[inline]
 fn get_import_source<'a>(jsx_runtime_importer: &Atom<'a>, react_importer_len: u32) -> Atom<'a> {
     Atom::from(&jsx_runtime_importer.as_str()[..react_importer_len as usize])
-}
-
-#[derive(Clone)]
-pub struct BoundIdentifier<'a> {
-    pub name: Atom<'a>,
-    pub symbol_id: SymbolId,
-}
-
-impl<'a> BoundIdentifier<'a> {
-    /// Create `IdentifierReference` referencing this binding which is read from
-    fn create_read_reference(&self, ctx: &mut TraverseCtx) -> IdentifierReference<'a> {
-        let reference_id = ctx.create_bound_reference(
-            self.name.to_compact_str(),
-            self.symbol_id,
-            ReferenceFlag::Read,
-        );
-        create_read_identifier_reference(SPAN, self.name.clone(), Some(reference_id))
-    }
 }
 
 /// Pragma used in classic mode
@@ -383,7 +362,6 @@ impl<'a> ReactJsx<'a> {
             jsx_self: ReactJsxSelf::new(Rc::clone(&ctx)),
             jsx_source: ReactJsxSource::new(ctx),
             bindings,
-            can_add_filename_statement: false,
         }
     }
 
@@ -420,8 +398,8 @@ impl<'a> ReactJsx<'a> {
 impl<'a> ReactJsx<'a> {
     pub fn add_runtime_imports(&mut self, program: &mut Program<'a>) {
         if self.bindings.is_classic() {
-            if self.can_add_filename_statement {
-                program.body.insert(0, self.jsx_source.get_var_file_name_statement());
+            if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
+                program.body.insert(0, stmt);
             }
             return;
         }
@@ -433,8 +411,8 @@ impl<'a> ReactJsx<'a> {
             .rposition(|stmt| matches!(stmt, Statement::ImportDeclaration(_)))
             .map_or(0, |i| i + 1);
 
-        if self.can_add_filename_statement {
-            program.body.insert(index, self.jsx_source.get_var_file_name_statement());
+        if let Some(stmt) = self.jsx_source.get_var_file_name_statement() {
+            program.body.insert(index, stmt);
             // If source type is module then we need to add the import statement after the var file name statement
             // Follow the same behavior as babel
             if !self.is_script() {
@@ -619,10 +597,9 @@ impl<'a> ReactJsx<'a> {
                 if let Some(span) = source_attr_span {
                     self.jsx_source.report_error(span);
                 } else {
-                    self.can_add_filename_statement = true;
                     let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
                     properties.push(
-                        self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column),
+                        self.jsx_source.get_object_property_kind_for_jsx_plugin(line, column, ctx),
                     );
                 }
             }
@@ -675,9 +652,8 @@ impl<'a> ReactJsx<'a> {
                     if let Some(span) = source_attr_span {
                         self.jsx_source.report_error(span);
                     } else {
-                        self.can_add_filename_statement = true;
                         let (line, column) = get_line_column(e.span().start, self.ctx.source_text);
-                        let expr = self.jsx_source.get_source_object(line, column);
+                        let expr = self.jsx_source.get_source_object(line, column, ctx);
                         arguments.push(Argument::from(expr));
                     }
                 }
@@ -1012,22 +988,7 @@ fn get_read_identifier_reference<'a>(
 ) -> IdentifierReference<'a> {
     let reference_id =
         ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlag::Read);
-    create_read_identifier_reference(span, name, Some(reference_id))
-}
-
-/// Create `IdentifierReference` which is read from
-#[inline]
-fn create_read_identifier_reference(
-    span: Span,
-    name: Atom,
-    reference_id: Option<ReferenceId>,
-) -> IdentifierReference {
-    IdentifierReference {
-        span,
-        name,
-        reference_id: Cell::new(reference_id),
-        reference_flag: ReferenceFlag::Read,
-    }
+    IdentifierReference::new_read(span, name, Some(reference_id))
 }
 
 fn create_static_member_expression<'a>(

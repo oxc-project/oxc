@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::{path::Path, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
@@ -28,7 +28,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                     Path::new(&file.file_name),
                     source_type,
                     source_text,
-                    &trivias,
+                    Rc::new(trivias),
                     transform_options,
                 )
                 .build(program)

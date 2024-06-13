@@ -1,0 +1,120 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 203
+expression: max_nested_describe
+---
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:7:37]
+  6 │                                     describe('quxx', function () {
+  7 │ ╭─▶                                     describe('over limit', function () {
+  8 │ │                                           it('should get something', () => {
+  9 │ │                                               expect(getSomething()).toBe('Something');
+ 10 │ │                                           });
+ 11 │ ╰─▶                                     });
+ 12 │                                     });
+    ╰────
+  help: Too many nested describe calls (6) - maximum allowed is 5
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:7:37]
+  6 │                                     describe('baz2', () => {
+  7 │ ╭─▶                                     describe('baz3', () => {
+  8 │ │                                           it('should get something', () => {
+  9 │ │                                               expect(getSomething()).toBe('Something');
+ 10 │ │                                           });
+ 11 │ ╰─▶                                     });
+ 12 │     
+    ╰────
+  help: Too many nested describe calls (6) - maximum allowed is 5
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:13:37]
+ 12 │     
+ 13 │ ╭─▶                                     describe('baz4', () => {
+ 14 │ │                                           it('should get something', () => {
+ 15 │ │                                               expect(getSomething()).toBe('Something');
+ 16 │ │                                           });
+ 17 │ ╰─▶                                     });
+ 18 │                                     });
+    ╰────
+  help: Too many nested describe calls (6) - maximum allowed is 5
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:22:25]
+ 21 │     
+ 22 │ ╭─▶                         describe('qux', function () {
+ 23 │ │                               it('should get something', () => {
+ 24 │ │                                   expect(getSomething()).toBe('Something');
+ 25 │ │                               });
+ 26 │ ╰─▶                         });
+ 27 │                         })
+    ╰────
+  help: Too many nested describe calls (6) - maximum allowed is 5
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+   ╭─[max_nested_describe.tsx:4:25]
+ 3 │                         describe.only('bar', () => {
+ 4 │ ╭─▶                         describe.skip('baz', () => {
+ 5 │ │                               it('should get something', () => {
+ 6 │ │                                   expect(getSomething()).toBe('Something');
+ 7 │ │                               });
+ 8 │ ╰─▶                         });
+ 9 │     
+   ╰────
+  help: Too many nested describe calls (3) - maximum allowed is 2
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:10:25]
+  9 │     
+ 10 │ ╭─▶                         describe('baz', () => {
+ 11 │ │                               it('should get something', () => {
+ 12 │ │                                   expect(getSomething()).toBe('Something');
+ 13 │ │                               });
+ 14 │ ╰─▶                         });
+ 15 │                         });
+    ╰────
+  help: Too many nested describe calls (3) - maximum allowed is 2
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+    ╭─[max_nested_describe.tsx:18:17]
+ 17 │     
+ 18 │ ╭─▶                 xdescribe('qux', () => {
+ 19 │ │                       it('should get something', () => {
+ 20 │ │                           expect(getSomething()).toBe('Something');
+ 21 │ │                       });
+ 22 │ ╰─▶                 });
+ 23 │                 
+    ╰────
+  help: Too many nested describe calls (3) - maximum allowed is 2
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+   ╭─[max_nested_describe.tsx:2:17]
+ 1 │     
+ 2 │ ╭─▶                 describe('qux', () => {
+ 3 │ │                       it('should get something', () => {
+ 4 │ │                           expect(getSomething()).toBe('Something');
+ 5 │ │                       });
+ 6 │ ╰─▶                 });
+ 7 │                 
+   ╰────
+  help: Too many nested describe calls (1) - maximum allowed is 0
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+   ╭─[max_nested_describe.tsx:3:21]
+ 2 │                 describe('foo', () => {
+ 3 │                     describe.each(['hello', 'world'])("%s", (a) => {});
+   ·                     ──────────────────────────────────────────────────
+ 4 │                 });
+   ╰────
+  help: Too many nested describe calls (2) - maximum allowed is 1
+
+  ⚠ eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.
+   ╭─[max_nested_describe.tsx:3:21]
+ 2 │                     describe('foo', () => {
+ 3 │ ╭─▶                     describe.each`
+ 4 │ │                       foo  | bar
+ 5 │ │                       ${'1'} | ${'2'}
+ 6 │ ╰─▶                     `('$foo $bar', ({ foo, bar }) => {});
+ 7 │                     });
+   ╰────
+  help: Too many nested describe calls (2) - maximum allowed is 1

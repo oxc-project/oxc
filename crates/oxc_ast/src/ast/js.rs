@@ -462,6 +462,15 @@ impl<'a> IdentifierReference<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
     }
+
+    pub fn new_read(span: Span, name: Atom<'a>, reference_id: Option<ReferenceId>) -> Self {
+        Self {
+            span,
+            name,
+            reference_id: Cell::new(reference_id),
+            reference_flag: ReferenceFlag::Read,
+        }
+    }
 }
 
 /// Binding Identifier
@@ -801,17 +810,9 @@ impl<'a> MemberExpression<'a> {
 
     pub fn static_property_name(&self) -> Option<&str> {
         match self {
-            MemberExpression::ComputedMemberExpression(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some(&lit.value),
-                Expression::TemplateLiteral(lit) => {
-                    if lit.expressions.is_empty() && lit.quasis.len() == 1 {
-                        Some(&lit.quasis[0].value.raw)
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
+            MemberExpression::ComputedMemberExpression(expr) => {
+                expr.static_property_name().map(|name| name.as_str())
+            }
             MemberExpression::StaticMemberExpression(expr) => Some(expr.property.name.as_str()),
             MemberExpression::PrivateFieldExpression(_) => None,
         }
@@ -872,6 +873,20 @@ pub struct ComputedMemberExpression<'a> {
     pub object: Expression<'a>,
     pub expression: Expression<'a>,
     pub optional: bool, // for optional chaining
+}
+
+impl<'a> ComputedMemberExpression<'a> {
+    pub fn static_property_name(&self) -> Option<Atom<'a>> {
+        match &self.expression {
+            Expression::StringLiteral(lit) => Some(lit.value.clone()),
+            Expression::TemplateLiteral(lit)
+                if lit.expressions.is_empty() && lit.quasis.len() == 1 =>
+            {
+                Some(lit.quasis[0].value.raw.clone())
+            }
+            _ => None,
+        }
+    }
 }
 
 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
@@ -2516,7 +2531,10 @@ impl<'a> FunctionBody<'a> {
 }
 
 /// Arrow Function Definitions
-#[visited_node(scope(ScopeFlags::Function | ScopeFlags::Arrow))]
+#[visited_node(
+    scope(ScopeFlags::Function | ScopeFlags::Arrow),
+    strict_if(self.body.has_use_strict_directive())
+)]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -3102,6 +3120,22 @@ pub enum ImportDeclarationSpecifier<'a> {
     ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>),
     /// import * as local from "source"
     ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>),
+}
+
+impl<'a> ImportDeclarationSpecifier<'a> {
+    pub fn name(&self) -> CompactStr {
+        match self {
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
+                specifier.local.name.to_compact_str()
+            }
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
+                specifier.local.name.to_compact_str()
+            }
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
+                specifier.local.name.to_compact_str()
+            }
+        }
+    }
 }
 
 // import {imported} from "source"

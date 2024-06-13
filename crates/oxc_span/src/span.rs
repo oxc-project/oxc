@@ -118,6 +118,21 @@ impl Span {
         self.start == self.end
     }
 
+    /// Returns `true` if `self` is not a real span.
+    /// i.e. `SPAN` which is used for generated nodes which are not in source code.
+    ///
+    /// # Example
+    /// ```
+    /// use oxc_span::{Span, SPAN};
+    ///
+    /// assert!(SPAN.is_unspanned());
+    /// assert!(!Span::new(0, 5).is_unspanned());
+    /// assert!(!Span::new(5, 5).is_unspanned());
+    /// ```
+    pub const fn is_unspanned(&self) -> bool {
+        self.start == SPAN.start && self.end == SPAN.end
+    }
+
     /// Create a [`Span`] covering the maximum range of two [`Span`]s.
     ///
     /// # Example
