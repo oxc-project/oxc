@@ -25,6 +25,9 @@ cargo watch -x 'coverage js --filter filter-file-path'
 
 # find crash scene by turning off rayon and print out the test cases in serial
 cargo coverage -- --debug
+
+# Run after submodules are updated
+UPDATE_SNAPSHOT=1 just c
 ```
 
 <!-- Links -->

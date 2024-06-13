@@ -1,4 +1,4 @@
-use std::{env, path::Path, rc::Rc};
+use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
@@ -22,7 +22,6 @@ fn main() {
     let source_type = SourceType::from_path(path).unwrap();
 
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
-    let trivias = Rc::new(ret.trivias);
 
     if !ret.errors.is_empty() {
         for error in ret.errors {
@@ -47,11 +46,18 @@ fn main() {
         },
         ..Default::default()
     };
-    Transformer::new(&allocator, path, source_type, &source_text, trivias, transform_options)
-        .build(&mut program)
-        .unwrap();
+    Transformer::new(
+        &allocator,
+        path,
+        source_type,
+        &source_text,
+        ret.trivias.clone(),
+        transform_options,
+    )
+    .build(&mut program)
+    .unwrap();
 
-    let printed = Codegen::<false>::new("", &source_text, CodegenOptions::default(), None)
+    let printed = Codegen::<false>::new("", &source_text, ret.trivias, CodegenOptions::default())
         .build(&program)
         .source_text;
     println!("Transformed:\n");

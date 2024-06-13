@@ -43,7 +43,7 @@ declare_oxc_lint!(
 
 impl Rule for NoNamedAsDefault {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(import_span) = &import_entry.import_name else {
                 continue;

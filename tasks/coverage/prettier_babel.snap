@@ -1,8 +1,8 @@
-commit: 4bd1b2c2
+commit: 12619ffe
 
 prettier_babel Summary:
-AST Parsed     : 2099/2099 (100.00%)
-Positive Passed: 1893/2099 (90.19%)
+AST Parsed     : 2101/2101 (100.00%)
+Positive Passed: 1893/2101 (90.10%)
 Expect to Parse: "comments/attachComment-false/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/object-expression-trailing-comma/input.js"
@@ -41,6 +41,8 @@ Expect to Parse: "typescript/class/predicate-types/input.ts"
 Expect to Parse: "typescript/class/private-method-overload/input.ts"
 Expect to Parse: "typescript/const/initializer-ambient-context/input.ts"
 Expect to Parse: "typescript/declare/destructure/input.ts"
+Expect to Parse: "typescript/declare/eval/input.ts"
+Expect to Parse: "typescript/declare/eval-dts/input.ts"
 Expect to Parse: "typescript/declare/pattern-parameters/input.ts"
 Expect to Parse: "typescript/declare/pattern-parameters-babel-7/input.ts"
 Expect to Parse: "typescript/enum/const/input.ts"

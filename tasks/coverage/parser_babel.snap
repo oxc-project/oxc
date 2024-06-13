@@ -1,8 +1,8 @@
-commit: 4bd1b2c2
+commit: 12619ffe
 
 parser_babel Summary:
-AST Parsed     : 2093/2099 (99.71%)
-Positive Passed: 2086/2099 (99.38%)
+AST Parsed     : 2095/2101 (99.71%)
+Positive Passed: 2087/2101 (99.33%)
 Negative Passed: 1362/1501 (90.74%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -287,6 +287,39 @@ Expect to Parse: "typescript/class/properties/input.ts"
    ·     ╰── It can not be redeclared here
  8 │ }
    ╰────
+Expect to Parse: "typescript/declare/eval/input.ts"
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/declare/eval/input.ts:3:25]
+ 2 │     export namespace ns {
+ 3 │         export function eval(): void;
+   ·                         ────
+ 4 │         export function arguments(): void;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[typescript/declare/eval/input.ts:4:25]
+ 3 │         export function eval(): void;
+ 4 │         export function arguments(): void;
+   ·                         ─────────
+ 5 │     }
+   ╰────
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[typescript/declare/eval/input.ts:8:18]
+ 7 │ 
+ 8 │ declare function eval(): void;
+   ·                  ────
+ 9 │ declare function arguments(): void;
+   ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+    ╭─[typescript/declare/eval/input.ts:9:18]
+  8 │ declare function eval(): void;
+  9 │ declare function arguments(): void;
+    ·                  ─────────
+ 10 │ 
+    ╰────
 Expect to Parse: "typescript/function/declare-pattern-parameters/input.ts"
 
   × A required parameter cannot follow an optional parameter.

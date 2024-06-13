@@ -1,8 +1,8 @@
-commit: 17ba9aea
+commit: a1587416
 
 parser_test262 Summary:
-AST Parsed     : 45289/45289 (100.00%)
-Positive Passed: 45289/45289 (100.00%)
+AST Parsed     : 45859/45859 (100.00%)
+Positive Passed: 45859/45859 (100.00%)
 Negative Passed: 3925/3929 (99.90%)
 Expect Syntax Error: "language/import/import-assertions/json-invalid.js"
 Expect Syntax Error: "language/import/import-assertions/json-named-bindings.js"
@@ -34466,13 +34466,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
   help: Wrap this declaration in a block statement
 
   × 'with' statements are not allowed
-    ╭─[language/statements/with/stict-script.js:17:1]
- 16 │ 
- 17 │ with ({}) {}
-    · ────
-    ╰────
-
-  × 'with' statements are not allowed
     ╭─[language/statements/with/strict-fn-decl-nested-1.js:21:5]
  20 │     var o = {};
  21 │     with (o) {};
@@ -34509,6 +34502,13 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  16 │ 
  17 │ var obj = { get(a) { with(a){} } };
     ·                      ────
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/strict-script.js:17:1]
+ 16 │ 
+ 17 │ with ({}) {}
+    · ────
     ╰────
 
   × Cannot assign to this expression

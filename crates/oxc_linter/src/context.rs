@@ -3,6 +3,7 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::{SourceType, Span};
+use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -35,7 +36,8 @@ pub struct LintContext<'a> {
 impl<'a> LintContext<'a> {
     pub fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
         let disable_directives =
-            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias()).build();
+            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias().clone())
+                .build();
         Self {
             semantic,
             diagnostics: RefCell::new(vec![]),
@@ -169,6 +171,10 @@ impl<'a> LintContext<'a> {
 
     pub fn symbols(&self) -> &SymbolTable {
         self.semantic().symbols()
+    }
+
+    pub fn module_record(&self) -> &ModuleRecord {
+        self.semantic().module_record()
     }
 
     /* JSDoc */

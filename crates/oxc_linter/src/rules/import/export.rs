@@ -35,7 +35,7 @@ declare_oxc_lint!(
 
 impl Rule for Export {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         let named_export = &module_record.exported_bindings;
 
         let mut all_export_names = FxHashMap::default();

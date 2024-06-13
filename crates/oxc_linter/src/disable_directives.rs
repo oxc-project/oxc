@@ -46,9 +46,9 @@ impl<'a> DisableDirectives<'a> {
     }
 }
 
-pub struct DisableDirectivesBuilder<'a, 'b> {
+pub struct DisableDirectivesBuilder<'a> {
     source_text: &'a str,
-    trivias: &'b Trivias,
+    trivias: Trivias,
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
     /// Start of `eslint-disable` or `oxlint-disable`
@@ -61,8 +61,8 @@ pub struct DisableDirectivesBuilder<'a, 'b> {
     disable_rule_comments: Vec<DisableRuleComment<'a>>,
 }
 
-impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
-    pub fn new(source_text: &'a str, trivias: &'b Trivias) -> Self {
+impl<'a> DisableDirectivesBuilder<'a> {
+    pub fn new(source_text: &'a str, trivias: Trivias) -> Self {
         Self {
             source_text,
             trivias,
@@ -93,7 +93,7 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
         // This algorithm iterates through the comments and builds all intervals
         // for matching disable and enable pairs.
         // Wrongly ordered matching pairs are not taken into consideration.
-        for (_, span) in self.trivias.comments() {
+        for (_, span) in self.trivias.clone().comments() {
             let text = span.source_text(self.source_text);
             let text = text.trim_start();
 

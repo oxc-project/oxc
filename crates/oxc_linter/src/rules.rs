@@ -127,6 +127,7 @@ mod typescript {
     pub mod ban_types;
     pub mod consistent_indexed_object_style;
     pub mod consistent_type_definitions;
+    pub mod explicit_function_return_type;
     pub mod no_duplicate_enum_values;
     pub mod no_empty_interface;
     pub mod no_explicit_any;
@@ -137,6 +138,7 @@ mod typescript {
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
+    pub mod no_useless_empty_export;
     pub mod no_var_requires;
     pub mod prefer_as_const;
     pub mod prefer_enum_initializers;
@@ -524,6 +526,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_this_alias,
     typescript::no_unnecessary_type_constraint,
     typescript::no_unsafe_declaration_merging,
+    typescript::no_useless_empty_export,
     typescript::no_var_requires,
     typescript::prefer_as_const,
     typescript::prefer_for_of,
@@ -531,6 +534,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_ts_expect_error,
     typescript::triple_slash_reference,
     typescript::prefer_literal_enum_member,
+    typescript::explicit_function_return_type,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,

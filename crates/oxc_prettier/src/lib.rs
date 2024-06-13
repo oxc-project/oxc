@@ -70,10 +70,11 @@ impl<'a> DocBuilder<'a> for Prettier<'a> {
 }
 
 impl<'a> Prettier<'a> {
+    #[allow(clippy::needless_pass_by_value)]
     pub fn new(
         allocator: &'a Allocator,
         source_text: &'a str,
-        trivias: &Trivias,
+        trivias: Trivias,
         options: PrettierOptions,
     ) -> Self {
         Self {

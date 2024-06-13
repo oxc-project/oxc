@@ -62,7 +62,7 @@ fn get_symbol_id_from_ident(
 
 impl Rule for NoNamedAsDefaultMember {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
 
         let mut has_members_map: HashMap<SymbolId, (Ref<'_, CompactStr, _, _>, CompactStr)> =
             HashMap::default();

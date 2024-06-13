@@ -43,7 +43,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDefaultExport {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         write_diagnostic_optional(ctx, module_record.export_default);
         module_record.export_default_duplicated.iter().for_each(|it| write_diagnostic(ctx, *it));
         write_diagnostic_optional(ctx, module_record.exported_bindings.get("default").copied());

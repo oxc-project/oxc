@@ -13,7 +13,7 @@ mod reference;
 mod scope;
 mod symbol;
 
-use std::{rc::Rc, sync::Arc};
+use std::sync::Arc;
 
 pub use petgraph;
 pub use petgraph::algo;
@@ -57,7 +57,7 @@ pub struct Semantic<'a> {
 
     classes: ClassTable,
 
-    trivias: Rc<Trivias>,
+    trivias: Trivias,
 
     module_record: Arc<ModuleRecord>,
 
@@ -105,8 +105,8 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    pub fn module_record(&self) -> &Arc<ModuleRecord> {
-        &self.module_record
+    pub fn module_record(&self) -> &ModuleRecord {
+        self.module_record.as_ref()
     }
 
     pub fn symbols(&self) -> &SymbolTable {

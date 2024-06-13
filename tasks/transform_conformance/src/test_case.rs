@@ -1,7 +1,6 @@
 use std::{
     fs,
     path::{Path, PathBuf},
-    rc::Rc,
 };
 
 use oxc_allocator::Allocator;
@@ -177,7 +176,7 @@ pub trait TestCase {
             path,
             source_type,
             &source_text,
-            Rc::new(ret.trivias),
+            ret.trivias.clone(),
             transform_options.clone(),
         )
         .build(&mut program);
@@ -186,8 +185,8 @@ pub trait TestCase {
             Codegen::<false>::new(
                 "",
                 &source_text,
+                ret.trivias,
                 CodegenOptions::default().with_typescript(true),
-                None,
             )
             .build(&program)
             .source_text
@@ -271,14 +270,15 @@ impl TestCase for ConformanceTestCase {
                         &self.path,
                         source_type,
                         &input,
-                        Rc::new(ret.trivias),
+                        ret.trivias.clone(),
                         transform_options.clone(),
                     );
                     let result = transformer.build(&mut program);
                     if result.is_ok() {
-                        transformed_code = Codegen::<false>::new("", &input, codegen_options, None)
-                            .build(&program)
-                            .source_text;
+                        transformed_code =
+                            Codegen::<false>::new("", &input, ret.trivias, codegen_options)
+                                .build(&program)
+                                .source_text;
                     } else {
                         let error = result
                             .err()
@@ -319,9 +319,9 @@ impl TestCase for ConformanceTestCase {
             },
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
-                let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new("", &output, codegen_options, None)
-                    .build(&program)
+                let ret = Parser::new(&allocator, &output, source_type).parse();
+                Codegen::<false>::new("", &output, ret.trivias, codegen_options)
+                    .build(&ret.program)
                     .source_text
             },
         );
@@ -386,15 +386,14 @@ impl ExecTestCase {
         fs::write(&target_path, content).unwrap();
         let source_text = fs::read_to_string(&target_path).unwrap();
         let source_type = SourceType::from_path(&target_path).unwrap();
-        let transformed_program =
-            Parser::new(&allocator, &source_text, source_type).parse().program;
+        let transformed_ret = Parser::new(&allocator, &source_text, source_type).parse();
         let result = Codegen::<false>::new(
             "",
             &source_text,
+            transformed_ret.trivias,
             CodegenOptions::default().with_typescript(true),
-            None,
         )
-        .build(&transformed_program)
+        .build(&transformed_ret.program)
         .source_text;
 
         fs::write(&target_path, result).unwrap();

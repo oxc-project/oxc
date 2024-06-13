@@ -68,11 +68,11 @@ fn get_normal_result(
     let options = CodegenOptions::default().with_typescript(source_type.is_typescript());
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = Codegen::<false>::new("", source_text, options, None)
+    let source_text1 = Codegen::<false>::new("", source_text, parse_result1.trivias, options)
         .build(&parse_result1.program)
         .source_text;
     let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
-    let source_text2 = Codegen::<false>::new("", &source_text1, options, None)
+    let source_text2 = Codegen::<false>::new("", &source_text1, parse_result2.trivias, options)
         .build(&parse_result2.program)
         .source_text;
     let result = source_text1 == source_text2;
@@ -111,11 +111,12 @@ fn get_minify_result(
     let options = CodegenOptions::default().with_typescript(source_type.is_typescript());
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = Codegen::<true>::new("", source_text, options, None)
-        .build(&parse_result1.program)
-        .source_text;
+    let source_text1 =
+        Codegen::<true>::new("", source_text, parse_result1.trivias.clone(), options)
+            .build(&parse_result1.program)
+            .source_text;
     let parse_result2 = Parser::new(&allocator, source_text1.as_str(), source_type).parse();
-    let source_text2 = Codegen::<true>::new("", &source_text1, options, None)
+    let source_text2 = Codegen::<true>::new("", &source_text1, parse_result2.trivias, options)
         .build(&parse_result2.program)
         .source_text;
     let result = source_text1 == source_text2;

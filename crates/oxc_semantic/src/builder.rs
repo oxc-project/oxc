@@ -1,6 +1,6 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
+use std::{cell::RefCell, path::PathBuf, sync::Arc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
@@ -35,7 +35,7 @@ pub struct SemanticBuilder<'a> {
 
     pub source_type: SourceType,
 
-    trivias: Rc<Trivias>,
+    trivias: Trivias,
 
     /// Semantic early errors such as redeclaration errors.
     errors: RefCell<Vec<OxcDiagnostic>>,
@@ -82,11 +82,11 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
-        let trivias = Rc::new(Trivias::default());
+        let trivias = Trivias::default();
         Self {
             source_text,
             source_type,
-            trivias: Rc::clone(&trivias),
+            trivias: trivias.clone(),
             errors: RefCell::new(vec![]),
             current_node_id: AstNodeId::new(0),
             current_node_flags: NodeFlags::empty(),
@@ -108,9 +108,9 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     #[must_use]
-    pub fn with_trivias(mut self, trivias: Rc<Trivias>) -> Self {
-        self.trivias = trivias;
-        self.jsdoc = JSDocBuilder::new(self.source_text, Rc::clone(&self.trivias));
+    pub fn with_trivias(mut self, trivias: Trivias) -> Self {
+        self.trivias = trivias.clone();
+        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
         self
     }
 

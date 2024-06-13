@@ -43,11 +43,11 @@ impl Rule for NoExport {
             return;
         }
 
-        for span in ctx.semantic().module_record().exported_bindings.values() {
+        for span in ctx.module_record().exported_bindings.values() {
             ctx.diagnostic(no_export_diagnostic(*span));
         }
 
-        if let Some(span) = ctx.semantic().module_record().export_default {
+        if let Some(span) = ctx.module_record().export_default {
             ctx.diagnostic(no_export_diagnostic(span));
         }
     }
