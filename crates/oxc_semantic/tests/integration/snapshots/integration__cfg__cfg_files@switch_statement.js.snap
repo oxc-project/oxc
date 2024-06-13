@@ -90,14 +90,17 @@ bb18: {
 
 bb19: {
 	unreachable
+}
+
+bb20: {
 	statement
 	return <value>
 }
 
-bb20: {
+bb21: {
 	unreachable
 }
 
-bb21: {
+bb22: {
 
 }

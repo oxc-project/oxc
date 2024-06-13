@@ -1027,37 +1027,37 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let discriminant_graph_ix = self.cfg.current_node_ix;
-        self.cfg.switch_case_conditions.push(vec![]);
 
         self.cfg.ctx(None).default().allow_break();
-        let mut ends_of_switch_cases = vec![];
+        let mut switch_case_graph_spans = vec![];
+        let mut have_default_case = false;
         /* cfg */
 
         for case in &stmt.cases {
+            let before_case_graph_ix = self.cfg.new_basic_block_normal();
             self.visit_switch_case(case);
-            ends_of_switch_cases.push(self.cfg.current_node_ix);
+            if case.is_default_case() {
+                have_default_case = true;
+            }
+            switch_case_graph_spans.push((before_case_graph_ix, self.cfg.current_node_ix));
         }
 
         /* cfg */
-        let switch_case_conditions = self.cfg.switch_case_conditions.pop().expect(
-            "there must be a corresponding previous_switch_case_last_block in a switch statement",
-        );
-
         // for each switch case
-        for i in 0..switch_case_conditions.len() {
-            let switch_case_condition_graph_ix = switch_case_conditions[i];
+        for i in 0..switch_case_graph_spans.len() {
+            let case_graph_span = switch_case_graph_spans[i];
 
             // every switch case condition can be skipped,
             // so there's a possible jump from it to the next switch case condition
-            for y in switch_case_conditions.iter().skip(i + 1) {
-                self.cfg.add_edge(switch_case_condition_graph_ix, *y, EdgeType::Normal);
+            for y in switch_case_graph_spans.iter().skip(i + 1) {
+                self.cfg.add_edge(case_graph_span.0, y.0, EdgeType::Normal);
             }
 
             // connect the end of each switch statement to
             // the condition of the next switch statement
-            if switch_case_conditions.len() > i + 1 {
-                let end_of_switch_case = ends_of_switch_cases[i];
-                let next_switch_statement_condition = switch_case_conditions[i + 1];
+            if switch_case_graph_spans.len() > i + 1 {
+                let (_, end_of_switch_case) = switch_case_graph_spans[i];
+                let (next_switch_statement_condition, _) = switch_case_graph_spans[i + 1];
 
                 self.cfg.add_edge(
                     end_of_switch_case,
@@ -1066,19 +1066,26 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
                 );
             }
 
+            self.cfg.add_edge(discriminant_graph_ix, case_graph_span.0, EdgeType::Normal);
+        }
+
+        let end_of_switch_case_statement = self.cfg.new_basic_block_normal();
+
+        if let Some(last) = switch_case_graph_spans.last() {
+            self.cfg.add_edge(last.1, end_of_switch_case_statement, EdgeType::Normal);
+        }
+
+        // if we don't have a default case there should be an edge from discriminant to the end of
+        // the statement.
+        if !have_default_case {
             self.cfg.add_edge(
                 discriminant_graph_ix,
-                switch_case_condition_graph_ix,
+                end_of_switch_case_statement,
                 EdgeType::Normal,
             );
         }
 
-        if let Some(last) = switch_case_conditions.last() {
-            self.cfg.add_edge(*last, self.cfg.current_node_ix, EdgeType::Normal);
-        }
-
-        let current_node_ix = self.cfg.current_node_ix;
-        self.cfg.ctx(None).mark_break(current_node_ix).resolve();
+        self.cfg.ctx(None).mark_break(end_of_switch_case_statement).resolve();
         /* cfg */
 
         self.leave_scope();
@@ -1089,24 +1096,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::SwitchCase(self.alloc(case));
         self.enter_node(kind);
 
-        /* cfg */
-        // make a new basic block so that we can jump to it later from the switch
-        //   discriminant and the switch cases above it (if they don't test ss true)
-        let switch_cond_graph_ix = self.cfg.new_basic_block_normal();
-        self.cfg
-            .switch_case_conditions
-            .last_mut()
-            .expect("there must be a switch_case_conditions while in a switch case")
-            .push(switch_cond_graph_ix);
-        /* cfg */
-
         if let Some(expr) = &case.test {
             self.visit_expression(expr);
         }
 
         /* cfg */
+        let after_test_graph_ix = self.cfg.current_node_ix;
         let statements_in_switch_graph_ix = self.cfg.new_basic_block_normal();
-        self.cfg.add_edge(switch_cond_graph_ix, statements_in_switch_graph_ix, EdgeType::Normal);
+        self.cfg.add_edge(after_test_graph_ix, statements_in_switch_graph_ix, EdgeType::Normal);
         /* cfg */
 
         self.visit_statements(&case.consequent);
