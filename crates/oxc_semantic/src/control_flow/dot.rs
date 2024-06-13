@@ -3,7 +3,10 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_syntax::node::AstNodeId;
-use petgraph::dot::{Config, Dot};
+use petgraph::{
+    dot::{Config, Dot},
+    visit::EdgeRef,
+};
 
 use crate::{
     AstNode, AstNodes, BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind,
@@ -56,7 +59,9 @@ impl DisplayDot for ControlFlowGraph {
                 &|_graph, edge| {
                     let weight = edge.weight();
                     let label = format!("label = \"{weight:?}\" ");
-                    if matches!(weight, EdgeType::Unreachable) {
+                    if matches!(weight, EdgeType::Unreachable)
+                        || self.basic_block(edge.source()).unreachable
+                    {
                         format!("{label}, style = \"dotted\" ")
                     } else {
                         label
@@ -115,7 +120,9 @@ impl DebugDot for ControlFlowGraph {
                 &|_graph, edge| {
                     let weight = edge.weight();
                     let label = format!("label = \"{weight:?}\" ");
-                    if matches!(weight, EdgeType::Unreachable) {
+                    if matches!(weight, EdgeType::Unreachable)
+                        || self.basic_block(edge.source()).unreachable
+                    {
                         format!("{label}, style = \"dotted\" ")
                     } else {
                         label

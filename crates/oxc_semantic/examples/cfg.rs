@@ -5,7 +5,10 @@ use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_semantic::{DebugDot, DisplayDot, EdgeType, SemanticBuilder};
 use oxc_span::SourceType;
-use petgraph::dot::{Config, Dot};
+use petgraph::{
+    dot::{Config, Dot},
+    visit::EdgeRef,
+};
 
 // Instruction:
 // 1. create a `test.js`,
@@ -91,8 +94,10 @@ fn main() -> std::io::Result<()> {
             &|_graph, edge| {
                 let weight = edge.weight();
                 let label = format!("label = \"{weight:?}\"");
-                if matches!(weight, EdgeType::Unreachable) {
-                    format!("{label}, style = \"dotted\"")
+                if matches!(weight, EdgeType::Unreachable)
+                    || semantic.semantic.cfg().basic_block(edge.source()).unreachable
+                {
+                    format!("{label}, style = \"dotted\" ")
                 } else {
                     label
                 }
