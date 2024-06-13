@@ -193,6 +193,11 @@ impl GetterReturn {
                 | EdgeType::NewFunction
                 // Unreachable nodes aren't reachable so we don't follow them.
                 | EdgeType::Unreachable
+                // TODO: For now we ignore the error path to simplify this rule, We can also
+                // analyze the error path as a nice to have addition.
+                | EdgeType::Error(_)
+                | EdgeType::Finalize
+                | EdgeType::Join
                 // By returning Some(X),
                 // we signal that we don't walk to this path any farther.
                 //

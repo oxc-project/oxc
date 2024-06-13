@@ -8,7 +8,7 @@ bb0: {
 }
 
 bb1: {
-	statement
+
 }
 
 bb2: {
@@ -17,19 +17,19 @@ bb2: {
 
 bb3: {
 	statement
-	break
 }
 
 bb4: {
-	unreachable
+
 }
 
 bb5: {
-
+	statement
+	break
 }
 
 bb6: {
-	statement
+	unreachable
 }
 
 bb7: {
@@ -38,18 +38,26 @@ bb7: {
 
 bb8: {
 	statement
-	break
 }
 
 bb9: {
-	unreachable
+
 }
 
 bb10: {
-
+	statement
+	break
 }
 
 bb11: {
+	unreachable
+}
+
+bb12: {
+
+}
+
+bb13: {
 	statement
 	statement
 	statement
@@ -57,18 +65,8 @@ bb11: {
 	return <value>
 }
 
-bb12: {
-	unreachable
-}
-
-bb13: {
-
-}
-
 bb14: {
-	statement
-	statement
-	statement
+	unreachable
 }
 
 bb15: {
@@ -77,19 +75,29 @@ bb15: {
 
 bb16: {
 	statement
-	return <value>
+	statement
+	statement
 }
 
 bb17: {
+
+}
+
+bb18: {
+	statement
+	return <value>
+}
+
+bb19: {
 	unreachable
 	statement
 	return <value>
 }
 
-bb18: {
+bb20: {
 	unreachable
 }
 
-bb19: {
+bb21: {
 
 }

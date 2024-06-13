@@ -8,8 +8,7 @@ bb0: {
 }
 
 bb1: {
-	statement
-	statement
+
 }
 
 bb2: {
@@ -17,51 +16,60 @@ bb2: {
 }
 
 bb3: {
-
+	statement
+	statement
 }
 
 bb4: {
+
+}
+
+bb5: {
+
+}
+
+bb6: {
 	statement
 	statement
 }
 
-bb5: {
+bb7: {
 	statement
 	statement
 	break
 }
 
-bb6: {
+bb8: {
 	unreachable
 }
 
-bb7: {
+bb9: {
 	statement
 }
 
-bb8: {
+bb10: {
 	statement
 	statement
 	continue
 }
 
-bb9: {
+bb11: {
 	unreachable
 }
 
-bb10: {
-
-}
-
-bb11: {
-	statement
-	statement
-}
-
 bb12: {
-	statement
+
 }
 
 bb13: {
+	statement
+	statement
+}
+
+bb14: {
+	statement
+}
+
+bb15: {
 
 }

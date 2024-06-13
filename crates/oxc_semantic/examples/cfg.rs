@@ -90,7 +90,7 @@ fn main() -> std::io::Result<()> {
             &[Config::EdgeNoLabel, Config::NodeNoLabel],
             &|_graph, edge| {
                 let weight = edge.weight();
-                let label = format!("label = {weight:?}");
+                let label = format!("label = \"{weight:?}\"");
                 if matches!(weight, EdgeType::Unreachable) {
                     format!("{label}, style = \"dotted\"")
                 } else {

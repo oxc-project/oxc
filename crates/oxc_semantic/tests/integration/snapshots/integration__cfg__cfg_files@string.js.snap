@@ -6,3 +6,7 @@ input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/string.js
 bb0: {
 
 }
+
+bb1: {
+
+}

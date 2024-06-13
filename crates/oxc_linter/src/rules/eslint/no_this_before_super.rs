@@ -7,7 +7,10 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{pg::neighbors_filtered_by_edge_weight, AstNodeId, BasicBlockId, EdgeType};
+use oxc_semantic::{
+    petgraph::visit::EdgeRef, pg::neighbors_filtered_by_edge_weight, AstNodeId, BasicBlockId,
+    ControlFlowGraph, EdgeType,
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -48,6 +51,7 @@ enum DefinitelyCallsThisBeforeSuper {
     #[default]
     No,
     Yes,
+    Maybe(BasicBlockId),
 }
 
 impl Rule for NoThisBeforeSuper {
@@ -99,35 +103,20 @@ impl Rule for NoThisBeforeSuper {
         // second pass, walk cfg for wanted nodes and propagate
         // cross-block super calls:
         for node in wanted_nodes {
-            let output = neighbors_filtered_by_edge_weight(
-                &cfg.graph,
+            let output = Self::analyze(
+                cfg,
                 node.cfg_id(),
-                &|edge| match edge {
-                    EdgeType::Jump | EdgeType::Normal => None,
-                    EdgeType::Unreachable | EdgeType::Backedge | EdgeType::NewFunction => {
-                        Some(DefinitelyCallsThisBeforeSuper::No)
-                    }
-                },
-                &mut |basic_block_id, _| {
-                    let super_called = basic_blocks_with_super_called.contains(basic_block_id);
-                    if basic_blocks_with_local_violations.contains_key(basic_block_id) {
-                        // super was not called before this in the current code path:
-                        return (DefinitelyCallsThisBeforeSuper::Yes, false);
-                    }
-
-                    if super_called {
-                        (DefinitelyCallsThisBeforeSuper::No, false)
-                    } else {
-                        (DefinitelyCallsThisBeforeSuper::No, true)
-                    }
-                },
+                &basic_blocks_with_super_called,
+                &basic_blocks_with_local_violations,
+                false,
             );
 
-            // Deciding whether we definitely call this before super in all
-            // codepaths is as simple as seeing if any individual codepath
-            // definitely calls this before super.
-            let violation_in_any_codepath =
-                output.into_iter().any(|y| matches!(y, DefinitelyCallsThisBeforeSuper::Yes));
+            let violation_in_any_codepath = Self::check_for_violation(
+                cfg,
+                output,
+                &basic_blocks_with_super_called,
+                &basic_blocks_with_local_violations,
+            );
 
             // If not, flag it as a diagnostic.
             if violation_in_any_codepath {
@@ -162,6 +151,108 @@ impl NoThisBeforeSuper {
         }
 
         false
+    }
+
+    fn analyze(
+        cfg: &ControlFlowGraph,
+        id: BasicBlockId,
+        basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
+        basic_blocks_with_local_violations: &HashMap<
+            oxc_semantic::petgraph::prelude::NodeIndex,
+            Vec<AstNodeId>,
+        >,
+        follow_join: bool,
+    ) -> Vec<DefinitelyCallsThisBeforeSuper> {
+        neighbors_filtered_by_edge_weight(
+            &cfg.graph,
+            id,
+            &|edge| match edge {
+                EdgeType::Jump | EdgeType::Normal => None,
+                EdgeType::Join if follow_join => None,
+                EdgeType::Unreachable
+                | EdgeType::Join
+                | EdgeType::Error(_)
+                | EdgeType::Finalize
+                | EdgeType::Backedge
+                | EdgeType::NewFunction => Some(DefinitelyCallsThisBeforeSuper::No),
+            },
+            &mut |basic_block_id, _| {
+                let super_called = basic_blocks_with_super_called.contains(basic_block_id);
+                if basic_blocks_with_local_violations.contains_key(basic_block_id) {
+                    // super was not called before this in the current code path:
+                    return (DefinitelyCallsThisBeforeSuper::Yes, false);
+                }
+
+                if super_called {
+                    // If super is called but we are in a try-catch(-finally) block mark it as a
+                    // maybe, since we might throw on super call and still call this in
+                    // `catch`/`finally` block(s).
+                    if cfg.graph.edges(*basic_block_id).any(|it| {
+                        matches!(
+                            it.weight(),
+                            EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit)
+                                | EdgeType::Finalize
+                        )
+                    }) {
+                        (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
+                    // Otherwise we know for sure that super is called in this branch before
+                    // reaching a this expression.
+                    } else {
+                        (DefinitelyCallsThisBeforeSuper::No, false)
+                    }
+                // If we haven't visited a super call and we have a non-error/finalize path
+                // forward, continue visiting this branch.
+                } else if cfg
+                    .graph
+                    .edges(*basic_block_id)
+                    .any(|it| !matches!(it.weight(), EdgeType::Error(_) | EdgeType::Finalize))
+                {
+                    (DefinitelyCallsThisBeforeSuper::No, true)
+                // Otherwise we mark it as a `Maybe` so we can analyze error/finalize paths separately.
+                } else {
+                    (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
+                }
+            },
+        )
+    }
+
+    fn check_for_violation(
+        cfg: &ControlFlowGraph,
+        output: Vec<DefinitelyCallsThisBeforeSuper>,
+        basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
+        basic_blocks_with_local_violations: &HashMap<
+            oxc_semantic::petgraph::prelude::NodeIndex,
+            Vec<AstNodeId>,
+        >,
+    ) -> bool {
+        // Deciding whether we definitely call this before super in all
+        // codepaths is as simple as seeing if any individual codepath
+        // definitely calls this before super.
+        output.into_iter().any(|y| match y {
+            DefinitelyCallsThisBeforeSuper::Yes => true,
+            DefinitelyCallsThisBeforeSuper::No => false,
+            DefinitelyCallsThisBeforeSuper::Maybe(id) => cfg.graph.edges(id).any(|edge| {
+                let weight = edge.weight();
+                let is_explicit_error =
+                    matches!(weight, EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit));
+                if is_explicit_error || matches!(weight, EdgeType::Finalize) {
+                    Self::check_for_violation(
+                        cfg,
+                        Self::analyze(
+                            cfg,
+                            edge.target(),
+                            basic_blocks_with_super_called,
+                            basic_blocks_with_local_violations,
+                            is_explicit_error,
+                        ),
+                        basic_blocks_with_super_called,
+                        basic_blocks_with_local_violations,
+                    )
+                } else {
+                    false
+                }
+            }),
+        })
     }
 }
 

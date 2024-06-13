@@ -34,8 +34,8 @@ pub use crate::{
     control_flow::{
         AssignmentValue, BasicBlock, BasicBlockId, BinaryAssignmentValue, BinaryOp, CallType,
         CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, ControlFlowGraph, DebugDot,
-        DebugDotContext, DisplayDot, EdgeType, Instruction, InstructionKind, LabeledInstruction,
-        ObjectPropertyAccessAssignmentValue, Register, ReturnInstructionKind,
+        DebugDotContext, DisplayDot, EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
+        LabeledInstruction, ObjectPropertyAccessAssignmentValue, Register, ReturnInstructionKind,
         UnaryExpressioneAssignmentValue, UpdateAssignmentValue,
     },
     node::{AstNode, AstNodeId, AstNodes},

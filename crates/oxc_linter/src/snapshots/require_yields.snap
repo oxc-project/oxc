@@ -230,20 +230,6 @@ expression: require_yields
   4 │                                */
   5 │ ╭─▶                           function * quux () {
   6 │ │                               try {
-  7 │ │                               } finally {
-  8 │ │                                 yield true;
-  9 │ │                               }
- 10 │ │                               yield;
- 11 │ ╰─▶                           }
- 12 │                           
-    ╰────
-  help: Add `@yields` tag to the JSDoc comment.
-
-  ⚠ eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.
-    ╭─[require_yields.tsx:5:20]
-  4 │                                */
-  5 │ ╭─▶                           function * quux () {
-  6 │ │                               try {
   7 │ │                                 yield;
   8 │ │                               } catch (err) {
   9 │ │                               }

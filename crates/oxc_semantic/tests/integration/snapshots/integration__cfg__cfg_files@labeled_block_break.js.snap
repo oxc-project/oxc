@@ -4,7 +4,7 @@ expression: output.basic_blocks_printed()
 input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/labeled_block_break.js
 ---
 bb0: {
-	statement
+
 }
 
 bb1: {
@@ -12,28 +12,36 @@ bb1: {
 }
 
 bb2: {
-	statement
-	statement
-	statement
+
 }
 
 bb3: {
 	statement
-	break <label>
 }
 
 bb4: {
-	unreachable
+	statement
+	statement
+	statement
 }
 
 bb5: {
-
+	statement
+	break <label>
 }
 
 bb6: {
-
+	unreachable
 }
 
 bb7: {
+
+}
+
+bb8: {
+
+}
+
+bb9: {
 
 }
