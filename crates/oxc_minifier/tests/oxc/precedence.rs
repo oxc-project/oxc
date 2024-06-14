@@ -15,7 +15,7 @@ fn assignment() {
     test("({a,b} = (1, 2))", "({a,b}=(1,2));");
     test("a *= yield b", "a*=yield b;");
     test("a /= () => {}", "a/=()=>{};");
-    test("a %= async () => {}", "a%=async()=>{};");
+    test("a %= async () => {}", "a%=async ()=>{};");
     test("a -= (1, 2)", "a-=(1,2);");
     test("a >>= b >>= c", "a>>=b>>=c;");
 }
@@ -27,12 +27,12 @@ fn r#yield() {
     test("function *foo() { yield * a ? b : c }", "function*foo(){yield*a?b:c}");
     test("function *foo() { yield * yield * a }", "function*foo(){yield*yield*a}");
     test("function *foo() { yield * () => {} }", "function*foo(){yield*()=>{}}");
-    test("function *foo() { yield * async () => {} }", "function*foo(){yield*async()=>{}}");
+    test("function *foo() { yield * async () => {} }", "function*foo(){yield*async ()=>{}}");
 
     test("function *foo() { yield a ? b : c }", "function*foo(){yield a?b:c}");
     test("function *foo() { yield yield a }", "function*foo(){yield yield a}");
     test("function *foo() { yield () => {} }", "function*foo(){yield ()=>{}}");
-    test("function *foo() { yield async () => {} }", "function*foo(){yield async()=>{}}");
+    test("function *foo() { yield async () => {} }", "function*foo(){yield async ()=>{}}");
 
     test(
         "function *foo() { yield { a } = [ b ] = c ? b : d }",
@@ -45,14 +45,14 @@ fn r#yield() {
 
 #[test]
 fn arrow() {
-    test("x => a, b", "x=>a,b;");
-    test("x => (a, b)", "x=>(a,b);");
-    test("x => (a => b)", "x=>a=>b;");
-    test("x => y => a, b", "x=>y=>a,b;");
-    test("x => y => (a = b)", "x=>y=>a=b;");
-    test("x => y => z => a = b, c", "x=>y=>z=>a=b,c;");
-    test("x => y => z => a = (b, c)", "x=>y=>z=>a=(b,c);");
-    test("x => ({} + 0)", "x=>({})+0;");
+    test("x => a, b", "(x)=>a,b;");
+    test("x => (a, b)", "(x)=>(a,b);");
+    test("x => (a => b)", "(x)=>(a)=>b;");
+    test("x => y => a, b", "(x)=>(y)=>a,b;");
+    test("x => y => (a = b)", "(x)=>(y)=>a=b;");
+    test("x => y => z => a = b, c", "(x)=>(y)=>(z)=>a=b,c;");
+    test("x => y => z => a = (b, c)", "(x)=>(y)=>(z)=>a=(b,c);");
+    test("x => ({} + 0)", "(x)=>({})+0;");
 }
 
 #[test]

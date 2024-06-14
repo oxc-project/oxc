@@ -7,10 +7,10 @@ fn test(source_text: &str, expected: &str, options: Option<CodegenOptions>) {
     let allocator = Allocator::default();
     let source_type = SourceType::default().with_module(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
     let options = options.unwrap_or_default();
-    let result =
-        Codegen::<false>::new("", source_text, ret.trivias, options).build(program).source_text;
+    let result = Codegen::<false>::new("", source_text, ret.trivias, options)
+        .build(&ret.program)
+        .source_text;
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
@@ -21,10 +21,9 @@ fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
         .with_typescript_definition(is_typescript_definition)
         .with_module(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let program = allocator.alloc(ret.program);
-    let codegen_options = CodegenOptions { enable_typescript: true, ..CodegenOptions::default() };
+    let codegen_options = CodegenOptions::default();
     let result = Codegen::<false>::new("", source_text, ret.trivias, codegen_options)
-        .build(program)
+        .build(&ret.program)
         .source_text;
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
@@ -186,11 +185,7 @@ fn test_comment_helper(source_text: &str, expected: &str) {
     test(
         source_text,
         expected,
-        Some(CodegenOptions {
-            enable_source_map: true,
-            enable_typescript: false,
-            preserve_annotate_comments: true,
-        }),
+        Some(CodegenOptions { enable_source_map: true, preserve_annotate_comments: true }),
     );
 }
 #[test]
@@ -230,9 +225,9 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async () => {},
     					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
     				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ () => {
-}, /* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ async y => y, /* #__NO_SIDE_EFFECTS__ */ async() => {
-}, /* #__NO_SIDE_EFFECTS__ */ async y => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {
+}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {
+}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
 ",
     );
     test_comment_helper(
@@ -245,9 +240,9 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async () => {},
     					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
     				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ () => {
-}, /* #__NO_SIDE_EFFECTS__ */ y => y, /* #__NO_SIDE_EFFECTS__ */ async y => y, /* #__NO_SIDE_EFFECTS__ */ async() => {
-}, /* #__NO_SIDE_EFFECTS__ */ async y => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {
+}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {
+}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
 ",
     );
     //
