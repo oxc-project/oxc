@@ -240,7 +240,12 @@ impl<'a> ControlFlowGraphBuilder<'a> {
                 .filter(|it| it.flags.contains(flag))
                 .find(|it| it.is(label))
         } else {
-            self.ctx_stack.iter_mut().rev().find(|it| it.flags.contains(flag))
+            self.ctx_stack
+                .iter_mut()
+                .rev()
+                // anything up the function is unreachable
+                .take_while(|it| !it.flags.intersects(CtxFlags::FUNCTION))
+                .find(|it| it.flags.contains(flag))
         };
 
         if let Some(ctx) = ctx {
