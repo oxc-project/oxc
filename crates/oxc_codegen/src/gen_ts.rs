@@ -478,9 +478,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterInstantiation<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexSignature<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            return;
-        }
         p.print_str(b"[");
         for (index, parameter) in self.parameters.iter().enumerate() {
             if index != 0 {
@@ -563,9 +560,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAliasDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            return;
-        }
         p.print_str(b"type ");
         self.id.gen(p, ctx);
         if let Some(type_parameters) = &self.type_parameters {
@@ -579,10 +573,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAliasDeclaration<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            return;
-        }
-
         p.print_str(b"interface");
         p.print_hard_space();
         self.id.gen(p, ctx);
@@ -623,15 +613,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceHeritage<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            return;
-        }
-
         p.print_indent();
         if self.modifiers.contains(ModifierKind::Export) {
             p.print_str(b"export ");
         }
-        if p.options.enable_typescript && self.modifiers.contains(ModifierKind::Declare) {
+        if self.modifiers.contains(ModifierKind::Declare) {
             p.print_str(b"declare ");
         }
         if self.modifiers.contains(ModifierKind::Const) {
@@ -684,9 +670,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSConstructorType<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportEqualsDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if !p.options.enable_typescript {
-            return;
-        }
         p.print_str(b"import ");
         self.id.gen(p, ctx);
         p.print_str(b" = ");
@@ -709,11 +692,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        if p.options.enable_typescript {
-            p.print_str(b"<");
-            self.type_annotation.gen(p, ctx);
-            p.print_str(b">");
-        }
+        p.print_str(b"<");
+        self.type_annotation.gen(p, ctx);
+        p.print_str(b">");
         self.expression.gen_expr(p, precedence, ctx);
     }
 }

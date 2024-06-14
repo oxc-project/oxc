@@ -28,8 +28,7 @@ fn main() -> std::io::Result<()> {
     println!("Original:");
     println!("{source_text}");
 
-    let options =
-        CodegenOptions { enable_source_map: false, enable_typescript: true, ..Default::default() };
+    let options = CodegenOptions { enable_source_map: false, ..Default::default() };
     let printed = Codegen::<false>::new("", &source_text, ret.trivias, options)
         .build(&ret.program)
         .source_text;

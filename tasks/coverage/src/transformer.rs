@@ -43,7 +43,7 @@ fn get_result(
         &filename,
         source_text,
         parse_result1.trivias.clone(),
-        CodegenOptions::default().with_typescript(true),
+        CodegenOptions::default(),
     )
     .build(&program)
     .source_text;

@@ -44,7 +44,7 @@ impl<'a> TransformerDts<'a> {
             &source_path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default(),
             source_text,
             trivias,
-            CodegenOptions::default().with_typescript(true),
+            CodegenOptions::default(),
         );
 
         let ctx = Rc::new(TransformDtsCtx::new(allocator));

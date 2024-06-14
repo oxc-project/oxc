@@ -65,7 +65,7 @@ fn get_normal_result(
     source_text: &str,
     source_type: SourceType,
 ) -> bool {
-    let options = CodegenOptions::default().with_typescript(source_type.is_typescript());
+    let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let source_text1 = Codegen::<false>::new("", source_text, parse_result1.trivias, options)
@@ -108,7 +108,7 @@ fn get_minify_result(
     source_text: &str,
     source_type: SourceType,
 ) -> bool {
-    let options = CodegenOptions::default().with_typescript(source_type.is_typescript());
+    let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
     let source_text1 =

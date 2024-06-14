@@ -44,22 +44,8 @@ pub struct CodegenOptions {
     /// Pass in the filename to enable source map support.
     pub enable_source_map: bool,
 
-    /// Enable TypeScript code generation.
-    pub enable_typescript: bool,
-
     /// Enable preserve annotate comments, like `/* #__PURE__ */` and `/* #__NO_SIDE_EFFECTS__ */`.
     pub preserve_annotate_comments: bool,
-}
-
-impl CodegenOptions {
-    #[must_use]
-    pub fn with_typescript(mut self, yes: bool) -> Self {
-        if yes {
-            self.enable_typescript = true;
-        }
-
-        self
-    }
 }
 
 pub struct CodegenReturn {
@@ -471,9 +457,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
         for stmt in statements {
             if let Some(decl) = stmt.as_declaration() {
-                if decl.is_typescript_syntax()
-                    && !self.options.enable_typescript
-                    && !matches!(decl, Declaration::TSEnumDeclaration(_))
+                if decl.is_typescript_syntax() && !matches!(decl, Declaration::TSEnumDeclaration(_))
                 {
                     continue;
                 }

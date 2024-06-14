@@ -214,7 +214,7 @@ fn r#for() {
     test("for (x(a in b);;);", "for(x(a in b);;);");
     test("for (x[a in b];;);", "for(x[a in b];;);");
     test("for (x?.[a in b];;);", "for(x?.[a in b];;);");
-    test("for ((x => a in b);;);", "for(x=>(a in b);;);");
+    test("for ((x => a in b);;);", "for((x)=>(a in b);;);");
 
     // Make sure for-of loops with commas are wrapped in parentheses
     test("for (let a in b, c);", "for(let a in b,c);");
@@ -303,8 +303,8 @@ fn generator() {
 #[test]
 fn arrow() {
     test("() => {}", "()=>{};");
-    test("x => (x, 0)", "x=>(x,0);");
-    test("x => {y}", "x=>{y};");
+    test("x => (x, 0)", "(x)=>(x,0);");
+    test("x => {y}", "(x)=>{y};");
     test("(a = (b, c), ...d) => {}", "(a=(b,c),...d)=>{};");
     test("({[1 + 2]: a = 3} = {[1 + 2]: 3}) => {}", "({[3]:a=3}={[3]:3})=>{};");
     test(
@@ -515,7 +515,7 @@ fn minify() {
     test("1.2", "1.2;");
 
     test("() => {}", "()=>{};");
-    test("(a) => {}", "a=>{};");
+    test("(a) => {}", "(a)=>{};");
     test("(...a) => {}", "(...a)=>{};");
     test("(a = 0) => {}", "(a=0)=>{};");
     test("(a, b) => {}", "(a,b)=>{};");

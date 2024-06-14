@@ -155,7 +155,7 @@ impl Oxc {
         run_options: &OxcRunOptions,
         parser_options: &OxcParserOptions,
         _linter_options: &OxcLinterOptions,
-        codegen_options: &OxcCodegenOptions,
+        _codegen_options: &OxcCodegenOptions,
         minifier_options: &OxcMinifierOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
@@ -274,10 +274,7 @@ impl Oxc {
             Minifier::new(options).build(&allocator, program);
         }
 
-        let codegen_options = CodegenOptions {
-            enable_typescript: codegen_options.enable_typescript,
-            ..CodegenOptions::default()
-        };
+        let codegen_options = CodegenOptions::default();
         self.codegen_text = if minifier_options.whitespace() {
             Codegen::<true>::new("", source_text, ret.trivias, codegen_options)
                 .build(program)

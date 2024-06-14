@@ -182,14 +182,9 @@ pub trait TestCase {
         .build(&mut program);
 
         result.map(|()| {
-            Codegen::<false>::new(
-                "",
-                &source_text,
-                ret.trivias,
-                CodegenOptions::default().with_typescript(true),
-            )
-            .build(&program)
-            .source_text
+            Codegen::<false>::new("", &source_text, ret.trivias, CodegenOptions::default())
+                .build(&program)
+                .source_text
         })
     }
 }
@@ -256,7 +251,7 @@ impl TestCase for ConformanceTestCase {
             println!("output_path: {output_path:?}");
         }
 
-        let codegen_options = CodegenOptions::default().with_typescript(true);
+        let codegen_options = CodegenOptions::default();
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
 
@@ -391,7 +386,7 @@ impl ExecTestCase {
             "",
             &source_text,
             transformed_ret.trivias,
-            CodegenOptions::default().with_typescript(true),
+            CodegenOptions::default(),
         )
         .build(&transformed_ret.program)
         .source_text;
