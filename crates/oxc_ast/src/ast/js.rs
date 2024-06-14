@@ -3315,7 +3315,6 @@ pub enum ExportDefaultDeclarationKind<'a> {
     ClassDeclaration(Box<'a, Class<'a>>) = 65,
 
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
-    TSEnumDeclaration(Box<'a, TSEnumDeclaration<'a>>) = 67,
 
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
@@ -3328,7 +3327,7 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
         match self {
             Self::FunctionDeclaration(func) => func.is_typescript_syntax(),
             Self::ClassDeclaration(class) => class.is_typescript_syntax(),
-            Self::TSInterfaceDeclaration(_) | Self::TSEnumDeclaration(_) => true,
+            Self::TSInterfaceDeclaration(_) => true,
             _ => false,
         }
     }
