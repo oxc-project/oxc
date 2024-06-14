@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements
     ///
     NoUnreachable,
-    correctness
+    nursery
 );
 
 impl Rule for NoUnreachable {
