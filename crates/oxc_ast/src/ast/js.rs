@@ -2211,7 +2211,11 @@ impl<'a> BindingPatternKind<'a> {
     }
 
     pub fn is_destructuring_pattern(&self) -> bool {
-        matches!(self, Self::ObjectPattern(_) | Self::ArrayPattern(_))
+        match self {
+            Self::ObjectPattern(_) | Self::ArrayPattern(_) => true,
+            Self::AssignmentPattern(pattern) => pattern.left.kind.is_destructuring_pattern(),
+            Self::BindingIdentifier(_) => false,
+        }
     }
 
     pub fn is_binding_identifier(&self) -> bool {

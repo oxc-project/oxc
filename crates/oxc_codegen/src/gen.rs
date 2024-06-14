@@ -720,8 +720,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameter<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.decorators.gen(p, ctx);
-        if p.options.enable_typescript && self.readonly {
-            p.print_str(b"readonly ");
+        if p.options.enable_typescript {
+            if self.readonly {
+                p.print_str(b"readonly ");
+            }
+            if let Some(accessibility) = self.accessibility {
+                accessibility.gen(p, ctx);
+            }
         }
         self.pattern.gen(p, ctx);
     }
@@ -2080,8 +2085,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
         if !p.options.enable_typescript && self.is_declare() {
             return;
         }
-        if p.options.enable_typescript && self.is_declare() {
-            p.print_str(b"declare ");
+        if p.options.enable_typescript {
+            if self.modifiers.is_contains_declare() {
+                p.print_str(b"declare ");
+            }
+            if self.modifiers.is_contains_abstract() {
+                p.print_str(b"abstract ");
+            }
         }
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
@@ -2441,6 +2451,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
         self.key.gen(p, ctx);
         if self.computed {
             p.print(b']');
+        }
+        if self.optional {
+            p.print_str(b"?");
         }
         if p.options.enable_typescript {
             if let Some(type_annotation) = &self.type_annotation {

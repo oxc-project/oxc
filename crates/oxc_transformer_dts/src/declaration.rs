@@ -1,0 +1,192 @@
+#[allow(clippy::wildcard_imports)]
+use oxc_ast::ast::*;
+
+use oxc_allocator::Box;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::{GetSpan, SPAN};
+
+use crate::TransformerDts;
+
+impl<'a> TransformerDts<'a> {
+    pub fn transform_variable_declaration(
+        &self,
+        decl: &VariableDeclaration<'a>,
+        check_binding: bool,
+    ) -> Option<Box<'a, VariableDeclaration<'a>>> {
+        if decl.modifiers.is_contains_declare() {
+            None
+        } else {
+            let declarations =
+                self.ctx.ast.new_vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+                    self.transform_variable_declarator(declarator, check_binding)
+                }));
+            Some(self.transform_variable_declaration_with_new_declarations(decl, declarations))
+        }
+    }
+
+    pub fn transform_variable_declaration_with_new_declarations(
+        &self,
+        decl: &VariableDeclaration<'a>,
+        declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
+    ) -> Box<'a, VariableDeclaration<'a>> {
+        self.ctx.ast.variable_declaration(
+            decl.span,
+            decl.kind,
+            self.ctx.ast.new_vec_from_iter(declarations),
+            self.modifiers_declare(),
+        )
+    }
+
+    pub fn transform_variable_declarator(
+        &self,
+        decl: &VariableDeclarator<'a>,
+        check_binding: bool,
+    ) -> Option<VariableDeclarator<'a>> {
+        if decl.id.kind.is_destructuring_pattern() {
+            self.ctx.error(OxcDiagnostic::error(
+                "Binding elements can't be exported directly with --isolatedDeclarations.",
+            ));
+            return None;
+        }
+
+        if check_binding {
+            if let Some(name) = decl.id.get_identifier() {
+                if !self.scope.has_reference(name) {
+                    return None;
+                }
+            }
+        }
+
+        let mut binding_type = None;
+        let mut init = None;
+        if decl.id.type_annotation.is_none() {
+            if let Some(init_expr) = &decl.init {
+                // if kind is const and it doesn't need to infer type from expression
+                if decl.kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
+                    init = Some(self.ctx.ast.copy(init_expr));
+                } else {
+                    // otherwise, we need to infer type from expression
+                    binding_type = self.infer_type_from_expression(init_expr);
+                }
+            }
+            if init.is_none() && binding_type.is_none() {
+                binding_type = Some(self.ctx.ast.ts_unknown_keyword(SPAN));
+                self.ctx.error(
+                  OxcDiagnostic::error("Variable must have an explicit type annotation with --isolatedDeclarations.")
+                      .with_label(decl.id.span()),
+              );
+            }
+        }
+        let id = binding_type.map_or_else(
+            || self.ctx.ast.copy(&decl.id),
+            |ts_type| {
+                self.ctx.ast.binding_pattern(
+                    self.ctx.ast.copy(&decl.id.kind),
+                    Some(self.ctx.ast.ts_type_annotation(SPAN, ts_type)),
+                    decl.id.optional,
+                )
+            },
+        );
+
+        Some(self.ctx.ast.variable_declarator(decl.span, decl.kind, id, init, decl.definite))
+    }
+
+    pub fn transform_using_declaration(
+        &self,
+        decl: &UsingDeclaration<'a>,
+        check_binding: bool,
+    ) -> Box<'a, VariableDeclaration<'a>> {
+        let declarations =
+            self.ctx.ast.new_vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+                self.transform_variable_declarator(declarator, check_binding)
+            }));
+        self.transform_using_declaration_with_new_declarations(decl, declarations)
+    }
+
+    pub fn transform_using_declaration_with_new_declarations(
+        &self,
+        decl: &UsingDeclaration<'a>,
+        declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
+    ) -> Box<'a, VariableDeclaration<'a>> {
+        self.ctx.ast.variable_declaration(
+            decl.span,
+            VariableDeclarationKind::Const,
+            declarations,
+            self.modifiers_declare(),
+        )
+    }
+
+    pub fn transform_declaration(
+        &mut self,
+        decl: &Declaration<'a>,
+        check_binding: bool,
+    ) -> Option<Declaration<'a>> {
+        match decl {
+            Declaration::FunctionDeclaration(func) => {
+                if !check_binding
+                    || func.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
+                {
+                    self.transform_function(func).map(Declaration::FunctionDeclaration)
+                } else {
+                    None
+                }
+            }
+            Declaration::VariableDeclaration(decl) => self
+                .transform_variable_declaration(decl, check_binding)
+                .map(Declaration::VariableDeclaration),
+            Declaration::UsingDeclaration(decl) => Some(Declaration::VariableDeclaration(
+                self.transform_using_declaration(decl, check_binding),
+            )),
+            Declaration::ClassDeclaration(decl) => {
+                if !check_binding
+                    || decl.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
+                {
+                    self.transform_class(decl).map(Declaration::ClassDeclaration)
+                } else {
+                    None
+                }
+            }
+            Declaration::TSTypeAliasDeclaration(decl) => {
+                if !check_binding || self.scope.has_reference(&decl.id.name) {
+                    Some(Declaration::TSTypeAliasDeclaration(self.ctx.ast.copy(decl)))
+                } else {
+                    None
+                }
+            }
+            Declaration::TSInterfaceDeclaration(decl) => {
+                if !check_binding || self.scope.has_reference(&decl.id.name) {
+                    Some(Declaration::TSInterfaceDeclaration(self.ctx.ast.copy(decl)))
+                } else {
+                    None
+                }
+            }
+            Declaration::TSEnumDeclaration(decl) => {
+                if !check_binding || self.scope.has_reference(&decl.id.name) {
+                    Some(Declaration::TSEnumDeclaration(self.ctx.ast.copy(decl)))
+                } else {
+                    None
+                }
+            }
+            Declaration::TSModuleDeclaration(decl) => {
+                if !check_binding
+                    || matches!(
+                        &decl.id,
+                        TSModuleDeclarationName::Identifier(ident)
+                            if self.scope.has_reference(&ident.name)
+                    )
+                {
+                    Some(Declaration::TSModuleDeclaration(self.ctx.ast.copy(decl)))
+                } else {
+                    None
+                }
+            }
+            Declaration::TSImportEqualsDeclaration(decl) => {
+                if !check_binding || self.scope.has_reference(&decl.id.name) {
+                    Some(Declaration::TSImportEqualsDeclaration(self.ctx.ast.copy(decl)))
+                } else {
+                    None
+                }
+            }
+        }
+    }
+}

@@ -1062,6 +1062,13 @@ impl<'a> AstBuilder<'a> {
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
+        declare: bool,
+        r#override: bool,
+        optional: bool,
+        definite: bool,
+        readonly: bool,
+        type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        accessibility: Option<TSAccessibility>,
         decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         ClassElement::PropertyDefinition(self.alloc(PropertyDefinition {
@@ -1071,14 +1078,43 @@ impl<'a> AstBuilder<'a> {
             value,
             computed,
             r#static,
-            declare: false,
-            r#override: false,
-            optional: false,
-            definite: false,
-            readonly: false,
-            type_annotation: None,
-            accessibility: None,
+            declare,
+            r#override,
+            optional,
+            definite,
+            readonly,
+            type_annotation,
+            accessibility,
             decorators,
+        }))
+    }
+
+    pub fn class_method(
+        self,
+        r#type: MethodDefinitionType,
+        span: Span,
+        key: PropertyKey<'a>,
+        kind: MethodDefinitionKind,
+        value: Box<'a, Function<'a>>,
+        computed: bool,
+        r#static: bool,
+        r#override: bool,
+        optional: bool,
+        accessibility: Option<TSAccessibility>,
+        decorators: Vec<'a, Decorator<'a>>,
+    ) -> ClassElement<'a> {
+        ClassElement::MethodDefinition(self.alloc(MethodDefinition {
+            r#type,
+            span,
+            decorators,
+            key,
+            value,
+            kind,
+            computed,
+            r#static,
+            r#override,
+            optional,
+            accessibility,
         }))
     }
 
@@ -1246,6 +1282,11 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn property_key_identifier(self, ident: IdentifierName<'a>) -> PropertyKey<'a> {
         PropertyKey::StaticIdentifier(self.alloc(ident))
+    }
+
+    #[inline]
+    pub fn property_key_private_identifier(self, ident: PrivateIdentifier<'a>) -> PropertyKey<'a> {
+        PropertyKey::PrivateIdentifier(self.alloc(ident))
     }
 
     #[inline]

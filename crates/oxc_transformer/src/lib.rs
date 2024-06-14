@@ -236,6 +236,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_statements(stmts);
         self.x3_es2015.enter_statements(stmts);
     }
 

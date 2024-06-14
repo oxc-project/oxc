@@ -425,6 +425,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                 if signature.optional {
                     p.print_str(b"?");
                 }
+                if let Some(type_parameters) = &signature.type_parameters {
+                    type_parameters.gen(p, ctx);
+                }
                 p.print_str(b"(");
                 signature.params.gen(p, ctx);
                 p.print_str(b")");
@@ -555,6 +558,22 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
         }
         p.print_hard_space();
         p.print_soft_newline();
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAliasDeclaration<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if !p.options.enable_typescript {
+            return;
+        }
+        p.print_str(b"type ");
+        self.id.gen(p, ctx);
+        if let Some(type_parameters) = &self.type_parameters {
+            type_parameters.gen(p, ctx);
+        }
+        p.print_str(b" = ");
+        self.type_annotation.gen(p, ctx);
+        p.print_semicolon_after_statement();
     }
 }
 
@@ -696,5 +715,15 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
             p.print_str(b">");
         }
         self.expression.gen_expr(p, precedence, ctx);
+    }
+}
+
+impl<const MINIFY: bool> Gen<MINIFY> for TSAccessibility {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        match self {
+            Self::Public => p.print_str(b"public "),
+            Self::Private => p.print_str(b"private "),
+            Self::Protected => p.print_str(b"protected "),
+        }
     }
 }

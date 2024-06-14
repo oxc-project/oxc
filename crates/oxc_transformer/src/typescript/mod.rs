@@ -145,6 +145,10 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_property_definition(def);
     }
 
+    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        self.annotations.transform_statements(stmts);
+    }
+
     pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         self.annotations.transform_statements_on_exit(stmts);
     }

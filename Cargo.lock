@@ -1745,6 +1745,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_transformer_dts"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_codegen",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_traverse"
 version = "0.14.0"
 dependencies = [
