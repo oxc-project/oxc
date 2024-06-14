@@ -78,7 +78,7 @@ declare_oxc_lint!(
     /// }
     ///```
     NoUselessConstructor,
-    suspicious,
+    nursery,
 );
 
 impl Rule for NoUselessConstructor {
@@ -262,7 +262,7 @@ class A extends B {
 }",
             r"
 class A extends B {
-    
+
     foo() {
         bar();
     }
