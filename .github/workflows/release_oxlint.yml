@@ -149,6 +149,7 @@ jobs:
       - name: Run
         id: run
         run: |
+          mkdir -p target
           cargo release-oxc changelog --release oxlint
           echo "VERSION=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
           {
