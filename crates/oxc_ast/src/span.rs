@@ -565,7 +565,6 @@ impl<'a> GetSpan for ExportDefaultDeclarationKind<'a> {
         match self {
             Self::ClassDeclaration(x) => x.span,
             Self::FunctionDeclaration(x) => x.span,
-            Self::TSEnumDeclaration(x) => x.span,
             Self::TSInterfaceDeclaration(x) => x.span,
             // `Expression`
             Self::BooleanLiteral(e) => e.span,
