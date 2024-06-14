@@ -14,6 +14,7 @@ lazy_static::lazy_static! {
     static ref TEST_BRACES: Regex = Regex::new(r"^[[:space:]]*[{|}][[:space:]]*$").unwrap();
 }
 
+#[allow(unused)]
 #[derive(Debug)]
 pub struct CompilerSettings {
     pub modules: Vec<String>,

@@ -12,7 +12,7 @@ define_index_type! {
 
     DEFAULT = CoolIndex::new(0);
 
-    MAX_INDEX = i32::max_value() as usize;
+    MAX_INDEX = i32::MAX as usize;
 
     DISABLE_MAX_INDEX_CHECK = cfg!(not(debug_assertions));
 

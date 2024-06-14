@@ -1,5 +1,3 @@
-use std::usize;
-
 use daachorse::DoubleArrayAhoCorasick;
 use once_cell::sync::Lazy;
 use oxc_ast::{Comment, CommentKind};

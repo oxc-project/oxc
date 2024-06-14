@@ -323,12 +323,14 @@ pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: Cow<'a, str>,
+    #[allow(unused)]
     pub local: Cow<'a, str>,
 }
 
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
+    #[allow(unused)]
     pub name: Cow<'a, str>,
     pub local: Cow<'a, str>,
     pub head: KnownMemberExpressionProperty<'a>,

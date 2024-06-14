@@ -70,6 +70,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 }
 
 pub struct FixResult<'a> {
+    #[allow(unused)]
     pub fixed: bool,
     pub fixed_code: Cow<'a, str>,
     pub messages: Vec<Message<'a>>,
