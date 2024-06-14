@@ -3,10 +3,6 @@ mod dot;
 
 use itertools::Itertools;
 use oxc_ast::AstKind;
-use oxc_span::CompactStr;
-use oxc_syntax::operator::{
-    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-};
 use petgraph::{
     stable_graph::NodeIndex,
     visit::{depth_first_search, Control, DfsEvent, EdgeRef},
@@ -19,101 +15,6 @@ pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::{DebugDot, DebugDotContext, DisplayDot};
 
 pub type BasicBlockId = NodeIndex;
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Register {
-    Index(u32),
-    Return,
-}
-
-#[derive(Debug, Clone)]
-pub enum ObjectPropertyAccessBy {
-    PrivateProperty(CompactStr),
-    Property(CompactStr),
-    Expression(Register),
-}
-
-#[derive(Debug, Clone)]
-pub struct CollectionAssignmentValue {
-    pub id: AstNodeId,
-    pub elements: Vec<Register>,
-    pub spreads: Vec<usize>,
-    pub collection_type: CollectionType,
-}
-
-#[derive(Debug, Clone)]
-pub struct CalleeWithArgumentsAssignmentValue {
-    pub id: AstNodeId,
-    pub callee: Register,
-    pub arguments: Vec<Register>,
-    pub spreads: Vec<usize>,
-    pub call_type: CallType,
-}
-
-#[derive(Debug, Clone)]
-pub struct ObjectPropertyAccessAssignmentValue {
-    pub id: AstNodeId,
-    pub access_on: Register,
-    pub access_by: ObjectPropertyAccessBy,
-    pub optional: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct BinaryAssignmentValue {
-    pub id: AstNodeId,
-    pub a: Register,
-    pub b: Register,
-    pub operator: BinaryOp,
-}
-
-#[derive(Debug, Clone)]
-pub struct UpdateAssignmentValue {
-    pub id: AstNodeId,
-    pub expr: Register,
-    pub op: UpdateOperator,
-    pub prefix: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct UnaryExpressioneAssignmentValue(pub AstNodeId, pub UnaryOperator, pub Register);
-
-#[derive(Debug, Clone)]
-pub enum AssignmentValue {
-    ImplicitUndefined,
-    NotImplicitUndefined,
-}
-
-#[derive(Debug, Clone)]
-pub enum BinaryOp {
-    BinaryOperator(BinaryOperator),
-    LogicalOperator(LogicalOperator),
-    AssignmentOperator(AssignmentOperator),
-}
-
-#[derive(Debug, Clone)]
-pub enum CollectionType {
-    Array,
-    // Note: we do not currently track object names in objects.
-    Object,
-    JSXElement,
-    JSXFragment,
-    // doesn't use spreads
-    Class,
-    TemplateLiteral,
-}
-
-#[derive(Debug, Clone)]
-pub enum CallType {
-    New,
-    CallExpression,
-    // the callee is the yielded value, arguments are always empty
-    // spreads are always empty
-    Yield,
-    // spreads are always empty
-    TaggedTemplate,
-    // spreads are always empty
-    Import,
-}
 
 #[derive(Debug)]
 pub struct BasicBlock {
