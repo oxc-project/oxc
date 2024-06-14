@@ -42,29 +42,11 @@ jobs:
       - name: Run
         id: run
         run: |
-          {
-            echo 'OUTPUT<<EOF'
-            cargo release-oxc update --release ${{ inputs.name }}
-            echo EOF
-          } >> $GITHUB_OUTPUT
-
-      - name: Save Version
-        id: version
-        run: |
-          {
-            echo 'VERSION<<EOF'
-            # Last line is the version
-            echo '${{ steps.run.outputs.OUTPUT }}' | tail -n 1
-            echo EOF
-          } >> $GITHUB_OUTPUT
-
-      - name: Save Changelog
-        id: changelog
-        run: |
+          cargo release-oxc update --release ${{ inputs.name }}
+          echo "VERSION=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
           {
             echo 'CHANGELOG<<EOF'
-            # Remove the last line
-            echo '${{ steps.run.outputs.OUTPUT }}' | head -n -1
+            cat ./target/OXC_CHANGELOG
             echo EOF
           } >> $GITHUB_OUTPUT
 
@@ -81,6 +63,6 @@ jobs:
           branch: release/${{ inputs.name }}
           branch-suffix: timestamp
           base: main
-          title: Release ${{ inputs.name }} v${{ steps.version.outputs.VERSION }}
-          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          title: Release ${{ inputs.name }} v${{ steps.run.outputs.VERSION }}
+          body: ${{ steps.run.outputs.CHANGELOG }}
           assignees: Boshen

@@ -149,29 +149,11 @@ jobs:
       - name: Run
         id: run
         run: |
-          {
-            echo 'OUTPUT<<EOF'
-            cargo release-oxc changelog --release oxlint
-            echo EOF
-          } >> $GITHUB_OUTPUT
-
-      - name: Save Version
-        id: version
-        run: |
-          {
-            echo 'VERSION<<EOF'
-            # Last line is the version
-            echo '${{ steps.run.outputs.OUTPUT }}' | tail -n 1
-            echo EOF
-          } >> $GITHUB_OUTPUT
-
-      - name: Save Changelog
-        id: changelog
-        run: |
+          cargo release-oxc changelog --release oxlint
+          echo "VERSION=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
           {
             echo 'CHANGELOG<<EOF'
-            # Remove the last line
-            echo '${{ steps.run.outputs.OUTPUT }}' | head -n -1
+            cat ./target/OXC_CHANGELOG
             echo EOF
           } >> $GITHUB_OUTPUT
 
@@ -212,11 +194,11 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          body: ${{ steps.changelog.outputs.CHANGELOG }}
+          body: ${{ steps.run.outputs.CHANGELOG }}
           draft: true
           files: oxlint-*
-          name: oxlint v${{ steps.version.outputs.VERSION }}
-          tag_name: oxlint_v${{ steps.version.outputs.VERSION }}
+          name: oxlint v${{ steps.run.outputs.VERSION }}
+          tag_name: oxlint_v${{ steps.run.outputs.VERSION }}
           fail_on_unmatched_files: true
           target_commitish: ${{ github.sha }}
 

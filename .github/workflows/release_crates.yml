@@ -41,8 +41,8 @@ jobs:
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
         run: |
-          TAG=`cargo release-oxc publish --release crates`
-          echo "TAG=${TAG}" >> $GITHUB_OUTPUT
+          cargo release-oxc publish --release crates
+          echo "TAG=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
 
       - name: Tag and Push
         run: |
