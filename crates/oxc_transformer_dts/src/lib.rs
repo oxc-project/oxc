@@ -23,9 +23,14 @@ use oxc_ast::Trivias;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, Visit};
 use oxc_codegen::{Codegen, CodegenOptions, Context, Gen};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SPAN;
 use scope::ScopeTree;
+
+pub struct TransformerDtsReturn {
+    pub source_text: String,
+    pub errors: Vec<OxcDiagnostic>,
+}
 
 pub struct TransformerDts<'a> {
     ctx: Ctx<'a>,
@@ -55,7 +60,7 @@ impl<'a> TransformerDts<'a> {
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &Program<'a>) -> Result<String, std::vec::Vec<Error>> {
+    pub fn build(mut self, program: &Program<'a>) -> TransformerDtsReturn {
         let has_import_or_export = program.body.iter().any(|stmt| {
             matches!(
                 stmt,
@@ -72,11 +77,9 @@ impl<'a> TransformerDts<'a> {
             self.transform_program_without_module_declaration(program);
         }
 
-        let errors = self.ctx.take_errors();
-        if errors.is_empty() {
-            Ok(self.codegen.into_source_text())
-        } else {
-            Err(errors)
+        TransformerDtsReturn {
+            source_text: self.codegen.into_source_text(),
+            errors: self.ctx.take_errors(),
         }
     }
 

@@ -2,7 +2,7 @@ use std::{cell::RefCell, mem, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_ast::AstBuilder;
-use oxc_diagnostics::{Error, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 
 pub type Ctx<'a> = Rc<TransformDtsCtx<'a>>;
 
@@ -16,9 +16,8 @@ impl<'a> TransformDtsCtx<'a> {
         Self { errors: RefCell::new(vec![]), ast: AstBuilder::new(allocator) }
     }
 
-    pub fn take_errors(&self) -> Vec<Error> {
-        let errors: Vec<OxcDiagnostic> = mem::take(&mut self.errors.borrow_mut());
-        errors.into_iter().map(Error::from).collect()
+    pub fn take_errors(&self) -> Vec<OxcDiagnostic> {
+        mem::take(&mut self.errors.borrow_mut())
     }
 
     /// Add an Error

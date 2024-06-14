@@ -60,6 +60,7 @@ impl AppArgs {
         self.run_codegen();
         self.run_prettier();
         self.run_transformer();
+        self.run_transipler();
         // self.run_codegen_runtime();
         self.run_minifier();
     }

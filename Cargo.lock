@@ -1386,6 +1386,7 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
+ "oxc_transformer_dts",
  "phf",
  "pico-args",
  "project-root",
@@ -1746,7 +1747,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer_dts"
-version = "0.0.0"
+version = "0.14.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",

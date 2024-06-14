@@ -31,16 +31,16 @@ fn main() {
     println!("{source_text}\n");
 
     let program = ret.program;
-    match TransformerDts::new(&allocator, path, &source_text, ret.trivias).build(&program) {
-        Ok(dts) => {
-            println!("Transformed dts:\n");
-            println!("{dts}\n");
-        }
-        Err(errors) => {
-            println!("Transformed dts failed:\n");
-            for error in errors {
-                println!("{error:?}");
-            }
+    let ret = TransformerDts::new(&allocator, path, &source_text, ret.trivias).build(&program);
+
+    println!("Transformed dts:\n");
+    println!("{}\n", ret.source_text);
+
+    if !ret.errors.is_empty() {
+        println!("Transformed dts failed:\n");
+        for error in ret.errors {
+            let error = error.with_source_code(source_text.clone());
+            println!("{error:?}");
         }
     }
 }
