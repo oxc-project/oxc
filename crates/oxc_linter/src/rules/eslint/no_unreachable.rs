@@ -6,7 +6,7 @@ use oxc_semantic::{
         visit::{depth_first_search, Control, DfsEvent, EdgeRef},
         Direction,
     },
-    EdgeType, InstructionKind,
+    EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_span::{GetSpan, Span};
 
@@ -84,7 +84,9 @@ impl Rule for NoUnreachable {
                         // `NewFunction` is always reachable
                         | EdgeType::NewFunction
                         // `Finalize` can be reachable if we encounter an error in the loop.
-                        | EdgeType::Finalize => true,
+                        | EdgeType::Finalize
+                        // Explicit `Error` can also be reachable if we encounter an error in the loop.
+                        | EdgeType::Error(ErrorEdgeKind::Explicit) => true,
 
                         // If we have an incoming `Jump` and it is from a `Break` instruction,
                         // We know with high confidence that we are visiting a reachable block.
@@ -255,6 +257,15 @@ fn test() {
             b();
         }
         c();
+        ",
+        "
+        try {
+            while (true) {
+                a();
+            }
+        } catch {
+            b();
+        }
         ",
     ];
 
