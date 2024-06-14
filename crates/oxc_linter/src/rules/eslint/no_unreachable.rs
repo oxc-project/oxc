@@ -50,25 +50,18 @@ impl Rule for NoUnreachable {
         // In our first path we first check if each block is definitely unreachable, If it is then
         // we set it as such, If we encounter an infinite loop we keep its end block since it can
         // prevent other reachable blocks from ever getting executed.
-        let _: Control<()> = depth_first_search(graph, Some(root.cfg_id()), |event| match event {
-            DfsEvent::Finish(node, _) => {
-                let bb = cfg.basic_block(node);
-                let unreachable = if bb.unreachable {
-                    true
-                } else {
-                    graph
-                        .edges_directed(node, Direction::Incoming)
-                        .any(|edge| matches!(edge.weight(), EdgeType::Join))
-                };
+        let _: Control<()> = depth_first_search(graph, Some(root.cfg_id()), |event| {
+            if let DfsEvent::Finish(node, _) = event {
+                let unreachable = cfg.basic_block(node).unreachable;
                 unreachables[node.index()] = unreachable;
 
-                if let Some(it) = cfg.is_infinite_loop_start(node, nodes) {
-                    infinite_loops.push(it);
+                if !unreachable {
+                    if let Some(it) = cfg.is_infinite_loop_start(node, nodes) {
+                        infinite_loops.push(it);
+                    }
                 }
-
-                Control::Continue
             }
-            _ => Control::Continue,
+            Control::Continue
         });
 
         // In the second path we go for each infinite loop end block and follow it marking all
@@ -254,6 +247,14 @@ fn test() {
         } finally {
             b();
         }
+        ",
+        "
+        try {
+            a();
+        } finally {
+            b();
+        }
+        c();
         ",
     ];
 

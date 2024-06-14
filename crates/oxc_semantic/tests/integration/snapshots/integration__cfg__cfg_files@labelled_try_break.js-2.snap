@@ -31,7 +31,7 @@ digraph {
     7 -> 8 [ label = "Unreachable" , style = "dotted" ]
     9 -> 2 [ label = "Error(Implicit)" , style = "dotted" ]
     3 -> 5 [ label = "Normal" ]
-    8 -> 9 [ label = "Join" , style = "dotted" ]
+    8 -> 9 [ label = "Unreachable" , style = "dotted" ]
     10 -> 2 [ label = "Error(Implicit)" ]
     9 -> 10 [ label = "Normal" , style = "dotted" ]
     7 -> 10 [ label = "Jump" ]
