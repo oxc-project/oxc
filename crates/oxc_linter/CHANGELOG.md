@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.4.4] - 2024-06-14
+
+### Features
+
+- 8f5655d linter: Add eslint/no-useless-constructor (#3594) (Don Isaac)
+- 29c78db linter: Implement @typescript-eslint/explicit-function-return-type (#3455) (kaykdm)
+- 21d3425 linter: Typescript-eslint no-useless-empty-export (#3605) (keita hino)
+- 85c3b83 linter: Eslint-plugin-jest/max-nested-describes (#3585) (cinchen)
+- f6d9ca6 linter: Add `eslint/sort-imports` rule (#3568) (Wang Wenzhe)
+- 046ff3f linter/eslint: Add `no_unreachable` rule. (#3238) (rzvxa)
+- e32ce00 linter/jsdoc: Implement require-param-name rule (#3636) (Yuji Sugiura)
+- 110661c linter/jsdoc: Implement require-param-description (#3621) (Yuji Sugiura)
+- d6370f1 linter/jsdoc: Implement require-param-type rule (#3601) (Yuji Sugiura)
+- d9c5b33 semantic/cfg: Add `Condition` instruction. (#3567) (Ali Rezvani)
+- f2dfd66 semantic/cfg: Add iteration instructions. (#3566) (rzvxa)
+
+### Bug Fixes
+
+- f0b689d linter: Panic in jsdoc/require-param (#3590) (Don Isaac)
+- e148a32 semantic/cfg: Correct unreachability propagation in try-finally. (#3667) (Ali Rezvani)
+
+### Refactor
+
+- 84304b4 linter: Add a `ctx.module_record()` method (#3637) (Boshen)
+- f98f777 linter: Add rule fixer (#3589) (Don Isaac)
+- fa11644 linter: Pass `Rc` by value (#3587) (overlookmotel)
+- f702fb9 semantic/cfg: Cleanup control flow and it's builder. (#3650) (rzvxa)
+- 5793ff1 transformer: Replace `&’a Trivias` with `Rc<Trivias>` (#3580) (Dunqing)
+
 ## [0.4.3] - 2024-06-07
 
 ### Features
