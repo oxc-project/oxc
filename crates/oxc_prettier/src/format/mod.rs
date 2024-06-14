@@ -1233,7 +1233,6 @@ impl<'a> Format<'a> for ExportDefaultDeclarationKind<'a> {
             Self::FunctionDeclaration(decl) => decl.format(p),
             Self::ClassDeclaration(decl) => decl.format(p),
             Self::TSInterfaceDeclaration(decl) => decl.format(p),
-            Self::TSEnumDeclaration(decl) => decl.format(p),
         }
     }
 }
