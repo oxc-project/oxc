@@ -991,7 +991,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
                 p.print_soft_newline();
             }
             Self::TSInterfaceDeclaration(interface) => interface.gen(p, ctx),
-            Self::TSEnumDeclaration(enum_decl) => enum_decl.gen(p, ctx),
         }
     }
 }

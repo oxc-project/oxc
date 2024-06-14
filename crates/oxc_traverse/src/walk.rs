@@ -3054,9 +3054,6 @@ pub(crate) unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         ExportDefaultDeclarationKind::TSInterfaceDeclaration(node) => {
             walk_ts_interface_declaration(traverser, (&mut **node) as *mut _, ctx)
         }
-        ExportDefaultDeclarationKind::TSEnumDeclaration(node) => {
-            walk_ts_enum_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
         ExportDefaultDeclarationKind::BooleanLiteral(_)
         | ExportDefaultDeclarationKind::NullLiteral(_)
         | ExportDefaultDeclarationKind::NumericLiteral(_)
