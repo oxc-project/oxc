@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_linter"
-version                = "0.4.3"
+version                = "0.4.4"
 publish                = false
 authors.workspace      = true
 description.workspace  = true
