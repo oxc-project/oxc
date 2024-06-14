@@ -252,21 +252,9 @@ fn test() {
         ("class A { constructor(){} }", "class A {  }"),
         (
             r"
-class A extends B {
-    constructor() {
-        super();
-    }
-    foo() {
-        bar();
-    }
-}",
+class A extends B { constructor() { super(); } foo() { bar(); } }",
             r"
-class A extends B {
-
-    foo() {
-        bar();
-    }
-}",
+class A extends B {  foo() { bar(); } }",
         ),
     ];
 
