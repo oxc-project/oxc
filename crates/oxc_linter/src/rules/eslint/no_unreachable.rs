@@ -52,14 +52,14 @@ impl Rule for NoUnreachable {
         // prevent other reachable blocks from ever getting executed.
         let _: Control<()> = depth_first_search(graph, Some(root.cfg_id()), |event| {
             if let DfsEvent::Finish(node, _) = event {
-                    let unreachable = cfg.basic_block(node).unreachable;
-                    unreachables[node.index()] = unreachable;
+                let unreachable = cfg.basic_block(node).unreachable;
+                unreachables[node.index()] = unreachable;
 
-                    if !unreachable {
-                        if let Some(it) = cfg.is_infinite_loop_start(node, nodes) {
-                            infinite_loops.push(it);
-                        }
+                if !unreachable {
+                    if let Some(it) = cfg.is_infinite_loop_start(node, nodes) {
+                        infinite_loops.push(it);
                     }
+                }
             }
             Control::Continue
         });
