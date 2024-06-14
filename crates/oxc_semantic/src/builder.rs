@@ -1367,6 +1367,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let before_function_graph_ix = self.cfg.current_node_ix;
+        self.cfg.push_finalization_stack();
         let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
         self.cfg.ctx(None).new_function();
@@ -1391,6 +1392,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
         self.cfg.release_error_harness(error_harness);
+        self.cfg.pop_finalization_stack();
         let after_function_graph_ix = self.cfg.new_basic_block_normal();
         self.cfg.add_edge(before_function_graph_ix, after_function_graph_ix, EdgeType::Normal);
         /* cfg */
@@ -1463,6 +1465,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         let current_node_ix = self.cfg.current_node_ix;
+        self.cfg.push_finalization_stack();
         let error_harness = self.cfg.attach_error_harness(ErrorEdgeKind::Implicit);
         let function_graph_ix = self.cfg.new_basic_block_function();
         self.cfg.ctx(None).new_function();
@@ -1483,6 +1486,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         self.cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
         self.cfg.release_error_harness(error_harness);
+        self.cfg.pop_finalization_stack();
         self.cfg.current_node_ix = current_node_ix;
         /* cfg */
         if let Some(parameters) = &expr.type_parameters {

@@ -273,6 +273,24 @@ fn test() {
         // allows `this`/`super` after `super()`.
         ("class A extends B { }", None),
         ("class A extends B { constructor() { super(); } }", None),
+        (
+        "
+        function f() {
+            try {
+                return a();
+            }
+            catch (err) {
+                throw new class CustomError extends Error {
+                    constructor() {
+                        super(err);
+                    }
+                };
+            }
+            finally {
+                this.b();
+            }
+        }
+        ", None),
         ("class A extends B { constructor() { super(); this.c = this.d; } }", None),
         ("class A extends B { constructor() { super(); this.c(); } }", None),
         ("class A extends B { constructor() { super(); super.c(); } }", None),

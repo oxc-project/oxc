@@ -23,7 +23,7 @@ pub struct ControlFlowGraphBuilder<'a> {
     /// Contains the error unwinding path represented as a stack of `ErrorHarness`es
     error_path: Vec<ErrorHarness>,
     /// Stack of finalizers, the top most element is always the appropriate one for current node.
-    finalizers: Vec<BasicBlockId>,
+    finalizers: Vec<Option<BasicBlockId>>,
 }
 
 impl<'a> ControlFlowGraphBuilder<'a> {
@@ -81,7 +81,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
             self.error_path.last().expect("normal basic blocks need an error harness to attach to");
         self.add_edge(graph_ix, *error_graph_ix, EdgeType::Error(*error_edge_kind));
 
-        if let Some(finalizer) = self.finalizers.last() {
+        if let Some(Some(finalizer)) = self.finalizers.last() {
             self.add_edge(graph_ix, *finalizer, EdgeType::Finalize);
         }
 
@@ -139,8 +139,17 @@ impl<'a> ControlFlowGraphBuilder<'a> {
     /// Returns the `BasicBlockId` of the created finalizer block.
     pub fn attach_finalizer(&mut self) -> BasicBlockId {
         let graph_ix = self.new_basic_block();
-        self.finalizers.push(graph_ix);
+        self.finalizers.push(Some(graph_ix));
         graph_ix
+    }
+
+    pub fn push_finalization_stack(&mut self) {
+        self.finalizers.push(None);
+    }
+
+    pub fn pop_finalization_stack(&mut self) {
+        let result = self.finalizers.pop();
+        debug_assert!(result.as_ref().is_some_and(Option::is_none));
     }
 
     /// # Panics if last finalizer doesn't match the expected `BasicBlockId`.
@@ -148,7 +157,8 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         // return early if there is no finalizer.
         let Some(finalizer) = self.finalizers.pop() else { return };
         assert_eq!(
-            finalizer, expect,
+            finalizer,
+            Some(expect),
             "expected finalizer doesn't match the last finalizer pushed onto the stack."
         );
     }
