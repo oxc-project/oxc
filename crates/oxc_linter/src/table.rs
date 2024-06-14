@@ -1,8 +1,8 @@
-use std::{collections::HashMap, fmt::Write};
+use std::fmt::Write;
 
-use rustc_hash::FxHashSet;
+use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{rules::RULES, Linter};
+use crate::{rules::RULES, Linter, RuleCategory};
 
 pub struct RuleTable {
     pub sections: Vec<RuleTableSection>,
@@ -12,7 +12,7 @@ pub struct RuleTable {
 
 pub struct RuleTableSection {
     pub rows: Vec<RuleTableRow>,
-    pub category: String,
+    pub category: RuleCategory,
     pub rule_column_width: usize,
     pub plugin_column_width: usize,
 }
@@ -20,7 +20,7 @@ pub struct RuleTableSection {
 pub struct RuleTableRow {
     pub name: &'static str,
     pub plugin: String,
-    pub category: String,
+    pub category: RuleCategory,
     pub documentation: Option<&'static str>,
     pub turned_on_by_default: bool,
 }
@@ -47,7 +47,7 @@ impl RuleTable {
                     name,
                     documentation: rule.documentation(),
                     plugin: rule.plugin_name().to_string(),
-                    category: rule.category().to_string(),
+                    category: rule.category(),
                     turned_on_by_default: default_rules.contains(name),
                 }
             })
@@ -58,28 +58,30 @@ impl RuleTable {
         rows.sort_by_key(|row| (row.plugin.clone(), row.name));
 
         let mut rows_by_category = rows.into_iter().fold(
-            HashMap::default(),
-            |mut map: HashMap<String, Vec<RuleTableRow>>, row| {
-                map.entry(row.category.clone()).or_default().push(row);
+            FxHashMap::default(),
+            |mut map: FxHashMap<RuleCategory, Vec<RuleTableRow>>, row| {
+                map.entry(row.category).or_default().push(row);
                 map
             },
         );
 
-        let sections =
-            ["Correctness", "Perf", "Restriction", "Suspicious", "Pedantic", "Style", "Nursery"]
-                .into_iter()
-                .filter_map(|category| {
-                    let rows = rows_by_category.remove(category)?;
-                    let rule_column_width = rows.iter().map(|r| r.name.len()).max()?;
-                    let plugin_column_width = rows.iter().map(|r| r.plugin.len()).max()?;
-                    Some(RuleTableSection {
-                        rows,
-                        category: category.to_string(),
-                        rule_column_width,
-                        plugin_column_width,
-                    })
-                })
-                .collect::<Vec<_>>();
+        let sections = [
+            RuleCategory::Correctness,
+            RuleCategory::Perf,
+            RuleCategory::Restriction,
+            RuleCategory::Suspicious,
+            RuleCategory::Pedantic,
+            RuleCategory::Style,
+            RuleCategory::Nursery,
+        ]
+        .into_iter()
+        .filter_map(|category| {
+            let rows = rows_by_category.remove(&category)?;
+            let rule_column_width = rows.iter().map(|r| r.name.len()).max()?;
+            let plugin_column_width = rows.iter().map(|r| r.plugin.len()).max()?;
+            Some(RuleTableSection { rows, category, rule_column_width, plugin_column_width })
+        })
+        .collect::<Vec<_>>();
 
         RuleTable { total, sections, turned_on_by_default_count: default_rules.len() }
     }
@@ -93,6 +95,8 @@ impl RuleTableSection {
         let rule_width = self.rule_column_width;
         let plugin_width = self.plugin_column_width;
         writeln!(s, "## {} ({}):", category, rows.len()).unwrap();
+
+        writeln!(s, "{}", category.description()).unwrap();
 
         let x = "";
         writeln!(s, "| {:<rule_width$} | {:<plugin_width$} | Default |", "Rule name", "Source")
