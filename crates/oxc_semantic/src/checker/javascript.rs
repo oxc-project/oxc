@@ -16,93 +16,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration, scope::ScopeFlags, AstNode};
 
-pub struct EarlyErrorJavaScript;
-
-impl EarlyErrorJavaScript {
-    pub fn run<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
-        let kind = node.kind();
-
-        match kind {
-            AstKind::Program(_) => {
-                check_labeled_statement(ctx);
-                check_duplicate_class_elements(ctx);
-            }
-            AstKind::BindingIdentifier(ident) => {
-                check_identifier(&ident.name, ident.span, node, ctx);
-                check_binding_identifier(ident, node, ctx);
-            }
-            AstKind::IdentifierReference(ident) => {
-                check_identifier(&ident.name, ident.span, node, ctx);
-                check_identifier_reference(ident, node, ctx);
-            }
-            AstKind::LabelIdentifier(ident) => check_identifier(&ident.name, ident.span, node, ctx),
-            AstKind::PrivateIdentifier(ident) => check_private_identifier_outside_class(ident, ctx),
-            AstKind::NumericLiteral(lit) => check_number_literal(lit, ctx),
-            AstKind::StringLiteral(lit) => check_string_literal(lit, ctx),
-            AstKind::RegExpLiteral(lit) => check_regexp_literal(lit, ctx),
-
-            AstKind::Directive(dir) => check_directive(dir, ctx),
-            AstKind::ModuleDeclaration(decl) => {
-                check_module_declaration(decl, node, ctx);
-            }
-            AstKind::MetaProperty(prop) => check_meta_property(prop, node, ctx),
-
-            AstKind::WithStatement(stmt) => {
-                check_function_declaration(&stmt.body, false, ctx);
-                check_with_statement(stmt, ctx);
-            }
-            AstKind::SwitchStatement(stmt) => check_switch_statement(stmt, ctx),
-            AstKind::BreakStatement(stmt) => check_break_statement(stmt, node, ctx),
-            AstKind::ContinueStatement(stmt) => check_continue_statement(stmt, node, ctx),
-            AstKind::LabeledStatement(stmt) => {
-                check_function_declaration(&stmt.body, true, ctx);
-            }
-            AstKind::ForInStatement(stmt) => {
-                check_function_declaration(&stmt.body, false, ctx);
-                check_for_statement_left(&stmt.left, true, node, ctx);
-            }
-            AstKind::ForOfStatement(stmt) => {
-                check_function_declaration(&stmt.body, false, ctx);
-                check_for_statement_left(&stmt.left, false, node, ctx);
-            }
-            AstKind::WhileStatement(WhileStatement { body, .. })
-            | AstKind::DoWhileStatement(DoWhileStatement { body, .. })
-            | AstKind::ForStatement(ForStatement { body, .. }) => {
-                check_function_declaration(body, false, ctx);
-            }
-            AstKind::IfStatement(stmt) => {
-                check_function_declaration(&stmt.consequent, true, ctx);
-                if let Some(alternate) = &stmt.alternate {
-                    check_function_declaration(alternate, true, ctx);
-                }
-            }
-
-            AstKind::Class(class) => check_class(class, node, ctx),
-            AstKind::MethodDefinition(method) => check_method_definition(method, ctx),
-            AstKind::ObjectProperty(prop) => check_object_property(prop, ctx),
-            AstKind::Super(sup) => check_super(sup, node, ctx),
-
-            AstKind::FormalParameters(params) => check_formal_parameters(params, node, ctx),
-            AstKind::ArrayPattern(pat) => check_array_pattern(pat, ctx),
-
-            AstKind::AssignmentExpression(expr) => check_assignment_expression(expr, ctx),
-            AstKind::AwaitExpression(expr) => check_await_expression(expr, node, ctx),
-            AstKind::BinaryExpression(expr) => check_binary_expression(expr, ctx),
-            AstKind::LogicalExpression(expr) => check_logical_expression(expr, ctx),
-            AstKind::MemberExpression(expr) => check_member_expression(expr, ctx),
-            AstKind::ObjectExpression(expr) => check_object_expression(expr, ctx),
-            AstKind::UnaryExpression(expr) => check_unary_expression(expr, node, ctx),
-            AstKind::YieldExpression(expr) => check_yield_expression(expr, node, ctx),
-            _ => {}
-        }
-    }
-
-    pub fn check_module_record(ctx: &SemanticBuilder<'_>) {
-        check_module_record(ctx);
-    }
-}
-
-fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
+pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
     classes.iter_enumerated().for_each(|(class_id, _)| {
         let mut defined_elements = FxHashMap::default();
@@ -149,7 +63,7 @@ fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     ])
 }
 
-fn check_module_record(ctx: &SemanticBuilder<'_>) {
+pub fn check_module_record(ctx: &SemanticBuilder<'_>) {
     // Skip checkking for exports in TypeScript for now
     if ctx.source_type.is_typescript() {
         return;
@@ -214,7 +128,12 @@ pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
     "yield",
 };
 
-fn check_identifier<'a>(name: &Atom, span: Span, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_identifier<'a>(
+    name: &Atom,
+    span: Span,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     // ts module block allows revered keywords
     if ctx.current_scope_flags().is_ts_module_block() {
         return;
@@ -248,7 +167,7 @@ fn invalid_let_declaration(x0: &str, span1: Span) -> OxcDiagnostic {
     .with_labels([span1.into()])
 }
 
-fn check_binding_identifier<'a>(
+pub fn check_binding_identifier<'a>(
     ident: &BindingIdentifier,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -280,7 +199,7 @@ fn unexpected_arguments(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("'arguments' is not allowed in {x0}")).with_labels([span1.into()])
 }
 
-fn check_identifier_reference<'a>(
+pub fn check_identifier_reference<'a>(
     ident: &IdentifierReference,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -326,7 +245,10 @@ fn private_not_in_class(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_labels([span1.into()])
 }
 
-fn check_private_identifier_outside_class(ident: &PrivateIdentifier, ctx: &SemanticBuilder<'_>) {
+pub fn check_private_identifier_outside_class(
+    ident: &PrivateIdentifier,
+    ctx: &SemanticBuilder<'_>,
+) {
     if ctx.class_table_builder.current_class_id.is_none() {
         ctx.error(private_not_in_class(&ident.name, ident.span));
     }
@@ -365,7 +287,7 @@ fn leading_zero_decimal(span0: Span) -> OxcDiagnostic {
         .with_labels([span0.into()])
 }
 
-fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_number_literal(lit: &NumericLiteral, ctx: &SemanticBuilder<'_>) {
     // NumericLiteral :: legacy_octalIntegerLiteral
     // DecimalIntegerLiteral :: NonOctalDecimalIntegerLiteral
     // * It is a Syntax Error if the source text matched by this production is strict mode code.
@@ -398,7 +320,7 @@ fn non_octal_decimal_escape_sequence(span0: Span) -> OxcDiagnostic {
         .with_labels([span0.into()])
 }
 
-fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     // 12.9.4.1 Static Semantics: Early Errors
     // EscapeSequence ::
     //   legacy_octalEscapeSequence
@@ -437,7 +359,7 @@ fn illegal_use_strict(span0: Span) -> OxcDiagnostic {
 
 // It is a Syntax Error if FunctionBodyContainsUseStrict of AsyncFunctionBody is true and IsSimpleParameterList of FormalParameters is false.
 // background: https://humanwhocodes.com/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/
-fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
+pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
     if directive.directive != "use strict" {
         return;
     }
@@ -466,7 +388,7 @@ fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Cannot use {x0} outside a module")).with_labels([span1.into()])
 }
 
-fn check_module_declaration<'a>(
+pub fn check_module_declaration<'a>(
     decl: &ModuleDeclaration,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -523,7 +445,7 @@ fn import_meta_property(span0: Span) -> OxcDiagnostic {
         .with_labels([span0.into()])
 }
 
-fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_meta_property<'a>(prop: &MetaProperty, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     match prop.meta.name.as_str() {
         "import" => {
             if prop.property.name == "meta" {
@@ -573,7 +495,7 @@ fn function_declaration_non_strict(span0: Span) -> OxcDiagnostic {
 .with_labels([span0.into()])
 }
 
-fn check_function_declaration<'a>(
+pub fn check_function_declaration<'a>(
     stmt: &Statement<'a>,
     is_if_stmt_or_labeled_stmt: bool,
     ctx: &SemanticBuilder<'a>,
@@ -595,7 +517,7 @@ fn reg_exp_flag_u_and_v(span0: Span) -> OxcDiagnostic {
     .with_labels([span0.into()])
 }
 
-fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
+pub fn check_regexp_literal(lit: &RegExpLiteral, ctx: &SemanticBuilder<'_>) {
     let flags = lit.regex.flags;
     if flags.contains(RegExpFlags::U | RegExpFlags::V) {
         ctx.error(reg_exp_flag_u_and_v(lit.span));
@@ -606,13 +528,13 @@ fn with_statement(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("'with' statements are not allowed").with_labels([span0.into()])
 }
 
-fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
+pub fn check_with_statement(stmt: &WithStatement, ctx: &SemanticBuilder<'_>) {
     if ctx.strict_mode() || ctx.source_type.is_typescript() {
         ctx.error(with_statement(Span::new(stmt.span.start, stmt.span.start + 4)));
     }
 }
 
-fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_switch_statement<'a>(stmt: &SwitchStatement<'a>, ctx: &SemanticBuilder<'a>) {
     let mut previous_default: Option<Span> = None;
     for case in &stmt.cases {
         if case.test.is_none() {
@@ -669,7 +591,11 @@ fn invalid_break(span0: Span) -> OxcDiagnostic {
 .with_labels([span0.into()])
 }
 
-fn check_break_statement<'a>(stmt: &BreakStatement, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_break_statement<'a>(
+    stmt: &BreakStatement,
+    node: &AstNode<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
     if let Some(label) = &stmt.label {
         return check_label(label, ctx, false);
     }
@@ -697,7 +623,7 @@ fn invalid_continue(span0: Span) -> OxcDiagnostic {
 .with_labels([span0.into()])
 }
 
-fn check_continue_statement<'a>(
+pub fn check_continue_statement<'a>(
     stmt: &ContinueStatement,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -719,7 +645,7 @@ fn check_continue_statement<'a>(
 }
 
 #[allow(clippy::option_if_let_else)]
-fn check_labeled_statement(ctx: &SemanticBuilder) {
+pub fn check_labeled_statement(ctx: &SemanticBuilder) {
     ctx.label_builder.labels.iter().for_each(|labels| {
         let mut defined = FxHashMap::default();
         for labeled in labels {
@@ -744,7 +670,7 @@ fn unexpected_initializer_in_for_loop_head(x0: &str, span1: Span) -> OxcDiagnost
         .with_labels([span1.into()])
 }
 
-fn check_for_statement_left<'a>(
+pub fn check_for_statement_left<'a>(
     left: &ForStatementLeft,
     is_for_in: bool,
     _node: &AstNode<'a>,
@@ -790,7 +716,7 @@ fn require_class_name(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A class name is required.").with_labels([span0.into()])
 }
 
-fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_class(class: &Class, node: &AstNode<'_>, ctx: &SemanticBuilder<'_>) {
     check_private_identifier(ctx);
 
     if class.is_declaration()
@@ -855,7 +781,7 @@ fn check_getter(function: &Function<'_>, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-fn check_method_definition(method: &MethodDefinition<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_method_definition(method: &MethodDefinition<'_>, ctx: &SemanticBuilder<'_>) {
     match method.kind {
         MethodDefinitionKind::Set => check_setter(&method.value, ctx),
         MethodDefinitionKind::Get => check_getter(&method.value, ctx),
@@ -882,7 +808,7 @@ fn unexpected_super_reference(span0: Span) -> OxcDiagnostic {
 .with_labels([span0.into()])
 }
 
-fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_super<'a>(sup: &Super, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     let super_call_span = match ctx.nodes.parent_kind(node.id()) {
         Some(AstKind::CallExpression(expr)) => Some(expr.span),
         Some(AstKind::NewExpression(expr)) => Some(expr.span),
@@ -973,7 +899,7 @@ fn cover_initialized_name(span0: Span) -> OxcDiagnostic {
 .with_labels([span0.into()])
 }
 
-fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
+pub fn check_object_property(prop: &ObjectProperty, ctx: &SemanticBuilder<'_>) {
     // PropertyDefinition : cover_initialized_name
     // It is a Syntax Error if any source text is matched by this production.
     if let Some(expr) = &prop.init {
@@ -993,7 +919,7 @@ fn a_rest_parameter_cannot_have_an_initializer(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("A rest parameter cannot have an initializer").with_labels([span0.into()])
 }
 
-fn check_formal_parameters<'a>(
+pub fn check_formal_parameters<'a>(
     params: &FormalParameters,
     _node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -1005,7 +931,7 @@ fn check_formal_parameters<'a>(
     }
 }
 
-fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
+pub fn check_array_pattern(pattern: &ArrayPattern, ctx: &SemanticBuilder<'_>) {
     // function foo([...x = []]) { }
     //                    ^^^^ A rest element cannot have an initializer
     if let Some(rest) = &pattern.rest {
@@ -1019,7 +945,7 @@ fn assignment_is_not_simple(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Invalid left-hand side in assignment").with_labels([span0.into()])
 }
 
-fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &SemanticBuilder<'_>) {
     // AssignmentExpression :
     //     LeftHandSideExpression AssignmentOperator AssignmentExpression
     //     LeftHandSideExpression &&= AssignmentExpression
@@ -1033,7 +959,7 @@ fn check_assignment_expression(assign_expr: &AssignmentExpression, ctx: &Semanti
     }
 }
 
-fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_object_expression(obj_expr: &ObjectExpression, ctx: &SemanticBuilder<'_>) {
     // ObjectLiteral : { PropertyDefinitionList }
     // It is a Syntax Error if PropertyNameList of PropertyDefinitionList contains any duplicate entries for "__proto__"
     // and at least two of those entries were obtained from productions of the form PropertyDefinition : PropertyName : AssignmentExpression
@@ -1055,7 +981,7 @@ fn unexpected_exponential(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_labels([span1.into()])
 }
 
-fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_binary_expression(binary_expr: &BinaryExpression, ctx: &SemanticBuilder<'_>) {
     if binary_expr.operator == BinaryOperator::Exponential {
         match binary_expr.left {
             // async () => await 5 ** 6
@@ -1078,7 +1004,7 @@ fn mixed_coalesce(span0: Span) -> OxcDiagnostic {
         .with_labels([span0.into()])
 }
 
-fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_logical_expression(logical_expr: &LogicalExpression, ctx: &SemanticBuilder<'_>) {
     // check mixed coalesce
     // a ?? b || c - a ?? (b || c)
     // a ?? b && c - a ?? (b && c)
@@ -1103,7 +1029,7 @@ fn super_private(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Private fields cannot be accessed on super").with_labels([span0.into()])
 }
 
-fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
+pub fn check_member_expression(member_expr: &MemberExpression, ctx: &SemanticBuilder<'_>) {
     if let MemberExpression::PrivateFieldExpression(private_expr) = member_expr {
         // super.#m
         if let Expression::Super(_) = &private_expr.object {
@@ -1121,7 +1047,7 @@ fn delete_private_field(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Private fields can not be deleted").with_labels([span0.into()])
 }
 
-fn check_unary_expression<'a>(
+pub fn check_unary_expression<'a>(
     unary_expr: &'a UnaryExpression,
     _node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -1162,7 +1088,7 @@ fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
     ])
 }
 
-fn check_await_expression<'a>(
+pub fn check_await_expression<'a>(
     expr: &AwaitExpression,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
@@ -1177,7 +1103,7 @@ fn check_await_expression<'a>(
     }
 }
 
-fn check_yield_expression<'a>(
+pub fn check_yield_expression<'a>(
     expr: &YieldExpression,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
