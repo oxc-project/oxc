@@ -3028,7 +3028,44 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportType<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_str(b"import(");
         self.argument.gen(p, ctx);
+        if let Some(attributes) = &self.attributes {
+            p.print_str(", ");
+            attributes.gen(p, ctx);
+        }
         p.print_str(b")");
+        if let Some(qualifier) = &self.qualifier {
+            p.print(b'.');
+            qualifier.gen(p, ctx);
+        }
+        if let Some(type_parameters) = &self.type_parameters {
+            type_parameters.gen(p, ctx);
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttributes<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        // { with: { ... } }
+        p.print_str(b"{ with: { ");
+        p.print_list(&self.elements, ctx);
+        p.print_str(b" }}");
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttribute<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.name.gen(p, ctx);
+        p.print_str(": ");
+        self.value.gen_expr(p, Precedence::Member, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttributeName<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self {
+            TSImportAttributeName::Identifier(ident) => ident.gen(p, ctx),
+            TSImportAttributeName::StringLiteral(literal) => literal.gen(p, ctx),
+        }
     }
 }
 
