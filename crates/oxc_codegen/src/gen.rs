@@ -2302,7 +2302,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
         if self.r#type == MethodDefinitionType::TSAbstractMethodDefinition {
             p.print_str(b"abstract ");
         }
-
+        if let Some(accessibility) = &self.accessibility {
+            accessibility.gen(p, ctx);
+        }
         if self.r#static {
             p.print_str(b"static ");
         }
@@ -2356,18 +2358,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
             p.print_str(b"abstract ");
         }
         if let Some(accessibility) = &self.accessibility {
-            match accessibility {
-                TSAccessibility::Private => {
-                    p.print_str(b"private ");
-                }
-                TSAccessibility::Protected => {
-                    p.print_str(b"protected ");
-                }
-                TSAccessibility::Public => {
-                    p.print_str(b"public ");
-                }
-            }
+            accessibility.gen(p, ctx);
         }
+
         if self.r#static {
             p.print_str(b"static ");
         }
