@@ -2266,6 +2266,12 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     {
         walk_binding_identifier(traverser, field as *mut _, ctx);
     }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        ctx.retag_stack(AncestorType::FunctionTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_THIS_PARAM)
         as *mut Option<TSThisParameter>)
     {
@@ -2284,12 +2290,6 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     {
         ctx.retag_stack(AncestorType::FunctionBody);
         walk_function_body(traverser, (&mut **field) as *mut _, ctx);
-    }
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::FunctionTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_RETURN_TYPE)
         as *mut Option<Box<TSTypeAnnotation>>)
