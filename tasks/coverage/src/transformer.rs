@@ -17,7 +17,7 @@ use crate::{
     typescript::TypeScriptCase,
 };
 
-/// Runs the transformer and make sure it doesn't crash.
+/// Idempotency test
 fn get_result(
     source_text: &str,
     source_type: SourceType,
@@ -27,76 +27,51 @@ fn get_result(
     let allocator = Allocator::default();
     let filename = source_path.file_name().unwrap().to_string_lossy();
     let options = options.unwrap_or_else(get_default_transformer_options);
-    let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let mut program = parse_result1.program;
-    let transform_result1 = Transformer::new(
-        &allocator,
-        source_path,
-        source_type,
-        source_text,
-        parse_result1.trivias.clone(),
-        options.clone(),
-    )
-    .build(&mut program);
 
-    let ts_source_text1 = Codegen::<false>::new(
-        &filename,
-        source_text,
-        parse_result1.trivias.clone(),
-        CodegenOptions::default(),
-    )
-    .build(&program)
-    .source_text;
+    // First pass
+    let transformed1 = {
+        let mut ret1 = Parser::new(&allocator, source_text, source_type).parse();
+        let _ = Transformer::new(
+            &allocator,
+            source_path,
+            source_type,
+            source_text,
+            ret1.trivias.clone(),
+            options.clone(),
+        )
+        .build(&mut ret1.program);
+        Codegen::<false>::new(
+            &filename,
+            source_text,
+            ret1.trivias.clone(),
+            CodegenOptions::default(),
+        )
+        .build(&ret1.program)
+        .source_text
+    };
 
-    let source_text1 = Codegen::<false>::new(
-        &filename,
-        source_text,
-        parse_result1.trivias.clone(),
-        CodegenOptions::default(),
-    )
-    .build(&program)
-    .source_text;
+    // Second pass with only JavaScript parsing
+    let transformed2 = {
+        let source_type = SourceType::default().with_module(source_type.is_module());
+        let mut ret2 = Parser::new(&allocator, &transformed1, source_type).parse();
+        let _ = Transformer::new(
+            &allocator,
+            source_path,
+            source_type,
+            &transformed1,
+            ret2.trivias.clone(),
+            options,
+        )
+        .build(&mut ret2.program);
+        Codegen::<false>::new(&filename, source_text, ret2.trivias, CodegenOptions::default())
+            .build(&ret2.program)
+            .source_text
+    };
 
-    if transform_result1.is_ok() && ts_source_text1 != source_text1 {
-        return TestResult::Mismatch(ts_source_text1.clone(), source_text1.clone());
-    }
-
-    let parse_result2 = Parser::new(&allocator, &ts_source_text1, source_type).parse();
-    let mut program = parse_result2.program;
-
-    let transform_result2 = Transformer::new(
-        &allocator,
-        source_path,
-        source_type,
-        &source_text1,
-        parse_result2.trivias.clone(),
-        options,
-    )
-    .build(&mut program);
-
-    let source_text2 = Codegen::<false>::new(
-        &filename,
-        &source_text1,
-        parse_result2.trivias,
-        CodegenOptions::default(),
-    )
-    .build(&program)
-    .source_text;
-
-    if source_text1 == source_text2
-        || transform_result1.is_err_and(|err| {
-            // If error messages are the same, we consider it as a pass.
-            transform_result2
-                .map_err(|err| err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n"))
-                .is_err_and(|err_message| {
-                    err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n")
-                        == err_message
-                })
-        })
-    {
+    if transformed1 == transformed2 {
         TestResult::Passed
     } else {
-        TestResult::Mismatch(source_text1.clone(), source_text2)
+        TestResult::Mismatch(transformed1, transformed2)
     }
 }
 

@@ -24,11 +24,11 @@ fn main() {
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     if !ret.errors.is_empty() {
+        println!("Parser Errors:");
         for error in ret.errors {
             let error = error.with_source_code(source_text.clone());
             println!("{error:?}");
         }
-        return;
     }
 
     println!("Original:\n");
@@ -46,7 +46,7 @@ fn main() {
         },
         ..Default::default()
     };
-    Transformer::new(
+    let _ = Transformer::new(
         &allocator,
         path,
         source_type,
@@ -54,8 +54,7 @@ fn main() {
         ret.trivias.clone(),
         transform_options,
     )
-    .build(&mut program)
-    .unwrap();
+    .build(&mut program);
 
     let printed = Codegen::<false>::new("", &source_text, ret.trivias, CodegenOptions::default())
         .build(&program)
