@@ -134,6 +134,12 @@ impl Tester {
         self
     }
 
+    /// Change the extension of the path
+    pub fn change_rule_path_extension(mut self, ext: &str) -> Self {
+        self.rule_path = self.rule_path.with_extension(ext);
+        self
+    }
+
     pub fn with_import_plugin(mut self, yes: bool) -> Self {
         self.import_plugin = yes;
         self

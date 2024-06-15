@@ -54,6 +54,10 @@ declare_oxc_lint!(
 
 impl Rule for GetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
+        if ctx.source_type().is_typescript() {
+            return;
+        }
         match node.kind() {
             AstKind::Function(func) if !func.is_typescript_syntax() => {
                 self.run_diagnostic(node, ctx, func.span);
@@ -350,54 +354,12 @@ fn test() {
         ("foo.defineProperties(null, { bar: { get() {} } });", None),
         ("foo.create(null, { bar: { get() {} } });", None),
         ("var foo = { get willThrowSoValid() { throw MyException() } };", None),
-        ("export abstract class Foo { protected abstract get foobar(): number; }", None),
-        (
-            "class T {
-            theme: number;
-            get type(): number {
-                switch (theme) {
-                    case 1: return 1;
-                    case 2: return 2;
-                    default: return 3;
-                 }
-                 throw new Error('test')
-            }
-        }",
-            None,
-        ),
-        (
-            "class T {
-            theme: number;
-            get type(): number {
-                switch (theme) {
-                    case 1: return 1;
-                    case 2: return 2;
-                    default: return 3;
-                 }
-            }
-        }",
-            None,
-        ),
         (
             "const originalClearTimeout = targetWindow.clearTimeout;
         Object.defineProperty(targetWindow, 'vscodeOriginalClearTimeout', { get: () => originalClearTimeout });
         ",
             None,
         ),
-        (
-            "class T {
-            get width(): number | undefined {
-                const val = undefined
-                if (!val) {
-                    return;
-                }
-
-                return val * val;
-            }
-        }",
-            None,
-        ),
-        ("function fn(): void { console.log('test') }", None),
     ];
 
     let fail = vec![
@@ -437,5 +399,7 @@ fn test() {
         ("(Object?.create)(foo, { bar: { get: function (){} } });", Some(serde_json::json!([{ "allowImplicit": true }]))),
     ];
 
-    Tester::new(GetterReturn::NAME, pass, fail).test_and_snapshot();
+    Tester::new(GetterReturn::NAME, pass, fail)
+        .change_rule_path_extension("js")
+        .test_and_snapshot();
 }
