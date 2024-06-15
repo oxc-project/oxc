@@ -131,19 +131,27 @@ impl TypeScriptTranspileCase {
         };
 
         // compare lines
-        let baseline_lines = baseline_text.lines().filter(|s| !s.is_empty()).collect::<Vec<_>>();
-        let expected_lines = expected_text.lines().filter(|s| !s.is_empty()).collect::<Vec<_>>();
+        let baseline_lines = baseline_text
+            .lines()
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| s.trim_start())
+            .collect::<Vec<_>>();
+        let expected_lines = expected_text
+            .lines()
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| s.trim_start())
+            .collect::<Vec<_>>();
         if baseline_lines.len() != expected_lines.len() {
-            return TestResult::Mismatch(baseline_text, expected_text);
+            return TestResult::Mismatch(baseline_lines.join("\n"), expected_lines.join("\n"));
         }
         // compare the lines with all whitespace removed
-        for (a, b) in baseline_lines.into_iter().zip(expected_lines) {
+        for (a, b) in baseline_lines.iter().zip(expected_lines.iter()) {
             let mut a = a.to_string();
             a.retain(|c| !c.is_whitespace());
             let mut b = b.to_string();
             b.retain(|c| !c.is_whitespace());
             if a != b {
-                return TestResult::Mismatch(baseline_text, expected_text);
+                return TestResult::Mismatch(baseline_lines.join("\n"), expected_lines.join("\n"));
             }
         }
         TestResult::Passed

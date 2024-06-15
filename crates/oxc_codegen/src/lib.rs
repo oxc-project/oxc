@@ -337,7 +337,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.print(b'}');
     }
 
-    fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
+    fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_block_start(stmt.span.start);
         self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
         self.print_block_end(stmt.span.end);

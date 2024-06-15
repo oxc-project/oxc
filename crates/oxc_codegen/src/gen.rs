@@ -150,7 +150,7 @@ fn print_if<const MINIFY: bool>(
 
     match &if_stmt.consequent {
         Statement::BlockStatement(block) => {
-            p.print_block1(block, ctx);
+            p.print_block_statement(block, ctx);
         }
         stmt if wrap_to_avoid_ambiguous_else(stmt) => {
             p.print_block_start(stmt.span().start);
@@ -173,7 +173,7 @@ fn print_if<const MINIFY: bool>(
         p.print_str(b"else ");
         match alternate {
             Statement::BlockStatement(block) => {
-                p.print_block1(block, ctx);
+                p.print_block_statement(block, ctx);
                 p.print_soft_newline();
             }
             Statement::IfStatement(if_stmt) => {
@@ -215,7 +215,7 @@ fn wrap_to_avoid_ambiguous_else(stmt: &Statement) -> bool {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BlockStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_indent();
-        p.print_block1(self, ctx);
+        p.print_block_statement(self, ctx);
         p.print_soft_newline();
     }
 }
@@ -334,7 +334,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for DoWhileStatement<'a> {
         p.print_indent();
         p.print_str(b"do ");
         if let Statement::BlockStatement(block) = &self.body {
-            p.print_block1(block, ctx);
+            p.print_block_statement(block, ctx);
         } else {
             p.print_soft_newline();
             p.indent();
@@ -455,7 +455,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TryStatement<'a> {
         p.add_source_mapping(self.span.start);
         p.print_indent();
         p.print_str(b"try");
-        p.print_block1(&self.block, ctx);
+        p.print_block_statement(&self.block, ctx);
         if let Some(handler) = &self.handler {
             p.print_str(b"catch");
             if let Some(param) = &handler.param {
@@ -463,11 +463,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TryStatement<'a> {
                 param.pattern.gen(p, ctx);
                 p.print_str(b")");
             }
-            p.print_block1(&handler.body, ctx);
+            p.print_block_statement(&handler.body, ctx);
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_str(b"finally");
-            p.print_block1(finalizer, ctx);
+            p.print_block_statement(finalizer, ctx);
         }
     }
 }
@@ -528,18 +528,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             Self::VariableDeclaration(decl) => {
-                p.print_indent();
                 decl.gen(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::FunctionDeclaration(decl) => {
-                p.print_indent();
                 p.print_space_before_identifier();
                 decl.gen(p, ctx);
                 p.print_soft_newline();
             }
             Self::ClassDeclaration(decl) => {
-                p.print_indent();
                 p.print_space_before_identifier();
                 decl.gen(p, ctx);
                 p.print_soft_newline();
@@ -884,7 +881,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
                     p.print_soft_space();
                     source.gen(p, ctx);
                 }
-                p.needs_semicolon = true;
+                p.print_semicolon_after_statement();
             }
         }
     }
@@ -2056,7 +2053,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
                         | ClassElement::AccessorProperty(_)
                         | ClassElement::TSIndexSignature(_)
                 ) {
-                    p.print_semicolon_after_statement();
+                    p.print_semicolon();
                 }
                 p.print_soft_newline();
             }
@@ -2743,14 +2740,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
                 p.print_str(b"void");
             }
             Self::TSTemplateLiteralType(decl) => decl.gen(p, ctx),
-            Self::TSTypeLiteral(decl) => {
-                p.print_block_start(decl.span.start);
-                for item in &decl.members {
-                    item.gen(p, ctx);
-                    p.print_semicolon();
-                }
-                p.print_block_end(decl.span.end);
-            }
+            Self::TSTypeLiteral(decl) => decl.gen(p, ctx),
             Self::TSTypeOperatorType(decl) => {
                 match decl.operator {
                     TSTypeOperatorOperator::Keyof => {
@@ -2800,6 +2790,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             }
             Self::JSDocUnknownType(_decl) => p.print_str(b"unknown"),
         }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeLiteral<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_block_start(self.span.start);
+        for item in &self.members {
+            item.gen(p, ctx);
+            p.print_semicolon();
+            p.print_soft_newline();
+        }
+        p.print_block_end(self.span.end);
     }
 }
 
