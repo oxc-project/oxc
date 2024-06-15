@@ -1247,12 +1247,12 @@ pub mod walk {
         if let Some(ident) = &func.id {
             visitor.visit_binding_identifier(ident);
         }
+        if let Some(parameters) = &func.type_parameters {
+            visitor.visit_ts_type_parameter_declaration(parameters);
+        }
         visitor.visit_formal_parameters(&func.params);
         if let Some(body) = &func.body {
             visitor.visit_function_body(body);
-        }
-        if let Some(parameters) = &func.type_parameters {
-            visitor.visit_ts_type_parameter_declaration(parameters);
         }
         if let Some(annotation) = &func.return_type {
             visitor.visit_ts_type_annotation(annotation);
