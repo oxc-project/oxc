@@ -402,3 +402,9 @@ pub fn static_constructor(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("TS1089: `static` modifier cannot appear on a constructor declaration.")
         .with_labels([span0.into()])
 }
+
+#[cold]
+pub fn jsx_element_no_match(span0: Span, span1: Span, name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
+        .with_labels([span0.into(), span1.into()])
+}

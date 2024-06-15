@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 18/18 (100.00%)
 Positive Passed: 18/18 (100.00%)
-Negative Passed: 9/9 (100.00%)
+Negative Passed: 10/10 (100.00%)
 
   × Unexpected token
    ╭─[fail/oxc-169.js:2:1]
@@ -103,6 +103,28 @@ Negative Passed: 9/9 (100.00%)
    ╭─[fail/oxc-3320.tsx:1:8]
  1 │ m< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< mm< $<{3[   $<{3[  $<{3[ m< m$<{3[ m< m$<{3[  $<{3[ m< m$<{3[
    ·        ─
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'Apple'.
+   ╭─[fail/oxc-3528.jsx:1:10]
+ 1 │ let a = <Apple></Banana>;
+   ·          ─────   ──────
+ 2 │ 
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'Apple:Orange'.
+   ╭─[fail/oxc-3528.jsx:3:10]
+ 2 │ 
+ 3 │ let b = <Apple:Orange></Banana>;
+   ·          ────────────   ──────
+ 4 │ 
+   ╰────
+
+  × Expected corresponding JSX closing tag for 'Apple.Orange'.
+   ╭─[fail/oxc-3528.jsx:5:10]
+ 4 │ 
+ 5 │ let c = <Apple.Orange></Banana>;
+   ·          ────────────   ──────
    ╰────
 
   × The keyword 'let' is reserved

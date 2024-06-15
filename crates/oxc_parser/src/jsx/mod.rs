@@ -5,7 +5,7 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, GetSpan, Span};
 
 use crate::{diagnostics, lexer::Kind, Context, ParserImpl};
 
@@ -62,9 +62,19 @@ impl<'a> ParserImpl<'a> {
         } else {
             self.parse_jsx_children()?
         };
-        let closing_element = (!opening_element.self_closing)
-            .then(|| self.parse_jsx_closing_element(in_jsx_child))
-            .transpose()?;
+        let closing_element = if opening_element.self_closing {
+            None
+        } else {
+            let closing_element = self.parse_jsx_closing_element(in_jsx_child)?;
+            if !Self::jsx_element_name_eq(&opening_element.name, &closing_element.name) {
+                self.error(diagnostics::jsx_element_no_match(
+                    opening_element.name.span(),
+                    closing_element.name.span(),
+                    opening_element.name.span().source_text(self.source_text),
+                ));
+            }
+            Some(closing_element)
+        };
         Ok(self.ast.jsx_element(self.end_span(span), opening_element, closing_element, children))
     }
 
@@ -377,5 +387,40 @@ impl<'a> ParserImpl<'a> {
         let value = Atom::from(self.cur_string());
         self.bump_any();
         self.ast.jsx_text(self.end_span(span), value)
+    }
+
+    fn jsx_element_name_eq(lhs: &JSXElementName<'a>, rhs: &JSXElementName<'a>) -> bool {
+        match (lhs, rhs) {
+            (JSXElementName::Identifier(lhs), JSXElementName::Identifier(rhs)) => {
+                lhs.name == rhs.name
+            }
+            (JSXElementName::NamespacedName(lhs), JSXElementName::NamespacedName(rhs)) => {
+                lhs.namespace.name == rhs.namespace.name && lhs.property.name == rhs.property.name
+            }
+            (JSXElementName::MemberExpression(lhs), JSXElementName::MemberExpression(rhs)) => {
+                Self::jsx_member_expression_eq(lhs, rhs)
+            }
+            _ => false,
+        }
+    }
+
+    fn jsx_member_expression_eq(
+        lhs: &JSXMemberExpression<'a>,
+        rhs: &JSXMemberExpression<'a>,
+    ) -> bool {
+        if lhs.property.name != rhs.property.name {
+            return false;
+        }
+        match (&lhs.object, &rhs.object) {
+            (
+                JSXMemberExpressionObject::Identifier(lhs),
+                JSXMemberExpressionObject::Identifier(rhs),
+            ) => lhs.name == rhs.name,
+            (
+                JSXMemberExpressionObject::MemberExpression(lhs),
+                JSXMemberExpressionObject::MemberExpression(rhs),
+            ) => Self::jsx_member_expression_eq(lhs, rhs),
+            _ => false,
+        }
     }
 }
