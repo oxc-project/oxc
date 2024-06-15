@@ -53,6 +53,23 @@ pub struct CodegenReturn {
     pub source_map: Option<oxc_sourcemap::SourceMap>,
 }
 
+impl From<CodegenReturn> for String {
+    fn from(val: CodegenReturn) -> Self {
+        val.source_text
+    }
+}
+
+impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for String {
+    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
+        val.into_source_text()
+    }
+}
+impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for Cow<'a, str> {
+    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
+        Cow::Owned(val.into_source_text())
+    }
+}
+
 pub struct Codegen<'a, const MINIFY: bool> {
     options: CodegenOptions,
 
@@ -456,12 +473,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             }
         }
         for stmt in statements {
-            if let Some(decl) = stmt.as_declaration() {
-                if decl.is_typescript_syntax() && !matches!(decl, Declaration::TSEnumDeclaration(_))
-                {
-                    continue;
-                }
-            }
             if print_semicolon_first {
                 self.print_semicolon_if_needed();
                 stmt.gen(self, ctx);
@@ -500,22 +511,5 @@ fn choose_quote(s: &str) -> char {
         '"'
     } else {
         '\''
-    }
-}
-
-impl From<CodegenReturn> for String {
-    fn from(val: CodegenReturn) -> Self {
-        val.source_text
-    }
-}
-
-impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for String {
-    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
-        val.into_source_text()
-    }
-}
-impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for Cow<'a, str> {
-    fn from(mut val: Codegen<'a, MINIFY>) -> Self {
-        Cow::Owned(val.into_source_text())
     }
 }

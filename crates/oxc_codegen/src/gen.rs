@@ -596,7 +596,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.modifiers.contains(ModifierKind::Declare) {
+        if self.modifiers.is_contains_declare() {
             p.print_str(b"declare ");
         }
 

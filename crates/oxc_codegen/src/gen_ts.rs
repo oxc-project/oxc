@@ -1,8 +1,8 @@
-use crate::context::Context;
-use crate::{Codegen, Gen, GenExpr};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::precedence::Precedence;
+
+use crate::{context::Context, Codegen, Gen, GenExpr};
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
@@ -194,13 +194,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             }
             Self::TSTemplateLiteralType(decl) => decl.gen(p, ctx),
             Self::TSTypeLiteral(decl) => {
-                p.print_str(b"{");
+                p.print_block_start(decl.span.start);
                 for item in &decl.members {
                     item.gen(p, ctx);
                     p.print_semicolon();
                 }
-                p.print_soft_space();
-                p.print_str(b"}");
+                p.print_block_end(decl.span.end);
             }
             Self::TSTypeOperatorType(decl) => {
                 match decl.operator {

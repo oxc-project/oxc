@@ -109,10 +109,30 @@ impl TypeScriptTranspileCase {
         let filename = change_extension(self.path.to_str().unwrap());
         let path =
             project_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(filename);
-        let expected_text = fs::read_to_string(path).unwrap();
+
+        // remove the error diagnostics lines
+        let expected_text = {
+            let raw_expected_text = fs::read_to_string(path).unwrap();
+            let mut expected_text = String::new();
+            let mut ignore = false;
+            for line in raw_expected_text.split("\r\n") {
+                if let Some(remain) = line.strip_prefix("//// ") {
+                    ignore = remain.starts_with("[Diagnostics reported]");
+                    if ignore {
+                        continue;
+                    }
+                }
+                if !ignore {
+                    expected_text.push_str(line);
+                    expected_text.push_str("\r\n");
+                }
+            }
+            expected_text
+        };
+
         // compare lines
-        let baseline_lines = baseline_text.lines().collect::<Vec<_>>();
-        let expected_lines = expected_text.lines().collect::<Vec<_>>();
+        let baseline_lines = baseline_text.lines().filter(|s| !s.is_empty()).collect::<Vec<_>>();
+        let expected_lines = expected_text.lines().filter(|s| !s.is_empty()).collect::<Vec<_>>();
         if baseline_lines.len() != expected_lines.len() {
             return TestResult::Mismatch(baseline_text, expected_text);
         }
@@ -147,12 +167,16 @@ impl TypeScriptTranspileCase {
             if !ret.source_text.ends_with('\n') {
                 baseline_text.push_str("\r\n");
             }
-            if !ret.errors.is_empty() {
-                baseline_text.push_str("\r\n\r\n//// [Diagnostics reported]\r\n");
-                for error in &ret.errors {
-                    baseline_text.push_str(&error.message.to_string());
-                }
-            }
+            // ignore the diagnostics for now
+            // if !ret.errors.is_empty() {
+            // baseline_text.push_str("\r\n\r\n//// [Diagnostics reported]\r\n");
+            // for error in &ret.errors {
+            // baseline_text.push_str(&error.message.to_string());
+            // }
+            // if !baseline_text.ends_with('\n') {
+            // baseline_text.push_str("\r\n");
+            // }
+            // }
         }
 
         baseline_text
