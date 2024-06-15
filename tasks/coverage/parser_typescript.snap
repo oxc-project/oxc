@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
 Positive Passed: 5273/5283 (99.81%)
-Negative Passed: 1052/4875 (21.58%)
+Negative Passed: 1053/4875 (21.60%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3026,7 +3026,6 @@ Expect Syntax Error: "conformance/jsx/tsxUnionElementType3.tsx"
 Expect Syntax Error: "conformance/jsx/tsxUnionElementType4.tsx"
 Expect Syntax Error: "conformance/jsx/tsxUnionElementType6.tsx"
 Expect Syntax Error: "conformance/jsx/tsxUnionTypeComponent2.tsx"
-Expect Syntax Error: "conformance/jsx/unicodeEscapesInJsxtags.tsx"
 Expect Syntax Error: "conformance/override/override1.ts"
 Expect Syntax Error: "conformance/override/override11.ts"
 Expect Syntax Error: "conformance/override/override13.ts"
@@ -16204,6 +16203,54 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                ┬
     ·                ╰── `,` expected
  42 │ }
+    ╰────
+
+  × Expected corresponding JSX closing tag for '\u0061'.
+    ╭─[conformance/jsx/unicodeEscapesInJsxtags.tsx:15:4]
+ 14 │ // tag name:
+ 15 │ ; <\u0061></a>
+    ·    ──────   ─
+ 16 │ ; <\u0061-b></a-b>
+    ╰────
+
+  × Expected corresponding JSX closing tag for '\u0061-b'.
+    ╭─[conformance/jsx/unicodeEscapesInJsxtags.tsx:16:4]
+ 15 │ ; <\u0061></a>
+ 16 │ ; <\u0061-b></a-b>
+    ·    ────────   ───
+ 17 │ ; <a-\u0063></a-c>
+    ╰────
+
+  × Expected corresponding JSX closing tag for 'a-'.
+    ╭─[conformance/jsx/unicodeEscapesInJsxtags.tsx:17:4]
+ 16 │ ; <\u0061-b></a-b>
+ 17 │ ; <a-\u0063></a-c>
+    ·    ──         ───
+ 18 │ ; <Comp\u0061 x={12} />
+    ╰────
+
+  × Expected corresponding JSX closing tag for '\u{0061}'.
+    ╭─[conformance/jsx/unicodeEscapesInJsxtags.tsx:20:4]
+ 19 │ ; <x.\u0076ideo />
+ 20 │ ; <\u{0061}></a>
+    ·    ────────   ─
+ 21 │ ; <\u{0061}-b></a-b>
+    ╰────
+
+  × Expected corresponding JSX closing tag for '\u{0061}-b'.
+    ╭─[conformance/jsx/unicodeEscapesInJsxtags.tsx:21:4]
+ 20 │ ; <\u{0061}></a>
+ 21 │ ; <\u{0061}-b></a-b>
+    ·    ──────────   ───
+ 22 │ ; <a-\u{0063}></a-c>
+    ╰────
+
+  × Expected corresponding JSX closing tag for 'a-'.
+    ╭─[conformance/jsx/unicodeEscapesInJsxtags.tsx:22:4]
+ 21 │ ; <\u{0061}-b></a-b>
+ 22 │ ; <a-\u{0063}></a-c>
+    ·    ──           ───
+ 23 │ ; <Comp\u{0061} x={12} />
     ╰────
 
   × Expected `(` but found `Identifier`
