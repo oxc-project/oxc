@@ -14,7 +14,7 @@ use oxc_syntax::{
 
 use crate::{
     binder::Binder,
-    checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
+    checker,
     class::ClassTableBuilder,
     control_flow::{
         ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
@@ -151,7 +151,7 @@ impl<'a> SemanticBuilder<'a> {
 
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
-                EarlyErrorJavaScript::check_module_record(&self);
+                checker::check_module_record(&self);
             }
         }
 
@@ -449,8 +449,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
             let node = self.nodes.get_node(self.current_node_id);
-            EarlyErrorJavaScript::run(node, self);
-            EarlyErrorTypeScript::run(node, self);
+            checker::check(node, self);
         }
         self.leave_kind(kind);
         self.pop_ast_node();

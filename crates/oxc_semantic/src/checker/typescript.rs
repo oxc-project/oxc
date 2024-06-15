@@ -5,34 +5,13 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration, AstNode};
-
-pub struct EarlyErrorTypeScript;
-
-impl EarlyErrorTypeScript {
-    pub fn run<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
-        let kind = node.kind();
-
-        match kind {
-            AstKind::VariableDeclarator(decl) => check_variable_declarator(decl, ctx),
-            AstKind::SimpleAssignmentTarget(target) => check_simple_assignment_target(target, ctx),
-            AstKind::FormalParameters(params) => check_formal_parameters(params, ctx),
-            AstKind::ArrayPattern(pattern) => check_array_pattern(pattern, ctx),
-            AstKind::TSTypeParameterDeclaration(declaration) => {
-                check_ts_type_parameter_declaration(declaration, ctx);
-            }
-            AstKind::TSModuleDeclaration(decl) => check_ts_module_declaration(decl, ctx),
-            AstKind::TSEnumDeclaration(decl) => check_ts_enum_declaration(decl, ctx),
-            _ => {}
-        }
-    }
-}
+use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 
 fn empty_type_parameter_list(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Type parameter list cannot be empty.").with_labels([span0.into()])
 }
 
-fn check_ts_type_parameter_declaration(
+pub fn check_ts_type_parameter_declaration(
     declaration: &TSTypeParameterDeclaration<'_>,
     ctx: &SemanticBuilder<'_>,
 ) {
@@ -46,7 +25,7 @@ fn unexpected_optional(span0: Span) -> OxcDiagnostic {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
+pub fn check_variable_declarator(decl: &VariableDeclarator, ctx: &SemanticBuilder<'_>) {
     if decl.id.optional {
         let start = decl.id.span().end;
         let Some(offset) = ctx.source_text[start as usize..].find('?') else { return };
@@ -65,7 +44,7 @@ fn parameter_property_outside_constructor(span0: Span) -> OxcDiagnostic {
         .with_labels([span0.into()])
 }
 
-fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
+pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<'_>) {
     if !params.is_empty() && params.kind == FormalParameterKind::Signature {
         check_duplicate_bound_names(params, ctx);
     }
@@ -105,7 +84,7 @@ fn unexpected_assignment(span0: Span) -> OxcDiagnostic {
     .with_labels([span0.into()])
 }
 
-fn check_simple_assignment_target<'a>(
+pub fn check_simple_assignment_target<'a>(
     target: &SimpleAssignmentTarget<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
@@ -125,7 +104,7 @@ fn unexpected_type_annotation(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Unexpected type annotation").with_labels([span0.into()])
 }
 
-fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
     for element in &pattern.elements {
         let _ = element.as_ref().map(|element| {
             if let Some(type_annotation) = &element.type_annotation {
@@ -142,7 +121,7 @@ fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {
     .with_labels([span0.into()])
 }
 
-fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
+pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     // skip current node
     for node in ctx.nodes.iter_parents(ctx.current_node_id).skip(1) {
         match node.kind() {
@@ -165,7 +144,7 @@ fn enum_member_must_have_initializer(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_labels([span0.into()])
 }
 
-fn check_ts_enum_declaration(decl: &TSEnumDeclaration<'_>, ctx: &SemanticBuilder<'_>) {
+pub fn check_ts_enum_declaration(decl: &TSEnumDeclaration<'_>, ctx: &SemanticBuilder<'_>) {
     let mut need_initializer = false;
 
     decl.members.iter().for_each(|member| {
