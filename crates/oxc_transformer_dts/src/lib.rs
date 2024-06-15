@@ -46,13 +46,31 @@ impl<'a> TransformerDts<'a> {
         _trivias: Trivias,
     ) -> Self {
         let ctx = Rc::new(TransformDtsCtx::new(allocator));
-        Self { ctx, scope: ScopeTree::new() }
+        Self { ctx, scope: ScopeTree::new(allocator) }
     }
 
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> TransformerDtsReturn {
+        let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
+        let directives = self.ctx.ast.new_vec();
+        let stmts = self.transform_program(program);
+        let program = self.ctx.ast.program(SPAN, source_type, directives, None, stmts);
+        let source_text =
+            Codegen::<false>::new("", "", Trivias::default(), CodegenOptions::default())
+                .build(&program)
+                .source_text;
+
+        TransformerDtsReturn { source_text, errors: self.ctx.take_errors() }
+    }
+}
+
+impl<'a> TransformerDts<'a> {
+    pub fn transform_program(
+        &mut self,
+        program: &Program<'a>,
+    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
         let has_import_or_export = program.body.iter().any(|stmt| {
             matches!(
                 stmt,
@@ -63,30 +81,24 @@ impl<'a> TransformerDts<'a> {
             )
         });
 
-        let stmts = if has_import_or_export {
-            self.transform_program(program)
+        if has_import_or_export {
+            self.transform_statements_on_demand(&program.body)
         } else {
             self.transform_program_without_module_declaration(program)
-        };
-
-        let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
-        let directives = self.ctx.ast.new_vec();
-        let program = self.ctx.ast.program(SPAN, source_type, directives, None, stmts);
-        let source_text =
-            Codegen::<false>::new("", "", Trivias::default(), CodegenOptions::default())
-                .build(&program)
-                .source_text;
-        TransformerDtsReturn { source_text, errors: self.ctx.take_errors() }
+        }
     }
 
     pub fn modifiers_declare(&self) -> Modifiers<'a> {
-        Modifiers::new(
-            self.ctx.ast.new_vec_single(Modifier { span: SPAN, kind: ModifierKind::Declare }),
-        )
+        if self.scope.is_ts_module_block_flag() {
+            // If we are in a module block, we don't need to add declare
+            Modifiers::empty()
+        } else {
+            Modifiers::new(
+                self.ctx.ast.new_vec_single(Modifier { span: SPAN, kind: ModifierKind::Declare }),
+            )
+        }
     }
-}
 
-impl<'a> TransformerDts<'a> {
     pub fn transform_program_without_module_declaration(
         &mut self,
         program: &Program<'a>,
@@ -104,9 +116,9 @@ impl<'a> TransformerDts<'a> {
         new_ast_stmts
     }
 
-    pub fn transform_program(
+    pub fn transform_statements_on_demand(
         &mut self,
-        program: &Program<'a>,
+        stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
         let mut new_stmts = Vec::new();
         let mut variables_declarations = VecDeque::new();
@@ -116,7 +128,7 @@ impl<'a> TransformerDts<'a> {
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
         // 4. Collect transformed indexes
-        program.body.iter().for_each(|stmt| match stmt {
+        stmts.iter().for_each(|stmt| match stmt {
             match_declaration!(Statement) => {
                 match stmt.to_declaration() {
                     Declaration::VariableDeclaration(decl) => {
@@ -229,9 +241,9 @@ impl<'a> TransformerDts<'a> {
         }
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
-        // 7. Generate code
-        let mut new_ast_stmts = self.ctx.ast.new_vec::<Statement<'a>>();
-        for (index, stmt) in new_stmts.drain(..).enumerate() {
+        // 7. Return transformed statements
+        let mut new_ast_stmts = self.ctx.ast.new_vec_with_capacity(transformed_indexes.len());
+        for (index, stmt) in new_stmts.into_iter().enumerate() {
             match stmt {
                 _ if transformed_indexes.contains(&index) => {
                     new_ast_stmts.push(stmt);
@@ -283,7 +295,7 @@ impl<'a> TransformerDts<'a> {
                     if decl.specifiers.is_none() {
                         new_ast_stmts.push(Statement::ImportDeclaration(decl));
                     } else if let Some(decl) = self.transform_import_declaration(&decl) {
-                        new_ast_stmts.push(Statement::ImportDeclaration(self.ctx.ast.alloc(decl)));
+                        new_ast_stmts.push(Statement::ImportDeclaration(decl));
                     }
                 }
                 _ => {}

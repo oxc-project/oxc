@@ -1,6 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
+use oxc_allocator::Box;
 use oxc_span::{GetSpan, SPAN};
 
 use crate::TransformerDts;
@@ -90,7 +91,7 @@ impl<'a> TransformerDts<'a> {
     pub fn transform_import_declaration(
         &self,
         decl: &ImportDeclaration<'a>,
-    ) -> Option<ImportDeclaration<'a>> {
+    ) -> Option<Box<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
         let mut specifiers = self.ctx.ast.copy(specifiers);
@@ -109,13 +110,13 @@ impl<'a> TransformerDts<'a> {
             // We don't need to print this import statement
             None
         } else {
-            Some(ImportDeclaration {
-                span: decl.span,
-                specifiers: Some(specifiers),
-                source: self.ctx.ast.copy(&decl.source),
-                with_clause: self.ctx.ast.copy(&decl.with_clause),
-                import_kind: decl.import_kind,
-            })
+            Some(self.ctx.ast.import_declaration(
+                decl.span,
+                Some(specifiers),
+                self.ctx.ast.copy(&decl.source),
+                self.ctx.ast.copy(&decl.with_clause),
+                decl.import_kind,
+            ))
         }
     }
 }

@@ -1335,6 +1335,12 @@ impl<'a> Modifiers<'a> {
             list.retain(|m| !m.kind.is_typescript_syntax());
         }
     }
+
+    pub fn add_modifier(&mut self, modifier: Modifier) {
+        if let Some(list) = self.0.as_mut() {
+            list.push(modifier);
+        }
+    }
 }
 
 /// Export Assignment in non-module files

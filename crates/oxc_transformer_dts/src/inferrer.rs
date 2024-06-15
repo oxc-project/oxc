@@ -4,7 +4,7 @@ use oxc_ast::ast::{
     TSType, TSTypeAnnotation,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 
 use crate::{return_type::FunctionReturnType, TransformerDts};
 
@@ -78,7 +78,10 @@ impl<'a> TransformerDts<'a> {
             } else {
                 if let Expression::TSAsExpression(expr) = &pattern.right {
                     if !expr.type_annotation.is_keyword_or_literal() {
-                        self.ctx.error(OxcDiagnostic::error("Parameter must have an explicit type annotation with --isolatedDeclarations."));
+                        self.ctx.error(
+                            OxcDiagnostic::error("Parameter must have an explicit type annotation with --isolatedDeclarations.")
+                                .with_label(expr.type_annotation.span())
+                        );
                     }
                 }
 

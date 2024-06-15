@@ -2,8 +2,10 @@
 use oxc_ast::ast::*;
 
 use oxc_allocator::Box;
+use oxc_ast::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::TransformerDts;
 
@@ -116,6 +118,53 @@ impl<'a> TransformerDts<'a> {
         )
     }
 
+    fn transform_ts_module_block(
+        &mut self,
+        block: &Box<'a, TSModuleBlock<'a>>,
+    ) -> Box<'a, TSModuleBlock<'a>> {
+        // We need to enter a new scope for the module block, avoid add binding to the parent scope
+        self.scope.enter_scope(ScopeFlags::TsModuleBlock);
+        let stmts = self.transform_statements_on_demand(&block.body);
+        self.scope.leave_scope();
+        self.ctx.ast.ts_module_block(SPAN, stmts)
+    }
+
+    pub fn transform_ts_module_declaration(
+        &mut self,
+        decl: &Box<'a, TSModuleDeclaration<'a>>,
+    ) -> Box<'a, TSModuleDeclaration<'a>> {
+        if decl.modifiers.is_contains_declare() {
+            return self.ctx.ast.copy(decl);
+        }
+
+        let Some(body) = &decl.body else {
+            return self.ctx.ast.copy(decl);
+        };
+
+        match body {
+            TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
+                let inner = self.transform_ts_module_declaration(decl);
+                return self.ctx.ast.ts_module_declaration(
+                    decl.span,
+                    self.ctx.ast.copy(&decl.id),
+                    Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
+                    decl.kind,
+                    self.modifiers_declare(),
+                );
+            }
+            TSModuleDeclarationBody::TSModuleBlock(block) => {
+                let body = self.transform_ts_module_block(block);
+                return self.ctx.ast.ts_module_declaration(
+                    decl.span,
+                    self.ctx.ast.copy(&decl.id),
+                    Some(TSModuleDeclarationBody::TSModuleBlock(body)),
+                    decl.kind,
+                    self.modifiers_declare(),
+                );
+            }
+        }
+    }
+
     pub fn transform_declaration(
         &mut self,
         decl: &Declaration<'a>,
@@ -175,7 +224,9 @@ impl<'a> TransformerDts<'a> {
                             if self.scope.has_reference(&ident.name)
                     )
                 {
-                    Some(Declaration::TSModuleDeclaration(self.ctx.ast.copy(decl)))
+                    Some(Declaration::TSModuleDeclaration(
+                        self.transform_ts_module_declaration(decl),
+                    ))
                 } else {
                     None
                 }
