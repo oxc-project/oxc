@@ -42,22 +42,26 @@ impl<'a> TransformerDts<'a> {
         &self,
         property: &PropertyDefinition<'a>,
     ) -> ClassElement<'a> {
-        let type_annotations = property
-            .type_annotation
-            .as_ref()
-            .map(|type_annotation| self.ctx.ast.copy(type_annotation))
-            .or_else(|| {
-                let new_type = property
-                    .value
-                    .as_ref()
-                    .and_then(|expr| self.infer_type_from_expression(expr))
-                    .unwrap_or_else(|| {
-                        // report error for has no type annotation
-                        self.ctx.ast.ts_unknown_keyword(property.span)
-                    });
+        let type_annotations = if property.accessibility.is_some_and(|a| a.is_private()) {
+            None
+        } else {
+            property
+                .type_annotation
+                .as_ref()
+                .map(|type_annotation| self.ctx.ast.copy(type_annotation))
+                .or_else(|| {
+                    let new_type = property
+                        .value
+                        .as_ref()
+                        .and_then(|expr| self.infer_type_from_expression(expr))
+                        .unwrap_or_else(|| {
+                            // report error for has no type annotation
+                            self.ctx.ast.ts_unknown_keyword(property.span)
+                        });
 
-                Some(self.ctx.ast.ts_type_annotation(SPAN, new_type))
-            });
+                    Some(self.ctx.ast.ts_type_annotation(SPAN, new_type))
+                })
+        };
 
         self.ctx.ast.class_property(
             property.r#type,
@@ -83,6 +87,23 @@ impl<'a> TransformerDts<'a> {
         params: Box<'a, FormalParameters<'a>>,
     ) -> ClassElement<'a> {
         let function = &definition.value;
+        if definition.accessibility.is_some_and(|a| a.is_private()) {
+            let r#type = match definition.r#type {
+                MethodDefinitionType::MethodDefinition => {
+                    PropertyDefinitionType::PropertyDefinition
+                }
+                MethodDefinitionType::TSAbstractMethodDefinition => {
+                    PropertyDefinitionType::TSAbstractPropertyDefinition
+                }
+            };
+            return self.create_class_property(
+                r#type,
+                self.ctx.ast.copy(&definition.key),
+                definition.r#override,
+                self.transform_accessibility(definition.accessibility),
+            );
+        }
+
         let type_annotation = self.infer_function_return_type(function);
 
         let value = self.ctx.ast.function(
@@ -109,6 +130,31 @@ impl<'a> TransformerDts<'a> {
             definition.r#override,
             definition.optional,
             self.transform_accessibility(definition.accessibility),
+            self.ctx.ast.new_vec(),
+        )
+    }
+
+    pub fn create_class_property(
+        &self,
+        r#type: PropertyDefinitionType,
+        key: PropertyKey<'a>,
+        r#override: bool,
+        accessibility: Option<TSAccessibility>,
+    ) -> ClassElement<'a> {
+        self.ctx.ast.class_property(
+            r#type,
+            SPAN,
+            key,
+            None,
+            false,
+            false,
+            false,
+            r#override,
+            false,
+            false,
+            false,
+            None,
+            accessibility,
             self.ctx.ast.new_vec(),
         )
     }

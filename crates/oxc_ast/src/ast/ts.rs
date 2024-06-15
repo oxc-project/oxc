@@ -729,6 +729,12 @@ pub enum TSAccessibility {
     Public,
 }
 
+impl TSAccessibility {
+    pub fn is_private(&self) -> bool {
+        matches!(self, TSAccessibility::Private)
+    }
+}
+
 #[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
