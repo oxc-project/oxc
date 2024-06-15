@@ -51,11 +51,11 @@ impl<'a> ScopeTree<'a> {
         self.type_bindings.last_mut().unwrap().insert(ident.clone());
     }
 
-    fn add_unresolved_value_reference(&mut self, ident: &Atom<'a>) {
+    fn add_value_reference(&mut self, ident: &Atom<'a>) {
         self.value_references.last_mut().unwrap().insert(ident.clone());
     }
 
-    fn add_unresolved_type_reference(&mut self, ident: &Atom<'a>) {
+    fn add_type_reference(&mut self, ident: &Atom<'a>) {
         self.type_references.last_mut().unwrap().insert(ident.clone());
     }
 
@@ -65,7 +65,6 @@ impl<'a> ScopeTree<'a> {
     fn resolve_references(&mut self) {
         let current_value_bindings = self.value_bindings.pop().unwrap_or_default();
         let current_value_references = self.value_references.pop().unwrap_or_default();
-
         self.type_references
             .last_mut()
             .unwrap()
@@ -95,7 +94,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        self.add_unresolved_value_reference(&ident.name);
+        self.add_value_reference(&ident.name);
     }
 
     fn visit_binding_pattern(&mut self, pattern: &BindingPattern<'a>) {
@@ -107,7 +106,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_ts_type_name(&mut self, name: &TSTypeName<'a>) {
         if let TSTypeName::IdentifierReference(ident) = name {
-            self.add_unresolved_type_reference(&ident.name);
+            self.add_type_reference(&ident.name);
         } else {
             walk_ts_type_name(self, name);
         }
@@ -116,7 +115,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     fn visit_ts_type_query(&mut self, ty: &TSTypeQuery<'a>) {
         if let Some(type_name) = ty.expr_name.as_ts_type_name() {
             let ident = TSTypeName::get_first_name(type_name);
-            self.add_unresolved_value_reference(&ident.name);
+            self.add_value_reference(&ident.name);
         } else {
             walk_ts_type_query(self, ty);
         }
@@ -125,8 +124,8 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         for specifier in &decl.specifiers {
             if let ModuleExportName::Identifier(ident) = &specifier.local {
-                self.add_type_binding(&ident.name);
-                self.add_value_binding(&ident.name);
+                self.add_type_reference(&ident.name);
+                self.add_value_reference(&ident.name);
             }
         }
     }

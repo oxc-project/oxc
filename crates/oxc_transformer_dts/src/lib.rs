@@ -8,6 +8,7 @@
 mod class;
 mod context;
 mod declaration;
+mod diagnostics;
 mod function;
 mod inferrer;
 mod module;

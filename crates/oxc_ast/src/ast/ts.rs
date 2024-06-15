@@ -237,6 +237,20 @@ macro_rules! match_ts_type {
 pub use match_ts_type;
 
 impl<'a> TSType<'a> {
+    pub fn get_identifier_reference(&self) -> Option<IdentifierReference<'a>> {
+        match self {
+            TSType::TSTypeReference(reference) => {
+                Some(TSTypeName::get_first_name(&reference.type_name))
+            }
+            TSType::TSQualifiedName(qualified) => Some(TSTypeName::get_first_name(&qualified.left)),
+            TSType::TSTypeQuery(query) => match &query.expr_name {
+                TSTypeQueryExprName::IdentifierReference(ident) => Some((*ident).clone()),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     pub fn is_const_type_reference(&self) -> bool {
         matches!(self, TSType::TSTypeReference(reference) if reference.type_name.is_const())
     }

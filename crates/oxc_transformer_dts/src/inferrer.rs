@@ -6,7 +6,10 @@ use oxc_ast::ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 
-use crate::{return_type::FunctionReturnType, TransformerDts};
+use crate::{
+    diagnostics::function_must_have_explicit_return_type, return_type::FunctionReturnType,
+    TransformerDts,
+};
 
 impl<'a> TransformerDts<'a> {
     pub fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
@@ -100,19 +103,21 @@ impl<'a> TransformerDts<'a> {
             return self.ctx.ast.copy(&function.return_type);
         }
 
+        if function.r#async || function.generator {
+            self.ctx.error(function_must_have_explicit_return_type(function));
+        }
+
         let return_type = FunctionReturnType::infer(
             self,
             function
                 .body
                 .as_ref()
-                .unwrap_or_else(|| unreachable!("declare function can not have body")),
+                .unwrap_or_else(|| unreachable!("Only declare function can have no body")),
         )
         .map(|type_annotation| self.ctx.ast.ts_type_annotation(SPAN, type_annotation));
 
         if return_type.is_none() {
-            self.ctx.error(OxcDiagnostic::error(
-                "Function must have an explicit return type annotation with --isolatedDeclarations.",
-            ).with_label(function.span));
+            self.ctx.error(function_must_have_explicit_return_type(function));
 
             Some(self.ctx.ast.ts_type_annotation(SPAN, self.ctx.ast.ts_unknown_keyword(SPAN)))
         } else {

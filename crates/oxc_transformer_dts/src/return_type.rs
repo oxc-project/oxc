@@ -7,11 +7,10 @@ use oxc_ast::{
     },
     Visit,
 };
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan};
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{context::Ctx, TransformerDts};
+use crate::{context::Ctx, diagnostics::type_containing_private_name, TransformerDts};
 
 /// Infer return type from return statement. Does not support multiple return statements.
 pub struct FunctionReturnType<'a> {
@@ -67,11 +66,12 @@ impl<'a> FunctionReturnType<'a> {
                 };
 
                 if is_defined_in_current_scope {
-                    transformer.ctx.error(
-                        OxcDiagnostic::error(format!("Type containing private name '{reference_name}' can't be used with --isolatedDeclarations.")).with_label(
-                            expr.span()
-                        )
-                    );
+                    transformer.ctx.error(type_containing_private_name(
+                        &reference_name,
+                        expr_type
+                            .get_identifier_reference()
+                            .map_or_else(|| expr_type.span(), |ident| ident.span),
+                    ));
                 }
             }
 

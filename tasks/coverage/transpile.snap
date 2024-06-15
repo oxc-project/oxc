@@ -2,14 +2,13 @@ commit: d8086f14
 
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
-Positive Passed: 7/20 (35.00%)
+Positive Passed: 8/20 (40.00%)
 Mismatch: "declarationAsyncAndGeneratorFunctions.ts"
 Mismatch: "declarationBasicSyntax.ts"
 Mismatch: "declarationComputedPropertyNames.ts"
 Mismatch: "declarationCrossFileInferences.ts"
 Mismatch: "declarationEmitPartialNodeReuse.ts"
 Mismatch: "declarationFunctionDeclarations.ts"
-Mismatch: "declarationLinkedAliases.ts"
 Mismatch: "declarationNotInScopeTypes.ts"
 Mismatch: "declarationPartialNodeReuseTypeOf.ts"
 Mismatch: "declarationRestParameters.ts"
