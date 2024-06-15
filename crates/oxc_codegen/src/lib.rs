@@ -11,7 +11,6 @@
 mod annotation_comment;
 mod context;
 mod gen;
-mod gen_ts;
 mod operator;
 mod sourcemap_builder;
 
