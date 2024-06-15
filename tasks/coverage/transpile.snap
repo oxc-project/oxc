@@ -2,7 +2,7 @@ commit: d8086f14
 
 transpile Summary:
 AST Parsed     : 20/20 (100.00%)
-Positive Passed: 0/20 (0.00%)
+Positive Passed: 7/20 (35.00%)
 Mismatch: "declarationAsyncAndGeneratorFunctions.ts"
 Mismatch: "declarationBasicSyntax.ts"
 Mismatch: "declarationComputedPropertyNames.ts"
@@ -10,16 +10,9 @@ Mismatch: "declarationCrossFileInferences.ts"
 Mismatch: "declarationEmitPartialNodeReuse.ts"
 Mismatch: "declarationFunctionDeclarations.ts"
 Mismatch: "declarationLinkedAliases.ts"
-Mismatch: "declarationLocalAliasOfImportAlias.ts"
 Mismatch: "declarationNotInScopeTypes.ts"
 Mismatch: "declarationPartialNodeReuseTypeOf.ts"
 Mismatch: "declarationRestParameters.ts"
-Mismatch: "declarationSelfReferentialConstraint.ts"
 Mismatch: "declarationSingleFileHasErrors.ts"
 Mismatch: "declarationSingleFileHasErrorsReported.ts"
-Mismatch: "declarationTypeParameterConstraint.ts"
-Mismatch: "declarationTypeWithComputedName.ts"
-Mismatch: "declarationUnresolvedGlobalReferencesNoErrors.ts"
-Mismatch: "declarationUnresolvedTypeReference.ts"
-Mismatch: "declarationUnresolvedTypeReference2.ts"
 Mismatch: "declarationsSimple.ts"

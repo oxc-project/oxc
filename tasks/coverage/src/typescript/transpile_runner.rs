@@ -1,9 +1,6 @@
 //! <https://github.com/microsoft/TypeScript/blob/main/src/testRunner/transpileRunner.ts>
 
-use std::{
-    fs,
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
@@ -15,7 +12,7 @@ use crate::{
     suite::{Case, Suite, TestResult},
 };
 
-use super::meta::{CompilerSettings, TestCaseContent, TestUnitData};
+use super::meta::{Baseline, BaselineFile, CompilerSettings, TestCaseContent, TestUnitData};
 use super::TESTS_ROOT;
 
 pub struct TranspileRunner<T: Case> {
@@ -103,83 +100,59 @@ impl Case for TypeScriptTranspileCase {
 
 impl TypeScriptTranspileCase {
     fn compare(&self, kind: TranspileKind) -> TestResult {
-        let baseline_text = self.run_kind(kind);
-
         // get expected text by reading its .d.ts file
         let filename = change_extension(self.path.to_str().unwrap());
         let path =
             project_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(filename);
+        let expected = BaselineFile::parse(&path);
 
-        // remove the error diagnostics lines
-        let expected_text = {
-            let raw_expected_text = fs::read_to_string(path).unwrap();
-            let mut expected_text = String::new();
-            let mut ignore = false;
-            for line in raw_expected_text.split("\r\n") {
-                if let Some(remain) = line.strip_prefix("//// ") {
-                    ignore = remain.starts_with("[Diagnostics reported]");
-                    if ignore {
-                        continue;
-                    }
-                }
-                if !ignore {
-                    expected_text.push_str(line);
-                    expected_text.push_str("\r\n");
-                }
-            }
-            expected_text
-        };
+        let baseline = self.run_kind(kind);
 
-        // compare lines
-        let baseline_lines = baseline_text.lines().filter(|s| !s.is_empty()).collect::<Vec<_>>();
-        let expected_lines = expected_text.lines().filter(|s| !s.is_empty()).collect::<Vec<_>>();
-        if baseline_lines.len() != expected_lines.len() {
+        let expected_text = expected.print();
+        let baseline_text = baseline.print();
+
+        if expected.files.len() != baseline.files.len() {
             return TestResult::Mismatch(baseline_text, expected_text);
         }
-        // compare the lines with all whitespace removed
-        for (a, b) in baseline_lines.into_iter().zip(expected_lines) {
-            let mut a = a.to_string();
-            a.retain(|c| !c.is_whitespace());
-            let mut b = b.to_string();
-            b.retain(|c| !c.is_whitespace());
-            if a != b {
-                return TestResult::Mismatch(baseline_text, expected_text);
+
+        for (base, expected) in baseline.files.into_iter().zip(expected.files) {
+            if base.oxc_printed != expected.oxc_printed {
+                return TestResult::Mismatch(base.oxc_printed, expected.oxc_printed);
             }
         }
         TestResult::Passed
     }
 
-    fn run_kind(&self, _kind: TranspileKind) -> String {
-        let mut baseline_text = String::new();
+    fn run_kind(&self, _kind: TranspileKind) -> BaselineFile {
+        let mut files = vec![];
 
         for unit in &self.units {
-            baseline_text.push_str(&format!("//// [{}] ////\r\n", unit.name));
-            baseline_text.push_str(&unit.content);
-            if !unit.content.ends_with('\n') {
-                baseline_text.push_str("\r\n");
-            }
+            let mut baseline = Baseline {
+                name: unit.name.clone(),
+                original: unit.content.clone(),
+                ..Baseline::default()
+            };
+            baseline.print_oxc();
+            files.push(baseline);
         }
 
         for unit in &self.units {
             let ret = transpile(&self.path, &unit.content);
-            baseline_text.push_str(&format!("//// [{}] ////\r\n", change_extension(&unit.name)));
-            baseline_text.push_str(&ret.source_text);
-            if !ret.source_text.ends_with('\n') {
-                baseline_text.push_str("\r\n");
-            }
-            // ignore the diagnostics for now
-            // if !ret.errors.is_empty() {
-            // baseline_text.push_str("\r\n\r\n//// [Diagnostics reported]\r\n");
-            // for error in &ret.errors {
-            // baseline_text.push_str(&error.message.to_string());
-            // }
-            // if !baseline_text.ends_with('\n') {
-            // baseline_text.push_str("\r\n");
-            // }
-            // }
+            let baseline = Baseline {
+                name: change_extension(&unit.name),
+                original: unit.content.clone(),
+                oxc_printed: ret.source_text,
+                diagnostic: ret
+                    .errors
+                    .into_iter()
+                    .map(|e| e.message.clone())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            };
+            files.push(baseline);
         }
 
-        baseline_text
+        BaselineFile { files }
     }
 }
 
