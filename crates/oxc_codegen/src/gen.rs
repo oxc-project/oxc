@@ -1,4 +1,3 @@
-use crate::annotation_comment::{gen_comment, get_leading_annotate_comment};
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -11,7 +10,8 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use super::{Codegen, Context, Operator, Separator};
+use crate::annotation_comment::{gen_comment, get_leading_annotate_comment};
+use crate::{Codegen, Context, Operator, Separator};
 
 pub trait Gen<const MINIFY: bool> {
     fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
@@ -2571,234 +2571,244 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAnnotation<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::TSFunctionType(decl) => decl.gen(p, ctx),
-            Self::TSConstructorType(decl) => {
-                decl.gen(p, ctx);
-            }
-            Self::TSArrayType(decl) => {
-                p.print_str(b"(");
-                decl.element_type.gen(p, ctx);
-                p.print_str(b")[]");
-            }
-            Self::TSTupleType(decl) => {
-                p.print_str(b"[");
-                p.print_list(&decl.element_types, ctx);
-                p.print_str(b"]");
-            }
-            Self::TSUnionType(decl) => {
-                if decl.types.len() == 1 {
-                    decl.types[0].gen(p, ctx);
-                    return;
-                }
+            Self::TSFunctionType(ty) => ty.gen(p, ctx),
+            Self::TSConstructorType(ty) => ty.gen(p, ctx),
+            Self::TSArrayType(ty) => ty.gen(p, ctx),
+            Self::TSTupleType(ty) => ty.gen(p, ctx),
+            Self::TSUnionType(ty) => ty.gen(p, ctx),
+            Self::TSIntersectionType(ty) => ty.gen(p, ctx),
+            Self::TSConditionalType(ty) => ty.gen(p, ctx),
+            Self::TSInferType(ty) => ty.gen(p, ctx),
+            Self::TSIndexedAccessType(ty) => ty.gen(p, ctx),
+            Self::TSMappedType(ty) => ty.gen(p, ctx),
+            Self::TSNamedTupleMember(ty) => ty.gen(p, ctx),
+            Self::TSLiteralType(ty) => ty.literal.gen(p, ctx),
+            Self::TSImportType(ty) => ty.gen(p, ctx),
+            Self::TSQualifiedName(ty) => ty.gen(p, ctx),
+            Self::TSAnyKeyword(_) => p.print_str(b"any"),
+            Self::TSBigIntKeyword(_) => p.print_str(b"bigint"),
+            Self::TSBooleanKeyword(_) => p.print_str(b"boolean"),
+            Self::TSNeverKeyword(_) => p.print_str(b"never"),
+            Self::TSNullKeyword(_) => p.print_str(b"null"),
+            Self::TSNumberKeyword(_) => p.print_str(b"number"),
+            Self::TSObjectKeyword(_) => p.print_str(b"object"),
+            Self::TSStringKeyword(_) => p.print_str(b"string"),
+            Self::TSSymbolKeyword(_) => p.print_str(b"symbol"),
+            Self::TSThisType(_) => p.print_str(b"this"),
+            Self::TSUndefinedKeyword(_) => p.print_str(b"undefined"),
+            Self::TSUnknownKeyword(_) => p.print_str(b"unknown"),
+            Self::TSVoidKeyword(_) => p.print_str(b"void"),
+            Self::TSTemplateLiteralType(ty) => ty.gen(p, ctx),
+            Self::TSTypeLiteral(ty) => ty.gen(p, ctx),
+            Self::TSTypeOperatorType(ty) => ty.gen(p, ctx),
+            Self::TSTypePredicate(ty) => ty.gen(p, ctx),
+            Self::TSTypeQuery(ty) => ty.gen(p, ctx),
+            Self::TSTypeReference(ty) => ty.gen(p, ctx),
+            Self::JSDocNullableType(ty) => ty.gen(p, ctx),
+            Self::JSDocUnknownType(_ty) => p.print_str(b"unknown"),
+        }
+    }
+}
 
-                p.print_str(b"(");
-                for (index, item) in decl.types.iter().enumerate() {
-                    if index != 0 {
-                        p.print_soft_space();
-                        p.print_str(b"|");
-                        p.print_soft_space();
-                    }
-                    p.print_str(b"(");
-                    item.gen(p, ctx);
-                    p.print_str(b")");
-                }
-                p.print_str(b")");
-            }
-            Self::TSIntersectionType(decl) => {
-                if decl.types.len() == 1 {
-                    decl.types[0].gen(p, ctx);
-                    return;
-                }
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSArrayType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"(");
+        self.element_type.gen(p, ctx);
+        p.print_str(b")[]");
+    }
+}
 
-                p.print_str(b"(");
-                for (index, item) in decl.types.iter().enumerate() {
-                    if index != 0 {
-                        p.print_soft_space();
-                        p.print_str(b"&");
-                        p.print_soft_space();
-                    }
-                    p.print_str(b"(");
-                    item.gen(p, ctx);
-                    p.print_str(b")");
-                }
-                p.print_str(b")");
-            }
-            Self::TSConditionalType(decl) => {
-                decl.check_type.gen(p, ctx);
-                p.print_str(b" extends (");
-                decl.extends_type.gen(p, ctx);
-                p.print_str(b") ? ");
-                decl.true_type.gen(p, ctx);
-                p.print_str(b" : ");
-                decl.false_type.gen(p, ctx);
-            }
-            Self::TSInferType(decl) => {
-                p.print_str(b"infer ");
-                decl.type_parameter.gen(p, ctx);
-            }
-            Self::TSIndexedAccessType(decl) => {
-                decl.object_type.gen(p, ctx);
-                p.print_str(b"[");
-                decl.index_type.gen(p, ctx);
-                p.print_str(b"]");
-            }
-            Self::TSMappedType(decl) => {
-                p.print_str(b"{");
-                match decl.readonly {
-                    TSMappedTypeModifierOperator::True => {
-                        p.print_str(b"readonly");
-                    }
-                    TSMappedTypeModifierOperator::Plus => {
-                        p.print_str(b"+readonly");
-                    }
-                    TSMappedTypeModifierOperator::Minus => {
-                        p.print_str(b"-readonly");
-                    }
-                    TSMappedTypeModifierOperator::None => {}
-                }
-                p.print_hard_space();
-                p.print_str(b"[");
-                decl.type_parameter.name.gen(p, ctx);
-                if let Some(constraint) = &decl.type_parameter.constraint {
-                    p.print_str(b" in ");
-                    constraint.gen(p, ctx);
-                }
-                if let Some(default) = &decl.type_parameter.default {
-                    p.print_str(b" = ");
-                    default.gen(p, ctx);
-                }
-                p.print_str(b"]");
-                match decl.optional {
-                    TSMappedTypeModifierOperator::True => {
-                        p.print_str(b"?");
-                    }
-                    TSMappedTypeModifierOperator::Plus => {
-                        p.print_str(b"+?");
-                    }
-                    TSMappedTypeModifierOperator::Minus => {
-                        p.print_str(b"-?");
-                    }
-                    TSMappedTypeModifierOperator::None => {}
-                }
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"[");
+        p.print_list(&self.element_types, ctx);
+        p.print_str(b"]");
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSUnionType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.types.len() == 1 {
+            self.types[0].gen(p, ctx);
+            return;
+        }
+        p.print_str(b"(");
+        for (index, item) in self.types.iter().enumerate() {
+            if index != 0 {
                 p.print_soft_space();
-                if let Some(type_annotation) = &decl.type_annotation {
-                    p.print_str(b":");
-                    p.print_soft_space();
-                    type_annotation.gen(p, ctx);
-                }
-                p.print_semicolon_if_needed();
-                p.print_str(b"}");
+                p.print_str(b"|");
+                p.print_soft_space();
             }
-            Self::TSNamedTupleMember(decl) => {
-                decl.gen(p, ctx);
+            p.print_str(b"(");
+            item.gen(p, ctx);
+            p.print_str(b")");
+        }
+        p.print_str(b")");
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIntersectionType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.types.len() == 1 {
+            self.types[0].gen(p, ctx);
+            return;
+        }
+
+        p.print_str(b"(");
+        for (index, item) in self.types.iter().enumerate() {
+            if index != 0 {
+                p.print_soft_space();
+                p.print_str(b"&");
+                p.print_soft_space();
             }
-            Self::TSLiteralType(decl) => {
-                decl.literal.gen(p, ctx);
+            p.print_str(b"(");
+            item.gen(p, ctx);
+            p.print_str(b")");
+        }
+        p.print_str(b")");
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSConditionalType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.check_type.gen(p, ctx);
+        p.print_str(b" extends (");
+        self.extends_type.gen(p, ctx);
+        p.print_str(b") ? ");
+        self.true_type.gen(p, ctx);
+        p.print_str(b" : ");
+        self.false_type.gen(p, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInferType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"infer ");
+        self.type_parameter.gen(p, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexedAccessType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.object_type.gen(p, ctx);
+        p.print_str(b"[");
+        self.index_type.gen(p, ctx);
+        p.print_str(b"]");
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSMappedType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_str(b"{");
+        match self.readonly {
+            TSMappedTypeModifierOperator::True => {
+                p.print_str(b"readonly");
             }
-            Self::TSImportType(decl) => {
-                decl.gen(p, ctx);
+            TSMappedTypeModifierOperator::Plus => {
+                p.print_str(b"+readonly");
             }
-            Self::TSQualifiedName(decl) => {
-                decl.left.gen(p, ctx);
-                p.print_str(b".");
-                decl.right.gen(p, ctx);
+            TSMappedTypeModifierOperator::Minus => {
+                p.print_str(b"-readonly");
             }
-            Self::TSAnyKeyword(_) => {
-                p.print_str(b"any");
+            TSMappedTypeModifierOperator::None => {}
+        }
+        p.print_hard_space();
+        p.print_str(b"[");
+        self.type_parameter.name.gen(p, ctx);
+        if let Some(constraint) = &self.type_parameter.constraint {
+            p.print_str(b" in ");
+            constraint.gen(p, ctx);
+        }
+        if let Some(default) = &self.type_parameter.default {
+            p.print_str(b" = ");
+            default.gen(p, ctx);
+        }
+        p.print_str(b"]");
+        match self.optional {
+            TSMappedTypeModifierOperator::True => {
+                p.print_str(b"?");
             }
-            Self::TSBigIntKeyword(_) => {
-                p.print_str(b"bigint");
+            TSMappedTypeModifierOperator::Plus => {
+                p.print_str(b"+?");
             }
-            Self::TSBooleanKeyword(_) => {
-                p.print_str(b"boolean");
+            TSMappedTypeModifierOperator::Minus => {
+                p.print_str(b"-?");
             }
-            Self::TSNeverKeyword(_) => {
-                p.print_str(b"never");
+            TSMappedTypeModifierOperator::None => {}
+        }
+        p.print_soft_space();
+        if let Some(type_annotation) = &self.type_annotation {
+            p.print_str(b":");
+            p.print_soft_space();
+            type_annotation.gen(p, ctx);
+        }
+        p.print_semicolon_if_needed();
+        p.print_str(b"}");
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSQualifiedName<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.left.gen(p, ctx);
+        p.print_str(b".");
+        self.right.gen(p, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeOperator<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self.operator {
+            TSTypeOperatorOperator::Keyof => {
+                p.print_str(b"keyof ");
             }
-            Self::TSNullKeyword(_) => {
-                p.print_str(b"null");
+            TSTypeOperatorOperator::Unique => {
+                p.print_str(b"unique ");
             }
-            Self::TSNumberKeyword(_) => {
-                p.print_str(b"number");
+            TSTypeOperatorOperator::Readonly => {
+                p.print_str(b"readonly ");
             }
-            Self::TSObjectKeyword(_) => {
-                p.print_str(b"object");
+        }
+        self.type_annotation.gen(p, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypePredicate<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.asserts {
+            p.print_str(b"asserts ");
+        }
+        match &self.parameter_name {
+            TSTypePredicateName::Identifier(ident) => {
+                ident.gen(p, ctx);
             }
-            Self::TSStringKeyword(_) => {
-                p.print_str(b"string");
-            }
-            Self::TSSymbolKeyword(_) => {
-                p.print_str(b"symbol");
-            }
-            Self::TSThisType(_) => {
+            TSTypePredicateName::This(_ident) => {
                 p.print_str(b"this");
             }
-            Self::TSUndefinedKeyword(_) => {
-                p.print_str(b"undefined");
-            }
-            Self::TSUnknownKeyword(_) => {
-                p.print_str(b"unknown");
-            }
-            Self::TSVoidKeyword(_) => {
-                p.print_str(b"void");
-            }
-            Self::TSTemplateLiteralType(decl) => decl.gen(p, ctx),
-            Self::TSTypeLiteral(decl) => {
-                p.print_block_start(decl.span.start);
-                for item in &decl.members {
-                    item.gen(p, ctx);
-                    p.print_semicolon();
-                }
-                p.print_block_end(decl.span.end);
-            }
-            Self::TSTypeOperatorType(decl) => {
-                match decl.operator {
-                    TSTypeOperatorOperator::Keyof => {
-                        p.print_str(b"keyof ");
-                    }
-                    TSTypeOperatorOperator::Unique => {
-                        p.print_str(b"unique ");
-                    }
-                    TSTypeOperatorOperator::Readonly => {
-                        p.print_str(b"readonly ");
-                    }
-                }
-                decl.type_annotation.gen(p, ctx);
-            }
-            Self::TSTypePredicate(decl) => {
-                if decl.asserts {
-                    p.print_str(b"asserts ");
-                }
-                match &decl.parameter_name {
-                    TSTypePredicateName::Identifier(ident) => {
-                        ident.gen(p, ctx);
-                    }
-                    TSTypePredicateName::This(_ident) => {
-                        p.print_str(b"this");
-                    }
-                }
-                if let Some(type_annotation) = &decl.type_annotation {
-                    p.print_str(b" is ");
-                    type_annotation.gen(p, ctx);
-                }
-            }
-            Self::TSTypeQuery(decl) => decl.gen(p, ctx),
-            Self::TSTypeReference(decl) => {
-                decl.type_name.gen(p, ctx);
-                if let Some(type_parameters) = &decl.type_parameters {
-                    type_parameters.gen(p, ctx);
-                }
-            }
-            Self::JSDocNullableType(decl) => {
-                if decl.postfix {
-                    decl.type_annotation.gen(p, ctx);
-                    p.print_str(b"?");
-                } else {
-                    p.print_str(b"?");
-                    decl.type_annotation.gen(p, ctx);
-                }
-            }
-            Self::JSDocUnknownType(_decl) => p.print_str(b"unknown"),
+        }
+        if let Some(type_annotation) = &self.type_annotation {
+            p.print_str(b" is ");
+            type_annotation.gen(p, ctx);
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeReference<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        self.type_name.gen(p, ctx);
+        if let Some(type_parameters) = &self.type_parameters {
+            type_parameters.gen(p, ctx);
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for JSDocNullableType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.postfix {
+            self.type_annotation.gen(p, ctx);
+            p.print_str(b"?");
+        } else {
+            p.print_str(b"?");
+            self.type_annotation.gen(p, ctx);
         }
     }
 }
@@ -2819,6 +2829,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTemplateLiteralType<'a> {
         p.print_str(b"`");
     }
 }
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeLiteral<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        p.print_block_start(self.span.start);
+        for item in &self.members {
+            item.gen(p, ctx);
+            p.print_semicolon();
+        }
+        p.print_block_end(self.span.end);
+    }
+}
+
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
@@ -3226,6 +3248,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportEqualsDeclaration<'a> {
         p.print_semicolon_after_statement();
     }
 }
+
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {

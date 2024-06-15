@@ -1400,6 +1400,7 @@ impl ImportOrExportKind {
 
 // [`JSDoc`](https://github.com/microsoft/TypeScript/blob/54a554d8af2657630307cbfa8a3e4f3946e36507/src/compiler/types.ts#L393)
 
+/// `type foo = ty?` or `type foo = ?ty`
 #[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
