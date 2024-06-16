@@ -62,11 +62,7 @@ impl<'a> TransformerDts<'a> {
         let members =
         self.ctx.ast.new_vec_from_iter(expr.properties.iter().filter_map(|property| match property {
             ObjectPropertyKind::ObjectProperty(object) => {
-                if object.computed {
-                    self.ctx.error(
-                        OxcDiagnostic::error("Computed property names on class or object literals cannot be inferred with --isolatedDeclarations.")
-                            .with_label(object.span)
-                    );
+                if self.report_property_key(&object.key, object.computed) {
                     return None;
                 }
 

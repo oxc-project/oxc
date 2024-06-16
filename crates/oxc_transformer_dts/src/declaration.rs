@@ -7,7 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::TransformerDts;
+use crate::{diagnostics::signature_computed_property_name, TransformerDts};
 
 impl<'a> TransformerDts<'a> {
     pub fn transform_variable_declaration(
@@ -195,23 +195,25 @@ impl<'a> TransformerDts<'a> {
                     None
                 }
             }
-            Declaration::TSTypeAliasDeclaration(decl) => {
-                if !check_binding || self.scope.has_reference(&decl.id.name) {
-                    Some(Declaration::TSTypeAliasDeclaration(self.ctx.ast.copy(decl)))
+            Declaration::TSTypeAliasDeclaration(alias_decl) => {
+                self.visit_ts_type_alias_declaration(alias_decl);
+                if !check_binding || self.scope.has_reference(&alias_decl.id.name) {
+                    Some(self.ctx.ast.copy(decl))
                 } else {
                     None
                 }
             }
-            Declaration::TSInterfaceDeclaration(decl) => {
-                if !check_binding || self.scope.has_reference(&decl.id.name) {
-                    Some(Declaration::TSInterfaceDeclaration(self.ctx.ast.copy(decl)))
+            Declaration::TSInterfaceDeclaration(interface_decl) => {
+                self.visit_ts_interface_declaration(interface_decl);
+                if !check_binding || self.scope.has_reference(&interface_decl.id.name) {
+                    Some(self.ctx.ast.copy(decl))
                 } else {
                     None
                 }
             }
-            Declaration::TSEnumDeclaration(decl) => {
-                if !check_binding || self.scope.has_reference(&decl.id.name) {
-                    Some(Declaration::TSEnumDeclaration(self.ctx.ast.copy(decl)))
+            Declaration::TSEnumDeclaration(enum_decl) => {
+                if !check_binding || self.scope.has_reference(&enum_decl.id.name) {
+                    Some(self.ctx.ast.copy(decl))
                 } else {
                     None
                 }
@@ -239,5 +241,36 @@ impl<'a> TransformerDts<'a> {
                 }
             }
         }
+    }
+
+    fn report_signature_property_key(&self, key: &PropertyKey<'a>, computed: bool) {
+        if !computed {
+            return;
+        }
+
+        let is_not_allowed = match key {
+            PropertyKey::StaticIdentifier(_) | PropertyKey::Identifier(_) => false,
+            PropertyKey::StaticMemberExpression(expr) => {
+                let mut object = &expr.object;
+                while let Expression::StaticMemberExpression(expr) = &object {
+                    object = &expr.object;
+                }
+                !object.is_identifier_reference()
+            }
+            key => !self.is_literal_key(key),
+        };
+
+        if is_not_allowed {
+            self.ctx.error(signature_computed_property_name(key.span()));
+        }
+    }
+}
+
+impl<'a> Visit<'a> for TransformerDts<'a> {
+    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
+        self.report_signature_property_key(&signature.key, signature.computed);
+    }
+    fn visit_ts_property_signature(&mut self, signature: &TSPropertySignature<'a>) {
+        self.report_signature_property_key(&signature.key, signature.computed);
     }
 }

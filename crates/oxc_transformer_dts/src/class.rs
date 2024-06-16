@@ -2,25 +2,31 @@
 use oxc_ast::ast::*;
 
 use oxc_allocator::Box;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 
-use crate::TransformerDts;
+use crate::{diagnostics::computed_property_name, TransformerDts};
 
 impl<'a> TransformerDts<'a> {
+    pub fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
+        match key {
+            PropertyKey::StringLiteral(_)
+            | PropertyKey::NumericLiteral(_)
+            | PropertyKey::BigintLiteral(_) => true,
+            PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
+            PropertyKey::UnaryExpression(expr) => {
+                expr.operator.is_arithmetic()
+                    && matches!(
+                        expr.argument,
+                        Expression::NumericLiteral(_) | Expression::BigintLiteral(_)
+                    )
+            }
+            _ => false,
+        }
+    }
+
     pub fn report_property_key(&self, key: &PropertyKey<'a>, computed: bool) -> bool {
-        if computed
-            && !matches!(
-                key,
-                PropertyKey::StringLiteral(_)
-                    | PropertyKey::NumericLiteral(_)
-                    | PropertyKey::BigintLiteral(_)
-            )
-        {
-            self.ctx.error(
-            OxcDiagnostic::error("Computed property names on class or object literals cannot be inferred with --isolatedDeclarations.")
-            .with_label(key.span())
-        );
+        if computed && self.is_literal_key(key) {
+            computed_property_name(key.span());
             true
         } else {
             false

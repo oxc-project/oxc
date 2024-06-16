@@ -2,6 +2,7 @@
 use oxc_ast::ast::*;
 
 use oxc_allocator::Box;
+use oxc_ast::Visit;
 use oxc_span::{GetSpan, SPAN};
 
 use crate::TransformerDts;
@@ -34,12 +35,9 @@ impl<'a> TransformerDts<'a> {
             ExportDefaultDeclarationKind::ClassDeclaration(decl) => self
                 .transform_class(decl)
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl) => {
-                // TODO: need to transform TSInterfaceDeclaration
-                Some((
-                    None,
-                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(self.ctx.ast.copy(decl)),
-                ))
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(interface_decl) => {
+                self.visit_ts_interface_declaration(interface_decl);
+                Some((None, self.ctx.ast.copy(&decl.declaration)))
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => {
                 let expr = expr.to_expression();

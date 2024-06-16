@@ -21,3 +21,13 @@ pub fn type_containing_private_name(name: &Atom<'_>, span: Span) -> OxcDiagnosti
     ))
     .with_label(span)
 }
+
+pub fn computed_property_name(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Computed property names on class or object literals cannot be inferred with --isolatedDeclarations.")
+        .with_label(span)
+}
+
+pub fn signature_computed_property_name(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.")
+        .with_label(span)
+}
