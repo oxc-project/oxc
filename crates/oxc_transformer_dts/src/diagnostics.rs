@@ -36,3 +36,8 @@ pub fn enum_member_initializers(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member initializers must be computable without references to external symbols with --isolatedDeclarations.")
         .with_label(span)
 }
+
+pub fn extends_clause_expression(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Extends clause can't contain an expression with --isolatedDeclarations.")
+        .with_label(span)
+}

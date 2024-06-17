@@ -4,7 +4,10 @@ use oxc_ast::ast::*;
 use oxc_allocator::Box;
 use oxc_span::{GetSpan, SPAN};
 
-use crate::{diagnostics::computed_property_name, TransformerDts};
+use crate::{
+    diagnostics::{computed_property_name, extends_clause_expression},
+    TransformerDts,
+};
 
 impl<'a> TransformerDts<'a> {
     pub fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
@@ -197,6 +200,19 @@ impl<'a> TransformerDts<'a> {
     pub fn transform_class(&self, decl: &Class<'a>) -> Option<Box<'a, Class<'a>>> {
         if decl.is_declare() {
             return None;
+        }
+
+        if let Some(super_class) = &decl.super_class {
+            let is_not_allowed = match super_class {
+                Expression::Identifier(_) => false,
+                Expression::StaticMemberExpression(expr) => {
+                    !expr.get_first_object().is_identifier_reference()
+                }
+                _ => true,
+            };
+            if is_not_allowed {
+                self.ctx.error(extends_clause_expression(super_class.span()));
+            }
         }
 
         let mut elements = self.ctx.ast.new_vec();

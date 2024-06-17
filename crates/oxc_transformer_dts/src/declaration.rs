@@ -251,11 +251,7 @@ impl<'a> TransformerDts<'a> {
         let is_not_allowed = match key {
             PropertyKey::StaticIdentifier(_) | PropertyKey::Identifier(_) => false,
             PropertyKey::StaticMemberExpression(expr) => {
-                let mut object = &expr.object;
-                while let Expression::StaticMemberExpression(expr) = &object {
-                    object = &expr.object;
-                }
-                !object.is_identifier_reference()
+                !expr.get_first_object().is_identifier_reference()
             }
             key => !self.is_literal_key(key),
         };

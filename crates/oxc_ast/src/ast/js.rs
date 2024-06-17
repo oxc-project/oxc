@@ -902,6 +902,28 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
+impl<'a> StaticMemberExpression<'a> {
+    pub fn get_first_object(&self) -> &Expression<'a> {
+        match &self.object {
+            Expression::StaticMemberExpression(member) => {
+                if let Expression::StaticMemberExpression(expr) = &member.object {
+                    expr.get_first_object()
+                } else {
+                    &self.object
+                }
+            }
+            Expression::ChainExpression(chain) => {
+                if let ChainElement::StaticMemberExpression(expr) = &chain.expression {
+                    expr.get_first_object()
+                } else {
+                    &self.object
+                }
+            }
+            _ => &self.object,
+        }
+    }
+}
+
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
 #[visited_node]
 #[derive(Debug, Hash)]
