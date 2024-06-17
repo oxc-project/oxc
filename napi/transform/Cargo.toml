@@ -1,5 +1,5 @@
 [package]
-name                   = "oxc_isolated_declarations_napi"
+name                   = "oxc_transform_napi"
 version                = "0.0.0"
 publish                = false
 authors.workspace      = true

@@ -1432,22 +1432,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "oxc_isolated_declarations_napi"
-version = "0.0.0"
-dependencies = [
- "napi",
- "napi-build",
- "napi-derive",
- "oxc_allocator",
- "oxc_ast",
- "oxc_codegen",
- "oxc_diagnostics",
- "oxc_isolated_declarations",
- "oxc_parser",
- "oxc_span",
-]
-
-[[package]]
 name = "oxc_js_regex"
 version = "0.0.0"
 dependencies = [
@@ -1752,6 +1736,22 @@ dependencies = [
  "oxc_transformer",
  "pico-args",
  "walkdir",
+]
+
+[[package]]
+name = "oxc_transform_napi"
+version = "0.0.0"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_codegen",
+ "oxc_diagnostics",
+ "oxc_isolated_declarations",
+ "oxc_parser",
+ "oxc_span",
 ]
 
 [[package]]
