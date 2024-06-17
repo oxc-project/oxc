@@ -25,6 +25,7 @@ impl DiagnosticReporter for JsonReporter {
 }
 
 /// <https://github.com/fregante/eslint-formatters/tree/main/packages/eslint-formatter-json>
+#[allow(clippy::print_stdout)]
 fn format_json(diagnostics: &mut Vec<Error>) {
     let handler = JSONReportHandler::new();
     let messages = diagnostics

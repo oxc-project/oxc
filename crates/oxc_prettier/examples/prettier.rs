@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout)]
 use std::path::Path;
 
 use pico_args::Arguments;

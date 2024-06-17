@@ -28,6 +28,8 @@ empty_docs = { level = "allow", priority = 1 } # from `Tsify`
 dbg_macro     = "warn"
 todo          = "warn"
 unimplemented = "warn"
+print_stdout  = "warn" # must be opt-in
+print_stderr  = "warn" # must be opt-in
 # I like the explicitness of this rule as it removes confusion around `clone`.
 # This increases readability, avoids `clone` mindlessly and heap allocating on accident.
 clone_on_ref_ptr = "warn"

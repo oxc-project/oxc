@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout)]
 //! The simplest linter
 
 use std::{env, path::Path};

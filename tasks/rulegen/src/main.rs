@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout, clippy::print_stderr)]
 use std::{
     collections::HashMap,
     fmt::{self, Display, Formatter},

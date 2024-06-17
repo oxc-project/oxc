@@ -1,5 +1,5 @@
 //! Parse files in parallel and then `Send` them to the main thread for processing.
-
+#![allow(clippy::print_stdout)]
 #![allow(clippy::future_not_send)] // clippy warns `Allocator` is not `Send`
 #![allow(clippy::redundant_pub_crate)] // comes from  `ouroboros`'s macro
 

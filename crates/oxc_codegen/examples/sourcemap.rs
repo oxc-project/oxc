@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout)]
 use std::{env, path::Path};
 
 use base64::{prelude::BASE64_STANDARD, Engine};

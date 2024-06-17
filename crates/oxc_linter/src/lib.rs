@@ -1,4 +1,3 @@
-#![warn(clippy::print_stdout)]
 #![allow(clippy::self_named_module_files)] // for rules.rs
 
 #[cfg(test)]

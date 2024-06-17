@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout)]
 use std::path::{Path, PathBuf};
 
 mod diff;

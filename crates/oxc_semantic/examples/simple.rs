@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout)]
 use std::{env, path::Path, sync::Arc};
 
 use itertools::Itertools;

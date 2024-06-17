@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout, clippy::print_stderr)]
 use lazy_static::lazy_static;
 use oxc_tasks_common::agent;
 use serde::Serialize;

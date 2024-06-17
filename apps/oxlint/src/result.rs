@@ -33,6 +33,7 @@ pub struct FormatResult {
 }
 
 impl Termination for CliRunResult {
+    #[allow(clippy::print_stdout)]
     fn report(self) -> ExitCode {
         match self {
             Self::None => ExitCode::from(0),
