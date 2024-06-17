@@ -133,8 +133,8 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_export_default_declaration(&mut self, decl: &ExportDefaultDeclaration<'a>) {
         if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
-            self.add_type_binding(&ident.name);
-            self.add_value_binding(&ident.name);
+            self.add_type_reference(&ident.name);
+            self.add_value_reference(&ident.name);
         } else {
             walk_export_default_declaration(self, decl);
         }
