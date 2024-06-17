@@ -13,18 +13,13 @@ use crate::{
     typescript::TypeScriptCase,
 };
 
-fn get_result(
-    case_name: &str,
-    file_name: &Path,
-    source_text: &str,
-    source_type: SourceType,
-) -> TestResult {
-    let normal_result = get_normal_result(case_name, file_name, source_text, source_type);
-    let minify_result = get_minify_result(case_name, file_name, source_text, source_type);
-
+fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
+    let normal_result = get_normal_result(source_text, source_type);
     if !normal_result {
-        return TestResult::CodegenError("Default");
-    }
+        return TestResult::CodegenError("Normal");
+    };
+
+    let minify_result = get_minify_result(source_text, source_type);
     if !minify_result {
         return TestResult::CodegenError("Minify");
     }
@@ -32,82 +27,27 @@ fn get_result(
     TestResult::Passed
 }
 
-#[allow(clippy::too_many_arguments)]
-fn write_failure(
-    case_name: &str,
-    file_name: &Path,
-    result_type: &str,
-    original: &str,
-    parser_result1: &str,
-    source_text1: &str,
-    parser_result2: &str,
-    source_text2: &str,
-) {
-    let base_path = Path::new(&format!("./tasks/coverage/failures/{case_name}"))
-        .join(file_name)
-        .join(result_type);
-    let _ = std::fs::create_dir_all(&base_path);
-    std::fs::write(base_path.join("original.ts"), original).expect("Error writing original.ts");
-    std::fs::write(base_path.join("parser_result1.txt"), parser_result1)
-        .expect("Error writing parser_result1.json");
-    std::fs::write(base_path.join("source_text1.ts"), source_text1)
-        .expect("Error writing source_text1.ts");
-    std::fs::write(base_path.join("parser_result2.txt"), parser_result2)
-        .expect("Error writing parser_result2.json");
-    std::fs::write(base_path.join("source_text2.ts"), source_text2)
-        .expect("Error writing source_text2.ts");
-}
-
 /// Idempotency test
-fn get_normal_result(
-    case_name: &str,
-    file_name: &Path,
-    source_text: &str,
-    source_type: SourceType,
-) -> bool {
+fn get_normal_result(source_text: &str, source_type: SourceType) -> bool {
     let options = CodegenOptions::default();
     let allocator = Allocator::default();
-    let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 = Codegen::<false>::new("", source_text, parse_result1.trivias, options)
-        .build(&parse_result1.program)
-        .source_text;
-    let parse_result2 = Parser::new(&allocator, &source_text1, source_type).parse();
-    let source_text2 = Codegen::<false>::new("", &source_text1, parse_result2.trivias, options)
-        .build(&parse_result2.program)
-        .source_text;
-    let result = source_text1 == source_text2;
+    let source_text1 = {
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        Codegen::<false>::new("", source_text, ret.trivias, options).build(&ret.program).source_text
+    };
 
-    if !result {
-        let parse_result1 = format!(
-            "Panicked: {:#?}\nErrors:\n{:#?}\nProgram:\n{:#?}",
-            parse_result1.panicked, parse_result1.errors, parse_result1.program
-        );
-        let parse_result2 = format!(
-            "Panicked: {:#?}\nErrors:\n{:#?}\nProgram:\n{:#?}",
-            parse_result2.panicked, parse_result2.errors, parse_result2.program
-        );
-        write_failure(
-            case_name,
-            file_name,
-            "normal",
-            source_text,
-            &parse_result1,
-            &source_text1,
-            &parse_result2,
-            &source_text2,
-        );
-    }
+    let source_text2 = {
+        let ret = Parser::new(&allocator, &source_text1, source_type).parse();
+        Codegen::<false>::new("", &source_text1, ret.trivias, options)
+            .build(&ret.program)
+            .source_text
+    };
 
-    result
+    source_text1 == source_text2
 }
 
 /// Minify idempotency test
-fn get_minify_result(
-    case_name: &str,
-    file_name: &Path,
-    source_text: &str,
-    source_type: SourceType,
-) -> bool {
+fn get_minify_result(source_text: &str, source_type: SourceType) -> bool {
     let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
@@ -119,30 +59,7 @@ fn get_minify_result(
     let source_text2 = Codegen::<true>::new("", &source_text1, parse_result2.trivias, options)
         .build(&parse_result2.program)
         .source_text;
-    let result = source_text1 == source_text2;
-
-    if !result {
-        let parse_result1 = format!(
-            "Panicked: {:#?}\nErrors:\n{:#?}\nProgram:\n{:#?}",
-            parse_result1.panicked, parse_result1.errors, parse_result1.program
-        );
-        let parse_result2 = format!(
-            "Panicked: {:#?}\nErrors:\n{:#?}\nProgram:\n{:#?}",
-            parse_result2.panicked, parse_result2.errors, parse_result2.program
-        );
-        write_failure(
-            case_name,
-            file_name,
-            "minify",
-            source_text,
-            &parse_result1,
-            &source_text1,
-            &parse_result2,
-            &source_text2,
-        );
-    }
-
-    result
+    source_text1 == source_text2
 }
 
 pub struct CodegenTest262Case {
@@ -174,7 +91,7 @@ impl Case for CodegenTest262Case {
         let source_text = self.base.code();
         let is_module = self.base.meta().flags.contains(&TestFlag::Module);
         let source_type = SourceType::default().with_module(is_module);
-        let result = get_result("test262", self.base.path(), source_text, source_type);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
@@ -207,7 +124,7 @@ impl Case for CodegenBabelCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result("babel", self.base.path(), source_text, source_type);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
@@ -240,7 +157,7 @@ impl Case for CodegenTypeScriptCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result("typescript", self.base.path(), source_text, source_type);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }
@@ -273,7 +190,7 @@ impl Case for CodegenMiscCase {
     fn run(&mut self) {
         let source_text = self.base.code();
         let source_type = self.base.source_type();
-        let result = get_result("misc", self.base.path(), source_text, source_type);
+        let result = get_result(source_text, source_type);
         self.base.set_result(result);
     }
 }

@@ -2,9 +2,8 @@ commit: d8086f14
 
 codegen_typescript Summary:
 AST Parsed     : 5283/5283 (100.00%)
-Positive Passed: 5278/5283 (99.91%)
-Default failed: "compiler/castExpressionParentheses.ts"
-Default failed: "compiler/genericTypeAssertions3.ts"
-Default failed: "compiler/jsxMultilineAttributeStringValues.tsx"
-Default failed: "compiler/jsxMultilineAttributeValuesReact.tsx"
-Default failed: "conformance/jsx/tsxReactEmitEntities.tsx"
+Positive Passed: 5279/5283 (99.92%)
+Normal failed: "compiler/genericTypeAssertions3.ts"
+Normal failed: "compiler/jsxMultilineAttributeStringValues.tsx"
+Normal failed: "compiler/jsxMultilineAttributeValuesReact.tsx"
+Normal failed: "conformance/jsx/tsxReactEmitEntities.tsx"

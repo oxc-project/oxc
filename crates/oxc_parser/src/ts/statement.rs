@@ -252,10 +252,8 @@ impl<'a> ParserImpl<'a> {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl))
         } else if self.at(Kind::LCurly) {
             let block = self.parse_ts_module_block()?;
-            self.asi()?;
             Some(TSModuleDeclarationBody::TSModuleBlock(block))
         } else {
-            self.asi()?;
             None
         };
 

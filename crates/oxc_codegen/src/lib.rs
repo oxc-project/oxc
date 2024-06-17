@@ -311,16 +311,30 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     fn print_sequence<T: Gen<MINIFY>>(&mut self, items: &[T], separator: Separator, ctx: Context) {
-        let len = items.len();
-        for (index, item) in items.iter().enumerate() {
+        for item in items {
             item.gen(self, ctx);
             match separator {
                 Separator::Semicolon => self.print_semicolon(),
                 Separator::Comma => self.print(b','),
                 Separator::None => {}
             }
-            if index != len - 1 {}
         }
+    }
+
+    fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
+        self.add_source_mapping(span.start);
+        self.print(b'{');
+        if !single_line {
+            self.print_soft_newline();
+            self.indent();
+        }
+        op(self);
+        if !single_line {
+            self.dedent();
+            self.print_indent();
+        }
+        self.add_source_mapping(span.end);
+        self.print(b'}');
     }
 
     fn print_block_start(&mut self, position: u32) {
@@ -337,11 +351,21 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.print(b'}');
     }
 
-    fn print_block1(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
-        self.print_block_start(stmt.span.start);
-        self.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
-        self.print_block_end(stmt.span.end);
-        self.needs_semicolon = false;
+    fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
+        match stmt {
+            Statement::BlockStatement(stmt) => {
+                self.print_block_statement(stmt, ctx);
+                self.print_soft_newline();
+            }
+            stmt => stmt.gen(self, ctx),
+        }
+    }
+
+    fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
+        self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
+            p.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
+            p.needs_semicolon = false;
+        });
     }
 
     fn print_block<T: Gen<MINIFY>>(
@@ -379,6 +403,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         for (index, item) in items.iter().enumerate() {
             if index != 0 {
                 self.print_comma();
+                self.print_soft_space();
             }
             item.gen_expr(self, precedence, ctx);
         }
@@ -461,6 +486,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
                 if let Some(Statement::ExpressionStatement(s)) = statements.first() {
                     if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
                         self.print_semicolon();
+                        self.print_soft_newline();
                     }
                 }
             } else {

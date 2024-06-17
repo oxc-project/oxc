@@ -132,13 +132,13 @@ fn new_expr() {
 
 #[test]
 fn for_stmt() {
-    test("for (let x = 0; x < 10; x++) {}", "for (let x = 0; x < 10; x++) {\n}\n", None);
-    test("for (;;) {}", "for (;;) {\n}\n", None);
-    test("for (let x = 1;;) {}", "for (let x = 1;;) {\n}\n", None);
-    test("for (;true;) {}", "for (; true;) {\n}\n", None);
-    test("for (;;i++) {}", "for (;; i++) {\n}\n", None);
+    test("for (let x = 0; x < 10; x++) {}", "for (let x = 0; x < 10; x++) {}\n", None);
+    test("for (;;) {}", "for (;;) {}\n", None);
+    test("for (let x = 1;;) {}", "for (let x = 1;;) {}\n", None);
+    test("for (;true;) {}", "for (; true;) {}\n", None);
+    test("for (;;i++) {}", "for (;; i++) {}\n", None);
 
-    test("for (using x = 1;;) {}", "for (using x = 1;;) {\n}\n", None);
+    test("for (using x = 1;;) {}", "for (using x = 1;;) {}\n", None);
 }
 
 #[test]
@@ -178,7 +178,11 @@ fn typescript() {
     // type-only imports/exports
     test_ts("import type { Foo } from 'foo';", "import type {Foo} from 'foo';\n", false);
     test_ts("import { Foo, type Bar } from 'foo';", "import {Foo,type Bar} from 'foo';\n", false);
-    test_ts("export { Foo, type Bar } from 'foo';", "export { Foo, type Bar } from 'foo';", false);
+    test_ts(
+        "export { Foo, type Bar } from 'foo';",
+        "export { Foo, type Bar } from 'foo';\n",
+        false,
+    );
 }
 
 fn test_comment_helper(source_text: &str, expected: &str) {
@@ -201,17 +205,8 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async function y() {},
     					/* #__NO_SIDE_EFFECTS__ */ async function*() {},
     					/* #__NO_SIDE_EFFECTS__ */ async function* y() {},
-    				])
-        ",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ function() {
-}, /* #__NO_SIDE_EFFECTS__ */ function y() {
-}, /* #__NO_SIDE_EFFECTS__ */ function* () {
-}, /* #__NO_SIDE_EFFECTS__ */ function* y() {
-}, /* #__NO_SIDE_EFFECTS__ */ async function() {
-}, /* #__NO_SIDE_EFFECTS__ */ async function y() {
-}, /* #__NO_SIDE_EFFECTS__ */ async function* () {
-}, /* #__NO_SIDE_EFFECTS__ */ async function* y() {
-},]);
+    				])",
+        r"x([/* #__NO_SIDE_EFFECTS__ */ function() {}, /* #__NO_SIDE_EFFECTS__ */ function y() {}, /* #__NO_SIDE_EFFECTS__ */ function* () {}, /* #__NO_SIDE_EFFECTS__ */ function* y() {}, /* #__NO_SIDE_EFFECTS__ */ async function() {}, /* #__NO_SIDE_EFFECTS__ */ async function y() {}, /* #__NO_SIDE_EFFECTS__ */ async function* () {}, /* #__NO_SIDE_EFFECTS__ */ async function* y() {},]);
 ",
     );
 
@@ -225,9 +220,7 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async () => {},
     					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
     				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {
-}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {
-}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
 ",
     );
     test_comment_helper(
@@ -240,9 +233,7 @@ fn annotate_comment() {
     					/* #__NO_SIDE_EFFECTS__ */ async () => {},
     					/* #__NO_SIDE_EFFECTS__ */ async (y) => (y),
     				])",
-        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {
-}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {
-}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
+        r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
 ",
     );
     //
@@ -258,17 +249,13 @@ fn annotate_comment() {
     async function* d() {}
             ",
         r"// #__NO_SIDE_EFFECTS__
-function a() {
-}
+function a() {}
 // #__NO_SIDE_EFFECTS__
-function* b() {
-}
+function* b() {}
 // #__NO_SIDE_EFFECTS__
-async function c() {
-}
+async function c() {}
 // #__NO_SIDE_EFFECTS__
-async function* d() {
-}
+async function* d() {}
 ",
     );
 
@@ -284,17 +271,13 @@ async function* d() {
     async function* d() {}
             ",
         r"// #__NO_SIDE_EFFECTS__
-function a() {
-}
+function a() {}
 // #__NO_SIDE_EFFECTS__
-function* b() {
-}
+function* b() {}
 // #__NO_SIDE_EFFECTS__
-async function c() {
-}
+async function c() {}
 // #__NO_SIDE_EFFECTS__
-async function* d() {
-}
+async function* d() {}
 ",
     );
 
@@ -303,15 +286,11 @@ async function* d() {
     /* @__NO_SIDE_EFFECTS__ */ export function a() {}
     /* @__NO_SIDE_EFFECTS__ */ export function* b() {}
     /* @__NO_SIDE_EFFECTS__ */ export async function c() {}
-    /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}        ",
-        r"/* @__NO_SIDE_EFFECTS__ */ export function a() {
-}
-/* @__NO_SIDE_EFFECTS__ */ export function* b() {
-}
-/* @__NO_SIDE_EFFECTS__ */ export async function c() {
-}
-/* @__NO_SIDE_EFFECTS__ */ export async function* d() {
-}
+    /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}",
+        r"/* @__NO_SIDE_EFFECTS__ */ export function a() {}
+/* @__NO_SIDE_EFFECTS__ */ export function* b() {}
+/* @__NO_SIDE_EFFECTS__ */ export async function c() {}
+/* @__NO_SIDE_EFFECTS__ */ export async function* d() {}
 ",
     );
     // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
@@ -324,24 +303,12 @@ async function* d() {
         					/* #__NO_SIDE_EFFECTS__ */ export let l2 = () => {}, l3 = () => {}
         					/* #__NO_SIDE_EFFECTS__ */ export const c2 = () => {}, c3 = () => {}
         ",
-        r"export var v0 = function() {
-}, v1 = function() {
-};
-export let l0 = function() {
-}, l1 = function() {
-};
-export const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {
-}, c1 = function() {
-};
-export var v2 = () => {
-}, v3 = () => {
-};
-export let l2 = () => {
-}, l3 = () => {
-};
-export const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {
-}, c3 = () => {
-};
+        r"export var v0 = function() {}, v1 = function() {};
+export let l0 = function() {}, l1 = function() {};
+export const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
+export var v2 = () => {}, v3 = () => {};
+export let l2 = () => {}, l3 = () => {};
+export const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 ",
     );
     // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
@@ -354,24 +321,12 @@ export const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {
     /* #__NO_SIDE_EFFECTS__ */ let l2 = () => {}, l3 = () => {}
     /* #__NO_SIDE_EFFECTS__ */ const c2 = () => {}, c3 = () => {}
         ",
-        r"var v0 = function() {
-}, v1 = function() {
-};
-let l0 = function() {
-}, l1 = function() {
-};
-const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {
-}, c1 = function() {
-};
-var v2 = () => {
-}, v3 = () => {
-};
-let l2 = () => {
-}, l3 = () => {
-};
-const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {
-}, c3 = () => {
-};
+        r"var v0 = function() {}, v1 = function() {};
+let l0 = function() {}, l1 = function() {};
+const c0 = /* #__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
+var v2 = () => {}, v3 = () => {};
+let l2 = () => {}, l3 = () => {};
+const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 ",
     );
 }
