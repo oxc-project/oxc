@@ -1,0 +1,64 @@
+---
+source: crates/oxc_linter/src/tester.rs
+expression: no_optional_chaining
+---
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:9]
+ 1 │ var x = a?.b
+   ·         ────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:9]
+ 1 │ var x = a?.[b]
+   ·         ──────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:1]
+ 1 │ foo?.()
+   · ───────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:9]
+ 1 │ var x = ((a?.b)?.c)?.()
+   ·         ───────────────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:10]
+ 1 │ var x = ((a?.b)?.c)?.()
+   ·          ─────────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:11]
+ 1 │ var x = ((a?.b)?.c)?.()
+   ·           ────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:9]
+ 1 │ var x = a/*?.*/?.b
+   ·         ──────────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:9]
+ 1 │ var x = '?.'?.['?.']
+   ·         ────────────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:9]
+ 1 │ var x = '?.'?.['?.']
+   ·         ────────────
+   ╰────
+
+  ⚠ oxc(no-optional-chaining): Optional chaining is not allowed.
+   ╭─[no_optional_chaining.tsx:1:9]
+ 1 │ var x = a?.b
+   ·         ────
+   ╰────
+  help: Our output target is ES2016, and optional chaining results in verbose helpers and should be avoided.
