@@ -5,7 +5,10 @@ use oxc_allocator::Box;
 use oxc_span::{GetSpan, SPAN};
 
 use crate::{
-    diagnostics::{computed_property_name, extends_clause_expression},
+    diagnostics::{
+        accessor_must_have_explicit_return_type, computed_property_name, extends_clause_expression,
+        method_must_have_explicit_return_type, property_must_have_explicit_type,
+    },
     IsolatedDeclarations,
 };
 
@@ -59,16 +62,17 @@ impl<'a> IsolatedDeclarations<'a> {
                 .as_ref()
                 .map(|type_annotation| self.ast.copy(type_annotation))
                 .or_else(|| {
-                    let new_type = property
+                    property
                         .value
                         .as_ref()
-                        .and_then(|expr| self.infer_type_from_expression(expr))
-                        .unwrap_or_else(|| {
-                            // report error for has no type annotation
-                            self.ast.ts_unknown_keyword(property.span)
-                        });
-
-                    Some(self.ast.ts_type_annotation(SPAN, new_type))
+                        .and_then(|expr| {
+                            let ts_type = self.infer_type_from_expression(expr);
+                            if ts_type.is_none() {
+                                self.error(property_must_have_explicit_type(property.key.span()));
+                            }
+                            ts_type
+                        })
+                        .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type))
                 })
         };
 
@@ -114,6 +118,20 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         let type_annotation = self.infer_function_return_type(function);
+
+        if type_annotation.is_none() {
+            match definition.kind {
+                MethodDefinitionKind::Method => {
+                    self.error(method_must_have_explicit_return_type(definition.key.span()));
+                }
+                MethodDefinitionKind::Get => {
+                    self.error(accessor_must_have_explicit_return_type(definition.key.span()));
+                }
+                MethodDefinitionKind::Constructor | MethodDefinitionKind::Set => {}
+            }
+        }
+
+        // TODO: Infer the parameter type of the `set` method from the `get` method
 
         let value = self.ast.function(
             FunctionType::TSEmptyBodyFunctionExpression,

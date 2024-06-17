@@ -4,9 +4,9 @@ use oxc_ast::ast::*;
 use oxc_allocator::Box;
 use oxc_ast::ast::Function;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::SPAN;
+use oxc_span::{Span, SPAN};
 
-use crate::IsolatedDeclarations;
+use crate::{diagnostics::function_must_have_explicit_return_type, IsolatedDeclarations};
 
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_function(&mut self, func: &Function<'a>) -> Option<Box<'a, Function<'a>>> {
@@ -14,6 +14,9 @@ impl<'a> IsolatedDeclarations<'a> {
             None
         } else {
             let return_type = self.infer_function_return_type(func);
+            if return_type.is_none() {
+                self.error(function_must_have_explicit_return_type(get_function_span(func)));
+            }
             let params = self.transform_formal_parameters(&func.params);
             Some(self.ast.function(
                 func.r#type,
@@ -125,4 +128,14 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&params.rest),
         )
     }
+}
+
+pub fn get_function_span(func: &Function<'_>) -> Span {
+    func.id.as_ref().map_or_else(
+        || {
+            let start = func.params.span.start;
+            Span::new(start, start)
+        },
+        |id| id.span,
+    )
 }

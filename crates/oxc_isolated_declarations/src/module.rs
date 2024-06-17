@@ -5,7 +5,7 @@ use oxc_allocator::Box;
 use oxc_ast::Visit;
 use oxc_span::{GetSpan, SPAN};
 
-use crate::IsolatedDeclarations;
+use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
 
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_export_named_declaration(
@@ -46,6 +46,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 } else {
                     // declare const _default: Type
                     let kind = VariableDeclarationKind::Const;
+                    // TODO: create unique name for this
                     let name = self.ast.new_atom("_default");
                     let id = self
                         .ast
@@ -53,6 +54,10 @@ impl<'a> IsolatedDeclarations<'a> {
                     let type_annotation = self
                         .infer_type_from_expression(expr)
                         .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
+
+                    if type_annotation.is_none() {
+                        self.error(default_export_inferred(expr.span()));
+                    }
 
                     let id = BindingPattern { kind: id, type_annotation, optional: false };
                     let declarations = self

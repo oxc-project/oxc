@@ -7,7 +7,8 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 
 use crate::{
-    diagnostics::function_must_have_explicit_return_type, return_type::FunctionReturnType,
+    diagnostics::{array_inferred, inferred_type_of_class_expression},
+    return_type::FunctionReturnType,
     IsolatedDeclarations,
 };
 
@@ -35,6 +36,10 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::ObjectExpression(expr) => {
                 Some(self.transform_object_expression_to_ts_type(expr, false))
             }
+            Expression::ArrayExpression(expr) => {
+                self.error(array_inferred(expr.span));
+                Some(self.ast.ts_unknown_keyword(expr.span))
+            }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
                     Some(self.transform_expression_to_ts_type(&expr.expression))
@@ -43,14 +48,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             Expression::ClassExpression(expr) => {
-                self.error(
-                    OxcDiagnostic::error(
-                        "
-                        Inference from class expressions is not supported with --isolatedDeclarations.
-                    ",
-                    )
-                    .with_label(expr.span),
-                );
+                self.error(inferred_type_of_class_expression(expr.span));
                 Some(self.ast.ts_unknown_keyword(SPAN))
             }
             Expression::TSNonNullExpression(expr) => {
@@ -104,25 +102,17 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         if function.r#async || function.generator {
-            self.error(function_must_have_explicit_return_type(function));
+            return None;
         }
 
-        let return_type = FunctionReturnType::infer(
+        FunctionReturnType::infer(
             self,
             function
                 .body
                 .as_ref()
                 .unwrap_or_else(|| unreachable!("Only declare function can have no body")),
         )
-        .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation));
-
-        if return_type.is_none() {
-            self.error(function_must_have_explicit_return_type(function));
-
-            Some(self.ast.ts_type_annotation(SPAN, self.ast.ts_unknown_keyword(SPAN)))
-        } else {
-            return_type
-        }
+        .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
     }
 
     pub fn infer_arrow_function_return_type(
@@ -133,6 +123,14 @@ impl<'a> IsolatedDeclarations<'a> {
             return self.ast.copy(&function.return_type);
         }
 
+        if function.r#async {
+            return None;
+        }
+
+        if function.r#async {
+            return None;
+        }
+
         if function.expression {
             if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
                 return self
@@ -140,6 +138,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation));
             }
         }
+
         FunctionReturnType::infer(self, &function.body)
             .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
     }

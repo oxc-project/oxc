@@ -7,7 +7,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{diagnostics::signature_computed_property_name, IsolatedDeclarations};
+use crate::{
+    diagnostics::{inferred_type_of_expression, signature_computed_property_name},
+    IsolatedDeclarations,
+};
 
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_variable_declaration(
@@ -264,6 +267,9 @@ impl<'a> IsolatedDeclarations<'a> {
 
 impl<'a> Visit<'a> for IsolatedDeclarations<'a> {
     fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
+        if signature.return_type.is_none() {
+            self.error(inferred_type_of_expression(signature.span));
+        }
         self.report_signature_property_key(&signature.key, signature.computed);
     }
     fn visit_ts_property_signature(&mut self, signature: &TSPropertySignature<'a>) {

@@ -4,13 +4,23 @@ use oxc_ast::ast::{
     TSTypeOperatorOperator,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 
-use crate::IsolatedDeclarations;
+use crate::{
+    diagnostics::{
+        function_must_have_explicit_return_type, inferred_type_of_expression, shorthand_property,
+    },
+    function::get_function_span,
+    IsolatedDeclarations,
+};
 
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_function_to_ts_type(&self, func: &Function<'a>) -> Option<TSType<'a>> {
         let return_type = self.infer_function_return_type(func);
+        if return_type.is_none() {
+            self.error(function_must_have_explicit_return_type(get_function_span(func)));
+        }
+
         let params = self.transform_formal_parameters(&func.params);
 
         return_type.map(|return_type| {
@@ -29,6 +39,11 @@ impl<'a> IsolatedDeclarations<'a> {
         func: &ArrowFunctionExpression<'a>,
     ) -> Option<TSType<'a>> {
         let return_type = self.infer_arrow_function_return_type(func);
+
+        if return_type.is_none() {
+            self.error(function_must_have_explicit_return_type(func.span));
+        }
+
         let params = self.transform_formal_parameters(&func.params);
 
         return_type.map(|return_type| {
@@ -66,6 +81,11 @@ impl<'a> IsolatedDeclarations<'a> {
                     return None;
                 }
 
+                if object.shorthand {
+                    self.error(shorthand_property(object.span));
+                    return None;
+                }
+
                 if let Expression::FunctionExpression(function) = &object.value {
                     if !is_const && object.method {
                         let return_type = self.infer_function_return_type(function);
@@ -85,6 +105,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
 
                 let type_annotation = self.infer_type_from_expression(&object.value);
+
+                if type_annotation.is_none() {
+                    self.error(inferred_type_of_expression(object.value.span()));
+                    return None;
+                }
 
                 let property_signature = self.ast.ts_property_signature(
                     object.span,
