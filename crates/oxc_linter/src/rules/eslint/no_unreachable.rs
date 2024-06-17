@@ -2,7 +2,7 @@ use oxc_ast::{ast::VariableDeclarationKind, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    petgraph::{
+    control_flow::graph::{
         visit::{depth_first_search, Control, DfsEvent, EdgeRef},
         Direction,
     },

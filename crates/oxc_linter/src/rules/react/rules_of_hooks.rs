@@ -4,7 +4,8 @@ use oxc_ast::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    algo, petgraph::visit::Control, AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, InstructionKind,
+    control_flow::graph::{algo, visit::Control},
+    AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;

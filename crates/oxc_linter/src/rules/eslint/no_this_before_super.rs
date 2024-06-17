@@ -8,8 +8,8 @@ use oxc_ast::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    petgraph::visit::EdgeRef, pg::neighbors_filtered_by_edge_weight, AstNodeId, BasicBlockId,
-    ControlFlowGraph, EdgeType,
+    control_flow::graph::visit::{neighbors_filtered_by_edge_weight, EdgeRef},
+    AstNodeId, BasicBlockId, ControlFlowGraph, EdgeType,
 };
 use oxc_span::{GetSpan, Span};
 
@@ -156,11 +156,8 @@ impl NoThisBeforeSuper {
     fn analyze(
         cfg: &ControlFlowGraph,
         id: BasicBlockId,
-        basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
-        basic_blocks_with_local_violations: &HashMap<
-            oxc_semantic::petgraph::prelude::NodeIndex,
-            Vec<AstNodeId>,
-        >,
+        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<AstNodeId>>,
         follow_join: bool,
     ) -> Vec<DefinitelyCallsThisBeforeSuper> {
         neighbors_filtered_by_edge_weight(
@@ -219,11 +216,8 @@ impl NoThisBeforeSuper {
     fn check_for_violation(
         cfg: &ControlFlowGraph,
         output: Vec<DefinitelyCallsThisBeforeSuper>,
-        basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
-        basic_blocks_with_local_violations: &HashMap<
-            oxc_semantic::petgraph::prelude::NodeIndex,
-            Vec<AstNodeId>,
-        >,
+        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<AstNodeId>>,
     ) -> bool {
         // Deciding whether we definitely call this before super in all
         // codepaths is as simple as seeing if any individual codepath

@@ -2,21 +2,18 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
-mod control_flow;
 mod diagnostics;
 mod jsdoc;
 mod label;
 mod module_record;
 mod node;
-pub mod pg;
 mod reference;
 mod scope;
 mod symbol;
 
-use std::sync::Arc;
+pub mod control_flow;
 
-pub use petgraph;
-pub use petgraph::algo;
+use std::sync::Arc;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;

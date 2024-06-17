@@ -3,8 +3,8 @@ use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    pg::neighbors_filtered_by_edge_weight, EdgeType, Instruction, InstructionKind,
-    ReturnInstructionKind,
+    control_flow::graph::visit::neighbors_filtered_by_edge_weight, EdgeType, Instruction,
+    InstructionKind, ReturnInstructionKind,
 };
 use oxc_span::{GetSpan, Span};
 

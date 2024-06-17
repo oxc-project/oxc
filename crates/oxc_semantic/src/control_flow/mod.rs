@@ -1,5 +1,6 @@
 mod builder;
 mod dot;
+pub mod visit;
 
 use itertools::Itertools;
 use oxc_ast::AstKind;
@@ -9,9 +10,17 @@ use petgraph::{
     Direction, Graph,
 };
 
+pub mod graph {
+    pub use petgraph::*;
+    pub mod visit {
+        pub use super::super::visit::*;
+        pub use petgraph::visit::*;
+    }
+}
+
 use crate::{AstNodeId, AstNodes};
 
-pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
+pub(crate) use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::{DebugDot, DebugDotContext, DisplayDot};
 
 pub type BasicBlockId = NodeIndex;

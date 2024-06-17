@@ -8,8 +8,10 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{
-    petgraph::{visit::EdgeRef, Direction},
-    pg::neighbors_filtered_by_edge_weight,
+    control_flow::graph::{
+        visit::{neighbors_filtered_by_edge_weight, EdgeRef},
+        Direction,
+    },
     BasicBlockId, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_span::{GetSpan, Span};
