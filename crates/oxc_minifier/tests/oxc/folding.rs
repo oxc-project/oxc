@@ -1,4 +1,6 @@
-use crate::{test, test_snapshot};
+use oxc_minifier::{CompressOptions, MinifierOptions};
+
+use crate::{test, test_snapshot, test_with_options};
 
 #[test]
 fn addition_folding() {
@@ -36,4 +38,16 @@ fn addition_folding_snapshots() {
             "1 + 1.0000001",
         ],
     );
+}
+
+#[test]
+fn test_join_vars() {
+    let options = MinifierOptions {
+        mangle: false,
+        compress: CompressOptions { join_vars: false, ..CompressOptions::default() },
+    };
+    test_with_options("var foo = 1; var bar = 2;", "var foo=1;var bar=2;", options);
+    // join_vars: true
+    let options = MinifierOptions::default();
+    test_with_options("var foo = 1; var bar = 2;", "var foo=1,bar=2;", options);
 }
