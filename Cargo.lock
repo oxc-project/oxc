@@ -1378,6 +1378,7 @@ dependencies = [
  "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
+ "oxc_isolated_declarations",
  "oxc_minifier",
  "oxc_parser",
  "oxc_prettier",
@@ -1386,7 +1387,6 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
- "oxc_transformer_dts",
  "phf",
  "pico-args",
  "project-root",
@@ -1415,6 +1415,20 @@ name = "oxc_index"
 version = "0.14.0"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "oxc_isolated_declarations"
+version = "0.14.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_codegen",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -1743,20 +1757,6 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "oxc_transformer_dts"
-version = "0.14.0"
-dependencies = [
- "oxc_allocator",
- "oxc_ast",
- "oxc_codegen",
- "oxc_diagnostics",
- "oxc_parser",
- "oxc_span",
- "oxc_syntax",
- "rustc-hash",
 ]
 
 [[package]]

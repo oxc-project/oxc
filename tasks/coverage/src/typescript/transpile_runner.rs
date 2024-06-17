@@ -3,9 +3,9 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
+use oxc_isolated_declarations::{TransformerDts, TransformerDtsReturn};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use oxc_transformer_dts::{TransformerDts, TransformerDtsReturn};
 
 use crate::{
     project_root,

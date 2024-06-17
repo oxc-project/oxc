@@ -2,14 +2,14 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
+use oxc_isolated_declarations::TransformerDts;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use oxc_transformer_dts::TransformerDts;
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_transformer_dts --example transformer`
-// or `just watch "run -p oxc_transformer_dts --example transformer"`
+// run `cargo run -p oxc_isolated_declarations --example isolated_declarations`
+// or `just watch "run -p oxc_isolated_declarations --example isolated_declarations"`
 
 fn main() {
     let name = env::args().nth(1).unwrap_or_else(|| "test.tsx".to_string());
