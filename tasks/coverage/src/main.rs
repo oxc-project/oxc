@@ -25,7 +25,7 @@ fn main() {
         "codegen-runtime" => args.run_codegen_runtime(),
         "prettier" => args.run_prettier(),
         "transformer" => args.run_transformer(),
-        "transpiler" => args.run_transipler(),
+        "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),
         "v8_test262_status" => args.run_sync_v8_test262_status(),
         _ => args.run_all(),

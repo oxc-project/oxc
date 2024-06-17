@@ -32,6 +32,7 @@ pub enum TestResult {
     Passed,
     IncorrectlyPassed,
     #[allow(unused)]
+    // (actual, expected)
     Mismatch(String, String),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
@@ -424,7 +425,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         origin_string: &str,
         expected_string: &str,
     ) -> std::io::Result<()> {
-        let diff = TextDiff::from_lines(origin_string, expected_string);
+        let diff = TextDiff::from_lines(expected_string, origin_string);
         for change in diff.iter_all_changes() {
             let (sign, style) = match change.tag() {
                 ChangeTag::Delete => ("-", Style::new().red()),

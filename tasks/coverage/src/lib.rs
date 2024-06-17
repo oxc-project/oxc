@@ -61,7 +61,7 @@ impl AppArgs {
         self.run_codegen();
         self.run_prettier();
         self.run_transformer();
-        self.run_transipler();
+        self.run_transpiler();
         // self.run_codegen_runtime();
         self.run_minifier();
     }
@@ -95,7 +95,7 @@ impl AppArgs {
         MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self);
     }
 
-    pub fn run_transipler(&self) {
+    pub fn run_transpiler(&self) {
         TranspileRunner::<TypeScriptTranspileCase>::new().run("transpile", self);
     }
 
