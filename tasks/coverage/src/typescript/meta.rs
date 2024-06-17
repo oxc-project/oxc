@@ -1,9 +1,10 @@
 //! <https://github.com/microsoft/TypeScript/blob/6f06eb1b27a6495b209e8be79036f3b2ea92cd0b/src/harness/harnessIO.ts#L1237>
 
-use std::{collections::HashMap, fs, path::Path};
+use std::{collections::HashMap, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::{NamedSource, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -166,8 +167,9 @@ impl TestCaseContent {
 pub struct Baseline {
     pub name: String,
     pub original: String,
+    pub original_diagnostic: String,
     pub oxc_printed: String,
-    pub diagnostic: String,
+    pub oxc_diagnostics: Vec<OxcDiagnostic>,
 }
 
 impl Baseline {
@@ -181,6 +183,16 @@ impl Baseline {
                 .source_text;
         self.oxc_printed = printed;
     }
+
+    fn get_oxc_diagnostic(&self) -> String {
+        let source = Arc::new(NamedSource::new(&self.name, self.original.clone()));
+        self.oxc_diagnostics
+            .iter()
+            .map(|d| d.clone().with_source_code(Arc::clone(&source)))
+            .map(|error| format!("{error:?}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    }
 }
 
 #[derive(Debug)]
@@ -191,6 +203,18 @@ pub struct BaselineFile {
 impl BaselineFile {
     pub fn print(&self) -> String {
         self.files.iter().map(|f| f.oxc_printed.clone()).collect::<Vec<_>>().join("\n")
+    }
+
+    pub fn snapshot(&self) -> String {
+        self.files
+            .iter()
+            .map(|f| {
+                let printed = f.oxc_printed.clone();
+                let diagnostics = f.get_oxc_diagnostic();
+                format!("//// [{}] ////\n{}{}", f.name, printed, diagnostics)
+            })
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     pub fn parse(path: &Path) -> Self {
@@ -210,8 +234,8 @@ impl BaselineFile {
             }
             let last = files.last_mut().unwrap();
             if is_diagnostic {
-                last.diagnostic.push_str(line);
-                last.diagnostic.push_str("\r\n");
+                last.original_diagnostic.push_str(line);
+                last.original_diagnostic.push_str("\r\n");
             } else {
                 last.original.push_str(line);
                 last.original.push_str("\r\n");

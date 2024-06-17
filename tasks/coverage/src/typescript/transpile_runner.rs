@@ -118,12 +118,14 @@ impl TypeScriptTranspileCase {
             return TestResult::Mismatch(baseline_text, expected_text);
         }
 
-        for (base, expected) in baseline.files.into_iter().zip(expected.files) {
+        for (base, expected) in baseline.files.iter().zip(expected.files) {
             if base.oxc_printed != expected.oxc_printed {
-                return TestResult::Mismatch(base.oxc_printed, expected.oxc_printed);
+                return TestResult::Mismatch(base.oxc_printed.clone(), expected.oxc_printed);
             }
         }
-        TestResult::Passed
+
+        let snapshot = format!("\n#### {:?} ####\n{}", self.path, baseline.snapshot());
+        TestResult::CorrectError(snapshot, false)
     }
 
     fn run_kind(&self, _kind: TranspileKind) -> BaselineFile {
@@ -144,12 +146,9 @@ impl TypeScriptTranspileCase {
             let baseline = Baseline {
                 name: change_extension(&unit.name),
                 original: unit.content.clone(),
+                original_diagnostic: String::new(),
                 oxc_printed: source_text,
-                diagnostic: errors
-                    .into_iter()
-                    .map(|e| e.message.clone())
-                    .collect::<Vec<_>>()
-                    .join("\n"),
+                oxc_diagnostics: errors,
             };
             files.push(baseline);
         }
