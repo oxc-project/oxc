@@ -2943,6 +2943,9 @@ impl MethodDefinitionKind {
     pub fn is_set(&self) -> bool {
         matches!(self, Self::Set)
     }
+    pub fn is_get(&self) -> bool {
+        matches!(self, Self::Get)
+    }
 
     pub fn scope_flags(self) -> ScopeFlags {
         match self {

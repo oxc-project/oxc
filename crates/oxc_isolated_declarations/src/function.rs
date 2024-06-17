@@ -3,10 +3,15 @@ use oxc_ast::ast::*;
 
 use oxc_allocator::Box;
 use oxc_ast::ast::Function;
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Span, SPAN};
 
-use crate::{diagnostics::function_must_have_explicit_return_type, IsolatedDeclarations};
+use crate::{
+    diagnostics::{
+        function_must_have_explicit_return_type, implicitly_adding_undefined_to_type,
+        parameter_must_have_explicit_type,
+    },
+    IsolatedDeclarations,
+};
 
 impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_function(&mut self, func: &Function<'a>) -> Option<Box<'a, Function<'a>>> {
@@ -52,35 +57,40 @@ impl<'a> IsolatedDeclarations<'a> {
                 next_param.map_or(true, |next_param| next_param.pattern.optional);
 
             let type_annotation = pattern
-              .type_annotation
-              .as_ref()
-              .map(|type_annotation| self.ast.copy(&type_annotation.type_annotation))
-              .or_else(|| {
-                  // report error for has no type annotation
-                  let new_type = self
-                      .infer_type_from_formal_parameter(param)
-                      .unwrap_or_else(|| self.ast.ts_unknown_keyword(param.span));
-                  Some(new_type)
-              })
-              .map(|ts_type| {
-                  // jf next param is not optional and current param is assignment pattern
-                  // we need to add undefined to it's type
-                  if !is_next_param_optional {
-                      if matches!(ts_type, TSType::TSTypeReference(_)) {
-                          self.error(
-                              OxcDiagnostic::error("Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.")
-                                  .with_label(param.span),
-                          );
-                      } else if !ts_type.is_maybe_undefined() {
-                          // union with undefined
-                          return self.ast.ts_type_annotation(SPAN,
-                              self.ast.ts_union_type(SPAN, self.ast.new_vec_from_iter([ts_type, self.ast.ts_undefined_keyword(SPAN)]))
-                          );
-                      }
-                  }
+                .type_annotation
+                .as_ref()
+                .map(|type_annotation| self.ast.copy(&type_annotation.type_annotation))
+                .or_else(|| {
+                    // report error for has no type annotation
+                    let new_type = self.infer_type_from_formal_parameter(param);
+                    if new_type.is_none() {
+                        self.error(parameter_must_have_explicit_type(param.span));
+                    }
+                    new_type
+                })
+                .map(|ts_type| {
+                    // jf next param is not optional and current param is assignment pattern
+                    // we need to add undefined to it's type
+                    if !is_next_param_optional {
+                        if matches!(ts_type, TSType::TSTypeReference(_)) {
+                            self.error(implicitly_adding_undefined_to_type(param.span));
+                        } else if !ts_type.is_maybe_undefined() {
+                            // union with undefined
+                            return self.ast.ts_type_annotation(
+                                SPAN,
+                                self.ast.ts_union_type(
+                                    SPAN,
+                                    self.ast.new_vec_from_iter([
+                                        ts_type,
+                                        self.ast.ts_undefined_keyword(SPAN),
+                                    ]),
+                                ),
+                            );
+                        }
+                    }
 
-                  self.ast.ts_type_annotation(SPAN, ts_type)
-              });
+                    self.ast.ts_type_annotation(SPAN, ts_type)
+                });
 
             pattern = self.ast.binding_pattern(
                 self.ast.copy(&pattern.kind),
@@ -115,9 +125,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if let Some(rest) = &params.rest {
             if rest.argument.type_annotation.is_none() {
-                self.error(OxcDiagnostic::error(
-                  "Parameter must have an explicit type annotation with --isolatedDeclarations.",
-              ).with_label(rest.span));
+                self.error(parameter_must_have_explicit_type(rest.span));
             }
         }
 

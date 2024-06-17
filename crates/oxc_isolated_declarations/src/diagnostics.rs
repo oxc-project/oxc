@@ -77,9 +77,21 @@ pub fn inferred_type_of_expression(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-// Inference from class expressions is not supported with --isolatedDeclarations.
-
 pub fn inferred_type_of_class_expression(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Class expression type can't be inferred with --isolatedDeclarations.")
         .with_label(span)
+}
+
+pub fn parameter_must_have_explicit_type(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Parameter must have an explicit type annotation with --isolatedDeclarations.",
+    )
+    .with_label(span)
+}
+
+pub fn implicitly_adding_undefined_to_type(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        "Declaration emit for this parameter requires implicitly adding undefined to it's type. This is not supported with --isolatedDeclarations.",
+    )
+    .with_label(span)
 }

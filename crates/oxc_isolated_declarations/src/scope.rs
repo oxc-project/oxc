@@ -178,8 +178,6 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         walk_declaration(self, declaration);
     }
 
-    // // TODO: handle ts infer and ts mapped type
-
     // ==================== TSTypeParameter ====================
 
     /// ```ts
