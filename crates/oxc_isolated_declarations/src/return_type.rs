@@ -10,7 +10,7 @@ use oxc_ast::{
 use oxc_span::{Atom, GetSpan};
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{context::Ctx, diagnostics::type_containing_private_name, TransformerDts};
+use crate::{context::Ctx, diagnostics::type_containing_private_name, IsolatedDeclarations};
 
 /// Infer return type from return statement. Does not support multiple return statements.
 pub struct FunctionReturnType<'a> {
@@ -23,7 +23,10 @@ pub struct FunctionReturnType<'a> {
 }
 
 impl<'a> FunctionReturnType<'a> {
-    pub fn infer(transformer: &TransformerDts<'a>, body: &FunctionBody<'a>) -> Option<TSType<'a>> {
+    pub fn infer(
+        transformer: &IsolatedDeclarations<'a>,
+        body: &FunctionBody<'a>,
+    ) -> Option<TSType<'a>> {
         let mut visitor = FunctionReturnType {
             ctx: Rc::clone(&transformer.ctx),
             return_expression: None,

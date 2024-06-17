@@ -6,9 +6,9 @@ use oxc_ast::ast::Function;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SPAN;
 
-use crate::TransformerDts;
+use crate::IsolatedDeclarations;
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_function(&mut self, func: &Function<'a>) -> Option<Box<'a, Function<'a>>> {
         if func.modifiers.is_contains_declare() {
             None

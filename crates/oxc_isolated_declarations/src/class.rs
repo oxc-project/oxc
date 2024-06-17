@@ -6,10 +6,10 @@ use oxc_span::{GetSpan, SPAN};
 
 use crate::{
     diagnostics::{computed_property_name, extends_clause_expression},
-    TransformerDts,
+    IsolatedDeclarations,
 };
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn is_literal_key(&self, key: &PropertyKey<'a>) -> bool {
         match key {
             PropertyKey::StringLiteral(_)

@@ -1,21 +1,18 @@
 {
-  "name": "@oxc-parser/binding",
+  "name": "@oxc-isolated-declarations/binding",
   "private": true,
   "scripts": {
     "build": "napi build --platform --release",
-    "test": "node test.mjs",
-    "bench": "node parse.bench.mjs"
+    "test": "node test.mjs"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.0",
-    "es-module-lexer": "^1.4.1",
-    "tinybench": "^2.6.0"
+    "@napi-rs/cli": "^2.18.0"
   },
   "engines": {
     "node": ">=14.*"
   },
   "napi": {
-    "name": "parser",
+    "name": "isolated-declarations",
     "triples": {
       "defaults": false,
       "additional": [

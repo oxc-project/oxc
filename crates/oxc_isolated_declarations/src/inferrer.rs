@@ -8,10 +8,10 @@ use oxc_span::{GetSpan, SPAN};
 
 use crate::{
     diagnostics::function_must_have_explicit_return_type, return_type::FunctionReturnType,
-    TransformerDts,
+    IsolatedDeclarations,
 };
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(_) => Some(self.ctx.ast.ts_boolean_keyword(SPAN)),

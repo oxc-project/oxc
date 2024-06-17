@@ -7,9 +7,9 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{diagnostics::signature_computed_property_name, TransformerDts};
+use crate::{diagnostics::signature_computed_property_name, IsolatedDeclarations};
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_variable_declaration(
         &self,
         decl: &VariableDeclaration<'a>,
@@ -262,7 +262,7 @@ impl<'a> TransformerDts<'a> {
     }
 }
 
-impl<'a> Visit<'a> for TransformerDts<'a> {
+impl<'a> Visit<'a> for IsolatedDeclarations<'a> {
     fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
         self.report_signature_property_key(&signature.key, signature.computed);
     }

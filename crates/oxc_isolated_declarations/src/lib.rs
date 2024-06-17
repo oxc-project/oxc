@@ -27,17 +27,17 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, SPAN};
 use scope::ScopeTree;
 
-pub struct TransformerDtsReturn<'a> {
+pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,
 }
 
-pub struct TransformerDts<'a> {
+pub struct IsolatedDeclarations<'a> {
     ctx: Ctx<'a>,
     scope: ScopeTree<'a>,
 }
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         let ctx = Rc::new(TransformDtsCtx::new(allocator));
         Self { ctx, scope: ScopeTree::new(allocator) }
@@ -46,16 +46,16 @@ impl<'a> TransformerDts<'a> {
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &Program<'a>) -> TransformerDtsReturn<'a> {
+    pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
         let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
         let directives = self.ctx.ast.new_vec();
         let stmts = self.transform_program(program);
         let program = self.ctx.ast.program(SPAN, source_type, directives, None, stmts);
-        TransformerDtsReturn { program, errors: self.ctx.take_errors() }
+        IsolatedDeclarationsReturn { program, errors: self.ctx.take_errors() }
     }
 }
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_program(
         &mut self,
         program: &Program<'a>,

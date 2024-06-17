@@ -5,9 +5,9 @@ use oxc_allocator::Box;
 use oxc_ast::Visit;
 use oxc_span::{GetSpan, SPAN};
 
-use crate::TransformerDts;
+use crate::IsolatedDeclarations;
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_export_named_declaration(
         &mut self,
         decl: &ExportNamedDeclaration<'a>,

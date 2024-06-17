@@ -6,7 +6,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::Trivias;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_isolated_declarations::TransformerDts;
+use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -166,7 +166,7 @@ fn transpile(path: &Path, source_text: &str) -> (String, Vec<OxcDiagnostic>) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let ret = TransformerDts::new(&allocator).build(&ret.program);
+    let ret = IsolatedDeclarations::new(&allocator).build(&ret.program);
     let printed = Codegen::<false>::new("", "", Trivias::default(), CodegenOptions::default())
         .build(&ret.program)
         .source_text;

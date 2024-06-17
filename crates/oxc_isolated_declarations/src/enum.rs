@@ -8,7 +8,7 @@ use oxc_syntax::{
 };
 use rustc_hash::FxHashMap;
 
-use crate::{diagnostics::enum_member_initializers, TransformerDts};
+use crate::{diagnostics::enum_member_initializers, IsolatedDeclarations};
 
 #[derive(Debug, Clone)]
 enum ConstantValue {
@@ -16,7 +16,7 @@ enum ConstantValue {
     String(String),
 }
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_ts_enum_declaration(
         &mut self,
         decl: &TSEnumDeclaration<'a>,

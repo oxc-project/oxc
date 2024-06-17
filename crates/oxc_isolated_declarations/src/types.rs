@@ -6,9 +6,9 @@ use oxc_ast::ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SPAN;
 
-use crate::TransformerDts;
+use crate::IsolatedDeclarations;
 
-impl<'a> TransformerDts<'a> {
+impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_function_to_ts_type(&self, func: &Function<'a>) -> Option<TSType<'a>> {
         let return_type = self.infer_function_return_type(func);
         let params = self.transform_formal_parameters(&func.params);

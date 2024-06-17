@@ -1,0 +1,24 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    devDependencies:
+      '@napi-rs/cli':
+        specifier: ^2.18.0
+        version: 2.18.3
+
+packages:
+
+  '@napi-rs/cli@2.18.3':
+    resolution: {integrity: sha512-L0f4kP0dyG8W5Qtc7MtP73VvLLrOLyRcUEBzknIfu8Jk4Jfhrsx1ItMHgyalYqMSslWdY3ojEfAaU5sx1VyeQQ==}
+    engines: {node: '>= 10'}
+    hasBin: true
+
+snapshots:
+
+  '@napi-rs/cli@2.18.3': {}
