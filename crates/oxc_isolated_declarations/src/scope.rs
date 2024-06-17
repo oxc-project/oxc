@@ -1,3 +1,5 @@
+use rustc_hash::FxHashSet;
+
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -6,7 +8,6 @@ use oxc_ast::AstBuilder;
 use oxc_ast::{visit::walk::*, Visit};
 use oxc_span::Atom;
 use oxc_syntax::scope::ScopeFlags;
-use rustc_hash::FxHashSet;
 
 pub struct ScopeTree<'a> {
     type_bindings: Vec<'a, FxHashSet<Atom<'a>>>,

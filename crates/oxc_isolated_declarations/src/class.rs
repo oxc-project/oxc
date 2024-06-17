@@ -57,7 +57,7 @@ impl<'a> IsolatedDeclarations<'a> {
             property
                 .type_annotation
                 .as_ref()
-                .map(|type_annotation| self.ctx.ast.copy(type_annotation))
+                .map(|type_annotation| self.ast.copy(type_annotation))
                 .or_else(|| {
                     let new_type = property
                         .value
@@ -65,17 +65,17 @@ impl<'a> IsolatedDeclarations<'a> {
                         .and_then(|expr| self.infer_type_from_expression(expr))
                         .unwrap_or_else(|| {
                             // report error for has no type annotation
-                            self.ctx.ast.ts_unknown_keyword(property.span)
+                            self.ast.ts_unknown_keyword(property.span)
                         });
 
-                    Some(self.ctx.ast.ts_type_annotation(SPAN, new_type))
+                    Some(self.ast.ts_type_annotation(SPAN, new_type))
                 })
         };
 
-        self.ctx.ast.class_property(
+        self.ast.class_property(
             property.r#type,
             property.span,
-            self.ctx.ast.copy(&property.key),
+            self.ast.copy(&property.key),
             None,
             property.computed,
             property.r#static,
@@ -86,7 +86,7 @@ impl<'a> IsolatedDeclarations<'a> {
             property.readonly,
             type_annotations,
             self.transform_accessibility(property.accessibility),
-            self.ctx.ast.new_vec(),
+            self.ast.new_vec(),
         )
     }
 
@@ -107,7 +107,7 @@ impl<'a> IsolatedDeclarations<'a> {
             };
             return self.create_class_property(
                 r#type,
-                self.ctx.ast.copy(&definition.key),
+                self.ast.copy(&definition.key),
                 definition.r#override,
                 self.transform_accessibility(definition.accessibility),
             );
@@ -115,23 +115,23 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let type_annotation = self.infer_function_return_type(function);
 
-        let value = self.ctx.ast.function(
+        let value = self.ast.function(
             FunctionType::TSEmptyBodyFunctionExpression,
             function.span,
-            self.ctx.ast.copy(&function.id),
+            self.ast.copy(&function.id),
             function.generator,
             function.r#async,
-            self.ctx.ast.copy(&function.this_param),
+            self.ast.copy(&function.this_param),
             params,
             None,
-            self.ctx.ast.copy(&function.type_parameters),
+            self.ast.copy(&function.type_parameters),
             type_annotation,
             Modifiers::empty(),
         );
-        self.ctx.ast.class_method(
+        self.ast.class_method(
             definition.r#type,
             definition.span,
-            self.ctx.ast.copy(&definition.key),
+            self.ast.copy(&definition.key),
             definition.kind,
             value,
             definition.computed,
@@ -139,7 +139,7 @@ impl<'a> IsolatedDeclarations<'a> {
             definition.r#override,
             definition.optional,
             self.transform_accessibility(definition.accessibility),
-            self.ctx.ast.new_vec(),
+            self.ast.new_vec(),
         )
     }
 
@@ -150,7 +150,7 @@ impl<'a> IsolatedDeclarations<'a> {
         r#override: bool,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a> {
-        self.ctx.ast.class_property(
+        self.ast.class_property(
             r#type,
             SPAN,
             key,
@@ -164,7 +164,7 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             None,
             accessibility,
-            self.ctx.ast.new_vec(),
+            self.ast.new_vec(),
         )
     }
 
@@ -177,9 +177,8 @@ impl<'a> IsolatedDeclarations<'a> {
             // A parameter property may not be declared using a binding pattern.(1187)
             return None;
         };
-        let key =
-            self.ctx.ast.property_key_identifier(IdentifierName::new(SPAN, ident_name.clone()));
-        Some(self.ctx.ast.class_property(
+        let key = self.ast.property_key_identifier(IdentifierName::new(SPAN, ident_name.clone()));
+        Some(self.ast.class_property(
             PropertyDefinitionType::PropertyDefinition,
             param.span,
             key,
@@ -193,7 +192,7 @@ impl<'a> IsolatedDeclarations<'a> {
             param.readonly,
             type_annotation,
             self.transform_accessibility(param.accessibility),
-            self.ctx.ast.new_vec(),
+            self.ast.new_vec(),
         ))
     }
 
@@ -211,11 +210,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 _ => true,
             };
             if is_not_allowed {
-                self.ctx.error(extends_clause_expression(super_class.span()));
+                self.error(extends_clause_expression(super_class.span()));
             }
         }
 
-        let mut elements = self.ctx.ast.new_vec();
+        let mut elements = self.ast.new_vec();
         let mut has_private_key = false;
         for element in &decl.body.body {
             match element {
@@ -237,7 +236,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             if param.accessibility.is_some() {
                                 // transformed params will definitely have type annotation
                                 let type_annotation =
-                                    self.ctx.ast.copy(&params.items[index].pattern.type_annotation);
+                                    self.ast.copy(&params.items[index].pattern.type_annotation);
                                 if let Some(new_element) = self
                                     .transform_formal_parameter_to_class_property(
                                         param,
@@ -275,18 +274,18 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
 
                     // FIXME: missing many fields
-                    let new_element = self.ctx.ast.accessor_property(
+                    let new_element = self.ast.accessor_property(
                         property.r#type,
                         property.span,
-                        self.ctx.ast.copy(&property.key),
+                        self.ast.copy(&property.key),
                         None,
                         property.computed,
                         property.r#static,
-                        self.ctx.ast.new_vec(),
+                        self.ast.new_vec(),
                     );
                     elements.push(new_element);
                 }
-                ClassElement::TSIndexSignature(_) => elements.push(self.ctx.ast.copy(element)),
+                ClassElement::TSIndexSignature(_) => elements.push(self.ast.copy(element)),
             }
         }
 
@@ -295,12 +294,11 @@ impl<'a> IsolatedDeclarations<'a> {
             // When the class has at least one private identifier, create a unique constant identifier to retain the nominal typing behavior
             // Prevents other classes with the same public members from being used in place of the current class
             let ident = self
-                .ctx
                 .ast
                 .property_key_private_identifier(PrivateIdentifier::new(SPAN, "private".into()));
             let r#type = PropertyDefinitionType::PropertyDefinition;
-            let decorators = self.ctx.ast.new_vec();
-            let new_element = self.ctx.ast.class_property(
+            let decorators = self.ast.new_vec();
+            let new_element = self.ast.class_property(
                 r#type, SPAN, ident, None, false, false, false, false, false, false, false, None,
                 None, decorators,
             );
@@ -308,23 +306,23 @@ impl<'a> IsolatedDeclarations<'a> {
             elements.insert(0, new_element);
         }
 
-        let body = self.ctx.ast.class_body(decl.body.span, elements);
+        let body = self.ast.class_body(decl.body.span, elements);
 
         let mut modifiers = self.modifiers_declare();
         if decl.modifiers.is_contains_abstract() {
             modifiers.add_modifier(Modifier { span: SPAN, kind: ModifierKind::Abstract });
         };
 
-        Some(self.ctx.ast.class(
+        Some(self.ast.class(
             decl.r#type,
             decl.span,
-            self.ctx.ast.copy(&decl.id),
-            self.ctx.ast.copy(&decl.super_class),
+            self.ast.copy(&decl.id),
+            self.ast.copy(&decl.super_class),
             body,
-            self.ctx.ast.copy(&decl.type_parameters),
-            self.ctx.ast.copy(&decl.super_type_parameters),
-            self.ctx.ast.copy(&decl.implements),
-            self.ctx.ast.new_vec(),
+            self.ast.copy(&decl.type_parameters),
+            self.ast.copy(&decl.super_type_parameters),
+            self.ast.copy(&decl.implements),
+            self.ast.new_vec(),
             modifiers,
         ))
     }

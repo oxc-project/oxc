@@ -21,7 +21,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         decl: &TSEnumDeclaration<'a>,
     ) -> Option<Declaration<'a>> {
-        let mut members = self.ctx.ast.new_vec();
+        let mut members = self.ast.new_vec();
         let mut prev_initializer_value = Some(ConstantValue::Number(0.0));
         let mut prev_members = FxHashMap::default();
         for member in &decl.members {
@@ -30,7 +30,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.computed_constant_value(initializer, &decl.id.name, &prev_members);
 
                 if computed_value.is_none() {
-                    self.ctx.error(enum_member_initializers(member.id.span()));
+                    self.error(enum_member_initializers(member.id.span()));
                 }
 
                 computed_value
@@ -55,9 +55,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 prev_members.insert(member_name.clone(), value.clone());
             }
 
-            let member = self.ctx.ast.ts_enum_member(
+            let member = self.ast.ts_enum_member(
                 member.span,
-                self.ctx.ast.copy(&member.id),
+                self.ast.copy(&member.id),
                 value.map(|v| match v {
                     ConstantValue::Number(v) => {
                         let is_negative = v < 0.0;
@@ -65,36 +65,35 @@ impl<'a> IsolatedDeclarations<'a> {
                         // Infinity
                         let expr = if v.is_infinite() {
                             let ident =
-                                IdentifierReference::new(SPAN, self.ctx.ast.new_atom("Infinity"));
-                            self.ctx.ast.identifier_reference_expression(ident)
+                                IdentifierReference::new(SPAN, self.ast.new_atom("Infinity"));
+                            self.ast.identifier_reference_expression(ident)
                         } else {
                             let value = if is_negative { -v } else { v };
-                            self.ctx.ast.literal_number_expression(NumericLiteral {
+                            self.ast.literal_number_expression(NumericLiteral {
                                 span: SPAN,
                                 value,
-                                raw: self.ctx.ast.new_str(&value.to_string()),
+                                raw: self.ast.new_str(&value.to_string()),
                                 base: NumberBase::Decimal,
                             })
                         };
 
                         if is_negative {
-                            self.ctx.ast.unary_expression(SPAN, UnaryOperator::UnaryNegation, expr)
+                            self.ast.unary_expression(SPAN, UnaryOperator::UnaryNegation, expr)
                         } else {
                             expr
                         }
                     }
-                    ConstantValue::String(v) => self
-                        .ctx
-                        .ast
-                        .literal_string_expression(self.ctx.ast.string_literal(SPAN, &v)),
+                    ConstantValue::String(v) => {
+                        self.ast.literal_string_expression(self.ast.string_literal(SPAN, &v))
+                    }
                 }),
             );
 
             members.push(member);
         }
-        Some(self.ctx.ast.ts_enum_declaration(
+        Some(self.ast.ts_enum_declaration(
             decl.span,
-            self.ctx.ast.copy(&decl.id),
+            self.ast.copy(&decl.id),
             members,
             self.modifiers_declare(),
         ))

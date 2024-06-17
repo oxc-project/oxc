@@ -14,23 +14,23 @@ use crate::{
 impl<'a> IsolatedDeclarations<'a> {
     pub fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
-            Expression::BooleanLiteral(_) => Some(self.ctx.ast.ts_boolean_keyword(SPAN)),
-            Expression::NullLiteral(_) => Some(self.ctx.ast.ts_null_keyword(SPAN)),
+            Expression::BooleanLiteral(_) => Some(self.ast.ts_boolean_keyword(SPAN)),
+            Expression::NullLiteral(_) => Some(self.ast.ts_null_keyword(SPAN)),
             Expression::NumericLiteral(_) | Expression::BigintLiteral(_) => {
-                Some(self.ctx.ast.ts_number_keyword(SPAN))
+                Some(self.ast.ts_number_keyword(SPAN))
             }
             Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
-                Some(self.ctx.ast.ts_string_keyword(SPAN))
+                Some(self.ast.ts_string_keyword(SPAN))
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Some(self.ctx.ast.ts_undefined_keyword(SPAN)),
+                "undefined" => Some(self.ast.ts_undefined_keyword(SPAN)),
                 _ => None,
             },
             Expression::FunctionExpression(func) => {
-                self.transform_function_to_ts_type(func).map(|x| self.ctx.ast.copy(&x))
+                self.transform_function_to_ts_type(func).map(|x| self.ast.copy(&x))
             }
             Expression::ArrowFunctionExpression(func) => {
-                self.transform_arrow_function_to_ts_type(func).map(|x| self.ctx.ast.copy(&x))
+                self.transform_arrow_function_to_ts_type(func).map(|x| self.ast.copy(&x))
             }
             Expression::ObjectExpression(expr) => {
                 Some(self.transform_object_expression_to_ts_type(expr, false))
@@ -39,11 +39,11 @@ impl<'a> IsolatedDeclarations<'a> {
                 if expr.type_annotation.is_const_type_reference() {
                     Some(self.transform_expression_to_ts_type(&expr.expression))
                 } else {
-                    Some(self.ctx.ast.copy(&expr.type_annotation))
+                    Some(self.ast.copy(&expr.type_annotation))
                 }
             }
             Expression::ClassExpression(expr) => {
-                self.ctx.error(
+                self.error(
                     OxcDiagnostic::error(
                         "
                         Inference from class expressions is not supported with --isolatedDeclarations.
@@ -51,7 +51,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     )
                     .with_label(expr.span),
                 );
-                Some(self.ctx.ast.ts_unknown_keyword(SPAN))
+                Some(self.ast.ts_unknown_keyword(SPAN))
             }
             Expression::TSNonNullExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
@@ -63,7 +63,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 unreachable!();
                 // infer_type_from_expression(ctx, &expr.expression)
             }
-            Expression::TSTypeAssertion(expr) => Some(self.ctx.ast.copy(&expr.type_annotation)),
+            Expression::TSTypeAssertion(expr) => Some(self.ast.copy(&expr.type_annotation)),
             _ => None,
         }
     }
@@ -73,15 +73,15 @@ impl<'a> IsolatedDeclarations<'a> {
         param: &FormalParameter<'a>,
     ) -> Option<TSType<'a>> {
         if param.pattern.type_annotation.is_some() {
-            param.pattern.type_annotation.as_ref().map(|x| self.ctx.ast.copy(&x.type_annotation));
+            param.pattern.type_annotation.as_ref().map(|x| self.ast.copy(&x.type_annotation));
         }
         if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
             if let Some(annotation) = pattern.left.type_annotation.as_ref() {
-                Some(self.ctx.ast.copy(&annotation.type_annotation))
+                Some(self.ast.copy(&annotation.type_annotation))
             } else {
                 if let Expression::TSAsExpression(expr) = &pattern.right {
                     if !expr.type_annotation.is_keyword_or_literal() {
-                        self.ctx.error(
+                        self.error(
                             OxcDiagnostic::error("Parameter must have an explicit type annotation with --isolatedDeclarations.")
                                 .with_label(expr.type_annotation.span())
                         );
@@ -100,11 +100,11 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return self.ctx.ast.copy(&function.return_type);
+            return self.ast.copy(&function.return_type);
         }
 
         if function.r#async || function.generator {
-            self.ctx.error(function_must_have_explicit_return_type(function));
+            self.error(function_must_have_explicit_return_type(function));
         }
 
         let return_type = FunctionReturnType::infer(
@@ -114,12 +114,12 @@ impl<'a> IsolatedDeclarations<'a> {
                 .as_ref()
                 .unwrap_or_else(|| unreachable!("Only declare function can have no body")),
         )
-        .map(|type_annotation| self.ctx.ast.ts_type_annotation(SPAN, type_annotation));
+        .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation));
 
         if return_type.is_none() {
-            self.ctx.error(function_must_have_explicit_return_type(function));
+            self.error(function_must_have_explicit_return_type(function));
 
-            Some(self.ctx.ast.ts_type_annotation(SPAN, self.ctx.ast.ts_unknown_keyword(SPAN)))
+            Some(self.ast.ts_type_annotation(SPAN, self.ast.ts_unknown_keyword(SPAN)))
         } else {
             return_type
         }
@@ -130,18 +130,18 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &ArrowFunctionExpression<'a>,
     ) -> Option<Box<'a, TSTypeAnnotation<'a>>> {
         if function.return_type.is_some() {
-            return self.ctx.ast.copy(&function.return_type);
+            return self.ast.copy(&function.return_type);
         }
 
         if function.expression {
             if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
                 return self
                     .infer_type_from_expression(&stmt.expression)
-                    .map(|type_annotation| self.ctx.ast.ts_type_annotation(SPAN, type_annotation));
+                    .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation));
             }
         }
         FunctionReturnType::infer(self, &function.body)
-            .map(|type_annotation| self.ctx.ast.ts_type_annotation(SPAN, type_annotation))
+            .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
     }
 
     pub fn is_need_to_infer_type_from_expression(expr: &Expression) -> bool {

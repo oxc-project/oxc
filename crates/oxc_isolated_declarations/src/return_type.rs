@@ -1,20 +1,18 @@
-use std::rc::Rc;
-
 use oxc_ast::{
     ast::{
         BindingIdentifier, Expression, Function, FunctionBody, ReturnStatement, TSType,
         TSTypeAliasDeclaration, TSTypeName, TSTypeQueryExprName,
     },
-    Visit,
+    AstBuilder, Visit,
 };
 use oxc_span::{Atom, GetSpan};
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{context::Ctx, diagnostics::type_containing_private_name, IsolatedDeclarations};
+use crate::{diagnostics::type_containing_private_name, IsolatedDeclarations};
 
 /// Infer return type from return statement. Does not support multiple return statements.
 pub struct FunctionReturnType<'a> {
-    ctx: Ctx<'a>,
+    ast: AstBuilder<'a>,
     return_expression: Option<Expression<'a>>,
     value_bindings: Vec<Atom<'a>>,
     type_bindings: Vec<Atom<'a>>,
@@ -28,7 +26,7 @@ impl<'a> FunctionReturnType<'a> {
         body: &FunctionBody<'a>,
     ) -> Option<TSType<'a>> {
         let mut visitor = FunctionReturnType {
-            ctx: Rc::clone(&transformer.ctx),
+            ast: transformer.ast,
             return_expression: None,
             return_statement_count: 0,
             scope_depth: 0,
@@ -69,7 +67,7 @@ impl<'a> FunctionReturnType<'a> {
                 };
 
                 if is_defined_in_current_scope {
-                    transformer.ctx.error(type_containing_private_name(
+                    transformer.error(type_containing_private_name(
                         &reference_name,
                         expr_type
                             .get_identifier_reference()
@@ -108,6 +106,6 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
         if self.return_statement_count > 1 {
             return;
         }
-        self.return_expression = self.ctx.ast.copy(&stmt.argument);
+        self.return_expression = self.ast.copy(&stmt.argument);
     }
 }

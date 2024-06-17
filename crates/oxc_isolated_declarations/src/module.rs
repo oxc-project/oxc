@@ -17,7 +17,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(ExportNamedDeclaration {
             span: decl.span(),
             declaration: Some(decl),
-            specifiers: self.ctx.ast.new_vec(),
+            specifiers: self.ast.new_vec(),
             source: None,
             export_kind: ImportOrExportKind::Value,
             with_clause: None,
@@ -37,7 +37,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(interface_decl) => {
                 self.visit_ts_interface_declaration(interface_decl);
-                Some((None, self.ctx.ast.copy(&decl.declaration)))
+                Some((None, self.ast.copy(&decl.declaration)))
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => {
                 let expr = expr.to_expression();
@@ -46,19 +46,18 @@ impl<'a> IsolatedDeclarations<'a> {
                 } else {
                     // declare const _default: Type
                     let kind = VariableDeclarationKind::Const;
-                    let name = self.ctx.ast.new_atom("_default");
+                    let name = self.ast.new_atom("_default");
                     let id = self
-                        .ctx
                         .ast
                         .binding_pattern_identifier(BindingIdentifier::new(SPAN, name.clone()));
                     let type_annotation = self
                         .infer_type_from_expression(expr)
-                        .map(|ts_type| self.ctx.ast.ts_type_annotation(SPAN, ts_type));
+                        .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
 
                     let id = BindingPattern { kind: id, type_annotation, optional: false };
-                    let declarations = self.ctx.ast.new_vec_single(
-                        self.ctx.ast.variable_declarator(SPAN, kind, id, None, true),
-                    );
+                    let declarations = self
+                        .ast
+                        .new_vec_single(self.ast.variable_declarator(SPAN, kind, id, None, true));
 
                     Some((
                         Some(VariableDeclaration {
@@ -68,8 +67,8 @@ impl<'a> IsolatedDeclarations<'a> {
                             modifiers: self.modifiers_declare(),
                         }),
                         ExportDefaultDeclarationKind::from(
-                            self.ctx.ast.identifier_reference_expression(
-                                self.ctx.ast.identifier_reference(SPAN, &name),
+                            self.ast.identifier_reference_expression(
+                                self.ast.identifier_reference(SPAN, &name),
                             ),
                         ),
                     ))
@@ -80,7 +79,7 @@ impl<'a> IsolatedDeclarations<'a> {
         declaration.map(|(var_decl, declaration)| {
             let exported = ModuleExportName::Identifier(IdentifierName::new(
                 SPAN,
-                self.ctx.ast.new_atom("default"),
+                self.ast.new_atom("default"),
             ));
             (var_decl, ExportDefaultDeclaration { span: decl.span, declaration, exported })
         })
@@ -92,7 +91,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<Box<'a, ImportDeclaration<'a>>> {
         let specifiers = decl.specifiers.as_ref()?;
 
-        let mut specifiers = self.ctx.ast.copy(specifiers);
+        let mut specifiers = self.ast.copy(specifiers);
         specifiers.retain(|specifier| match specifier {
             ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
                 self.scope.has_reference(&specifier.local.name)
@@ -101,18 +100,18 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.scope.has_reference(&specifier.local.name)
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                self.scope.has_reference(&self.ctx.ast.new_atom(&specifier.name()))
+                self.scope.has_reference(&self.ast.new_atom(&specifier.name()))
             }
         });
         if specifiers.is_empty() {
             // We don't need to print this import statement
             None
         } else {
-            Some(self.ctx.ast.import_declaration(
+            Some(self.ast.import_declaration(
                 decl.span,
                 Some(specifiers),
-                self.ctx.ast.copy(&decl.source),
-                self.ctx.ast.copy(&decl.with_clause),
+                self.ast.copy(&decl.source),
+                self.ast.copy(&decl.with_clause),
                 decl.import_kind,
             ))
         }

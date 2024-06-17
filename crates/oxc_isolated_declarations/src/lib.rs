@@ -6,7 +6,6 @@
 //! * <https://github.com/microsoft/TypeScript/blob/main/src/compiler/transformers/declarations.ts>
 
 mod class;
-mod context;
 mod declaration;
 mod diagnostics;
 mod r#enum;
@@ -17,15 +16,15 @@ mod return_type;
 mod scope;
 mod types;
 
-use std::{collections::VecDeque, rc::Rc};
+use std::{cell::RefCell, collections::VecDeque, mem};
 
-use context::{Ctx, TransformDtsCtx};
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
-use oxc_ast::{ast::*, Visit};
+use oxc_ast::{ast::*, AstBuilder, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, SPAN};
-use scope::ScopeTree;
+
+use crate::scope::ScopeTree;
 
 pub struct IsolatedDeclarationsReturn<'a> {
     pub program: Program<'a>,
@@ -33,14 +32,19 @@ pub struct IsolatedDeclarationsReturn<'a> {
 }
 
 pub struct IsolatedDeclarations<'a> {
-    ctx: Ctx<'a>,
+    ast: AstBuilder<'a>,
+    // state
     scope: ScopeTree<'a>,
+    errors: RefCell<Vec<OxcDiagnostic>>,
 }
 
 impl<'a> IsolatedDeclarations<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
-        let ctx = Rc::new(TransformDtsCtx::new(allocator));
-        Self { ctx, scope: ScopeTree::new(allocator) }
+        Self {
+            ast: AstBuilder::new(allocator),
+            scope: ScopeTree::new(allocator),
+            errors: RefCell::new(vec![]),
+        }
     }
 
     /// # Errors
@@ -48,10 +52,19 @@ impl<'a> IsolatedDeclarations<'a> {
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
         let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
-        let directives = self.ctx.ast.new_vec();
+        let directives = self.ast.new_vec();
         let stmts = self.transform_program(program);
-        let program = self.ctx.ast.program(SPAN, source_type, directives, None, stmts);
-        IsolatedDeclarationsReturn { program, errors: self.ctx.take_errors() }
+        let program = self.ast.program(SPAN, source_type, directives, None, stmts);
+        IsolatedDeclarationsReturn { program, errors: self.take_errors() }
+    }
+
+    fn take_errors(&self) -> Vec<OxcDiagnostic> {
+        mem::take(&mut self.errors.borrow_mut())
+    }
+
+    /// Add an Error
+    fn error(&self, error: OxcDiagnostic) {
+        self.errors.borrow_mut().push(error);
     }
 }
 
@@ -83,7 +96,7 @@ impl<'a> IsolatedDeclarations<'a> {
             Modifiers::empty()
         } else {
             Modifiers::new(
-                self.ctx.ast.new_vec_single(Modifier { span: SPAN, kind: ModifierKind::Declare }),
+                self.ast.new_vec_single(Modifier { span: SPAN, kind: ModifierKind::Declare }),
             )
         }
     }
@@ -92,13 +105,13 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         program: &Program<'a>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
-        let mut new_ast_stmts = self.ctx.ast.new_vec::<Statement<'a>>();
+        let mut new_ast_stmts = self.ast.new_vec::<Statement<'a>>();
         for stmt in &program.body {
             if let Some(decl) = stmt.as_declaration() {
                 if let Some(decl) = self.transform_declaration(decl, false) {
                     new_ast_stmts.push(Statement::from(decl));
                 } else {
-                    new_ast_stmts.push(Statement::from(self.ctx.ast.copy(decl)));
+                    new_ast_stmts.push(Statement::from(self.ast.copy(decl)));
                 }
             }
         }
@@ -122,19 +135,19 @@ impl<'a> IsolatedDeclarations<'a> {
                 match stmt.to_declaration() {
                     Declaration::VariableDeclaration(decl) => {
                         variables_declarations.push_back(
-                            self.ctx.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
+                            self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                         );
                         variable_transformed_indexes.push_back(Vec::default());
                     }
                     Declaration::UsingDeclaration(decl) => {
                         variables_declarations.push_back(
-                            self.ctx.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
+                            self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                         );
                         variable_transformed_indexes.push_back(Vec::default());
                     }
                     _ => {}
                 }
-                new_stmts.push(self.ctx.ast.copy(stmt));
+                new_stmts.push(self.ast.copy(stmt));
             }
             match_module_declaration!(Statement) => {
                 transformed_indexes.push(new_stmts.len());
@@ -145,15 +158,14 @@ impl<'a> IsolatedDeclarations<'a> {
                         {
                             if let Some(var_decl) = var_decl {
                                 self.scope.visit_variable_declaration(&var_decl);
-                                new_stmts.push(Statement::VariableDeclaration(
-                                    self.ctx.ast.alloc(var_decl),
-                                ));
+                                new_stmts
+                                    .push(Statement::VariableDeclaration(self.ast.alloc(var_decl)));
                                 transformed_indexes.push(new_stmts.len());
                             }
 
                             self.scope.visit_export_default_declaration(&new_decl);
                             new_stmts.push(Statement::ExportDefaultDeclaration(
-                                self.ctx.ast.alloc(new_decl),
+                                self.ast.alloc(new_decl),
                             ));
                             return;
                         }
@@ -166,9 +178,8 @@ impl<'a> IsolatedDeclarations<'a> {
                                 new_decl.declaration.as_ref().unwrap_or_else(|| unreachable!()),
                             );
 
-                            new_stmts.push(Statement::ExportNamedDeclaration(
-                                self.ctx.ast.alloc(new_decl),
-                            ));
+                            new_stmts
+                                .push(Statement::ExportNamedDeclaration(self.ast.alloc(new_decl)));
                             return;
                         }
 
@@ -177,7 +188,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     module_declaration => self.scope.visit_module_declaration(module_declaration),
                 }
 
-                new_stmts.push(self.ctx.ast.copy(stmt));
+                new_stmts.push(self.ast.copy(stmt));
             }
             _ => {}
         });
@@ -231,7 +242,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
         // 7. Return transformed statements
-        let mut new_ast_stmts = self.ctx.ast.new_vec_with_capacity(transformed_indexes.len());
+        let mut new_ast_stmts = self.ast.new_vec_with_capacity(transformed_indexes.len());
         for (index, stmt) in new_stmts.into_iter().enumerate() {
             match stmt {
                 _ if transformed_indexes.contains(&index) => {
@@ -247,7 +258,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         let variables_declaration = self
                             .transform_variable_declaration_with_new_declarations(
                                 &decl,
-                                self.ctx.ast.new_vec_from_iter(
+                                self.ast.new_vec_from_iter(
                                     declarations
                                         .into_iter()
                                         .enumerate()
@@ -268,7 +279,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         let variable_declaration = self
                             .transform_using_declaration_with_new_declarations(
                                 &decl,
-                                self.ctx.ast.new_vec_from_iter(
+                                self.ast.new_vec_from_iter(
                                     declarations
                                         .into_iter()
                                         .enumerate()
