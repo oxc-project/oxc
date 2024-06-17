@@ -335,9 +335,9 @@ dependencies = [
 
 [[package]]
 name = "criterion2"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f22174bed309c964c1720148dfe793f285cc02fd8b13c91205d485f73468d94d"
+checksum = "7258985df1aa8b33359ee2392cbc3b7802875242cdacdda91a17a602132c24a9"
 dependencies = [
  "anes",
  "bpaf",
@@ -987,9 +987,9 @@ dependencies = [
 
 [[package]]
 name = "memchr"
-version = "2.7.2"
+version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6c8640c5d730cb13ebd907d8d04b52f55ac9a2eec55b440c8892f40d56c76c1d"
+checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
 
 [[package]]
 name = "memoffset"
@@ -1282,9 +1282,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "0.17.0"
+version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b9d96b978cbca7d108283a10fcfe79e0dc5b2ecaa99e610b5b5488c3c9321295"
+checksum = "4ffd653f8c5d3dfd8beca79303398ab65d936168109640e00a19629eded86423"
 dependencies = [
  "js-sys",
  "nom",

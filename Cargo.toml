@@ -139,7 +139,7 @@ tower-lsp           = "0.20.0"
 trybuild            = "1.0.96"
 unicode-id-start    = "1.*" # Relaxed version so the user can decide which unicode version to use.
 ureq                = { version = "2.9.6", default-features = false }
-url                 = "2.5.0"
+url                 = "=2.5.0"
 walkdir             = "2.5.0"
 indexmap            = "2.2.6"
 static_assertions   = "1.1.0"
@@ -176,7 +176,7 @@ base64-simd         = "0.8"
 cfg-if              = "1.0.0"
 schemars            = "0.8.21"
 oxc-browserslist    = "0.17.0"
-criterion2          = { version = "0.10.0", default-features = false }
+criterion2          = { version = "0.11.0", default-features = false }
 daachorse           = { version = "1.0.0" }
 
 [workspace.metadata.cargo-shear]
