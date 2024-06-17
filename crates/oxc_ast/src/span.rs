@@ -732,3 +732,14 @@ impl<'a> GetSpan for JSXMemberExpressionObject<'a> {
         }
     }
 }
+
+impl<'a> GetSpan for TSEnumMemberName<'a> {
+    fn span(&self) -> Span {
+        match self {
+            TSEnumMemberName::StaticIdentifier(ident) => ident.span,
+            TSEnumMemberName::StaticStringLiteral(literal) => literal.span,
+            TSEnumMemberName::StaticNumericLiteral(literal) => literal.span,
+            expr @ match_expression!(TSEnumMemberName) => expr.to_expression().span(),
+        }
+    }
+}

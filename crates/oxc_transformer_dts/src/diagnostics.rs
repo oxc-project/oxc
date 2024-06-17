@@ -31,3 +31,8 @@ pub fn signature_computed_property_name(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Computed properties must be number or string literals, variables or dotted expressions with --isolatedDeclarations.")
         .with_label(span)
 }
+
+pub fn enum_member_initializers(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Enum member initializers must be computable without references to external symbols with --isolatedDeclarations.")
+        .with_label(span)
+}

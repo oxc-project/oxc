@@ -1900,6 +1900,16 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn ts_enum_member(
+        self,
+        span: Span,
+        id: TSEnumMemberName<'a>,
+        initializer: Option<Expression<'a>>,
+    ) -> TSEnumMember<'a> {
+        TSEnumMember { span, id, initializer }
+    }
+
+    #[inline]
     pub fn decorator(self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
         Decorator { span, expression }
     }

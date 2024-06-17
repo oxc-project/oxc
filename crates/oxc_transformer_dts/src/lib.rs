@@ -9,6 +9,7 @@ mod class;
 mod context;
 mod declaration;
 mod diagnostics;
+mod r#enum;
 mod function;
 mod inferrer;
 mod module;

@@ -213,7 +213,7 @@ impl<'a> TransformerDts<'a> {
             }
             Declaration::TSEnumDeclaration(enum_decl) => {
                 if !check_binding || self.scope.has_reference(&enum_decl.id.name) {
-                    Some(self.ctx.ast.copy(decl))
+                    self.transform_ts_enum_declaration(enum_decl)
                 } else {
                     None
                 }
