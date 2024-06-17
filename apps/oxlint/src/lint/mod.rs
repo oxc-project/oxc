@@ -8,17 +8,17 @@ use oxc_linter::{
 use oxc_span::VALID_EXTENSIONS;
 
 use crate::{
-    command::{LintOptions as CliLintOptions, OutputFormat, OutputOptions, WarningOptions},
+    command::{LintCommand, OutputFormat, OutputOptions, WarningOptions},
     walk::{Extensions, Walk},
     CliRunResult, LintResult, MiscOptions, Runner,
 };
 
 pub struct LintRunner {
-    options: CliLintOptions,
+    options: LintCommand,
 }
 
 impl Runner for LintRunner {
-    type Options = CliLintOptions;
+    type Options = LintCommand;
 
     fn new(options: Self::Options) -> Self {
         Self { options }
@@ -31,7 +31,7 @@ impl Runner for LintRunner {
             return CliRunResult::None;
         }
 
-        let CliLintOptions {
+        let LintCommand {
             paths,
             filter,
             basic_options,
@@ -185,7 +185,7 @@ mod test {
     fn test(args: &[&str]) -> LintResult {
         let mut new_args = vec!["--silent"];
         new_args.extend(args);
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
             CliRunResult::LintResult(lint_result) => lint_result,
             other => panic!("{other:?}"),
@@ -195,7 +195,7 @@ mod test {
     fn test_invalid_options(args: &[&str]) -> String {
         let mut new_args = vec!["--quiet"];
         new_args.extend(args);
-        let options = lint_command().run_inner(new_args.as_slice()).unwrap().lint_options;
+        let options = lint_command().run_inner(new_args.as_slice()).unwrap();
         match LintRunner::new(options).run() {
             CliRunResult::InvalidOptions { message } => message,
             other => {

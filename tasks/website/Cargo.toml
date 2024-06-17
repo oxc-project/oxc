@@ -18,13 +18,15 @@ doctest = false
 [dependencies]
 oxc_linter = { workspace = true }
 oxlint     = { path = "../../apps/oxlint" }
-
-bpaf       = { workspace = true, features = ["docgen"] }
 pico-args  = { workspace = true }
 serde_json = { workspace = true }
 schemars   = { workspace = true }
 handlebars = { workspace = true }
 serde      = { workspace = true }
+bpaf       = { workspace = true, features = ["docgen"] }
 
 [dev-dependencies]
 insta = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["bpaf"]

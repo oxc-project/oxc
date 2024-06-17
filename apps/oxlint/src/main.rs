@@ -18,7 +18,7 @@ fn main() -> CliRunResult {
 
     let command = oxlint::lint_command().run();
     command.handle_threads();
-    LintRunner::new(command.lint_options).run()
+    LintRunner::new(command).run()
 }
 
 // Initialize the data which relies on `is_atty` system calls so they don't block subsequent threads.

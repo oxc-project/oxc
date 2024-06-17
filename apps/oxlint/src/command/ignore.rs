@@ -40,7 +40,7 @@ mod ignore_options {
 
     fn get_ignore_options(arg: &str) -> IgnoreOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();
-        lint_command().run_inner(args.as_slice()).unwrap().lint_options.ignore_options
+        lint_command().run_inner(args.as_slice()).unwrap().ignore_options
     }
 
     #[test]

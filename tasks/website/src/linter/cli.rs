@@ -1,5 +1,4 @@
-use bpaf::Parser;
-use oxlint::lint_options;
+use oxlint::lint_command;
 
 #[test]
 fn test_cli() {
@@ -23,7 +22,7 @@ pub fn print_cli() {
 }
 
 fn generate_cli() -> String {
-    let markdown = lint_options().to_options().render_markdown("oxlint");
+    let markdown = lint_command().render_markdown("oxlint");
     // Remove the extra header
     let markdown = markdown.trim_start_matches("# oxlint\n");
 

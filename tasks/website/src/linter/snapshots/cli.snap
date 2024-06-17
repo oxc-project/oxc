@@ -122,6 +122,8 @@ Arguments:
   list all the rules that are currently registered
 - **`-h`**, **`--help`** &mdash; 
   Prints help information
+- **`-V`**, **`--version`** &mdash; 
+  Prints version information
 
 
 

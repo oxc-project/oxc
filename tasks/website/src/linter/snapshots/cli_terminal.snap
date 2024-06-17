@@ -2,8 +2,6 @@
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
-Linter for the JavaScript Oxidation Compiler
-
 Usage: [-c=<./oxlintrc.json>] [--fix] [PATH]...
 
 Basic Configuration
