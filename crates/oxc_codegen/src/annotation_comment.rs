@@ -19,7 +19,7 @@ pub fn get_leading_annotate_comment<const MINIFY: bool>(
         CommentKind::SingleLine => comment.end,
         CommentKind::MultiLine => comment.end + 2,
     };
-    let source_code = codegen.source_code;
+    let source_code = codegen.source_text;
     let content_between = &source_code[real_end as usize..node_start as usize];
     // Used for VariableDeclaration (Rollup only respects "const" and only for the first one)
     if content_between.chars().all(|ch| ch.is_ascii_whitespace()) {

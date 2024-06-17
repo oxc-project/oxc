@@ -3,7 +3,10 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_isolated_declarations::{TransformerDts, TransformerDtsReturn};
+use oxc_ast::Trivias;
+use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_isolated_declarations::TransformerDts;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -137,13 +140,12 @@ impl TypeScriptTranspileCase {
         }
 
         for unit in &self.units {
-            let ret = transpile(&self.path, &unit.content);
+            let (source_text, errors) = transpile(&self.path, &unit.content);
             let baseline = Baseline {
                 name: change_extension(&unit.name),
                 original: unit.content.clone(),
-                oxc_printed: ret.source_text,
-                diagnostic: ret
-                    .errors
+                oxc_printed: source_text,
+                diagnostic: errors
                     .into_iter()
                     .map(|e| e.message.clone())
                     .collect::<Vec<_>>()
@@ -160,9 +162,13 @@ fn change_extension(name: &str) -> String {
     Path::new(name).with_extension("").with_extension("d.ts").to_str().unwrap().to_string()
 }
 
-fn transpile(path: &Path, source_text: &str) -> TransformerDtsReturn {
+fn transpile(path: &Path, source_text: &str) -> (String, Vec<OxcDiagnostic>) {
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    TransformerDts::new(&allocator, path, source_text, ret.trivias).build(&ret.program)
+    let ret = TransformerDts::new(&allocator).build(&ret.program);
+    let printed = Codegen::<false>::new("", "", Trivias::default(), CodegenOptions::default())
+        .build(&ret.program)
+        .source_text;
+    (printed, ret.errors)
 }

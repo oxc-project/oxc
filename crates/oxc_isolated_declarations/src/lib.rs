@@ -17,20 +17,18 @@ mod return_type;
 mod scope;
 mod types;
 
-use std::{collections::VecDeque, path::Path, rc::Rc};
+use std::{collections::VecDeque, rc::Rc};
 
 use context::{Ctx, TransformDtsCtx};
 use oxc_allocator::Allocator;
-use oxc_ast::Trivias;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, Visit};
-use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, SPAN};
 use scope::ScopeTree;
 
-pub struct TransformerDtsReturn {
-    pub source_text: String,
+pub struct TransformerDtsReturn<'a> {
+    pub program: Program<'a>,
     pub errors: Vec<OxcDiagnostic>,
 }
 
@@ -40,13 +38,7 @@ pub struct TransformerDts<'a> {
 }
 
 impl<'a> TransformerDts<'a> {
-    #[allow(clippy::needless_pass_by_value)]
-    pub fn new(
-        allocator: &'a Allocator,
-        _source_path: &Path,
-        _source_text: &'a str,
-        _trivias: Trivias,
-    ) -> Self {
+    pub fn new(allocator: &'a Allocator) -> Self {
         let ctx = Rc::new(TransformDtsCtx::new(allocator));
         Self { ctx, scope: ScopeTree::new(allocator) }
     }
@@ -54,17 +46,12 @@ impl<'a> TransformerDts<'a> {
     /// # Errors
     ///
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &Program<'a>) -> TransformerDtsReturn {
+    pub fn build(mut self, program: &Program<'a>) -> TransformerDtsReturn<'a> {
         let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
         let directives = self.ctx.ast.new_vec();
         let stmts = self.transform_program(program);
         let program = self.ctx.ast.program(SPAN, source_type, directives, None, stmts);
-        let source_text =
-            Codegen::<false>::new("", "", Trivias::default(), CodegenOptions::default())
-                .build(&program)
-                .source_text;
-
-        TransformerDtsReturn { source_text, errors: self.ctx.take_errors() }
+        TransformerDtsReturn { program, errors: self.ctx.take_errors() }
     }
 }
 

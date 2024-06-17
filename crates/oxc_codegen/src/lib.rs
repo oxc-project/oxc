@@ -72,7 +72,7 @@ impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for Cow<'a, str> {
 pub struct Codegen<'a, const MINIFY: bool> {
     options: CodegenOptions,
 
-    source_code: &'a str,
+    source_text: &'a str,
 
     trivias: Trivias,
 
@@ -116,24 +116,24 @@ pub enum Separator {
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     pub fn new(
         source_name: &str,
-        source_code: &'a str,
+        source_text: &'a str,
         trivias: Trivias,
         options: CodegenOptions,
     ) -> Self {
         // Initialize the output code buffer to reduce memory reallocation.
         // Minification will reduce by at least half of the original size.
-        let source_len = source_code.len();
+        let source_len = source_text.len();
         let capacity = if MINIFY { source_len / 2 } else { source_len };
 
         let sourcemap_builder = options.enable_source_map.then(|| {
             let mut sourcemap_builder = SourcemapBuilder::default();
-            sourcemap_builder.with_name_and_source(source_name, source_code);
+            sourcemap_builder.with_name_and_source(source_name, source_text);
             sourcemap_builder
         });
 
         Self {
             options,
-            source_code,
+            source_text,
             trivias,
             // mangler: None,
             code: Vec::with_capacity(capacity),
@@ -192,7 +192,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     /// Since if you want to print a range of source code, you need to borrow the source code
     /// immutable first, and call the [Self::print_str] which is a mutable borrow.
     pub fn print_range_of_source_code(&mut self, range: Range<usize>) {
-        self.code.extend_from_slice(self.source_code[range].as_bytes());
+        self.code.extend_from_slice(self.source_text[range].as_bytes());
     }
 
     /// In some scenario, we want to move the comment that should be codegened to another position.

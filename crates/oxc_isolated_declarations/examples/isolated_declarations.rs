@@ -2,6 +2,8 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
+use oxc_ast::Trivias;
+use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_isolated_declarations::TransformerDts;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -31,11 +33,14 @@ fn main() {
     println!("Original:\n");
     println!("{source_text}\n");
 
-    let program = ret.program;
-    let ret = TransformerDts::new(&allocator, path, &source_text, ret.trivias).build(&program);
+    let ret = TransformerDts::new(&allocator).build(&ret.program);
+    let printed =
+        Codegen::<false>::new("", &source_text, Trivias::default(), CodegenOptions::default())
+            .build(&ret.program)
+            .source_text;
 
-    println!("Transformed dts:\n");
-    println!("{}\n", ret.source_text);
+    println!("Dts Emit:\n");
+    println!("{printed}\n");
 
     if !ret.errors.is_empty() {
         println!("Transformed dts failed:\n");
