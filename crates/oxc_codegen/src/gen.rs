@@ -122,9 +122,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
                 decl.gen(p, ctx);
                 p.print_soft_newline();
             }
-            Self::ClassDeclaration(decl) => decl.gen(p, ctx),
-            Self::UsingDeclaration(declaration) => declaration.gen(p, ctx),
+            Self::ClassDeclaration(decl) => {
+                p.print_indent();
+                decl.gen(p, ctx);
+                p.print_soft_newline();
+            }
+            Self::UsingDeclaration(declaration) => {
+                p.print_indent();
+                declaration.gen(p, ctx);
+                p.print_semicolon_after_statement();
+            }
             Self::TSModuleDeclaration(decl) => {
+                p.print_indent();
                 decl.gen(p, ctx);
                 p.print_soft_newline();
             }
@@ -133,8 +142,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
                 decl.gen(p, ctx);
                 p.print_semicolon_after_statement();
             }
-            Self::TSInterfaceDeclaration(decl) => decl.gen(p, ctx),
-            Self::TSEnumDeclaration(decl) => decl.gen(p, ctx),
+            Self::TSInterfaceDeclaration(decl) => {
+                p.print_indent();
+                decl.gen(p, ctx);
+                p.print_soft_newline();
+            }
+            Self::TSEnumDeclaration(decl) => {
+                p.print_indent();
+                decl.gen(p, ctx);
+                p.print_soft_newline();
+            }
             Self::TSImportEqualsDeclaration(decl) => {
                 p.print_indent();
                 decl.gen(p, ctx);
@@ -565,7 +582,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
         p.print_str(b"using");
         p.print_soft_space();
         p.print_list(&self.declarations, ctx);
-        p.needs_semicolon = true;
     }
 }
 
@@ -858,6 +874,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
                 if matches!(
                     decl,
                     Declaration::VariableDeclaration(_)
+                        | Declaration::UsingDeclaration(_)
                         | Declaration::TSTypeAliasDeclaration(_)
                         | Declaration::TSImportEqualsDeclaration(_)
                 ) {
@@ -1460,14 +1477,17 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
         let n = p.code_len();
         p.wrap(p.start_of_stmt == n || p.start_of_arrow_expr == n, |p| {
-            p.print_curly_braces(self.span, self.properties.is_empty(), |p| {
+            let single_line = self.properties.is_empty();
+            p.print_curly_braces(self.span, single_line, |p| {
                 for (index, item) in self.properties.iter().enumerate() {
                     if index != 0 {
                         p.print_comma();
-                        p.print_soft_space();
+                        p.print_soft_newline();
                     }
                     p.print_indent();
                     item.gen(p, ctx);
+                }
+                if !single_line {
                     p.print_soft_newline();
                 }
             });
@@ -3155,7 +3175,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamedTupleMember<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.print_indent();
         if self.modifiers.contains(ModifierKind::Export) {
             p.print_str(b"export ");
         }
@@ -3255,11 +3274,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
                 p.print_soft_newline();
             }
         });
-        if MINIFY {
-            p.print_hard_space();
-        }
-        p.print_soft_newline();
-        p.needs_semicolon = false;
     }
 }
 
@@ -3296,11 +3310,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
                 p.print_soft_newline();
             }
         });
-        if MINIFY {
-            p.print_hard_space();
-        }
-        p.print_soft_newline();
-        p.needs_semicolon = false;
     }
 }
 
