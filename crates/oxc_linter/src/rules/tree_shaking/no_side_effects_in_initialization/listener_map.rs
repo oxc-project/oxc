@@ -27,6 +27,7 @@ use crate::{
         is_function_side_effect_free, is_local_variable_a_whitelisted_module, is_pure_function,
         no_effects, FunctionName, NodeListenerOptions, Value,
     },
+    LintCtx,
 };
 
 pub trait ListenerMap {

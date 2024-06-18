@@ -4,7 +4,7 @@ use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
-use crate::LintContext;
+use crate::{LintContext, LintCtx};
 
 #[derive(Debug, Clone, Default)]
 pub struct Fix<'a> {

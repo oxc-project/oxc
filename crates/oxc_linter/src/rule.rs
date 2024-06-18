@@ -6,22 +6,22 @@ use std::{
 
 use oxc_semantic::SymbolId;
 
-use crate::{context::LintContext, AllowWarnDeny, AstNode, RuleEnum};
+use crate::{AllowWarnDeny, AstNode, RuleEnum};
 
-pub trait Rule: Sized + Default + fmt::Debug {
+pub trait Rule: RuleContext + Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
     fn from_configuration(_value: serde_json::Value) -> Self {
         Self::default()
     }
 
     /// Visit each AST Node
-    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &Self::Context<'a>) {}
 
     /// Visit each symbol
-    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_>) {}
+    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &Self::Context<'_>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
-    fn run_once(&self, _ctx: &LintContext) {}
+    fn run_once(&self, _ctx: &Self::Context<'_>) {}
 }
 
 pub trait RuleMeta {
@@ -34,6 +34,10 @@ pub trait RuleMeta {
     fn documentation() -> Option<&'static str> {
         None
     }
+}
+
+pub trait RuleContext {
+    type Context<'a>;
 }
 
 /// Rule categories defined by rust-clippy

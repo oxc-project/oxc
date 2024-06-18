@@ -10,7 +10,7 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHashSet;
 
-use crate::LintContext;
+use crate::{LintContext, LintCtx};
 
 mod pure_functions;
 

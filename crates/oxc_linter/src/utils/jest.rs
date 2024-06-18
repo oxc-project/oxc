@@ -11,7 +11,7 @@ use oxc_semantic::{AstNode, ReferenceId};
 use oxc_span::Atom;
 use phf::phf_set;
 
-use crate::LintContext;
+use crate::{LintContext, LintCtx};
 
 mod parse_jest_fn;
 pub use crate::utils::jest::parse_jest_fn::{
@@ -307,7 +307,7 @@ mod test {
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
 
-    use crate::LintContext;
+    use crate::{LintContext, LintCtx};
 
     #[test]
     fn test_is_jest_file() {

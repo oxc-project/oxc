@@ -13,7 +13,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::CFGLintContext, rule::Rule, AstNode};
 
 fn getter_return_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(getter-return): Expected to always return a value in getter.")
@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for GetterReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &CFGLintContext<'a>) {
         let cfg = ctx.cfg();
 
         // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
@@ -119,7 +119,7 @@ impl GetterReturn {
     }
 
     /// Checks whether it is necessary to check the node
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+    fn is_wanted_node(node: &AstNode, ctx: &CFGLintContext<'_>) -> bool {
         if let Some(parent) = ctx.nodes().parent_node(node.id()) {
             match parent.kind() {
                 AstKind::MethodDefinition(mdef) => {
@@ -183,7 +183,7 @@ impl GetterReturn {
     fn run_diagnostic<'a>(
         &self,
         node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &CFGLintContext<'a>,
         cfg: &ControlFlowGraph,
         span: Span,
     ) {

@@ -16,7 +16,7 @@ use oxc::{
     span::SourceType,
     transformer::{TransformOptions, Transformer},
 };
-use oxc_linter::{LintContext, Linter};
+use oxc_linter::{LintContext, LintCtx, Linter};
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
 use tsify::Tsify;

@@ -10,7 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::CFGLintContext, rule::Rule};
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("eslint(no-unreachable): Unreachable code.").with_labels([span.into()])
@@ -31,7 +31,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnreachable {
-    fn run_once(&self, ctx: &LintContext) {
+    fn run_once(&self, ctx: &CFGLintContext) {
         let cfg = ctx.cfg();
 
         let nodes = ctx.nodes();

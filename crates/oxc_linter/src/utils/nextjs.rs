@@ -1,6 +1,6 @@
 use oxc_span::CompactStr;
 
-use crate::LintContext;
+use crate::{LintContext, LintCtx};
 
 pub fn is_in_app_dir(file_path: &str) -> bool {
     file_path.contains("app/") || file_path.contains("app\\")

@@ -6,7 +6,11 @@ use oxc_semantic::JSDoc;
 use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
+use crate::{
+    config::JSDocPluginSettings,
+    context::{LintContext, LintCtx},
+    AstNode,
+};
 
 /// JSDoc is often attached on the parent node of a function.
 ///

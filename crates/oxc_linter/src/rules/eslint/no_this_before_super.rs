@@ -13,7 +13,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::CFGLintContext, rule::Rule, AstNode};
 
 fn no_this_before_super_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-this-before-super): Expected to always call super() before this/super property access.")
@@ -56,7 +56,7 @@ enum DefinitelyCallsThisBeforeSuper {
 }
 
 impl Rule for NoThisBeforeSuper {
-    fn run_once(&self, ctx: &LintContext) {
+    fn run_once(&self, ctx: &CFGLintContext) {
         let cfg = ctx.cfg();
         let semantic = ctx.semantic();
 
@@ -132,7 +132,7 @@ impl Rule for NoThisBeforeSuper {
 }
 
 impl NoThisBeforeSuper {
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+    fn is_wanted_node(node: &AstNode, ctx: &CFGLintContext<'_>) -> bool {
         if let Some(parent) = ctx.nodes().parent_node(node.id()) {
             if let AstKind::MethodDefinition(mdef) = parent.kind() {
                 if matches!(mdef.kind, MethodDefinitionKind::Constructor) {

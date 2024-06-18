@@ -59,7 +59,13 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let import_statement = if used_in_test {
         None
     } else {
-        Some(quote! { use crate::rule::{RuleCategory, RuleMeta}; })
+        Some(quote! { use crate::{context::LintCtx, rule::{RuleCategory, RuleMeta, RuleContext}}; })
+    };
+
+    let context = if use_cfg {
+        quote! { CFGLintContext<'a> }
+    } else {
+        quote! { LintContext<'a> }
     };
 
     let output = quote! {
@@ -75,6 +81,10 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)
             }
+        }
+
+        impl RuleContext for #name {
+            type Context<'a> = #context;
         }
     };
 

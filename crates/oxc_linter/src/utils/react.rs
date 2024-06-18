@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_semantic::{AstNode, SymbolFlags};
 
-use crate::{LintContext, OxlintSettings};
+use crate::{LintContext, LintCtx, OxlintSettings};
 
 pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     if let Some(member_expr) = call_expr.callee.get_member_expr() {

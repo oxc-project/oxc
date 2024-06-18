@@ -12,7 +12,7 @@ use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
-    context::LintContext,
+    context::CFGLintContext,
     rule::Rule,
     utils::{is_react_component_or_hook_name, is_react_function_call, is_react_hook},
     AstNode,
@@ -107,7 +107,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RulesOfHooks {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &CFGLintContext<'a>) {
         let cfg = ctx.cfg();
 
         let AstKind::CallExpression(call) = node.kind() else { return };

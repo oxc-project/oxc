@@ -2,7 +2,7 @@ use std::{env, path::PathBuf, rc::Rc};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_linter::{AllowWarnDeny, LintContext, LintOptions, Linter};
+use oxc_linter::{AllowWarnDeny, LintContext, LintCtx, LintOptions, Linter};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;

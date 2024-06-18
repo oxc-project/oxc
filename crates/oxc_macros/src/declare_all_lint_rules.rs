@@ -53,7 +53,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let expanded = quote! {
         #(pub use self::#use_stmts::#struct_names;)*
 
-        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
+        use crate::{context::{CFGLintContext, LintContext}, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
@@ -107,21 +107,21 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+            pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &CFGLintContext<'a>) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run(node, ctx)),*
+                    #(Self::#struct_names(rule) => rule.run(node, ctx.into())),*
                 }
             }
 
-            pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
+            pub fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &CFGLintContext<'a>) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
+                    #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx.into())),*
                 }
             }
 
-            pub fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+            pub fn run_once<'a>(&self, ctx: &CFGLintContext<'a>) {
                 match self {
-                    #(Self::#struct_names(rule) => rule.run_once(ctx)),*
+                    #(Self::#struct_names(rule) => rule.run_once(ctx.into())),*
                 }
             }
         }

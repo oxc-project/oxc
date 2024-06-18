@@ -8,7 +8,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::CFGLintContext,
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
     AstNode,
@@ -50,7 +50,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireRenderReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &CFGLintContext<'a>) {
         let cfg = ctx.cfg();
 
         if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
@@ -168,7 +168,7 @@ fn is_render_fn(node: &AstNode) -> bool {
     false
 }
 
-fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b CFGLintContext<'a>) -> bool {
     let Some(ancestors_0) = ctx.nodes().parent_node(node.id()) else { return false };
     if !matches!(ancestors_0.kind(), AstKind::ObjectExpression(_)) {
         return false;
@@ -184,7 +184,7 @@ fn is_in_es5_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
     is_es5_component(ancestors_2)
 }
 
-fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_in_es6_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b CFGLintContext<'a>) -> bool {
     let Some(parent) = ctx.nodes().parent_node(node.id()) else { return false };
     if !matches!(parent.kind(), AstKind::ClassBody(_)) {
         return false;

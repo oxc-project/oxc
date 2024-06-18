@@ -18,7 +18,7 @@ use oxc_span::{GetSpan, Span};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::CFGLintContext, rule::Rule, AstNode};
 
 fn no_fallthrough_case_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("eslint(no-fallthrough): Expected a 'break' statement before 'case'.")
@@ -89,7 +89,7 @@ impl Rule for NoFallthrough {
         Self::new(comment_pattern, allow_empty_case, report_unused_fallthrough_comment)
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &CFGLintContext<'a>) {
         let cfg = ctx.cfg();
 
         let AstKind::SwitchStatement(switch) = node.kind() else { return };
@@ -197,7 +197,7 @@ fn possible_fallthrough_comment_span(case: &SwitchCase) -> (u32, Option<u32>) {
 }
 
 impl NoFallthrough {
-    fn has_blanks_between(ctx: &LintContext, range: Range<u32>) -> bool {
+    fn has_blanks_between(ctx: &CFGLintContext, range: Range<u32>) -> bool {
         let in_between = &ctx.semantic().source_text()[range.start as usize..range.end as usize];
         // check for at least 2 new lines, we allow the first new line for formatting.
         in_between.bytes().filter(|it| *it == b'\n').nth(1).is_some()
@@ -205,7 +205,7 @@ impl NoFallthrough {
 
     fn maybe_allow_fallthrough_trivia(
         &self,
-        ctx: &LintContext,
+        ctx: &CFGLintContext,
         case: &SwitchCase,
         fall: &SwitchCase,
     ) -> Option<Span> {
@@ -261,7 +261,7 @@ impl NoFallthrough {
 // TAKE IT AS A MAGICAL BLACK BOX, NO DOCUMENTATION TO PREVENT REUSE!
 // Issue: <https://github.com/oxc-project/oxc/issues/3662>
 fn get_switch_semantic_cases(
-    ctx: &LintContext,
+    ctx: &CFGLintContext,
     cfg: &ControlFlowGraph,
     node: &AstNode,
     switch: &SwitchStatement,

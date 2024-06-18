@@ -14,7 +14,7 @@ pub fn calculate_hash<T: Hash>(t: &T) -> u64 {
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 
-use crate::context::LintContext;
+use crate::context::{LintContext, LintCtx};
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:

@@ -13,7 +13,7 @@ use oxc_linter::{
         AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,
         LINT_PARTIAL_LOADER_EXT,
     },
-    LintContext, Linter,
+    LintContext, LintCtx, Linter,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;

@@ -11,7 +11,7 @@ use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LintCtx},
     utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
