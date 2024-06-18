@@ -288,6 +288,7 @@ impl IsolatedLintHandler {
             let program = allocator.alloc(ret.program);
             let semantic_ret = SemanticBuilder::new(javascript_source_text, source_type)
                 .with_trivias(ret.trivias)
+                .with_cfg(true)
                 .with_check_syntax_error(true)
                 .build(program);
 
