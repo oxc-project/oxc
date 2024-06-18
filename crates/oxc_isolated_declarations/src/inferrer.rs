@@ -105,14 +105,10 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        FunctionReturnType::infer(
-            self,
-            function
-                .body
-                .as_ref()
-                .unwrap_or_else(|| unreachable!("Only declare function can have no body")),
-        )
-        .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
+        function.body.as_ref().and_then(|body| {
+            FunctionReturnType::infer(self, body)
+                .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
+        })
     }
 
     pub fn infer_arrow_function_return_type(
