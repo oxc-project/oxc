@@ -84,6 +84,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     prev_op_end: usize,
     prev_reg_exp_end: usize,
     need_space_before_dot: usize,
+    print_next_indent_as_space: bool,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -95,7 +96,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     start_of_default_export: usize,
 
     /// Track the current indentation level
-    indentation: u8,
+    indent: u8,
 
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
@@ -139,13 +140,14 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             code: Vec::with_capacity(capacity),
             needs_semicolon: false,
             need_space_before_dot: 0,
+            print_next_indent_as_space: false,
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
             start_of_stmt: 0,
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
-            indentation: 0,
+            indent: 0,
             sourcemap_builder,
             move_comment_map: MoveCommentMap::default(),
         }
@@ -224,30 +226,36 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.move_comment_map.get(&start)
     }
 
+    #[inline]
     fn print_soft_space(&mut self) {
         if !MINIFY {
             self.print(b' ');
         }
     }
 
+    #[inline]
     pub fn print_hard_space(&mut self) {
         self.print(b' ');
     }
 
+    #[inline]
     fn print_soft_newline(&mut self) {
         if !MINIFY {
             self.print(b'\n');
         }
     }
 
+    #[inline]
     fn print_semicolon(&mut self) {
         self.print(b';');
     }
 
+    #[inline]
     fn print_comma(&mut self) {
         self.print(b',');
     }
 
+    #[inline]
     fn print_space_before_identifier(&mut self) {
         if self
             .peek_nth(0)
@@ -257,32 +265,41 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
+    #[inline]
     fn peek_nth(&self, n: usize) -> Option<char> {
         #[allow(unsafe_code)]
         // SAFETY: criteria of `from_utf8_unchecked` are met.
         unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }
 
+    #[inline]
     fn indent(&mut self) {
         if !MINIFY {
-            self.indentation += 1;
+            self.indent += 1;
         }
     }
 
+    #[inline]
     fn dedent(&mut self) {
         if !MINIFY {
-            self.indentation -= 1;
+            self.indent -= 1;
         }
     }
 
+    #[inline]
     fn print_indent(&mut self) {
-        if !MINIFY {
-            for _ in 0..self.indentation {
-                self.print(b'\t');
-            }
+        if MINIFY {
+            return;
         }
+        if self.print_next_indent_as_space {
+            self.print_hard_space();
+            self.print_next_indent_as_space = false;
+            return;
+        }
+        self.code.extend(std::iter::repeat(b'\t').take(self.indent as usize));
     }
 
+    #[inline]
     fn print_semicolon_after_statement(&mut self) {
         if MINIFY {
             self.needs_semicolon = true;
@@ -291,6 +308,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
+    #[inline]
     fn print_semicolon_if_needed(&mut self) {
         if self.needs_semicolon {
             self.print_semicolon();
@@ -298,14 +316,17 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
+    #[inline]
     fn print_ellipsis(&mut self) {
         self.print_str(b"...");
     }
 
+    #[inline]
     pub fn print_colon(&mut self) {
         self.print(b':');
     }
 
+    #[inline]
     fn print_equal(&mut self) {
         self.print(b'=');
     }
@@ -351,13 +372,24 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.print(b'}');
     }
 
-    fn print_body(&mut self, stmt: &Statement<'_>, ctx: Context) {
+    fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
         match stmt {
             Statement::BlockStatement(stmt) => {
+                self.print_soft_space();
                 self.print_block_statement(stmt, ctx);
                 self.print_soft_newline();
             }
-            stmt => stmt.gen(self, ctx),
+            Statement::EmptyStatement(_) => {
+                self.print_semicolon();
+                self.print_soft_newline();
+            }
+            stmt => {
+                if need_space && MINIFY {
+                    self.print_hard_space();
+                }
+                self.print_next_indent_as_space = true;
+                stmt.gen(self, ctx);
+            }
         }
     }
 
@@ -390,6 +422,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
+    #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
         expr.gen_expr(self, Precedence::lowest(), Context::default());
     }
@@ -422,10 +455,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     fn print_space_before_operator(&mut self, next: Operator) {
-        if !MINIFY {
-            self.print_hard_space();
-            return;
-        }
         if self.prev_op_end != self.code.len() {
             return;
         }
@@ -457,6 +486,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
+    #[inline]
     fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
         if wrap {
             self.print(b'(');
@@ -467,6 +497,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
+    #[inline]
     fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
         let quote = choose_quote(s);
         self.print(quote as u8);

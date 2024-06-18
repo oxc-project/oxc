@@ -17,61 +17,49 @@ Mismatch: "declarationSingleFileHasErrorsReported.ts"
 
 #### "declarationLinkedAliases.ts" ####
 //// [declarationLinkedAliases.ts] ////
-import {A} from 'mod';
+import { A } from 'mod';
 import B = A.C;
 export { B };
 
 //// [declarationLinkedAliases.d.ts] ////
-import {A} from 'mod';
+import { A } from 'mod';
 import B = A.C;
 export { B };
 
 #### "declarationLocalAliasOfImportAlias.ts" ####
 //// [declarationLocalAliasOfImportAlias.ts] ////
-import {Record} from './a';
+import { Record } from './a';
 export type Foo<K extends string> = Record<K, number>;
-export const obj = {
-	doThing<K extends string>(_k: K) {
-		return ({} as any);
-	}
-};
+export const obj = {doThing<K extends string>(_k: K) {
+	return ({} as any);
+}};
 
 //// [declarationLocalAliasOfImportAlias.d.ts] ////
-import {Record} from './a';
+import { Record } from './a';
 export type Foo<K extends string> = Record<K, number>;
-export declare const obj: {
-	doThing<K extends string>(_k: K): Foo<K>;
-};
+export declare const obj: {doThing<K extends string>(_k: K): Foo<K>};
 
 #### "declarationSelfReferentialConstraint.ts" ####
 //// [declarationSelfReferentialConstraint.ts] ////
-export const object = {
-	foo: <T extends ((Set<T>) | ([]))>(): void => {}
-};
+export const object = {foo: <T extends ((Set<T>) | ([]))>(): void => {}};
 
 //// [declarationSelfReferentialConstraint.d.ts] ////
-export declare const object: {
-	foo: <T extends ((Set<T>) | ([]))>() => void;
-};
+export declare const object: {foo: <T extends ((Set<T>) | ([]))>() => void};
 
 #### "declarationTypeParameterConstraint.ts" ####
 //// [declarationTypeParameterConstraint.ts] ////
-import {type In,type Out,type Base} from './a';
-export const object = {
-	doThing<T extends Base>(_t: T, _in: In[T]) {
-		return;
-	}
-};
+import { type In, type Out, type Base } from './a';
+export const object = {doThing<T extends Base>(_t: T, _in: In[T]) {
+	return;
+}};
 
 //// [declarationTypeParameterConstraint.d.ts] ////
-import {type In,type Out,type Base} from './a';
-export declare const object: {
-	doThing<T extends Base>(_t: T, _in: In[T]): Out[T];
-};
+import { type In, type Out, type Base } from './a';
+export declare const object: {doThing<T extends Base>(_t: T, _in: In[T]): Out[T]};
 
 #### "declarationTypeWithComputedName.ts" ####
 //// [declarationTypeWithComputedName.ts] ////
-import {Foo} from './a';
+import { Foo } from './a';
 export type Bar = {
 	[Foo.A]: 1;
 	[Foo.B]: 2;
@@ -82,7 +70,7 @@ export const valBar = ((null as any) as {
 });
 
 //// [declarationTypeWithComputedName.d.ts] ////
-import {Foo} from './a';
+import { Foo } from './a';
 export type Bar = {
 	[Foo.A]: 1;
 	[Foo.B]: 2;
@@ -100,9 +88,7 @@ export const fn2 = (a: MissingGlobalType) => (null as MissingGlobalType);
 export const x2: typeof missingGlobalValue = null;
 export const fn3 = (a: typeof missingGlobalValue): typeof missingGlobalValue => null;
 export const fn4 = (a: typeof missingGlobalValue) => (null as typeof missingGlobalValue);
-export const o: {
-	[missingGlobalValue]: string;
-} = null;
+export const o: {[missingGlobalValue]: string} = null;
 
 //// [declarationUnresolvedGlobalReferencesNoErrors.d.ts] ////
 export declare const x: MissingGlobalType;
@@ -111,18 +97,16 @@ export declare const fn2: (a: MissingGlobalType) => MissingGlobalType;
 export declare const x2: typeof missingGlobalValue;
 export declare const fn3: (a: typeof missingGlobalValue) => typeof missingGlobalValue;
 export declare const fn4: (a: typeof missingGlobalValue) => typeof missingGlobalValue;
-export declare const o: {
-	[missingGlobalValue]: string;
-};
+export declare const o: {[missingGlobalValue]: string};
 
 #### "declarationUnresolvedTypeReference.ts" ####
 //// [declarationUnresolvedTypeReference.ts] ////
-import {type Type} from './a';
+import { type Type } from './a';
 export const foo = (_: Type): void => {};
 export const bar = (_: import('./a').Type): void => {};
 
 //// [declarationUnresolvedTypeReference.d.ts] ////
-import {type Type} from './a';
+import { type Type } from './a';
 export declare const foo: (_: Type) => void;
 export declare const bar: (_: import('./a').Type) => void;
 
@@ -153,12 +137,8 @@ export const c: number = 1;
 export interface A {
 	x: number;
 }
-let expr: {
-	x: number;
-};
-expr = {
-	x: 12
-};
+let expr: {x: number};
+expr = {x: 12};
 export default expr;
 
 //// [declarationsSimple.d.ts] ////
@@ -166,7 +146,5 @@ export declare const c: number;
 export interface A {
 	x: number;
 }
-declare let expr: {
-	x: number;
-};
+declare let expr: {x: number};
 export default expr;

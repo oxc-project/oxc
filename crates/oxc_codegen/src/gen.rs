@@ -193,45 +193,46 @@ fn print_if<const MINIFY: bool>(
     p.print(b'(');
     p.print_expression(&if_stmt.test);
     p.print(b')');
-    p.print_soft_space();
 
     match &if_stmt.consequent {
         Statement::BlockStatement(block) => {
+            p.print_soft_space();
             p.print_block_statement(block, ctx);
+            if if_stmt.alternate.is_some() {
+                p.print_soft_space();
+            } else {
+                p.print_soft_newline();
+            }
         }
         stmt if wrap_to_avoid_ambiguous_else(stmt) => {
+            p.print_soft_space();
             p.print_block_start(stmt.span().start);
             stmt.gen(p, ctx);
             p.needs_semicolon = false;
             p.print_block_end(stmt.span().end);
+            if if_stmt.alternate.is_some() {
+                p.print_soft_space();
+            } else {
+                p.print_soft_newline();
+            }
         }
-        stmt => {
-            stmt.gen(p, ctx);
-        }
-    }
-    if if_stmt.alternate.is_some() {
-        p.print_soft_space();
-    } else {
-        p.print_soft_newline();
+        stmt => p.print_body(stmt, false, ctx),
     }
     if let Some(alternate) = if_stmt.alternate.as_ref() {
         p.print_semicolon_if_needed();
         p.print_space_before_identifier();
-        p.print_str(b"else ");
+        p.print_str(b"else");
         match alternate {
             Statement::BlockStatement(block) => {
+                p.print_soft_space();
                 p.print_block_statement(block, ctx);
                 p.print_soft_newline();
             }
             Statement::IfStatement(if_stmt) => {
+                p.print_hard_space();
                 print_if(if_stmt, p, ctx);
             }
-            _ => {
-                p.print_soft_newline();
-                p.indent();
-                alternate.gen(p, ctx);
-                p.dedent();
-            }
+            stmt => p.print_body(stmt, true, ctx),
         }
     }
 }
@@ -296,12 +297,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
         p.print_semicolon();
 
         if let Some(update) = self.update.as_ref() {
+            p.print_soft_space();
             p.print_expression(update);
         }
 
         p.print(b')');
-        p.print_soft_space();
-        p.print_body(&self.body, ctx);
+        p.print_body(&self.body, false, ctx);
     }
 }
 
@@ -319,8 +320,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForInStatement<'a> {
         p.print_hard_space();
         p.print_expression(&self.right);
         p.print(b')');
-        p.print_soft_space();
-        p.print_body(&self.body, ctx);
+        p.print_body(&self.body, false, ctx);
     }
 }
 
@@ -340,8 +340,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForOfStatement<'a> {
         p.print_str(b"of ");
         self.right.gen_expr(p, Precedence::Assign, Context::default());
         p.print(b')');
-        p.print_soft_space();
-        p.print_body(&self.body, ctx);
+        p.print_body(&self.body, false, ctx);
     }
 }
 
@@ -370,8 +369,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WhileStatement<'a> {
         p.print(b'(');
         p.print_expression(&self.test);
         p.print(b')');
-        p.print_soft_space();
-        p.print_body(&self.body, ctx);
+        p.print_body(&self.body, false, ctx);
     }
 }
 
@@ -470,12 +468,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SwitchCase<'a> {
         p.print_colon();
 
         if self.consequent.len() == 1 {
-            if let Statement::BlockStatement(block) = &self.consequent[0] {
-                p.print_soft_space();
-                p.print_block_statement(block, ctx);
-                p.print_soft_newline();
-                return;
-            }
+            p.print_body(&self.consequent[0], false, ctx);
+            return;
         }
 
         p.print_soft_newline();
@@ -503,12 +497,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ReturnStatement<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for LabeledStatement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.add_source_mapping(self.span.start);
-        p.print_indent();
+        if !MINIFY && (p.indent > 0 || p.print_next_indent_as_space) {
+            p.add_source_mapping(self.span.start);
+            p.print_indent();
+        }
+        p.print_space_before_identifier();
         self.label.gen(p, ctx);
         p.print_colon();
-        p.print_soft_space();
-        p.print_body(&self.body, ctx);
+        p.print_body(&self.body, false, ctx);
     }
 }
 
@@ -531,6 +527,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TryStatement<'a> {
             }
             p.print_soft_space();
             p.print_block_statement(&handler.body, ctx);
+            if self.finalizer.is_some() {
+                p.print_soft_newline();
+            }
         }
         if let Some(finalizer) = &self.finalizer {
             p.print_soft_space();
@@ -560,7 +559,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WithStatement<'a> {
         p.print(b'(');
         p.print_expression(&self.object);
         p.print(b')');
-        p.print_body(&self.body, ctx);
+        p.print_body(&self.body, false, ctx);
     }
 }
 
@@ -716,6 +715,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
         }
         if let Some(specifiers) = &self.specifiers {
             if specifiers.is_empty() {
+                p.print_str(b"{}");
+                p.print_soft_space();
+                p.print_str(b"from");
+                p.print_soft_space();
                 p.print(b'\'');
                 p.print_str(self.source.value.as_bytes());
                 p.print(b'\'');
@@ -732,19 +735,23 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                 match specifier {
                     ImportDeclarationSpecifier::ImportDefaultSpecifier(spec) => {
                         if in_block {
+                            p.print_soft_space();
                             p.print_str(b"},");
                             in_block = false;
                         } else if index != 0 {
                             p.print_comma();
+                            p.print_soft_space();
                         }
                         spec.local.gen(p, ctx);
                     }
                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(spec) => {
                         if in_block {
+                            p.print_soft_space();
                             p.print_str(b"},");
                             in_block = false;
                         } else if index != 0 {
                             p.print_comma();
+                            p.print_soft_space();
                         }
                         p.print_str(b"* as ");
                         spec.local.gen(p, ctx);
@@ -752,12 +759,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                     ImportDeclarationSpecifier::ImportSpecifier(spec) => {
                         if in_block {
                             p.print_comma();
+                            p.print_soft_space();
                         } else {
                             if index != 0 {
                                 p.print_comma();
+                                p.print_soft_space();
                             }
                             in_block = true;
                             p.print(b'{');
+                            p.print_soft_space();
                         }
 
                         if spec.import_kind.is_type() {
@@ -785,6 +795,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                 }
             }
             if in_block {
+                p.print_soft_space();
                 p.print(b'}');
             }
             p.print_str(b" from ");
@@ -825,6 +836,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportAttribute<'a> {
             ImportAttributeKey::StringLiteral(literal) => literal.gen(p, ctx),
         };
         p.print_colon();
+        p.print_soft_space();
         self.value.gen(p, ctx);
     }
 }
@@ -1477,14 +1489,16 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
         let n = p.code_len();
         p.wrap(p.start_of_stmt == n || p.start_of_arrow_expr == n, |p| {
-            let single_line = self.properties.is_empty();
+            let single_line = self.properties.len() <= 1;
             p.print_curly_braces(self.span, single_line, |p| {
                 for (index, item) in self.properties.iter().enumerate() {
                     if index != 0 {
                         p.print_comma();
                         p.print_soft_newline();
                     }
-                    p.print_indent();
+                    if !single_line {
+                        p.print_indent();
+                    }
                     item.gen(p, ctx);
                 }
                 if !single_line {
@@ -1691,9 +1705,10 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
             self.left.gen_expr(p, left_precedence, ctx);
             if self.operator.is_keyword() {
                 p.print_space_before_identifier();
+            } else {
+                p.print_soft_space();
             }
             self.operator.gen(p, ctx);
-            p.print_soft_space();
             let right_precedence = if self.precedence().is_left_associative() {
                 self.precedence()
             } else {
@@ -1714,6 +1729,7 @@ impl<const MINIFY: bool> Gen<MINIFY> for BinaryOperator {
             let op: Operator = (*self).into();
             p.print_space_before_operator(op);
             p.print_str(operator);
+            p.print_soft_space();
             p.prev_op = Some(op);
             p.prev_op_end = p.code().len();
         }
@@ -1755,7 +1771,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ConditionalExpression<'a> {
             p.print_soft_space();
             self.consequent.gen_expr(p, Precedence::Assign, ctx.and_in(true));
             p.print_soft_space();
-            p.print(b':');
+            p.print_colon();
             p.print_soft_space();
             self.alternate.gen_expr(p, Precedence::Assign, ctx.union_in_if(wrap));
         });
@@ -1898,7 +1914,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetMaybeDefault<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetWithDefault<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.binding.gen(p, ctx);
+        p.print_soft_space();
         p.print_equal();
+        p.print_soft_space();
         self.init.gen_expr(p, Precedence::Assign, Context::default());
     }
 }
@@ -1916,7 +1934,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyIdentifier<
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.binding.gen(p, ctx);
         if let Some(expr) = &self.init {
+            p.print_soft_space();
             p.print_equal();
+            p.print_soft_space();
             expr.gen_expr(p, Precedence::Assign, Context::default());
         }
     }
@@ -1938,6 +1958,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyProperty<'a
             }
         }
         p.print_colon();
+        p.print_soft_space();
         self.binding.gen(p, ctx);
     }
 }
@@ -2157,7 +2178,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXElementName<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXNamespacedName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.namespace.gen(p, ctx);
-        p.print(b':');
+        p.print_colon();
         self.property.gen(p, ctx);
     }
 }
@@ -2175,7 +2196,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.name.gen(p, ctx);
         if let Some(value) = &self.value {
-            p.print(b'=');
+            p.print_equal();
             value.gen(p, ctx);
         }
     }
@@ -2326,6 +2347,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StaticBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_str(b"static");
+        p.print_soft_space();
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for stmt in &self.body {
                 p.print_semicolon_if_needed();
@@ -2487,6 +2509,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
     fn gen(&self, p: &mut Codegen<MINIFY>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print(b'{');
+        p.print_soft_space();
         p.print_list(&self.properties, ctx);
         if let Some(rest) = &self.rest {
             if !self.properties.is_empty() {
@@ -2494,6 +2517,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
             }
             rest.gen(p, ctx);
         }
+        p.print_soft_space();
         p.print(b'}');
         p.add_source_mapping(self.span.end);
     }
@@ -2513,6 +2537,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
         }
         if !self.shorthand {
             p.print_colon();
+            p.print_soft_space();
         }
         self.value.gen(p, ctx);
     }
@@ -2876,12 +2901,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTemplateLiteralType<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.print_curly_braces(self.span, self.members.is_empty(), |p| {
+        let single_line = self.members.len() <= 1;
+        p.print_curly_braces(self.span, single_line, |p| {
             for item in &self.members {
                 p.print_indent();
                 item.gen(p, ctx);
-                p.print_semicolon();
-                p.print_soft_newline();
+                if !single_line {
+                    p.print_semicolon();
+                    p.print_soft_newline();
+                }
             }
         });
     }

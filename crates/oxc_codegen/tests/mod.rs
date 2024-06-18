@@ -121,7 +121,7 @@ fn template() {
 fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from 'foo';\n", None);
     test("import x from './foo.js' with {}", "import x from './foo.js' with {\n};\n", None);
-    test("import {} from './foo.js' with {}", "import './foo.js' with {\n};\n", None);
+    test("import {} from './foo.js' with {}", "import {} from './foo.js' with {\n};\n", None);
     test("export * from './foo.js' with {}", "export * from './foo.js' with {\n};\n", None);
 }
 
@@ -176,8 +176,12 @@ fn typescript() {
     test_ts("function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}", "function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}\n", false);
 
     // type-only imports/exports
-    test_ts("import type { Foo } from 'foo';", "import type {Foo} from 'foo';\n", false);
-    test_ts("import { Foo, type Bar } from 'foo';", "import {Foo,type Bar} from 'foo';\n", false);
+    test_ts("import type { Foo } from 'foo';", "import type { Foo } from 'foo';\n", false);
+    test_ts(
+        "import { Foo, type Bar } from 'foo';",
+        "import { Foo, type Bar } from 'foo';\n",
+        false,
+    );
     test_ts(
         "export { Foo, type Bar } from 'foo';",
         "export { Foo, type Bar } from 'foo';\n",
