@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_transformer::{
@@ -57,9 +57,7 @@ fn main() {
     )
     .build(&mut program);
 
-    let printed = Codegen::<false>::new("", &source_text, ret.trivias, CodegenOptions::default())
-        .build(&program)
-        .source_text;
+    let printed = CodeGenerator::new().build(&program).source_text;
     println!("Transformed:\n");
     println!("{printed}");
 }

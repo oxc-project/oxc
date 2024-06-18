@@ -3,7 +3,7 @@
 use std::{collections::HashMap, fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_diagnostics::{NamedSource, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -177,10 +177,7 @@ impl Baseline {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(Path::new(&self.name)).unwrap();
         let ret = Parser::new(&allocator, &self.original, source_type).parse();
-        let printed =
-            Codegen::<false>::new("", &self.original, ret.trivias, CodegenOptions::default())
-                .build(&ret.program)
-                .source_text;
+        let printed = CodeGenerator::new().build(&ret.program).source_text;
         self.oxc_printed = printed;
     }
 

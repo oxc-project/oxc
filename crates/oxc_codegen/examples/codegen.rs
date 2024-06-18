@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{CodeGenerator, WhitespaceRemover};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -29,16 +29,11 @@ fn main() -> std::io::Result<()> {
     println!("Original:");
     println!("{source_text}");
 
-    let options = CodegenOptions::default();
-    let printed = Codegen::<false>::new("", &source_text, ret.trivias.clone(), options)
-        .build(&ret.program)
-        .source_text;
+    let printed = CodeGenerator::new().build(&ret.program).source_text;
     println!("Printed:");
     println!("{printed}");
 
-    let minified = Codegen::<true>::new("", &source_text, ret.trivias, options)
-        .build(&ret.program)
-        .source_text;
+    let minified = WhitespaceRemover::new().build(&ret.program).source_text;
     println!("Minified:");
     println!("{minified}");
 

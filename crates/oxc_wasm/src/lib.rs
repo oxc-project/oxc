@@ -8,7 +8,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc};
 use oxc::{
     allocator::Allocator,
     ast::{CommentKind, Trivias},
-    codegen::{Codegen, CodegenOptions},
+    codegen::{CodeGenerator, WhitespaceRemover},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::Parser,
@@ -283,15 +283,10 @@ impl Oxc {
             Minifier::new(options).build(&allocator, program);
         }
 
-        let codegen_options = CodegenOptions::default();
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new("", source_text, ret.trivias, codegen_options)
-                .build(program)
-                .source_text
+            WhitespaceRemover::new().build(program).source_text
         } else {
-            Codegen::<false>::new("", source_text, ret.trivias, codegen_options)
-                .build(program)
-                .source_text
+            CodeGenerator::new().build(program).source_text
         };
 
         Ok(())

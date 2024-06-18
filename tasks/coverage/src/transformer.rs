@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_transformer::{
@@ -25,7 +25,6 @@ fn get_result(
     options: Option<TransformOptions>,
 ) -> TestResult {
     let allocator = Allocator::default();
-    let filename = source_path.file_name().unwrap().to_string_lossy();
     let options = options.unwrap_or_else(get_default_transformer_options);
 
     // First pass
@@ -40,14 +39,7 @@ fn get_result(
             options.clone(),
         )
         .build(&mut ret1.program);
-        Codegen::<false>::new(
-            &filename,
-            source_text,
-            ret1.trivias.clone(),
-            CodegenOptions::default(),
-        )
-        .build(&ret1.program)
-        .source_text
+        CodeGenerator::new().build(&ret1.program).source_text
     };
 
     // Second pass with only JavaScript parsing
@@ -63,9 +55,7 @@ fn get_result(
             options,
         )
         .build(&mut ret2.program);
-        Codegen::<false>::new(&filename, source_text, ret2.trivias, CodegenOptions::default())
-            .build(&ret2.program)
-            .source_text
+        CodeGenerator::new().build(&ret2.program).source_text
     };
 
     if transformed1 == transformed2 {

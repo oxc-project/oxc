@@ -1746,7 +1746,6 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc_allocator",
- "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_isolated_declarations",

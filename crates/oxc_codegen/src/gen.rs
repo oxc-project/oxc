@@ -11,7 +11,7 @@ use oxc_syntax::{
 };
 
 use crate::annotation_comment::{gen_comment, get_leading_annotate_comment};
-use crate::{Codegen, Context, Operator, Separator};
+use crate::{Codegen, Context, Operator};
 
 pub trait Gen<const MINIFY: bool> {
     fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
@@ -591,7 +591,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
             p.print_str(b"declare ");
         }
 
-        if p.options.preserve_annotate_comments
+        if p.comment_options.preserve_annotate_comments
             && matches!(self.kind, VariableDeclarationKind::Const)
         {
             if let Some(declarator) = self.declarations.first() {
@@ -823,7 +823,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for WithClause<'a> {
         p.add_source_mapping(self.span.start);
         self.attributes_keyword.gen(p, ctx);
         p.print_soft_space();
-        p.print_block(&self.with_entries, Separator::Comma, ctx, self.span);
+        p.print_block_start(self.span.start);
+        p.print_sequence(&self.with_entries, ctx);
+        p.print_block_end(self.span.end);
     }
 }
 
@@ -845,7 +847,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_indent();
-        if p.options.preserve_annotate_comments {
+        if p.comment_options.preserve_annotate_comments {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
                     gen_comment(self.span.start, p);

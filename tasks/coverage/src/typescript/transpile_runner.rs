@@ -3,8 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_ast::Trivias;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
@@ -166,8 +165,6 @@ fn transpile(path: &Path, source_text: &str) -> (String, Vec<OxcDiagnostic>) {
     let source_type = SourceType::from_path(path).unwrap();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let ret = IsolatedDeclarations::new(&allocator).build(&ret.program);
-    let printed = Codegen::<false>::new("", "", Trivias::default(), CodegenOptions::default())
-        .build(&ret.program)
-        .source_text;
+    let printed = CodeGenerator::new().build(&ret.program).source_text;
     (printed, ret.errors)
 }

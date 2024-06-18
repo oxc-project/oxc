@@ -5,7 +5,7 @@ mod tdewolff;
 mod terser;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::WhitespaceRemover;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -19,9 +19,7 @@ pub(crate) fn minify(
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new("", source_text, ret.trivias, CodegenOptions::default())
-        .build(program)
-        .source_text
+    WhitespaceRemover::new().build(program).source_text
 }
 
 pub(crate) fn test(source_text: &str, expected: &str) {

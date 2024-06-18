@@ -1,8 +1,7 @@
 use napi_derive::napi;
 
 use oxc_allocator::Allocator;
-use oxc_ast::Trivias;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_diagnostics::{Error, NamedSource};
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
@@ -23,14 +22,7 @@ pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDe
     let allocator = Allocator::default();
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
     let transformed_ret = IsolatedDeclarations::new(&allocator).build(&parser_ret.program);
-    let printed = Codegen::<false>::new(
-        &filename,
-        &source_text,
-        Trivias::default(),
-        CodegenOptions::default(),
-    )
-    .build(&transformed_ret.program)
-    .source_text;
+    let printed = CodeGenerator::new().build(&transformed_ret.program).source_text;
 
     let mut errors = vec![];
     if !parser_ret.errors.is_empty() || !transformed_ret.errors.is_empty() {
