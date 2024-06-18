@@ -3,13 +3,16 @@ use std::{collections::HashMap, env, path::Path, sync::Arc};
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
-use oxc_semantic::{DebugDot, DisplayDot, EdgeType, SemanticBuilder};
-use oxc_span::SourceType;
-use petgraph::{
-    dot::{Config, Dot},
-    visit::EdgeRef,
+use oxc_cfg::{
+    graph::{
+        dot::{Config, Dot},
+        visit::EdgeRef,
+    },
+    DisplayDot, EdgeType,
 };
+use oxc_parser::Parser;
+use oxc_semantic::{dot::DebugDot, SemanticBuilder};
+use oxc_span::SourceType;
 
 // Instruction:
 // 1. create a `test.js`,

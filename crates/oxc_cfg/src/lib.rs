@@ -3,7 +3,7 @@ mod dot;
 pub mod visit;
 
 use itertools::Itertools;
-use oxc_ast::AstKind;
+use oxc_syntax::node::AstNodeId;
 use petgraph::{
     stable_graph::NodeIndex,
     visit::{depth_first_search, Control, DfsEvent, EdgeRef},
@@ -18,10 +18,8 @@ pub mod graph {
     }
 }
 
-use crate::{AstNodeId, AstNodes};
-
-pub(crate) use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
-pub use dot::{DebugDot, DebugDotContext, DisplayDot};
+pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
+pub use dot::DisplayDot;
 
 pub type BasicBlockId = NodeIndex;
 
@@ -113,6 +111,12 @@ pub enum ErrorEdgeKind {
     Implicit,
 }
 
+pub enum EvalConstConditionResult {
+    NotFound,
+    Fail,
+    Eval(bool),
+}
+
 #[derive(Debug)]
 pub struct ControlFlowGraph {
     pub graph: Graph<usize, EdgeType>,
@@ -172,32 +176,14 @@ impl ControlFlowGraph {
 
     /// Returns `None` the given node isn't the cyclic point of an infinite loop.
     /// Otherwise returns `Some(loop_start, loop_end)`.
-    pub fn is_infinite_loop_start(
+    pub fn is_infinite_loop_start<F>(
         &self,
         node: BasicBlockId,
-        nodes: &AstNodes,
-    ) -> Option<(BasicBlockId, BasicBlockId)> {
-        enum EvalConstConditionResult {
-            NotFound,
-            Fail,
-            Eval(bool),
-        }
-        fn try_eval_const_condition(
-            instruction: &Instruction,
-            nodes: &AstNodes,
-        ) -> EvalConstConditionResult {
-            use EvalConstConditionResult::{Eval, Fail, NotFound};
-            match instruction {
-                Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
-                    match nodes.kind(*id) {
-                        AstKind::BooleanLiteral(lit) => Eval(lit.value),
-                        _ => Fail,
-                    }
-                }
-                _ => NotFound,
-            }
-        }
-
+        try_eval_const_condition: F,
+    ) -> Option<(BasicBlockId, BasicBlockId)>
+    where
+        F: Fn(&Instruction) -> EvalConstConditionResult,
+    {
         fn get_jump_target(
             graph: &Graph<usize, EdgeType>,
             node: BasicBlockId,
@@ -239,15 +225,14 @@ impl ControlFlowGraph {
 
         // if there is exactly one and it is a condition instruction we are in a loop so we
         // check the condition to infer if it is always true.
-        if let EvalConstConditionResult::Eval(true) =
-            try_eval_const_condition(only_instruction, nodes)
-        {
+        if let EvalConstConditionResult::Eval(true) = try_eval_const_condition(only_instruction) {
             get_jump_target(&self.graph, node).map(|it| (it, node))
-        } else if let EvalConstConditionResult::Eval(true) =
-            self.basic_block(backedge.source()).instructions().iter().exactly_one().map_or_else(
-                |_| EvalConstConditionResult::NotFound,
-                |it| try_eval_const_condition(it, nodes),
-            )
+        } else if let EvalConstConditionResult::Eval(true) = self
+            .basic_block(backedge.source())
+            .instructions()
+            .iter()
+            .exactly_one()
+            .map_or_else(|_| EvalConstConditionResult::NotFound, try_eval_const_condition)
         {
             get_jump_target(&self.graph, node).map(|it| (node, it))
         } else {

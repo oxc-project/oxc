@@ -1349,6 +1349,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_cfg"
+version = "0.0.0"
+dependencies = [
+ "bitflags 2.5.0",
+ "itertools 0.13.0",
+ "oxc_syntax",
+ "petgraph",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_codegen"
 version = "0.14.0"
 dependencies = [
@@ -1478,6 +1489,7 @@ dependencies = [
  "once_cell",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_macros",
@@ -1652,18 +1664,17 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.14.0"
 dependencies = [
- "bitflags 2.5.0",
  "indexmap",
  "insta",
  "itertools 0.13.0",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_cfg",
  "oxc_diagnostics",
  "oxc_index",
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "petgraph",
  "phf",
  "rustc-hash",
  "serde",

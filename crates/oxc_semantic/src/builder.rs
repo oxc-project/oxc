@@ -4,6 +4,10 @@ use std::{cell::RefCell, path::PathBuf, sync::Arc};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
+use oxc_cfg::{
+    ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
+    IterationInstructionKind, ReturnInstructionKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
@@ -16,10 +20,6 @@ use crate::{
     binder::Binder,
     checker,
     class::ClassTableBuilder,
-    control_flow::{
-        ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
-        IterationInstructionKind, ReturnInstructionKind,
-    },
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::LabelBuilder,

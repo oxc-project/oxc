@@ -4,11 +4,12 @@ use crate::ReturnInstructionKind;
 use context::Ctx;
 
 pub use context::{CtxCursor, CtxFlags};
+use oxc_syntax::node::AstNodeId;
 use petgraph::Direction;
 
 use super::{
-    AstNodeId, BasicBlock, BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph,
-    Instruction, InstructionKind, IterationInstructionKind, LabeledInstruction,
+    BasicBlock, BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph, Instruction,
+    InstructionKind, IterationInstructionKind, LabeledInstruction,
 };
 
 #[derive(Debug, Default)]
@@ -70,7 +71,8 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         self.new_basic_block_normal()
     }
 
-    /// # Panics if there is no error harness to attach to.
+    /// # Panics
+    /// if there is no error harness to attach to.
     #[must_use]
     pub fn new_basic_block_normal(&mut self) -> BasicBlockId {
         let graph_ix = self.new_basic_block();
@@ -122,7 +124,8 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         graph_ix
     }
 
-    /// # Panics if there is no error harness pushed onto the stack,
+    /// # Panics
+    /// if there is no error harness pushed onto the stack,
     /// Or last harness doesn't match the expected `BasicBlockId`.
     pub fn release_error_harness(&mut self, expect: BasicBlockId) {
         let harness = self
@@ -152,7 +155,8 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         debug_assert!(result.as_ref().is_some_and(Option::is_none));
     }
 
-    /// # Panics if last finalizer doesn't match the expected `BasicBlockId`.
+    /// # Panics
+    /// if last finalizer doesn't match the expected `BasicBlockId`.
     pub fn release_finalizer(&mut self, expect: BasicBlockId) {
         // return early if there is no finalizer.
         let Some(finalizer) = self.finalizers.pop() else { return };
@@ -216,6 +220,7 @@ impl<'a> ControlFlowGraphBuilder<'a> {
         );
     }
 
+    /// # Panics
     #[inline]
     pub(self) fn push_instruction(&mut self, kind: InstructionKind, node_id: Option<AstNodeId>) {
         self.push_instruction_to(self.current_node_ix, kind, node_id);

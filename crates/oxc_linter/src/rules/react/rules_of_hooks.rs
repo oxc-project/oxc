@@ -2,11 +2,12 @@ use oxc_ast::{
     ast::{ArrowFunctionExpression, Function},
     AstKind,
 };
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    control_flow::graph::{algo, visit::Control},
-    AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, InstructionKind,
+use oxc_cfg::{
+    graph::{algo, visit::Control},
+    EdgeType, ErrorEdgeKind, InstructionKind,
 };
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{AstNodeId, AstNodes};
 use oxc_span::{Atom, CompactStr};
 use oxc_syntax::operator::AssignmentOperator;
 

@@ -40,6 +40,7 @@ impl<'a> Ctx<'a> {
 }
 
 pub trait CtxCursor {
+    #![allow(clippy::return_self_not_must_use)]
     /// Marks the break jump position in the current context.
     fn mark_break(self, jmp_pos: BasicBlockId) -> Self;
     /// Marks the continue jump position in the current context.

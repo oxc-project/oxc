@@ -2,18 +2,17 @@ use oxc_ast::{
     ast::{BreakStatement, ContinueStatement},
     AstKind,
 };
-use oxc_syntax::node::AstNodeId;
-use petgraph::{
-    dot::{Config, Dot},
-    visit::EdgeRef,
-};
-
-use crate::{
-    AstNode, AstNodes, BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind,
+use oxc_cfg::{
+    graph::{
+        dot::{Config, Dot},
+        visit::EdgeRef,
+    },
+    BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind, IterationInstructionKind,
     LabeledInstruction, ReturnInstructionKind,
 };
+use oxc_syntax::node::AstNodeId;
 
-use super::IterationInstructionKind;
+use crate::{AstNode, AstNodes};
 
 pub trait DisplayDot {
     fn display_dot(&self) -> String;
@@ -46,67 +45,6 @@ impl<'a, 'b> DebugDotContext<'a, 'b> {
 impl<'a, 'b> From<&'b AstNodes<'a>> for DebugDotContext<'a, 'b> {
     fn from(value: &'b AstNodes<'a>) -> Self {
         Self(value)
-    }
-}
-
-impl DisplayDot for ControlFlowGraph {
-    fn display_dot(&self) -> String {
-        format!(
-            "{:?}",
-            Dot::with_attr_getters(
-                &self.graph,
-                &[Config::EdgeNoLabel, Config::NodeNoLabel],
-                &|_graph, edge| {
-                    let weight = edge.weight();
-                    let label = format!("label = \"{weight:?}\" ");
-                    if matches!(weight, EdgeType::Unreachable)
-                        || self.basic_block(edge.source()).unreachable
-                    {
-                        format!("{label}, style = \"dotted\" ")
-                    } else {
-                        label
-                    }
-                },
-                &|_graph, node| format!(
-                    "label = {:?} ",
-                    self.basic_blocks[*node.1].display_dot().trim()
-                ),
-            )
-        )
-    }
-}
-
-impl DisplayDot for BasicBlock {
-    fn display_dot(&self) -> String {
-        self.instructions().iter().fold(String::new(), |mut acc, it| {
-            acc.push_str(it.display_dot().as_str());
-            acc.push('\n');
-            acc
-        })
-    }
-}
-
-impl DisplayDot for Instruction {
-    fn display_dot(&self) -> String {
-        match self.kind {
-            InstructionKind::Statement => "statement",
-            InstructionKind::Unreachable => "unreachable",
-            InstructionKind::Throw => "throw",
-            InstructionKind::Condition => "condition",
-            InstructionKind::Iteration(IterationInstructionKind::Of) => "iteration <of>",
-            InstructionKind::Iteration(IterationInstructionKind::In) => "iteration <in>",
-            InstructionKind::Break(LabeledInstruction::Labeled) => "break <label>",
-            InstructionKind::Break(LabeledInstruction::Unlabeled) => "break",
-            InstructionKind::Continue(LabeledInstruction::Labeled) => "continue <label>",
-            InstructionKind::Continue(LabeledInstruction::Unlabeled) => "continue",
-            InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) => {
-                "return <implicit undefined>"
-            }
-            InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined) => {
-                "return <value>"
-            }
-        }
-        .to_string()
     }
 }
 
@@ -166,7 +104,7 @@ impl DebugDot for Instruction {
                     "Iteration({} {} {})",
                     self.node_id.map_or("None".to_string(), |id| ctx.debug_ast_kind(id)),
                     if matches!(kind, IterationInstructionKind::Of) { "of" } else { "in" },
-                    // TODO: at this point we can't evaluate this note. needs access to the graph information.
+                    // TODO: at this point we can't evaluate this node. needs access to the graph information.
                     "expr"
                 )
             }

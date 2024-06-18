@@ -1,4 +1,5 @@
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNodeId;
 
 use std::collections::{HashMap, HashSet};
 
@@ -6,11 +7,11 @@ use oxc_ast::{
     ast::{Expression, MethodDefinitionKind},
     AstKind,
 };
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    control_flow::graph::visit::{neighbors_filtered_by_edge_weight, EdgeRef},
-    AstNodeId, BasicBlockId, ControlFlowGraph, EdgeType,
+use oxc_cfg::{
+    graph::visit::{neighbors_filtered_by_edge_weight, EdgeRef},
+    BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
 };
+use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -187,8 +188,7 @@ impl NoThisBeforeSuper {
                     if cfg.graph.edges(*basic_block_id).any(|it| {
                         matches!(
                             it.weight(),
-                            EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit)
-                                | EdgeType::Finalize
+                            EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize
                         )
                     }) {
                         (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
@@ -227,8 +227,7 @@ impl NoThisBeforeSuper {
             DefinitelyCallsThisBeforeSuper::No => false,
             DefinitelyCallsThisBeforeSuper::Maybe(id) => cfg.graph.edges(id).any(|edge| {
                 let weight = edge.weight();
-                let is_explicit_error =
-                    matches!(weight, EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit));
+                let is_explicit_error = matches!(weight, EdgeType::Error(ErrorEdgeKind::Explicit));
                 if is_explicit_error || matches!(weight, EdgeType::Finalize) {
                     Self::check_for_violation(
                         cfg,

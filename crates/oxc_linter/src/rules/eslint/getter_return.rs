@@ -7,11 +7,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    control_flow::graph::visit::neighbors_filtered_by_edge_weight, EdgeType, InstructionKind,
+use oxc_cfg::{
+    graph::visit::neighbors_filtered_by_edge_weight, EdgeType, InstructionKind,
     ReturnInstructionKind,
 };
+use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};

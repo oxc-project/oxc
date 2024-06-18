@@ -11,14 +11,16 @@ mod reference;
 mod scope;
 mod symbol;
 
-pub mod control_flow;
+pub mod dot;
 
 use std::sync::Arc;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
+pub use node::{AstNode, AstNodeId, AstNodes};
 use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
+use oxc_cfg::ControlFlowGraph;
 use oxc_span::SourceType;
 pub use oxc_syntax::{
     module_record::ModuleRecord,
@@ -28,12 +30,6 @@ pub use oxc_syntax::{
 use rustc_hash::FxHashSet;
 
 pub use crate::{
-    control_flow::{
-        BasicBlock, BasicBlockId, ControlFlowGraph, DebugDot, DebugDotContext, DisplayDot,
-        EdgeType, ErrorEdgeKind, Instruction, InstructionKind, LabeledInstruction,
-        ReturnInstructionKind,
-    },
-    node::{AstNode, AstNodeId, AstNodes},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
     symbol::SymbolTable,

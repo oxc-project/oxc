@@ -5,15 +5,15 @@ use oxc_ast::{
     ast::{Statement, SwitchCase, SwitchStatement},
     AstKind,
 };
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    control_flow::graph::{
+use oxc_cfg::{
+    graph::{
         visit::{neighbors_filtered_by_edge_weight, EdgeRef},
         Direction,
     },
     BasicBlockId, EdgeType, ErrorEdgeKind, InstructionKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
