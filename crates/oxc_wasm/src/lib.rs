@@ -263,10 +263,19 @@ impl Oxc {
         let program = allocator.alloc(program);
 
         if minifier_options.compress() || minifier_options.mangle() {
+            let compress_options = minifier_options.compress_options();
             let options = MinifierOptions {
                 mangle: minifier_options.mangle(),
                 compress: if minifier_options.compress() {
-                    CompressOptions::default()
+                    CompressOptions {
+                        booleans: compress_options.booleans(),
+                        drop_console: compress_options.drop_console(),
+                        drop_debugger: compress_options.drop_debugger(),
+                        evaluate: compress_options.evaluate(),
+                        join_vars: compress_options.join_vars(),
+                        loops: compress_options.loops(),
+                        typeofs: compress_options.typeofs(),
+                    }
                 } else {
                     CompressOptions::all_false()
                 },
