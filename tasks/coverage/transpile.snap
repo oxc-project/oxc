@@ -40,7 +40,7 @@ export const obj = {
 import {Record} from './a';
 export type Foo<K extends string> = Record<K, number>;
 export declare const obj: {
-	 doThing<K extends string>(_k: K): Foo<K>;
+	doThing<K extends string>(_k: K): Foo<K>;
 };
 
 #### "declarationSelfReferentialConstraint.ts" ####
@@ -51,7 +51,7 @@ export const object = {
 
 //// [declarationSelfReferentialConstraint.d.ts] ////
 export declare const object: {
-	 foo: <T extends ((Set<T>) | ([]))>() => void;
+	foo: <T extends ((Set<T>) | ([]))>() => void;
 };
 
 #### "declarationTypeParameterConstraint.ts" ####
@@ -66,30 +66,30 @@ export const object = {
 //// [declarationTypeParameterConstraint.d.ts] ////
 import {type In,type Out,type Base} from './a';
 export declare const object: {
-	 doThing<T extends Base>(_t: T, _in: In[T]): Out[T];
+	doThing<T extends Base>(_t: T, _in: In[T]): Out[T];
 };
 
 #### "declarationTypeWithComputedName.ts" ####
 //// [declarationTypeWithComputedName.ts] ////
 import {Foo} from './a';
 export type Bar = {
-	 [Foo.A]: 1;
-	 [Foo.B]: 2;
+	[Foo.A]: 1;
+	[Foo.B]: 2;
 };
 export const valBar = ((null as any) as {
-	 [Foo.A]: 1;
-	 [Foo.B]: 2;
+	[Foo.A]: 1;
+	[Foo.B]: 2;
 });
 
 //// [declarationTypeWithComputedName.d.ts] ////
 import {Foo} from './a';
 export type Bar = {
-	 [Foo.A]: 1;
-	 [Foo.B]: 2;
+	[Foo.A]: 1;
+	[Foo.B]: 2;
 };
 export declare const valBar: {
-	 [Foo.A]: 1;
-	 [Foo.B]: 2;
+	[Foo.A]: 1;
+	[Foo.B]: 2;
 };
 
 #### "declarationUnresolvedGlobalReferencesNoErrors.ts" ####
@@ -101,7 +101,7 @@ export const x2: typeof missingGlobalValue = null;
 export const fn3 = (a: typeof missingGlobalValue): typeof missingGlobalValue => null;
 export const fn4 = (a: typeof missingGlobalValue) => (null as typeof missingGlobalValue);
 export const o: {
-	 [missingGlobalValue]: string;
+	[missingGlobalValue]: string;
 } = null;
 
 //// [declarationUnresolvedGlobalReferencesNoErrors.d.ts] ////
@@ -112,7 +112,7 @@ export declare const x2: typeof missingGlobalValue;
 export declare const fn3: (a: typeof missingGlobalValue) => typeof missingGlobalValue;
 export declare const fn4: (a: typeof missingGlobalValue) => typeof missingGlobalValue;
 export declare const o: {
-	 [missingGlobalValue]: string;
+	[missingGlobalValue]: string;
 };
 
 #### "declarationUnresolvedTypeReference.ts" ####
@@ -151,10 +151,11 @@ export declare const fn4: (a: typeof missingGlobalValue) => typeof missingGlobal
 //// [declarationsSimple.ts] ////
 export const c: number = 1;
 export interface A {
-	 x: number;
+	x: number;
 }
+
 let expr: {
-	 x: number;
+	x: number;
 };
 expr = {
 	x: 12
@@ -164,9 +165,10 @@ export default expr;
 //// [declarationsSimple.d.ts] ////
 export declare const c: number;
 export interface A {
-	 x: number;
+	x: number;
 }
+
 declare let expr: {
-	 x: number;
+	x: number;
 };
 export default expr;

@@ -363,9 +363,9 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
-            p.print_directives_and_statements_with_semicolon_order(None, &stmt.body, ctx, true);
-            p.needs_semicolon = false;
+            p.print_directives_and_statements(None, &stmt.body, ctx);
         });
+        self.needs_semicolon = false;
     }
 
     fn print_block<T: Gen<MINIFY>>(
@@ -474,12 +474,11 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.print(quote as u8);
     }
 
-    fn print_directives_and_statements_with_semicolon_order(
+    fn print_directives_and_statements(
         &mut self,
         directives: Option<&[Directive]>,
         statements: &[Statement<'_>],
         ctx: Context,
-        print_semicolon_first: bool,
     ) {
         if let Some(directives) = directives {
             if directives.is_empty() {
@@ -491,20 +490,14 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
                 }
             } else {
                 for directive in directives {
-                    self.print_indent();
                     directive.gen(self, ctx);
-                    self.print_soft_newline();
+                    self.print_semicolon_if_needed();
                 }
             }
         }
         for stmt in statements {
-            if print_semicolon_first {
-                self.print_semicolon_if_needed();
-                stmt.gen(self, ctx);
-            } else {
-                stmt.gen(self, ctx);
-                self.print_semicolon_if_needed();
-            }
+            self.print_semicolon_if_needed();
+            stmt.gen(self, ctx);
         }
     }
 

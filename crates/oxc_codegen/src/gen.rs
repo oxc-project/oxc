@@ -59,12 +59,7 @@ fn print_directives_and_statements<const MINIFY: bool>(
     statements: &[Statement<'_>],
     ctx: Context,
 ) {
-    p.print_directives_and_statements_with_semicolon_order(
-        Some(directives),
-        statements,
-        ctx,
-        false,
-    );
+    p.print_directives_and_statements(Some(directives), statements, ctx);
 }
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Hashbang<'a> {
@@ -77,13 +72,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Hashbang<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Directive<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.add_source_mapping(self.span.start);
+        p.print_indent();
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/main/packages/babel-generator/src/generators/base.ts#L64
         p.wrap_quote(self.directive.as_str(), |p, _| {
             p.print_str(self.directive.as_bytes());
         });
-        p.print_semicolon();
+        p.print_semicolon_after_statement();
     }
 }
 
@@ -108,10 +104,41 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
             Self::TryStatement(stmt) => stmt.gen(p, ctx),
             Self::WhileStatement(stmt) => stmt.gen(p, ctx),
             Self::WithStatement(stmt) => stmt.gen(p, ctx),
-            match_module_declaration!(Self) => self.to_module_declaration().gen(p, ctx),
-            match_declaration!(Self) => {
+
+            Self::ImportDeclaration(decl) => decl.gen(p, ctx),
+            Self::ExportAllDeclaration(decl) => decl.gen(p, ctx),
+            Self::ExportDefaultDeclaration(decl) => decl.gen(p, ctx),
+            Self::ExportNamedDeclaration(decl) => decl.gen(p, ctx),
+            Self::TSExportAssignment(decl) => decl.gen(p, ctx),
+            Self::TSNamespaceExportDeclaration(decl) => decl.gen(p, ctx),
+
+            Self::VariableDeclaration(decl) => {
                 p.print_indent();
-                self.to_declaration().gen(p, ctx);
+                decl.gen(p, ctx);
+                p.print_semicolon_after_statement();
+            }
+            Self::FunctionDeclaration(decl) => {
+                p.print_indent();
+                decl.gen(p, ctx);
+                p.print_soft_newline();
+            }
+            Self::ClassDeclaration(decl) => decl.gen(p, ctx),
+            Self::UsingDeclaration(declaration) => declaration.gen(p, ctx),
+            Self::TSModuleDeclaration(decl) => {
+                decl.gen(p, ctx);
+                p.print_soft_newline();
+            }
+            Self::TSTypeAliasDeclaration(decl) => {
+                p.print_indent();
+                decl.gen(p, ctx);
+                p.print_semicolon_after_statement();
+            }
+            Self::TSInterfaceDeclaration(decl) => decl.gen(p, ctx),
+            Self::TSEnumDeclaration(decl) => decl.gen(p, ctx),
+            Self::TSImportEqualsDeclaration(decl) => {
+                p.print_indent();
+                decl.gen(p, ctx);
+                p.print_semicolon_after_statement();
             }
         }
     }
@@ -529,68 +556,6 @@ impl<const MINIFY: bool> Gen<MINIFY> for DebuggerStatement {
     }
 }
 
-impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleDeclaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        match self {
-            Self::ImportDeclaration(decl) => decl.gen(p, ctx),
-            Self::ExportAllDeclaration(decl) => decl.gen(p, ctx),
-            Self::ExportDefaultDeclaration(decl) => decl.gen(p, ctx),
-            Self::ExportNamedDeclaration(decl) => decl.gen(p, ctx),
-            Self::TSExportAssignment(decl) => decl.gen(p, ctx),
-            Self::TSNamespaceExportDeclaration(decl) => decl.gen(p, ctx),
-        }
-    }
-}
-
-impl<'a, const MINIFY: bool> Gen<MINIFY> for Declaration<'a> {
-    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        match self {
-            Self::VariableDeclaration(decl) => {
-                decl.gen(p, ctx);
-                p.print_semicolon_after_statement();
-            }
-            Self::FunctionDeclaration(decl) => {
-                p.print_space_before_identifier();
-                decl.gen(p, ctx);
-                p.print_soft_newline();
-            }
-            Self::ClassDeclaration(decl) => {
-                p.print_space_before_identifier();
-                decl.gen(p, ctx);
-                p.print_soft_newline();
-            }
-            Self::UsingDeclaration(declaration) => {
-                p.print_space_before_identifier();
-                declaration.gen(p, ctx);
-                p.print_soft_newline();
-            }
-            Self::TSModuleDeclaration(decl) => decl.gen(p, ctx),
-            Self::TSTypeAliasDeclaration(decl) => {
-                if decl.modifiers.contains(ModifierKind::Export) {
-                    p.print_str(b"export ");
-                }
-                if decl.modifiers.contains(ModifierKind::Declare) {
-                    p.print_str(b"declare ");
-                }
-                p.print_str(b"type");
-                p.print_space_before_identifier();
-                decl.id.gen(p, ctx);
-                if let Some(type_parameters) = &decl.type_parameters {
-                    type_parameters.gen(p, ctx);
-                }
-                p.print_soft_space();
-                p.print_str(b"=");
-                p.print_soft_space();
-                decl.type_annotation.gen(p, ctx);
-                p.print_semicolon_after_statement();
-            }
-            Declaration::TSInterfaceDeclaration(decl) => decl.gen(p, ctx),
-            Declaration::TSEnumDeclaration(decl) => decl.gen(p, ctx),
-            Declaration::TSImportEqualsDeclaration(decl) => decl.gen(p, ctx),
-        }
-    }
-}
-
 impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if self.is_await {
@@ -635,6 +600,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
         p.print_list(&self.declarations, ctx);
     }
 }
+
 impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.id.gen(p, ctx);
@@ -692,12 +658,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_curly_braces(self.span, self.is_empty(), |p| {
-            p.print_directives_and_statements_with_semicolon_order(
-                Some(&self.directives),
-                &self.statements,
-                ctx,
-                true,
-            );
+            p.print_directives_and_statements(Some(&self.directives), &self.statements, ctx);
         });
         p.needs_semicolon = false;
     }
@@ -883,7 +844,28 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
         }
         match &self.declaration {
             Some(decl) => {
-                decl.gen(p, ctx);
+                match decl {
+                    Declaration::VariableDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::FunctionDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::ClassDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::UsingDeclaration(declaration) => declaration.gen(p, ctx),
+                    Declaration::TSModuleDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::TSTypeAliasDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::TSInterfaceDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::TSEnumDeclaration(decl) => decl.gen(p, ctx),
+                    Declaration::TSImportEqualsDeclaration(decl) => decl.gen(p, ctx),
+                }
+                if matches!(
+                    decl,
+                    Declaration::VariableDeclaration(_)
+                        | Declaration::TSTypeAliasDeclaration(_)
+                        | Declaration::TSImportEqualsDeclaration(_)
+                ) {
+                    p.print_semicolon_after_statement();
+                } else {
+                    p.print_soft_newline();
+                    p.needs_semicolon = false;
+                }
             }
             None => {
                 p.print(b'{');
@@ -968,7 +950,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportAllDeclaration<'a> {
             p.print_hard_space();
         }
         self.with_clause.gen(p, ctx);
-
         p.print_semicolon_after_statement();
     }
 }
@@ -2786,7 +2767,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSMappedType<'a> {
             p.print_soft_space();
             type_annotation.gen(p, ctx);
         }
-        p.print_semicolon_if_needed();
         p.print_str(b"}");
     }
 }
@@ -2961,7 +2941,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSFunctionType<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.print_soft_space();
         match self {
             Self::TSIndexSignature(signature) => signature.gen(p, ctx),
             Self::TSPropertySignature(signature) => {
@@ -3225,8 +3204,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_curly_braces(self.span, self.body.is_empty(), |p| {
             for item in &self.body {
-                item.gen(p, ctx);
                 p.print_semicolon_if_needed();
+                item.gen(p, ctx);
             }
         });
     }
@@ -3234,14 +3213,22 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleBlock<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAliasDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.print_str(b"type ");
+        if self.modifiers.contains(ModifierKind::Export) {
+            p.print_str(b"export ");
+        }
+        if self.modifiers.contains(ModifierKind::Declare) {
+            p.print_str(b"declare ");
+        }
+        p.print_str(b"type");
+        p.print_space_before_identifier();
         self.id.gen(p, ctx);
         if let Some(type_parameters) = &self.type_parameters {
             type_parameters.gen(p, ctx);
         }
-        p.print_str(b" = ");
+        p.print_soft_space();
+        p.print_str(b"=");
+        p.print_soft_space();
         self.type_annotation.gen(p, ctx);
-        p.print_semicolon_after_statement();
     }
 }
 
@@ -3263,9 +3250,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceDeclaration<'a> {
         p.print_curly_braces(self.body.span, self.body.body.is_empty(), |p| {
             for item in &self.body.body {
                 p.print_indent();
-                p.print_semicolon_if_needed();
                 item.gen(p, ctx);
-                p.print_semicolon_after_statement();
+                p.print_semicolon();
+                p.print_soft_newline();
             }
         });
         if MINIFY {
@@ -3363,7 +3350,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportEqualsDeclaration<'a> {
         self.id.gen(p, ctx);
         p.print_str(b" = ");
         self.module_reference.gen(p, ctx);
-        p.print_semicolon_after_statement();
     }
 }
 
