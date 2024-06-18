@@ -18,6 +18,7 @@ pub struct SemanticTester<'a> {
     allocator: Allocator,
     source_type: SourceType,
     source_text: &'a str,
+    cfg: bool,
 }
 
 impl<'a> SemanticTester<'a> {
@@ -36,7 +37,7 @@ impl<'a> SemanticTester<'a> {
     }
 
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        Self { allocator: Allocator::default(), source_type, source_text }
+        Self { allocator: Allocator::default(), source_type, source_text, cfg: false }
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
@@ -56,6 +57,12 @@ impl<'a> SemanticTester<'a> {
     #[must_use]
     pub fn with_module(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_module(yes);
+        self
+    }
+
+    #[must_use]
+    pub fn with_cfg(mut self, yes: bool) -> Self {
+        self.cfg = yes;
         self
     }
 
@@ -83,6 +90,7 @@ impl<'a> SemanticTester<'a> {
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
             .build_module_record(PathBuf::new(), program)
+            .with_cfg(self.cfg)
             .build(program);
 
         if !semantic_ret.errors.is_empty() {

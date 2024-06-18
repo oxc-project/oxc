@@ -115,7 +115,7 @@ impl<'a> SemanticBuilder<'a> {
             label_builder: LabelBuilder::default(),
             jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
-            cfg: Some(ControlFlowGraphBuilder::default()),
+            cfg: None,
             class_table_builder: ClassTableBuilder::new(),
             ast_nodes_records: Vec::new(),
         }
