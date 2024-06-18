@@ -11,11 +11,6 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
-use rayon::prelude::*;
-use similar::{ChangeTag, TextDiff};
-use tokio::runtime::Runtime;
-use walkdir::WalkDir;
-
 use oxc_allocator::Allocator;
 use oxc_ast::Trivias;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
@@ -23,6 +18,10 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};
 use oxc_tasks_common::{normalize_path, Snapshot};
+use rayon::prelude::*;
+use similar::{ChangeTag, TextDiff};
+use tokio::runtime::Runtime;
+use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
 

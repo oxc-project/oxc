@@ -121,6 +121,7 @@ impl Query {
             Query::Multiple(s) => s.join(","),
         }
     }
+
     fn exec(&self) -> QueryResult {
         fn query<T>(s: &[T]) -> QueryResult
         where

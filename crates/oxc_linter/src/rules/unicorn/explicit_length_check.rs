@@ -25,7 +25,9 @@ fn none_zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnost
 }
 
 fn zero(span0: Span, x1: &str, x2: &str, x3: Option<String>) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!("eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is zero."));
+    let mut d = OxcDiagnostic::warn(format!(
+        "eslint-plugin-unicorn(explicit-length-check): Use `.{x1} {x2}` when checking {x1} is zero."
+    ));
     if let Some(x) = x3 {
         d = d.with_help(x);
     }
@@ -272,6 +274,7 @@ impl Rule for ExplicitLengthCheck {
             };
         }
     }
+
     fn from_configuration(value: serde_json::Value) -> Self {
         Self {
             non_zero: value
@@ -333,7 +336,10 @@ fn test() {
         // ("const A_NUMBER = 2; const x = foo.length || A_NUMBER", None),
         ("class A { a(){ if(this.length); while(!this.size || foo);}}", None),
         // Use of .size but not in conditional "test" position
-        ("const totalCount = tests.reduce((count, test) => count + (test.enabled ? test.maxSize : test.size), 0)", None),
+        (
+            "const totalCount = tests.reduce((count, test) => count + (test.enabled ? test.maxSize : test.size), 0)",
+            None,
+        ),
     ];
 
     let fail = vec![

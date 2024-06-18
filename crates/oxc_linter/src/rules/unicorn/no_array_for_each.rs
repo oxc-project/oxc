@@ -3,13 +3,11 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use phf::phf_set;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
-
-use phf::phf_set;
 
 fn no_array_for_each_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`")

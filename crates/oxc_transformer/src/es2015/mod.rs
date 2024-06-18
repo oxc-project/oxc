@@ -1,13 +1,13 @@
 mod arrow_functions;
 mod options;
 
+use std::rc::Rc;
+
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::TraverseCtx;
-use std::rc::Rc;
 
 use crate::context::Ctx;
 

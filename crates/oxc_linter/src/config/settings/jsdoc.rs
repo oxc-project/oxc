@@ -102,6 +102,7 @@ impl JSDocPluginSettings {
             _ => None,
         }
     }
+
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if replacement found or default aliased
     pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<String> {
@@ -144,6 +145,7 @@ impl JSDocPluginSettings {
             }
         }
     }
+
     /// Only for `check-tag-names` rule
     /// Return all user replacement tag names
     pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
@@ -195,8 +197,9 @@ enum TagNamePreference {
 
 #[cfg(test)]
 mod test {
-    use super::JSDocPluginSettings;
     use serde::Deserialize;
+
+    use super::JSDocPluginSettings;
 
     #[test]
     fn parse_defaults() {

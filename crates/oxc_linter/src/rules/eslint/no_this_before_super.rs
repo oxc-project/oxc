@@ -1,6 +1,3 @@
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::AstNodeId;
-
 use std::collections::{HashMap, HashSet};
 
 use oxc_ast::{
@@ -11,7 +8,9 @@ use oxc_cfg::{
     graph::visit::{neighbors_filtered_by_edge_weight, EdgeRef},
     BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -268,7 +267,7 @@ fn test() {
         ("class A extends B { }", None),
         ("class A extends B { constructor() { super(); } }", None),
         (
-        "
+            "
         function f() {
             try {
                 return a();
@@ -284,34 +283,57 @@ fn test() {
                 this.b();
             }
         }
-        ", None),
+        ",
+            None,
+        ),
         ("class A extends B { constructor() { super(); this.c = this.d; } }", None),
         ("class A extends B { constructor() { super(); this.c(); } }", None),
         ("class A extends B { constructor() { super(); super.c(); } }", None),
-        ("class A extends B { constructor() { if (true) { super(); } else { super(); } this.c(); } }", None),
+        (
+            "class A extends B { constructor() { if (true) { super(); } else { super(); } this.c(); } }",
+            None,
+        ),
         ("class A extends B { constructor() { foo = super(); this.c(); } }", None),
         ("class A extends B { constructor() { foo += super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo |= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo &= super().a; this.c(); } }", None),
         // allows `this`/`super` in nested executable scopes, even if before `super()`.
-        ("class A extends B { constructor() { class B extends C { constructor() { super(); this.d = 0; } } super(); } }", None),
-        ("class A extends B { constructor() { var B = class extends C { constructor() { super(); this.d = 0; } }; super(); } }", None),
+        (
+            "class A extends B { constructor() { class B extends C { constructor() { super(); this.d = 0; } } super(); } }",
+            None,
+        ),
+        (
+            "class A extends B { constructor() { var B = class extends C { constructor() { super(); this.d = 0; } }; super(); } }",
+            None,
+        ),
         ("class A extends B { constructor() { function c() { this.d(); } super(); } }", None),
-        ("class A extends B { constructor() { var c = function c() { this.d(); }; super(); } }", None),
+        (
+            "class A extends B { constructor() { var c = function c() { this.d(); }; super(); } }",
+            None,
+        ),
         ("class A extends B { constructor() { var c = () => this.d(); super(); } }", None),
         // ignores out of constructors.
         ("class A { b() { this.c = 0; } }", None),
         ("class A extends B { c() { this.d = 0; } }", None),
         ("function a() { this.b = 0; }", None),
         // multi code path.
-        ("class A extends B { constructor() { if (a) { super(); this.a(); } else { super(); this.b(); } } }", None),
+        (
+            "class A extends B { constructor() { if (a) { super(); this.a(); } else { super(); this.b(); } } }",
+            None,
+        ),
         ("class A extends B { constructor() { if (a) super(); else super(); this.a(); } }", None),
         ("class A extends B { constructor() { try { super(); } finally {} this.a(); } }", None),
         // https://github.com/eslint/eslint/issues/5261
-        ("class A extends B { constructor(a) { super(); for (const b of a) { this.a(); } } }", None),
+        (
+            "class A extends B { constructor(a) { super(); for (const b of a) { this.a(); } } }",
+            None,
+        ),
         ("class A extends B { constructor(a) { for (const b of a) { foo(b); } super(); } }", None),
         // https://github.com/eslint/eslint/issues/5319
-        ("class A extends B { constructor(a) { super(); this.a = a && function(){} && this.foo; } }", None),
+        (
+            "class A extends B { constructor(a) { super(); this.a = a && function(){} && this.foo; } }",
+            None,
+        ),
         // https://github.com/eslint/eslint/issues/5394
         (
             r"class A extends Object {
@@ -365,8 +387,14 @@ fn test() {
         ("class A extends B { constructor() { super(this.c()); } }", None),
         ("class A extends B { constructor() { super(super.c()); } }", None),
         // // even if is nested, reports correctly.
-        ("class A extends B { constructor() { class C extends D { constructor() { super(); this.e(); } } this.f(); super(); } }", None),
-        ("class A extends B { constructor() { class C extends D { constructor() { this.e(); super(); } } super(); this.f(); } }", None),
+        (
+            "class A extends B { constructor() { class C extends D { constructor() { super(); this.e(); } } this.f(); super(); } }",
+            None,
+        ),
+        (
+            "class A extends B { constructor() { class C extends D { constructor() { this.e(); super(); } } super(); this.f(); } }",
+            None,
+        ),
         // multi code path.
         ("class A extends B { constructor() { if (a) super(); this.a(); } }", None),
         ("class A extends B { constructor() { try { super(); } finally { this.a; } } }", None),
@@ -374,7 +402,10 @@ fn test() {
         ("class A extends B { constructor() { foo &&= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo ||= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo ??= super().a; this.c(); } }", None),
-        ("class A extends B { constructor() { if (foo) { if (bar) { } super(); } this.a(); }}", None),
+        (
+            "class A extends B { constructor() { if (foo) { if (bar) { } super(); } this.a(); }}",
+            None,
+        ),
         (
             "class A extends B {
                 constructor() {

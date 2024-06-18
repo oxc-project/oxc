@@ -1,7 +1,6 @@
+use oxc_coverage::AppArgs;
 use pico_args::Arguments;
 use rayon::ThreadPoolBuilder;
-
-use oxc_coverage::AppArgs;
 
 fn main() {
     let mut args = Arguments::from_env();

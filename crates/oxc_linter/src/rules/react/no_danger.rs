@@ -3,10 +3,8 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
-use oxc_span::GetSpan;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -92,7 +90,10 @@ fn test() {
         ("<div dangerouslySetInnerHTML={{ __html: \"\" }}></div>;", None),
         ("<button dangerouslySetInnerHTML={{ __html: \"baz\" }}>Foo</button>;", None),
         ("React.createElement(\"div\", { dangerouslySetInnerHTML: { __html: \"\" } });", None),
-        ("React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");", None),
+        (
+            "React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");",
+            None,
+        ),
     ];
 
     Tester::new(NoDanger::NAME, pass, fail).test_and_snapshot();

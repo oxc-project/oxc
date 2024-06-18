@@ -29,8 +29,7 @@ const ESLINT_TEST_PATH: &str =
 const JEST_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jest-community/eslint-plugin-jest/main/src/rules/__tests__";
 
-const TYPESCRIPT_ESLINT_TEST_PATH: &str =
-    "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/tests/rules";
+const TYPESCRIPT_ESLINT_TEST_PATH: &str = "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/tests/rules";
 
 const UNICORN_TEST_PATH: &str =
     "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";

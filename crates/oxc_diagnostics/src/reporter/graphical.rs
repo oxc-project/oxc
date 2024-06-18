@@ -1,8 +1,7 @@
 use std::io::{BufWriter, Stdout, Write};
 
-use crate::{Error, GraphicalReportHandler};
-
 use super::{writer, DiagnosticReporter};
+use crate::{Error, GraphicalReportHandler};
 
 pub struct GraphicalReporter {
     handler: GraphicalReportHandler,

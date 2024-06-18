@@ -126,7 +126,7 @@ pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &Sem
     for node in ctx.nodes.iter_parents(ctx.current_node_id).skip(1) {
         match node.kind() {
             AstKind::Program(_) | AstKind::TSModuleBlock(_) | AstKind::TSModuleDeclaration(_) => {
-                break
+                break;
             }
             AstKind::ExportNamedDeclaration(_) | AstKind::ModuleDeclaration(_) => {
                 // export namespace N {}

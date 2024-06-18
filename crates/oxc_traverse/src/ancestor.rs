@@ -11,7 +11,6 @@
 use std::cell::Cell;
 
 use memoffset::offset_of;
-
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;

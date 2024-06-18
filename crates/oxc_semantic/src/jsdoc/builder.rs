@@ -1,10 +1,11 @@
 use std::collections::BTreeMap;
 
-use super::parser::JSDoc;
-use crate::jsdoc::JSDocFinder;
 use oxc_ast::{AstKind, CommentKind, Trivias};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
+
+use super::parser::JSDoc;
+use crate::jsdoc::JSDocFinder;
 
 pub struct JSDocBuilder<'a> {
     source_text: &'a str,

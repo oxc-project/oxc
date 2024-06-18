@@ -33,8 +33,7 @@ pub use crate::{
 };
 use crate::{
     config::{OxlintEnv, OxlintGlobals, OxlintSettings},
-    fixer::Fix,
-    fixer::{Fixer, Message},
+    fixer::{Fix, Fixer, Message},
     rules::RuleEnum,
     table::RuleTable,
 };
@@ -153,8 +152,9 @@ mod test {
 
     #[test]
     fn test_schema_json() {
-        use project_root::get_project_root;
         use std::fs;
+
+        use project_root::get_project_root;
         let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
         let schema = schemars::schema_for!(OxlintConfig);
         let json = serde_json::to_string_pretty(&schema).unwrap();

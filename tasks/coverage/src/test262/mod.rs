@@ -4,12 +4,11 @@ use std::path::{Path, PathBuf};
 
 use oxc_span::SourceType;
 
+pub use self::meta::{MetaData, Phase, TestFlag};
 use crate::{
     project_root,
     suite::{Case, Suite, TestResult},
 };
-
-pub use self::meta::{MetaData, Phase, TestFlag};
 
 const FIXTURES_PATH: &str = "tasks/coverage/test262/test";
 
@@ -46,6 +45,7 @@ impl<T: Case> Suite<T> for Test262Suite<T> {
     fn get_test_cases(&self) -> &Vec<T> {
         &self.test_cases
     }
+
     fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
         &mut self.test_cases
     }

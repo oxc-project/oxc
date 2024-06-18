@@ -127,8 +127,9 @@ impl Rule for NoPageCustomFont {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let filename = Some(PathBuf::from("pages/_document.jsx"));
     let pass = vec![

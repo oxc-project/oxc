@@ -10,9 +10,10 @@ use oxc_ast::{
 use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
 
-use crate::context::LintContext;
-
-use crate::utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode};
+use crate::{
+    context::LintContext,
+    utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+};
 
 pub fn parse_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
@@ -349,6 +350,7 @@ impl<'a> ParsedExpectFnCall<'a> {
         let matcher_index = self.matcher_index?;
         self.members.get(matcher_index)
     }
+
     pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
         self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
     }
@@ -392,12 +394,15 @@ impl<'a> KnownMemberExpressionProperty<'a> {
             }
         }
     }
+
     pub fn is_name_equal(&self, name: &str) -> bool {
         self.name().map_or(false, |n| n == name)
     }
+
     pub fn is_name_unequal(&self, name: &str) -> bool {
         !self.is_name_equal(name)
     }
+
     pub fn is_name_in_modifiers(&self, modifiers: &[ModifierName]) -> bool {
         self.name().map_or(false, |name| {
             if let Some(modifier_name) = ModifierName::from(name.as_ref()) {
@@ -429,6 +434,7 @@ impl<'a> MemberExpressionElement<'a> {
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
+
     pub fn is_string_literal(&self) -> bool {
         matches!(
             self,

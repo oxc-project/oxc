@@ -10,8 +10,10 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::annotation_comment::{gen_comment, get_leading_annotate_comment};
-use crate::{Codegen, Context, Operator};
+use crate::{
+    annotation_comment::{gen_comment, get_leading_annotate_comment},
+    Codegen, Context, Operator,
+};
 
 pub trait Gen<const MINIFY: bool> {
     fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}

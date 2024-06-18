@@ -3,7 +3,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -100,6 +99,7 @@ impl Rule for ValidExpect {
 
         Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await }))
     }
+
     fn run_once(&self, ctx: &LintContext) {
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
             self.run(possible_jest_node, ctx);
@@ -407,7 +407,10 @@ impl Message {
 fn test_1() {
     use crate::tester::Tester;
 
-    let pass = vec![("test('valid-expect', async () => { await Promise.race([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); })", None)];
+    let pass = vec![(
+        "test('valid-expect', async () => { await Promise.race([expect(Promise.reject(2)).rejects.not.toBeDefined(), expect(Promise.reject(2)).rejects.not.toBeDefined()]); })",
+        None,
+    )];
     let fail = vec![];
 
     Tester::new(ValidExpect::NAME, pass, fail).with_jest_plugin(true).test();

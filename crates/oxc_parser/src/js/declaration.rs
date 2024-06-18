@@ -3,9 +3,8 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
-use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
-
 use super::{VariableDeclarationContext, VariableDeclarationParent};
+use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {

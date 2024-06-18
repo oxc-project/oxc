@@ -27,6 +27,7 @@ impl<I: Idx, T> IdxSliceIndex<I, T> for I {
     fn get(self, slice: &IndexSlice<I, [T]>) -> Option<&Self::Output> {
         slice.raw.get(self.index())
     }
+
     #[inline]
     fn get_mut(self, slice: &mut IndexSlice<I, [T]>) -> Option<&mut Self::Output> {
         slice.raw.get_mut(self.index())
@@ -52,6 +53,7 @@ macro_rules! range_slice {
             fn get(self, slice: &IndexSlice<I, [T]>) -> Option<&Self::Output> {
                 slice.raw.get(self.into_range()).map(IndexSlice::new)
             }
+
             #[inline]
             fn get_mut(self, slice: &mut IndexSlice<I, [T]>) -> Option<&mut Self::Output> {
                 slice.raw.get_mut(self.into_range()).map(IndexSlice::new_mut)
@@ -61,6 +63,7 @@ macro_rules! range_slice {
             fn index(self, slice: &IndexSlice<I, [T]>) -> &Self::Output {
                 IndexSlice::new(&slice.raw[self.into_range()])
             }
+
             #[inline]
             fn index_mut(self, slice: &mut IndexSlice<I, [T]>) -> &mut Self::Output {
                 IndexSlice::new_mut(&mut slice.raw[self.into_range()])
@@ -115,6 +118,7 @@ impl<I: Idx, T> IdxSliceIndex<I, T> for usize {
     fn get(self, slice: &IndexSlice<I, [T]>) -> Option<&Self::Output> {
         slice.raw.get(self)
     }
+
     #[inline]
     fn get_mut(self, slice: &mut IndexSlice<I, [T]>) -> Option<&mut Self::Output> {
         slice.raw.get_mut(self)
@@ -124,6 +128,7 @@ impl<I: Idx, T> IdxSliceIndex<I, T> for usize {
     fn index(self, slice: &IndexSlice<I, [T]>) -> &Self::Output {
         &slice.raw[self]
     }
+
     #[inline]
     fn index_mut(self, slice: &mut IndexSlice<I, [T]>) -> &mut Self::Output {
         &mut slice.raw[self]
@@ -158,6 +163,7 @@ impl private_range_bounds::Sealed for core::ops::RangeFull {}
 
 impl<I: Idx> IdxRangeBounds<I> for core::ops::Range<I> {
     type Range = core::ops::Range<usize>;
+
     #[inline]
     fn into_range(self) -> Self::Range {
         self.start.index()..self.end.index()
@@ -166,6 +172,7 @@ impl<I: Idx> IdxRangeBounds<I> for core::ops::Range<I> {
 
 impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeFrom<I> {
     type Range = core::ops::RangeFrom<usize>;
+
     #[inline]
     fn into_range(self) -> Self::Range {
         self.start.index()..
@@ -174,6 +181,7 @@ impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeFrom<I> {
 
 impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeFull {
     type Range = core::ops::RangeFull;
+
     #[inline]
     fn into_range(self) -> Self::Range {
         self
@@ -182,6 +190,7 @@ impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeFull {
 
 impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeTo<I> {
     type Range = core::ops::RangeTo<usize>;
+
     #[inline]
     fn into_range(self) -> Self::Range {
         ..self.end.index()
@@ -190,6 +199,7 @@ impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeTo<I> {
 
 impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeInclusive<I> {
     type Range = core::ops::RangeInclusive<usize>;
+
     #[inline]
     fn into_range(self) -> Self::Range {
         self.start().index()..=self.end().index()
@@ -198,6 +208,7 @@ impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeInclusive<I> {
 
 impl<I: Idx> IdxRangeBounds<I> for core::ops::RangeToInclusive<I> {
     type Range = core::ops::RangeToInclusive<usize>;
+
     #[inline]
     fn into_range(self) -> Self::Range {
         ..=self.end.index()
@@ -210,6 +221,7 @@ where
     R: IdxSliceIndex<I, T>,
 {
     type Output = R::Output;
+
     #[inline]
     fn index(&self, index: R) -> &R::Output {
         index.index(self)

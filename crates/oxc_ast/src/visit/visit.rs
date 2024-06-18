@@ -6,10 +6,9 @@
 
 use oxc_allocator::Vec;
 use oxc_syntax::scope::ScopeFlags;
+use walk::*;
 
 use crate::{ast::*, ast_kind::AstKind};
-
-use walk::*;
 
 /// Syntax tree traversal
 pub trait Visit<'a>: Sized {

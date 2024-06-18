@@ -11,11 +11,9 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_traverse::TraverseCtx;
 
-use crate::context::Ctx;
-
-use self::{annotations::TypeScriptAnnotations, r#enum::TypeScriptEnum};
-
 pub use self::options::TypeScriptOptions;
+use self::{annotations::TypeScriptAnnotations, r#enum::TypeScriptEnum};
+use crate::context::Ctx;
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///

@@ -31,13 +31,12 @@ use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
+use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
 use crate::{
     array,
     doc::{Doc, DocBuilder, Group, Separator},
     format, group, hardline, indent, line, softline, space, ss, string, wrap, Prettier,
 };
-
-use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
 
 pub trait Format<'a> {
     #[must_use]

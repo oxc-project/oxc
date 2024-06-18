@@ -1,3 +1,5 @@
+use std::collections::{hash_map::HashMap, hash_set::HashSet};
+
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use oxc_ast::{
@@ -10,8 +12,6 @@ use oxc_span::{GetSpan, Span};
 use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
 use serde::Deserialize;
-use std::collections::hash_map::HashMap;
-use std::collections::hash_set::HashSet;
 
 use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
 
@@ -449,6 +449,7 @@ impl Rule for NoUnknownProperty {
             .and_then(|value| serde_json::from_value(value.clone()).ok())
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
 

@@ -7,14 +7,16 @@
 // run `cargo run -p oxc_parser --example multi-thread`
 // or `cargo watch -x "run -p oxc_parser --example multi-thread"`
 
-use std::sync::mpsc;
+use std::{
+    sync::{mpsc, Arc},
+    thread,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::{sync::Arc, thread};
 
 /// Wrap the AST for unsafe `Send` and `Sync`
 struct BumpaloProgram<'a>(Program<'a>);

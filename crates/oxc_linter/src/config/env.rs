@@ -32,9 +32,10 @@ impl Default for OxlintEnv {
 
 #[cfg(test)]
 mod test {
-    use super::OxlintEnv;
     use itertools::Itertools;
     use serde::Deserialize;
+
+    use super::OxlintEnv;
 
     #[test]
     fn test_parse_env() {

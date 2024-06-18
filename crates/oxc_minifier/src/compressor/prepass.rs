@@ -1,5 +1,4 @@
 use oxc_allocator::{Allocator, Vec};
-
 use oxc_ast::visit::walk_mut::{walk_expression_mut, walk_statements_mut};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};

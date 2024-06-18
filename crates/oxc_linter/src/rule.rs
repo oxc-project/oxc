@@ -78,7 +78,9 @@ impl RuleCategory {
             Self::Pedantic => "Lints which are rather strict or have occasional false positives.",
             Self::Perf => "Code that can be written to run faster.",
             Self::Style => "Code that should be written in a more idiomatic way.",
-            Self::Restriction => "Lints which prevent the use of language and library features. Must not be enabled as a whole, should be considered on a case-by-case basis before enabling.",
+            Self::Restriction => {
+                "Lints which prevent the use of language and library features. Must not be enabled as a whole, should be considered on a case-by-case basis before enabling."
+            }
             Self::Nursery => "New lints that are still under development.",
         }
     }

@@ -355,7 +355,10 @@ fn test() {
         ("function foo() { switch(foo) { case 0: {return;}\n case 1: {return;} } }", None),
         ("switch(foo) { case 0: case 1: {break;} }", None),
         ("switch(foo) { }", None),
-        ("switch(foo) { case 0: switch(bar) { case 2: break; } /* falls through */ case 1: break; }", None),
+        (
+            "switch(foo) { case 0: switch(bar) { case 2: break; } /* falls through */ case 1: break; }",
+            None,
+        ),
         ("function foo() { switch(foo) { case 1: return a; a++; }}", None),
         ("switch (foo) { case 0: a(); /* falls through */ default:  b(); /* comment */ }", None),
         ("switch (foo) { case 0: a(); /* falls through */ default: /* comment */ b(); }", None),
@@ -400,10 +403,22 @@ fn test() {
                 "commentPattern": "break[\\s\\w]+omitted"
             }])),
         ),
-        ("switch(foo) { case 0: \n\n\n case 1: b(); }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
-        ("switch(foo) { case 0: \n /* with comments */  \n case 1: b(); }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
-        ("switch (a) {\n case 1: ; break; \n case 3: }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
-        ("switch (a) {\n case 1: ; break; \n case 3: }", Some(serde_json::json!([{ "allowEmptyCase": false }]))),
+        (
+            "switch(foo) { case 0: \n\n\n case 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch(foo) { case 0: \n /* with comments */  \n case 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch (a) {\n case 1: ; break; \n case 3: }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch (a) {\n case 1: ; break; \n case 3: }",
+            Some(serde_json::json!([{ "allowEmptyCase": false }])),
+        ),
         (
             "switch(foo) { case 0: a(); break; /* falls through */ case 1: b(); }",
             Some(serde_json::json!([{

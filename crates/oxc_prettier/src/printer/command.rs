@@ -10,6 +10,7 @@ impl<'a> Command<'a> {
     pub fn new(indent: Indent, mode: Mode, doc: Doc<'a>) -> Self {
         Self { indent, mode, doc }
     }
+
     pub fn with_mode(mut self, mode: Mode) -> Self {
         self.mode = mode;
         self

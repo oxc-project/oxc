@@ -2,13 +2,12 @@ use std::borrow::Cow;
 
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
-use oxc_semantic::ReferenceFlag;
-use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
-
 use oxc_ast::ast::{
     match_expression, ArrayExpressionElement, BinaryExpression, Expression, NumericLiteral,
     ObjectProperty, ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
 };
+use oxc_semantic::ReferenceFlag;
+use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
 /// Returns true if this is a literal value. We define a literal value as any node that evaluates
@@ -265,6 +264,7 @@ impl NumberValue {
 
 impl std::ops::Add<Self> for NumberValue {
     type Output = Self;
+
     fn add(self, other: Self) -> Self {
         match self {
             Self::Number(num) => match other {
@@ -288,6 +288,7 @@ impl std::ops::Add<Self> for NumberValue {
 
 impl TryFrom<NumberValue> for f64 {
     type Error = ();
+
     fn try_from(value: NumberValue) -> Result<Self, Self::Error> {
         match value {
             NumberValue::Number(num) => Ok(num),

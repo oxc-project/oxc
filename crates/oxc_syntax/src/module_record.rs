@@ -3,9 +3,8 @@
 use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
 
 use dashmap::DashMap;
-use rustc_hash::{FxHashMap, FxHasher};
-
 use oxc_span::{CompactStr, Span};
+use rustc_hash::{FxHashMap, FxHasher};
 
 /// ESM Module Record
 ///
@@ -301,8 +300,9 @@ impl RequestedModule {
 
 #[cfg(test)]
 mod test {
-    use super::{ExportExportName, ExportLocalName, ImportImportName, NameSpan};
     use oxc_span::Span;
+
+    use super::{ExportExportName, ExportLocalName, ImportImportName, NameSpan};
 
     #[test]
     fn import_import_name() {

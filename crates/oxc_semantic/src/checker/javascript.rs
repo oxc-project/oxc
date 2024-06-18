@@ -1071,7 +1071,7 @@ fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) ->
         match ctx.nodes.kind(node_id) {
             AstKind::FormalParameter(_) => return true,
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
-                break
+                break;
             }
             _ => {}
         }

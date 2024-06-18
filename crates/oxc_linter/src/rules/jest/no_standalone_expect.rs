@@ -1,8 +1,7 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 use std::collections::HashMap;
 
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
@@ -76,6 +75,7 @@ impl Rule for NoStandaloneExpect {
 
         Self(Box::new(NoStandaloneExpectConfig { additional_test_block_functions }))
     }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let id_nodes_mapping = possible_jest_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
@@ -243,7 +243,10 @@ fn test() {
         ("expect.any(String)", None),
         ("expect.extend({})", None),
         ("describe('a test', () => { it('an it', () => {expect(1).toBe(1); }); });", None),
-        ("describe('a test', () => { it('an it', () => { const func = () => { expect(1).toBe(1); }; }); });", None),
+        (
+            "describe('a test', () => { it('an it', () => { const func = () => { expect(1).toBe(1); }; }); });",
+            None,
+        ),
         ("describe('a test', () => { const func = () => { expect(1).toBe(1); }; });", None),
         ("describe('a test', () => { function func() { expect(1).toBe(1); }; });", None),
         ("describe('a test', () => { const func = function(){ expect(1).toBe(1); }; });", None),
@@ -252,7 +255,10 @@ fn test() {
         ("const func = () => expect(1).toBe(1);", None),
         ("{}", None),
         ("it.each([1, true])('trues', value => { expect(value).toBe(true); });", None),
-        ("it.each([1, true])('trues', value => { expect(value).toBe(true); }); it('an it', () => { expect(1).toBe(1) });", None),
+        (
+            "it.each([1, true])('trues', value => { expect(value).toBe(true); }); it('an it', () => { expect(1).toBe(1) });",
+            None,
+        ),
         (
             "
                 it.each`
@@ -266,7 +272,10 @@ fn test() {
         ),
         ("it.only('an only', value => { expect(value).toBe(true); });", None),
         ("it.concurrent('an concurrent', value => { expect(value).toBe(true); });", None),
-        ("describe.each([1, true])('trues', value => { it('an it', () => expect(value).toBe(true) ); });", None),
+        (
+            "describe.each([1, true])('trues', value => { it('an it', () => expect(value).toBe(true) ); });",
+            None,
+        ),
         (
             "
             describe('scenario', () => {
@@ -350,11 +359,20 @@ fn test() {
         ),
         ("describe('a test', () => { expect(1).toBe(1); });", None),
         ("describe('a test', () => expect(1).toBe(1));", None),
-        ("describe('a test', () => { const func = () => { expect(1).toBe(1); }; expect(1).toBe(1); });", None),
-        ("describe('a test', () => {  it(() => { expect(1).toBe(1); }); expect(1).toBe(1); });", None),
+        (
+            "describe('a test', () => { const func = () => { expect(1).toBe(1); }; expect(1).toBe(1); });",
+            None,
+        ),
+        (
+            "describe('a test', () => {  it(() => { expect(1).toBe(1); }); expect(1).toBe(1); });",
+            None,
+        ),
         ("expect(1).toBe(1);", None),
         ("{expect(1).toBe(1)}", None),
-        ("it.each([1, true])('trues', value => { expect(value).toBe(true); }); expect(1).toBe(1);", None),
+        (
+            "it.each([1, true])('trues', value => { expect(value).toBe(true); }); expect(1).toBe(1);",
+            None,
+        ),
         ("describe.each([1, true])('trues', value => { expect(value).toBe(true); });", None),
         (
             "

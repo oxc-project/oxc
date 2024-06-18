@@ -9,13 +9,14 @@ use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
+use super::{
+    meta::{Baseline, BaselineFile, CompilerSettings, TestCaseContent, TestUnitData},
+    TESTS_ROOT,
+};
 use crate::{
     project_root,
     suite::{Case, Suite, TestResult},
 };
-
-use super::meta::{Baseline, BaselineFile, CompilerSettings, TestCaseContent, TestUnitData};
-use super::TESTS_ROOT;
 
 pub struct TranspileRunner<T: Case> {
     test_root: PathBuf,

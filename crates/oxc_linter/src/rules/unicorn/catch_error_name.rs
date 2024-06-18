@@ -3,7 +3,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{Atom, CompactStr, Span};
@@ -11,7 +10,10 @@ use oxc_span::{Atom, CompactStr, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn catch_error_name_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(catch-error-name): The catch parameter {x0:?} should be named {x1:?}")).with_labels([span2.into()])
+    OxcDiagnostic::warn(format!(
+        "eslint-plugin-unicorn(catch-error-name): The catch parameter {x0:?} should be named {x1:?}"
+    ))
+    .with_labels([span2.into()])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -134,6 +136,7 @@ impl CatchErrorName {
     fn is_name_allowed(&self, name: &Atom) -> bool {
         self.name == name || self.ignore.iter().any(|s| s.as_str() == name.as_str())
     }
+
     fn check_function_arguments(
         &self,
         arg0: &Argument,

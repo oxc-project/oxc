@@ -1,13 +1,13 @@
+use std::cmp::max;
+
+use oxc_allocator::String;
+
 use super::{
     cold_branch,
     search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
     Kind, Lexer, SourcePosition, Token,
 };
 use crate::diagnostics;
-
-use std::cmp::max;
-
-use oxc_allocator::String;
 
 const MIN_ESCAPED_TEMPLATE_LIT_LEN: usize = 16;
 

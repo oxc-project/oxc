@@ -1,6 +1,5 @@
 use convert_case::{Case, Casing};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
@@ -127,8 +126,9 @@ impl Rule for FilenameCase {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         // should pass - camel_case, pascal_case both allowed

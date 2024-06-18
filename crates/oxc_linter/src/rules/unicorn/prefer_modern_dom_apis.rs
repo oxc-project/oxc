@@ -3,7 +3,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_map;
@@ -190,9 +189,15 @@ fn test() {
         ("foo = referenceNode.insertAdjacentElement(\"beforebegin\", newNode);", None),
         ("const foo = [referenceNode.insertAdjacentElement(\"beforebegin\", newNode)]", None),
         ("foo(bar = referenceNode.insertAdjacentElement(\"beforebegin\", newNode))", None),
-        ("const foo = () => { return referenceNode.insertAdjacentElement(\"beforebegin\", newNode); }", None),
+        (
+            "const foo = () => { return referenceNode.insertAdjacentElement(\"beforebegin\", newNode); }",
+            None,
+        ),
         ("if (referenceNode.insertAdjacentElement(\"beforebegin\", newNode)) {}", None),
-        ("const foo = { bar: referenceNode.insertAdjacentElement(\"beforebegin\", newNode) }", None),
+        (
+            "const foo = { bar: referenceNode.insertAdjacentElement(\"beforebegin\", newNode) }",
+            None,
+        ),
     ];
 
     Tester::new(PreferModernDomApis::NAME, pass, fail).test_and_snapshot();

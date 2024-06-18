@@ -1,18 +1,18 @@
+use oxc_ast::{
+    ast::{JSXAttributeItem, JSXAttributeValue},
+    AstKind,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use phf::phf_map;
+
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_lowercase},
     AstNode,
 };
-use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
-    AstKind,
-};
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use phf::phf_map;
 
 fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
@@ -80,8 +80,7 @@ impl Rule for NoRedundantRoles {
 
 #[test]
 fn test() {
-    use crate::rules::NoRedundantRoles;
-    use crate::tester::Tester;
+    use crate::{rules::NoRedundantRoles, tester::Tester};
 
     fn settings() -> serde_json::Value {
         serde_json::json!({

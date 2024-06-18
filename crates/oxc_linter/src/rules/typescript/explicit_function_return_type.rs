@@ -335,6 +335,7 @@ impl ExplicitFunctionReturnType {
             _ => false,
         }
     }
+
     fn is_valid_function_expression_return_type<'a>(
         &self,
         node: &AstNode<'a>,
@@ -682,8 +683,9 @@ fn is_property_of_object_with_type(node: &AstNode, ctx: &LintContext) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("return;", None, None, None),

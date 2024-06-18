@@ -8,12 +8,11 @@ use oxc_ast::{
 use oxc_span::{Atom, GetSpan};
 use oxc_syntax::class::{ClassId, ElementKind};
 
-use crate::{AstNodeId, AstNodes};
-
 use super::{
     table::{Element, PrivateIdentifierReference},
     ClassTable,
 };
+use crate::{AstNodeId, AstNodes};
 
 #[derive(Debug, Default)]
 pub struct ClassTableBuilder {
@@ -154,6 +153,7 @@ impl ClassTableBuilder {
             }
         }
     }
+
     pub fn pop_class(&mut self) {
         self.current_class_id = self
             .current_class_id

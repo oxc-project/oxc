@@ -1,5 +1,4 @@
 use memchr::memmem::Finder;
-
 use oxc_span::SourceType;
 
 use super::{find_script_closing_angle, JavaScriptSource, SCRIPT_END, SCRIPT_START};

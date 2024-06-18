@@ -1,3 +1,12 @@
+use std::{collections::HashMap, hash::BuildHasherDefault, path::Path};
+
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use phf::phf_set;
+use rustc_hash::{FxHashMap, FxHasher};
+
 use crate::{
     context::LintContext,
     rule::Rule,
@@ -6,14 +15,6 @@ use crate::{
         JestFnKind, KnownMemberExpressionProperty, PossibleJestNode,
     },
 };
-
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use phf::phf_set;
-use rustc_hash::{FxHashMap, FxHasher};
-use std::{collections::HashMap, hash::BuildHasherDefault, path::Path};
 
 fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

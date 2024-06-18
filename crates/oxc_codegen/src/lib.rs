@@ -11,10 +11,10 @@ mod sourcemap_builder;
 
 use std::{borrow::Cow, ops::Range};
 
-use rustc_hash::FxHashMap;
-
-use oxc_ast::ast::{BlockStatement, Directive, Expression, Program, Statement};
-use oxc_ast::{Comment, Trivias};
+use oxc_ast::{
+    ast::{BlockStatement, Directive, Expression, Program, Statement},
+    Comment, Trivias,
+};
 use oxc_span::{Atom, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
@@ -22,14 +22,13 @@ use oxc_syntax::{
     precedence::Precedence,
     symbol::SymbolId,
 };
-
-use crate::operator::Operator;
-use crate::sourcemap_builder::SourcemapBuilder;
+use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
 };
+use crate::{operator::Operator, sourcemap_builder::SourcemapBuilder};
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a, false>;

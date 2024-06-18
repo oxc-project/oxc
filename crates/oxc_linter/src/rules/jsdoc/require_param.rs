@@ -1,13 +1,13 @@
+use std::sync::Mutex;
+
 use lazy_static::lazy_static;
 use oxc_ast::{ast::MethodDefinitionKind, AstKind};
-use oxc_diagnostics::LabeledSpan;
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, JSDoc};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
 use serde::Deserialize;
-use std::sync::Mutex;
 
 use crate::{
     context::LintContext,

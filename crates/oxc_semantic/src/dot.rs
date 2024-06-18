@@ -113,7 +113,8 @@ impl DebugDot for Instruction {
                     self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
                 else {
                     unreachable!(
-                        "Expected a label node to be associated with an labeled break instruction. {:?}", ctx.0.kind(self.node_id.unwrap())
+                        "Expected a label node to be associated with an labeled break instruction. {:?}",
+                        ctx.0.kind(self.node_id.unwrap())
                     )
                 };
                 format!("break <{}>", label.name)
@@ -125,7 +126,8 @@ impl DebugDot for Instruction {
                 })) = self.node_id.map(|id| ctx.0.get_node(id)).map(AstNode::kind)
                 else {
                     unreachable!(
-                        "Expected a label node to be associated with an labeled continue instruction. {:?}", ctx.0.kind(self.node_id.unwrap())
+                        "Expected a label node to be associated with an labeled continue instruction. {:?}",
+                        ctx.0.kind(self.node_id.unwrap())
                     )
                 };
                 format!("continue <{}>", label.name)

@@ -300,12 +300,14 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
 
 #[cfg(test)]
 mod test {
-    use crate::LintContext;
+    use std::{path::Path, rc::Rc};
+
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_semantic::SemanticBuilder;
     use oxc_span::SourceType;
-    use std::{path::Path, rc::Rc};
+
+    use crate::LintContext;
 
     #[test]
     fn test_is_jest_file() {

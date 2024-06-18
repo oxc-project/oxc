@@ -361,6 +361,7 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
             Err(i) => Err(I::from_usize(i)),
         }
     }
+
     /// Searches for an element in an iterator, returning its index. This is
     /// equivalent to `Iterator::position`, but returns `I` and not `usize`.
     #[inline(always)]
@@ -576,6 +577,7 @@ impl<I: Idx, T> IndexSlice<I, [T]> {
     ) -> SliceMapped<slice::SplitN<'_, T, F>, I, T> {
         self.raw.splitn(n, f).map(IndexSlice::new)
     }
+
     /// Wraps the underlying slice's `splitn_mut` iterator with one that yields
     /// `IndexSlice`s with the correct index type.
     #[inline]
@@ -686,6 +688,7 @@ where
     fn eq(&self, other: &IndexSlice<I, [B]>) -> bool {
         PartialEq::eq(&self.raw, &other.raw)
     }
+
     #[inline]
     fn ne(&self, other: &IndexSlice<I, [B]>) -> bool {
         PartialEq::ne(&self.raw, &other.raw)
@@ -702,6 +705,7 @@ where
     fn eq(&self, other: &[B]) -> bool {
         PartialEq::eq(&self.raw, other)
     }
+
     #[inline]
     fn ne(&self, other: &[B]) -> bool {
         PartialEq::ne(&self.raw, other)
@@ -734,6 +738,7 @@ where
     T: Clone,
 {
     type Owned = IndexVec<I, T>;
+
     #[inline]
     fn to_owned(&self) -> Self::Owned {
         IndexVec::from(self.raw.to_vec())
@@ -741,8 +746,8 @@ where
 }
 
 impl<'a, I: Idx, T> IntoIterator for &'a IndexSlice<I, [T]> {
-    type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
+    type Item = &'a T;
 
     #[inline]
     fn into_iter(self) -> slice::Iter<'a, T> {
@@ -751,8 +756,8 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexSlice<I, [T]> {
 }
 
 impl<'a, I: Idx, T> IntoIterator for &'a mut IndexSlice<I, [T]> {
-    type Item = &'a mut T;
     type IntoIter = slice::IterMut<'a, T>;
+    type Item = &'a mut T;
 
     #[inline]
     fn into_iter(self) -> slice::IterMut<'a, T> {
@@ -829,8 +834,9 @@ impl<I: Idx, A> FromIterator<A> for Box<IndexSlice<I, [A]>> {
 }
 
 impl<I: Idx, A> IntoIterator for Box<IndexSlice<I, [A]>> {
-    type Item = A;
     type IntoIter = vec::IntoIter<A>;
+    type Item = A;
+
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
         let v: IndexVec<I, A> = self.into();

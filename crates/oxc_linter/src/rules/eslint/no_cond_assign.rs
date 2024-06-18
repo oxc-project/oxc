@@ -3,7 +3,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -102,6 +101,7 @@ impl NoCondAssign {
 
         ctx.diagnostic(no_cond_assign_diagnostic(operator_span));
     }
+
     fn check_expression(&self, ctx: &LintContext<'_>, expr: &Expression<'_>) {
         let mut expr = expr;
         if self.config == NoCondAssignConfig::Always {

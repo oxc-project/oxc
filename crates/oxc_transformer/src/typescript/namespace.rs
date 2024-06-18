@@ -1,10 +1,3 @@
-use rustc_hash::FxHashSet;
-
-use super::{
-    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
-    TypeScript,
-};
-
 use oxc_allocator::{Box, Vec};
 use oxc_ast::{ast::*, syntax_directed_operations::BoundNames};
 use oxc_span::{Atom, CompactStr, SPAN};
@@ -14,6 +7,12 @@ use oxc_syntax::{
     symbol::SymbolFlags,
 };
 use oxc_traverse::TraverseCtx;
+use rustc_hash::FxHashSet;
+
+use super::{
+    diagnostics::{ambient_module_nested, namespace_exporting_non_const, namespace_not_supported},
+    TypeScript,
+};
 
 // TODO:
 // 1. register scope for the newly created function: <https://github.com/babel/babel/blob/08b0472069cd207f043dd40a4d157addfdd36011/packages/babel-plugin-transform-typescript/src/namespace.ts#L38>

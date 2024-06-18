@@ -9,10 +9,9 @@ use std::{
 
 use constants::PLUGINS;
 use indexmap::IndexMap;
+use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 use test_case::TestCaseKind;
 use walkdir::WalkDir;
-
-use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 
 mod test_case;
 

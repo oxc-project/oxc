@@ -1,12 +1,12 @@
-use napi_derive::napi;
+use std::sync::Arc;
 
+use napi_derive::napi;
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_diagnostics::{Error, NamedSource};
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use std::sync::Arc;
 
 #[napi(object)]
 pub struct IsolatedDeclarationsResult {

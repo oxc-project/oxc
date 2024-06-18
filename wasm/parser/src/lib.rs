@@ -2,11 +2,10 @@
 #![allow(non_snake_case)]
 #![allow(clippy::needless_pass_by_value)]
 
+use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
-
-use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]

@@ -1,6 +1,5 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -119,6 +118,7 @@ impl BadAliasMethodName {
             _ => None,
         }
     }
+
     fn name_with_canonical(&self) -> (&'static str, &'static str) {
         match self {
             Self::ToBeCalled => ("toBeCalled", "toHaveBeenCalled"),

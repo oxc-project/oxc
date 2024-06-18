@@ -133,18 +133,22 @@
 #![no_std]
 extern crate alloc;
 
-use alloc::borrow::{Cow, ToOwned};
-use alloc::boxed::Box;
-use alloc::vec;
-use alloc::vec::Vec;
-use core::borrow::{Borrow, BorrowMut};
-use core::fmt;
-use core::fmt::Debug;
-use core::hash::Hash;
-use core::iter::{self, FromIterator};
-use core::marker::PhantomData;
-use core::ops::Range;
-use core::slice;
+use alloc::{
+    borrow::{Cow, ToOwned},
+    boxed::Box,
+    vec,
+    vec::Vec,
+};
+use core::{
+    borrow::{Borrow, BorrowMut},
+    fmt,
+    fmt::Debug,
+    hash::Hash,
+    iter::{self, FromIterator},
+    marker::PhantomData,
+    ops::Range,
+    slice,
+};
 mod idxslice;
 mod indexing;
 pub use idxslice::{IndexBox, IndexSlice};
@@ -536,8 +540,8 @@ impl<I: Idx, T> FromIterator<T> for IndexVec<I, T> {
 }
 
 impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
-    type Item = T;
     type IntoIter = vec::IntoIter<T>;
+    type Item = T;
 
     #[inline]
     fn into_iter(self) -> vec::IntoIter<T> {
@@ -546,8 +550,8 @@ impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
 }
 
 impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
-    type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
+    type Item = &'a T;
 
     #[inline]
     fn into_iter(self) -> slice::Iter<'a, T> {
@@ -556,8 +560,8 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
 }
 
 impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVec<I, T> {
-    type Item = &'a mut T;
     type IntoIter = slice::IterMut<'a, T>;
+    type Item = &'a mut T;
 
     #[inline]
     fn into_iter(self) -> slice::IterMut<'a, T> {
@@ -614,6 +618,7 @@ impl<I: Idx, T: Clone> Clone for IndexVec<I, T> {
     fn clone(&self) -> Self {
         Self { raw: self.raw.clone(), _marker: PhantomData }
     }
+
     #[inline]
     fn clone_from(&mut self, o: &Self) {
         self.raw.clone_from(&o.raw);
@@ -650,6 +655,7 @@ impl<I: Idx, A> AsMut<IndexSlice<I, [A]>> for IndexVec<I, A> {
 
 impl<I: Idx, A> core::ops::Deref for IndexVec<I, A> {
     type Target = IndexSlice<I, [A]>;
+
     #[inline]
     fn deref(&self) -> &IndexSlice<I, [A]> {
         IndexSlice::new(&self.raw)
@@ -687,6 +693,7 @@ macro_rules! impl_partialeq {
             fn eq(&self, other: &$Rhs) -> bool {
                 self[..] == other[..]
             }
+
             #[inline]
             fn ne(&self, other: &$Rhs) -> bool {
                 self[..] != other[..]
@@ -705,6 +712,7 @@ macro_rules! impl_partialeq2 {
             fn eq(&self, other: &$Rhs) -> bool {
                 self.raw[..] == other.raw[..]
             }
+
             #[inline]
             fn ne(&self, other: &$Rhs) -> bool {
                 self.raw[..] != other.raw[..]

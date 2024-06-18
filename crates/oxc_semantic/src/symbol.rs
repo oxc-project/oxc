@@ -7,16 +7,15 @@ pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
+#[cfg(feature = "serialize")]
+use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 use crate::{
     node::AstNodeId,
     reference::{Reference, ReferenceId},
 };
-
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]

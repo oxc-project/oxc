@@ -4,9 +4,8 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::precedence::Precedence;
 
-use crate::{diagnostics, lexer::Kind, ParserImpl};
-
 use super::Tristate;
+use crate::{diagnostics, lexer::Kind, ParserImpl};
 
 type ArrowFunctionHead<'a> = (
     Option<Box<'a, TSTypeParameterDeclaration<'a>>>,

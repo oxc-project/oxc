@@ -6,7 +6,6 @@ use std::{
 
 use flate2::{write::GzEncoder, Compression};
 use humansize::{format_size, DECIMAL};
-
 use oxc_allocator::Allocator;
 use oxc_codegen::WhitespaceRemover;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};

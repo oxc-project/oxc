@@ -1,7 +1,6 @@
 use itertools::Itertools;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, AstNodes};
 use oxc_span::Span;
@@ -136,7 +135,7 @@ fn is_read(current_node_id: AstNodeId, nodes: &AstNodes) -> bool {
                 | AstKind::AssignmentTarget(_),
             )
             | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
-                return false
+                return false;
             }
             (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(_))
             | (_, AstKind::UpdateExpression(_)) => {

@@ -4,9 +4,8 @@ use oxc_span::{Span, SPAN};
 use oxc_syntax::{number::NumberBase, symbol::SymbolFlags};
 use oxc_traverse::TraverseCtx;
 
-use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
-
 use super::utils::get_line_column;
+use crate::{context::Ctx, helpers::bindings::BoundIdentifier};
 
 const SOURCE: &str = "__source";
 const FILE_NAME_VAR: &str = "jsxFileName";

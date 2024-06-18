@@ -1,5 +1,6 @@
-use crate::{token::TokenChunk, SourceMap, Token};
 use std::sync::Arc;
+
+use crate::{token::TokenChunk, SourceMap, Token};
 
 /// The `ConcatSourceMapBuilder` is a helper to concat sourcemaps.
 #[derive(Debug, Default)]

@@ -36,12 +36,10 @@ pub use crate::{
     compiler_assumptions::CompilerAssumptions,
     env::EnvOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
-    options::BabelOptions,
-    options::TransformOptions,
+    options::{BabelOptions, TransformOptions},
     react::{ReactJsxRuntime, ReactOptions},
     typescript::TypeScriptOptions,
 };
-
 use crate::{
     context::{Ctx, TransformCtx},
     react::React,
@@ -269,9 +267,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_if_statement(stmt);
     }
+
     fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_while_statement(stmt);
     }
+
     fn enter_do_while_statement(
         &mut self,
         stmt: &mut DoWhileStatement<'a>,
@@ -279,6 +279,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     ) {
         self.x0_typescript.transform_do_while_statement(stmt);
     }
+
     fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_for_statement(stmt);
     }

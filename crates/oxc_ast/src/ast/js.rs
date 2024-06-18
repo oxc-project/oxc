@@ -22,8 +22,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use super::inherit_variants;
-use super::{jsx::*, literal::*, ts::*};
+use super::{inherit_variants, jsx::*, literal::*, ts::*};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -1173,6 +1172,7 @@ impl<'a> AssignmentTarget<'a> {
     pub fn get_identifier(&self) -> Option<&str> {
         self.as_simple_assignment_target().and_then(|it| it.get_identifier())
     }
+
     pub fn get_expression(&self) -> Option<&Expression<'a>> {
         self.as_simple_assignment_target().and_then(|it| it.get_expression())
     }
@@ -2937,12 +2937,15 @@ impl MethodDefinitionKind {
     pub fn is_constructor(&self) -> bool {
         matches!(self, Self::Constructor)
     }
+
     pub fn is_method(&self) -> bool {
         matches!(self, Self::Method)
     }
+
     pub fn is_set(&self) -> bool {
         matches!(self, Self::Set)
     }
+
     pub fn is_get(&self) -> bool {
         matches!(self, Self::Get)
     }

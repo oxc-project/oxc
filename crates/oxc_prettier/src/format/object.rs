@@ -4,12 +4,11 @@ use oxc_ast::{
 };
 use oxc_span::Span;
 
+use super::{misc, Format};
 use crate::{
     doc::{Doc, DocBuilder, Group},
     group, if_break, line, softline, ss, Prettier,
 };
-
-use super::{misc, Format};
 
 #[derive(Debug, Clone, Copy)]
 pub enum ObjectLike<'a, 'b> {

@@ -122,11 +122,17 @@ impl Rule for ConstComparisons {
                 let rhs_str = right_const_expr.span.source_text(ctx.source_text());
                 let expr_str = left_expr.span().source_text(ctx.source_text());
                 let diagnostic_note = match ordering {
-                    Ordering::Less => format!("since `{lhs_str}` < `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"),
+                    Ordering::Less => format!(
+                        "since `{lhs_str}` < `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
+                    ),
                     Ordering::Equal => {
-                        format!("`{expr_str}` cannot simultaneously be greater than and less than `{lhs_str}`")
+                        format!(
+                            "`{expr_str}` cannot simultaneously be greater than and less than `{lhs_str}`"
+                        )
                     }
-                    Ordering::Greater => format!("since `{lhs_str}` > `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"),
+                    Ordering::Greater => format!(
+                        "since `{lhs_str}` > `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
+                    ),
                 };
 
                 ctx.diagnostic(impossible(

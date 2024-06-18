@@ -85,22 +85,27 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
     fn enter_scope(&mut self, _flags: ScopeFlags) {
         self.scope_depth += 1;
     }
+
     fn leave_scope(&mut self) {
         self.scope_depth -= 1;
     }
+
     fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
         if self.scope_depth == 0 {
             self.value_bindings.push(ident.name.clone());
         }
     }
+
     fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
         if self.scope_depth == 0 {
             self.type_bindings.push(decl.id.name.clone());
         }
     }
+
     fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {
         // We don't care about nested functions
     }
+
     fn visit_return_statement(&mut self, stmt: &ReturnStatement<'a>) {
         self.return_statement_count += 1;
         if self.return_statement_count > 1 {

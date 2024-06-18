@@ -3,7 +3,6 @@ use std::{env, fs, path::PathBuf, time::Duration};
 use oxc_benchmark::{
     black_box, criterion_group, criterion_main, BenchmarkId, Criterion, SamplingMode,
 };
-
 use serde::Deserialize;
 
 #[derive(Deserialize)]

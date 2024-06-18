@@ -8,13 +8,12 @@ use oxc_ast::{
     AstKind,
 };
 
+use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 use crate::{
     array,
     doc::{Doc, DocBuilder, Group, IndentIfBreak},
     group, indent, line, space, Format, Prettier,
 };
-
-use super::{binaryish::should_inline_logical_expression, class::ClassMemberish};
 
 pub(super) fn print_assignment_expression<'a>(
     p: &mut Prettier<'a>,

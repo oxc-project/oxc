@@ -1,8 +1,6 @@
 mod context;
 
-use crate::ReturnInstructionKind;
 use context::Ctx;
-
 pub use context::{CtxCursor, CtxFlags};
 use oxc_syntax::node::AstNodeId;
 use petgraph::Direction;
@@ -11,6 +9,7 @@ use super::{
     BasicBlock, BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, Graph, Instruction,
     InstructionKind, IterationInstructionKind, LabeledInstruction,
 };
+use crate::ReturnInstructionKind;
 
 #[derive(Debug, Default)]
 struct ErrorHarness(ErrorEdgeKind, BasicBlockId);

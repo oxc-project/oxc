@@ -1,6 +1,5 @@
-use crate::{BasicBlockId, EdgeType};
-
 use super::ControlFlowGraphBuilder;
+use crate::{BasicBlockId, EdgeType};
 
 bitflags::bitflags! {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -181,6 +180,7 @@ impl<'a, 'c> RefCtxCursor<'a, 'c> {
         self.0.flags.insert(CtxFlags::BREAK);
         self
     }
+
     /// Allow continue entries in this context.
     pub fn allow_continue(self) -> Self {
         self.0.flags.insert(CtxFlags::CONTINUE);

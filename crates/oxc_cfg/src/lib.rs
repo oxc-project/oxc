@@ -13,8 +13,9 @@ use petgraph::{
 pub mod graph {
     pub use petgraph::*;
     pub mod visit {
-        pub use super::super::visit::*;
         pub use petgraph::visit::*;
+
+        pub use super::super::visit::*;
     }
 }
 

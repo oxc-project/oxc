@@ -159,8 +159,9 @@ impl<'a> JSDocTagTypeNamePart<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::{JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart};
     use oxc_span::{Span, SPAN};
+
+    use super::{JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart};
 
     #[test]
     fn comment_part_parsed() {

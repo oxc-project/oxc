@@ -1,7 +1,6 @@
+use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-
-use oxc_allocator::Box;
 use oxc_span::{Atom, GetSpan, SPAN};
 use rustc_hash::FxHashMap;
 

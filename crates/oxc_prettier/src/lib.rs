@@ -21,9 +21,12 @@ use oxc_ast::{ast::Program, AstKind, CommentKind, Trivias};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
-use crate::{doc::Doc, doc::DocBuilder, format::Format, printer::Printer};
-
 pub use crate::options::{ArrowParens, EndOfLine, PrettierOptions, QuoteProps, TrailingComma};
+use crate::{
+    doc::{Doc, DocBuilder},
+    format::Format,
+    printer::Printer,
+};
 
 type GroupId = u32;
 #[derive(Default)]

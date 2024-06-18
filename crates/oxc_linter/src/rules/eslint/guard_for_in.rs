@@ -1,7 +1,5 @@
-use oxc_ast::ast::Statement;
-use oxc_ast::AstKind;
+use oxc_ast::{ast::Statement, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -43,7 +41,7 @@ impl Rule for GuardForIn {
                     if block_body.body.len() == 1
                         && matches!(block_body.body[0], Statement::IfStatement(_)) =>
                 {
-                    return
+                    return;
                 }
                 Statement::BlockStatement(block_body) if block_body.body.len() >= 1 => {
                     let block_statement = &block_body.body[0];

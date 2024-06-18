@@ -4,13 +4,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
+use self::listener_map::ListenerMap;
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{ModuleFunctions, NodeListenerOptions, WhitelistModule},
 };
-
-use self::listener_map::ListenerMap;
 
 mod listener_map;
 
@@ -217,6 +216,7 @@ impl Rule for NoSideEffectsInInitialization {
 
         Self(Box::new(NoSideEffectsInInitiallizationOptions { functions, modules }))
     }
+
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().root_node() else {
             return;

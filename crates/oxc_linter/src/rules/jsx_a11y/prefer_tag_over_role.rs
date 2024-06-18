@@ -1,19 +1,19 @@
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
-    AstNode,
-};
 use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_map;
+
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_lowercase},
+    AstNode,
+};
 
 fn prefer_tag_over_role_diagnostic(span: Span, tag: &str, role: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `{tag}` over `role` attribute `{role}`."))

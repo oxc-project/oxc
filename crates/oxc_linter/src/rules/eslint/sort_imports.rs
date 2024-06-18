@@ -130,6 +130,7 @@ impl Rule for SortImports {
             member_syntax_sort_order,
         }))
     }
+
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().root_node() else {
             return;
@@ -251,6 +252,7 @@ impl SortImports {
             std::cmp::Ordering::Greater => {}
         }
     }
+
     // Check member sort in a import declaration
     // ```js
     // import { b, a } from 'foo.js'

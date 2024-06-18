@@ -1,10 +1,10 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
-use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
+
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_void_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-void): Disallow `void` operators")

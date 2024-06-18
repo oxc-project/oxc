@@ -227,6 +227,7 @@ impl BinaryOperator {
             Self::Exponential => "**",
         }
     }
+
     pub fn lower_precedence(&self) -> Precedence {
         match self {
             Self::BitwiseOR => Precedence::LogicalAnd,

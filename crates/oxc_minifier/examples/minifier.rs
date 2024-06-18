@@ -6,7 +6,6 @@ use oxc_codegen::{CodeGenerator, WhitespaceRemover};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
 use pico_args::Arguments;
 
 // Instruction:

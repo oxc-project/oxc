@@ -2,12 +2,11 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::Statement;
 use oxc_span::GetSpan;
 
+use super::Format;
 use crate::{
     doc::{Doc, DocBuilder},
     hardline, Prettier,
 };
-
-use super::Format;
 
 pub(super) fn print_statement_sequence<'a>(
     p: &mut Prettier<'a>,

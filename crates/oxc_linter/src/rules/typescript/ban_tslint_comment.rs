@@ -1,6 +1,5 @@
 use lazy_static::lazy_static;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;

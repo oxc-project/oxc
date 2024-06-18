@@ -19,6 +19,7 @@ impl<'a> TypeScriptEnum<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { ctx, enums: FxHashMap::default() }
     }
+
     /// ```TypeScript
     /// enum Foo {
     ///   X = 1,

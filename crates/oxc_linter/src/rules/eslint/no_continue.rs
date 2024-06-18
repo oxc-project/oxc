@@ -1,9 +1,9 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+
+use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_continue_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-continue): Unexpected use of `continue` statement.")

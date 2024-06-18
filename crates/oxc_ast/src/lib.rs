@@ -55,8 +55,9 @@ pub use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use crate::ast;
     use static_assertions::assert_eq_size;
+
+    use crate::ast;
 
     assert_eq_size!(ast::Statement, [u8; 16]);
     assert_eq_size!(ast::Expression, [u8; 16]);

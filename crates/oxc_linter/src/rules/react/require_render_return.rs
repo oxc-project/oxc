@@ -1,10 +1,9 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_cfg::{
     graph::visit::neighbors_filtered_by_edge_weight, ControlFlowGraph, EdgeType, Instruction,
     InstructionKind, ReturnInstructionKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 

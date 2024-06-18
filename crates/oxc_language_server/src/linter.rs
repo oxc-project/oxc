@@ -1,4 +1,3 @@
-use log::debug;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -6,6 +5,7 @@ use std::{
     sync::Arc,
 };
 
+use log::debug;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{

@@ -222,7 +222,10 @@ fn test() {
             None,
         ),
         ("foo()", None),
-        ("describe.each([1, true])(\"trues\", value => { it(\"an it\", () => expect(value).toBe(true) ); });", None),
+        (
+            "describe.each([1, true])(\"trues\", value => { it(\"an it\", () => expect(value).toBe(true) ); });",
+            None,
+        ),
         (
             "
                 describe('%s', () => {
@@ -253,7 +256,7 @@ fn test() {
                     });
                 });
         ",
-        None,
+            None,
         ),
         (
             "
@@ -266,7 +269,10 @@ fn test() {
         ("jest.doMock(\"my-module\")", None),
         ("describe(\"test suite\", () => { test(\"my test\") });", None),
         ("foo()", None),
-        ("describe.each([1, true])(\"trues\", value => { it(\"an it\", () => expect(value).toBe(true) ); });", None),
+        (
+            "describe.each([1, true])(\"trues\", value => { it(\"an it\", () => expect(value).toBe(true) ); });",
+            None,
+        ),
         (
             "
                 describe('one', () => {});

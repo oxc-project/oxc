@@ -159,8 +159,9 @@ fn failed_to_parse_rule_value(value: &str, err: &str) -> OxcDiagnostic {
 
 #[cfg(test)]
 mod test {
-    use super::OxlintRules;
     use serde::Deserialize;
+
+    use super::OxlintRules;
 
     #[test]
     fn test_parse_rules() {

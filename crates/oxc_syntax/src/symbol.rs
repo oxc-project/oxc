@@ -1,6 +1,5 @@
 use bitflags::bitflags;
 use oxc_index::define_index_type;
-
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 

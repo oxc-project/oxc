@@ -1,7 +1,6 @@
 use std::{fmt, fs::read_to_string, str::FromStr};
 
-use crate::project_root;
-use crate::request::agent;
+use crate::{project_root, request::agent};
 
 pub struct TestFiles {
     files: Vec<TestFile>,

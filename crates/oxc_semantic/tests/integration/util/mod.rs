@@ -3,15 +3,14 @@ mod expect;
 mod symbol_tester;
 use std::{path::PathBuf, sync::Arc};
 
+pub use class_tester::ClassTester;
+pub use expect::Expect;
 use itertools::Itertools;
 use oxc_allocator::Allocator;
 use oxc_cfg::DisplayDot;
 use oxc_diagnostics::{Error, NamedSource, OxcDiagnostic};
 use oxc_semantic::{dot::DebugDot, Semantic, SemanticBuilder};
 use oxc_span::SourceType;
-
-pub use class_tester::ClassTester;
-pub use expect::Expect;
 pub use symbol_tester::SymbolTester;
 
 pub struct SemanticTester<'a> {

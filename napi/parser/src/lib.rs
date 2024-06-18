@@ -3,7 +3,6 @@ mod module_lexer;
 use std::sync::Arc;
 
 use napi_derive::napi;
-
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
 use oxc_ast::CommentKind;

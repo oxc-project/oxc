@@ -1,7 +1,6 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::AssignmentTarget, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 

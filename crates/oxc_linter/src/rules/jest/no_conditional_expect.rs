@@ -1,10 +1,9 @@
-use oxc_diagnostics::OxcDiagnostic;
-use rustc_hash::FxHashSet;
-
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,
@@ -126,7 +125,7 @@ fn check_parents<'a>(
         | AstKind::ConditionalExpression(_)
         | AstKind::AwaitExpression(_)
         | AstKind::LogicalExpression(_) => {
-            return check_parents(parent_node, visited, InConditional(true), ctx)
+            return check_parents(parent_node, visited, InConditional(true), ctx);
         }
         AstKind::Function(function) => {
             let Some(ident) = &function.id else {

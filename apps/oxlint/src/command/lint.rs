@@ -162,6 +162,7 @@ pub enum OutputFormat {
 
 impl FromStr for OutputFormat {
     type Err = String;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "json" => Ok(Self::Json),
@@ -251,8 +252,7 @@ mod warning_options {
 
 #[cfg(test)]
 mod lint_options {
-    use std::fs::File;
-    use std::path::PathBuf;
+    use std::{fs::File, path::PathBuf};
 
     use oxc_linter::AllowWarnDeny;
 

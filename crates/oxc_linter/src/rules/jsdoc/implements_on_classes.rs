@@ -1,3 +1,8 @@
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use crate::{
     ast_util::is_function_node,
     context::LintContext,
@@ -5,11 +10,6 @@ use crate::{
     utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
     AstNode,
 };
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 fn implements_on_classes_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function")

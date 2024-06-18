@@ -1,10 +1,11 @@
-use oxc_ast::ast::{
-    AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, SimpleAssignmentTarget,
-    VariableDeclarationKind,
+use oxc_ast::{
+    ast::{
+        match_member_expression, AssignmentTarget, BindingPatternKind, Expression,
+        ForStatementInit, SimpleAssignmentTarget, VariableDeclarationKind,
+    },
+    AstKind,
 };
-use oxc_ast::{ast::match_member_expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};

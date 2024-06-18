@@ -1,11 +1,11 @@
-use oxc_diagnostics::OxcDiagnostic;
+use std::f64::consts as f64;
 
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/approx_const.rs
 // https://rust-lang.github.io/rust-clippy/master/#approx_constant
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use std::f64::consts as f64;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 

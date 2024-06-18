@@ -1,3 +1,8 @@
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use crate::{
     context::LintContext,
     rule::Rule,
@@ -7,10 +12,6 @@ use crate::{
     },
     AstNode,
 };
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 fn missing_type_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.")

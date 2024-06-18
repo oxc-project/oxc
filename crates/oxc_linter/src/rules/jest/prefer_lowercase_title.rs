@@ -1,6 +1,5 @@
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -230,6 +229,7 @@ impl PreferLowercaseTitle {
 
         ignores
     }
+
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
         if literal.is_empty() || self.allowed_prefixes.iter().any(|name| literal.starts_with(name))
         {

@@ -1,3 +1,5 @@
+use std::{collections::HashMap, hash::BuildHasherDefault, ops::Deref, path::Path};
+
 use oxc_ast::{
     ast::{Expression, ExpressionStatement, MemberExpression},
     AstKind,
@@ -7,7 +9,6 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHasher};
-use std::{collections::HashMap, hash::BuildHasherDefault, ops::Deref, path::Path};
 
 use crate::{
     context::LintContext,

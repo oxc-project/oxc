@@ -1,8 +1,7 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 use std::collections::HashMap;
 
 use oxc_ast::{ast::MemberExpression, AstKind};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, ReferenceId};
 use oxc_span::{GetSpan, Span};

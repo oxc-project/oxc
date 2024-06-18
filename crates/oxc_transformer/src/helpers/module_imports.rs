@@ -1,6 +1,6 @@
-use indexmap::IndexMap;
 use std::cell::{Cell, RefCell};
 
+use indexmap::IndexMap;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};

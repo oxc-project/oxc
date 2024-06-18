@@ -7,12 +7,11 @@ use petgraph::{
     visit::EdgeRef,
 };
 
+use super::IterationInstructionKind;
 use crate::{
     BasicBlock, ControlFlowGraph, EdgeType, Instruction, InstructionKind, LabeledInstruction,
     ReturnInstructionKind,
 };
-
-use super::IterationInstructionKind;
 
 pub trait DisplayDot {
     fn display_dot(&self) -> String;

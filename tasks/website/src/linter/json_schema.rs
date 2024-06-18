@@ -1,11 +1,10 @@
 use handlebars::Handlebars;
+use oxc_linter::OxlintConfig;
 use schemars::{
     schema::{RootSchema, Schema, SchemaObject, SingleOrVec},
     schema_for,
 };
 use serde::Serialize;
-
-use oxc_linter::OxlintConfig;
 
 pub fn print_schema_json() {
     println!("{}", generate_schema_json());

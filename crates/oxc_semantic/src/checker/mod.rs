@@ -2,16 +2,14 @@ mod javascript;
 mod typescript;
 
 use javascript as js;
-use typescript as ts;
-
+pub use javascript::check_module_record;
 use oxc_ast::{
     ast::{DoWhileStatement, ForStatement, WhileStatement},
     AstKind,
 };
+use typescript as ts;
 
 use crate::{builder::SemanticBuilder, AstNode};
-
-pub use javascript::check_module_record;
 
 pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     let kind = node.kind();

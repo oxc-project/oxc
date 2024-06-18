@@ -1,18 +1,18 @@
+use oxc_ast::{
+    ast::{JSXAttributeItem, JSXAttributeValue},
+    AstKind,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use phf::{phf_map, phf_set};
+
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{get_element_type, has_jsx_prop_lowercase},
     AstNode,
 };
-use oxc_ast::{
-    ast::{JSXAttributeItem, JSXAttributeValue},
-    AstKind,
-};
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use phf::{phf_map, phf_set};
 
 fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(autocomplete-valid): `{autocomplete}` is not a valid value for autocomplete."))
@@ -203,8 +203,7 @@ impl Rule for AutocompleteValid {
 
 #[test]
 fn test() {
-    use crate::rules::AutocompleteValid;
-    use crate::tester::Tester;
+    use crate::{rules::AutocompleteValid, tester::Tester};
 
     fn settings() -> serde_json::Value {
         serde_json::json!({

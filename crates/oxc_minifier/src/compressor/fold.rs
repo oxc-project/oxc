@@ -13,12 +13,14 @@ use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
-use super::ast_util::{
-    get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
-    get_side_free_string_value, get_string_value, is_exact_int64, IsLiteralValue,
-    MayHaveSideEffects, NumberValue,
+use super::{
+    ast_util::{
+        get_boolean_value, get_number_value, get_side_free_bigint_value,
+        get_side_free_number_value, get_side_free_string_value, get_string_value, is_exact_int64,
+        IsLiteralValue, MayHaveSideEffects, NumberValue,
+    },
+    Compressor,
 };
-use super::Compressor;
 
 /// Tri state
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -2,14 +2,13 @@
 #![allow(non_snake_case)]
 
 use oxc_span::{CompactStr, Span};
+pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
 use crate::{symbol::SymbolId, AstNodeId};
-
-pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

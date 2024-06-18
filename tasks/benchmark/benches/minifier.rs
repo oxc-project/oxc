@@ -1,9 +1,8 @@
 use oxc_allocator::Allocator;
+use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
-use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
 use oxc_tasks_common::TestFiles;
 
 fn bench_minifier(criterion: &mut Criterion) {

@@ -7,7 +7,6 @@ use super::{
     call_expression::{is_commons_js_or_amd_call, CallExpressionLike},
     misc,
 };
-
 use crate::{
     array, conditional_group,
     doc::{Doc, DocBuilder, Group},

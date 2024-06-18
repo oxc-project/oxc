@@ -139,7 +139,11 @@ fn for_stmt() {
 fn typescript() {
     test_ts("let x: string = `\\x01`;", "let x: string = `\\x01`;\n", false);
 
-    test_ts("function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}", "function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}\n", false);
+    test_ts(
+        "function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}",
+        "function foo<T extends string>(x: T, y: string, ...restOfParams: Omit<T, 'x'>): T {\n\treturn x;\n}\n",
+        false,
+    );
 
     test_ts(
         "let x: string[] = ['abc', 'def', 'ghi'];",
@@ -167,7 +171,11 @@ fn typescript() {
     );
     test_ts("let x: string['length'] = 123;", "let x: string['length'] = 123;\n", false);
 
-    test_ts("function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}", "function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}\n", false);
+    test_ts(
+        "function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}",
+        "function isString(value: unknown): asserts value is string {\n\tif (typeof value !== 'string') {\n\t\tthrow new Error('Not a string');\n\t}\n}\n",
+        false,
+    );
 
     // type-only imports/exports
     test_ts("import type { Foo } from 'foo';", "import type { Foo } from 'foo';\n", false);

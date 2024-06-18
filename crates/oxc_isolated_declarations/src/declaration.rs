@@ -1,7 +1,6 @@
+use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-
-use oxc_allocator::Box;
 use oxc_ast::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
@@ -272,6 +271,7 @@ impl<'a> Visit<'a> for IsolatedDeclarations<'a> {
         }
         self.report_signature_property_key(&signature.key, signature.computed);
     }
+
     fn visit_ts_property_signature(&mut self, signature: &TSPropertySignature<'a>) {
         self.report_signature_property_key(&signature.key, signature.computed);
     }

@@ -79,14 +79,13 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-pub use crate::lexer::Kind; // re-export for codegen
-
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
 use oxc_ast::{ast::Program, AstBuilder, Trivias};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
+pub use crate::lexer::Kind; // re-export for codegen
 use crate::{
     lexer::{Lexer, Token},
     state::ParserState,
@@ -406,8 +405,9 @@ impl<'a> ParserImpl<'a> {
 
 #[cfg(test)]
 mod test {
-    use oxc_ast::CommentKind;
     use std::path::Path;
+
+    use oxc_ast::CommentKind;
 
     use super::*;
 
@@ -465,7 +465,14 @@ mod test {
     fn comments() {
         let allocator = Allocator::default();
         let source_type = SourceType::default().with_typescript(true);
-        let sources = [("// line comment", CommentKind::SingleLine), ("/* line comment */", CommentKind::MultiLine), ("type Foo = ( /* Require properties which are not generated automatically. */ 'bar')", CommentKind::MultiLine)];
+        let sources = [
+            ("// line comment", CommentKind::SingleLine),
+            ("/* line comment */", CommentKind::MultiLine),
+            (
+                "type Foo = ( /* Require properties which are not generated automatically. */ 'bar')",
+                CommentKind::MultiLine,
+            ),
+        ];
         for (source, kind) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             let comments = ret.trivias.comments().collect::<Vec<_>>();

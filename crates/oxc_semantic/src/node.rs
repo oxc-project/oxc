@@ -1,10 +1,9 @@
 use oxc_ast::AstKind;
+use oxc_cfg::BasicBlockId;
 use oxc_index::IndexVec;
+pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 
 use crate::scope::ScopeId;
-
-use oxc_cfg::BasicBlockId;
-pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 
 /// Semantic node contains all the semantic information about an ast node.
 #[derive(Debug, Clone, Copy)]

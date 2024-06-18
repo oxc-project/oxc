@@ -7,12 +7,10 @@ use oxc_codegen::CodeGenerator;
 use oxc_diagnostics::{NamedSource, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
 use regex::Regex;
 
-use crate::project_root;
-
 use super::TESTS_ROOT;
+use crate::project_root;
 
 lazy_static::lazy_static! {
     // Returns a match for a test option. Test options have the form `// @name: value`

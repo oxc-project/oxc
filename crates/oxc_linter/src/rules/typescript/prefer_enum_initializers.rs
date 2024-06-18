@@ -1,6 +1,5 @@
 use oxc_ast::{ast::TSEnumMemberName, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 

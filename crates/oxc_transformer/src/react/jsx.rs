@@ -11,17 +11,15 @@ use oxc_syntax::{
 };
 use oxc_traverse::TraverseCtx;
 
-use crate::{
-    context::{Ctx, TransformCtx},
-    helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
-};
-
-use super::diagnostics;
-use super::utils::get_line_column;
+use super::{diagnostics, utils::get_line_column};
 pub use super::{
     jsx_self::ReactJsxSelf,
     jsx_source::ReactJsxSource,
     options::{ReactJsxRuntime, ReactOptions},
+};
+use crate::{
+    context::{Ctx, TransformCtx},
+    helpers::{bindings::BoundIdentifier, module_imports::NamedImport},
 };
 
 /// [plugin-transform-react-jsx](https://babeljs.io/docs/babel-plugin-transform-react-jsx)

@@ -10,12 +10,13 @@ use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
-
 pub use self::{
-    env::OxlintEnv, globals::OxlintGlobals, rules::OxlintRules,
-    settings::jsdoc::JSDocPluginSettings, settings::OxlintSettings,
+    env::OxlintEnv,
+    globals::OxlintGlobals,
+    rules::OxlintRules,
+    settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
+use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
 
 /// Oxlint Configuration File
 ///
@@ -169,9 +170,11 @@ impl OxlintConfig {
 
 #[cfg(test)]
 mod test {
-    use super::OxlintConfig;
-    use serde::Deserialize;
     use std::env;
+
+    use serde::Deserialize;
+
+    use super::OxlintConfig;
 
     #[test]
     fn test_from_file() {

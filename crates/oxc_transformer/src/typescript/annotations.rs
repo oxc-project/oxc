@@ -2,15 +2,14 @@
 
 use std::rc::Rc;
 
-use crate::context::Ctx;
-use crate::TypeScriptOptions;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
+
+use crate::{context::Ctx, TypeScriptOptions};
 
 pub struct TypeScriptAnnotations<'a> {
     #[allow(dead_code)]
@@ -118,10 +117,10 @@ impl<'a> TypeScriptAnnotations<'a> {
                                     && decl.specifiers.is_empty())
                         }
                         ModuleDeclaration::ExportAllDeclaration(decl) => {
-                            return !decl.export_kind.is_type()
+                            return !decl.export_kind.is_type();
                         }
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                            return !decl.is_typescript_syntax()
+                            return !decl.is_typescript_syntax();
                         }
                         ModuleDeclaration::ImportDeclaration(decl) => {
                             let is_type = decl.import_kind.is_type();

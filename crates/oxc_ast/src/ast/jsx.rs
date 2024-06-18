@@ -14,9 +14,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use super::{js::*, literal::*, ts::*};
-
-use super::inherit_variants;
+use super::{inherit_variants, js::*, literal::*, ts::*};
 
 // 1.2 JSX Elements
 

@@ -344,7 +344,10 @@ mod tests {
             let a_refs: Vec<_> = semantic.symbol_references(a_id).collect();
             let num_refs = a_refs.len();
 
-            assert!(num_refs == 1, "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}");
+            assert!(
+                num_refs == 1,
+                "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}"
+            );
             let ref_type = a_refs[0];
             if flag.is_write() {
                 assert!(
@@ -352,7 +355,10 @@ mod tests {
                     "expected reference to '{target_symbol_name}' to be write\n\nsource:\n{source}"
                 );
             } else {
-                assert!(!ref_type.is_write(), "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}");
+                assert!(
+                    !ref_type.is_write(),
+                    "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}"
+                );
             }
             if flag.is_read() {
                 assert!(
@@ -360,7 +366,10 @@ mod tests {
                     "expected reference to '{target_symbol_name}' to be read\n\nsource:\n{source}"
                 );
             } else {
-                assert!(!ref_type.is_read(), "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}");
+                assert!(
+                    !ref_type.is_read(),
+                    "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}"
+                );
             }
         }
     }
