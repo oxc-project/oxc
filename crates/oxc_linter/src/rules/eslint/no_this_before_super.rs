@@ -42,6 +42,7 @@ declare_oxc_lint!(
     ///     }
     /// }
     /// ```
+    #[use_cfg]
     NoThisBeforeSuper,
     correctness
 );
@@ -56,9 +57,8 @@ enum DefinitelyCallsThisBeforeSuper {
 
 impl Rule for NoThisBeforeSuper {
     fn run_once(&self, ctx: &LintContext) {
+        let cfg = ctx.cfg();
         let semantic = ctx.semantic();
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();

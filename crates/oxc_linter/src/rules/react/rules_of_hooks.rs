@@ -101,14 +101,14 @@ declare_oxc_lint!(
     ///
     /// <https://reactjs.org/docs/hooks-rules.html>
     ///
+    #[use_cfg]
     RulesOfHooks,
     nursery
 );
 
 impl Rule for RulesOfHooks {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
+        let cfg = ctx.cfg();
 
         let AstKind::CallExpression(call) = node.kind() else { return };
 

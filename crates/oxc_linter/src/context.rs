@@ -1,5 +1,6 @@
 use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
+use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::{SourceType, Span};
@@ -76,6 +77,16 @@ impl<'a> LintContext<'a> {
 
     pub fn semantic(&self) -> &Rc<Semantic<'a>> {
         &self.semantic
+    }
+
+    /// # Panics
+    /// If rule doesn't have `#[use_cfg]` in it's declaration it would panic.
+    pub fn cfg(&self) -> &ControlFlowGraph {
+        if let Some(cfg) = self.semantic().cfg() {
+            cfg
+        } else {
+            unreachable!("for creating a control flow aware rule you have to add `#[use_cfg]` attribute to its `declare_oxc_lint` declaration");
+        }
     }
 
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {

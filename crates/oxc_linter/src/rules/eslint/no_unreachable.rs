@@ -25,14 +25,14 @@ declare_oxc_lint!(
     ///
     /// Disallow unreachable code after `return`, `throw`, `continue`, and `break` statements
     ///
+    #[use_cfg]
     NoUnreachable,
     nursery
 );
 
 impl Rule for NoUnreachable {
     fn run_once(&self, ctx: &LintContext) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
+        let cfg = ctx.cfg();
 
         let nodes = ctx.nodes();
         let Some(root) = nodes.root_node() else { return };

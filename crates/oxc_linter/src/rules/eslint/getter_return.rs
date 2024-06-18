@@ -48,14 +48,14 @@ declare_oxc_lint!(
     ///     }
     /// }
     /// ```
+    #[use_cfg]
     GetterReturn,
-    nursery
+    nursery,
 );
 
 impl Rule for GetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
+        let cfg = ctx.cfg();
 
         // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
         if ctx.source_type().is_typescript() {

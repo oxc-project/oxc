@@ -29,6 +29,8 @@ pub trait RuleMeta {
 
     const CATEGORY: RuleCategory;
 
+    const USE_CFG: bool;
+
     fn documentation() -> Option<&'static str> {
         None
     }

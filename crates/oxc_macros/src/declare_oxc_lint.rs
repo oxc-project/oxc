@@ -3,44 +3,48 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Result, Token,
+    Attribute, Expr, Ident, Lit, LitStr, Meta, Result, Token,
 };
 
 pub struct LintRuleMeta {
     name: Ident,
     category: Ident,
     documentation: String,
+    use_cfg: bool,
     pub used_in_test: bool,
 }
 
 impl Parse for LintRuleMeta {
     fn parse(input: ParseStream<'_>) -> Result<Self> {
         let mut documentation = String::new();
-        for attr in input.call(Attribute::parse_outer)? {
-            if let Some(lit) = parse_attr(["doc"], &attr) {
-                let value = lit.value();
-                let line = value.strip_prefix(' ').unwrap_or(&value);
+        let use_cfg = 'use_cfg: {
+            for attr in input.call(Attribute::parse_outer)? {
+                if let Some(lit) = parse_attr(["doc"], &attr) {
+                    let value = lit.value();
+                    let line = value.strip_prefix(' ').unwrap_or(&value);
 
-                documentation.push_str(line);
-                documentation.push('\n');
-            } else {
-                return Err(Error::new_spanned(attr, "unexpected attribute"));
+                    documentation.push_str(line);
+                    documentation.push('\n');
+                } else {
+                    break 'use_cfg parse_attr(["use_cfg"], &attr).is_some();
+                }
             }
-        }
+            false
+        };
 
         let struct_name = input.parse()?;
-        input.parse::<Token!(,)>()?;
+        input.parse::<Token![,]>()?;
         let category = input.parse()?;
 
         // Ignore the rest
         input.parse::<proc_macro2::TokenStream>()?;
 
-        Ok(Self { name: struct_name, category, documentation, used_in_test: false })
+        Ok(Self { name: struct_name, category, documentation, use_cfg, used_in_test: false })
     }
 }
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta { name, category, documentation, used_in_test } = metadata;
+    let LintRuleMeta { name, category, documentation, use_cfg, used_in_test } = metadata;
     let canonical_name = name.to_string().to_case(Case::Kebab);
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
@@ -66,6 +70,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             const NAME: &'static str = #canonical_name;
 
             const CATEGORY: RuleCategory = #category;
+
+            const USE_CFG: bool = #use_cfg;
 
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)

@@ -73,6 +73,7 @@ declare_oxc_lint!(
     ///
     /// Disallow fallthrough of `case` statements
     ///
+    #[use_cfg]
     NoFallthrough,
     correctness
 );
@@ -89,8 +90,7 @@ impl Rule for NoFallthrough {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
+        let cfg = ctx.cfg();
 
         let AstKind::SwitchStatement(switch) = node.kind() else { return };
 

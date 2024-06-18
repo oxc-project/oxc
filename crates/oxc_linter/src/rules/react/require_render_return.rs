@@ -44,14 +44,14 @@ declare_oxc_lint!(
     ///   }
     /// }
     /// ```
+    #[use_cfg]
     RequireRenderReturn,
     nursery
 );
 
 impl Rule for RequireRenderReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
+        let cfg = ctx.cfg();
 
         if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
             return;
