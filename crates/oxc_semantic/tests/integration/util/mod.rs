@@ -102,29 +102,29 @@ impl<'a> SemanticTester<'a> {
 
     pub fn basic_blocks_count(&self) -> usize {
         let built = self.build();
-        built.cfg().basic_blocks.len()
+        built.cfg().map_or(0, |cfg| cfg.basic_blocks.len())
     }
 
     pub fn basic_blocks_printed(&self) -> String {
         let built = self.build();
-        built
-            .cfg()
-            .basic_blocks
-            .iter()
-            .map(DisplayDot::display_dot)
-            .enumerate()
-            .map(|(i, it)| {
-                format!(
-                    "bb{i}: {{\n{}\n}}",
-                    it.lines().map(|x| format!("\t{}", x.trim())).join("\n")
-                )
-            })
-            .join("\n\n")
+        built.cfg().map_or_else(String::default, |cfg| {
+            cfg.basic_blocks
+                .iter()
+                .map(DisplayDot::display_dot)
+                .enumerate()
+                .map(|(i, it)| {
+                    format!(
+                        "bb{i}: {{\n{}\n}}",
+                        it.lines().map(|x| format!("\t{}", x.trim())).join("\n")
+                    )
+                })
+                .join("\n\n")
+        })
     }
 
     pub fn cfg_dot_diagram(&self) -> String {
         let semantic = self.build();
-        semantic.cfg().debug_dot(semantic.nodes().into())
+        semantic.cfg().map_or_else(String::default, |cfg| cfg.debug_dot(semantic.nodes().into()))
     }
 
     /// Tests that a symbol with the given name exists at the top-level scope and provides a

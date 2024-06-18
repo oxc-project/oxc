@@ -58,7 +58,8 @@ enum DefinitelyCallsThisBeforeSuper {
 impl Rule for NoThisBeforeSuper {
     fn run_once(&self, ctx: &LintContext) {
         let semantic = ctx.semantic();
-        let cfg = semantic.cfg();
+        // control flow dependant
+        let Some(cfg) = ctx.semantic().cfg() else { return };
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();

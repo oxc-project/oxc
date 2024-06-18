@@ -2,8 +2,8 @@ use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 
 use oxc_cfg::{
-    graph::visit::neighbors_filtered_by_edge_weight, EdgeType, Instruction, InstructionKind,
-    ReturnInstructionKind,
+    graph::visit::neighbors_filtered_by_edge_weight, ControlFlowGraph, EdgeType, Instruction,
+    InstructionKind, ReturnInstructionKind,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -51,6 +51,9 @@ declare_oxc_lint!(
 
 impl Rule for RequireRenderReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // control flow dependant
+        let Some(cfg) = ctx.semantic().cfg() else { return };
+
         if !matches!(node.kind(), AstKind::ArrowFunctionExpression(_) | AstKind::Function(_)) {
             return;
         }
@@ -64,7 +67,7 @@ impl Rule for RequireRenderReturn {
             return;
         }
 
-        if !contains_return_statement(node, ctx) {
+        if !contains_return_statement(node, cfg) {
             match parent.kind() {
                 AstKind::MethodDefinition(method) => {
                     ctx.diagnostic(require_render_return_diagnostic(method.key.span()));
@@ -91,10 +94,9 @@ enum FoundReturn {
 const KEEP_WALKING_ON_THIS_PATH: bool = true;
 const STOP_WALKING_ON_THIS_PATH: bool = false;
 
-fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let cfg = ctx.semantic().cfg();
+fn contains_return_statement(node: &AstNode, cfg: &ControlFlowGraph) -> bool {
     let state = neighbors_filtered_by_edge_weight(
-        &cfg.graph,
+        cfg.graph(),
         node.cfg_id(),
         &|edge| match edge {
             // We only care about normal edges having a return statement.

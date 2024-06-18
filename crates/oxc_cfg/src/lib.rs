@@ -124,6 +124,10 @@ pub struct ControlFlowGraph {
 }
 
 impl ControlFlowGraph {
+    pub fn graph(&self) -> &Graph<usize, EdgeType> {
+        &self.graph
+    }
+
     /// # Panics
     pub fn basic_block(&self, id: BasicBlockId) -> &BasicBlock {
         let ix = *self.graph.node_weight(id).expect("expected a valid node id in self.graph");

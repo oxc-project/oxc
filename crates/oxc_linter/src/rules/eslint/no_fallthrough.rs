@@ -10,7 +10,7 @@ use oxc_cfg::{
         visit::{neighbors_filtered_by_edge_weight, EdgeRef},
         Direction,
     },
-    BasicBlockId, EdgeType, ErrorEdgeKind, InstructionKind,
+    BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -89,13 +89,15 @@ impl Rule for NoFallthrough {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // control flow dependant
+        let Some(cfg) = ctx.semantic().cfg() else { return };
+
         let AstKind::SwitchStatement(switch) = node.kind() else { return };
 
         let switch_id = node.cfg_id();
-        let cfg = ctx.semantic().cfg();
-        let graph = &cfg.graph;
+        let graph = cfg.graph();
 
-        let (cfg_ids, tests, default, exit) = get_switch_semantic_cases(ctx, node, switch);
+        let (cfg_ids, tests, default, exit) = get_switch_semantic_cases(ctx, cfg, node, switch);
 
         let Some(default_or_exit) = default.or(exit) else {
             // TODO: our `get_switch_semantic_cases` can't evaluate cfg_ids for switch statements
@@ -260,6 +262,7 @@ impl NoFallthrough {
 // Issue: <https://github.com/oxc-project/oxc/issues/3662>
 fn get_switch_semantic_cases(
     ctx: &LintContext,
+    cfg: &ControlFlowGraph,
     node: &AstNode,
     switch: &SwitchStatement,
 ) -> (
@@ -268,8 +271,7 @@ fn get_switch_semantic_cases(
     /* default */ Option<BasicBlockId>,
     /* exit */ Option<BasicBlockId>,
 ) {
-    let cfg = &ctx.semantic().cfg();
-    let graph = &cfg.graph;
+    let graph = cfg.graph();
     let has_default = switch.cases.iter().any(SwitchCase::is_default_case);
     let (tests, exit) = graph
         .edges_directed(node.cfg_id(), Direction::Outgoing)

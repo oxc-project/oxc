@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_cfg::{
     graph::{algo, visit::Control},
-    EdgeType, ErrorEdgeKind, InstructionKind,
+    ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodeId, AstNodes};
@@ -107,6 +107,9 @@ declare_oxc_lint!(
 
 impl Rule for RulesOfHooks {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        // control flow dependant
+        let Some(cfg) = ctx.semantic().cfg() else { return };
+
         let AstKind::CallExpression(call) = node.kind() else { return };
 
         if !is_react_hook(&call.callee) {
@@ -227,7 +230,7 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if !ctx.semantic().cfg().is_reachable(func_cfg_id, node_cfg_id) {
+        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
             // There should always be a control flow path between a parent and child node.
             // If there is none it means we always do an early exit before reaching our hook call.
             // In some cases it might mean that we are operating on an invalid `cfg` but in either
@@ -236,11 +239,11 @@ impl Rule for RulesOfHooks {
         }
 
         // Is this node cyclic?
-        if semantic.cfg().is_cyclic(node_cfg_id) {
+        if cfg.is_cyclic(node_cfg_id) {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if has_conditional_path_accept_throw(ctx, parent_func, node) {
+        if has_conditional_path_accept_throw(cfg, parent_func, node) {
             #[allow(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
@@ -248,14 +251,13 @@ impl Rule for RulesOfHooks {
 }
 
 fn has_conditional_path_accept_throw(
-    ctx: &LintContext<'_>,
+    cfg: &ControlFlowGraph,
     from: &AstNode<'_>,
     to: &AstNode<'_>,
 ) -> bool {
     let from_graph_id = from.cfg_id();
     let to_graph_id = to.cfg_id();
-    let cfg = ctx.semantic().cfg();
-    let graph = &cfg.graph;
+    let graph = cfg.graph();
     if graph
         .edges(to_graph_id)
         .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))

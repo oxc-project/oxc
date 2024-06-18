@@ -56,7 +56,7 @@ pub struct Semantic<'a> {
 
     unused_labels: FxHashSet<AstNodeId>,
 
-    cfg: ControlFlowGraph,
+    cfg: Option<ControlFlowGraph>,
 }
 
 impl<'a> Semantic<'a> {
@@ -108,8 +108,8 @@ impl<'a> Semantic<'a> {
         &self.unused_labels
     }
 
-    pub fn cfg(&self) -> &ControlFlowGraph {
-        &self.cfg
+    pub fn cfg(&self) -> Option<&ControlFlowGraph> {
+        self.cfg.as_ref()
     }
 
     pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {
