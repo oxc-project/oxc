@@ -181,7 +181,6 @@ impl Oxc {
 
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias.clone())
-            .with_cfg(true)
             .with_check_syntax_error(true)
             .build(program);
 
