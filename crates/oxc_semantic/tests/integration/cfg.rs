@@ -8,7 +8,8 @@ use crate::util::SemanticTester;
 fn test_cfg_files() {
     insta::glob!("cfg_fixtures/*.js", |path| {
         let code = fs::read_to_string(path).unwrap();
-        let output = SemanticTester::new(&code, SourceType::from_path(path).unwrap());
+        let output =
+            SemanticTester::new(&code, SourceType::from_path(path).unwrap()).with_cfg(true);
         insta::assert_snapshot!(output.basic_blocks_printed());
         insta::assert_snapshot!(output.cfg_dot_diagram());
     });
