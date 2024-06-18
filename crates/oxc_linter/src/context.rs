@@ -13,6 +13,45 @@ use crate::{
     AllowWarnDeny, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
+pub trait LintCtx<'a>: Clone {
+    fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self;
+    #[must_use]
+    fn with_fix(self, fix: bool) -> Self;
+    #[must_use]
+    fn with_eslint_config(self, eslint_config: &Arc<OxlintConfig>) -> Self;
+    #[must_use]
+    fn with_rule_name(self, name: &'static str) -> Self;
+    #[must_use]
+    fn with_severity(self, severity: AllowWarnDeny) -> Self;
+    fn semantic(&self) -> &Rc<Semantic<'a>>;
+    fn disable_directives(&self) -> &DisableDirectives<'a>;
+    fn source_text(&self) -> &'a str;
+    fn source_range(&self, span: Span) -> &'a str;
+    fn source_type(&self) -> &SourceType;
+    fn file_path(&self) -> &Path;
+    fn settings(&self) -> &OxlintSettings;
+    fn globals(&self) -> &OxlintGlobals;
+    fn env(&self) -> &OxlintEnv;
+    fn env_contains_var(&self, var: &str) -> bool;
+
+    /* Diagnostics */
+    fn into_message(self) -> Vec<Message<'a>>;
+
+    fn diagnostic(&self, diagnostic: OxcDiagnostic);
+    fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
+        &self,
+        diagnostic: OxcDiagnostic,
+        fix: F,
+    );
+    fn nodes(&self) -> &AstNodes<'a>;
+    fn scopes(&self) -> &ScopeTree;
+    fn symbols(&self) -> &SymbolTable;
+    fn module_record(&self) -> &ModuleRecord;
+
+    /* JSDoc */
+    fn jsdoc(&self) -> &JSDocFinder<'a>;
+}
+
 #[derive(Clone)]
 pub struct LintContext<'a> {
     semantic: Rc<Semantic<'a>>,
@@ -34,6 +73,158 @@ pub struct LintContext<'a> {
     severity: Severity,
 }
 
+impl<'a> LintContext<'a> {
+    fn add_diagnostic(&self, message: Message<'a>) {
+        if !self.disable_directives.contains(self.current_rule_name, message.start()) {
+            let mut message = message;
+            if message.error.severity != self.severity {
+                message.error = message.error.with_severity(self.severity);
+            }
+            self.diagnostics.borrow_mut().push(message);
+        }
+    }
+}
+
+impl<'a> LintCtx<'a> for LintContext<'a> {
+    fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
+        let disable_directives =
+            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias().clone())
+                .build();
+        Self {
+            semantic,
+            diagnostics: RefCell::new(vec![]),
+            disable_directives: Rc::new(disable_directives),
+            fix: false,
+            file_path: file_path.into(),
+            eslint_config: Arc::new(OxlintConfig::default()),
+            current_rule_name: "",
+            severity: Severity::Warning,
+        }
+    }
+
+    #[must_use]
+    fn with_fix(mut self, fix: bool) -> Self {
+        self.fix = fix;
+        self
+    }
+
+    #[must_use]
+    fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
+        self.eslint_config = Arc::clone(eslint_config);
+        self
+    }
+
+    #[must_use]
+    fn with_rule_name(mut self, name: &'static str) -> Self {
+        self.current_rule_name = name;
+        self
+    }
+
+    #[must_use]
+    fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
+        self.severity = Severity::from(severity);
+        self
+    }
+
+    fn semantic(&self) -> &Rc<Semantic<'a>> {
+        &self.semantic
+    }
+
+    fn disable_directives(&self) -> &DisableDirectives<'a> {
+        &self.disable_directives
+    }
+
+    /// Source code of the file being linted.
+    fn source_text(&self) -> &'a str {
+        self.semantic().source_text()
+    }
+
+    /// Get a snippet of source text covered by the given [`Span`]. For details,
+    /// see [`Span::source_text`].
+    fn source_range(&self, span: Span) -> &'a str {
+        span.source_text(self.semantic().source_text())
+    }
+
+    fn source_type(&self) -> &SourceType {
+        self.semantic().source_type()
+    }
+
+    fn file_path(&self) -> &Path {
+        &self.file_path
+    }
+
+    fn settings(&self) -> &OxlintSettings {
+        &self.eslint_config.settings
+    }
+
+    fn globals(&self) -> &OxlintGlobals {
+        &self.eslint_config.globals
+    }
+
+    fn env(&self) -> &OxlintEnv {
+        &self.eslint_config.env
+    }
+
+    fn env_contains_var(&self, var: &str) -> bool {
+        for env in self.env().iter() {
+            let env = GLOBALS.get(env).unwrap_or(&GLOBALS["builtin"]);
+            if env.get(var).is_some() {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /* Diagnostics */
+
+    fn into_message(self) -> Vec<Message<'a>> {
+        self.diagnostics.borrow().iter().cloned().collect::<Vec<_>>()
+    }
+
+    /// Report a lint rule violation.
+    ///
+    /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
+    fn diagnostic(&self, diagnostic: OxcDiagnostic) {
+        self.add_diagnostic(Message::new(diagnostic, None));
+    }
+
+    /// Report a lint rule violation and provide an automatic fix.
+    fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
+        &self,
+        diagnostic: OxcDiagnostic,
+        fix: F,
+    ) {
+        if self.fix {
+            let fixer = RuleFixer::new(self);
+            self.add_diagnostic(Message::new(diagnostic, Some(fix(fixer))));
+        } else {
+            self.diagnostic(diagnostic);
+        }
+    }
+
+    fn nodes(&self) -> &AstNodes<'a> {
+        self.semantic().nodes()
+    }
+
+    fn scopes(&self) -> &ScopeTree {
+        self.semantic().scopes()
+    }
+
+    fn symbols(&self) -> &SymbolTable {
+        self.semantic().symbols()
+    }
+
+    fn module_record(&self) -> &ModuleRecord {
+        self.semantic().module_record()
+    }
+
+    /* JSDoc */
+    fn jsdoc(&self) -> &JSDocFinder<'a> {
+        self.semantic().jsdoc()
+    }
+}
+
 #[derive(Clone)]
 pub struct CFGLintContext<'a>(LintContext<'a>);
 
@@ -46,18 +237,6 @@ impl<'a> CFGLintContext<'a> {
         } else {
             unreachable!("for creating a control flow aware rule you have to add `#[use_cfg]` attribute to its `declare_oxc_lint` declaration");
         }
-    }
-}
-
-impl<'a> From<LintContext<'a>> for CFGLintContext<'a> {
-    fn from(ctx: LintContext<'a>) -> Self {
-        Self(ctx)
-    }
-}
-
-impl<'a, 'b> From<&'b CFGLintContext<'a>> for &'b LintContext<'a> {
-    fn from(ctx: &'b CFGLintContext<'a>) -> Self {
-        &ctx.0
     }
 }
 
@@ -131,10 +310,6 @@ impl<'a> LintCtx<'a> for CFGLintContext<'a> {
         self.0.into_message()
     }
 
-    fn add_diagnostic(&self, message: Message<'a>) {
-        self.0.add_diagnostic(message);
-    }
-
     fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.0.diagnostic(diagnostic);
     }
@@ -169,195 +344,14 @@ impl<'a> LintCtx<'a> for CFGLintContext<'a> {
     }
 }
 
-pub trait LintCtx<'a>: Clone {
-    fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self;
-    #[must_use]
-    fn with_fix(self, fix: bool) -> Self;
-    #[must_use]
-    fn with_eslint_config(self, eslint_config: &Arc<OxlintConfig>) -> Self;
-    #[must_use]
-    fn with_rule_name(self, name: &'static str) -> Self;
-    #[must_use]
-    fn with_severity(self, severity: AllowWarnDeny) -> Self;
-    fn semantic(&self) -> &Rc<Semantic<'a>>;
-    fn disable_directives(&self) -> &DisableDirectives<'a>;
-    fn source_text(&self) -> &'a str;
-    fn source_range(&self, span: Span) -> &'a str;
-    fn source_type(&self) -> &SourceType;
-    fn file_path(&self) -> &Path;
-    fn settings(&self) -> &OxlintSettings;
-    fn globals(&self) -> &OxlintGlobals;
-    fn env(&self) -> &OxlintEnv;
-    fn env_contains_var(&self, var: &str) -> bool;
-
-    /* Diagnostics */
-    fn into_message(self) -> Vec<Message<'a>>;
-    fn add_diagnostic(&self, message: Message<'a>);
-
-    fn diagnostic(&self, diagnostic: OxcDiagnostic);
-    fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
-        &self,
-        diagnostic: OxcDiagnostic,
-        fix: F,
-    );
-    fn nodes(&self) -> &AstNodes<'a>;
-    fn scopes(&self) -> &ScopeTree;
-    fn symbols(&self) -> &SymbolTable;
-    fn module_record(&self) -> &ModuleRecord;
-
-    /* JSDoc */
-    fn jsdoc(&self) -> &JSDocFinder<'a>;
+impl<'a> From<LintContext<'a>> for CFGLintContext<'a> {
+    fn from(ctx: LintContext<'a>) -> Self {
+        Self(ctx)
+    }
 }
 
-impl<'a> LintCtx<'a> for LintContext<'a> {
-    fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
-        let disable_directives =
-            DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias().clone())
-                .build();
-        Self {
-            semantic,
-            diagnostics: RefCell::new(vec![]),
-            disable_directives: Rc::new(disable_directives),
-            fix: false,
-            file_path: file_path.into(),
-            eslint_config: Arc::new(OxlintConfig::default()),
-            current_rule_name: "",
-            severity: Severity::Warning,
-        }
-    }
-
-    #[must_use]
-    fn with_fix(mut self, fix: bool) -> Self {
-        self.fix = fix;
-        self
-    }
-
-    #[must_use]
-    fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
-        self.eslint_config = Arc::clone(eslint_config);
-        self
-    }
-
-    #[must_use]
-    fn with_rule_name(mut self, name: &'static str) -> Self {
-        self.current_rule_name = name;
-        self
-    }
-
-    #[must_use]
-    fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
-        self.severity = Severity::from(severity);
-        self
-    }
-
-    fn semantic(&self) -> &Rc<Semantic<'a>> {
-        &self.semantic
-    }
-
-    // TODO ?
-    fn disable_directives(&self) -> &DisableDirectives<'a> {
-        &self.disable_directives
-    }
-
-    // TODO ?
-    /// Source code of the file being linted.
-    fn source_text(&self) -> &'a str {
-        self.semantic().source_text()
-    }
-
-    /// Get a snippet of source text covered by the given [`Span`]. For details,
-    /// see [`Span::source_text`].
-    fn source_range(&self, span: Span) -> &'a str {
-        span.source_text(self.semantic().source_text())
-    }
-
-    fn source_type(&self) -> &SourceType {
-        self.semantic().source_type()
-    }
-
-    fn file_path(&self) -> &Path {
-        &self.file_path
-    }
-
-    fn settings(&self) -> &OxlintSettings {
-        &self.eslint_config.settings
-    }
-
-    fn globals(&self) -> &OxlintGlobals {
-        &self.eslint_config.globals
-    }
-
-    fn env(&self) -> &OxlintEnv {
-        &self.eslint_config.env
-    }
-
-    fn env_contains_var(&self, var: &str) -> bool {
-        for env in self.env().iter() {
-            let env = GLOBALS.get(env).unwrap_or(&GLOBALS["builtin"]);
-            if env.get(var).is_some() {
-                return true;
-            }
-        }
-
-        false
-    }
-
-    /* Diagnostics */
-
-    fn into_message(self) -> Vec<Message<'a>> {
-        self.diagnostics.borrow().iter().cloned().collect::<Vec<_>>()
-    }
-
-    /// TODO ?
-    fn add_diagnostic(&self, message: Message<'a>) {
-        if !self.disable_directives.contains(self.current_rule_name, message.start()) {
-            let mut message = message;
-            if message.error.severity != self.severity {
-                message.error = message.error.with_severity(self.severity);
-            }
-            self.diagnostics.borrow_mut().push(message);
-        }
-    }
-
-    /// Report a lint rule violation.
-    ///
-    /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
-    fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.add_diagnostic(Message::new(diagnostic, None));
-    }
-
-    /// Report a lint rule violation and provide an automatic fix.
-    fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
-        &self,
-        diagnostic: OxcDiagnostic,
-        fix: F,
-    ) {
-        if self.fix {
-            let fixer = RuleFixer::new(self);
-            self.add_diagnostic(Message::new(diagnostic, Some(fix(fixer))));
-        } else {
-            self.diagnostic(diagnostic);
-        }
-    }
-
-    fn nodes(&self) -> &AstNodes<'a> {
-        self.semantic().nodes()
-    }
-
-    fn scopes(&self) -> &ScopeTree {
-        self.semantic().scopes()
-    }
-
-    fn symbols(&self) -> &SymbolTable {
-        self.semantic().symbols()
-    }
-
-    fn module_record(&self) -> &ModuleRecord {
-        self.semantic().module_record()
-    }
-
-    /* JSDoc */
-    fn jsdoc(&self) -> &JSDocFinder<'a> {
-        self.semantic().jsdoc()
+impl<'a, 'b> From<&'b CFGLintContext<'a>> for &'b LintContext<'a> {
+    fn from(ctx: &'b CFGLintContext<'a>) -> Self {
+        &ctx.0
     }
 }
