@@ -265,10 +265,12 @@ impl Runtime {
 
         let trivias = ret.trivias;
 
+        let use_cfg = self.linter.rules.iter().any(|it| it.rule.use_cfg());
+
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
         let semantic_builder = SemanticBuilder::new(source_text, source_type)
-            .with_cfg(true)
+            .with_cfg(use_cfg)
             .with_trivias(trivias)
             .with_check_syntax_error(check_syntax_errors)
             .build_module_record(path.to_path_buf(), program);
