@@ -1,0 +1,25 @@
+{
+  "name": "oxc-transform",
+  "version": "0.0.1",
+  "description": "Oxc transform Node API",
+  "keywords": [
+    "transform"
+  ],
+  "author": "Boshen and oxc contributors",
+  "license": "MIT",
+  "homepage": "https://oxc.rs",
+  "bugs": "https://github.com/oxc-project/oxc/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/oxc-project/oxc.git",
+    "directory": "npm/oxc-transform"
+  },
+  "funding": {
+    "url": "https://github.com/sponsors/Boshen"
+  },
+  "main": "index.js",
+  "files": [
+    "index.d.ts",
+    "index.js"
+  ]
+}
