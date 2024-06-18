@@ -62,6 +62,10 @@ impl Default for Linter {
 }
 
 impl Linter {
+    pub fn rules(&self) -> &Vec<RuleWithSeverity> {
+        &self.rules
+    }
+
     /// # Errors
     ///
     /// Returns `Err` if there are any errors parsing the configuration file.

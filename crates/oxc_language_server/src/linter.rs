@@ -285,10 +285,12 @@ impl IsolatedLintHandler {
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
 
+            let use_cfg = linter.rules().iter().any(|it| it.rule.use_cfg());
+
             let program = allocator.alloc(ret.program);
             let semantic_ret = SemanticBuilder::new(javascript_source_text, source_type)
                 .with_trivias(ret.trivias)
-                .with_cfg(true)
+                .with_cfg(use_cfg)
                 .with_check_syntax_error(true)
                 .build(program);
 
