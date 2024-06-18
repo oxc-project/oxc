@@ -3,7 +3,7 @@ use oxc_ast::ast::*;
 
 use oxc_allocator::Box;
 use oxc_ast::Visit;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{Atom, GetSpan, SPAN};
 
 use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
 
@@ -22,6 +22,16 @@ impl<'a> IsolatedDeclarations<'a> {
             export_kind: ImportOrExportKind::Value,
             with_clause: None,
         })
+    }
+
+    pub fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
+        let mut binding = self.ast.new_atom(name);
+        let mut i = 1;
+        while self.scope.has_reference(&binding) {
+            binding = self.ast.new_atom(format!("{name}_{i}").as_str());
+            i += 1;
+        }
+        binding
     }
 
     pub fn transform_export_default_declaration(
@@ -46,8 +56,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 } else {
                     // declare const _default: Type
                     let kind = VariableDeclarationKind::Const;
-                    // TODO: create unique name for this
-                    let name = self.ast.new_atom("_default");
+                    let name = self.create_unique_name("_default");
                     let id = self
                         .ast
                         .binding_pattern_identifier(BindingIdentifier::new(SPAN, name.clone()));
