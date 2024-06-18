@@ -657,6 +657,45 @@ async function main() {
     playground.updateView("codegen");
   };
 
+  [
+    "compress-booleans",
+    "compress-drop-debugger",
+    "compress-drop-console",
+    "compress-join-vars",
+    "compress-evaluate",
+    "compress-loops",
+    "compress-typeofs",
+  ].forEach((key) => {
+    let labelElement = document.getElementById(`${key}`) as HTMLLabelElement
+    if (labelElement) {
+      labelElement.onchange = function () {
+        const normalizedKey = () => {
+          return key.replace('compress-', '').replace(/-([a-z])/g, (g) => g[1].toUpperCase())
+        }
+        const optionKey = normalizedKey();
+
+        if (
+          optionKey !== "booleans"
+          && optionKey !== "dropDebugger"
+          && optionKey !== "dropConsole"
+          && optionKey !== "joinVars"
+          && optionKey !== "evaluate"
+          && optionKey !== "loops"
+          && optionKey !== "typeofs"
+        ) {
+          console.error('Unknown compress option key', optionKey)
+          return
+        }
+
+        let checkbox = document.getElementById(`${key}-checkbox`) as HTMLInputElement
+        const checked = checkbox.checked || false;
+        const compressOptions = playground.minifierOptions.compressOptions
+        compressOptions[optionKey] = checked
+        playground.minifierOptions.compressOptions = compressOptions
+        playground.updateView('codegen')
+      }
+    }
+  })
 
   document.getElementById("file-type-select").onchange = function (e) {
     playground.parserOptions.sourceFilename= `test.${e.target.value}`;

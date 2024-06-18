@@ -28,6 +28,27 @@
       .controls > div > button.active { background-color: #555; }
       .controls > div > label { margin-right: 4px; }
       .controls label { font-size: 14px; }
+      .compress-control {position: relative; display: inline-flex;}
+      .compression-options {
+        position: absolute; 
+        top: 100%;
+        left: 0;
+        background-color: #2c3136;
+        border: 1px solid #ccc;
+        padding: 10px;
+        display: none;
+        z-index: 1;
+        display: none;
+        flex-direction: column;
+        min-width: 180px;
+        font-size: 12px;
+      }
+      .compress-control:hover .compression-options {
+        display: flex; 
+      }
+      .compression-options label { margin-bottom: 4px; } 
+      .compression-options label input { margin-right: 8px; } 
+
       #duration { margin-left: auto; }
       #viewer { flex: 1; overflow-y: auto; }
       #divider { width: 4px; background: #444; }
@@ -80,9 +101,45 @@
             <label id="transform">Transform<input id="transform-checkbox" type="checkbox"></label>
             <label id="codegen-ts">TS<input id="codegen-ts-checkbox" type="checkbox"></label>
             <label>| Minify: </label>
+            <div class="compress-control">
+              <label id="compress">compress<input id="compress-checkbox" type="checkbox"></label>
+              <div id="compression-options" class="compression-options">
+                <label id="compress-booleans"
+                  title="various optimizations for boolean context, for example `!!a ? b : c` → `a ? b : c`.">
+                  <input type="checkbox" checked id="compress-booleans-checkbox">
+                  booleans
+                </label>
+                <label id="compress-drop-debugger" title="Remove `debugger;` statements.">
+                  <input type="checkbox" checked id="compress-drop-debugger-checkbox">
+                  drop debugger
+                </label>
+                <label id="compress-drop-console" title="Remove `console.*` statements.">
+                  <input type="checkbox" id="compress-drop-console-checkbox">
+                  drop console
+                </label>
+                <label id="compress-join-vars" title="Join consecutive var statements.">
+                  <input type="checkbox" checked id="compress-join-vars-checkbox">
+                  join vars
+                </label>
+                <label id="compress-evaluate" title="Attempt to evaluate constant expressions">
+                  <input type="checkbox" checked id="compress-evaluate-checkbox">
+                  evaluate
+                </label>
+                <label id="compress-loops"
+                  title="Optimizations for do, while and for loops when we can statically determine the condition">
+                  <input type="checkbox" checked id="compress-loops-checkbox">
+                  loops
+                </label>
+                <label id="compress-typeofs" title="Transforms `typeof foo == 'undefined' into `foo === void 0`">
+                  <input type="checkbox" checked id="compress-typeofs-checkbox">
+                  typeofs
+                </label>
+            
+              </div>
+            
+            </div>
             <label id="whitespace">whitespace<input id="whitespace-checkbox" type="checkbox"></label>
             <label id="mangle">mangle<input id="mangle-checkbox" type="checkbox"></label>
-            <label id="compress">compress<input id="compress-checkbox" type="checkbox"></label>
             <div id="duration" title="Execution Time"></div>
           </div>
         </div>
