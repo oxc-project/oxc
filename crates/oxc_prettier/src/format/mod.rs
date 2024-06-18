@@ -1334,8 +1334,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
             // Remove unnecessary plus and zeroes from scientific notation.
             if let Some((head, tail)) = string.split_once('e') {
                 let negative = if tail.starts_with('-') { "-" } else { "" };
-                let trimmed =
-                    tail.trim_start_matches(|c| c == '+' || c == '-').trim_start_matches('0');
+                let trimmed = tail.trim_start_matches(['+', '-']).trim_start_matches('0');
                 if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
                     string = Cow::Owned(std::format!("{head}e{negative}{trimmed}"));
                 }
@@ -1343,11 +1342,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
 
             // Remove unnecessary scientific notation (1e0).
             if let Some((head, tail)) = string.split_once('e') {
-                if tail
-                    .trim_start_matches(|c| c == '+' || c == '-')
-                    .trim_start_matches('0')
-                    .is_empty()
-                {
+                if tail.trim_start_matches(['+', '-']).trim_start_matches('0').is_empty() {
                     string = Cow::Owned(head.to_string());
                 }
             }

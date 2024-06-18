@@ -80,8 +80,7 @@ fn format_raw(raw: &str) -> Option<(String, bool)> {
     let dot_and_fractions = after_parts.next()?;
     let after = after_parts.next().unwrap_or("");
 
-    let fixed_dot_and_fractions =
-        dot_and_fractions.trim_end_matches(|c: char| c == '0' || c == '.' || c == '_');
+    let fixed_dot_and_fractions = dot_and_fractions.trim_end_matches(['0', '.', '_']);
     let formatted = format!(
         "{}{}{}{}",
         if before.is_empty() && fixed_dot_and_fractions.is_empty() { "0" } else { before },

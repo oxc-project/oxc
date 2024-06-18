@@ -148,7 +148,7 @@ pub trait Suite<T: Case> {
 
                 let path = path.strip_prefix(test_root).unwrap().to_owned();
                 // remove the Byte Order Mark in some of the TypeScript files
-                let code = code.trim_start_matches(|c| c == '\u{feff}').to_string();
+                let code = code.trim_start_matches('\u{feff}').to_string();
                 T::new(path, code)
             })
             .filter(|case| !case.skip_test_case())

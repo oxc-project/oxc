@@ -359,7 +359,7 @@ impl ExecTestCase {
     fn write_to_test_files(&self, content: &str) -> PathBuf {
         let allocator = Allocator::default();
         let new_file_name: String =
-            normalize_path(self.path.strip_prefix(&packages_root()).unwrap())
+            normalize_path(self.path.strip_prefix(packages_root()).unwrap())
                 .split('/')
                 .collect::<Vec<&str>>()
                 .join("-");
