@@ -4,6 +4,34 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.0] - 2024-06-18
+
+- 5c38a0f codegen: [**BREAKING**] New code gen API (#3740) (Boshen)
+
+- 534242a codegen: [**BREAKING**] Remove `CodegenOptions::enable_typescript` (#3674) (Boshen)
+
+- 0578ece ast: [**BREAKING**] Remove `ExportDefaultDeclarationKind::TSEnumDeclaration` (#3666) (Dunqing)
+
+### Features
+
+- 5a99d30 codegen: Improve codegen formatting (#3735) (Boshen)
+- bf9b38a codegen: Improve codegen formatting (#3731) (Boshen)
+- 4a004e2 codegen: Print TSImport remaining fields (#3695) (Dunqing)
+- a56cb1b codegen: Print accessibility for MethodDefinition (#3690) (Dunqing)
+- 38a75e5 coverage: Improve codegen (#3729) (Boshen)
+- 4f2db46 transformer-dts: `--isolatedDeclarations` dts transform (#3664) (Dunqing)
+
+### Bug Fixes
+
+- da1e2d0 codegen: Improve typescript codegen (#3708) (Boshen)
+
+### Refactor
+
+- fa7a6ba codegen: Add `gen` method to ast nodes (#3687) (Boshen)
+- 09b92b6 codegen: Move `gen_ts` into `gen` to make searching things easier (#3680) (Boshen)
+- 815260e isolated-declarations: Decouple codegen (#3715) (Boshen)
+- 4f16664 transformer_dts: Create a `Program` for codegen (#3679) (Boshen)
+
 ## [0.14.0] - 2024-06-12
 
 ### Refactor

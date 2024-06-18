@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.0] - 2024-06-18
+
+- 5c38a0f codegen: [**BREAKING**] New code gen API (#3740) (Boshen)
+
+### Features
+
+- 750a534 coverage: Transformer idempotency test (#3691) (Boshen)
+- 4f2db46 transformer-dts: `--isolatedDeclarations` dts transform (#3664) (Dunqing)
+
+### Bug Fixes
+
+- 59666e0 transformer: Do not rename accessible identifier references (#3623) (Dunqing)
+
 ## [0.14.0] - 2024-06-12
 
 ### Bug Fixes

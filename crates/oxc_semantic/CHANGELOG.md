@@ -4,6 +4,40 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.0] - 2024-06-18
+
+- 0537d29 cfg: [**BREAKING**] Move control flow to its own crate. (#3728) (rzvxa)
+
+- 4bce59d semantic/cfg: [**BREAKING**] Re-export `petgraph` as `control_flow::graph`. (#3722) (rzvxa)
+
+- 0578ece ast: [**BREAKING**] Remove `ExportDefaultDeclarationKind::TSEnumDeclaration` (#3666) (Dunqing)
+
+### Features
+
+- 046ff3f linter/eslint: Add `no_unreachable` rule. (#3238) (rzvxa)
+- 9c31ed9 semantic/cfg: Propagate unreachable edges through subgraphs. (#3648) (rzvxa)
+- d9c5b33 semantic/cfg: Add `Condition` instruction. (#3567) (Ali Rezvani)
+- f2dfd66 semantic/cfg: Add iteration instructions. (#3566) (rzvxa)
+
+### Bug Fixes
+
+- 70fc69b semantic: Add Eq to CtxFlags (#3651) (Yuji Sugiura)
+- 7a58fec semantic/cfg: Issue in unlabeled `Ctx`s. (#3678) (rzvxa)
+- abd6ac8 semantic/cfg: Discrete finalization path after `NewFunction`s. (#3671) (rzvxa)
+- e148a32 semantic/cfg: Correct unreachability propagation in try-finally. (#3667) (Ali Rezvani)
+
+### Performance
+
+- 2717a1a semantic/cfg: Lower the visits in `neighbors_filtered_by_edge_weight`. (#3676) (rzvxa)
+
+### Refactor
+
+- 7ec44f8 semantic: Rename `cfg` macro to `control_flow`. (#3742) (rzvxa)
+- d8ad321 semantic: Make control flow generation optional. (#3737) (rzvxa)
+- a94a72d semantic: Expose 1 checker function instead of 2 (#3694) (Boshen)
+- bd8d115 semantic/cfg: Remove unused types. (#3677) (rzvxa)
+- f702fb9 semantic/cfg: Cleanup control flow and it's builder. (#3650) (rzvxa)
+
 ## [0.14.0] - 2024-06-12
 
 ### Refactor
