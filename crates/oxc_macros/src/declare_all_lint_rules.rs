@@ -81,6 +81,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            pub fn use_cfg(&self) -> bool {
+                match self {
+                    #(Self::#struct_names(_) => #struct_names::USE_CFG),*
+                }
+            }
+
             pub fn documentation(&self) -> Option<&'static str> {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::documentation()),*

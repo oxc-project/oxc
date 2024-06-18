@@ -50,7 +50,7 @@ declare_oxc_lint!(
     /// ```
     #[use_cfg]
     GetterReturn,
-    nursery,
+    nursery
 );
 
 impl Rule for GetterReturn {

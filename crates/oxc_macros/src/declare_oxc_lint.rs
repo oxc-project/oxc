@@ -3,7 +3,7 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
     parse::{Parse, ParseStream},
-    Attribute, Expr, Ident, Lit, LitStr, Meta, Result, Token,
+    Attribute, Expr, Ident, Lit, Meta, Result, Token,
 };
 
 pub struct LintRuleMeta {
@@ -19,8 +19,7 @@ impl Parse for LintRuleMeta {
         let mut documentation = String::new();
         let use_cfg = 'use_cfg: {
             for attr in input.call(Attribute::parse_outer)? {
-                if let Some(lit) = parse_attr(["doc"], &attr) {
-                    let value = lit.value();
+                if let Some(value) = parse_attr(["doc"], &attr) {
                     let line = value.strip_prefix(' ').unwrap_or(&value);
 
                     documentation.push_str(line);
@@ -82,19 +81,20 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     TokenStream::from(output)
 }
 
-fn parse_attr<'a, const LEN: usize>(
-    path: [&'static str; LEN],
-    attr: &'a Attribute,
-) -> Option<&'a LitStr> {
-    if let Meta::NameValue(name_value) = &attr.meta {
-        let path_idents = name_value.path.segments.iter().map(|segment| &segment.ident);
-        if itertools::equal(path_idents, path) {
-            if let Expr::Lit(expr_lit) = &name_value.value {
-                if let Lit::Str(s) = &expr_lit.lit {
-                    return Some(s);
+fn parse_attr<const LEN: usize>(path: [&'static str; LEN], attr: &Attribute) -> Option<String> {
+    match &attr.meta {
+        Meta::NameValue(name_value) => {
+            let path_idents = name_value.path.segments.iter().map(|segment| &segment.ident);
+            if itertools::equal(path_idents, path) {
+                if let Expr::Lit(expr_lit) = &name_value.value {
+                    if let Lit::Str(s) = &expr_lit.lit {
+                        return Some(s.value());
+                    }
                 }
             }
+            None
         }
+        Meta::Path(p) if p.is_ident(path[0]) => Some(path[0].to_string()),
+        _ => None,
     }
-    None
 }
