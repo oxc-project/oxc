@@ -1,0 +1,47 @@
+---
+source: crates/oxc_semantic/tests/integration/cfg.rs
+expression: snapshot
+input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/conditional_expression.js
+---
+bb0: {
+
+}
+
+bb1: {
+	statement
+}
+
+bb2: {
+	condition
+}
+
+bb3: {
+
+}
+
+bb4: {
+
+}
+
+bb5: {
+	statement
+}
+
+digraph {
+    0 [ label = "" ]
+    1 [ label = "VariableDeclaration" ]
+    2 [ label = "Condition(CallExpression)" ]
+    3 [ label = "" ]
+    4 [ label = "" ]
+    5 [ label = "VariableDeclaration" ]
+    1 -> 0 [ label = "Error(Implicit)" ]
+    2 -> 0 [ label = "Error(Implicit)" ]
+    3 -> 0 [ label = "Error(Implicit)" ]
+    4 -> 0 [ label = "Error(Implicit)" ]
+    5 -> 0 [ label = "Error(Implicit)" ]
+    1 -> 2 [ label = "Normal" ]
+    3 -> 5 [ label = "Normal" ]
+    2 -> 3 [ label = "Jump" ]
+    2 -> 4 [ label = "Normal" ]
+    4 -> 5 [ label = "Normal" ]
+}
