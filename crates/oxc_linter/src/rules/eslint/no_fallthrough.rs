@@ -365,12 +365,10 @@ fn test() {
         ("switch (foo) { case 0: try {} finally { break; } default: b(); }", None),
         ("switch (foo) { case 0: try { throw 0; } catch (err) { break; } default: b(); }", None),
         ("switch (foo) { case 0: do { throw 0; } while(a); default: b(); }", None),
-        // TODO: we need a way to handle disables in the higher context, For example purging
-        // disabled diagnostics.
-        // (
-        //     "switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }",
-        //     None,
-        // ),
+        (
+            "switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }",
+            None,
+        ),
         (
             "switch(foo) { case 0: a(); /* no break */ case 1: b(); }",
             Some(serde_json::json!([{
