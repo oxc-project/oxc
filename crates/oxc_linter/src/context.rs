@@ -88,11 +88,6 @@ impl<'a> LintContext<'a> {
 pub struct CFGLintContext<'a>(LintContextData<'a>);
 
 impl<'a> CFGLintContext<'a> {
-    #[allow(dead_code)]
-    pub(super) fn into_data(self) -> LintContextData<'a> {
-        self.0
-    }
-
     /// # Panics
     /// If rule doesn't have `#[use_cfg]` in it's declaration it would panic.
     pub fn cfg(&self) -> &ControlFlowGraph {
@@ -114,7 +109,7 @@ impl<'a, 'b> From<&'b LintContextData<'a>> for &'b LintContext<'a> {
     fn from(data: &'b LintContextData<'a>) -> Self {
         #![allow(unsafe_code)]
         // SAFETY: `LintContext` is just a thin wrapper around `LintContextData`.
-        unsafe { &*((data as *const LintContextData<'_>).cast::<LintContext<'_>>()) }
+        unsafe { &*((data as *const LintContextData<'a>).cast::<LintContext<'a>>()) }
     }
 }
 
@@ -122,111 +117,7 @@ impl<'a, 'b> From<&'b LintContextData<'a>> for &'b CFGLintContext<'a> {
     fn from(data: &'b LintContextData<'a>) -> Self {
         #![allow(unsafe_code)]
         // SAFETY: `CFGLintContext` is just a thin wrapper around `LintContextData`.
-        unsafe { &*((data as *const LintContextData<'_>).cast::<CFGLintContext<'_>>()) }
-    }
-}
-
-impl<'a> LintCtx<'a> for LintContext<'a> {
-    fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
-        LintContextData::new(file_path, semantic).into()
-    }
-
-    fn with_fix(mut self, fix: bool) -> Self {
-        self.0 = self.0.with_fix(fix);
-        self
-    }
-
-    fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
-        self.0 = self.0.with_eslint_config(eslint_config);
-        self
-    }
-
-    fn with_rule_name(mut self, name: &'static str) -> Self {
-        self.0 = self.0.with_rule_name(name);
-        self
-    }
-
-    fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
-        self.0 = self.0.with_severity(severity);
-        self
-    }
-
-    fn semantic(&self) -> &Rc<Semantic<'a>> {
-        self.0.semantic()
-    }
-
-    fn disable_directives(&self) -> &DisableDirectives<'a> {
-        self.0.disable_directives()
-    }
-
-    fn source_text(&self) -> &'a str {
-        self.0.source_text()
-    }
-
-    fn source_range(&self, span: Span) -> &'a str {
-        self.0.source_range(span)
-    }
-
-    fn source_type(&self) -> &SourceType {
-        self.0.source_type()
-    }
-
-    fn file_path(&self) -> &Path {
-        self.0.file_path()
-    }
-
-    fn settings(&self) -> &OxlintSettings {
-        self.0.settings()
-    }
-
-    fn globals(&self) -> &OxlintGlobals {
-        self.0.globals()
-    }
-
-    fn env(&self) -> &OxlintEnv {
-        self.0.env()
-    }
-
-    fn env_contains_var(&self, var: &str) -> bool {
-        self.0.env_contains_var(var)
-    }
-
-    /* Diagnostics */
-    fn into_message(self) -> Vec<Message<'a>> {
-        self.0.into_message()
-    }
-
-    fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.0.diagnostic(diagnostic);
-    }
-
-    fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
-        &self,
-        diagnostic: OxcDiagnostic,
-        fix: F,
-    ) {
-        self.0.diagnostic_with_fix(diagnostic, fix);
-    }
-
-    fn nodes(&self) -> &AstNodes<'a> {
-        self.0.nodes()
-    }
-
-    fn scopes(&self) -> &ScopeTree {
-        self.0.scopes()
-    }
-
-    fn symbols(&self) -> &SymbolTable {
-        self.0.symbols()
-    }
-
-    fn module_record(&self) -> &ModuleRecord {
-        self.0.module_record()
-    }
-
-    /* JSDoc */
-    fn jsdoc(&self) -> &JSDocFinder<'a> {
-        self.0.jsdoc()
+        unsafe { &*((data as *const LintContextData<'a>).cast::<CFGLintContext<'a>>()) }
     }
 }
 
@@ -382,106 +273,113 @@ impl<'a> LintCtx<'a> for LintContextData<'a> {
     }
 }
 
-impl<'a> LintCtx<'a> for CFGLintContext<'a> {
-    fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
-        Self(LintContextData::new(file_path, semantic))
-    }
+macro_rules! impl_lint_ctx {
+    ($ty:ty) => {
+        impl<'a> LintCtx<'a> for $ty {
+            fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
+                Self(LintContextData::new(file_path, semantic))
+            }
 
-    fn with_fix(mut self, fix: bool) -> Self {
-        self.0 = self.0.with_fix(fix);
-        self
-    }
+            fn with_fix(mut self, fix: bool) -> Self {
+                self.0 = self.0.with_fix(fix);
+                self
+            }
 
-    fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
-        self.0 = self.0.with_eslint_config(eslint_config);
-        self
-    }
+            fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
+                self.0 = self.0.with_eslint_config(eslint_config);
+                self
+            }
 
-    fn with_rule_name(mut self, name: &'static str) -> Self {
-        self.0 = self.0.with_rule_name(name);
-        self
-    }
+            fn with_rule_name(mut self, name: &'static str) -> Self {
+                self.0 = self.0.with_rule_name(name);
+                self
+            }
 
-    fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
-        self.0 = self.0.with_severity(severity);
-        self
-    }
+            fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
+                self.0 = self.0.with_severity(severity);
+                self
+            }
 
-    fn semantic(&self) -> &Rc<Semantic<'a>> {
-        self.0.semantic()
-    }
+            fn semantic(&self) -> &Rc<Semantic<'a>> {
+                self.0.semantic()
+            }
 
-    fn disable_directives(&self) -> &DisableDirectives<'a> {
-        self.0.disable_directives()
-    }
+            fn disable_directives(&self) -> &DisableDirectives<'a> {
+                self.0.disable_directives()
+            }
 
-    fn source_text(&self) -> &'a str {
-        self.0.source_text()
-    }
+            fn source_text(&self) -> &'a str {
+                self.0.source_text()
+            }
 
-    fn source_range(&self, span: Span) -> &'a str {
-        self.0.source_range(span)
-    }
+            fn source_range(&self, span: Span) -> &'a str {
+                self.0.source_range(span)
+            }
 
-    fn source_type(&self) -> &SourceType {
-        self.0.source_type()
-    }
+            fn source_type(&self) -> &SourceType {
+                self.0.source_type()
+            }
 
-    fn file_path(&self) -> &Path {
-        self.0.file_path()
-    }
+            fn file_path(&self) -> &Path {
+                self.0.file_path()
+            }
 
-    fn settings(&self) -> &OxlintSettings {
-        self.0.settings()
-    }
+            fn settings(&self) -> &OxlintSettings {
+                self.0.settings()
+            }
 
-    fn globals(&self) -> &OxlintGlobals {
-        self.0.globals()
-    }
+            fn globals(&self) -> &OxlintGlobals {
+                self.0.globals()
+            }
 
-    fn env(&self) -> &OxlintEnv {
-        self.0.env()
-    }
+            fn env(&self) -> &OxlintEnv {
+                self.0.env()
+            }
 
-    fn env_contains_var(&self, var: &str) -> bool {
-        self.0.env_contains_var(var)
-    }
+            fn env_contains_var(&self, var: &str) -> bool {
+                self.0.env_contains_var(var)
+            }
 
-    /* Diagnostics */
-    fn into_message(self) -> Vec<Message<'a>> {
-        self.0.into_message()
-    }
+            /* Diagnostics */
+            fn into_message(self) -> Vec<Message<'a>> {
+                self.0.into_message()
+            }
 
-    fn diagnostic(&self, diagnostic: OxcDiagnostic) {
-        self.0.diagnostic(diagnostic);
-    }
+            fn diagnostic(&self, diagnostic: OxcDiagnostic) {
+                self.0.diagnostic(diagnostic);
+            }
 
-    fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
-        &self,
-        diagnostic: OxcDiagnostic,
-        fix: F,
-    ) {
-        self.0.diagnostic_with_fix(diagnostic, fix);
-    }
+            fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
+                &self,
+                diagnostic: OxcDiagnostic,
+                fix: F,
+            ) {
+                self.0.diagnostic_with_fix(diagnostic, fix);
+            }
 
-    fn nodes(&self) -> &AstNodes<'a> {
-        self.0.nodes()
-    }
+            fn nodes(&self) -> &AstNodes<'a> {
+                self.0.nodes()
+            }
 
-    fn scopes(&self) -> &ScopeTree {
-        self.0.scopes()
-    }
+            fn scopes(&self) -> &ScopeTree {
+                self.0.scopes()
+            }
 
-    fn symbols(&self) -> &SymbolTable {
-        self.0.symbols()
-    }
+            fn symbols(&self) -> &SymbolTable {
+                self.0.symbols()
+            }
 
-    fn module_record(&self) -> &ModuleRecord {
-        self.0.module_record()
-    }
+            fn module_record(&self) -> &ModuleRecord {
+                self.0.module_record()
+            }
 
-    /* JSDoc */
-    fn jsdoc(&self) -> &JSDocFinder<'a> {
-        self.0.jsdoc()
-    }
+            /* JSDoc */
+            fn jsdoc(&self) -> &JSDocFinder<'a> {
+                self.0.jsdoc()
+            }
+        }
+    };
 }
+
+impl_lint_ctx!(LintContext<'a>);
+impl_lint_ctx!(CFGLintContext<'a>);
