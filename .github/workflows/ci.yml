@@ -28,7 +28,20 @@ env:
   RUSTFLAGS: "-D warnings"
 
 jobs:
+  optimize_ci:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.check_skip.outputs.skip }}
+    steps:
+      - name: Optimize CI
+        id: check_skip
+        uses: withgraphite/graphite-ci-action@main
+        with:
+          graphite_token: ${{ secrets.GRAPHITE_TOKEN }}
+
   test:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Test
     strategy:
       fail-fast: false
@@ -64,6 +77,8 @@ jobs:
       - run: cargo ck
 
   test-windows:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Test (windows-latest)
     runs-on: windows-latest
     steps:
@@ -109,6 +124,8 @@ jobs:
           cargo ck
 
   wasm:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Check Wasm
     runs-on: ubuntu-latest
     steps:
@@ -133,6 +150,8 @@ jobs:
         run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
 
   typos:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
@@ -142,6 +161,8 @@ jobs:
           files: .
 
   deny:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Cargo Deny
     runs-on: ubuntu-latest
     steps:
@@ -164,6 +185,8 @@ jobs:
         run: cargo deny check
 
   unused-deps:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Check Unused Dependencies
     runs-on: ubuntu-latest
     steps:
@@ -188,6 +211,8 @@ jobs:
         if: steps.filter.outputs.src == 'true'
 
   format:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Format
     runs-on: ubuntu-latest
     steps:
@@ -210,6 +235,8 @@ jobs:
       - run: cargo lint -- -D warnings
 
   doc:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Doc
     runs-on: ubuntu-latest
     steps:
@@ -221,6 +248,8 @@ jobs:
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   conformance:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Conformance
     runs-on: ubuntu-latest
     env:
