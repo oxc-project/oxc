@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_jasmine_globals
 ---
   ⚠ eslint-plugin-jest(no-jasmine-globals): "Illegal usage of global spyOn"
    ╭─[no_jasmine_globals.tsx:1:1]

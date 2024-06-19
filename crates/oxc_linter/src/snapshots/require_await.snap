@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: require_await
 ---
   ⚠ eslint(require-await): Async function has no 'await' expression.
    ╭─[require_await.tsx:1:16]

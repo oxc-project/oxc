@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_unsafe_negation
 ---
   ⚠ Unexpected logical not in the left hand side of 'in' operator
    ╭─[no_unsafe_negation.tsx:1:1]

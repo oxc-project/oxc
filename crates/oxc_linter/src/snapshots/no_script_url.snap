@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_script_url
 ---
   ⚠ eslint(no-script-url): Script URL is a form of eval
    ╭─[no_script_url.tsx:1:9]

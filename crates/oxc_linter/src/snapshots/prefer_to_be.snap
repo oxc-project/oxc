@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_to_be
 ---
   ⚠ eslint-plugin-jest(prefer-to-be): Use `toBe` when expecting primitive literals.
    ╭─[prefer_to_be.tsx:1:15]

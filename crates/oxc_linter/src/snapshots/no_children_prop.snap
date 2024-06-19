@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_children_prop
 ---
   ⚠ eslint-plugin-react(no-children-prop): Avoid passing children using a prop.
    ╭─[no_children_prop.tsx:1:6]

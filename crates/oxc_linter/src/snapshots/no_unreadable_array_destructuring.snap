@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_unreadable_array_destructuring
 ---
   ⚠ eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring
    ╭─[no_unreadable_array_destructuring.tsx:1:7]

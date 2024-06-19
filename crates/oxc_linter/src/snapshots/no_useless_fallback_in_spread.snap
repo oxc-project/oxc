@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_useless_fallback_in_spread
 ---
   ⚠ eslint-plugin-unicorn(no-useless-fallback-in-spread): Disallow useless fallback when spreading in object literals
    ╭─[no_useless_fallback_in_spread.tsx:1:17]

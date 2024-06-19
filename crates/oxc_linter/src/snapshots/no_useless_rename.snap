@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_useless_rename
 ---
   ⚠ eslint(no-useless-rename): Disallow renaming import, export, and destructured assignments to the same name
    ╭─[no_useless_rename.tsx:1:6]

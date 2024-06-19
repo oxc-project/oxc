@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_new
 ---
   ⚠ eslint(no-new): Do not use 'new' for side effects.
    ╭─[no_new.tsx:1:1]

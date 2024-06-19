@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_rest_spread_properties
 ---
   ⚠ oxc(no-rest-spread-properties): object spread property are not allowed.
    ╭─[no_rest_spread_properties.tsx:1:3]

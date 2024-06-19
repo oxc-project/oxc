@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_typos
 ---
   ⚠ eslint-plugin-next(no-typos): getStaticpaths may be a typo. Did you mean getStaticPaths?
    ╭─[no_typos.tsx:5:30]

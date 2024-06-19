@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: require_render_return
 ---
   ⚠ eslint-plugin-react(require-render-return): Your render method should have a return statement
    ╭─[require_render_return.tsx:4:20]

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: max_lines
 ---
   ⚠ eslint(max-lines): "File has too many lines (3). Maximum allowed is 2."
    ╭─[max_lines.tsx:3:1]

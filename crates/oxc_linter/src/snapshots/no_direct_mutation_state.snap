@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_direct_mutation_state
 ---
   ⚠ eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.
    ╭─[no_direct_mutation_state.tsx:5:23]

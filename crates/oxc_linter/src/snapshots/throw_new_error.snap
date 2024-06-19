@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: throw_new_error
 ---
   ⚠ eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.
    ╭─[throw_new_error.tsx:1:7]

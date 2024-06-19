@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: default_case
 ---
   ⚠ eslint(default-case): Require default cases in switch statements.
    ╭─[default_case.tsx:1:1]

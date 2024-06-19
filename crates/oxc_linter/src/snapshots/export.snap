@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: export
 ---
   ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
    ╭─[index.ts:1:19]

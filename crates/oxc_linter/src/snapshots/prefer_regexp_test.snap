@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_regexp_test
 ---
   ⚠ eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()
    ╭─[prefer_regexp_test.tsx:1:34]

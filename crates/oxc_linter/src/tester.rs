@@ -205,8 +205,8 @@ impl Tester {
 
     pub fn snapshot(&self) {
         let name = self.rule_name.replace('-', "_");
-        insta::with_settings!({ prepend_module_to_snapshot => false, }, {
-            insta::assert_snapshot!(name.clone(), self.snapshot, &name);
+        insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+            insta::assert_snapshot!(name, self.snapshot);
         });
     }
 

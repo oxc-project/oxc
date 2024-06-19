@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_empty_function
 ---
   ⚠ eslint(no-empty-function): Disallow empty functions
    ╭─[no_empty_function.tsx:1:16]

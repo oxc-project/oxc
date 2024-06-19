@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: jsx_no_undef
 ---
   ⚠ eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX
    ╭─[jsx_no_undef.tsx:1:26]

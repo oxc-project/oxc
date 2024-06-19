@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: getter_return
 ---
   ⚠ eslint(getter-return): Expected to always return a value in getter.
    ╭─[getter_return.js:1:20]

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_duplicate_hooks
 ---
   ⚠ eslint-plugin-jest(no-duplicate-hooks): Disallow duplicate setup and teardown hooks.
    ╭─[no_duplicate_hooks.tsx:4:21]

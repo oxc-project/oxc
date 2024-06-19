@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_is_mounted
 ---
   ⚠ eslint(no-is-mounted): Do not use isMounted
    ╭─[no_is_mounted.tsx:4:24]

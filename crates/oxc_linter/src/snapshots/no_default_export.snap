@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_default_export
 ---
   ⚠ eslint-plugin-import(no-default-export): Prefer named exports
    ╭─[index.ts:1:8]

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_caller
 ---
   ⚠ eslint(no-caller): Disallow the use of arguments.caller or arguments.callee
    ╭─[no_caller.tsx:1:19]

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_ternary
 ---
   ⚠ eslint(no-ternary): Unexpected use of ternary expression
    ╭─[no_ternary.tsx:1:11]

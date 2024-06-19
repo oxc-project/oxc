@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_ex_assign
 ---
   ⚠ eslint(no-ex-assign): Do not assign to the exception parameter.
    ╭─[no_ex_assign.tsx:1:21]

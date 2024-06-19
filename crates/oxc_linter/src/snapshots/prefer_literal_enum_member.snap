@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_literal_enum_member
 ---
   ⚠ typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).
    ╭─[prefer_literal_enum_member.tsx:3:12]

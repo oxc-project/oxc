@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_null
 ---
   ⚠ eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal
    ╭─[no_null.tsx:1:13]

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: jsx_no_new_object_as_prop
 ---
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
    ╭─[jsx_no_new_object_as_prop.tsx:1:15]

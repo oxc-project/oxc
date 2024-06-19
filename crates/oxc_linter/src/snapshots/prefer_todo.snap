@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_todo
 ---
   ⚠ eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.
    ╭─[prefer_todo.tsx:1:1]

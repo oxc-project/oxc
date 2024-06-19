@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_eq_null
 ---
   ⚠ eslint(no-eq-null): Use '===' to compare with null
    ╭─[no_eq_null.tsx:1:5]

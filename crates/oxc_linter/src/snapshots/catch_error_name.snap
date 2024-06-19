@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: catch_error_name
 ---
   ⚠ eslint-plugin-unicorn(catch-error-name): The catch parameter "descriptiveError" should be named "exception"
    ╭─[catch_error_name.tsx:1:16]
