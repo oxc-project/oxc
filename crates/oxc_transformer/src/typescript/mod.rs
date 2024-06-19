@@ -189,12 +189,6 @@ impl<'a> TypeScript<'a> {
         }
     }
 
-    pub fn transform_module_declaration(&mut self, module_decl: &mut ModuleDeclaration<'a>) {
-        if let ModuleDeclaration::TSExportAssignment(ts_export_assignment) = &mut *module_decl {
-            self.transform_ts_export_assignment(ts_export_assignment);
-        }
-    }
-
     pub fn transform_jsx_element(&mut self, elem: &mut JSXElement<'a>) {
         self.annotations.transform_jsx_element(elem);
     }

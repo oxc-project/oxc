@@ -284,11 +284,11 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_for_statement(stmt);
     }
 
-    fn enter_module_declaration(
+    fn enter_ts_export_assignment(
         &mut self,
-        decl: &mut ModuleDeclaration<'a>,
+        export_assignment: &mut TSExportAssignment<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.transform_module_declaration(decl);
+        self.x0_typescript.transform_ts_export_assignment(export_assignment);
     }
 }
