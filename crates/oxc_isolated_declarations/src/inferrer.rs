@@ -52,15 +52,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.error(inferred_type_of_class_expression(expr.span));
                 Some(self.ast.ts_unknown_keyword(SPAN))
             }
+            Expression::ParenthesizedExpression(expr) => {
+                self.infer_type_from_expression(&expr.expression)
+            }
             Expression::TSNonNullExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
             }
             Expression::TSSatisfiesExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
-            }
-            Expression::TSInstantiationExpression(_expr) => {
-                unreachable!();
-                // infer_type_from_expression(ctx, &expr.expression)
             }
             Expression::TSTypeAssertion(expr) => Some(self.ast.copy(&expr.type_annotation)),
             _ => None,
