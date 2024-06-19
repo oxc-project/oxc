@@ -31,6 +31,11 @@ submodules:
   just clone-submodule tasks/coverage/typescript git@github.com:microsoft/TypeScript.git d8086f14b6b97c0df34a0cc2f56d4b5926a0c299
   just clone-submodule tasks/prettier_conformance/prettier git@github.com:prettier/prettier.git 7142cf354cce2558f41574f44b967baf11d5b603
 
+# Install git pre-commit to format files
+install-hook:
+  echo "#!/bin/sh\njust fmt" > .git/hooks/pre-commit
+  chmod +x .git/hooks/pre-commit
+
 # --no-vcs-ignores: cargo-watch has a bug loading all .gitignores, including the ones listed in .gitignore
 # use .ignore file getting the ignore list
 # Run `cargo watch`
