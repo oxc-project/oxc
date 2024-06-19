@@ -313,14 +313,15 @@ impl<'a> IsolatedDeclarations<'a> {
                         )
                     })
                     .name;
-                if last_function_name.as_ref().is_some_and(|last_name| last_name == name)
-                    && func.body.is_some()
-                {
-                    None
+
+                if func.body.is_some() {
+                    if last_function_name.as_ref().is_some_and(|last_name| last_name == name) {
+                        return None;
+                    }
                 } else {
                     last_function_name = Some(name.clone());
-                    Some(stmt)
                 }
+                Some(stmt)
             }
             Statement::ExportNamedDeclaration(ref decl) => {
                 if let Some(Declaration::FunctionDeclaration(ref func)) = decl.declaration {
@@ -333,14 +334,14 @@ impl<'a> IsolatedDeclarations<'a> {
                         )
                         })
                         .name;
-                    if last_function_name.as_ref().is_some_and(|last_name| last_name == name)
-                        && func.body.is_some()
-                    {
-                        None
+                    if func.body.is_some() {
+                        if last_function_name.as_ref().is_some_and(|last_name| last_name == name) {
+                            return None;
+                        }
                     } else {
                         last_function_name = Some(name.clone());
-                        Some(stmt)
                     }
+                    Some(stmt)
                 } else {
                     Some(stmt)
                 }
