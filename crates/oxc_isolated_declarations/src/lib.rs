@@ -111,6 +111,9 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        // https://github.com/microsoft/TypeScript/pull/58912
+        let mut need_empty_export_marker = true;
+
         let mut new_stmts = Vec::new();
         let mut variables_declarations = VecDeque::new();
         let mut variable_transformed_indexes = VecDeque::new();
@@ -140,13 +143,14 @@ impl<'a> IsolatedDeclarations<'a> {
                     new_stmts.push(stmt);
                 }
                 match_module_declaration!(Statement) => {
-                    transformed_indexes.push(new_stmts.len());
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
+                            transformed_indexes.push(new_stmts.len());
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
                             {
                                 if let Some(var_decl) = var_decl {
+                                    need_empty_export_marker = false;
                                     self.scope.visit_variable_declaration(&var_decl);
                                     new_stmts.push(Statement::VariableDeclaration(
                                         self.ast.alloc(var_decl),
@@ -161,10 +165,12 @@ impl<'a> IsolatedDeclarations<'a> {
                                 continue;
                             }
 
+                            need_empty_export_marker = false;
                             self.scope.visit_export_default_declaration(decl);
                         }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
+                            transformed_indexes.push(new_stmts.len());
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_declaration(
                                     new_decl.declaration.as_ref().unwrap_or_else(|| unreachable!()),
@@ -175,10 +181,14 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ));
                                 continue;
                             }
-
+                            need_empty_export_marker = false;
                             self.scope.visit_export_named_declaration(decl);
                         }
+                        ModuleDeclaration::ImportDeclaration(_) => {
+                            // We must transform this in the end, because we need to know all references
+                        }
                         module_declaration => {
+                            transformed_indexes.push(new_stmts.len());
                             self.scope.visit_module_declaration(module_declaration);
                         }
                     }
@@ -190,6 +200,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         // 5. Transform statements until no more transformation can be done
+        let last_transformed_len = transformed_indexes.len();
         let mut last_reference_len = 0;
         while last_reference_len != self.scope.references_len() {
             last_reference_len = self.scope.references_len();
@@ -259,6 +270,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variables_declaration));
+                        transformed_indexes.push(index);
                     }
                 }
                 Statement::UsingDeclaration(decl) => {
@@ -280,6 +292,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variable_declaration));
+                        transformed_indexes.push(index);
                     }
                 }
                 Statement::ImportDeclaration(decl) => {
@@ -292,6 +305,19 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
                 _ => {}
             }
+        }
+
+        if last_transformed_len == transformed_indexes.len() {
+            need_empty_export_marker = false;
+        }
+
+        if need_empty_export_marker {
+            let specifiers = self.ast.new_vec();
+            let kind = ImportOrExportKind::Value;
+            let empty_export =
+                self.ast.export_named_declaration(SPAN, None, specifiers, None, kind, None);
+            new_ast_stmts
+                .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         }
 
         new_ast_stmts
