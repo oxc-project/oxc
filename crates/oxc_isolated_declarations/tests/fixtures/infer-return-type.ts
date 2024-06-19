@@ -4,7 +4,7 @@ function foo() {
 // inferred type is number
 
 function bar() {
-  if (true) {
+  if (a) {
    return;
   }
   return 1;
@@ -12,9 +12,16 @@ function bar() {
 // inferred type is number | undefined
 
 function baz() {
- if (true) {
+ if (a) {
   return null;
  }
  return 1;
 }
 // We can't infer return type if there are multiple return statements with different types
+
+function qux() {
+  const a = (() => {
+    return 1;
+  })();
+ return `Hello, world!`;
+}
