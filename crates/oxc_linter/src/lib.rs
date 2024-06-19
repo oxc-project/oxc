@@ -21,7 +21,6 @@ pub mod table;
 
 use std::{io::Write, rc::Rc, sync::Arc};
 
-use context::CFGLintContext;
 use oxc_diagnostics::Error;
 use oxc_semantic::AstNode;
 
@@ -102,20 +101,17 @@ impl Linter {
         self.rules.len()
     }
 
-    pub fn run<'a, C>(&self, ctx: C) -> Vec<Message<'a>>
-    where
-        C: LintCtx<'a> + Into<CFGLintContext<'a>>,
-    {
+    pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
         let semantic = Rc::clone(ctx.semantic());
 
         let ctx = ctx.with_fix(self.options.fix).with_eslint_config(&self.eslint_config);
-        let ctx: &CFGLintContext<'a> = &ctx.into();
+        let ctx_data = &ctx.into_data();
 
         let rules = self
             .rules
             .iter()
             .map(|rule| {
-                (rule, ctx.clone().with_rule_name(rule.name()).with_severity(rule.severity))
+                (rule, ctx_data.clone().with_rule_name(rule.name()).with_severity(rule.severity))
             })
             .collect::<Vec<_>>();
 
