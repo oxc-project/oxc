@@ -2,13 +2,13 @@ use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_ast::{syntax_directed_operations::BoundNames, Visit};
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     diagnostics::{
         binding_element_export, inferred_type_of_expression, signature_computed_property_name,
+        variable_must_have_explicit_type,
     },
     IsolatedDeclarations,
 };
@@ -82,10 +82,7 @@ impl<'a> IsolatedDeclarations<'a> {
             if init.is_none() && binding_type.is_none() {
                 binding_type = Some(self.ast.ts_unknown_keyword(SPAN));
                 if !decl.init.as_ref().is_some_and(Expression::is_function) {
-                    self.error(
-                      OxcDiagnostic::error("Variable must have an explicit type annotation with --isolatedDeclarations.")
-                          .with_label(decl.id.span()),
-                  );
+                    self.error(variable_must_have_explicit_type(decl.id.span()));
                 }
             }
         }

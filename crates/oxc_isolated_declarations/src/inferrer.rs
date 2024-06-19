@@ -3,11 +3,12 @@ use oxc_ast::ast::{
     ArrowFunctionExpression, BindingPatternKind, Expression, FormalParameter, Function, Statement,
     TSType, TSTypeAnnotation,
 };
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, SPAN};
 
 use crate::{
-    diagnostics::{array_inferred, inferred_type_of_class_expression},
+    diagnostics::{
+        array_inferred, inferred_type_of_class_expression, parameter_must_have_explicit_type,
+    },
     return_type::FunctionReturnType,
     IsolatedDeclarations,
 };
@@ -79,10 +80,7 @@ impl<'a> IsolatedDeclarations<'a> {
             } else {
                 if let Expression::TSAsExpression(expr) = &pattern.right {
                     if !expr.type_annotation.is_keyword_or_literal() {
-                        self.error(
-                            OxcDiagnostic::error("Parameter must have an explicit type annotation with --isolatedDeclarations.")
-                                .with_label(expr.type_annotation.span())
-                        );
+                        self.error(parameter_must_have_explicit_type(expr.type_annotation.span()));
                     }
                 }
 

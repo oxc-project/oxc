@@ -13,8 +13,8 @@ export declare function fnDeclBad3<T>(p: T, rParam?: T, r2: T): void;
 
 ==================== Errors ====================
 
-  x Declaration emit for this parameter requires implicitly adding undefined
-  | to it's type. This is not supported with --isolatedDeclarations.
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
    ,-[6:30]
  5 | // Incorrect
  6 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
@@ -22,8 +22,8 @@ export declare function fnDeclBad3<T>(p: T, rParam?: T, r2: T): void;
  7 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
    `----
 
-  x Declaration emit for this parameter requires implicitly adding undefined
-  | to it's type. This is not supported with --isolatedDeclarations.
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
    ,-[6:41]
  5 | // Incorrect
  6 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
@@ -31,8 +31,8 @@ export declare function fnDeclBad3<T>(p: T, rParam?: T, r2: T): void;
  7 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
    `----
 
-  x Declaration emit for this parameter requires implicitly adding undefined
-  | to it's type. This is not supported with --isolatedDeclarations.
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
    ,-[7:31]
  6 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
  7 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
@@ -40,8 +40,8 @@ export declare function fnDeclBad3<T>(p: T, rParam?: T, r2: T): void;
  8 | export function fnDeclBad3<T>(p: T = [], rParam?: T, r2: T): void { }
    `----
 
-  x Declaration emit for this parameter requires implicitly adding undefined
-  | to it's type. This is not supported with --isolatedDeclarations.
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
    ,-[8:31]
  7 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
  8 | export function fnDeclBad3<T>(p: T = [], rParam?: T, r2: T): void { }

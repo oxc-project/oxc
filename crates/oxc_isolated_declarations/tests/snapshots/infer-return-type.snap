@@ -11,7 +11,7 @@ declare function baz();
 
 ==================== Errors ====================
 
-  x Function must have an explicit return type annotation with
+  x TS9007: Function must have an explicit return type annotation with
   | --isolatedDeclarations.
     ,-[14:10]
  13 | 

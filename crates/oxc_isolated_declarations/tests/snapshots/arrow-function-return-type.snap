@@ -11,7 +11,7 @@ declare const C: unknown;
 
 ==================== Errors ====================
 
-  x Function must have an explicit return type annotation with
+  x TS9007: Function must have an explicit return type annotation with
   | --isolatedDeclarations.
    ,-[2:10]
  1 | function A() {
@@ -20,7 +20,7 @@ declare const C: unknown;
  3 |     return C;
    `----
 
-  x Function must have an explicit return type annotation with
+  x TS9007: Function must have an explicit return type annotation with
   | --isolatedDeclarations.
    ,-[7:11]
  6 | 
@@ -29,7 +29,7 @@ declare const C: unknown;
  8 | 
    `----
 
-  x Function must have an explicit return type annotation with
+  x TS9007: Function must have an explicit return type annotation with
   | --isolatedDeclarations.
    ,-[9:20]
  8 | 
