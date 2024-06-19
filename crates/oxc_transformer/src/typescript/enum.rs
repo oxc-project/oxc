@@ -53,7 +53,7 @@ impl<'a> TypeScriptEnum<'a> {
     ///   return Foo;
     /// })(Foo || {});
     /// ```
-    pub fn transform_ts_enum(
+    fn transform_ts_enum(
         &mut self,
         decl: &Box<'a, TSEnumDeclaration<'a>>,
         is_export: bool,
@@ -149,7 +149,7 @@ impl<'a> TypeScriptEnum<'a> {
         Some(stmt)
     }
 
-    pub fn transform_ts_enum_members(
+    fn transform_ts_enum_members(
         &mut self,
         members: &Vec<'a, TSEnumMember<'a>>,
         enum_name: &Atom<'a>,
