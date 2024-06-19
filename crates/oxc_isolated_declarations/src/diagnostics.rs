@@ -95,3 +95,8 @@ pub fn implicitly_adding_undefined_to_type(span: Span) -> OxcDiagnostic {
     )
     .with_label(span)
 }
+
+pub fn binding_element_export(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("Binding elements can't be exported directly with --isolatedDeclarations.")
+        .with_label(span)
+}
