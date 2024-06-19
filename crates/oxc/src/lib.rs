@@ -61,6 +61,12 @@ pub mod codegen {
     pub use oxc_codegen::*;
 }
 
+#[cfg(feature = "isolated_declarations")]
+pub mod isolated_declarations {
+    #[doc(inline)]
+    pub use oxc_isolated_declarations::*;
+}
+
 #[cfg(feature = "sourcemap")]
 pub mod sourcemap {
     #[doc(inline)]

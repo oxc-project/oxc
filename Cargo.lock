@@ -1271,6 +1271,7 @@ dependencies = [
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_index",
+ "oxc_isolated_declarations",
  "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
