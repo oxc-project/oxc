@@ -20,6 +20,26 @@ impl<'a> TypeScriptEnum<'a> {
         Self { ctx, enums: FxHashMap::default() }
     }
 
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {
+        let new_stmt = match stmt {
+            Statement::TSEnumDeclaration(ts_enum_decl) => {
+                self.transform_ts_enum(ts_enum_decl, false, ctx)
+            }
+            Statement::ExportNamedDeclaration(decl) => {
+                if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
+                    self.transform_ts_enum(ts_enum_decl, true, ctx)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+
+        if let Some(new_stmt) = new_stmt {
+            *stmt = new_stmt;
+        }
+    }
+
     /// ```TypeScript
     /// enum Foo {
     ///   X = 1,
