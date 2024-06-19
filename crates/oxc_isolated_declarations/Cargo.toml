@@ -18,6 +18,7 @@ workspace = true
 
 [lib]
 doctest = false
+test    = false
 
 [dependencies]
 oxc_ast         = { workspace = true }
@@ -31,3 +32,4 @@ rustc-hash = { workspace = true }
 [dev-dependencies]
 oxc_parser  = { workspace = true }
 oxc_codegen = { workspace = true }
+insta       = { workspace = true, features = ["glob"] }

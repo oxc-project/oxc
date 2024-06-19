@@ -1432,6 +1432,7 @@ dependencies = [
 name = "oxc_isolated_declarations"
 version = "0.15.0"
 dependencies = [
+ "insta",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
