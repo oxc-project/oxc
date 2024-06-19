@@ -41,7 +41,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_formal_parameter(
         &self,
         param: &FormalParameter<'a>,
-        next_param: Option<&FormalParameter<'a>>,
+        is_remaining_params_have_required: bool,
     ) -> FormalParameter<'a> {
         let is_assignment_pattern = param.pattern.kind.is_assignment_pattern();
         let mut pattern =
@@ -52,9 +52,6 @@ impl<'a> IsolatedDeclarations<'a> {
             };
 
         if is_assignment_pattern || pattern.type_annotation.is_none() {
-            let is_next_param_optional =
-                next_param.map_or(true, |next_param| next_param.pattern.optional);
-
             let type_annotation = pattern
                 .type_annotation
                 .as_ref()
@@ -70,7 +67,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .map(|ts_type| {
                     // jf next param is not optional and current param is assignment pattern
                     // we need to add undefined to it's type
-                    if !is_next_param_optional {
+                    if is_remaining_params_have_required {
                         if matches!(ts_type, TSType::TSTypeReference(_)) {
                             self.error(implicitly_adding_undefined_to_type(param.span));
                         } else if !ts_type.is_maybe_undefined() {
@@ -95,7 +92,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.copy(&pattern.kind),
                 type_annotation,
                 // if it's assignment pattern, it's optional
-                pattern.optional || (is_next_param_optional && is_assignment_pattern),
+                pattern.optional || (!is_remaining_params_have_required && is_assignment_pattern),
             );
         }
 
@@ -119,7 +116,11 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let items =
             self.ast.new_vec_from_iter(params.items.iter().enumerate().map(|(index, item)| {
-                self.transform_formal_parameter(item, params.items.get(index + 1))
+                let is_remaining_params_have_required =
+                    params.items.iter().skip(index).any(|item| {
+                        !(item.pattern.optional || item.pattern.kind.is_assignment_pattern())
+                    });
+                self.transform_formal_parameter(item, is_remaining_params_have_required)
             }));
 
         if let Some(rest) = &params.rest {
