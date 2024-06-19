@@ -8,7 +8,7 @@ use oxc_tasks_common::TestFiles;
 fn bench_codegen_sourcemap(criterion: &mut Criterion) {
     let mut group = criterion.benchmark_group("codegen_sourcemap");
 
-    for file in TestFiles::minimal().files() {
+    for file in TestFiles::complicated_one(1).files() {
         let id = BenchmarkId::from_parameter(&file.file_name);
         let source_type = SourceType::from_path(&file.file_name).unwrap();
         group.bench_with_input(id, &file.source_text, |b, source_text| {
