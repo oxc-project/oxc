@@ -265,7 +265,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        let mut inferred_accessor_type: FxHashMap<Atom<'a>, Box<'a, TSTypeAnnotation<'a>>> =
+        let mut inferred_accessor_types: FxHashMap<Atom<'a>, Box<'a, TSTypeAnnotation<'a>>> =
             FxHashMap::default();
 
         // Infer get accessor return type from set accessor
@@ -282,7 +282,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     continue;
                 };
                 let name = self.ast.new_atom(&name);
-                if inferred_accessor_type.contains_key(&name) {
+                if inferred_accessor_types.contains_key(&name) {
                     // We've inferred that accessor type already
                     continue;
                 }
@@ -291,7 +291,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     MethodDefinitionKind::Get => {
                         let return_type = self.infer_function_return_type(function);
                         if let Some(return_type) = return_type {
-                            inferred_accessor_type.insert(name, self.ast.copy(&return_type));
+                            inferred_accessor_types.insert(name, self.ast.copy(&return_type));
                         }
                     }
                     MethodDefinitionKind::Set => {
@@ -305,7 +305,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                     |t| Some(self.ast.copy(t)),
                                 );
                             if let Some(type_annotation) = type_annotation {
-                                inferred_accessor_type.insert(name, type_annotation);
+                                inferred_accessor_types.insert(name, type_annotation);
                             }
                         }
                     }
@@ -338,7 +338,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             |n| {
                                 self.transform_set_accessor_params(
                                     &function.params,
-                                    inferred_accessor_type
+                                    inferred_accessor_types
                                         .get(&self.ast.new_atom(&n))
                                         .map(|t| self.ast.copy(t)),
                                 )
@@ -368,7 +368,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         MethodDefinitionKind::Get => {
                             let rt = method.key.static_name().and_then(|name| {
-                                inferred_accessor_type
+                                inferred_accessor_types
                                     .get(&self.ast.new_atom(&name))
                                     .map(|t| self.ast.copy(t))
                             });

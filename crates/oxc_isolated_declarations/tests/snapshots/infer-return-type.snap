@@ -1,0 +1,21 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/infer-return-type.ts
+---
+==================== .D.TS ====================
+
+declare function foo(): number;
+declare function bar(): ((number) | (undefined));
+declare function baz();
+
+
+==================== Errors ====================
+
+  x Function must have an explicit return type annotation with
+  | --isolatedDeclarations.
+    ,-[14:10]
+ 13 | 
+ 14 | function baz() {
+    :          ^^^
+ 15 |  if (true) {
+    `----

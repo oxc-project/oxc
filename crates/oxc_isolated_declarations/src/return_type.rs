@@ -5,15 +5,38 @@ use oxc_ast::{
     },
     AstBuilder, Visit,
 };
-use oxc_span::{Atom, GetSpan};
+use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{diagnostics::type_containing_private_name, IsolatedDeclarations};
 
-/// Infer return type from return statement. Does not support multiple return statements.
+/// Infer return type from return statement.
+/// ```ts
+/// function foo() {
+///    return 1;
+/// }
+/// // inferred type is number
+///
+/// function bar() {
+///   if (true) {
+///    return;
+///   }
+///   return 1;
+/// }
+/// // inferred type is number | undefined
+///
+/// function baz() {
+///  if (true) {
+///   return null;
+///  }
+///  return 1;
+/// }
+/// // We can't infer return type if there are multiple return statements with different types
+/// ```
+#[allow(clippy::option_option)]
 pub struct FunctionReturnType<'a> {
     ast: AstBuilder<'a>,
-    return_expression: Option<Expression<'a>>,
+    return_expression: Option<Option<Expression<'a>>>,
     value_bindings: Vec<Atom<'a>>,
     type_bindings: Vec<Atom<'a>>,
     return_statement_count: u8,
@@ -36,48 +59,57 @@ impl<'a> FunctionReturnType<'a> {
 
         visitor.visit_function_body(body);
 
-        if visitor.return_statement_count > 1 {
-            return None;
-        }
+        let expr = visitor.return_expression??;
+        let Some(mut expr_type) = transformer.infer_type_from_expression(&expr) else {
+            // Avoid report error in parent function
+            return if expr.is_function() {
+                Some(transformer.ast.ts_unknown_keyword(SPAN))
+            } else {
+                None
+            };
+        };
 
-        visitor.return_expression.and_then(|expr| {
-            let expr_type = transformer.infer_type_from_expression(&expr)?;
-
-            if let Some((reference_name, is_value)) = match &expr_type {
-                TSType::TSTypeReference(type_reference) => {
-                    if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name {
-                        Some((ident.name.clone(), false))
-                    } else {
-                        None
-                    }
-                }
-                TSType::TSTypeQuery(query) => {
-                    if let TSTypeQueryExprName::IdentifierReference(ident) = &query.expr_name {
-                        Some((ident.name.clone(), true))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            } {
-                let is_defined_in_current_scope = if is_value {
-                    visitor.value_bindings.contains(&reference_name)
+        if let Some((reference_name, is_value)) = match &expr_type {
+            TSType::TSTypeReference(type_reference) => {
+                if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name {
+                    Some((ident.name.clone(), false))
                 } else {
-                    visitor.type_bindings.contains(&reference_name)
-                };
-
-                if is_defined_in_current_scope {
-                    transformer.error(type_containing_private_name(
-                        &reference_name,
-                        expr_type
-                            .get_identifier_reference()
-                            .map_or_else(|| expr_type.span(), |ident| ident.span),
-                    ));
+                    None
                 }
             }
+            TSType::TSTypeQuery(query) => {
+                if let TSTypeQueryExprName::IdentifierReference(ident) = &query.expr_name {
+                    Some((ident.name.clone(), true))
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        } {
+            let is_defined_in_current_scope = if is_value {
+                visitor.value_bindings.contains(&reference_name)
+            } else {
+                visitor.type_bindings.contains(&reference_name)
+            };
 
-            Some(expr_type)
-        })
+            if is_defined_in_current_scope {
+                transformer.error(type_containing_private_name(
+                    &reference_name,
+                    expr_type
+                        .get_identifier_reference()
+                        .map_or_else(|| expr_type.span(), |ident| ident.span),
+                ));
+            }
+        }
+
+        //
+        if visitor.return_statement_count > 1 {
+            let types = transformer
+                .ast
+                .new_vec_from_iter([expr_type, transformer.ast.ts_undefined_keyword(SPAN)]);
+            expr_type = transformer.ast.ts_union_type(SPAN, types);
+        }
+        Some(expr_type)
     }
 }
 
@@ -109,8 +141,16 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
     fn visit_return_statement(&mut self, stmt: &ReturnStatement<'a>) {
         self.return_statement_count += 1;
         if self.return_statement_count > 1 {
-            return;
+            if let Some(expr) = &self.return_expression {
+                // if last return statement is not empty, we can't infer return type
+                if expr.is_some() {
+                    self.return_expression = None;
+                    return;
+                }
+            } else {
+                return;
+            }
         }
-        self.return_expression = self.ast.copy(&stmt.argument);
+        self.return_expression = Some(self.ast.copy(&stmt.argument));
     }
 }

@@ -75,10 +75,12 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             if init.is_none() && binding_type.is_none() {
                 binding_type = Some(self.ast.ts_unknown_keyword(SPAN));
-                self.error(
-                  OxcDiagnostic::error("Variable must have an explicit type annotation with --isolatedDeclarations.")
-                      .with_label(decl.id.span()),
-              );
+                if !decl.init.as_ref().is_some_and(Expression::is_function) {
+                    self.error(
+                      OxcDiagnostic::error("Variable must have an explicit type annotation with --isolatedDeclarations.")
+                          .with_label(decl.id.span()),
+                  );
+                }
             }
         }
         let id = binding_type.map_or_else(
