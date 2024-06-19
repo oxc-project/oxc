@@ -124,9 +124,12 @@ impl GetterReturn {
                         return true;
                     }
                 }
-                AstKind::ObjectProperty(ObjectProperty { kind, .. }) => {
+                AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
                     if matches!(kind, PropertyKind::Get) {
                         return true;
+                    }
+                    if prop_key.name().is_some_and(|key| key != "get") {
+                        return false;
                     }
 
                     if let Some(parent_2) = ctx.nodes().parent_node(parent.id()) {
@@ -328,8 +331,11 @@ fn test() {
         ("class foo { get bar(){return;} }", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("Object.defineProperty(foo, \"bar\", { get: function () {return true;}});", None),
         ("Object.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});", None),
+        ("Object.defineProperty(foo, \"bar\", { set: function () {}});", None),
+        ("Object.defineProperty(foo, \"bar\", { set: () => {}});", None),
         ("Object.defineProperties(foo, { bar: { get: function () {return true;}} });", None),
         ("Object.defineProperties(foo, { bar: { get: function () { ~function (){ return true; }(); return true;}} });", None),
+        ("Object.defineProperties(foo, { bar: { set: function () {}} });", None),
         ("Reflect.defineProperty(foo, \"bar\", { get: function () {return true;}});", None),
         ("Reflect.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});", None),
         ("Object.create(foo, { bar: { get() {return true;} } });", None),
