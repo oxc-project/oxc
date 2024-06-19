@@ -178,17 +178,6 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_tagged_template_expression(expr);
     }
 
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
-        match decl {
-            Declaration::TSImportEqualsDeclaration(ts_import_equals)
-                if ts_import_equals.import_kind.is_value() =>
-            {
-                *decl = self.transform_ts_import_equals(ts_import_equals, ctx);
-            }
-            _ => {}
-        }
-    }
-
     pub fn transform_jsx_element(&mut self, elem: &mut JSXElement<'a>) {
         self.annotations.transform_jsx_element(elem);
     }

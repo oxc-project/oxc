@@ -7,31 +7,6 @@ use oxc_traverse::TraverseCtx;
 use super::TypeScript;
 
 impl<'a> TypeScript<'a> {
-    fn transform_ts_type_name(
-        &self,
-        type_name: &mut TSTypeName<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        match type_name {
-            TSTypeName::IdentifierReference(ident) => {
-                ident.reference_flag = ReferenceFlag::Read;
-                if let Some(reference_id) = ident.reference_id.get() {
-                    let reference = ctx.symbols_mut().get_reference_mut(reference_id);
-                    *reference.flag_mut() = ReferenceFlag::Read;
-                } else {
-                    unreachable!()
-                }
-                self.ctx.ast.identifier_reference_expression(ctx.ast.copy(ident))
-            }
-            TSTypeName::QualifiedName(qualified_name) => self.ctx.ast.static_member_expression(
-                SPAN,
-                self.transform_ts_type_name(&mut qualified_name.left, ctx),
-                qualified_name.right.clone(),
-                false,
-            ),
-        }
-    }
-
     /// ```TypeScript
     /// import b = babel;
     /// import AliasModule = LongNameModule;
@@ -40,7 +15,18 @@ impl<'a> TypeScript<'a> {
     /// var b = babel;
     /// var AliasModule = LongNameModule;
     /// ```
-    pub fn transform_ts_import_equals(
+    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
+        match decl {
+            Declaration::TSImportEqualsDeclaration(ts_import_equals)
+                if ts_import_equals.import_kind.is_value() =>
+            {
+                *decl = self.transform_ts_import_equals(ts_import_equals, ctx);
+            }
+            _ => {}
+        }
+    }
+
+    fn transform_ts_import_equals(
         &self,
         decl: &mut Box<'a, TSImportEqualsDeclaration<'a>>,
         ctx: &mut TraverseCtx<'a>,
@@ -84,6 +70,31 @@ impl<'a> TypeScript<'a> {
             self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
 
         Declaration::VariableDeclaration(variable_declaration)
+    }
+
+    fn transform_ts_type_name(
+        &self,
+        type_name: &mut TSTypeName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        match type_name {
+            TSTypeName::IdentifierReference(ident) => {
+                ident.reference_flag = ReferenceFlag::Read;
+                if let Some(reference_id) = ident.reference_id.get() {
+                    let reference = ctx.symbols_mut().get_reference_mut(reference_id);
+                    *reference.flag_mut() = ReferenceFlag::Read;
+                } else {
+                    unreachable!()
+                }
+                self.ctx.ast.identifier_reference_expression(ctx.ast.copy(ident))
+            }
+            TSTypeName::QualifiedName(qualified_name) => self.ctx.ast.static_member_expression(
+                SPAN,
+                self.transform_ts_type_name(&mut qualified_name.left, ctx),
+                qualified_name.right.clone(),
+                false,
+            ),
+        }
     }
 
     pub fn transform_ts_export_assignment(
