@@ -107,14 +107,14 @@ declare_oxc_lint!(
 
 impl Rule for RulesOfHooks {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
-
         let AstKind::CallExpression(call) = node.kind() else { return };
 
         if !is_react_hook(&call.callee) {
             return;
         }
+
+        let cfg = ctx.cfg();
+
         let span = call.span;
         let hook_name =
             call.callee_name().expect("We identify hooks using their names so it should be named.");

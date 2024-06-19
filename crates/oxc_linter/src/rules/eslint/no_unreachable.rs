@@ -31,11 +31,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnreachable {
     fn run_once(&self, ctx: &LintContext) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
-
         let nodes = ctx.nodes();
         let Some(root) = nodes.root_node() else { return };
+        let cfg = ctx.cfg();
         let graph = cfg.graph();
 
         // A pre-allocated vector containing the reachability status of all the basic blocks.

@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_cfg::{
-    graph::visit::neighbors_filtered_by_edge_weight, ControlFlowGraph, EdgeType, InstructionKind,
+    graph::visit::neighbors_filtered_by_edge_weight, EdgeType, InstructionKind,
     ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -54,19 +54,16 @@ declare_oxc_lint!(
 
 impl Rule for GetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        // control flow dependant
-        let Some(cfg) = ctx.semantic().cfg() else { return };
-
         // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
         if ctx.source_type().is_typescript() {
             return;
         }
         match node.kind() {
             AstKind::Function(func) if !func.is_typescript_syntax() => {
-                self.run_diagnostic(node, ctx, cfg, func.span);
+                self.run_diagnostic(node, ctx, func.span);
             }
             AstKind::ArrowFunctionExpression(expr) => {
-                self.run_diagnostic(node, ctx, cfg, expr.span);
+                self.run_diagnostic(node, ctx, expr.span);
             }
             _ => {}
         }
@@ -180,16 +177,12 @@ impl GetterReturn {
         false
     }
 
-    fn run_diagnostic<'a>(
-        &self,
-        node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
-        cfg: &ControlFlowGraph,
-        span: Span,
-    ) {
+    fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, span: Span) {
         if !Self::is_wanted_node(node, ctx) {
             return;
         }
+
+        let cfg = ctx.cfg();
 
         let output = neighbors_filtered_by_edge_weight(
             cfg.graph(),
