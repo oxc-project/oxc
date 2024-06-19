@@ -202,3 +202,8 @@ codegen-units = 1
 strip         = "symbols" # set to `false` for debug information
 debug         = false # set to `true` for debug information
 panic         = "abort" # Let it crash and force ourselves to write safe Rust.
+
+# Faster compile time with thin lto
+[profile.release-thin]
+inherits = "release"
+lto      = "thin"
