@@ -1,17 +1,30 @@
-# The JavaScript Oxidation Compiler
+# Oxc Transform
 
-See index.d.ts for `parseSync` and `parseAsync` API.
+## [Isolated Declarations for Standalone DTS Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-beta/#isolated-declarations)
 
-## ESM
+Based on Oxc and conforms to TypeScript Compiler's `--isolated-declaration` `.d.ts` emit.
+
+This is still in alpha and may yield incorrect results, feel free to [submit a bug report](https://github.com/oxc-project/oxc/issues/new?assignees=&labels=C-bug&projects=&template=bug_report.md&title=isolated-declarations:).
+
+### Usage
 
 ```javascript
-import oxc from './index.js';
 import assert from 'assert';
+import oxc from 'oxc-transform';
 
-test(oxc.isolatedDeclaration("test.ts", "class A {}"), "declare class A {}\n");
+const { sourceText, errors } = oxc.isolatedDeclaration("test.ts", "class A {}");
 
-function test(ret, expected) {
-  assert.equal(ret.sourceText, expected);
-  assert(ret.errors.length == 0);
+assert.equal(sourceText, "declare class A {}\n");
+assert(errors.length == 0);
+```
+
+### API
+
+```typescript
+export function isolatedDeclaration(filename: string, sourceText: string): IsolatedDeclarationsResult
+
+export interface IsolatedDeclarationsResult {
+  sourceText: string
+  errors: Array<string>
 }
 ```
