@@ -4,7 +4,7 @@ use oxc_ast::ast::{
     TSTypeOperatorOperator,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::{GetSpan, Span, SPAN};
 
 use crate::{
     diagnostics::{
@@ -41,7 +41,10 @@ impl<'a> IsolatedDeclarations<'a> {
         let return_type = self.infer_arrow_function_return_type(func);
 
         if return_type.is_none() {
-            self.error(function_must_have_explicit_return_type(func.span));
+            self.error(function_must_have_explicit_return_type(Span::new(
+                func.params.span.start,
+                func.body.span.start + 1,
+            )));
         }
 
         let params = self.transform_formal_parameters(&func.params);
