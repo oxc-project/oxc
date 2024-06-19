@@ -266,22 +266,13 @@ impl<'a> TSType<'a> {
         }
     }
 
+    #[rustfmt::skip]
     pub fn is_keyword(&self) -> bool {
-        matches!(
-            self,
-            TSType::TSAnyKeyword(_)
-                | TSType::TSBigIntKeyword(_)
-                | TSType::TSBooleanKeyword(_)
-                | TSType::TSNeverKeyword(_)
-                | TSType::TSNullKeyword(_)
-                | TSType::TSNumberKeyword(_)
-                | TSType::TSObjectKeyword(_)
-                | TSType::TSStringKeyword(_)
-                | TSType::TSSymbolKeyword(_)
-                | TSType::TSThisType(_)
-                | TSType::TSUndefinedKeyword(_)
-                | TSType::TSUnknownKeyword(_)
-                | TSType::TSVoidKeyword(_)
+        matches!(self, TSType::TSAnyKeyword(_) | TSType::TSBigIntKeyword(_) | TSType::TSBooleanKeyword(_)
+                | TSType::TSNeverKeyword(_) | TSType::TSNullKeyword(_) | TSType::TSNumberKeyword(_)
+                | TSType::TSObjectKeyword(_) | TSType::TSStringKeyword(_)| TSType::TSVoidKeyword(_)
+                | TSType::TSIntrinsicKeyword(_) | TSType::TSSymbolKeyword(_) | TSType::TSThisType(_)
+                | TSType::TSUndefinedKeyword(_) | TSType::TSUnknownKeyword(_)
         )
     }
 
