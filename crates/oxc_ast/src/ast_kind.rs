@@ -154,6 +154,7 @@ ast_kinds! {
     TSAnyKeyword(&'a TSAnyKeyword),
     TSBigIntKeyword(&'a TSBigIntKeyword),
     TSBooleanKeyword(&'a TSBooleanKeyword),
+    TSIntrinsicKeyword(&'a TSIntrinsicKeyword),
     TSNeverKeyword(&'a TSNeverKeyword),
     TSNullKeyword(&'a TSNullKeyword),
     TSNumberKeyword(&'a TSNumberKeyword),
@@ -251,12 +252,12 @@ impl<'a> AstKind<'a> {
 
     #[rustfmt::skip]
     pub fn is_type(self) -> bool {
-        matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSNeverKeyword(_)
-                | Self::TSNullKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_) | Self::TSStringKeyword(_)
-                | Self::TSSymbolKeyword(_) | Self::TSUndefinedKeyword(_) | Self::TSUnknownKeyword(_) | Self::TSVoidKeyword(_)
-                | Self::TSIndexedAccessType(_) | Self::TSInferType(_) | Self::TSIntersectionType(_) | Self::TSLiteralType(_)
-                | Self::TSMethodSignature(_) | Self::TSTemplateLiteralType(_) | Self::TSThisType(_) | Self::TSTypeLiteral(_)
-                | Self::TSTypeReference(_) | Self::TSUnionType(_))
+        matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSIntrinsicKeyword(_)
+                | Self::TSNeverKeyword(_) | Self::TSNullKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_)
+                | Self::TSStringKeyword(_) | Self::TSSymbolKeyword(_) | Self::TSUndefinedKeyword(_) | Self::TSUnknownKeyword(_)
+                | Self::TSVoidKeyword(_) | Self::TSIndexedAccessType(_) | Self::TSInferType(_) | Self::TSIntersectionType(_)
+                | Self::TSLiteralType(_) | Self::TSMethodSignature(_) | Self::TSTemplateLiteralType(_) | Self::TSThisType(_)
+                | Self::TSTypeLiteral(_) | Self::TSTypeReference(_) | Self::TSUnionType(_))
     }
 
     pub fn is_literal(self) -> bool {
@@ -497,6 +498,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSVoidKeyword(x) => x.span,
             Self::TSBigIntKeyword(x) => x.span,
             Self::TSBooleanKeyword(x) => x.span,
+            Self::TSIntrinsicKeyword(x) => x.span,
             Self::TSNeverKeyword(x) => x.span,
             Self::TSNumberKeyword(x) => x.span,
             Self::TSObjectKeyword(x) => x.span,
@@ -698,6 +700,7 @@ impl<'a> AstKind<'a> {
             Self::TSVoidKeyword(_) => "TSVoidKeyword".into(),
             Self::TSBigIntKeyword(_) => "TSBigIntKeyword".into(),
             Self::TSBooleanKeyword(_) => "TSBooleanKeyword".into(),
+            Self::TSIntrinsicKeyword(_) => "TSIntrinsicKeyword".into(),
             Self::TSNeverKeyword(_) => "TSNeverKeyword".into(),
             Self::TSNumberKeyword(_) => "TSNumberKeyword".into(),
             Self::TSObjectKeyword(_) => "TSObjectKeyword".into(),

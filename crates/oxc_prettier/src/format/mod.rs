@@ -655,6 +655,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSAnyKeyword(v) => v.format(p),
             TSType::TSBigIntKeyword(v) => v.format(p),
             TSType::TSBooleanKeyword(v) => v.format(p),
+            TSType::TSIntrinsicKeyword(v) => v.format(p),
             TSType::TSNeverKeyword(v) => v.format(p),
             TSType::TSNullKeyword(v) => v.format(p),
             TSType::TSNumberKeyword(v) => v.format(p),
@@ -706,6 +707,12 @@ impl<'a> Format<'a> for TSBigIntKeyword {
 impl<'a> Format<'a> for TSBooleanKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Str("boolean")
+    }
+}
+
+impl<'a> Format<'a> for TSIntrinsicKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Str("intrinsic")
     }
 }
 

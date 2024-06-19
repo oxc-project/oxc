@@ -2662,6 +2662,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             Self::TSAnyKeyword(_) => p.print_str(b"any"),
             Self::TSBigIntKeyword(_) => p.print_str(b"bigint"),
             Self::TSBooleanKeyword(_) => p.print_str(b"boolean"),
+            Self::TSIntrinsicKeyword(_) => p.print_str(b"intrinsic"),
             Self::TSNeverKeyword(_) => p.print_str(b"never"),
             Self::TSNullKeyword(_) => p.print_str(b"null"),
             Self::TSNumberKeyword(_) => p.print_str(b"number"),

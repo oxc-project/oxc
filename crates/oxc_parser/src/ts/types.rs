@@ -476,6 +476,10 @@ impl<'a> ParserImpl<'a> {
                 self.bump_any();
                 Some(self.ast.ts_never_keyword(self.end_span(span)))
             }
+            Kind::Intrinsic => {
+                self.bump_any();
+                Some(self.ast.ts_intrinsic_keyword(self.end_span(span)))
+            }
             _ => None,
         }
     }

@@ -713,6 +713,10 @@ pub trait Visit<'a>: Sized {
         walk_ts_boolean_keyword(self, ty);
     }
 
+    fn visit_ts_intrinsic_keyword(&mut self, ty: &TSIntrinsicKeyword) {
+        walk_ts_intrinsic_keyword(self, ty);
+    }
+
     fn visit_ts_never_keyword(&mut self, ty: &TSNeverKeyword) {
         walk_ts_never_keyword(self, ty);
     }
@@ -2690,6 +2694,7 @@ pub mod walk {
             TSType::TSAnyKeyword(ty) => visitor.visit_ts_any_keyword(ty),
             TSType::TSBigIntKeyword(ty) => visitor.visit_ts_big_int_keyword(ty),
             TSType::TSBooleanKeyword(ty) => visitor.visit_ts_boolean_keyword(ty),
+            TSType::TSIntrinsicKeyword(ty) => visitor.visit_ts_intrinsic_keyword(ty),
             TSType::TSNeverKeyword(ty) => visitor.visit_ts_never_keyword(ty),
             TSType::TSNullKeyword(ty) => visitor.visit_ts_null_keyword(ty),
             TSType::TSNumberKeyword(ty) => visitor.visit_ts_number_keyword(ty),
@@ -3065,6 +3070,12 @@ pub mod walk {
 
     pub fn walk_ts_boolean_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSBooleanKeyword) {
         let kind = AstKind::TSBooleanKeyword(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_intrinsic_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSIntrinsicKeyword) {
+        let kind = AstKind::TSIntrinsicKeyword(visitor.alloc(ty));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }

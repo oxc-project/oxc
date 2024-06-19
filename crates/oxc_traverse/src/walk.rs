@@ -3814,6 +3814,9 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSBooleanKeyword(node) => {
             walk_ts_boolean_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSType::TSIntrinsicKeyword(node) => {
+            walk_ts_intrinsic_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
         TSType::TSNeverKeyword(node) => {
             walk_ts_never_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -4122,6 +4125,7 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         TSTupleElement::TSAnyKeyword(_)
         | TSTupleElement::TSBigIntKeyword(_)
         | TSTupleElement::TSBooleanKeyword(_)
+        | TSTupleElement::TSIntrinsicKeyword(_)
         | TSTupleElement::TSNeverKeyword(_)
         | TSTupleElement::TSNullKeyword(_)
         | TSTupleElement::TSNumberKeyword(_)
@@ -4201,6 +4205,15 @@ pub(crate) unsafe fn walk_ts_never_keyword<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_never_keyword(&mut *node, ctx);
     traverser.exit_ts_never_keyword(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_ts_intrinsic_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSIntrinsicKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_intrinsic_keyword(&mut *node, ctx);
+    traverser.exit_ts_intrinsic_keyword(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_unknown_keyword<'a, Tr: Traverse<'a>>(

@@ -1728,6 +1728,21 @@ pub trait Traverse<'a> {
     fn exit_ts_never_keyword(&mut self, node: &mut TSNeverKeyword, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
+    fn enter_ts_intrinsic_keyword(
+        &mut self,
+        node: &mut TSIntrinsicKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_intrinsic_keyword(
+        &mut self,
+        node: &mut TSIntrinsicKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_unknown_keyword(&mut self, node: &mut TSUnknownKeyword, ctx: &mut TraverseCtx<'a>) {
     }
     #[inline]

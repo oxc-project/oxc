@@ -549,6 +549,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSStringKeyword(t) => t.span,
             Self::TSNeverKeyword(t) => t.span,
             Self::TSBooleanKeyword(t) => t.span,
+            Self::TSIntrinsicKeyword(t) => t.span,
             Self::TSSymbolKeyword(t) => t.span,
             Self::TSBigIntKeyword(t) => t.span,
             Self::TSThisType(t) => t.span,

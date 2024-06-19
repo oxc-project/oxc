@@ -1980,6 +1980,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn ts_intrinsic_keyword(self, span: Span) -> TSType<'a> {
+        TSType::TSIntrinsicKeyword(self.alloc(TSIntrinsicKeyword { span }))
+    }
+
+    #[inline]
     pub fn ts_template_literal_type(
         self,
         span: Span,
