@@ -29,15 +29,16 @@ env:
 
 jobs:
   optimize_ci:
+    name: Graphite Optimize CI
     runs-on: ubuntu-latest
     outputs:
       skip: ${{ steps.check_skip.outputs.skip }}
     steps:
-      - name: Optimize CI
         id: check_skip
         uses: withgraphite/graphite-ci-action@main
         with:
           graphite_token: ${{ secrets.GRAPHITE_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
 
   test:
     needs: optimize_ci
@@ -224,6 +225,8 @@ jobs:
       - run: cargo fmt --all -- --check
 
   lint:
+    needs: optimize_ci
+    if: needs.optimize_ci.outputs.skip == 'false'
     name: Clippy
     runs-on: ubuntu-latest
     steps:
