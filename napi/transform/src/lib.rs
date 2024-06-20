@@ -15,7 +15,7 @@ pub struct IsolatedDeclarationsResult {
 #[allow(clippy::needless_pass_by_value)]
 #[napi]
 pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDeclarationsResult {
-    let source_type = SourceType::from_path(&filename).unwrap_or_default().with_typescript(true);
+    let source_type = SourceType::from_path(filename).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
     let transformed_ret = IsolatedDeclarations::new(&allocator).build(&parser_ret.program);
