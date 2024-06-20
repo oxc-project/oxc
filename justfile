@@ -11,7 +11,7 @@ alias c := coverage
 # or install via `cargo install cargo-binstall`
 # Initialize the project by installing all the necessary tools.
 init:
-  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov -y
+  cargo binstall cargo-watch cargo-insta typos-cli taplo-cli wasm-pack cargo-llvm-cov cargo-shear -y
 
 # When ready, run the same CI commands
 ready:
@@ -22,6 +22,7 @@ ready:
   just test
   just lint
   just doc
+  cargo shear
   git status
 
 # Clone or update submodules
@@ -83,7 +84,6 @@ benchmark:
 
 # Removed Unused Dependencies
 shear:
-  cargo binstall cargo-shear
   cargo shear --fix
 
 # Automatically DRY up Cargo.toml manifests in a workspace.
