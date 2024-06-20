@@ -1760,7 +1760,6 @@ dependencies = [
  "napi-derive",
  "oxc_allocator",
  "oxc_codegen",
- "oxc_diagnostics",
  "oxc_isolated_declarations",
  "oxc_parser",
  "oxc_span",
