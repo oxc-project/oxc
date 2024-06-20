@@ -108,7 +108,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             }
                         }
 
-                        let type_annotation = self.infer_type_from_expression(&object.value);
+                        let type_annotation = if is_const {
+                            self.transform_expression_to_ts_type(&object.value)
+                        } else {
+                            self.infer_type_from_expression(&object.value)
+                        };
 
                         if type_annotation.is_none() {
                             self.error(inferred_type_of_expression(object.value.span()));
@@ -142,17 +146,19 @@ impl<'a> IsolatedDeclarations<'a> {
         is_const: bool,
     ) -> TSType<'a> {
         let element_types =
-            self.ast.new_vec_from_iter(expr.elements.iter().filter_map(|element| match element {
-                ArrayExpressionElement::SpreadElement(spread) => {
-                    self.error(arrays_with_spread_elements(spread.span));
-                    None
+            self.ast.new_vec_from_iter(expr.elements.iter().filter_map(|element| {
+                match element {
+                    ArrayExpressionElement::SpreadElement(spread) => {
+                        self.error(arrays_with_spread_elements(spread.span));
+                        None
+                    }
+                    ArrayExpressionElement::Elision(elision) => {
+                        Some(TSTupleElement::from(self.ast.ts_undefined_keyword(elision.span)))
+                    }
+                    _ => self
+                        .transform_expression_to_ts_type(element.to_expression())
+                        .map(TSTupleElement::from),
                 }
-                ArrayExpressionElement::Elision(elision) => {
-                    Some(TSTupleElement::from(self.ast.ts_undefined_keyword(elision.span)))
-                }
-                _ => Some(TSTupleElement::from(
-                    self.transform_expression_to_ts_type(element.to_expression()),
-                )),
             }));
 
         let ts_type = self.ast.ts_tuple_type(SPAN, element_types);
@@ -164,36 +170,58 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions
-    pub fn transform_expression_to_ts_type(&self, expr: &Expression<'a>) -> TSType<'a> {
+    pub fn transform_expression_to_ts_type(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(lit) => {
-                self.ast.ts_literal_type(SPAN, TSLiteral::BooleanLiteral(self.ast.copy(lit)))
+                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BooleanLiteral(self.ast.copy(lit))))
             }
             Expression::NumericLiteral(lit) => {
-                self.ast.ts_literal_type(SPAN, TSLiteral::NumericLiteral(self.ast.copy(lit)))
+                Some(self.ast.ts_literal_type(SPAN, TSLiteral::NumericLiteral(self.ast.copy(lit))))
             }
             Expression::BigintLiteral(lit) => {
-                self.ast.ts_literal_type(SPAN, TSLiteral::BigintLiteral(self.ast.copy(lit)))
+                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BigintLiteral(self.ast.copy(lit))))
             }
             Expression::StringLiteral(lit) => {
-                self.ast.ts_literal_type(SPAN, TSLiteral::StringLiteral(self.ast.copy(lit)))
+                Some(self.ast.ts_literal_type(SPAN, TSLiteral::StringLiteral(self.ast.copy(lit))))
             }
+            Expression::NullLiteral(lit) => Some(self.ast.ts_null_keyword(lit.span)),
+            Expression::Identifier(ident) => match ident.name.as_str() {
+                "undefined" => Some(self.ast.ts_undefined_keyword(ident.span)),
+                _ => None,
+            },
             Expression::TemplateLiteral(lit) => {
-                self.ast.ts_literal_type(SPAN, TSLiteral::TemplateLiteral(self.ast.copy(lit)))
+                if lit.expressions.is_empty() {
+                    lit.quasis.first().map(|item| {
+                        self.ast.ts_literal_type(
+                            SPAN,
+                            TSLiteral::StringLiteral(self.ast.alloc(self.ast.string_literal(
+                                lit.span,
+                                if let Some(cooked) = &item.value.cooked {
+                                    cooked
+                                } else {
+                                    &item.value.raw
+                                },
+                            ))),
+                        )
+                    })
+                } else {
+                    None
+                }
             }
-            Expression::UnaryExpression(expr) => {
-                self.ast.ts_literal_type(SPAN, TSLiteral::UnaryExpression(self.ast.copy(expr)))
-            }
+            Expression::UnaryExpression(expr) => Some(
+                self.ast.ts_literal_type(SPAN, TSLiteral::UnaryExpression(self.ast.copy(expr))),
+            ),
             Expression::ArrayExpression(expr) => {
-                self.transform_array_expression_to_ts_type(expr, true)
+                Some(self.transform_array_expression_to_ts_type(expr, true))
             }
             Expression::ObjectExpression(expr) => {
-                // { readonly a: number }
-                self.transform_object_expression_to_ts_type(expr, true)
+                Some(self.transform_object_expression_to_ts_type(expr, true))
             }
-            _ => {
-                unreachable!()
+            Expression::FunctionExpression(func) => self.transform_function_to_ts_type(func),
+            Expression::ArrowFunctionExpression(func) => {
+                self.transform_arrow_function_to_ts_type(func)
             }
+            _ => None,
         }
     }
 }

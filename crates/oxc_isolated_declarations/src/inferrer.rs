@@ -43,7 +43,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
-                    Some(self.transform_expression_to_ts_type(&expr.expression))
+                    self.transform_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(self.ast.copy(&expr.type_annotation))
                 }
