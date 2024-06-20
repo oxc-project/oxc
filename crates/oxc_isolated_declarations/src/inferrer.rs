@@ -120,10 +120,6 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        if function.r#async {
-            return None;
-        }
-
         if function.expression {
             if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
                 return self
