@@ -55,7 +55,7 @@ jobs:
           - lexer
           - parser
           - transformer
-          # - semantic # Too flaky
+          - semantic
           - minifier
           - codegen_sourcemap
           - sourcemap
