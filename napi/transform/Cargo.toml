@@ -24,7 +24,6 @@ doctest    = false
 oxc_allocator             = { workspace = true }
 oxc_parser                = { workspace = true }
 oxc_span                  = { workspace = true }
-oxc_diagnostics           = { workspace = true }
 oxc_codegen               = { workspace = true }
 oxc_isolated_declarations = { workspace = true }
 
