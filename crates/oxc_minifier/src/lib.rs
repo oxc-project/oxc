@@ -7,7 +7,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 
 pub use crate::{
-    compressor::{CompressOptions, Compressor},
+    compressor::{CompressOptions, Compressor, Prepass},
     mangler::ManglerBuilder,
 };
 

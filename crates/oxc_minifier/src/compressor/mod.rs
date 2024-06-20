@@ -20,8 +20,7 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-pub use self::options::CompressOptions;
-use self::prepass::Prepass;
+pub use self::{options::CompressOptions, prepass::Prepass};
 
 pub struct Compressor<'a> {
     ast: AstBuilder<'a>,
