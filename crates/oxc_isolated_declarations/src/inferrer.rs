@@ -17,7 +17,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(_) => Some(self.ast.ts_boolean_keyword(SPAN)),
-            Expression::NullLiteral(_) => Some(self.ast.ts_null_keyword(SPAN)),
+            Expression::NullLiteral(lit) => Some(self.ast.ts_any_keyword(lit.span)),
             Expression::NumericLiteral(_) | Expression::BigintLiteral(_) => {
                 Some(self.ast.ts_number_keyword(SPAN))
             }
@@ -30,7 +30,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Some(self.ast.ts_undefined_keyword(SPAN)),
+                "undefined" => Some(self.ast.ts_any_keyword(ident.span)),
                 _ => None,
             },
             Expression::FunctionExpression(func) => {
