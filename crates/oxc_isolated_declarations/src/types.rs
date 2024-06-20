@@ -189,25 +189,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 "undefined" => Some(self.ast.ts_undefined_keyword(ident.span)),
                 _ => None,
             },
-            Expression::TemplateLiteral(lit) => {
-                if lit.expressions.is_empty() {
-                    lit.quasis.first().map(|item| {
-                        self.ast.ts_literal_type(
-                            SPAN,
-                            TSLiteral::StringLiteral(self.ast.alloc(self.ast.string_literal(
-                                lit.span,
-                                if let Some(cooked) = &item.value.cooked {
-                                    cooked
-                                } else {
-                                    &item.value.raw
-                                },
-                            ))),
-                        )
-                    })
-                } else {
-                    None
-                }
-            }
+            Expression::TemplateLiteral(lit) => self
+                .transform_template_to_string(lit)
+                .map(|string| self.ast.ts_literal_type(lit.span, TSLiteral::StringLiteral(string))),
             Expression::UnaryExpression(expr) => Some(
                 self.ast.ts_literal_type(SPAN, TSLiteral::UnaryExpression(self.ast.copy(expr))),
             ),

@@ -73,7 +73,12 @@ impl<'a> IsolatedDeclarations<'a> {
             if let Some(init_expr) = &decl.init {
                 // if kind is const and it doesn't need to infer type from expression
                 if decl.kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
-                    init = Some(self.ast.copy(init_expr));
+                    if let Expression::TemplateLiteral(lit) = init_expr {
+                        init =
+                            self.transform_template_to_string(lit).map(Expression::StringLiteral);
+                    } else {
+                        init = Some(self.ast.copy(init_expr));
+                    }
                 } else {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);

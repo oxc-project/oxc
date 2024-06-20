@@ -11,6 +11,7 @@ mod diagnostics;
 mod r#enum;
 mod function;
 mod inferrer;
+mod literal;
 mod module;
 mod return_type;
 mod scope;

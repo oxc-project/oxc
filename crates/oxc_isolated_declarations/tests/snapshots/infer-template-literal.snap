@@ -1,0 +1,24 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/infer-template-literal.ts
+---
+==================== .D.TS ====================
+
+export declare const CSS_VARS_HELPER = 'useCssVars';
+export declare function g(func?: string): void;
+export declare const F: {
+	readonly a: 'a';
+	readonly b: readonly ['b'];
+};
+export declare const BAD: unknown;
+
+
+==================== Errors ====================
+
+  x TS9010: Variable must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[10:14]
+  9 | 
+ 10 | export const BAD = `useCssV${v}ars`
+    :              ^^^
+    `----

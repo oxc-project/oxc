@@ -21,8 +21,13 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::NumericLiteral(_) | Expression::BigintLiteral(_) => {
                 Some(self.ast.ts_number_keyword(SPAN))
             }
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
-                Some(self.ast.ts_string_keyword(SPAN))
+            Expression::StringLiteral(_) => Some(self.ast.ts_string_keyword(SPAN)),
+            Expression::TemplateLiteral(lit) => {
+                if lit.expressions.is_empty() {
+                    Some(self.ast.ts_string_keyword(SPAN))
+                } else {
+                    None
+                }
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Some(self.ast.ts_undefined_keyword(SPAN)),
@@ -133,12 +138,12 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub fn is_need_to_infer_type_from_expression(expr: &Expression) -> bool {
-        !matches!(
-            expr,
+        match expr {
             Expression::NumericLiteral(_)
-                | Expression::BigintLiteral(_)
-                | Expression::StringLiteral(_)
-                | Expression::TemplateLiteral(_)
-        )
+            | Expression::BigintLiteral(_)
+            | Expression::StringLiteral(_) => false,
+            Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
+            _ => true,
+        }
     }
 }
