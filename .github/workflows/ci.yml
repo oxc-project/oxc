@@ -34,8 +34,8 @@ jobs:
     outputs:
       skip: ${{ steps.check_skip.outputs.skip }}
     steps:
+      - uses: withgraphite/graphite-ci-action@main
         id: check_skip
-        uses: withgraphite/graphite-ci-action@main
         with:
           graphite_token: ${{ secrets.GRAPHITE_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
