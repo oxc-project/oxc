@@ -1,9 +1,6 @@
-use std::sync::Arc;
-
 use napi_derive::napi;
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
-use oxc_diagnostics::{Error, NamedSource};
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -26,14 +23,12 @@ pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDe
 
     let mut errors = vec![];
     if !parser_ret.errors.is_empty() || !transformed_ret.errors.is_empty() {
-        let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
         errors.extend(
             parser_ret
                 .errors
                 .into_iter()
                 .chain(transformed_ret.errors)
-                .map(|diagnostic| Error::from(diagnostic).with_source_code(Arc::clone(&source)))
-                .map(|error| format!("{error:?}")),
+                .map(|error| error.message.to_string()),
         );
     }
 
