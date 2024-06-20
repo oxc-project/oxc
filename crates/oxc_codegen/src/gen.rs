@@ -3025,8 +3025,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
             Self::TSIndexSignature(signature) => signature.gen(p, ctx),
             Self::TSPropertySignature(signature) => {
                 if signature.readonly {
-                    p.print_str(b"readonly");
-                    p.print_hard_space();
+                    p.print_str(b"readonly ");
                 }
                 if signature.computed {
                     p.print(b'[');
@@ -3191,6 +3190,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameterInstantiation<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSIndexSignature<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.readonly {
+            p.print_str(b"readonly ");
+        }
         p.print_str(b"[");
         for (index, parameter) in self.parameters.iter().enumerate() {
             if index != 0 {
