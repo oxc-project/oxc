@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
@@ -55,7 +55,7 @@ impl<'a> TypeScriptEnum<'a> {
     /// ```
     fn transform_ts_enum(
         &mut self,
-        decl: &Box<'a, TSEnumDeclaration<'a>>,
+        decl: &TSEnumDeclaration<'a>,
         is_export: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
