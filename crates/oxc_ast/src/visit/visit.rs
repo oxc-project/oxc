@@ -187,6 +187,10 @@ pub trait Visit<'a>: Sized {
         walk_class_heritage(self, expr);
     }
 
+    fn visit_ts_class_implements(&mut self, expr: &TSClassImplements<'a>) {
+        walk_ts_class_implements(self, expr);
+    }
+
     fn visit_class_body(&mut self, body: &ClassBody<'a>) {
         walk_class_body(self, body);
     }
@@ -657,6 +661,10 @@ pub trait Visit<'a>: Sized {
         walk_ts_interface_declaration(self, decl);
     }
 
+    fn visit_ts_interface_heritage(&mut self, heritage: &TSInterfaceHeritage<'a>) {
+        walk_ts_interface_heritage(self, heritage);
+    }
+
     fn visit_ts_as_expression(&mut self, expr: &TSAsExpression<'a>) {
         walk_ts_as_expression(self, expr);
     }
@@ -687,6 +695,10 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_tuple_element(&mut self, ty: &TSTupleElement<'a>) {
         walk_ts_tuple_element(self, ty);
+    }
+
+    fn visit_ts_this_parameter(&mut self, param: &TSThisParameter<'a>) {
+        walk_ts_this_parameter(self, param);
     }
 
     fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
@@ -1253,6 +1265,9 @@ pub mod walk {
         if let Some(parameters) = &func.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
+        if let Some(this_param) = &func.this_param {
+            visitor.visit_ts_this_parameter(this_param);
+        }
         visitor.visit_formal_parameters(&func.params);
         if let Some(body) = &func.body {
             visitor.visit_function_body(body);
@@ -1337,6 +1352,11 @@ pub mod walk {
         if let Some(super_class) = &class.super_class {
             visitor.visit_class_heritage(super_class);
         }
+        if let Some(implements) = &class.implements {
+            for implement in implements {
+                visitor.visit_ts_class_implements(implement);
+            }
+        }
         if let Some(super_parameters) = &class.super_type_parameters {
             visitor.visit_ts_type_parameter_instantiation(super_parameters);
         }
@@ -1351,6 +1371,19 @@ pub mod walk {
         let kind = AstKind::ClassHeritage(visitor.alloc(expr));
         visitor.enter_node(kind);
         visitor.visit_expression(expr);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_class_implements<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        implements: &TSClassImplements<'a>,
+    ) {
+        let kind = AstKind::TSClassImplements(visitor.alloc(implements));
+        visitor.enter_node(kind);
+        visitor.visit_ts_type_name(&implements.expression);
+        if let Some(type_parameters) = &implements.type_parameters {
+            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        }
         visitor.leave_node(kind);
     }
 
@@ -2624,11 +2657,29 @@ pub mod walk {
         let kind = AstKind::TSInterfaceDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&decl.id);
+        if let Some(extends) = &decl.extends {
+            for extend in extends {
+                visitor.visit_ts_interface_heritage(extend);
+            }
+        }
         if let Some(parameters) = &decl.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
         for signature in &decl.body.body {
             visitor.visit_ts_signature(signature);
+        }
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_interface_heritage<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        heritage: &TSInterfaceHeritage<'a>,
+    ) {
+        let kind = AstKind::TSInterfaceHeritage(visitor.alloc(heritage));
+        visitor.enter_node(kind);
+        visitor.visit_expression(&heritage.expression);
+        if let Some(type_parameters) = &heritage.type_parameters {
+            visitor.visit_ts_type_parameter_instantiation(type_parameters);
         }
         visitor.leave_node(kind);
     }
@@ -2786,11 +2837,24 @@ pub mod walk {
     }
 
     pub fn walk_ts_function_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSFunctionType<'a>) {
-        visitor.visit_formal_parameters(&ty.params);
         if let Some(parameters) = &ty.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
+        if let Some(this_param) = &ty.this_param {
+            visitor.visit_ts_this_parameter(this_param);
+        }
+        visitor.visit_formal_parameters(&ty.params);
         visitor.visit_ts_type_annotation(&ty.return_type);
+    }
+
+    pub fn walk_ts_this_parameter<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSThisParameter<'a>) {
+        let kind = AstKind::TSThisParameter(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.visit_identifier_name(&ty.this);
+        if let Some(type_annotation) = &ty.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
+        visitor.leave_node(kind);
     }
 
     pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSTypeParameter<'a>) {
