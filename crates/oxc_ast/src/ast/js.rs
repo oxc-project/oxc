@@ -2203,6 +2203,10 @@ impl<'a> BindingPattern<'a> {
     pub fn get_identifier(&self) -> Option<&Atom<'a>> {
         self.kind.get_identifier()
     }
+
+    pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
+        self.kind.get_binding_identifier()
+    }
 }
 
 #[visited_node]
@@ -2228,6 +2232,14 @@ impl<'a> BindingPatternKind<'a> {
         match self {
             Self::BindingIdentifier(ident) => Some(&ident.name),
             Self::AssignmentPattern(assign) => assign.left.get_identifier(),
+            _ => None,
+        }
+    }
+
+    pub fn get_binding_identifier(&self) -> Option<&BindingIdentifier<'a>> {
+        match self {
+            Self::BindingIdentifier(ident) => Some(ident),
+            Self::AssignmentPattern(assign) => assign.left.get_binding_identifier(),
             _ => None,
         }
     }

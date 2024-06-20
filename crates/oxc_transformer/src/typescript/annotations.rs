@@ -4,7 +4,7 @@ use std::rc::Rc;
 
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
@@ -61,7 +61,7 @@ impl<'a> TypeScriptAnnotations<'a> {
     }
 
     // Creates `this.name = name`
-    fn create_this_property_assignment(&self, name: &Atom<'a>) -> Statement<'a> {
+    fn create_this_property_assignment(&self, id: &BindingIdentifier<'a>) -> Statement<'a> {
         let ast = self.ctx.ast;
 
         ast.expression_statement(
@@ -72,10 +72,10 @@ impl<'a> TypeScriptAnnotations<'a> {
                 ast.simple_assignment_target_member_expression(ast.static_member(
                     SPAN,
                     ast.this_expression(SPAN),
-                    ast.identifier_name(SPAN, name),
+                    ast.identifier_name(id.span, &id.name),
                     false,
                 )),
-                ast.identifier_reference_expression(ast.identifier_reference(SPAN, name)),
+                ast.identifier_reference_expression(ast.identifier_reference(id.span, &id.name)),
             ),
         )
     }
@@ -303,7 +303,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
                 if param.is_public() {
-                    if let Some(id) = param.pattern.get_identifier() {
+                    if let Some(id) = param.pattern.get_binding_identifier() {
                         let assignment = self.create_this_property_assignment(id);
                         self.assignments.push(assignment);
                     }
@@ -414,29 +414,35 @@ impl<'a> TypeScriptAnnotations<'a> {
     /// ```
     pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
         if !self.assignments.is_empty() {
-            if matches!(&stmt.consequent, Statement::ExpressionStatement(expr) if expr.expression.is_super_call_expression())
-            {
-                stmt.consequent =
-                    self.ctx.ast.block_statement(self.ctx.ast.block(
-                        SPAN,
+            if let Statement::ExpressionStatement(expr) = &stmt.consequent {
+                if expr.expression.is_super_call_expression() {
+                    stmt.consequent = self.ctx.ast.block_statement(self.ctx.ast.block(
+                        expr.span,
                         self.ctx.ast.new_vec_single(self.ctx.ast.copy(&stmt.consequent)),
                     ));
-            }
-            if let Some(alternate) = &stmt.alternate {
-                if matches!(alternate, Statement::ExpressionStatement(expr) if expr.expression.is_super_call_expression())
-                {
-                    stmt.alternate =
-                        Some(self.ctx.ast.block_statement(self.ctx.ast.block(
-                            SPAN,
-                            self.ctx.ast.new_vec_single(self.ctx.ast.copy(alternate)),
-                        )));
                 }
+            }
+
+            let alternate_span = match &stmt.alternate {
+                Some(Statement::ExpressionStatement(expr))
+                    if expr.expression.is_super_call_expression() =>
+                {
+                    Some(expr.span)
+                }
+                _ => None,
+            };
+            if let Some(span) = alternate_span {
+                let alternate = stmt.alternate.take().unwrap();
+                stmt.alternate = Some(self.ctx.ast.block_statement(
+                    self.ctx.ast.block(span, self.ctx.ast.new_vec_single(alternate)),
+                ));
             }
         }
 
         if stmt.consequent.is_typescript_syntax() {
-            stmt.consequent =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            stmt.consequent = self.ctx.ast.block_statement(
+                self.ctx.ast.block(stmt.consequent.span(), self.ctx.ast.new_vec()),
+            );
         }
 
         if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
@@ -446,22 +452,28 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
-            stmt.body =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            stmt.body = self
+                .ctx
+                .ast
+                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
         }
     }
 
     pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
-            stmt.body =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            stmt.body = self
+                .ctx
+                .ast
+                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
         }
     }
 
     pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
-            stmt.body =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            stmt.body = self
+                .ctx
+                .ast
+                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
         }
     }
 
