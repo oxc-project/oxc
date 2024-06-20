@@ -3055,6 +3055,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
             }
             Self::TSCallSignatureDeclaration(signature) => {
                 p.print_str(b"(");
+                if let Some(this_param) = &signature.this_param {
+                    this_param.gen(p, ctx);
+                    if !signature.params.is_empty() || signature.params.rest.is_some() {
+                        p.print_str(b",");
+                    }
+                    p.print_soft_space();
+                }
                 signature.params.gen(p, ctx);
                 p.print_str(b")");
                 if let Some(return_type) = &signature.return_type {
@@ -3104,6 +3111,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                     type_parameters.gen(p, ctx);
                 }
                 p.print_str(b"(");
+                if let Some(this_param) = &signature.this_param {
+                    this_param.gen(p, ctx);
+                    if !signature.params.is_empty() || signature.params.rest.is_some() {
+                        p.print_str(b",");
+                    }
+                    p.print_soft_space();
+                }
                 signature.params.gen(p, ctx);
                 p.print_str(b")");
                 if let Some(return_type) = &signature.return_type {
