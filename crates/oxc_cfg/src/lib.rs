@@ -6,7 +6,7 @@ use itertools::Itertools;
 use oxc_syntax::node::AstNodeId;
 use petgraph::{
     stable_graph::NodeIndex,
-    visit::{depth_first_search, Control, DfsEvent, EdgeRef},
+    visit::{Control, DfsEvent, EdgeRef},
     Direction, Graph,
 };
 
@@ -21,6 +21,7 @@ pub mod graph {
 
 pub use builder::{ControlFlowGraphBuilder, CtxCursor, CtxFlags};
 pub use dot::DisplayDot;
+use visit::set_depth_first_search;
 
 pub type BasicBlockId = NodeIndex;
 
@@ -155,7 +156,7 @@ impl ControlFlowGraph {
             return true;
         }
         let graph = &self.graph;
-        depth_first_search(&self.graph, Some(from), |event| match event {
+        set_depth_first_search(&self.graph, Some(from), |event| match event {
             DfsEvent::TreeEdge(a, b) => {
                 let filter_result = filter(a);
                 if !matches!(filter_result, Control::Continue) {
@@ -246,7 +247,7 @@ impl ControlFlowGraph {
     }
 
     pub fn is_cyclic(&self, node: BasicBlockId) -> bool {
-        depth_first_search(&self.graph, Some(node), |event| match event {
+        set_depth_first_search(&self.graph, Some(node), |event| match event {
             DfsEvent::BackEdge(_, id) if id == node => Err(()),
             _ => Ok(()),
         })
