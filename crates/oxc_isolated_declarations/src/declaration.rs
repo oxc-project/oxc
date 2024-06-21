@@ -187,7 +187,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 if !check_binding
                     || func.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
                 {
-                    self.transform_function(func).map(Declaration::FunctionDeclaration)
+                    self.transform_function(func, None).map(Declaration::FunctionDeclaration)
                 } else {
                     None
                 }
@@ -202,7 +202,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 if !check_binding
                     || decl.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
                 {
-                    self.transform_class(decl).map(Declaration::ClassDeclaration)
+                    self.transform_class(decl, None).map(Declaration::ClassDeclaration)
                 } else {
                     None
                 }

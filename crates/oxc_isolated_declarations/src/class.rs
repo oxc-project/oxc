@@ -247,7 +247,11 @@ impl<'a> IsolatedDeclarations<'a> {
         elements
     }
 
-    pub fn transform_class(&self, decl: &Class<'a>) -> Option<Box<'a, Class<'a>>> {
+    pub fn transform_class(
+        &self,
+        decl: &Class<'a>,
+        modifiers: Option<Modifiers<'a>>,
+    ) -> Option<Box<'a, Class<'a>>> {
         if decl.is_declare() {
             return None;
         }
@@ -441,7 +445,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = self.ast.class_body(decl.body.span, elements);
 
-        let mut modifiers = self.modifiers_declare();
+        let mut modifiers = modifiers.unwrap_or_else(|| self.modifiers_declare());
         if decl.modifiers.is_contains_abstract() {
             modifiers.add_modifier(Modifier { span: SPAN, kind: ModifierKind::Abstract });
         };

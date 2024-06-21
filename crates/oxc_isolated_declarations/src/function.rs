@@ -13,7 +13,11 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_function(&mut self, func: &Function<'a>) -> Option<Box<'a, Function<'a>>> {
+    pub fn transform_function(
+        &mut self,
+        func: &Function<'a>,
+        modifiers: Option<Modifiers<'a>>,
+    ) -> Option<Box<'a, Function<'a>>> {
         if func.modifiers.is_contains_declare() {
             None
         } else {
@@ -33,7 +37,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 None,
                 self.ast.copy(&func.type_parameters),
                 return_type,
-                self.modifiers_declare(),
+                modifiers.unwrap_or_else(|| self.modifiers_declare()),
             ))
         }
     }

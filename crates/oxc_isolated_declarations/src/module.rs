@@ -1,7 +1,6 @@
 use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::Visit;
 use oxc_span::{Atom, GetSpan, SPAN};
 
 use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
@@ -39,13 +38,12 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<(Option<VariableDeclaration<'a>>, ExportDefaultDeclaration<'a>)> {
         let declaration = match &decl.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(decl) => self
-                .transform_function(decl)
+                .transform_function(decl, Some(Modifiers::empty()))
                 .map(|d| (None, ExportDefaultDeclarationKind::FunctionDeclaration(d))),
             ExportDefaultDeclarationKind::ClassDeclaration(decl) => self
-                .transform_class(decl)
+                .transform_class(decl, Some(Modifiers::empty()))
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(interface_decl) => {
-                self.visit_ts_interface_declaration(interface_decl);
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                 Some((None, self.ast.copy(&decl.declaration)))
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => {
