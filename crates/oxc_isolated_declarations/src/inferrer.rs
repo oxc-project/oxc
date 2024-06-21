@@ -18,9 +18,8 @@ impl<'a> IsolatedDeclarations<'a> {
         match expr {
             Expression::BooleanLiteral(_) => Some(self.ast.ts_boolean_keyword(SPAN)),
             Expression::NullLiteral(_) => Some(self.ast.ts_null_keyword(SPAN)),
-            Expression::NumericLiteral(_) | Expression::BigintLiteral(_) => {
-                Some(self.ast.ts_number_keyword(SPAN))
-            }
+            Expression::NumericLiteral(_) => Some(self.ast.ts_number_keyword(SPAN)),
+            Expression::BigintLiteral(_) => Some(self.ast.ts_bigint_keyword(SPAN)),
             Expression::StringLiteral(_) => Some(self.ast.ts_string_keyword(SPAN)),
             Expression::TemplateLiteral(lit) => {
                 if lit.expressions.is_empty() {
