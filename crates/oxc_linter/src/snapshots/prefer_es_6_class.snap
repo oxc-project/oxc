@@ -1,0 +1,36 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-react(prefer-es6-class): Component should use es6 class instead of createClass
+   ╭─[prefer_es_6_class.tsx:2:25]
+ 1 │     
+ 2 │ ╭─▶             var Hello = createReactClass({
+ 3 │ │                 displayName: 'Hello',
+ 4 │ │                 render: function() {
+ 5 │ │                   return <div>Hello {this.props.name}</div>;
+ 6 │ │                 }
+ 7 │ ╰─▶             });
+ 8 │                 
+   ╰────
+
+  ⚠ eslint-plugin-react(prefer-es6-class): Component should use es6 class instead of createClass
+   ╭─[prefer_es_6_class.tsx:2:25]
+ 1 │     
+ 2 │ ╭─▶             var Hello = createReactClass({
+ 3 │ │                 render: function() {
+ 4 │ │                   return <div>Hello {this.props.name}</div>;
+ 5 │ │                 }
+ 6 │ ╰─▶             });
+ 7 │                 
+   ╰────
+
+  ⚠ eslint-plugin-react(prefer-es6-class): Component should use createClass instead of es6 class
+   ╭─[prefer_es_6_class.tsx:2:13]
+ 1 │     
+ 2 │ ╭─▶             class Hello extends React.Component {
+ 3 │ │                 render() {
+ 4 │ │                     return <div>Hello {this.props.name}</div>;
+ 5 │ │                 }
+ 6 │ ╰─▶             }
+ 7 │                 
+   ╰────
