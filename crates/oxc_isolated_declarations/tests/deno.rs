@@ -103,7 +103,6 @@ export function foo(a: any): number {
     }
 
     #[test]
-    #[ignore = "Doesn't support class function overloads"]
     fn dts_class_decl_overloads_test() {
         transform_dts_test(
             "export class Foo {

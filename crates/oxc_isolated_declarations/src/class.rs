@@ -247,33 +247,15 @@ impl<'a> IsolatedDeclarations<'a> {
         elements
     }
 
-    pub fn transform_class(
+    /// Infer get accessor return type from set accessor
+    /// Infer set accessor parameter type from get accessor return type
+    fn collect_inferred_accessor_types(
         &self,
         decl: &Class<'a>,
-        modifiers: Option<Modifiers<'a>>,
-    ) -> Option<Box<'a, Class<'a>>> {
-        if decl.is_declare() {
-            return None;
-        }
-
-        if let Some(super_class) = &decl.super_class {
-            let is_not_allowed = match super_class {
-                Expression::Identifier(_) => false,
-                Expression::StaticMemberExpression(expr) => {
-                    !expr.get_first_object().is_identifier_reference()
-                }
-                _ => true,
-            };
-            if is_not_allowed {
-                self.error(extends_clause_expression(super_class.span()));
-            }
-        }
-
+    ) -> FxHashMap<Atom, Box<'a, TSTypeAnnotation<'a>>> {
         let mut inferred_accessor_types: FxHashMap<Atom<'a>, Box<'a, TSTypeAnnotation<'a>>> =
             FxHashMap::default();
 
-        // Infer get accessor return type from set accessor
-        // Infer set accessor parameter type from get accessor
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if method.key.is_private_identifier()
@@ -318,12 +300,45 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
+        inferred_accessor_types
+    }
+
+    pub fn transform_class(
+        &self,
+        decl: &Class<'a>,
+        modifiers: Option<Modifiers<'a>>,
+    ) -> Option<Box<'a, Class<'a>>> {
+        if decl.is_declare() {
+            return None;
+        }
+
+        if let Some(super_class) = &decl.super_class {
+            let is_not_allowed = match super_class {
+                Expression::Identifier(_) => false,
+                Expression::StaticMemberExpression(expr) => {
+                    !expr.get_first_object().is_identifier_reference()
+                }
+                _ => true,
+            };
+            if is_not_allowed {
+                self.error(extends_clause_expression(super_class.span()));
+            }
+        }
+
         let mut has_private_key = false;
         let mut elements = self.ast.new_vec();
+        let mut is_function_overloads = false;
         for element in &decl.body.body {
             match element {
                 ClassElement::StaticBlock(_) => {}
                 ClassElement::MethodDefinition(ref method) => {
+                    if method.value.body.is_none() {
+                        is_function_overloads = true;
+                    } else if is_function_overloads {
+                        // Skip implementation of function overloads
+                        is_function_overloads = false;
+                        continue;
+                    }
                     if method.key.is_private_identifier() {
                         has_private_key = true;
                         continue;
@@ -335,6 +350,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         elements.push(self.transform_private_modifier_method(method));
                         continue;
                     }
+
+                    let inferred_accessor_types = self.collect_inferred_accessor_types(decl);
                     let function = &method.value;
                     let params = if method.kind.is_set() {
                         method.key.static_name().map_or_else(
