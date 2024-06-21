@@ -348,12 +348,12 @@ pub struct Quantifier<'a> {
 #[derive(Debug)]
 pub struct Flags {
     pub span: Span,
-    pub dot_all: bool,
     pub global: bool,
-    pub has_indices: bool,
     pub ignore_case: bool,
     pub multiline: bool,
-    pub sticky: bool,
     pub unicode: bool,
+    pub sticky: bool,
+    pub dot_all: bool,
+    pub has_indices: bool,
     pub unicode_sets: bool,
 }

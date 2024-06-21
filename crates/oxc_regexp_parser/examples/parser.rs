@@ -1,19 +1,26 @@
 use oxc_allocator::Allocator;
-use oxc_regexp_parser::{ast, Parser};
+use oxc_regexp_parser::{ast, Parser, ParserOptions};
 
 fn main() {
-    println!("🍀 Hello parser!");
-
     let allocator = Allocator::default();
 
-    let parser = Parser::new(&allocator, "/abc/i");
-    let ret = parser.parse();
+    for (pat, options) in [
+        ("/abc/", ParserOptions::default()),
+        ("/abc/iv", ParserOptions::default()),
+        ("/duplicated-flags/ii", ParserOptions::default()),
+        ("/invalid-flags/x", ParserOptions::default()),
+    ] {
+        println!("Test: {pat} + {options:?}");
+        let parser = Parser::new(&allocator, pat, options);
+        let ret = parser.parse();
 
-    match ret {
-        Ok(ast::RegExpLiteral { pattern, flags, .. }) => {
-            println!("✨ PAT: {pattern:#?}");
-            println!("✨ FLG: {flags:#?}");
+        match ret {
+            Ok(ast::RegExpLiteral { pattern, flags, .. }) => {
+                println!("✨ {pattern:#?}");
+                println!("✨ {flags:?}");
+            }
+            Err(err) => println!("💥 {}", err.message),
         }
-        Err(err) => println!("💥 {err:#?}"),
+        println!();
     }
 }

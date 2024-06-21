@@ -1651,6 +1651,8 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_span",
+ "oxc_syntax",
+ "rustc-hash",
 ]
 
 [[package]]
