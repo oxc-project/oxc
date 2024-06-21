@@ -360,14 +360,13 @@ export function foo(a: any): number {
             "export default function(a: number, b: number): number {};",
             "export default function(a: number, b: number): number;",
         );
-        // TODO export default function overloads
-        //         transform_dts_test(
-        //             "export default function(a: number, b: number): number;
-        // export default function(a: number, b: number): any {
-        //   return foo
-        // };",
-        //             "export default function(a: number, b: number): number;",
-        //         );
+        transform_dts_test(
+            "export default function(a: number, b: number): number;
+        export default function(a: number, b: number): any {
+          return foo
+        };",
+            "export default function(a: number, b: number): number;",
+        );
         transform_dts_test(
             "export default class {foo = 2};",
             "export default class {\n  foo: number;\n}",
