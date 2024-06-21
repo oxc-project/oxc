@@ -1,7 +1,9 @@
+pub use oxc_syntax::node::{AstNodeId, NodeFlags};
+
 use oxc_ast::AstKind;
 use oxc_cfg::BasicBlockId;
 use oxc_index::IndexVec;
-pub use oxc_syntax::node::{AstNodeId, NodeFlags};
+use rustc_hash::FxHashSet;
 
 use crate::scope::ScopeId;
 
@@ -62,6 +64,7 @@ pub struct AstNodes<'a> {
     root: Option<AstNodeId>,
     nodes: IndexVec<AstNodeId, AstNode<'a>>,
     parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
+    children_ids: IndexVec<AstNodeId, Vec<AstNodeId>>,
 }
 
 impl<'a> AstNodes<'a> {
@@ -100,6 +103,18 @@ impl<'a> AstNodes<'a> {
 
     pub fn parent_node(&self, ast_node_id: AstNodeId) -> Option<&AstNode<'a>> {
         self.parent_id(ast_node_id).map(|node_id| self.get_node(node_id))
+    }
+
+    pub fn children_ids(&self, ast_node_id: AstNodeId) -> &Vec<AstNodeId> {
+        &self.children_ids[ast_node_id]
+    }
+
+    pub fn children_kinds(&self, ast_node_id: AstNodeId) -> Vec<AstKind<'a>> {
+        self.children_ids[ast_node_id].iter().map(|it| self.kind(*it)).collect()
+    }
+
+    pub fn children_nodes(&self, ast_node_id: AstNodeId) -> Vec<&AstNode<'a>> {
+        self.children_ids[ast_node_id].iter().map(|it| self.get_node(*it)).collect()
     }
 
     pub fn get_node(&self, ast_node_id: AstNodeId) -> &AstNode<'a> {
@@ -152,10 +167,38 @@ impl<'a> AstNodes<'a> {
         std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
     }
 
+    /// Walk down the AST, iterating over each children node.
+    ///
+    /// The first node produced by this iterator is the first child of the node
+    /// pointed to by `node_id`.
+    pub fn descendants(&self, ast_node_id: AstNodeId) -> impl Iterator<Item = AstNodeId> + '_ {
+        let children_ids = &self.children_ids;
+        let mut queue = vec![ast_node_id];
+        let mut visited = FxHashSet::default();
+        let mut next = move || {
+            while let Some(next) = queue.pop() {
+                if !visited.contains(&next) {
+                    visited.insert(next);
+                    for children in &children_ids[next] {
+                        queue.push(*children);
+                    }
+                    return Some(next);
+                }
+            }
+            None
+        };
+        std::iter::successors(next(), move |_| next())
+    }
+
     /// Adds an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
     pub fn add_node(&mut self, node: AstNode<'a>, parent_id: Option<AstNodeId>) -> AstNodeId {
         let mut node = node;
         let ast_node_id = self.parent_ids.push(parent_id);
+        let ast_node_id2 = self.children_ids.push(Vec::new());
+        debug_assert_eq!(ast_node_id, ast_node_id2);
+        if let Some(parent_id) = parent_id {
+            self.children_ids[parent_id].push(ast_node_id);
+        }
         node.id = ast_node_id;
         self.nodes.push(node);
         ast_node_id
