@@ -1535,6 +1535,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
+ "oxc_diagnostics",
  "oxc_index",
  "oxc_parser",
  "oxc_semantic",

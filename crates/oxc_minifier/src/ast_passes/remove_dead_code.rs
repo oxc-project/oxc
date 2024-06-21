@@ -5,7 +5,6 @@ use oxc_span::SPAN;
 /// Remove Dead Code from the AST.
 ///
 /// Terser option: `dead_code: true`.
-#[derive(Clone, Copy)]
 pub struct RemoveDeadCode<'a> {
     ast: AstBuilder<'a>,
 }

@@ -16,7 +16,7 @@ impl<'a> ParserImpl<'a> {
             self.parse_expression_statement(span, expr)
         // let.a = 1, let()[a] = 1
         } else if matches!(peeked, Kind::Dot | Kind::LParen) {
-            let expr = self.parse_expression()?;
+            let expr = self.parse_expr()?;
             Ok(self.ast.expression_statement(self.end_span(span), expr))
         // single statement let declaration: while (0) let
         } else if (stmt_ctx.is_single_statement() && peeked != Kind::LBrack)

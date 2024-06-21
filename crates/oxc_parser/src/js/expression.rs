@@ -28,13 +28,13 @@ use crate::{
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_paren_expression(&mut self) -> Result<Expression<'a>> {
         self.expect(Kind::LParen)?;
-        let expression = self.parse_expression()?;
+        let expression = self.parse_expr()?;
         self.expect(Kind::RParen)?;
         Ok(expression)
     }
 
     /// Section [Expression](https://tc39.es/ecma262/#sec-ecmascript-language-expressions)
-    pub(crate) fn parse_expression(&mut self) -> Result<Expression<'a>> {
+    pub(crate) fn parse_expr(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
 
         let has_decorator = self.ctx.has_decorator();
@@ -386,7 +386,7 @@ impl<'a> ParserImpl<'a> {
             Kind::TemplateHead => {
                 quasis.push(self.parse_template_element(tagged));
                 // TemplateHead Expression[+In, ?Yield, ?Await]
-                let expr = self.context(Context::In, Context::empty(), Self::parse_expression)?;
+                let expr = self.context(Context::In, Context::empty(), Self::parse_expr)?;
                 expressions.push(expr);
                 self.re_lex_template_substitution_tail();
                 loop {
@@ -401,11 +401,8 @@ impl<'a> ParserImpl<'a> {
                         }
                         _ => {
                             // TemplateMiddle Expression[+In, ?Yield, ?Await]
-                            let expr = self.context(
-                                Context::In,
-                                Context::empty(),
-                                Self::parse_expression,
-                            )?;
+                            let expr =
+                                self.context(Context::In, Context::empty(), Self::parse_expr)?;
                             expressions.push(expr);
                             self.re_lex_template_substitution_tail();
                         }
@@ -652,7 +649,7 @@ impl<'a> ParserImpl<'a> {
         optional: bool,
     ) -> Result<Expression<'a>> {
         self.bump_any(); // advance `[`
-        let property = self.context(Context::In, Context::empty(), Self::parse_expression)?;
+        let property = self.context(Context::In, Context::empty(), Self::parse_expr)?;
         self.expect(Kind::RBrack)?;
         Ok(self.ast.computed_member_expression(self.end_span(lhs_span), lhs, property, optional))
     }

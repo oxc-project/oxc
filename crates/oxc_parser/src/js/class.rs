@@ -417,7 +417,7 @@ impl<'a> ParserImpl<'a> {
         let value = if self.eat(Kind::Eq) {
             // let current_flags = self.scope.current_flags();
             // self.scope.set_current_flags(self.scope.current_flags());
-            let expr = self.parse_expression()?;
+            let expr = self.parse_expr()?;
             // self.scope.set_current_flags(current_flags);
             Some(expr)
         } else {

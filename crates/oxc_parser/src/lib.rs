@@ -81,7 +81,10 @@ pub mod lexer;
 
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, AstBuilder, Trivias};
+use oxc_ast::{
+    ast::{Expression, Program},
+    AstBuilder, Trivias,
+};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
@@ -227,6 +230,23 @@ mod parser_parse {
             );
             parser.parse()
         }
+
+        /// Parse `Expression`
+        ///
+        /// # Errors
+        ///
+        /// * Syntax Error
+        pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+            let unique = UniquePromise::new();
+            let parser = ParserImpl::new(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                unique,
+            );
+            parser.parse_expression()
+        }
     }
 }
 use parser_parse::UniquePromise;
@@ -333,6 +353,17 @@ impl<'a> ParserImpl<'a> {
         ParserReturn { program, errors, trivias, panicked }
     }
 
+    pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        // initialize cur_token and prev_token by moving onto the first token
+        self.bump_any();
+        let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        Ok(expr)
+    }
+
     #[allow(clippy::cast_possible_truncation)]
     fn parse_program(&mut self) -> Result<Program<'a>> {
         // initialize cur_token and prev_token by moving onto the first token
@@ -407,18 +438,27 @@ impl<'a> ParserImpl<'a> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::CommentKind;
+    use oxc_ast::{ast::Expression, CommentKind};
 
     use super::*;
 
     #[test]
-    fn smoke_test() {
+    fn parse_program_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let source = "";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
         assert!(ret.errors.is_empty());
+    }
+
+    #[test]
+    fn parse_expression_smoke_test() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = "a";
+        let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+        assert!(matches!(expr, Expression::Identifier(_)));
     }
 
     #[test]

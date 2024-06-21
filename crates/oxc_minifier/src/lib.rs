@@ -8,7 +8,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 
 pub use crate::{
-    ast_passes::{RemoveDeadCode, RemoveParens},
+    ast_passes::{RemoveDeadCode, RemoveParens, ReplaceGlobalDefines, ReplaceGlobalDefinesConfig},
     compressor::{CompressOptions, Compressor},
     mangler::ManglerBuilder,
 };
