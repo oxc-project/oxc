@@ -3,12 +3,13 @@ use oxc_ast::visit::walk_mut::{walk_expression_mut, walk_statements_mut};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 
+/// Remove Parenthesized Expression from the AST.
 #[derive(Clone, Copy)]
-pub struct Prepass<'a> {
+pub struct RemoveParens<'a> {
     ast: AstBuilder<'a>,
 }
 
-impl<'a> Prepass<'a> {
+impl<'a> RemoveParens<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         Self { ast: AstBuilder::new(allocator) }
     }
@@ -25,7 +26,7 @@ impl<'a> Prepass<'a> {
     }
 }
 
-impl<'a> VisitMut<'a> for Prepass<'a> {
+impl<'a> VisitMut<'a> for RemoveParens<'a> {
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
         walk_statements_mut(self, stmts);

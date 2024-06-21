@@ -3,7 +3,6 @@
 mod ast_util;
 mod fold;
 mod options;
-mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
@@ -20,20 +19,22 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-pub use self::{options::CompressOptions, prepass::Prepass};
+use crate::ast_passes::RemoveParens;
+
+pub use self::options::CompressOptions;
 
 pub struct Compressor<'a> {
     ast: AstBuilder<'a>,
     options: CompressOptions,
 
-    prepass: Prepass<'a>,
+    prepass: RemoveParens<'a>,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
     pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { ast: AstBuilder::new(allocator), options, prepass: Prepass::new(allocator) }
+        Self { ast: AstBuilder::new(allocator), options, prepass: RemoveParens::new(allocator) }
     }
 
     pub fn build(mut self, program: &mut Program<'a>) {
