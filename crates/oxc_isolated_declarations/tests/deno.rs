@@ -49,16 +49,6 @@ export function foo(a: any): number {
 }",
             "export declare function foo(a?: string): number;",
         );
-        // TODO: Isolated Declarations doesn't ObjectPattern
-        //         transform_dts_test(
-        //             "export function foo({a, b} = { a: 1, b: 2 }): number {
-        //   return 2;
-        // }",
-        //             "export declare function foo({ a, b }?: {
-        //   a: number;
-        //   b: number;
-        // }): number;",
-        //         );
     }
 
     #[test]
