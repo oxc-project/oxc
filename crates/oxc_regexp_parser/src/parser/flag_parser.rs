@@ -1,19 +1,28 @@
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::Span;
 use rustc_hash::FxHashSet;
 
-use crate::{ast, ast_builder::AstBuilder, parser::ParserOptions};
+use crate::{
+    ast,
+    ast_builder::AstBuilder,
+    parser::{options::ParserOptions, span::SpanFactory},
+};
 
 pub struct FlagsParser<'a> {
     source_text: &'a str,
-    ast: AstBuilder<'a>,
     options: ParserOptions,
+    ast: AstBuilder<'a>,
+    span_factory: SpanFactory,
 }
 
 impl<'a> FlagsParser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
-        Self { source_text, ast: AstBuilder::new(allocator), options }
+        Self {
+            source_text,
+            options,
+            ast: AstBuilder::new(allocator),
+            span_factory: SpanFactory::new(options.span_offset),
+        }
     }
 
     pub fn parse(&mut self) -> Result<ast::Flags> {
@@ -47,8 +56,7 @@ impl<'a> FlagsParser<'a> {
         }
 
         Ok(self.ast.flags(
-            #[allow(clippy::cast_possible_truncation)]
-            Span::new(0, self.source_text.len() as u32),
+            self.span_factory.new_with_offset(0, self.source_text.len()),
             global,
             ignore_case,
             multiline,

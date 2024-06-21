@@ -5,8 +5,9 @@ fn main() {
     let allocator = Allocator::default();
 
     for (pat, options) in [
-        ("/abc/", ParserOptions::default()),
-        ("/abc/iv", ParserOptions::default()),
+        ("/ab/", ParserOptions::default()),
+        ("/abc/i", ParserOptions::default()),
+        ("/abcd/igv", ParserOptions::default()),
         ("/duplicated-flags/ii", ParserOptions::default()),
         ("/invalid-flags/x", ParserOptions::default()),
     ] {
@@ -16,8 +17,10 @@ fn main() {
 
         match ret {
             Ok(ast::RegExpLiteral { pattern, flags, .. }) => {
-                println!("✨ {pattern:#?}");
-                println!("✨ {flags:?}");
+                println!("✨ {}", pattern.span.source_text(pat));
+                println!("{pattern:#?}");
+                println!("✨ {}", flags.span.source_text(pat));
+                println!("{flags:?}");
             }
             Err(err) => println!("💥 {}", err.message),
         }

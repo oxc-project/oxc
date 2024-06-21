@@ -55,13 +55,12 @@ impl<'a> Reader<'a> {
         if self.c1.is_some() {
             self.idx += self.w1;
             self.c1 = self.c2;
-            self.w1 = self.c1.map_or(0, |c| c.len_utf8());
+            self.w1 = self.w2;
             self.c2 = self.c3;
-            self.w2 = self.c2.map_or(0, |c| c.len_utf8());
+            self.w2 = self.r_impl.width(self.c2);
             self.c3 = self.c4;
-            self.w3 = self.c3.map_or(0, |c| c.len_utf8());
-            self.c4 =
-                self.r_impl.at(self.source, self.end, self.idx + self.w1 + self.w2 + self.w3);
+            self.w3 = self.r_impl.width(self.c3);
+            self.c4 = self.r_impl.at(self.source, self.end, self.idx + self.w1 + self.w2 + self.w3);
         }
     }
 
@@ -94,23 +93,16 @@ impl<'a> Reader<'a> {
             false
         }
     }
-
-    fn char_at(&self, index: usize) -> Option<char> {
-        if index < self.end {
-            self.source[index..].chars().next()
-        } else {
-            None
-        }
-    }
 }
 
+// NOTE: I'm not sure this implementation is required for Rust...
 trait ReaderImpl {
     fn at(&self, s: &str, end: usize, i: usize) -> Option<char>;
     fn width(&self, c: Option<char>) -> usize;
 }
 
 struct LegacyImpl;
-/// Used with `u` flag
+/// Used when `u` or `v` flag is set
 struct UnicodeImpl;
 
 impl ReaderImpl for LegacyImpl {

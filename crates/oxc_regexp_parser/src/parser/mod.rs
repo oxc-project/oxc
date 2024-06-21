@@ -4,6 +4,7 @@ mod flag_parser;
 mod literal_parser;
 mod options;
 mod reader;
+mod span;
 
 pub use body_parser::PatternParser;
 pub use flag_parser::FlagsParser;

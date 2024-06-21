@@ -1,6 +1,5 @@
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
@@ -8,42 +7,53 @@ use crate::{
     ast_builder::AstBuilder,
     parser::{
         body_parser::PatternParser, flag_parser::FlagsParser, options::ParserOptions,
-        reader::Reader,
+        reader::Reader, span::SpanFactory,
     },
 };
 
+// LiteralParser
 pub struct Parser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
-    ast: AstBuilder<'a>,
     options: ParserOptions,
+    ast: AstBuilder<'a>,
+    span_factory: SpanFactory,
 }
 
 impl<'a> Parser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
-        Self { allocator, source_text, ast: AstBuilder::new(allocator), options }
+        Self {
+            allocator,
+            source_text,
+            options,
+            ast: AstBuilder::new(allocator),
+            span_factory: SpanFactory::new(options.span_offset),
+        }
     }
 
     // NOTE: Should return `ParserReturn { (empty)literal, errors }`?
     pub fn parse(self) -> Result<ast::RegExpLiteral<'a>> {
         let flag_start_idx = is_valid_reg_exp_literal(self.source_text)?;
 
-        let body_text = &self.source_text[1..flag_start_idx - 1];
-        let flag_text = &self.source_text[flag_start_idx..];
+        let flags = FlagsParser::new(
+            self.allocator,
+            &self.source_text[flag_start_idx..],
+            #[allow(clippy::cast_possible_truncation)]
+            self.options.with_span_offset(self.options.span_offset + flag_start_idx as u32),
+        )
+        .parse()?;
 
-        let mut flags = FlagsParser::new(self.allocator, flag_text, self.options).parse()?;
-        // Adjust Span to be based on the original source text
-        #[allow(clippy::cast_possible_truncation)]
-        let flags_span = Span::new(
-            flags.span.start + flag_start_idx as u32,
-            flags.span.end + flag_start_idx as u32,
-        );
-        flags.span = flags_span;
+        // TODO: Pass these flags to `PatternParser`
+        flags.unicode;
+        flags.unicode_sets;
+        let pattern = PatternParser::new(
+            self.allocator,
+            &self.source_text[1..flag_start_idx - 1],
+            self.options.with_span_offset(self.options.span_offset + 1),
+        )
+        .parse()?;
 
-        let pattern = PatternParser::new(self.allocator, body_text, self.options).parse()?;
-
-        #[allow(clippy::cast_possible_truncation)]
-        let span = Span::new(0, self.source_text.len() as u32);
+        let span = self.span_factory.new_with_offset(0, self.source_text.len());
         Ok(self.ast.reg_exp_literal(span, pattern, flags))
     }
 }

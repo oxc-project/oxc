@@ -14,16 +14,24 @@ pub struct ParserOptions {
     /// - `2025` added duplicate named capturing groups
     /// Default: 2025
     pub ecma_version: u32, // TODO: Enum?
+
+    /// Used to adjust Span pos to the global source code.
+    pub span_offset: u32,
 }
 impl Default for ParserOptions {
     fn default() -> Self {
-        Self { strict: false, ecma_version: 2025 }
+        Self { strict: false, ecma_version: 2025, span_offset: 0 }
     }
 }
 
 impl ParserOptions {
     #[must_use]
-    pub fn new(self, is_strict: bool, ecma_version: u32) -> Self {
-        Self { strict: is_strict, ecma_version }
+    pub fn new(is_strict: bool, ecma_version: u32) -> Self {
+        Self { strict: is_strict, ecma_version, span_offset: 0 }
+    }
+
+    #[must_use]
+    pub fn with_span_offset(self, span_offset: u32) -> ParserOptions {
+        ParserOptions { span_offset, ..self }
     }
 }
