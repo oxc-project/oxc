@@ -21,7 +21,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &TSEnumDeclaration<'a>,
     ) -> Option<Declaration<'a>> {
         let mut members = self.ast.new_vec();
-        let mut prev_initializer_value = Some(ConstantValue::Number(0.0));
+        let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
         for member in &decl.members {
             let value = if let Some(initializer) = &member.initializer {
@@ -90,12 +90,12 @@ impl<'a> IsolatedDeclarations<'a> {
 
             members.push(member);
         }
-        Some(self.ast.ts_enum_declaration(
-            decl.span,
-            self.ast.copy(&decl.id),
-            members,
-            self.modifiers_declare(),
-        ))
+        let mut modifiers = self.modifiers_declare();
+        if decl.modifiers.contains(ModifierKind::Const) {
+            modifiers.add_modifier(Modifier { span: SPAN, kind: ModifierKind::Const });
+        }
+
+        Some(self.ast.ts_enum_declaration(decl.span, self.ast.copy(&decl.id), members, modifiers))
     }
 
     /// Evaluate the expression to a constant value.
