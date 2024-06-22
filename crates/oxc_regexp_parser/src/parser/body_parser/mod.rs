@@ -13,7 +13,7 @@ use crate::{
 
 pub struct PatternParser<'a> {
     source_text: &'a str,
-    options: ParserOptions,
+    // options: ParserOptions,
     ast: AstBuilder<'a>,
     span_factory: SpanFactory,
     reader: Reader<'a>,
@@ -24,7 +24,7 @@ impl<'a> PatternParser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
         Self {
             source_text,
-            options,
+            // options,
             ast: AstBuilder::new(allocator),
             span_factory: SpanFactory::new(options.span_offset),
             reader: Reader::new(),
@@ -56,7 +56,6 @@ impl<'a> PatternParser<'a> {
 
         // if (
         //   !this._nFlag &&
-        //   this.ecmaVersion >= 2018 &&
         //   !this._groupSpecifiers.isEmpty()
         // ) {
         //   this._nFlag = true;

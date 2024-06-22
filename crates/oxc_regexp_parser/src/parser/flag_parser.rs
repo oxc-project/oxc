@@ -10,7 +10,7 @@ use crate::{
 
 pub struct FlagsParser<'a> {
     source_text: &'a str,
-    options: ParserOptions,
+    // options: ParserOptions,
     ast: AstBuilder<'a>,
     span_factory: SpanFactory,
 }
@@ -19,7 +19,7 @@ impl<'a> FlagsParser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
         Self {
             source_text,
-            options,
+            // options,
             ast: AstBuilder::new(allocator),
             span_factory: SpanFactory::new(options.span_offset),
         }
@@ -46,13 +46,17 @@ impl<'a> FlagsParser<'a> {
                 'g' => global = true,
                 'i' => ignore_case = true,
                 'm' => multiline = true,
-                'u' if 2015 <= self.options.ecma_version => unicode = true,
-                'y' if 2015 <= self.options.ecma_version => sticky = true,
-                's' if 2018 <= self.options.ecma_version => dot_all = true,
-                'd' if 2022 <= self.options.ecma_version => has_indices = true,
-                'v' if 2024 <= self.options.ecma_version => unicode_sets = true,
+                'u' => unicode = true,
+                'y' => sticky = true,
+                's' => dot_all = true,
+                'd' => has_indices = true,
+                'v' => unicode_sets = true,
                 _ => return Err(OxcDiagnostic::error(format!("Invalid flag `{c}`"))),
             }
+        }
+
+        if unicode && unicode_sets {
+            return Err(OxcDiagnostic::error("Invalid regular expression flags"));
         }
 
         Ok(self.ast.flags(
