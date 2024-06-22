@@ -47,7 +47,7 @@ pub struct Program<'a> {
 }
 
 inherit_variants! {
-/// Expression
+/// Represents a type for AST nodes corresponding to JavaScript's expressions.
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -58,50 +58,89 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum Expression<'a> {
+    /// See [`BooleanLiteral`] for ast node details.
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+    /// See [`NullLiteral`] for ast node details.
     NullLiteral(Box<'a, NullLiteral>) = 1,
+    /// See [`NumericLiteral`] for ast node details.
     NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+    /// See [`BigIntLiteral`] for ast node details.
     BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    /// See [`RegExpLiteral`] for ast node details.
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+    /// See [`StringLiteral`] for ast node details.
     StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+    /// See [`TemplateLiteral`] for ast node details.
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
 
+    /// See [`IdentifierReference`] for ast node details.
     Identifier(Box<'a, IdentifierReference<'a>>) = 7,
 
+    /// See [`MetaProperty`] for ast node details.
     MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
+    /// See [`Super`] for ast node details.
     Super(Box<'a, Super>) = 9,
 
+    /// See [`ArrayExpression`] for ast node details.
     ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+    /// See [`ArrowFunctionExpression`] for ast node details.
     ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+    /// See [`AssignmentExpression`] for ast node details.
     AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+    /// See [`AwaitExpression`] for ast node details.
     AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+    /// See [`BinaryExpression`] for ast node details.
     BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+    /// See [`CallExpression`] for ast node details.
     CallExpression(Box<'a, CallExpression<'a>>) = 15,
+    /// See [`ChainExpression`] for ast node details.
     ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+    /// See [`Class`] for ast node details.
     ClassExpression(Box<'a, Class<'a>>) = 17,
+    /// See [`ConditionalExpression`] for ast node details.
     ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+    /// See [`Function`] for ast node details.
     #[visit(args(flags = ScopeFlags::Function))]
     FunctionExpression(Box<'a, Function<'a>>) = 19,
+    /// See [`ImportExpression`] for ast node details.
     ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+    /// See [`LogicalExpression`] for ast node details.
     LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+    /// See [`NewExpression`] for ast node details.
     NewExpression(Box<'a, NewExpression<'a>>) = 22,
+    /// See [`ObjectExpression`] for ast node details.
     ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+    /// See [`ParenthesizedExpression`] for ast node details.
     ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+    /// See [`SequenceExpression`] for ast node details.
     SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+    /// See [`TaggedTemplateExpression`] for ast node details.
     TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+    /// See [`ThisExpression`] for ast node details.
     ThisExpression(Box<'a, ThisExpression>) = 27,
+    /// See [`UnaryExpression`] for ast node details.
     UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+    /// See [`UpdateExpression`] for ast node details.
     UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+    /// See [`YieldExpression`] for ast node details.
     YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+    /// See [`PrivateInExpression`] for ast node details.
     PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
 
+    /// See [`JSXElement`] for ast node details.
     JSXElement(Box<'a, JSXElement<'a>>) = 32,
+    /// See [`JSXFragment`] for ast node details.
     JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
 
+    /// See [`TSAsExpression`] for ast node details.
     TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+    /// See [`TSSatisfiesExpression`] for ast node details.
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+    /// See [`TSTypeAssertion`] for ast node details.
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+    /// See [`TSNonNullExpression`] for ast node details.
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+    /// See [`TSInstantiationExpression`] for ast node details.
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
