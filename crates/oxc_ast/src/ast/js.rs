@@ -1895,7 +1895,7 @@ pub struct ExportDefaultDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub declaration: ExportDefaultDeclarationKind<'a>,
-    pub exported: ModuleExportName<'a>, // `default`
+    pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
 #[visited_node]
@@ -1955,6 +1955,8 @@ pub enum ExportDefaultDeclarationKind<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ModuleExportName<'a> {
-    Identifier(IdentifierName<'a>),
+    IdentifierName(IdentifierName<'a>),
+    /// For `local` in `ExportSpecifier`: `foo` in `export { foo }`
+    IdentifierReference(IdentifierReference<'a>),
     StringLiteral(StringLiteral<'a>),
 }

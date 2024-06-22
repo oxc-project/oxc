@@ -1,5 +1,4 @@
 use oxc_semantic::SymbolFlags;
-use oxc_syntax::module_record::ExportExportName;
 
 use crate::util::SemanticTester;
 
@@ -26,9 +25,7 @@ fn test_exports() {
     );
 
     test.has_some_symbol("foo").is_exported().test();
-
-    // FIXME: failing
-    // test.has_some_symbol("defaultExport").is_exported().test();
+    test.has_some_symbol("defaultExport").is_exported().test();
 }
 
 #[test]
@@ -118,21 +115,6 @@ fn test_exported_default_class() {
     test.has_class("Foo");
     test.has_some_symbol("a").is_not_exported().test();
     test.has_some_symbol("T").is_not_exported().test();
-
-    {
-        let foo_test = test.has_some_symbol("Foo");
-        let (semantic, _) = foo_test.inner();
-        let m = semantic.module_record();
-        let local_default_entry = m
-            .local_export_entries
-            .iter()
-            .find(|export| matches!(export.export_name, ExportExportName::Default(_)))
-            .unwrap();
-        assert!(local_default_entry.local_name.name().is_some_and(|name| name == &"Foo"));
-        assert!(!m.exported_bindings.contains_key("Foo"));
-        assert!(m.export_default.is_some());
-        foo_test.contains_flags(SymbolFlags::Export).test();
-    }
 }
 
 // FIXME

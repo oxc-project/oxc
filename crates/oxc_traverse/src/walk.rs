@@ -3109,7 +3109,12 @@ pub(crate) unsafe fn walk_module_export_name<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_module_export_name(&mut *node, ctx);
     match &mut *node {
-        ModuleExportName::Identifier(node) => walk_identifier_name(traverser, node as *mut _, ctx),
+        ModuleExportName::IdentifierName(node) => {
+            walk_identifier_name(traverser, node as *mut _, ctx)
+        }
+        ModuleExportName::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, node as *mut _, ctx)
+        }
         ModuleExportName::StringLiteral(node) => {
             walk_string_literal(traverser, node as *mut _, ctx)
         }

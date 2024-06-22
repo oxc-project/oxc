@@ -1447,7 +1447,8 @@ impl<'a> ExportDefaultDeclarationKind<'a> {
 impl<'a> fmt::Display for ModuleExportName<'a> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let s = match self {
-            Self::Identifier(identifier) => identifier.name.to_string(),
+            Self::IdentifierName(identifier) => identifier.name.to_string(),
+            Self::IdentifierReference(identifier) => identifier.name.to_string(),
             Self::StringLiteral(literal) => format!(r#""{}""#, literal.value),
         };
         write!(f, "{s}")
@@ -1457,8 +1458,17 @@ impl<'a> fmt::Display for ModuleExportName<'a> {
 impl<'a> ModuleExportName<'a> {
     pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(identifier) => identifier.name.clone(),
+            Self::IdentifierName(identifier) => identifier.name.clone(),
+            Self::IdentifierReference(identifier) => identifier.name.clone(),
             Self::StringLiteral(literal) => literal.value.clone(),
+        }
+    }
+
+    pub fn identifier_name(&self) -> Option<Atom<'a>> {
+        match self {
+            Self::IdentifierName(identifier) => Some(identifier.name.clone()),
+            Self::IdentifierReference(identifier) => Some(identifier.name.clone()),
+            Self::StringLiteral(_) => None,
         }
     }
 }

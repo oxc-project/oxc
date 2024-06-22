@@ -218,7 +218,7 @@ impl<'a> ParserImpl<'a> {
         span: Span,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
-        let specifiers =
+        let mut specifiers =
             self.context(Context::empty(), self.ctx, ExportNamedSpecifiers::parse)?.elements;
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
@@ -229,7 +229,7 @@ impl<'a> ParserImpl<'a> {
 
         // ExportDeclaration : export NamedExports ;
         if source.is_none() {
-            for specifier in &specifiers {
+            for specifier in specifiers.iter_mut() {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
@@ -242,18 +242,25 @@ impl<'a> ParserImpl<'a> {
                     // For each IdentifierName n in ReferencedBindings of NamedExports:
                     // It is a Syntax Error if StringValue of n is a ReservedWord or the StringValue of n
                     // is one of "implements", "interface", "let", "package", "private", "protected", "public", or "static".
-                    ModuleExportName::Identifier(id) => {
-                        let match_result = Kind::match_keyword(&id.name);
+                    ModuleExportName::IdentifierName(ident) => {
+                        let match_result = Kind::match_keyword(&ident.name);
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
                             self.error(diagnostics::export_reserved_word(
                                 &specifier.local.to_string(),
                                 &specifier.exported.to_string(),
-                                id.span,
+                                ident.span,
                             ));
                         }
+
+                        // `local` becomes a reference for `export { local }`.
+                        specifier.local = ModuleExportName::IdentifierReference(
+                            self.ast.identifier_reference(ident.span, ident.name.as_str()),
+                        );
                     }
+                    // No prior code path should lead to parsing `ModuleExportName` as `IdentifierReference`.
+                    ModuleExportName::IdentifierReference(_) => unreachable!(),
                 }
             }
         }
@@ -343,7 +350,7 @@ impl<'a> ParserImpl<'a> {
                 decl
             }
         };
-        let exported = ModuleExportName::Identifier(exported);
+        let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
         Ok(self.ast.export_default_declaration(span, declaration, exported))
     }
@@ -400,7 +407,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             let local = self.parse_binding_identifier()?;
             let imported = IdentifierName { span: local.span, name: local.name.clone() };
-            (ModuleExportName::Identifier(imported), local)
+            (ModuleExportName::IdentifierName(imported), local)
         };
         Ok(self.ast.alloc(ImportSpecifier {
             span: self.end_span(specifier_span),
@@ -424,7 +431,7 @@ impl<'a> ParserImpl<'a> {
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }
-            _ => Ok(ModuleExportName::Identifier(self.parse_identifier_name()?)),
+            _ => Ok(ModuleExportName::IdentifierName(self.parse_identifier_name()?)),
         }
     }
 

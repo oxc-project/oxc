@@ -784,7 +784,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                         }
 
                         let imported_name = match &spec.imported {
-                            ModuleExportName::Identifier(identifier) => {
+                            ModuleExportName::IdentifierName(identifier) => {
+                                identifier.gen(p, ctx);
+                                identifier.name.as_bytes()
+                            }
+                            ModuleExportName::IdentifierReference(identifier) => {
                                 identifier.gen(p, ctx);
                                 identifier.name.as_bytes()
                             }
@@ -961,9 +965,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportSpecifier<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleExportName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::Identifier(identifier) => {
-                p.print_str(identifier.name.as_bytes());
-            }
+            Self::IdentifierName(identifier) => p.print_str(identifier.name.as_bytes()),
+            Self::IdentifierReference(identifier) => p.print_str(identifier.name.as_bytes()),
             Self::StringLiteral(literal) => literal.gen(p, ctx),
         };
     }

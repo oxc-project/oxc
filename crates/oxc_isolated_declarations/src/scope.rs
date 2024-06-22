@@ -123,9 +123,9 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_export_named_declaration(&mut self, decl: &ExportNamedDeclaration<'a>) {
         for specifier in &decl.specifiers {
-            if let ModuleExportName::Identifier(ident) = &specifier.local {
-                self.add_type_reference(ident.name.clone());
-                self.add_value_reference(ident.name.clone());
+            if let Some(name) = specifier.local.identifier_name() {
+                self.add_type_reference(name.clone());
+                self.add_value_reference(name);
             }
         }
     }

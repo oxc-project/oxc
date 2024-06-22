@@ -10,10 +10,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, SourceType, Span};
-use oxc_syntax::{
-    module_record::{ExportImportName, ModuleRecord},
-    operator::AssignmentOperator,
-};
+use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
 use crate::{
     binder::Binder,
@@ -388,22 +385,29 @@ impl<'a> SemanticBuilder<'a> {
         self.symbols.add_redeclare_variable(symbol_id, span);
     }
 
-    fn add_export_flag_for_export_identifier(&mut self) {
-        self.module_record.indirect_export_entries.iter().for_each(|entry| {
-            if let ExportImportName::Name(name) = &entry.import_name {
-                if let Some(symbol_id) = self.symbols.get_symbol_id_from_name(name.name()) {
-                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+    fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
+        for stmt in &program.body {
+            if let Statement::ExportDefaultDeclaration(decl) = stmt {
+                if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
+                    self.add_export_flag_to_identifier(ident.name.as_str());
                 }
             }
-        });
+            if let Statement::ExportNamedDeclaration(decl) = stmt {
+                for specifier in &decl.specifiers {
+                    if specifier.export_kind.is_value() {
+                        if let Some(name) = specifier.local.identifier_name() {
+                            self.add_export_flag_to_identifier(name.as_str());
+                        }
+                    }
+                }
+            }
+        }
+    }
 
-        self.module_record.local_export_entries.iter().for_each(|entry| {
-            if let Some(name) = entry.local_name.name() {
-                if let Some(symbol_id) = self.scope.get_root_binding(name.as_str()) {
-                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-                }
-            }
-        });
+    fn add_export_flag_to_identifier(&mut self, name: &str) {
+        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
+            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+        }
     }
 }
 
@@ -1680,8 +1684,20 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+            AstKind::ExportDefaultDeclaration(_) => {
                 self.current_symbol_flags |= SymbolFlags::Export;
+            }
+            AstKind::ExportNamedDeclaration(decl) => {
+                self.current_symbol_flags |= SymbolFlags::Export;
+                if decl.export_kind.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Type;
+                }
+            }
+            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
+                self.current_reference_flag = ReferenceFlag::Type;
+            }
+            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
+                self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
@@ -1768,6 +1784,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
             }
+            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
+                self.current_reference_flag = ReferenceFlag::Type;
+            }
             AstKind::TSTypeName(_) => {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
@@ -1815,15 +1834,27 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Program(_) => {
-                self.add_export_flag_for_export_identifier();
+            AstKind::Program(program) => {
+                self.add_export_flag_to_export_identifiers(program);
             }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
             }
-            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+            AstKind::ExportDefaultDeclaration(_) => {
                 self.current_symbol_flags -= SymbolFlags::Export;
+            }
+            AstKind::ExportNamedDeclaration(decl) => {
+                self.current_symbol_flags -= SymbolFlags::Export;
+                if decl.export_kind.is_type() {
+                    self.current_reference_flag -= ReferenceFlag::Type;
+                }
+            }
+            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
+                self.current_reference_flag -= ReferenceFlag::Type;
+            }
+            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
+                self.current_reference_flag -= ReferenceFlag::Type;
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
             AstKind::StaticBlock(_) => {

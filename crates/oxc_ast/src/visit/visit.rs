@@ -617,6 +617,14 @@ pub trait Visit<'a>: Sized {
         walk_export_named_declaration(self, decl);
     }
 
+    fn visit_export_specifier(&mut self, specifier: &ExportSpecifier<'a>) {
+        walk_export_specifier(self, specifier);
+    }
+
+    fn visit_module_export_name(&mut self, name: &ModuleExportName<'a>) {
+        walk_module_export_name(self, name);
+    }
+
     fn visit_enum_member(&mut self, member: &TSEnumMember<'a>) {
         walk_enum_member(self, member);
     }
@@ -2433,7 +2441,7 @@ pub mod walk {
     ) {
         let kind = AstKind::ImportSpecifier(visitor.alloc(specifier));
         visitor.enter_node(kind);
-        // TODO: imported
+        visitor.visit_module_export_name(&specifier.imported);
         visitor.visit_binding_identifier(&specifier.local);
         visitor.leave_node(kind);
     }
@@ -2496,10 +2504,34 @@ pub mod walk {
         if let Some(decl) = &decl.declaration {
             visitor.visit_declaration(decl);
         }
+        for export_specifier in &decl.specifiers {
+            visitor.visit_export_specifier(export_specifier);
+        }
         if let Some(ref source) = decl.source {
             visitor.visit_string_literal(source);
         }
         visitor.leave_node(kind);
+    }
+
+    pub fn walk_export_specifier<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        specifier: &ExportSpecifier<'a>,
+    ) {
+        let kind = AstKind::ExportSpecifier(visitor.alloc(specifier));
+        visitor.enter_node(kind);
+        visitor.visit_module_export_name(&specifier.local);
+        visitor.visit_module_export_name(&specifier.exported);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_module_export_name<'a, V: Visit<'a>>(visitor: &mut V, name: &ModuleExportName<'a>) {
+        match name {
+            ModuleExportName::IdentifierName(ident) => visitor.visit_identifier_name(ident),
+            ModuleExportName::IdentifierReference(ident) => {
+                visitor.visit_identifier_reference(ident);
+            }
+            ModuleExportName::StringLiteral(ident) => visitor.visit_string_literal(ident),
+        }
     }
 
     pub fn walk_enum_member<'a, V: Visit<'a>>(visitor: &mut V, member: &TSEnumMember<'a>) {
