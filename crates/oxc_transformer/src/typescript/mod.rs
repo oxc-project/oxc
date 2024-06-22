@@ -127,8 +127,12 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_jsx_opening_element(elem);
     }
 
-    pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
-        self.annotations.transform_method_definition(def);
+    pub fn transform_method_definition(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_method_definition(def, ctx);
     }
 
     pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
