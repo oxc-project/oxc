@@ -58,7 +58,7 @@ pub struct Parser<'a> {
     back_reference_names: HashSet<String>,
     last_assertion_is_quantifiable: bool,
     last_range: Range<usize>,
-    last_str_value: Stirng,
+    last_str_value: String,
 }
 
 #[derive(Default, Copy, Clone)]
