@@ -1,5 +1,5 @@
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 pub fn function_must_have_explicit_return_type(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
@@ -133,7 +133,8 @@ pub fn computed_property_name(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn type_containing_private_name(name: &Atom<'_>, span: Span) -> OxcDiagnostic {
+#[allow(clippy::needless_pass_by_value)]
+pub fn type_containing_private_name(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "TS9039: Type containing private name '{name}' can't be used with --isolatedDeclarations."
     ))

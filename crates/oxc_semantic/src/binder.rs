@@ -364,7 +364,7 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
         };
         builder.declare_symbol(
             self.span,
-            self.id.name(),
+            self.id.name().as_str(),
             SymbolFlags::NameSpaceModule | ambient,
             SymbolFlags::None,
         );

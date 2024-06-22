@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
-use oxc_span::Atom;
 
 use super::{Expect, SemanticTester};
 
@@ -22,8 +21,7 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let decl =
-            semantic.scopes().get_binding(semantic.scopes().root_scope_id(), &Atom::from(target));
+        let decl = semantic.scopes().get_binding(semantic.scopes().root_scope_id(), target);
         let data = decl.map_or_else(
             || Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             Ok,

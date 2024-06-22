@@ -204,7 +204,7 @@ impl PreferLowercaseTitle {
             let Some(template_string) = template_expr.quasi() else {
                 return;
             };
-            self.lint_string(ctx, template_string, template_expr.span);
+            self.lint_string(ctx, template_string.as_str(), template_expr.span);
         }
     }
 

@@ -642,9 +642,12 @@ impl<'a> PropertyKey<'a> {
             Self::NumericLiteral(lit) => Some(lit.value.to_string().into()),
             Self::BigintLiteral(lit) => Some(lit.raw.to_compact_str()),
             Self::NullLiteral(_) => Some("null".into()),
-            Self::TemplateLiteral(lit) => {
-                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Atom::to_compact_str)
-            }
+            Self::TemplateLiteral(lit) => lit
+                .expressions
+                .is_empty()
+                .then(|| lit.quasi())
+                .flatten()
+                .map(|quasi| quasi.to_compact_str()),
             _ => None,
         }
     }
@@ -661,16 +664,16 @@ impl<'a> PropertyKey<'a> {
         matches!(self, Self::PrivateIdentifier(_))
     }
 
-    pub fn private_name(&self) -> Option<&Atom<'a>> {
+    pub fn private_name(&self) -> Option<Atom<'a>> {
         match self {
-            Self::PrivateIdentifier(ident) => Some(&ident.name),
+            Self::PrivateIdentifier(ident) => Some(ident.name.clone()),
             _ => None,
         }
     }
 
     pub fn name(&self) -> Option<CompactStr> {
         if self.is_private_identifier() {
-            self.private_name().map(Atom::to_compact_str)
+            self.private_name().map(|name| name.to_compact_str())
         } else {
             self.static_name()
         }
@@ -717,8 +720,8 @@ impl<'a> TemplateLiteral<'a> {
     }
 
     /// Get single quasi from `template`
-    pub fn quasi(&self) -> Option<&Atom<'a>> {
-        self.quasis.first().and_then(|quasi| quasi.value.cooked.as_ref())
+    pub fn quasi(&self) -> Option<Atom<'a>> {
+        self.quasis.first().and_then(|quasi| quasi.value.cooked.clone())
     }
 }
 
@@ -2200,7 +2203,7 @@ impl<'a> BindingPattern<'a> {
         Self { kind, type_annotation: None, optional: false }
     }
 
-    pub fn get_identifier(&self) -> Option<&Atom<'a>> {
+    pub fn get_identifier(&self) -> Option<Atom<'a>> {
         self.kind.get_identifier()
     }
 
@@ -2228,9 +2231,9 @@ pub enum BindingPatternKind<'a> {
 }
 
 impl<'a> BindingPatternKind<'a> {
-    pub fn get_identifier(&self) -> Option<&Atom<'a>> {
+    pub fn get_identifier(&self) -> Option<Atom<'a>> {
         match self {
-            Self::BindingIdentifier(ident) => Some(&ident.name),
+            Self::BindingIdentifier(ident) => Some(ident.name.clone()),
             Self::AssignmentPattern(assign) => assign.left.get_identifier(),
             _ => None,
         }
@@ -3402,10 +3405,10 @@ impl<'a> fmt::Display for ModuleExportName<'a> {
 }
 
 impl<'a> ModuleExportName<'a> {
-    pub fn name(&self) -> &Atom<'a> {
+    pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(identifier) => &identifier.name,
-            Self::StringLiteral(literal) => &literal.value,
+            Self::Identifier(identifier) => identifier.name.clone(),
+            Self::StringLiteral(literal) => literal.value.clone(),
         }
     }
 }

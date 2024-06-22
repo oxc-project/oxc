@@ -83,7 +83,7 @@ impl Rule for NoPageCustomFont {
                     let AstKind::VariableDeclarator(declarator) = parent_parent_kind else {
                         return None;
                     };
-                    declarator.id.get_identifier().map(ToString::to_string)
+                    declarator.id.get_identifier().map(|id| id.to_string())
                 },
                 |id| Some(id.name.to_string()),
             );

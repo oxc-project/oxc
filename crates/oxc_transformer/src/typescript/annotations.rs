@@ -114,7 +114,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                                 !(specifier.export_kind.is_type()
                                     || self
                                         .type_identifier_names
-                                        .contains(specifier.exported.name()))
+                                        .contains(&specifier.exported.name()))
                             });
 
                             decl.export_kind.is_type()
@@ -514,7 +514,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 
-    pub fn has_value_reference(&self, name: &Atom<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {
         if let Some(symbol_id) = ctx.scopes().get_root_binding(name) {
             if ctx.symbols().get_flag(symbol_id).is_export()
                 && !self.type_identifier_names.contains(name)

@@ -113,13 +113,13 @@ impl<'a> ParserImpl<'a> {
         (self.end_span(span), Atom::from(name))
     }
 
-    pub(crate) fn check_identifier(&mut self, span: Span, name: &Atom) {
+    pub(crate) fn check_identifier(&mut self, span: Span, name: &str) {
         // It is a Syntax Error if this production has an [Await] parameter.
-        if self.ctx.has_await() && name.as_str() == "await" {
+        if self.ctx.has_await() && name == "await" {
             self.error(diagnostics::identifier_async("await", span));
         }
         // It is a Syntax Error if this production has a [Yield] parameter.
-        if self.ctx.has_yield() && name.as_str() == "yield" {
+        if self.ctx.has_yield() && name == "yield" {
             self.error(diagnostics::identifier_generator("yield", span));
         }
     }

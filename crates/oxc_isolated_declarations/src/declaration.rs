@@ -61,7 +61,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if check_binding {
             if let Some(name) = decl.id.get_identifier() {
-                if !self.scope.has_reference(name) {
+                if !self.scope.has_reference(&name) {
                     return None;
                 }
             }

@@ -172,10 +172,8 @@ mod tests {
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
-        let top_level_a = semantic
-            .scopes()
-            .get_binding(semantic.scopes().root_scope_id(), &Atom::from("a"))
-            .unwrap();
+        let top_level_a =
+            semantic.scopes().get_binding(semantic.scopes().root_scope_id(), "a").unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {

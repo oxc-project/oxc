@@ -980,10 +980,10 @@ impl<'a> TSModuleDeclarationName<'a> {
         matches!(self, Self::StringLiteral(_))
     }
 
-    pub fn name(&self) -> &Atom<'a> {
+    pub fn name(&self) -> Atom<'a> {
         match self {
-            Self::Identifier(ident) => &ident.name,
-            Self::StringLiteral(lit) => &lit.value,
+            Self::Identifier(ident) => ident.name.clone(),
+            Self::StringLiteral(lit) => lit.value.clone(),
         }
     }
 }

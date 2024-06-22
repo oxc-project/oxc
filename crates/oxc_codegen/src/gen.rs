@@ -1118,7 +1118,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_symbol(self.span, self.symbol_id.get(), &self.name);
+        p.print_symbol(self.span, self.symbol_id.get(), self.name.as_str());
     }
 }
 
