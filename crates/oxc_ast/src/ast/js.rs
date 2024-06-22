@@ -27,6 +27,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+/// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source, directives, top-level statements, and scope information.
 #[ast(visit)]
 #[scope(
     flags(ScopeFlags::Top),
@@ -323,7 +324,7 @@ pub enum ObjectPropertyKind<'a> {
     /// ```ts
     /// const foo = 'foo'
     /// const x = { foo, bar: 'bar' }
-    /// //          ^^^  ^^^^^^^^^^      
+    /// //          ^^^  ^^^^^^^^^^
     ObjectProperty(Box<'a, ObjectProperty<'a>>),
     /// Object Spread Property
     ///
@@ -539,7 +540,7 @@ pub struct CallExpression<'a> {
 /// ## Example
 /// ```ts
 /// //           callee         arguments
-/// //              ↓↓↓         ↓↓↓↓         
+/// //              ↓↓↓         ↓↓↓↓
 /// const foo = new Foo<number>(1, 2)
 /// //                 ↑↑↑↑↑↑↑↑
 /// //                 type_parameters
@@ -1706,7 +1707,7 @@ pub struct Class<'a> {
     /// ```ts
     /// interface Bar {}
     /// class Foo implements Bar {}
-    /// //                   ^^^   
+    /// //                   ^^^
     /// ```
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub body: Box<'a, ClassBody<'a>>,
