@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
 Positive Passed: 5273/5283 (99.81%)
-Negative Passed: 1053/4875 (21.60%)
+Negative Passed: 1059/4875 (21.72%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -1409,7 +1409,6 @@ Expect Syntax Error: "compiler/primitiveTypeAsInterfaceName.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsInterfaceNameGeneric.ts"
 Expect Syntax Error: "compiler/primitiveTypeAssignment.ts"
 Expect Syntax Error: "compiler/privacyGloImportParseErrors.ts"
-Expect Syntax Error: "compiler/privacyImportParseErrors.ts"
 Expect Syntax Error: "compiler/privateAccessInSubclass1.ts"
 Expect Syntax Error: "compiler/privateFieldAssignabilityFromUnknown.ts"
 Expect Syntax Error: "compiler/privateInterfaceProperties.ts"
@@ -1455,7 +1454,6 @@ Expect Syntax Error: "compiler/qualifiedName_entity-name-resolution-does-not-aff
 Expect Syntax Error: "compiler/qualify.ts"
 Expect Syntax Error: "compiler/quickIntersectionCheckCorrectlyCachesErrors.ts"
 Expect Syntax Error: "compiler/quickinfoTypeAtReturnPositionsInaccurate.ts"
-Expect Syntax Error: "compiler/quotedModuleNameMustBeAmbient.ts"
 Expect Syntax Error: "compiler/raiseErrorOnParameterProperty.ts"
 Expect Syntax Error: "compiler/reExportUndefined1.ts"
 Expect Syntax Error: "compiler/reachabilityChecks1.ts"
@@ -1924,9 +1922,6 @@ Expect Syntax Error: "conformance/Symbols/ES5SymbolProperty2.ts"
 Expect Syntax Error: "conformance/Symbols/ES5SymbolProperty6.ts"
 Expect Syntax Error: "conformance/additionalChecks/noPropertyAccessFromIndexSignature1.ts"
 Expect Syntax Error: "conformance/ambient/ambientDeclarationsPatterns_tooManyAsterisks.ts"
-Expect Syntax Error: "conformance/ambient/ambientErrors.ts"
-Expect Syntax Error: "conformance/ambient/ambientExternalModuleInsideNonAmbient.ts"
-Expect Syntax Error: "conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts"
 Expect Syntax Error: "conformance/async/asyncFunctionDeclarationParameterEvaluation.ts"
 Expect Syntax Error: "conformance/async/es2017/asyncArrowFunction/asyncArrowFunction10_es2017.ts"
 Expect Syntax Error: "conformance/async/es2017/asyncArrowFunction/asyncArrowFunction3_es2017.ts"
@@ -3179,7 +3174,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.d.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration10.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration2.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration3.ts"
@@ -8629,6 +8623,62 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ if (true) {
    ╰────
 
+  × TS1035: Only ambient modules can use quoted names.
+    ╭─[compiler/privacyImportParseErrors.ts:22:27]
+ 21 │ 
+ 22 │     export declare module "m1_M3_public" {
+    ·                           ──────────────
+ 23 │         export function f1();
+    ╰────
+
+  × TS2435: Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[compiler/privacyImportParseErrors.ts:30:20]
+ 29 │ 
+ 30 │     declare module "m1_M4_private" {
+    ·                    ───────────────
+ 31 │         export function f1();
+    ╰────
+
+  × TS1035: Only ambient modules can use quoted names.
+     ╭─[compiler/privacyImportParseErrors.ts:106:27]
+ 105 │ 
+ 106 │     export declare module "m2_M3_public" {
+     ·                           ──────────────
+ 107 │         export function f1();
+     ╰────
+
+  × TS2435: Ambient modules cannot be nested in other modules or namespaces.
+     ╭─[compiler/privacyImportParseErrors.ts:114:20]
+ 113 │ 
+ 114 │     declare module "m2_M4_private" {
+     ·                    ───────────────
+ 115 │         export function f1();
+     ╰────
+
+  × TS1035: Only ambient modules can use quoted names.
+     ╭─[compiler/privacyImportParseErrors.ts:180:23]
+ 179 │ 
+ 180 │ export declare module "glo_M2_public" {
+     ·                       ───────────────
+ 181 │     export function f1();
+     ╰────
+
+  × TS1035: Only ambient modules can use quoted names.
+     ╭─[compiler/privacyImportParseErrors.ts:198:23]
+ 197 │ 
+ 198 │ export declare module "glo_M4_private" {
+     ·                       ────────────────
+ 199 │     export function f1();
+     ╰────
+
+  × TS1035: Only ambient modules can use quoted names.
+     ╭─[compiler/privacyImportParseErrors.ts:255:23]
+ 254 │ 
+ 255 │ export declare module "use_glo_M1_public" {
+     ·                       ───────────────────
+ 256 │     import use_glo_M1_public = glo_M1_public;
+     ╰────
+
   × Unexpected token
    ╭─[compiler/privateNameJsx.tsx:4:22]
  3 │     render() {
@@ -8645,6 +8695,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ 
    ╰────
   help: Try insert a semicolon here
+
+  × TS1035: Only ambient modules can use quoted names.
+   ╭─[compiler/quotedModuleNameMustBeAmbient.ts:1:8]
+ 1 │ module 'M' {}
+   ·        ───
+ 2 │ 
+   ╰────
 
   × Identifier `bar` has already been declared
    ╭─[compiler/reassignStaticProp.ts:3:12]
@@ -10447,6 +10504,28 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │     yield 'literal';
    ·     ─────
  3 │ }
+   ╰────
+
+  × TS2435: Ambient modules cannot be nested in other modules or namespaces.
+    ╭─[conformance/ambient/ambientErrors.ts:47:20]
+ 46 │ module M2 {
+ 47 │     declare module 'nope' { }
+    ·                    ──────
+ 48 │ }
+    ╰────
+
+  × TS1035: Only ambient modules can use quoted names.
+   ╭─[conformance/ambient/ambientExternalModuleInsideNonAmbient.ts:2:27]
+ 1 │ module M {
+ 2 │     export declare module "M" { }
+   ·                           ───
+ 3 │ }
+   ╰────
+
+  × TS1035: Only ambient modules can use quoted names.
+   ╭─[conformance/ambient/ambientExternalModuleInsideNonAmbientExternalModule.ts:1:23]
+ 1 │ export declare module "M" { }
+   ·                       ───
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -17287,6 +17366,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/MissingTokens/parserMissingToken2.ts:1:1]
  1 │ / b;
    · ────
+   ╰────
+
+  × TS1035: Only ambient modules can use quoted names.
+   ╭─[conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.ts:1:8]
+ 1 │ module "Foo" {
+   ·        ─────
+ 2 │ }
    ╰────
 
   × Expected `(` but found `;`

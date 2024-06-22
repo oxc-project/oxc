@@ -408,3 +408,16 @@ pub fn jsx_element_no_match(span0: Span, span1: Span, name: &str) -> OxcDiagnost
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
         .with_labels([span0.into(), span1.into()])
 }
+
+#[cold]
+pub fn only_ambient_modules_can_use_quoted_names(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("TS1035: Only ambient modules can use quoted names.").with_label(span0)
+}
+
+#[cold]
+pub fn ambient_modules_cannot_be_nested_in_other_modules_or_namespaces(
+    span0: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::error("TS2435: Ambient modules cannot be nested in other modules or namespaces.")
+        .with_label(span0)
+}

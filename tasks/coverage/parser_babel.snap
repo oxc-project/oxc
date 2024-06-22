@@ -2,7 +2,7 @@ commit: 12619ffe
 
 parser_babel Summary:
 AST Parsed     : 2095/2101 (99.71%)
-Positive Passed: 2087/2101 (99.33%)
+Positive Passed: 2086/2101 (99.29%)
 Negative Passed: 1362/1501 (90.74%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -336,6 +336,14 @@ Expect to Parse: "typescript/interface/get-set-properties/input.ts"
    ·          ┬
    ·          ╰── `(` expected
  3 │   set bar: string;
+   ╰────
+Expect to Parse: "typescript/module-namespace/head/input.ts"
+
+  × TS1035: Only ambient modules can use quoted names.
+   ╭─[typescript/module-namespace/head/input.ts:4:8]
+ 3 │ module M {}
+ 4 │ module "m" {}
+   ·        ───
    ╰────
 Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param/input.ts"
 

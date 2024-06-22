@@ -1,13 +1,14 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use super::{
     list::{TSEnumMemberList, TSInterfaceOrObjectBodyList},
     types::ModifierFlags,
 };
 use crate::{
+    diagnostics,
     js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
     lexer::Kind,
     list::{NormalList, SeparatedList},
@@ -224,6 +225,13 @@ impl<'a> ParserImpl<'a> {
 
         while !self.eat(Kind::RCurly) && !self.at(Kind::Eof) {
             let stmt = self.parse_ts_module_item()?;
+
+            if let Statement::TSModuleDeclaration(decl) = &stmt {
+                if decl.id.is_string_literal() {
+                    self.error(diagnostics::ambient_modules_cannot_be_nested_in_other_modules_or_namespaces(decl.id.span()));
+                }
+            }
+
             statements.push(stmt);
         }
 
@@ -241,9 +249,15 @@ impl<'a> ParserImpl<'a> {
         modifiers: Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
         let id = match self.cur_kind() {
-            Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
-            _ => self.parse_identifier_name().map(TSModuleDeclarationName::Identifier),
-        }?;
+            Kind::Str => {
+                let s = self.parse_literal_string()?;
+                if !self.ctx.has_ambient() {
+                    self.error(diagnostics::only_ambient_modules_can_use_quoted_names(s.span));
+                }
+                TSModuleDeclarationName::StringLiteral(s)
+            }
+            _ => self.parse_identifier_name().map(TSModuleDeclarationName::Identifier)?,
+        };
 
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
