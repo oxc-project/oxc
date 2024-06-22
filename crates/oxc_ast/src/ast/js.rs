@@ -286,7 +286,7 @@ pub struct ThisExpression {
     pub span: Span,
 }
 
-/// <https://tc39.es/ecma262/#prod-ArrayLiteral>
+/// Represents an array literal, which can include elements, spread elements, or null values.: `[1, 2, ...[3, 4], null]` in `const array = [1, 2, ...[3, 4], null];`
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
