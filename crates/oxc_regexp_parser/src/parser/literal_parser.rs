@@ -61,7 +61,7 @@ impl<'a> Parser<'a> {
 /// ```
 /// / RegularExpressionBody / RegularExpressionFlags
 /// ```
-/// https://tc39.es/ecma262/#sec-literals-regular-expression-literals
+/// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 fn is_valid_reg_exp_literal(source_text: &str) -> Result<usize> {
     let mut reader = Reader::new();
     reader.reset(source_text, 0, source_text.len(), false);
