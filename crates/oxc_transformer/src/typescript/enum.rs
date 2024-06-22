@@ -83,7 +83,7 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
         let is_already_declared = self.enums.contains_key(&enum_name);
-        let statements = self.transform_ts_enum_members(&decl.members, &enum_name, ctx);
+        let statements = self.transform_ts_enum_members(&decl.members, enum_name.clone(), ctx);
         let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
         let r#type = FunctionType::FunctionExpression;
         let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
@@ -152,7 +152,7 @@ impl<'a> TypeScriptEnum<'a> {
     fn transform_ts_enum_members(
         &mut self,
         members: &Vec<'a, TSEnumMember<'a>>,
-        enum_name: &Atom<'a>,
+        enum_name: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let mut statements = self.ctx.ast.new_vec();
@@ -292,10 +292,8 @@ impl<'a> TypeScriptEnum<'a> {
 
         self.enums.insert(enum_name.clone(), previous_enum_members.clone());
 
-        let enum_ref = self
-            .ctx
-            .ast
-            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+        let enum_ref =
+            self.ctx.ast.identifier_reference_expression(IdentifierReference::new(SPAN, enum_name));
         // return Foo;
         let return_stmt = self.ctx.ast.return_statement(SPAN, Some(enum_ref));
         statements.push(return_stmt);
@@ -570,7 +568,7 @@ impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
                 // enum_name.identifier
                 let ident_reference = IdentifierReference::new(SPAN, self.enum_name.clone());
                 let object = self.ctx.ast.identifier_reference_expression(ident_reference);
-                let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
+                let property = IdentifierName::new(SPAN, ident.name.clone());
                 Some(self.ctx.ast.static_member_expression(SPAN, object, property, false))
             }
             _ => None,

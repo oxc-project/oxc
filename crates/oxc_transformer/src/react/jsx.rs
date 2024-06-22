@@ -90,7 +90,8 @@ impl<'a> AutomaticScriptBindings<'a> {
 
     fn require_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.require_create_element.is_none() {
-            let source = get_import_source(&self.jsx_runtime_importer, self.react_importer_len);
+            let source =
+                get_import_source(self.jsx_runtime_importer.as_str(), self.react_importer_len);
             let id = self.add_require_statement("react", source, true, ctx);
             self.require_create_element = Some(id);
         }
@@ -157,7 +158,8 @@ impl<'a> AutomaticModuleBindings<'a> {
 
     fn import_create_element(&mut self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         if self.import_create_element.is_none() {
-            let source = get_import_source(&self.jsx_runtime_importer, self.react_importer_len);
+            let source =
+                get_import_source(self.jsx_runtime_importer.as_str(), self.react_importer_len);
             let id = self.add_import_statement("createElement", source, ctx);
             self.import_create_element = Some(id);
         }
@@ -226,8 +228,8 @@ impl<'a> AutomaticModuleBindings<'a> {
 }
 
 #[inline]
-fn get_import_source<'a>(jsx_runtime_importer: &Atom<'a>, react_importer_len: u32) -> Atom<'a> {
-    Atom::from(&jsx_runtime_importer.as_str()[..react_importer_len as usize])
+fn get_import_source(jsx_runtime_importer: &str, react_importer_len: u32) -> Atom {
+    Atom::from(&jsx_runtime_importer[..react_importer_len as usize])
 }
 
 /// Pragma used in classic mode

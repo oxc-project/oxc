@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -133,8 +133,8 @@ impl Rule for CatchErrorName {
 }
 
 impl CatchErrorName {
-    fn is_name_allowed(&self, name: &Atom) -> bool {
-        self.name == name || self.ignore.iter().any(|s| s.as_str() == name.as_str())
+    fn is_name_allowed(&self, name: &str) -> bool {
+        self.name == name || self.ignore.iter().any(|s| s.as_str() == name)
     }
 
     fn check_function_arguments(

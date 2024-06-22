@@ -265,7 +265,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_jsx_assignment_expression(&mut self) -> Result<Expression<'a>> {
         self.context(Context::default().and_await(self.ctx.has_await()), self.ctx, |p| {
-            let expr = p.parse_expression();
+            let expr = p.parse_expr();
             if let Ok(Expression::SequenceExpression(seq)) = &expr {
                 return Err(diagnostics::jsx_expressions_may_not_use_the_comma_operator(seq.span));
             }

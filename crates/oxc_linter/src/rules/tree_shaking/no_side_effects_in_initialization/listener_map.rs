@@ -8,7 +8,7 @@ use oxc_ast::{
         FormalParameter, Function, IdentifierReference, JSXAttribute, JSXAttributeItem,
         JSXAttributeValue, JSXChild, JSXElement, JSXElementName, JSXExpression,
         JSXExpressionContainer, JSXFragment, JSXIdentifier, JSXOpeningElement, LogicalExpression,
-        MemberExpression, ModuleExportName, NewExpression, ObjectExpression, ObjectPropertyKind,
+        MemberExpression, NewExpression, ObjectExpression, ObjectPropertyKind,
         ParenthesizedExpression, PrivateFieldExpression, Program, PropertyKey, SequenceExpression,
         SimpleAssignmentTarget, Statement, StaticMemberExpression, SwitchCase, ThisExpression,
         UnaryExpression, VariableDeclarator,
@@ -198,10 +198,8 @@ impl<'a> ListenerMap for ExportSpecifier<'a> {
         let ctx = options.ctx;
         let symbol_table = ctx.symbols();
         if has_comment_about_side_effect_check(self.exported.span(), ctx) {
-            let ModuleExportName::Identifier(ident_name) = &self.exported else {
-                return;
-            };
-            let Some(symbol_id) = options.ctx.symbols().get_symbol_id_from_name(&ident_name.name)
+            let Some(name) = self.exported.identifier_name() else { return };
+            let Some(symbol_id) = options.ctx.symbols().get_symbol_id_from_name(name.as_str())
             else {
                 return;
             };

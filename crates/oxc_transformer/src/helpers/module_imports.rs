@@ -90,7 +90,10 @@ impl<'a> ModuleImports<'a> {
             let local = name.local.unwrap_or_else(|| name.imported.clone());
             ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
                 span: SPAN,
-                imported: ModuleExportName::Identifier(IdentifierName::new(SPAN, name.imported)),
+                imported: ModuleExportName::IdentifierName(IdentifierName::new(
+                    SPAN,
+                    name.imported,
+                )),
                 local: BindingIdentifier {
                     span: SPAN,
                     name: local,

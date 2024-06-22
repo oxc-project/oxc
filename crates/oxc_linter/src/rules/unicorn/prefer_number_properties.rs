@@ -83,24 +83,6 @@ impl Rule for PreferNumberProperties {
                 }
                 _ => {}
             },
-            AstKind::IdentifierName(ident_name) => {
-                if matches!(
-                    ctx.nodes().parent_kind(node.id()),
-                    Some(AstKind::MemberExpression(_) | AstKind::PropertyKey(_))
-                ) {
-                    return;
-                };
-
-                match ident_name.name.as_str() {
-                    "NaN" | "Infinity" => {
-                        ctx.diagnostic(prefer_number_properties_diagnostic(
-                            ident_name.span,
-                            &ident_name.name,
-                        ));
-                    }
-                    _ => {}
-                }
-            }
             AstKind::CallExpression(call_expr) => {
                 let Some(ident_name) = extract_ident_from_expression(&call_expr.callee) else {
                     return;

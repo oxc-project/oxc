@@ -10,8 +10,7 @@ use pico_args::Arguments;
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_minifier --example minifier`
-// or `just watch "run -p oxc_minifier --example minifier"`
+// run `cargo run -p oxc_minifier --example minifier` or `just example minifier`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();

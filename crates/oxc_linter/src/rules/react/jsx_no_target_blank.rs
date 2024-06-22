@@ -9,7 +9,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -245,8 +245,8 @@ impl Rule for JsxNoTargetBlank {
     }
 }
 
-fn check_is_external_link(link: &Atom) -> bool {
-    link.as_str().contains("//")
+fn check_is_external_link(link: &str) -> bool {
+    link.contains("//")
 }
 
 fn match_href_expression(

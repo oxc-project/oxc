@@ -170,7 +170,7 @@ impl<'a> TypeScript<'a> {
                     if let Some(transformed) = self.handle_nested(decl.unbox(), None, ctx) {
                         if names.insert(module_name.clone()) {
                             new_stmts.push(Statement::from(
-                                self.create_variable_declaration(&module_name),
+                                self.create_variable_declaration(module_name.clone()),
                             ));
                         }
                         new_stmts.push(transformed);
@@ -189,7 +189,12 @@ impl<'a> TypeScript<'a> {
                             Declaration::TSEnumDeclaration(_)
                             | Declaration::FunctionDeclaration(_)
                             | Declaration::ClassDeclaration(_) => {
-                                self.add_declaration(decl, &name, &mut names, &mut new_stmts);
+                                self.add_declaration(
+                                    decl,
+                                    name.clone(),
+                                    &mut names,
+                                    &mut new_stmts,
+                                );
                             }
                             Declaration::VariableDeclaration(var_decl) => {
                                 var_decl.declarations.iter().for_each(|decl| {
@@ -197,7 +202,8 @@ impl<'a> TypeScript<'a> {
                                         self.ctx.error(namespace_exporting_non_const(decl.span));
                                     }
                                 });
-                                let stmts = self.handle_variable_declaration(var_decl, &name);
+                                let stmts =
+                                    self.handle_variable_declaration(var_decl, name.clone());
                                 new_stmts.extend(stmts);
                             }
                             Declaration::TSModuleDeclaration(module_decl) => {
@@ -216,7 +222,7 @@ impl<'a> TypeScript<'a> {
                                 ) {
                                     if names.insert(module_name.clone()) {
                                         new_stmts.push(Statement::from(
-                                            self.create_variable_declaration(&module_name),
+                                            self.create_variable_declaration(module_name.clone()),
                                         ));
                                     }
                                     new_stmts.push(transformed);
@@ -255,10 +261,10 @@ impl<'a> TypeScript<'a> {
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     //                         ^^^^^^^
-    fn create_variable_declaration(&self, name: &Atom<'a>) -> Declaration<'a> {
+    fn create_variable_declaration(&self, name: Atom<'a>) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
-            let ident = BindingIdentifier::new(SPAN, name.clone());
+            let ident = BindingIdentifier::new(SPAN, name);
             let pattern_kind = self.ctx.ast.binding_pattern_identifier(ident);
             let binding = self.ctx.ast.binding_pattern(pattern_kind, None, false);
             let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
@@ -404,7 +410,7 @@ impl<'a> TypeScript<'a> {
     fn add_declaration(
         &self,
         decl: Declaration<'a>,
-        name: &Atom<'a>,
+        name: Atom<'a>,
         names: &mut FxHashSet<Atom<'a>>,
         new_stmts: &mut Vec<'a, Statement<'a>>,
     ) {
@@ -413,30 +419,31 @@ impl<'a> TypeScript<'a> {
         let ident = decl.id().unwrap();
         let item_name = ident.name.clone();
         new_stmts.push(Statement::from(decl));
-        let assignment_statement = self.create_assignment_statement(name, &item_name);
+        let assignment_statement = self.create_assignment_statement(name, item_name.clone());
         let assignment_statement = self.ctx.ast.expression_statement(SPAN, assignment_statement);
         new_stmts.push(assignment_statement);
         names.insert(item_name);
     }
 
     // name.item_name = item_name
-    fn create_assignment_statement(&self, name: &Atom<'a>, item_name: &Atom<'a>) -> Expression<'a> {
-        let ident = self.ctx.ast.identifier_reference(SPAN, name.as_str());
+    fn create_assignment_statement(&self, name: Atom<'a>, item_name: Atom<'a>) -> Expression<'a> {
+        let ident = IdentifierReference::new(SPAN, name);
         let object = self.ctx.ast.identifier_reference_expression(ident);
         let property = IdentifierName::new(SPAN, item_name.clone());
         let left = self.ctx.ast.static_member(SPAN, object, property, false);
         let left = AssignmentTarget::from(left);
-        let ident = self.ctx.ast.identifier_reference(SPAN, item_name.as_str());
+        let ident = IdentifierReference::new(SPAN, item_name);
         let right = self.ctx.ast.identifier_reference_expression(ident);
         let op = AssignmentOperator::Assign;
         self.ctx.ast.assignment_expression(SPAN, op, left, right)
     }
 
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
+    #[allow(clippy::needless_pass_by_value)]
     fn handle_variable_declaration(
         &self,
         mut var_decl: Box<'a, VariableDeclaration<'a>>,
-        name: &Atom<'a>,
+        name: Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let is_all_binding_identifier = var_decl
             .declarations
@@ -475,7 +482,7 @@ impl<'a> TypeScript<'a> {
         // `export const [a] = 1` transforms to `const [a] = 1; N.a = a`
         let mut assignments = self.ctx.ast.new_vec();
         var_decl.bound_names(&mut |id| {
-            assignments.push(self.create_assignment_statement(name, &id.name));
+            assignments.push(self.create_assignment_statement(name.clone(), id.name.clone()));
         });
 
         let mut stmts = self.ctx.ast.new_vec_with_capacity(2);

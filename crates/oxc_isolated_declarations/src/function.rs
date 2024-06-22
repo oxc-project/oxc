@@ -13,7 +13,11 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
-    pub fn transform_function(&mut self, func: &Function<'a>) -> Option<Box<'a, Function<'a>>> {
+    pub fn transform_function(
+        &mut self,
+        func: &Function<'a>,
+        modifiers: Option<Modifiers<'a>>,
+    ) -> Option<Box<'a, Function<'a>>> {
         if func.modifiers.is_contains_declare() {
             None
         } else {
@@ -26,14 +30,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 func.r#type,
                 func.span,
                 self.ast.copy(&func.id),
-                func.generator,
-                func.r#async,
+                false,
+                false,
                 self.ast.copy(&func.this_param),
                 params,
                 None,
                 self.ast.copy(&func.type_parameters),
                 return_type,
-                self.modifiers_declare(),
+                modifiers.unwrap_or_else(|| self.modifiers_declare()),
             ))
         }
     }
@@ -42,8 +46,14 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         param: &FormalParameter<'a>,
         is_remaining_params_have_required: bool,
-    ) -> FormalParameter<'a> {
-        let is_assignment_pattern = param.pattern.kind.is_assignment_pattern();
+    ) -> Option<FormalParameter<'a>> {
+        let pattern = &param.pattern;
+        if pattern.type_annotation.is_none() && pattern.kind.is_destructuring_pattern() {
+            self.error(parameter_must_have_explicit_type(param.span));
+            return None;
+        }
+
+        let is_assignment_pattern = pattern.kind.is_assignment_pattern();
         let mut pattern =
             if let BindingPatternKind::AssignmentPattern(pattern) = &param.pattern.kind {
                 self.ast.copy(&pattern.left)
@@ -96,14 +106,14 @@ impl<'a> IsolatedDeclarations<'a> {
             );
         }
 
-        self.ast.formal_parameter(
+        Some(self.ast.formal_parameter(
             param.span,
             pattern,
             None,
             param.readonly,
             false,
             self.ast.new_vec(),
-        )
+        ))
     }
 
     pub fn transform_formal_parameters(
@@ -114,14 +124,15 @@ impl<'a> IsolatedDeclarations<'a> {
             return self.ast.alloc(self.ast.copy(params));
         }
 
-        let items =
-            self.ast.new_vec_from_iter(params.items.iter().enumerate().map(|(index, item)| {
+        let items = self.ast.new_vec_from_iter(params.items.iter().enumerate().filter_map(
+            |(index, item)| {
                 let is_remaining_params_have_required =
                     params.items.iter().skip(index).any(|item| {
                         !(item.pattern.optional || item.pattern.kind.is_assignment_pattern())
                     });
                 self.transform_formal_parameter(item, is_remaining_params_have_required)
-            }));
+            },
+        ));
 
         if let Some(rest) = &params.rest {
             if rest.argument.type_annotation.is_none() {

@@ -1209,7 +1209,8 @@ impl<'a> Format<'a> for ExportSpecifier<'a> {
 impl<'a> Format<'a> for ModuleExportName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            Self::Identifier(ident) => ident.format(p),
+            Self::IdentifierName(ident) => ident.format(p),
+            Self::IdentifierReference(ident) => ident.format(p),
             Self::StringLiteral(literal) => literal.format(p),
         }
     }

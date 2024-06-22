@@ -15,7 +15,7 @@ use oxc_ast::{
     ast::{BlockStatement, Directive, Expression, Program, Statement},
     Comment, Trivias,
 };
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
@@ -394,7 +394,8 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
-    fn print_symbol(&mut self, span: Span, _symbol_id: Option<SymbolId>, fallback: &Atom) {
+    #[allow(clippy::needless_pass_by_value)]
+    fn print_symbol(&mut self, span: Span, _symbol_id: Option<SymbolId>, fallback: &str) {
         // if let Some(mangler) = &self.mangler {
         // if let Some(symbol_id) = symbol_id {
         // let name = mangler.get_symbol_name(symbol_id);

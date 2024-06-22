@@ -142,7 +142,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_expression_or_labeled_statement(&mut self) -> Result<Statement<'a>> {
         let span = self.start_span();
-        let expr = self.parse_expression()?;
+        let expr = self.parse_expr()?;
         if let Expression::Identifier(ident) = &expr {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
@@ -282,7 +282,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let init_expression =
-            self.context(Context::empty(), Context::In, ParserImpl::parse_expression)?;
+            self.context(Context::empty(), Context::In, ParserImpl::parse_expr)?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
@@ -358,7 +358,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
         let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
-            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr)?)
         } else {
             None
         };
@@ -366,7 +366,7 @@ impl<'a> ParserImpl<'a> {
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr)?)
         };
         self.expect(Kind::RParen)?;
         if r#await {
@@ -385,7 +385,7 @@ impl<'a> ParserImpl<'a> {
         let is_for_in = self.at(Kind::In);
         self.bump_any(); // bump `in` or `of`
         let right = if is_for_in {
-            self.parse_expression()
+            self.parse_expr()
         } else {
             self.parse_assignment_expression_or_higher()
         }?;
@@ -432,7 +432,7 @@ impl<'a> ParserImpl<'a> {
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
         } else {
-            let expr = self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?;
+            let expr = self.context(Context::In, Context::empty(), ParserImpl::parse_expr)?;
             self.asi()?;
             Some(expr)
         };
@@ -477,7 +477,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Case => {
                 self.bump_any();
-                let expression = self.parse_expression()?;
+                let expression = self.parse_expr()?;
                 Some(expression)
             }
             _ => return Err(self.unexpected()),
@@ -502,7 +502,7 @@ impl<'a> ParserImpl<'a> {
                 self.cur_token().span(),
             ));
         }
-        let argument = self.parse_expression()?;
+        let argument = self.parse_expr()?;
         self.asi()?;
         Ok(self.ast.throw_statement(self.end_span(span), argument))
     }

@@ -11,6 +11,7 @@ mod diagnostics;
 mod r#enum;
 mod function;
 mod inferrer;
+mod literal;
 mod module;
 mod return_type;
 mod scope;
@@ -327,6 +328,7 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts: oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> impl Iterator<Item = Statement<'a>> + '_ {
         let mut last_function_name: Option<Atom<'a>> = None;
+        let mut is_export_default_function_overloads = false;
 
         stmts.into_iter().filter_map(move |stmt| match stmt {
             Statement::FunctionDeclaration(ref func) => {
@@ -369,6 +371,21 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                     Some(stmt)
                 } else {
+                    Some(stmt)
+                }
+            }
+            Statement::ExportDefaultDeclaration(ref decl) => {
+                if let ExportDefaultDeclarationKind::FunctionDeclaration(ref func) =
+                    decl.declaration
+                {
+                    if is_export_default_function_overloads && func.body.is_some() {
+                        is_export_default_function_overloads = false;
+                        return None;
+                    }
+                    is_export_default_function_overloads = true;
+                    Some(stmt)
+                } else {
+                    is_export_default_function_overloads = false;
                     Some(stmt)
                 }
             }

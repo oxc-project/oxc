@@ -220,7 +220,8 @@ impl<'a> Visit<'a> for ModuleLexer<'a> {
         // export { named }
         self.exports.extend(decl.specifiers.iter().map(|s| {
             let (exported_start, exported_end) = match &s.exported {
-                ModuleExportName::Identifier(ident) => (ident.span.start, ident.span.end),
+                ModuleExportName::IdentifierName(ident) => (ident.span.start, ident.span.end),
+                ModuleExportName::IdentifierReference(ident) => (ident.span.start, ident.span.end),
                 // +1 -1 to remove the string quotes
                 ModuleExportName::StringLiteral(s) => (s.span.start + 1, s.span.end - 1),
             };

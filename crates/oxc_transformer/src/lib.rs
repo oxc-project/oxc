@@ -208,9 +208,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_method_definition(
         &mut self,
         def: &mut MethodDefinition<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.transform_method_definition(def);
+        self.x0_typescript.transform_method_definition(def, ctx);
     }
 
     fn exit_method_definition(

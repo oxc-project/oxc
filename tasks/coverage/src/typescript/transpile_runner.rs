@@ -119,13 +119,24 @@ impl TypeScriptTranspileCase {
         }
 
         for (base, expected) in baseline.files.iter().zip(expected.files) {
-            if base.oxc_printed != expected.oxc_printed {
-                return TestResult::Mismatch(base.oxc_printed.clone(), expected.oxc_printed);
+            if expected.original_diagnostic.is_empty() {
+                if base.oxc_printed != expected.oxc_printed {
+                    return TestResult::Mismatch(base.oxc_printed.clone(), expected.oxc_printed);
+                }
+            } else {
+                let matched = base.oxc_diagnostics.iter().zip(expected.original_diagnostic).all(
+                    |(base_diagnostic, expected_diagnostic)| {
+                        expected_diagnostic.contains(&base_diagnostic.to_string())
+                    },
+                );
+                if !matched {
+                    let snapshot = format!("\n#### {:?} ####\n{}", self.path, baseline.snapshot());
+                    return TestResult::CorrectError(snapshot, false);
+                }
             }
         }
 
-        let snapshot = format!("\n#### {:?} ####\n{}", self.path, baseline.snapshot());
-        TestResult::CorrectError(snapshot, false)
+        TestResult::Passed
     }
 
     fn run_kind(&self, _kind: TranspileKind) -> BaselineFile {
@@ -146,7 +157,7 @@ impl TypeScriptTranspileCase {
             let baseline = Baseline {
                 name: change_extension(&unit.name),
                 original: unit.content.clone(),
-                original_diagnostic: String::new(),
+                original_diagnostic: Vec::default(),
                 oxc_printed: source_text,
                 oxc_diagnostics: errors,
             };

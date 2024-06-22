@@ -18,11 +18,15 @@ impl<'a> IsolatedDeclarations<'a> {
         match expr {
             Expression::BooleanLiteral(_) => Some(self.ast.ts_boolean_keyword(SPAN)),
             Expression::NullLiteral(_) => Some(self.ast.ts_null_keyword(SPAN)),
-            Expression::NumericLiteral(_) | Expression::BigintLiteral(_) => {
-                Some(self.ast.ts_number_keyword(SPAN))
-            }
-            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
-                Some(self.ast.ts_string_keyword(SPAN))
+            Expression::NumericLiteral(_) => Some(self.ast.ts_number_keyword(SPAN)),
+            Expression::BigintLiteral(_) => Some(self.ast.ts_bigint_keyword(SPAN)),
+            Expression::StringLiteral(_) => Some(self.ast.ts_string_keyword(SPAN)),
+            Expression::TemplateLiteral(lit) => {
+                if lit.expressions.is_empty() {
+                    Some(self.ast.ts_string_keyword(SPAN))
+                } else {
+                    None
+                }
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Some(self.ast.ts_undefined_keyword(SPAN)),
@@ -43,7 +47,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
-                    Some(self.transform_expression_to_ts_type(&expr.expression))
+                    self.transform_expression_to_ts_type(&expr.expression)
                 } else {
                     Some(self.ast.copy(&expr.type_annotation))
                 }
@@ -120,10 +124,6 @@ impl<'a> IsolatedDeclarations<'a> {
             return None;
         }
 
-        if function.r#async {
-            return None;
-        }
-
         if function.expression {
             if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
                 return self
@@ -137,12 +137,12 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub fn is_need_to_infer_type_from_expression(expr: &Expression) -> bool {
-        !matches!(
-            expr,
+        match expr {
             Expression::NumericLiteral(_)
-                | Expression::BigintLiteral(_)
-                | Expression::StringLiteral(_)
-                | Expression::TemplateLiteral(_)
-        )
+            | Expression::BigintLiteral(_)
+            | Expression::StringLiteral(_) => false,
+            Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
+            _ => true,
+        }
     }
 }

@@ -1,3 +1,5 @@
+mod deno;
+
 use std::{fs, path::Path, sync::Arc};
 
 use oxc_allocator::Allocator;

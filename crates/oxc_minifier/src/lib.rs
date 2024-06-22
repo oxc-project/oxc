@@ -1,5 +1,6 @@
 //! ECMAScript Minifier
 
+mod ast_passes;
 mod compressor;
 mod mangler;
 
@@ -7,6 +8,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 
 pub use crate::{
+    ast_passes::{RemoveDeadCode, RemoveParens, ReplaceGlobalDefines, ReplaceGlobalDefinesConfig},
     compressor::{CompressOptions, Compressor},
     mangler::ManglerBuilder,
 };

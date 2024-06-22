@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
-use oxc_span::{Atom, GetSpan, ModuleKind, Span};
+use oxc_span::{GetSpan, ModuleKind, Span};
 use oxc_syntax::{
     module_record::ExportLocalName,
     number::NumberBase,
@@ -128,17 +128,12 @@ pub const STRICT_MODE_NAMES: Set<&'static str> = phf_set! {
     "yield",
 };
 
-pub fn check_identifier<'a>(
-    name: &Atom,
-    span: Span,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
+pub fn check_identifier<'a>(name: &str, span: Span, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     // ts module block allows revered keywords
     if ctx.current_scope_flags().is_ts_module_block() {
         return;
     }
-    if *name == "await" {
+    if name == "await" {
         // It is a Syntax Error if the goal symbol of the syntactic grammar is Module and the StringValue of IdentifierName is "await".
         if ctx.source_type.is_module() {
             return ctx.error(reserved_keyword(name, span));
@@ -150,7 +145,7 @@ pub fn check_identifier<'a>(
     }
 
     // It is a Syntax Error if this phrase is contained in strict mode code and the StringValue of IdentifierName is: "implements", "interface", "let", "package", "private", "protected", "public", "static", or "yield".
-    if ctx.strict_mode() && STRICT_MODE_NAMES.contains(name.as_str()) {
+    if ctx.strict_mode() && STRICT_MODE_NAMES.contains(name) {
         ctx.error(reserved_keyword(name, span));
     }
 }

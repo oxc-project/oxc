@@ -5,7 +5,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_span::{Atom, GetSpan};
+use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
 
 use super::{
@@ -125,7 +125,7 @@ impl ClassTableBuilder {
         }
         let is_private = method.key.is_private_identifier();
         let name = if is_private {
-            method.key.private_name().map(Atom::to_compact_str)
+            method.key.private_name().map(|name| name.to_compact_str())
         } else {
             method.key.static_name()
         };

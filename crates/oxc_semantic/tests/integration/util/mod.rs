@@ -1,7 +1,7 @@
 mod class_tester;
 mod expect;
 mod symbol_tester;
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 pub use class_tester::ClassTester;
 pub use expect::Expect;
@@ -88,7 +88,6 @@ impl<'a> SemanticTester<'a> {
         let semantic_ret = SemanticBuilder::new(self.source_text, self.source_type)
             .with_check_syntax_error(true)
             .with_trivias(parse.trivias)
-            .build_module_record(PathBuf::new(), program)
             .with_cfg(self.cfg)
             .build(program);
 

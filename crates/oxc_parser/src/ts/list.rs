@@ -241,7 +241,7 @@ impl<'a> SeparatedList<'a> for TSImportAttributeList<'a> {
         };
 
         p.expect(Kind::Colon)?;
-        let value = p.parse_expression()?;
+        let value = p.parse_expr()?;
         let element = TSImportAttribute { span: p.end_span(span), name, value };
         self.elements.push(element);
         Ok(())

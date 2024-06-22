@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,
@@ -116,7 +116,7 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a Atom<'a>, JestFnKind, AstNodeId)> {
+) -> Option<(Span, &'a str, JestFnKind, AstNodeId)> {
     let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;
     // we only need check `describe` or `test` block
@@ -135,7 +135,7 @@ fn filter_and_process_jest_result<'a>(
             Some((string_lit.span, &string_lit.value, kind, parent_id))
         }
         Some(Argument::TemplateLiteral(template_lit)) => {
-            template_lit.quasi().map(|quasi| (template_lit.span, quasi, kind, parent_id))
+            template_lit.quasi().map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id))
         }
         _ => None,
     }

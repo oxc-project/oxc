@@ -14,6 +14,7 @@ mod serialize;
 
 pub mod ast;
 mod ast_builder;
+mod ast_impl;
 mod ast_kind;
 pub mod precedence;
 mod span;
