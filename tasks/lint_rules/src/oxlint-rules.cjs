@@ -39,12 +39,11 @@ const readAllImplementedRuleNames = async () => {
       if (prefixedName.startsWith("eslint/")) {
         const ruleName = prefixedName.replace('eslint/', '');
 
-        // there is no alias
-        if (!pluginTypeScriptRulesNames.includes(ruleName)) {
+        // there is an alias, so we add it with this in mind.
+        if (pluginTypeScriptRulesNames.includes(ruleName)) {
+          rules.add(`typescript/${ruleName}`);
           continue;
         }
-
-        rules.add(`typescript/${ruleName}`);
       }
 
       rules.add(prefixedName);
