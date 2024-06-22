@@ -43,7 +43,9 @@ impl Rule for NoPageCustomFont {
         let AstKind::JSXOpeningElement(element) = node.kind() else {
             return;
         };
-        if matches!(&element.name, JSXElementName::Identifier(ident) if ident.name != "link") {
+        let JSXElementName::Identifier(ident) = &element.name else { return };
+
+        if ident.name != "link" {
             return;
         }
 
@@ -58,63 +60,12 @@ impl Rule for NoPageCustomFont {
             return;
         }
 
-        let mut is_inside_export_default = false;
-        for parent_node in ctx.nodes().iter_parents(node.id()) {
-            // export default function/class
-            let kind = parent_node.kind();
-            if matches!(kind, AstKind::ExportDefaultDeclaration(_)) {
-                is_inside_export_default = true;
-                break;
-            }
-
-            // function variable() {}; export default variable;
-            let id = match kind {
-                AstKind::ArrowFunctionExpression(_) => None,
-                AstKind::Function(Function { id, .. }) | AstKind::Class(Class { id, .. }) => {
-                    id.clone()
-                }
-                _ => continue,
-            };
-
-            let name = id.map_or_else(
-                || {
-                    let parent_parent_kind = ctx.nodes().parent_kind(parent_node.id())?;
-
-                    let AstKind::VariableDeclarator(declarator) = parent_parent_kind else {
-                        return None;
-                    };
-                    declarator.id.get_identifier().map(|id| id.to_string())
-                },
-                |id| Some(id.name.to_string()),
-            );
-            let Some(name) = name else {
-                continue;
-            };
-            if let Some(symbol_id) = ctx.scopes().get_root_binding(&name) {
-                if ctx.symbols().get_flag(symbol_id).is_export() {
-                    let is_export_default =
-                        ctx.symbols().get_resolved_references(symbol_id).any(|reference| {
-                            reference.is_read()
-                                && matches!(
-                                    ctx.nodes().parent_kind(reference.node_id()),
-                                    Some(AstKind::ExportDefaultDeclaration(_))
-                                )
-                        });
-
-                    if is_export_default {
-                        is_inside_export_default = true;
-                        break;
-                    }
-                }
-            }
-        }
-
         let in_document = ctx.file_path().file_name().map_or(false, |file_name| {
             file_name.to_str().map_or(false, |file_name| file_name.starts_with("_document."))
         });
         let span = ctx.nodes().parent_kind(node.id()).unwrap().span();
         let diagnostic = if in_document {
-            if is_inside_export_default {
+            if is_inside_export_default(node, ctx) {
                 return;
             }
             link_outside_of_head(span)
@@ -123,6 +74,47 @@ impl Rule for NoPageCustomFont {
         };
         ctx.diagnostic(diagnostic);
     }
+}
+
+fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+    let mut is_inside_export_default = false;
+    for parent_node in ctx.nodes().iter_parents(node.id()) {
+        // export default function/class
+        let kind = parent_node.kind();
+        if matches!(kind, AstKind::ExportDefaultDeclaration(_)) {
+            is_inside_export_default = true;
+            break;
+        }
+
+        // function variable() {}; export default variable;
+        let id = match kind {
+            AstKind::ArrowFunctionExpression(_) => None,
+            AstKind::Function(Function { id, .. }) | AstKind::Class(Class { id, .. }) => id.clone(),
+            _ => continue,
+        };
+
+        let name = id.map_or_else(
+            || {
+                let parent_parent_kind = ctx.nodes().parent_kind(parent_node.id())?;
+
+                let AstKind::VariableDeclarator(declarator) = parent_parent_kind else {
+                    return None;
+                };
+                declarator.id.get_identifier().map(|id| id.to_string())
+            },
+            |id| Some(id.name.to_string()),
+        );
+        let Some(name) = name else {
+            continue;
+        };
+        if ctx.module_record().local_export_entries.iter().any(|e| {
+            e.local_name.is_default()
+                && e.local_name.name().is_some_and(|n| n.as_str() == name.as_str())
+        }) {
+            is_inside_export_default = true;
+        }
+    }
+    is_inside_export_default
 }
 
 #[test]
@@ -206,7 +198,7 @@ fn test() {
 			        </Html>
 			      )
 			    }
-			
+
 			    export default CustomDocument;
 			    "#,
             None,
@@ -230,7 +222,7 @@ fn test() {
 			          );
 			        }
 			      }
-			
+
 			      export default MyDocument;"#,
             None,
             None,
@@ -297,8 +289,8 @@ fn test() {
         (
             r#"
 			      import Head from 'next/head'
-			
-			
+
+
 			      function Links() {
 			        return (
 			          <>
@@ -313,7 +305,7 @@ fn test() {
 			          </>
 			        )
 			      }
-			
+
 			      export default function IndexPage() {
 			        return (
 			          <div>

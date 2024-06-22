@@ -11,8 +11,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{
-    identifier::is_identifier_name,
-    module_record::{ExportImportName, ExportLocalName, ModuleRecord},
+    module_record::{ExportImportName, ModuleRecord},
     operator::AssignmentOperator,
 };
 
@@ -399,23 +398,10 @@ impl<'a> SemanticBuilder<'a> {
         });
 
         self.module_record.local_export_entries.iter().for_each(|entry| {
-            match &entry.local_name {
-                ExportLocalName::Name(name_span) => {
-                    if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
-                        self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-                    }
+            if let Some(name) = entry.local_name.name() {
+                if let Some(symbol_id) = self.scope.get_root_binding(name.as_str()) {
+                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
                 }
-                ExportLocalName::Default(_) => {
-                    // export default identifier
-                    //                ^^^^^^^^^^
-                    let identifier = entry.span.source_text(self.source_text);
-                    if is_identifier_name(identifier) {
-                        if let Some(symbol_id) = self.scope.get_root_binding(identifier) {
-                            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-                        }
-                    }
-                }
-                ExportLocalName::Null => {}
             }
         });
     }
@@ -1726,7 +1712,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
                 class.bind(self);
-                self.remove_export_flag();
+                self.current_symbol_flags -= SymbolFlags::Export;
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ClassBody(body) => {
@@ -1748,7 +1734,7 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::FormalParameters(_) => {
                 self.current_node_flags |= NodeFlags::Parameter;
-                self.remove_export_flag();
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::FormalParameter(param) => {
                 param.bind(self);
@@ -1876,10 +1862,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
-    }
-
-    fn remove_export_flag(&mut self) {
-        self.current_symbol_flags -= SymbolFlags::Export;
     }
 
     fn add_current_node_id_to_current_scope(&mut self) {
