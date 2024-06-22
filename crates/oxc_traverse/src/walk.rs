@@ -1763,6 +1763,36 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
     }
 }
 
+pub(crate) unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ForStatementLeft<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_for_statement_left(&mut *node, ctx);
+    match &mut *node {
+        ForStatementLeft::VariableDeclaration(node) => {
+            walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ForStatementLeft::UsingDeclaration(node) => {
+            walk_using_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ForStatementLeft::AssignmentTargetIdentifier(_)
+        | ForStatementLeft::TSAsExpression(_)
+        | ForStatementLeft::TSSatisfiesExpression(_)
+        | ForStatementLeft::TSNonNullExpression(_)
+        | ForStatementLeft::TSTypeAssertion(_)
+        | ForStatementLeft::TSInstantiationExpression(_)
+        | ForStatementLeft::ArrayAssignmentTarget(_)
+        | ForStatementLeft::ObjectAssignmentTarget(_)
+        | ForStatementLeft::ComputedMemberExpression(_)
+        | ForStatementLeft::StaticMemberExpression(_)
+        | ForStatementLeft::PrivateFieldExpression(_) => {
+            walk_assignment_target(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_for_statement_left(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ForOfStatement<'a>,
@@ -1800,36 +1830,6 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
-}
-
-pub(crate) unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut ForStatementLeft<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_for_statement_left(&mut *node, ctx);
-    match &mut *node {
-        ForStatementLeft::VariableDeclaration(node) => {
-            walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
-        ForStatementLeft::UsingDeclaration(node) => {
-            walk_using_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
-        ForStatementLeft::AssignmentTargetIdentifier(_)
-        | ForStatementLeft::TSAsExpression(_)
-        | ForStatementLeft::TSSatisfiesExpression(_)
-        | ForStatementLeft::TSNonNullExpression(_)
-        | ForStatementLeft::TSTypeAssertion(_)
-        | ForStatementLeft::TSInstantiationExpression(_)
-        | ForStatementLeft::ArrayAssignmentTarget(_)
-        | ForStatementLeft::ObjectAssignmentTarget(_)
-        | ForStatementLeft::ComputedMemberExpression(_)
-        | ForStatementLeft::StaticMemberExpression(_)
-        | ForStatementLeft::PrivateFieldExpression(_) => {
-            walk_assignment_target(traverser, node as *mut _, ctx)
-        }
-    }
-    traverser.exit_for_statement_left(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_continue_statement<'a, Tr: Traverse<'a>>(
