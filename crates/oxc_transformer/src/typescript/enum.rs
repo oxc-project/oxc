@@ -570,7 +570,7 @@ impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
                 // enum_name.identifier
                 let ident_reference = IdentifierReference::new(SPAN, self.enum_name.clone());
                 let object = self.ctx.ast.identifier_reference_expression(ident_reference);
-                let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
+                let property = IdentifierName::new(SPAN, ident.name.clone());
                 Some(self.ctx.ast.static_member_expression(SPAN, object, property, false))
             }
             _ => None,

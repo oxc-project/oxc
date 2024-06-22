@@ -421,12 +421,12 @@ impl<'a> TypeScript<'a> {
 
     // name.item_name = item_name
     fn create_assignment_statement(&self, name: &Atom<'a>, item_name: &Atom<'a>) -> Expression<'a> {
-        let ident = self.ctx.ast.identifier_reference(SPAN, name.as_str());
+        let ident = IdentifierReference::new(SPAN, name.clone());
         let object = self.ctx.ast.identifier_reference_expression(ident);
         let property = IdentifierName::new(SPAN, item_name.clone());
         let left = self.ctx.ast.static_member(SPAN, object, property, false);
         let left = AssignmentTarget::from(left);
-        let ident = self.ctx.ast.identifier_reference(SPAN, item_name.as_str());
+        let ident = IdentifierReference::new(SPAN, item_name.clone());
         let right = self.ctx.ast.identifier_reference_expression(ident);
         let op = AssignmentOperator::Assign;
         self.ctx.ast.assignment_expression(SPAN, op, left, right)
