@@ -1761,9 +1761,10 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_module_block(
         self,
         span: Span,
+        directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
-        self.alloc(TSModuleBlock { span, body })
+        self.alloc(TSModuleBlock { span, directives, body })
     }
 
     #[inline]
