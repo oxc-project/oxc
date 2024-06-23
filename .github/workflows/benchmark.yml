@@ -137,7 +137,7 @@ jobs:
           cache-key: benchmark-linter
           save-cache: ${{ github.ref_name == 'main' }}
 
-      - uses: mozilla-actions/sccache-action@v0.0.4
+      - uses: mozilla-actions/sccache-action@v0.0.5
         if: ${{ vars.USE_SCCACHE == 'true' }}
 
       - name: Build benchmark
