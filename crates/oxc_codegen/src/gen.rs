@@ -2081,10 +2081,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MetaProperty<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.modifiers.is_contains_declare() {
+        if self.declare {
             p.print_str(b"declare ");
         }
-        if self.modifiers.is_contains_abstract() {
+        if self.r#abstract {
             p.print_str(b"abstract ");
         }
         let n = p.code_len();

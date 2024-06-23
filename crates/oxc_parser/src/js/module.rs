@@ -318,12 +318,12 @@ impl<'a> ParserImpl<'a> {
         self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
-                .parse_class_declaration(decl_span, /* modifiers */ Modifiers::empty())
+                .parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty())
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
             _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
                 // eat the abstract modifier
                 let (_, modifiers) = self.eat_modifiers_before_declaration();
-                self.parse_class_declaration(decl_span, modifiers)
+                self.parse_class_declaration(decl_span, &modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }
             _ if self.at(Kind::Interface)

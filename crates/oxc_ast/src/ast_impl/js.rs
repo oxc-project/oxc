@@ -709,7 +709,7 @@ impl<'a> Declaration<'a> {
         match self {
             Declaration::VariableDeclaration(decl) => decl.declare,
             Declaration::FunctionDeclaration(decl) => decl.modifiers.is_contains_declare(),
-            Declaration::ClassDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::ClassDeclaration(decl) => decl.declare,
             Declaration::TSEnumDeclaration(decl) => decl.modifiers.is_contains_declare(),
             Declaration::TSTypeAliasDeclaration(decl) => decl.modifiers.is_contains_declare(),
             Declaration::TSModuleDeclaration(decl) => decl.modifiers.is_contains_declare(),
@@ -1110,7 +1110,8 @@ impl<'a> Class<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
-        modifiers: Modifiers<'a>,
+        r#abstract: bool,
+        declare: bool,
     ) -> Self {
         Self {
             r#type,
@@ -1122,7 +1123,8 @@ impl<'a> Class<'a> {
             type_parameters,
             super_type_parameters,
             implements,
-            modifiers,
+            r#abstract,
+            declare,
             scope_id: Cell::default(),
         }
     }
@@ -1145,30 +1147,12 @@ impl<'a> Class<'a> {
     ///   // ...
     /// }
     /// ```
-    ///
-    /// Not to be confused with [`Class::is_declare`].
     pub fn is_declaration(&self) -> bool {
         self.r#type == ClassType::ClassDeclaration
     }
 
-    /// `true` if this [`Class`] is being within a typescript declaration file
-    /// or `declare` statement.
-    ///
-    /// For example,
-    /// ```ts
-    /// declare global {
-    ///   declare class Foo {
-    ///    // ...
-    ///   }
-    /// }
-    ///
-    /// Not to be confused with [`Class::is_declaration`].
-    pub fn is_declare(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Declare)
-    }
-
     pub fn is_typescript_syntax(&self) -> bool {
-        self.is_declare()
+        self.declare || self.r#abstract
     }
 }
 
@@ -1182,7 +1166,8 @@ impl<'a> Hash for Class<'a> {
         self.type_parameters.hash(state);
         self.super_type_parameters.hash(state);
         self.implements.hash(state);
-        self.modifiers.hash(state);
+        self.r#abstract.hash(state);
+        self.declare.hash(state);
     }
 }
 

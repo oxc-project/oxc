@@ -1580,8 +1580,8 @@ pub struct Class<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
-    /// Valid Modifiers: `export`, `abstract`
-    pub modifiers: Modifiers<'a>,
+    pub r#abstract: bool,
+    pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

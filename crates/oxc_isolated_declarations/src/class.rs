@@ -308,7 +308,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &Class<'a>,
         modifiers: Option<Modifiers<'a>>,
     ) -> Option<Box<'a, Class<'a>>> {
-        if decl.is_declare() {
+        if decl.declare {
             return None;
         }
 
@@ -463,7 +463,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let body = self.ast.class_body(decl.body.span, elements);
 
         let mut modifiers = modifiers.unwrap_or_else(|| self.modifiers_declare());
-        if decl.modifiers.is_contains_abstract() {
+        if decl.r#abstract {
             modifiers.add_modifier(Modifier { span: SPAN, kind: ModifierKind::Abstract });
         };
 
@@ -477,7 +477,8 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&decl.super_type_parameters),
             self.ast.copy(&decl.implements),
             self.ast.new_vec(),
-            modifiers,
+            modifiers.is_contains_abstract(),
+            modifiers.is_contains_declare(),
         ))
     }
 

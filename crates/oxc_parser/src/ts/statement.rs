@@ -294,7 +294,7 @@ impl<'a> ParserImpl<'a> {
                 self.parse_ts_interface_declaration(start_span, modifiers)
             }
             Kind::Class => self
-                .parse_class_declaration(start_span, modifiers)
+                .parse_class_declaration(start_span, &modifiers)
                 .map(Declaration::ClassDeclaration),
             Kind::Import => {
                 self.bump_any();

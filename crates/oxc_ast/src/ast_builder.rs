@@ -1022,7 +1022,8 @@ impl<'a> AstBuilder<'a> {
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         decorators: Vec<'a, Decorator<'a>>,
-        modifiers: Modifiers<'a>,
+        r#abstract: bool,
+        declare: bool,
     ) -> Box<'a, Class<'a>> {
         self.alloc(Class::new(
             r#type,
@@ -1034,7 +1035,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             super_type_parameters,
             implements,
-            modifiers,
+            r#abstract,
+            declare,
         ))
     }
 

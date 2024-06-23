@@ -6124,7 +6124,8 @@ pub(crate) const OFFSET_CLASS_TYPE_PARAMETERS: usize = offset_of!(Class, type_pa
 pub(crate) const OFFSET_CLASS_SUPER_TYPE_PARAMETERS: usize =
     offset_of!(Class, super_type_parameters);
 pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
-pub(crate) const OFFSET_CLASS_MODIFIERS: usize = offset_of!(Class, modifiers);
+pub(crate) const OFFSET_CLASS_ABSTRACT: usize = offset_of!(Class, r#abstract);
+pub(crate) const OFFSET_CLASS_DECLARE: usize = offset_of!(Class, declare);
 pub(crate) const OFFSET_CLASS_SCOPE_ID: usize = offset_of!(Class, scope_id);
 
 #[repr(transparent)]
@@ -6186,8 +6187,13 @@ impl<'a> ClassWithoutDecorators<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6257,8 +6263,13 @@ impl<'a> ClassWithoutId<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6328,8 +6339,13 @@ impl<'a> ClassWithoutSuperClass<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6401,8 +6417,13 @@ impl<'a> ClassWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6471,8 +6492,13 @@ impl<'a> ClassWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6541,8 +6567,13 @@ impl<'a> ClassWithoutSuperTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6611,8 +6642,13 @@ impl<'a> ClassWithoutImplements<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]

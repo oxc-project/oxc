@@ -165,7 +165,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         class.type_parameters = None;
         class.super_type_parameters = None;
         class.implements = None;
-        class.modifiers = Modifiers::empty();
+        class.r#abstract = false;
+        class.declare = false;
     }
 
     pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
