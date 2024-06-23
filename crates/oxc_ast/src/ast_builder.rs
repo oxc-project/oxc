@@ -575,7 +575,7 @@ impl<'a> AstBuilder<'a> {
         self,
         expr: MemberExpression<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::from(SimpleAssignmentTarget::from(expr))
+        AssignmentTarget::from(expr)
     }
 
     #[inline]
