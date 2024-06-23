@@ -118,17 +118,17 @@ impl Span {
     }
 
     /// Checks if this [`Span`] contains an offset.
-    /// 
+    ///
     /// The end index is considered included.
-    /// 
+    ///
     /// # Example
     /// ```
     /// use oxc_span::Span;
-    /// 
+    ///
     /// let span = Span::new(1, 5);
     /// assert!(span.contains_inclusive(1));
     /// assert!(span.contains_inclusive(5));
-    /// 
+    ///
     /// assert!(!span.contains_inclusive(0));
     /// assert!(!span.contains_inclusive(6));
     /// ```

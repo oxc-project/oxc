@@ -81,7 +81,7 @@ impl<'a> SymbolTester<'a> {
             parent,
             semantic: Rc::new(semantic),
             target_symbol_name: symbol_name,
-            test_result: Ok(symbol_id)
+            test_result: Ok(symbol_id),
         }
     }
 

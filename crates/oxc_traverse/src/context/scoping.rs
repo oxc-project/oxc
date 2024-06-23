@@ -251,7 +251,7 @@ impl TraverseScoping {
 
     /// Attempt to resolve a symbol bound to a `name` by walking up the scope
     /// tree, starting at the current scope id.
-    /// 
+    ///
     /// See [`TraverseScoping::resolve_binding_from_scope`] for more details.
     pub fn resolve_binding(&self, name: &str, meaning: Option<SymbolFlags>) -> Option<SymbolId> {
         self.resolve_binding_from_scope(self.current_scope_id, name, meaning)
@@ -259,7 +259,7 @@ impl TraverseScoping {
 
     /// Attempt to resolve a symbol bound to a `name` by walking up the scope
     /// tree, starting at the desired `scope_id`.
-    /// 
+    ///
     /// Meaning refers to the kind of symbol desired. It will almost always be
     /// [`SymbolFlags::Value`] or [`SymbolFlags::Type`]. This prevents us from
     /// binding variable declarations to type references, e.g. in
@@ -267,13 +267,18 @@ impl TraverseScoping {
     /// const x = 1;
     /// function foo(a: x) {}
     /// ```
-    /// 
+    ///
     /// If you do not care about what kind of symbol is found, you can pass
     /// [`None`]; this is equivalent to [`SymbolFlags::all()`].
-    /// 
+    ///
     /// This method returns [`None`] when no symbol is found with the desired
     /// `name`, or if a symbol is found but it does not have the correct meaning.
-    pub fn resolve_binding_from_scope(&self, scope_id: ScopeId, name: &str, meaning: Option<SymbolFlags>) -> Option<SymbolId> {
+    pub fn resolve_binding_from_scope(
+        &self,
+        scope_id: ScopeId,
+        name: &str,
+        meaning: Option<SymbolFlags>,
+    ) -> Option<SymbolId> {
         let meaning = meaning.unwrap_or(SymbolFlags::all());
         for scope_id in self.scopes.ancestors(scope_id) {
             if let Some(symbol_id) = self.scopes.get_binding(scope_id, name) {
