@@ -1339,7 +1339,16 @@ impl<'a> Modifiers<'a> {
             .map_or(false, |modifiers| modifiers.iter().any(|modifier| modifier.kind == target))
     }
 
-    pub fn find<F>(&self, f: F) -> Option<&Modifier>
+    pub fn iter(&self) -> impl Iterator<Item = &Modifier> + '_ {
+        self.0.as_ref().into_iter().flat_map(|modifiers| modifiers.iter())
+    }
+
+    /// Find a modifier by kind
+    pub fn find(&self, kind: ModifierKind) -> Option<&Modifier> {
+        self.find_where(|modifier| modifier.kind == kind)
+    }
+
+    pub fn find_where<F>(&self, f: F) -> Option<&Modifier>
     where
         F: Fn(&Modifier) -> bool,
     {

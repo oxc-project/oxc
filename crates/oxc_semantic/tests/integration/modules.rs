@@ -1,4 +1,4 @@
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::{SemanticBuilderReturn, SymbolFlags};
 
 use crate::util::SemanticTester;
 
@@ -46,6 +46,23 @@ fn test_exported_named_function() {
         .has_some_symbol("T")
         .is_not_exported()
         .test();
+
+    SemanticTester::tsx(
+        "
+    import React from 'react';
+    export const Counter: React.FC<{ count: number }> = ({ count }) => (
+        <div>{count}</div>
+    )
+    ",
+    )
+    .has_some_symbol("Counter")
+    .is_exported()
+    .contains_flags(
+        SymbolFlags::ConstVariable
+            .union(SymbolFlags::BlockScopedVariable)
+            .union(SymbolFlags::Export),
+    )
+    .test();
 }
 
 #[test]
@@ -148,4 +165,40 @@ fn test_exported_interface() {
     test.has_root_symbol("Foo").is_exported().contains_flags(SymbolFlags::Interface).test();
     test.has_some_symbol("a").is_not_exported().test();
     test.has_some_symbol("T").is_not_exported().test();
+}
+
+#[test]
+fn test_exports_in_namespace() {
+    let test = SemanticTester::ts(
+        "
+    export const x = 1;
+    namespace N {
+        function foo() {
+            return 1
+        }
+        export function bar() {
+            return foo();
+        }
+        export const x = 2
+    } 
+    ",
+    );
+    test.has_some_symbol("bar").is_exported().test();
+    let semantic = test.build();
+    assert!(!semantic.module_record().exported_bindings.contains_key("bar"));
+}
+
+#[test]
+fn test_export_in_invalid_scope() {
+    let test = SemanticTester::js(
+        "
+    function foo() {
+        export const x = 1;
+    }",
+    )
+    .expect_errors(true);
+    test.has_some_symbol("x").contains_flags(SymbolFlags::Export).test();
+    let SemanticBuilderReturn { semantic, errors } = test.build_with_errors();
+    assert!(!errors.is_empty(), "expected an export within a function to produce a check error, but no errors were produced");
+    assert!(semantic.module_record().exported_bindings.is_empty());
 }

@@ -34,6 +34,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::RegExpLiteral(lit) => js::check_regexp_literal(lit, ctx),
 
         AstKind::Directive(dir) => js::check_directive(dir, ctx),
+        AstKind::Function(func) => ts::check_function(func, node, ctx),
         AstKind::ModuleDeclaration(decl) => {
             js::check_module_declaration(decl, node, ctx);
         }
@@ -68,8 +69,10 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
                 js::check_function_declaration(alternate, true, ctx);
             }
         }
-
-        AstKind::Class(class) => js::check_class(class, node, ctx),
+        AstKind::Class(class) => {
+            js::check_class(class, node, ctx);
+            ts::check_class(class, node, ctx);
+        }
         AstKind::MethodDefinition(method) => js::check_method_definition(method, ctx),
         AstKind::ObjectProperty(prop) => js::check_object_property(prop, ctx),
         AstKind::Super(sup) => js::check_super(sup, node, ctx),
@@ -91,13 +94,20 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, node, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
+        AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, node, ctx),
         AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
         AstKind::TSTypeParameterDeclaration(declaration) => {
             ts::check_ts_type_parameter_declaration(declaration, ctx);
         }
-        AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
-        AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
+        AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, node, ctx),
+        AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, node, ctx),
+        AstKind::TSTypeAliasDeclaration(decl) => {
+            ts::check_ts_type_alias_declaration(decl, node, ctx);
+        }
+        AstKind::TSInterfaceDeclaration(decl) => {
+            ts::check_ts_interface_declaration(decl, node, ctx);
+        }
         _ => {}
     }
 }
