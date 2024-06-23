@@ -117,6 +117,25 @@ impl Span {
         self.start == self.end
     }
 
+    /// Checks if this [`Span`] contains an offset.
+    /// 
+    /// The end index is considered included.
+    /// 
+    /// # Example
+    /// ```
+    /// use oxc_span::Span;
+    /// 
+    /// let span = Span::new(1, 5);
+    /// assert!(span.contains_inclusive(1));
+    /// assert!(span.contains_inclusive(5));
+    /// 
+    /// assert!(!span.contains_inclusive(0));
+    /// assert!(!span.contains_inclusive(6));
+    /// ```
+    pub const fn contains_inclusive(&self, offset: u32) -> bool {
+        self.start <= offset && offset <= self.end
+    }
+
     /// Returns `true` if `self` is not a real span.
     /// i.e. `SPAN` which is used for generated nodes which are not in source code.
     ///

@@ -238,8 +238,52 @@ impl TraverseScoping {
         name: CompactStr,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
+        let meaning = if flag.intersects(ReferenceFlag::Type) {
+            SymbolFlags::Type
+        } else {
+            SymbolFlags::Value
+        };
+        // let symbol_id = self.scopes.find_binding(self.current_scope_id,
+        // name.as_str());
+        let symbol_id = self.resolve_binding(name.as_str(), Some(meaning));
         self.create_reference(name, symbol_id, flag)
+    }
+
+    /// Attempt to resolve a symbol bound to a `name` by walking up the scope
+    /// tree, starting at the current scope id.
+    /// 
+    /// See [`TraverseScoping::resolve_binding_from_scope`] for more details.
+    pub fn resolve_binding(&self, name: &str, meaning: Option<SymbolFlags>) -> Option<SymbolId> {
+        self.resolve_binding_from_scope(self.current_scope_id, name, meaning)
+    }
+
+    /// Attempt to resolve a symbol bound to a `name` by walking up the scope
+    /// tree, starting at the desired `scope_id`.
+    /// 
+    /// Meaning refers to the kind of symbol desired. It will almost always be
+    /// [`SymbolFlags::Value`] or [`SymbolFlags::Type`]. This prevents us from
+    /// binding variable declarations to type references, e.g. in
+    /// ```ts
+    /// const x = 1;
+    /// function foo(a: x) {}
+    /// ```
+    /// 
+    /// If you do not care about what kind of symbol is found, you can pass
+    /// [`None`]; this is equivalent to [`SymbolFlags::all()`].
+    /// 
+    /// This method returns [`None`] when no symbol is found with the desired
+    /// `name`, or if a symbol is found but it does not have the correct meaning.
+    pub fn resolve_binding_from_scope(&self, scope_id: ScopeId, name: &str, meaning: Option<SymbolFlags>) -> Option<SymbolId> {
+        let meaning = meaning.unwrap_or(SymbolFlags::all());
+        for scope_id in self.scopes.ancestors(scope_id) {
+            if let Some(symbol_id) = self.scopes.get_binding(scope_id, name) {
+                let symbol_flags = self.symbols.get_flag(symbol_id);
+                if symbol_flags.intersects(meaning) {
+                    return Some(symbol_id);
+                }
+            }
+        }
+        None
     }
 }
 

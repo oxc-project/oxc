@@ -189,6 +189,10 @@ impl<'a> SemanticTester<'a> {
         SymbolTester::new_at_root(self, self.build(), name)
     }
 
+    pub fn has_symbol_at_offset(&self, offset: u32) -> SymbolTester {
+        SymbolTester::new_at_offset(self, self.build(), offset)
+    }
+
     /// Tests that a class with the given name exists
     ///
     /// ## Fails

@@ -66,6 +66,25 @@ impl<'a> SymbolTester<'a> {
         }
     }
 
+    pub fn new_at_offset(parent: &'a SemanticTester, semantic: Semantic<'a>, offset: u32) -> Self {
+        let msg = format!("Could not find symbol at offset {offset}");
+        let symbol_id = semantic
+            .symbols()
+            .spans
+            .iter_enumerated()
+            .find(|(_, span)| span.contains_inclusive(offset))
+            .map(|(symbol_id, _)| symbol_id)
+            .expect(&msg);
+
+        let symbol_name = semantic.symbols().get_name(symbol_id).to_string();
+        SymbolTester {
+            parent,
+            semantic: Rc::new(semantic),
+            target_symbol_name: symbol_name,
+            test_result: Ok(symbol_id)
+        }
+    }
+
     /// Get inner resources without consuming `self`
     pub fn inner(&self) -> (Rc<Semantic<'a>>, SymbolId) {
         (Rc::clone(&self.semantic), *self.test_result.as_ref().unwrap())
