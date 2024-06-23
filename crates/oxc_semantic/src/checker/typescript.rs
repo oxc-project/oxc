@@ -172,13 +172,6 @@ fn check_declaration_modifiers<'a>(
         }
     }
 }
-pub fn check_variable_declaration<'a>(
-    decl: &VariableDeclaration<'a>,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_declaration_modifiers(&decl.modifiers, node, ctx);
-}
 
 pub fn check_function<'a>(function: &Function<'a>, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     check_declaration_modifiers(&function.modifiers, node, ctx);

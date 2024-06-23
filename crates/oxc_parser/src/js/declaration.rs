@@ -41,7 +41,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         decl_ctx: VariableDeclarationContext,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
@@ -67,7 +67,21 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
-        Ok(self.ast.variable_declaration(self.end_span(start_span), kind, declarations, modifiers))
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifiers_cannot_appear(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+
+        Ok(self.ast.variable_declaration(
+            self.end_span(start_span),
+            kind,
+            declarations,
+            modifiers.is_contains_declare(),
+        ))
     }
 
     fn parse_variable_declarator(

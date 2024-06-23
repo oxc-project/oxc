@@ -705,23 +705,23 @@ impl<'a> Declaration<'a> {
         }
     }
 
-    pub fn modifiers(&self) -> Option<&Modifiers<'a>> {
+    pub fn declare(&self) -> bool {
         match self {
-            Declaration::VariableDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::FunctionDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::ClassDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSEnumDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSModuleDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSInterfaceDeclaration(decl) => Some(&decl.modifiers),
-            _ => None,
+            Declaration::VariableDeclaration(decl) => decl.declare,
+            Declaration::FunctionDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::ClassDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::TSEnumDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::TSTypeAliasDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::TSModuleDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::TSInterfaceDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            _ => false,
         }
     }
 }
 
 impl<'a> VariableDeclaration<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Declare)
+        self.declare
     }
 
     pub fn has_init(&self) -> bool {

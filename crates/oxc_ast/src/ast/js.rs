@@ -1,7 +1,6 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use crate::ast::*;
 use std::cell::Cell;
 
 use oxc_allocator::{Box, Vec};
@@ -17,6 +16,7 @@ use oxc_syntax::{
 };
 
 use super::macros::inherit_variants;
+use super::*;
 
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -1000,8 +1000,7 @@ pub struct VariableDeclaration<'a> {
     pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
-    /// Valid Modifiers: `export`, `declare`
-    pub modifiers: Modifiers<'a>,
+    pub declare: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

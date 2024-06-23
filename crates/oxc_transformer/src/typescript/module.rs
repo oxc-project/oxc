@@ -66,8 +66,7 @@ impl<'a> TypeScript<'a> {
                 false,
             ))
         };
-        let variable_declaration =
-            self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+        let variable_declaration = self.ctx.ast.variable_declaration(SPAN, kind, decls, false);
 
         Declaration::VariableDeclaration(variable_declaration)
     }

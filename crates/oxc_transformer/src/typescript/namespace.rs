@@ -190,7 +190,7 @@ impl<'a> TypeScript<'a> {
                     // legal syntax in TS namespaces
                     let export_decl = export_decl.unbox();
                     if let Some(decl) = export_decl.declaration {
-                        if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
+                        if decl.declare() {
                             continue;
                         }
                         match decl {
@@ -290,7 +290,7 @@ impl<'a> TypeScript<'a> {
             SPAN,
             kind,
             declarations,
-            Modifiers::empty(),
+            false,
         ))
     }
 

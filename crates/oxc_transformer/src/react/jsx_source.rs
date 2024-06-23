@@ -160,7 +160,7 @@ impl<'a> ReactJsxSource<'a> {
             let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             self.ctx.ast.new_vec_single(decl)
         };
-        let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
+        let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, false);
         Some(Statement::VariableDeclaration(var_decl))
     }
 

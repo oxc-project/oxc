@@ -160,7 +160,7 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_variable_declaration(
             start_span,
             VariableDeclarationContext::new(VariableDeclarationParent::Statement),
-            Modifiers::empty(),
+            &Modifiers::empty(),
         )?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
@@ -287,7 +287,7 @@ impl<'a> ParserImpl<'a> {
         let start_span = self.start_span();
         let init_declaration = self.context(Context::empty(), Context::In, |p| {
             let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
-            p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
+            p.parse_variable_declaration(start_span, decl_ctx, &Modifiers::empty())
         })?;
 
         // for (.. a in) for (.. a of)

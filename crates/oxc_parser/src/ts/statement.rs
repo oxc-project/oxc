@@ -304,7 +304,7 @@ impl<'a> ParserImpl<'a> {
                 .parse_variable_declaration(
                     start_span,
                     VariableDeclarationContext::new(VariableDeclarationParent::Clause),
-                    modifiers,
+                    &modifiers,
                 )
                 .map(Declaration::VariableDeclaration),
             _ if self.at_function_with_async() => {

@@ -75,7 +75,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             span: SPAN,
                             kind,
                             declarations,
-                            modifiers: self.modifiers_declare(),
+                            declare: self.modifiers_declare().is_contains_declare(),
                         }),
                         ExportDefaultDeclarationKind::from(
                             self.ast.identifier_reference_expression(

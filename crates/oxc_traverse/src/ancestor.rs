@@ -3835,8 +3835,8 @@ pub(crate) const OFFSET_VARIABLE_DECLARATION_SPAN: usize = offset_of!(VariableDe
 pub(crate) const OFFSET_VARIABLE_DECLARATION_KIND: usize = offset_of!(VariableDeclaration, kind);
 pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARATIONS: usize =
     offset_of!(VariableDeclaration, declarations);
-pub(crate) const OFFSET_VARIABLE_DECLARATION_MODIFIERS: usize =
-    offset_of!(VariableDeclaration, modifiers);
+pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARE: usize =
+    offset_of!(VariableDeclaration, declare);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -3857,11 +3857,8 @@ impl<'a> VariableDeclarationWithoutDeclarations<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
-        }
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_DECLARE) as *const bool) }
     }
 }
 

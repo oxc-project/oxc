@@ -19,7 +19,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         check_binding: bool,
     ) -> Option<Box<'a, VariableDeclaration<'a>>> {
-        if decl.modifiers.is_contains_declare() {
+        if decl.declare {
             None
         } else {
             let declarations =
@@ -39,7 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             decl.kind,
             self.ast.new_vec_from_iter(declarations),
-            self.modifiers_declare(),
+            self.modifiers_declare().is_contains_declare(),
         )
     }
 
@@ -126,7 +126,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             VariableDeclarationKind::Const,
             declarations,
-            self.modifiers_declare(),
+            self.modifiers_declare().is_contains_declare(),
         )
     }
 

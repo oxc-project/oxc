@@ -6,12 +6,13 @@
 // NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
 // It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
 
-use crate::ast::*;
-
 use std::{cell::Cell, hash::Hash};
 
 use oxc_allocator::Vec;
 use oxc_span::{Atom, GetSpan, Span};
+
+use crate::ast::Modifiers;
+use crate::ast::*;
 
 impl<'a> TSEnumDeclaration<'a> {
     pub fn new(
@@ -194,68 +195,6 @@ impl<'a> Decorator<'a> {
                 call.callee.get_member_expr().map(|member| member.static_property_name())?
             }
             _ => None,
-        }
-    }
-}
-
-impl ModifierKind {
-    pub fn is_typescript_syntax(&self) -> bool {
-        !matches!(self, Self::Async | Self::Default | Self::Export | Self::Static)
-    }
-}
-
-impl<'a> Modifiers<'a> {
-    pub fn new(modifiers: Vec<'a, Modifier>) -> Self {
-        Self(Some(modifiers))
-    }
-
-    pub fn empty() -> Self {
-        Self(None)
-    }
-
-    pub fn is_none(&self) -> bool {
-        self.0.is_none()
-    }
-
-    pub fn contains(&self, target: ModifierKind) -> bool {
-        self.0
-            .as_ref()
-            .map_or(false, |modifiers| modifiers.iter().any(|modifier| modifier.kind == target))
-    }
-
-    pub fn iter(&self) -> impl Iterator<Item = &Modifier> + '_ {
-        self.0.as_ref().into_iter().flat_map(|modifiers| modifiers.iter())
-    }
-
-    /// Find a modifier by kind
-    pub fn find(&self, kind: ModifierKind) -> Option<&Modifier> {
-        self.find_where(|modifier| modifier.kind == kind)
-    }
-
-    pub fn find_where<F>(&self, f: F) -> Option<&Modifier>
-    where
-        F: Fn(&Modifier) -> bool,
-    {
-        self.0.as_ref().and_then(|modifiers| modifiers.iter().find(|modifier| f(modifier)))
-    }
-
-    pub fn is_contains_declare(&self) -> bool {
-        self.contains(ModifierKind::Declare)
-    }
-
-    pub fn is_contains_abstract(&self) -> bool {
-        self.contains(ModifierKind::Abstract)
-    }
-
-    pub fn remove_type_modifiers(&mut self) {
-        if let Some(list) = &mut self.0 {
-            list.retain(|m| !m.kind.is_typescript_syntax());
-        }
-    }
-
-    pub fn add_modifier(&mut self, modifier: Modifier) {
-        if let Some(list) = self.0.as_mut() {
-            list.push(modifier);
         }
     }
 }

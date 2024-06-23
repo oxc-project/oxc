@@ -94,7 +94,6 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::ObjectExpression(expr) => js::check_object_expression(expr, ctx),
         AstKind::UnaryExpression(expr) => js::check_unary_expression(expr, node, ctx),
         AstKind::YieldExpression(expr) => js::check_yield_expression(expr, node, ctx),
-        AstKind::VariableDeclaration(decl) => ts::check_variable_declaration(decl, node, ctx),
         AstKind::VariableDeclarator(decl) => ts::check_variable_declarator(decl, ctx),
         AstKind::SimpleAssignmentTarget(target) => ts::check_simple_assignment_target(target, ctx),
         AstKind::TSTypeParameterDeclaration(declaration) => {

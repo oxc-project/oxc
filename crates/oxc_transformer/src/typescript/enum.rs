@@ -134,8 +134,7 @@ impl<'a> TypeScriptEnum<'a> {
             decls.push(decl);
             decls
         };
-        let variable_declaration =
-            self.ctx.ast.variable_declaration(span, kind, decls, Modifiers::empty());
+        let variable_declaration = self.ctx.ast.variable_declaration(span, kind, decls, false);
         let variable_declaration = Declaration::VariableDeclaration(variable_declaration);
 
         let stmt = if is_export {

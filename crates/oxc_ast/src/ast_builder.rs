@@ -111,7 +111,7 @@ impl<'a> AstBuilder<'a> {
             Span::default(),
             VariableDeclarationKind::Var,
             self.new_vec(),
-            Modifiers::empty(),
+            false,
         );
         let empty_decl = Declaration::VariableDeclaration(empty_decl);
         mem::replace(decl, empty_decl)
@@ -1167,9 +1167,9 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         kind: VariableDeclarationKind,
         declarations: Vec<'a, VariableDeclarator<'a>>,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.alloc(VariableDeclaration { span, kind, declarations, modifiers })
+        self.alloc(VariableDeclaration { span, kind, declarations, declare })
     }
 
     #[inline]

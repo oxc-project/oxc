@@ -20,7 +20,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use super::{inherit_variants, js::*, jsx::*, literal::*};
+use super::{inherit_variants, js::*, jsx::*, literal::*, Modifiers};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -1093,41 +1093,6 @@ pub struct Decorator<'a> {
     pub span: Span,
     pub expression: Expression<'a>,
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
-pub enum ModifierKind {
-    Abstract,
-    Accessor,
-    Async,
-    Const,
-    Declare,
-    Default,
-    Export,
-    In,
-    Public,
-    Private,
-    Protected,
-    Readonly,
-    Static,
-    Out,
-    Override,
-}
-
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
-pub struct Modifier {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
-    pub kind: ModifierKind,
-}
-
-#[derive(Debug, Default, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(transparent))]
-pub struct Modifiers<'a>(pub(crate) Option<Vec<'a, Modifier>>);
 
 /// Export Assignment in non-module files
 ///

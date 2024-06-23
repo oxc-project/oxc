@@ -131,7 +131,7 @@ impl<'a> ArrowFunctions<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 self.ctx.ast.new_vec_single(variable_declarator),
-                Modifiers::empty(),
+                false,
             );
 
             let stmt = Statement::VariableDeclaration(stmt);

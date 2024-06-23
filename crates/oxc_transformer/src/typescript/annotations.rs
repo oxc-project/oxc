@@ -311,13 +311,15 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         // Remove declare declaration
-        stmts.retain(|stmt| {
-            if let Some(decl) = stmt.as_declaration() {
-                decl.modifiers().map_or(true, |m| !m.is_contains_declare())
-            } else {
-                true
-            }
-        });
+        stmts.retain(
+            |stmt| {
+                if let Some(decl) = stmt.as_declaration() {
+                    !decl.declare()
+                } else {
+                    true
+                }
+            },
+        );
     }
 
     pub fn transform_statements_on_exit(
