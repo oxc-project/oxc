@@ -64,6 +64,7 @@
 mod context;
 mod cursor;
 mod list;
+mod modifiers;
 mod state;
 
 mod js;
@@ -311,19 +312,6 @@ impl<'a> ParserImpl<'a> {
             ast: AstBuilder::new(allocator),
             preserve_parens: options.preserve_parens,
         }
-    }
-
-    /// Backdoor to create a `ParserImpl` without holding a `UniquePromise`, for unit tests.
-    /// This function must NOT be exposed in public API as it breaks safety invariants.
-    #[cfg(test)]
-    fn new_for_tests(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        options: ParserOptions,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests();
-        Self::new(allocator, source_text, source_type, options, unique)
     }
 
     /// Main entry point

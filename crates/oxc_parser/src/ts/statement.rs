@@ -3,15 +3,13 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use super::{
-    list::{TSEnumMemberList, TSInterfaceOrObjectBodyList},
-    types::ModifierFlags,
-};
+use super::list::{TSEnumMemberList, TSInterfaceOrObjectBodyList};
 use crate::{
     diagnostics,
     js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
     lexer::Kind,
     list::{NormalList, SeparatedList},
+    modifiers::{ModifierKind, Modifiers},
     ParserImpl,
 };
 
@@ -472,106 +470,75 @@ impl<'a> ParserImpl<'a> {
         Ok(())
     }
 
-    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> (ModifierFlags, Modifiers<'a>) {
-        let mut flags = ModifierFlags::empty();
-        let mut modifiers = self.ast.new_vec();
-        while self.at_modifier() {
-            let span = self.start_span();
-            let modifier_flag = self.cur_kind().into();
-            flags.set(modifier_flag, true);
-            let kind = self.cur_kind();
-            self.bump_any();
-            modifiers.push(Self::modifier(kind, self.end_span(span)));
-        }
-
-        (flags, Modifiers::new(modifiers))
+    pub(crate) fn at_start_of_ts_declaration(&mut self) -> bool {
+        self.lookahead(Self::at_start_of_ts_declaration_worker)
     }
 
-    fn at_modifier(&mut self) -> bool {
-        self.lookahead(Self::at_modifier_worker)
-    }
-
-    fn at_modifier_worker(&mut self) -> bool {
-        if !self.cur_kind().is_modifier_kind() {
-            return false;
-        }
-
-        match self.cur_kind() {
-            Kind::Const => !self.peek_token().is_on_new_line && self.peek_kind() == Kind::Enum,
-            Kind::Export => {
-                self.bump_any();
-                match self.cur_kind() {
-                    Kind::Default => {
-                        self.bump_any();
-                        self.can_follow_default()
+    /// Check if the parser is at a start of a declaration
+    fn at_start_of_ts_declaration_worker(&mut self) -> bool {
+        loop {
+            match self.cur_kind() {
+                Kind::Var | Kind::Let | Kind::Const | Kind::Function | Kind::Class | Kind::Enum => {
+                    return true;
+                }
+                Kind::Interface | Kind::Type => {
+                    self.bump_any();
+                    return self.cur_kind().is_binding_identifier()
+                        && !self.cur_token().is_on_new_line;
+                }
+                Kind::Module | Kind::Namespace => {
+                    self.bump_any();
+                    return !self.cur_token().is_on_new_line
+                        && (self.cur_kind().is_binding_identifier()
+                            || self.cur_kind() == Kind::Str);
+                }
+                Kind::Abstract
+                | Kind::Accessor
+                | Kind::Async
+                | Kind::Declare
+                | Kind::Private
+                | Kind::Protected
+                | Kind::Public
+                | Kind::Readonly => {
+                    self.bump_any();
+                    if self.cur_token().is_on_new_line {
+                        return false;
                     }
-                    Kind::Type => {
-                        self.bump_any();
-                        self.can_follow_export()
+                }
+                Kind::Global => {
+                    self.bump_any();
+                    return matches!(self.cur_kind(), Kind::Ident | Kind::LCurly | Kind::Export);
+                }
+                Kind::Import => {
+                    self.bump_any();
+                    return matches!(self.cur_kind(), Kind::Str | Kind::Star | Kind::LCurly)
+                        || self.cur_kind().is_identifier();
+                }
+                Kind::Export => {
+                    self.bump_any();
+                    let kind = if self.cur_kind() == Kind::Type {
+                        self.peek_kind()
+                    } else {
+                        self.cur_kind()
+                    };
+                    // This allows constructs like
+                    // `export *`, `export default`, `export {}`, `export = {}` along with all
+                    // export [declaration]
+                    if matches!(
+                        kind,
+                        Kind::Eq | Kind::Star | Kind::Default | Kind::LCurly | Kind::At | Kind::As
+                    ) {
+                        return true;
                     }
-                    _ => self.can_follow_export(),
+                    // falls through to check next token
+                }
+                Kind::Static => {
+                    self.bump_any();
+                }
+                _ => {
+                    return false;
                 }
             }
-            Kind::Default => {
-                self.bump_any();
-                self.can_follow_default()
-            }
-            Kind::Accessor | Kind::Static | Kind::Get | Kind::Set => {
-                // These modifiers can cross line.
-                self.bump_any();
-                Self::can_follow_modifier(self.cur_kind())
-            }
-            // Rest modifiers cannot cross line
-            _ => {
-                self.bump_any();
-                Self::can_follow_modifier(self.cur_kind()) && !self.cur_token().is_on_new_line
-            }
         }
-    }
-
-    fn can_follow_default(&mut self) -> bool {
-        let at_declaration =
-            matches!(self.cur_kind(), Kind::Class | Kind::Function | Kind::Interface);
-        let at_abstract_declaration = self.at(Kind::Abstract)
-            && self.peek_at(Kind::Class)
-            && !self.peek_token().is_on_new_line;
-        let at_async_function = self.at(Kind::Async)
-            && self.peek_at(Kind::Function)
-            && !self.peek_token().is_on_new_line;
-        at_declaration | at_abstract_declaration | at_async_function
-    }
-
-    fn can_follow_export(&mut self) -> bool {
-        // Note that the `export` in export assignment is not a modifier
-        // and are handled explicitly in the parser.
-        !matches!(self.cur_kind(), Kind::Star | Kind::As | Kind::LCurly)
-            && Self::can_follow_modifier(self.cur_kind())
-    }
-
-    fn can_follow_modifier(kind: Kind) -> bool {
-        kind.is_literal_property_name()
-            || matches!(kind, Kind::LCurly | Kind::LBrack | Kind::Star | Kind::Dot3)
-    }
-
-    fn modifier(kind: Kind, span: Span) -> Modifier {
-        let modifier_kind = match kind {
-            Kind::Abstract => ModifierKind::Abstract,
-            Kind::Declare => ModifierKind::Declare,
-            Kind::Private => ModifierKind::Private,
-            Kind::Protected => ModifierKind::Protected,
-            Kind::Public => ModifierKind::Public,
-            Kind::Static => ModifierKind::Static,
-            Kind::Readonly => ModifierKind::Readonly,
-            Kind::Override => ModifierKind::Override,
-            Kind::Async => ModifierKind::Async,
-            Kind::Const => ModifierKind::Const,
-            Kind::In => ModifierKind::In,
-            Kind::Out => ModifierKind::Out,
-            Kind::Export => ModifierKind::Export,
-            Kind::Default => ModifierKind::Default,
-            Kind::Accessor => ModifierKind::Accessor,
-            _ => unreachable!(),
-        };
-        Modifier { span, kind: modifier_kind }
     }
 }

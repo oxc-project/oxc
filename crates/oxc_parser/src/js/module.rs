@@ -7,7 +7,9 @@ use super::{
     list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
     FunctionKind,
 };
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
+use crate::{
+    diagnostics, lexer::Kind, list::SeparatedList, modifiers::Modifiers, Context, ParserImpl,
+};
 
 impl<'a> ParserImpl<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)

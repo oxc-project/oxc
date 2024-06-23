@@ -4,7 +4,13 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::list::ClassElements;
-use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    list::NormalList,
+    modifiers::{ModifierKind, Modifiers},
+    Context, ParserImpl, StatementContext,
+};
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;

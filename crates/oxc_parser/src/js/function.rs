@@ -6,7 +6,13 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 
 use super::{list::FormalParameterList, FunctionKind};
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl, StatementContext};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    list::SeparatedList,
+    modifiers::{ModifierKind, Modifiers},
+    Context, ParserImpl, StatementContext,
+};
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {

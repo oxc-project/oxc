@@ -6,7 +6,10 @@ use oxc_span::{Atom, GetSpan, Span};
 use super::{
     grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
 };
-use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
+use crate::{
+    diagnostics, lexer::Kind, list::NormalList, modifiers::Modifiers, Context, ParserImpl,
+    StatementContext,
+};
 
 impl<'a> ParserImpl<'a> {
     // Section 12
