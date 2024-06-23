@@ -63,7 +63,7 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Box<'a, Function<'a>>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
@@ -176,7 +176,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         func_kind: FunctionKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Box<'a, Function<'a>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;

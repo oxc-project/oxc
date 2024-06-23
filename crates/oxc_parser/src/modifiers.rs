@@ -1,6 +1,5 @@
 use bitflags::bitflags;
 
-use oxc_allocator::Vec;
 use oxc_ast::ast::TSAccessibility;
 use oxc_span::Span;
 
@@ -103,10 +102,10 @@ pub struct Modifier {
 }
 
 #[derive(Debug, Default, Hash)]
-pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
+pub struct Modifiers(Option<Vec<Modifier>>);
 
-impl<'a> Modifiers<'a> {
-    pub fn new(modifiers: Vec<'a, Modifier>) -> Self {
+impl Modifiers {
+    pub fn new(modifiers: Vec<Modifier>) -> Self {
         Self(Some(modifiers))
     }
 
@@ -179,9 +178,9 @@ impl ModifierKind {
 }
 
 impl<'a> ParserImpl<'a> {
-    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> (ModifierFlags, Modifiers<'a>) {
+    pub(crate) fn eat_modifiers_before_declaration(&mut self) -> (ModifierFlags, Modifiers) {
         let mut flags = ModifierFlags::empty();
-        let mut modifiers = self.ast.new_vec();
+        let mut modifiers = vec![];
         while self.at_modifier() {
             let span = self.start_span();
             let modifier_flag = self.cur_kind().into();

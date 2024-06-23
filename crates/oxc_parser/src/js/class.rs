@@ -41,7 +41,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_declaration(
         &mut self,
         start_span: Span,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Box<'a, Class<'a>>> {
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers)
     }
@@ -59,7 +59,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         r#type: ClassType,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Box<'a, Class<'a>>> {
         self.bump_any(); // advance `class`
 

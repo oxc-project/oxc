@@ -46,7 +46,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         decl_ctx: VariableDeclarationContext,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,

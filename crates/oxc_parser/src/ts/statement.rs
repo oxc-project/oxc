@@ -24,7 +24,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
         span: Span,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Declaration<'a>> {
         self.bump_any(); // bump `enum`
 
@@ -104,7 +104,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
         span: Span,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Type)?;
 
@@ -140,7 +140,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
         span: Span,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Interface)?; // bump interface
         let id = self.parse_binding_identifier()?;
@@ -269,7 +269,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         kind: TSModuleDeclarationKind,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
         let id = match self.cur_kind() {
             Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
@@ -325,7 +325,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_declaration(
         &mut self,
         start_span: Span,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Declaration<'a>> {
         match self.cur_kind() {
             Kind::Namespace => {
@@ -385,7 +385,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_declare_function(
         &mut self,
         start_span: Span,
-        modifiers: &Modifiers<'a>,
+        modifiers: &Modifiers,
     ) -> Result<Box<'a, Function<'a>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;
