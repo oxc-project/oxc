@@ -16,7 +16,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_function(
         &mut self,
         func: &Function<'a>,
-        modifiers: Option<Modifiers<'a>>,
+        declare: Option<bool>,
     ) -> Option<Box<'a, Function<'a>>> {
         if func.declare {
             None
@@ -32,7 +32,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.copy(&func.id),
                 false,
                 false,
-                modifiers.unwrap_or_else(|| self.modifiers_declare()).is_contains_declare(),
+                declare.unwrap_or_else(|| self.is_declare()),
                 self.ast.copy(&func.this_param),
                 params,
                 None,

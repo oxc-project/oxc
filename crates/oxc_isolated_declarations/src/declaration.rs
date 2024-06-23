@@ -39,7 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             decl.kind,
             self.ast.new_vec_from_iter(declarations),
-            self.modifiers_declare().is_contains_declare(),
+            self.is_declare(),
         )
     }
 
@@ -126,7 +126,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             VariableDeclarationKind::Const,
             declarations,
-            self.modifiers_declare().is_contains_declare(),
+            self.is_declare(),
         )
     }
 
@@ -161,7 +161,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     decl.kind,
-                    self.modifiers_declare().is_contains_declare(),
+                    self.is_declare(),
                 )
             }
             TSModuleDeclarationBody::TSModuleBlock(block) => {
@@ -171,7 +171,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     decl.kind,
-                    self.modifiers_declare().is_contains_declare(),
+                    self.is_declare(),
                 )
             }
         }

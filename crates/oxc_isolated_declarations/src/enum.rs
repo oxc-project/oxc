@@ -90,17 +90,13 @@ impl<'a> IsolatedDeclarations<'a> {
 
             members.push(member);
         }
-        let mut modifiers = self.modifiers_declare();
-        if decl.r#const {
-            modifiers.add_modifier(Modifier { span: SPAN, kind: ModifierKind::Const });
-        }
 
         Some(self.ast.ts_enum_declaration(
             decl.span,
             self.ast.copy(&decl.id),
             members,
-            modifiers.is_contains_const(),
-            modifiers.is_contains_declare(),
+            decl.r#const,
+            self.is_declare(),
         ))
     }
 
