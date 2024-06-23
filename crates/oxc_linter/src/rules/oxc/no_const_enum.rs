@@ -42,7 +42,7 @@ impl Rule for NoConstEnum {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSEnumDeclaration(enum_decl) = node.kind() {
             let Some(const_enum) =
-                enum_decl.modifiers.find(|modifier| matches!(modifier.kind, ModifierKind::Const))
+                enum_decl.modifiers.find_where(|modifier| matches!(modifier.kind, ModifierKind::Const))
             else {
                 return;
             };

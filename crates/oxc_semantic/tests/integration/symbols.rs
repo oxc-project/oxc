@@ -114,3 +114,20 @@ fn test_export_flag() {
     tester.has_root_symbol("b").contains_flags(SymbolFlags::Export).test();
     tester.has_root_symbol("c").contains_flags(SymbolFlags::Export).test();
 }
+
+#[test]
+fn test_invalid_modifiers() {
+    const param_property: &'static str =
+        "A parameter property is only allowed in a constructor implementation.";
+    const illegal_modifier: &'static str = "Modifiers cannot be used here.";
+    const readonly: &'static str =
+        "'readonly' modifier can only appear on a property declaration or index signature.";
+
+    SemanticTester::ts("function foo(public x: number) { }").has_error(param_property);
+    SemanticTester::ts("function foo() { export const x = 1; }").has_error(illegal_modifier);
+    SemanticTester::ts("function foo() { public const x = 1; }").has_error(illegal_modifier);
+    SemanticTester::ts("function foo() { private const x = 1; }").has_error(illegal_modifier);
+    SemanticTester::ts("function foo() { protected const x = 1; }").has_error(illegal_modifier);
+    SemanticTester::ts("function foo() { abstract const x = 1; }").has_error(illegal_modifier);
+    SemanticTester::ts("function foo() { readonly const x = 1; }").has_error(readonly);
+}
