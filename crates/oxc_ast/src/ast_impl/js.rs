@@ -853,6 +853,7 @@ impl<'a> SwitchCase<'a> {
         self.test.is_none()
     }
 }
+
 impl<'a> CatchClause<'a> {
     pub fn new(
         span: Span,
@@ -1044,6 +1045,7 @@ impl<'a> FormalParameters<'a> {
         self.items.is_empty()
     }
 }
+
 impl<'a> FunctionBody<'a> {
     pub fn is_empty(&self) -> bool {
         self.directives.is_empty() && self.statements.is_empty()
