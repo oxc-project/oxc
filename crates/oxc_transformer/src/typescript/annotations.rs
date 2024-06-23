@@ -71,9 +71,6 @@ impl<'a> TypeScriptAnnotations<'a> {
 
         program.body.retain_mut(|stmt| {
             let need_retain = match stmt {
-                // fix namespace/export-type-only/input.ts
-                // The namespace is type only. So if its name appear in the ExportNamedDeclaration, we should remove it.
-                Statement::TSModuleDeclaration(_) => return false,
                 Statement::ExportNamedDeclaration(decl) => {
                     if decl.export_kind.is_type() {
                         false
@@ -203,27 +200,18 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
         if let Some(expr) = target.get_expression() {
-            if let Some(ident) = expr.get_inner_expression().get_identifier_reference() {
-                let ident = self.ctx.ast.alloc(self.ctx.ast.copy(ident));
+            if let Expression::Identifier(ident) = expr.get_inner_expression() {
+                let ident = self.ctx.ast.copy(ident);
                 *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
             }
         }
     }
 
     pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
-        if let Some(new_target) = target
-            .get_expression()
-            .map(Expression::get_inner_expression)
-            .and_then(|expr| match expr {
-                match_member_expression!(Expression) => {
-                    Some(self.ctx.ast.simple_assignment_target_member_expression(
-                        self.ctx.ast.copy(expr.as_member_expression().unwrap()),
-                    ))
-                }
-                _ => None,
-            })
-        {
-            *target = new_target;
+        if let Some(expr) = target.get_expression() {
+            if let Some(member_expr) = expr.get_inner_expression().as_member_expression() {
+                *target = AssignmentTarget::from(self.ctx.ast.copy(member_expr));
+            }
         }
     }
 
@@ -323,11 +311,12 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         // Remove declare declaration
-        stmts.retain(|stmt| match stmt {
-            match_declaration!(Statement) => {
-                stmt.to_declaration().modifiers().map_or(true, |m| !m.is_contains_declare())
+        stmts.retain(|stmt| {
+            if let Some(decl) = stmt.as_declaration() {
+                decl.modifiers().map_or(true, |m| !m.is_contains_declare())
+            } else {
+                true
             }
-            _ => true,
         });
     }
 
@@ -339,7 +328,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            Statement::TSModuleDeclaration(_) => true,
+            // Any namespaces left after namespace transform are type only, so remove them
+            Statement::TSModuleDeclaration(_) => false,
             match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
