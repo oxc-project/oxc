@@ -114,9 +114,17 @@ impl<'a> ParserImpl<'a> {
             if let Some(type_annotation) = &type_annotation {
                 Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
             }
-            (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
+            (
+                self.ast.binding_pattern(
+                    self.end_span(span),
+                    binding_kind,
+                    type_annotation,
+                    optional,
+                ),
+                definite,
+            )
         } else {
-            (self.ast.binding_pattern(binding_kind, None, false), false)
+            (self.ast.binding_pattern(self.end_span(span), binding_kind, None, false), false)
         };
 
         let init =

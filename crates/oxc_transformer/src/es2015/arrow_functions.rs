@@ -114,6 +114,7 @@ impl<'a> ArrowFunctions<'a> {
 
         if let Some(id) = &self.this_var {
             let binding_pattern = self.ctx.ast.binding_pattern(
+                SPAN,
                 self.ctx.ast.binding_pattern_identifier(id.create_binding_identifier()),
                 None,
                 false,

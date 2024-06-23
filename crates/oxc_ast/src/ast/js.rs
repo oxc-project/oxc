@@ -1326,6 +1326,8 @@ pub struct DebuggerStatement {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
     // serde(flatten) the attributes because estree has no `BindingPattern`
     #[cfg_attr(feature = "serialize", serde(flatten))]
     #[cfg_attr(

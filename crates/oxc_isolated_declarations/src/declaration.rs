@@ -95,6 +95,7 @@ impl<'a> IsolatedDeclarations<'a> {
             || self.ast.copy(&decl.id),
             |ts_type| {
                 self.ast.binding_pattern(
+                    SPAN,
                     self.ast.copy(&decl.id.kind),
                     Some(self.ast.ts_type_annotation(SPAN, ts_type)),
                     decl.id.optional,
