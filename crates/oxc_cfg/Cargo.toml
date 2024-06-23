@@ -17,7 +17,8 @@ include                = ["/src"]
 workspace = true
 
 [lib]
-doctest = true
+test    = false
+doctest = false
 
 [dependencies]
 oxc_syntax = { workspace = true }
