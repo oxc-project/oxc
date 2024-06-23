@@ -163,7 +163,7 @@ fn check_declaration_modifiers<'a>(
                 ctx.error(async_cannot_be_used_here(modifier.span));
             }
             ModifierKind::Readonly => {
-                ctx.error(readonly_only_on_index_signature_or_property_decl(modifier.span))
+                ctx.error(readonly_only_on_index_signature_or_property_decl(modifier.span));
             }
             ModifierKind::Export if !scope_can_export(scope_flags) => {
                 ctx.error(modifiers_cannot_be_used_here(modifier.span));
@@ -181,10 +181,10 @@ pub fn check_variable_declaration<'a>(
 }
 
 pub fn check_function<'a>(function: &Function<'a>, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
-    check_declaration_modifiers(&function.modifiers, node, ctx)
+    check_declaration_modifiers(&function.modifiers, node, ctx);
 }
 pub fn check_class<'a>(class: &Class<'a>, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
-    check_declaration_modifiers(&class.modifiers, node, ctx)
+    check_declaration_modifiers(&class.modifiers, node, ctx);
 }
 
 pub fn check_ts_type_alias_declaration<'a>(
@@ -192,14 +192,14 @@ pub fn check_ts_type_alias_declaration<'a>(
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    check_declaration_modifiers(&decl.modifiers, node, ctx)
+    check_declaration_modifiers(&decl.modifiers, node, ctx);
 }
 pub fn check_ts_interface_declaration<'a>(
     decl: &TSInterfaceDeclaration<'a>,
     node: &AstNode<'a>,
     ctx: &SemanticBuilder<'a>,
 ) {
-    check_declaration_modifiers(&decl.modifiers, node, ctx)
+    check_declaration_modifiers(&decl.modifiers, node, ctx);
 }
 
 fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {

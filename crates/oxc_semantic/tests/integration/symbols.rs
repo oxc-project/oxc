@@ -117,10 +117,10 @@ fn test_export_flag() {
 
 #[test]
 fn test_invalid_modifiers() {
-    const param_property: &'static str =
+    const param_property: &str =
         "A parameter property is only allowed in a constructor implementation.";
-    const illegal_modifier: &'static str = "Modifiers cannot be used here.";
-    const readonly: &'static str =
+    const illegal_modifier: &str = "Modifiers cannot be used here.";
+    const readonly: &str =
         "'readonly' modifier can only appear on a property declaration or index signature.";
 
     SemanticTester::ts("function foo(public x: number) { }").has_error(param_property);

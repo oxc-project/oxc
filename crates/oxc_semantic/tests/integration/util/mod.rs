@@ -210,11 +210,12 @@ impl<'a> SemanticTester<'a> {
         ClassTester::has_class(self.build(), name)
     }
 
-    pub fn has_error<'s>(&'s self, message: &str) {
+    pub fn has_error(&self, message: &str) {
         let SemanticBuilderReturn { errors, .. } = self.build_with_errors();
-        if errors.is_empty() {
-            panic!("Expected an error matching '{message}', but no errors were produced")
-        }
+        assert!(
+            !errors.is_empty(),
+            "Expected an error matching '{message}', but no errors were produced"
+        );
         if errors.iter().any(|e| e.message.contains(message)) {
             return;
         }

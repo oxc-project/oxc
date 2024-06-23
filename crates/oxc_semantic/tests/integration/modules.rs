@@ -58,7 +58,11 @@ fn test_exported_named_function() {
     )
     .has_some_symbol("Counter")
     .is_exported()
-    .contains_flags(SymbolFlags::ConstVariable.union(SymbolFlags::BlockScopedVariable).union(SymbolFlags::Export))
+    .contains_flags(
+        SymbolFlags::ConstVariable
+            .union(SymbolFlags::BlockScopedVariable)
+            .union(SymbolFlags::Export),
+    )
     .test();
 }
 
@@ -199,49 +203,49 @@ fn test_export_in_invalid_scope() {
     assert!(!errors.is_empty(), "expected an export within a function to produce a check error, but no errors were produced");
     assert!(semantic.module_record().exported_bindings.is_empty());
 
-//     SemanticTester::ts(
-//         "
-//     function foo() {
-//         const x = 1;
-//         export { x };
-//     }",
-//     )
-//     .expect_errors(true)
-//     .has_some_symbol("x")
-//     .test();
+    //     SemanticTester::ts(
+    //         "
+    //     function foo() {
+    //         const x = 1;
+    //         export { x };
+    //     }",
+    //     )
+    //     .expect_errors(true)
+    //     .has_some_symbol("x")
+    //     .test();
 
-//     SemanticTester::ts(
-//         "
-//     function foo() {
-//         const x = 1;
-//         export default x;
-//     }
-// ",
-//     )
-//     .expect_errors(true)
-//     .has_some_symbol("x")
-//     .test();
+    //     SemanticTester::ts(
+    //         "
+    //     function foo() {
+    //         const x = 1;
+    //         export default x;
+    //     }
+    // ",
+    //     )
+    //     .expect_errors(true)
+    //     .has_some_symbol("x")
+    //     .test();
 
-//     SemanticTester::ts(
-//         "
-//     function foo() {
-//         export * from './bar';
-//     }
-// ",
-//     )
-//     .expect_errors(true)
-//     .has_root_symbol("foo")
-//     .test();
+    //     SemanticTester::ts(
+    //         "
+    //     function foo() {
+    //         export * from './bar';
+    //     }
+    // ",
+    //     )
+    //     .expect_errors(true)
+    //     .has_root_symbol("foo")
+    //     .test();
 
-//     // NOTE: 'bar' does not end up in symbol table. Is this expected?
-//     SemanticTester::ts(
-//         "
-//     function foo() {
-//         export * as bar from './bar';
-//     }
-// ",
-//     )
-//     .expect_errors(true)
-//     .has_root_symbol("foo")
-//     .test();
+    //     // NOTE: 'bar' does not end up in symbol table. Is this expected?
+    //     SemanticTester::ts(
+    //         "
+    //     function foo() {
+    //         export * as bar from './bar';
+    //     }
+    // ",
+    //     )
+    //     .expect_errors(true)
+    //     .has_root_symbol("foo")
+    //     .test();
 }
