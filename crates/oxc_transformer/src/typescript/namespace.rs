@@ -40,7 +40,7 @@ impl<'a> TypeScript<'a> {
         for stmt in self.ctx.ast.move_statement_vec(&mut program.body) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
-                    if !decl.modifiers.is_contains_declare() {
+                    if !decl.declare {
                         if !self.options.allow_namespaces {
                             self.ctx.error(namespace_not_supported(decl.span));
                         }
@@ -63,7 +63,7 @@ impl<'a> TypeScript<'a> {
                 Statement::ExportNamedDeclaration(ref export_decl) => {
                     match &export_decl.declaration {
                         Some(Declaration::TSModuleDeclaration(decl)) => {
-                            if !decl.modifiers.is_contains_declare() {
+                            if !decl.declare {
                                 if !self.options.allow_namespaces {
                                     self.ctx.error(namespace_not_supported(decl.span));
                                 }

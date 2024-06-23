@@ -145,7 +145,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         decl: &Box<'a, TSModuleDeclaration<'a>>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        if decl.modifiers.is_contains_declare() {
+        if decl.declare {
             return self.ast.copy(decl);
         }
 
@@ -156,23 +156,23 @@ impl<'a> IsolatedDeclarations<'a> {
         match body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let inner = self.transform_ts_module_declaration(decl);
-                return self.ast.ts_module_declaration(
+                self.ast.ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     decl.kind,
-                    self.modifiers_declare(),
-                );
+                    self.modifiers_declare().is_contains_declare(),
+                )
             }
             TSModuleDeclarationBody::TSModuleBlock(block) => {
                 let body = self.transform_ts_module_block(block);
-                return self.ast.ts_module_declaration(
+                self.ast.ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     decl.kind,
-                    self.modifiers_declare(),
-                );
+                    self.modifiers_declare().is_contains_declare(),
+                )
             }
         }
     }

@@ -3,10 +3,9 @@ use oxc_ast::syntax_directed_operations::BoundNames;
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, Span};
-use oxc_syntax::scope::ScopeFlags;
 use rustc_hash::FxHashMap;
 
-use crate::{builder::SemanticBuilder, diagnostics::redeclaration, AstNode};
+use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 
 fn empty_type_parameter_list(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Type parameter list cannot be empty.").with_labels([span0.into()])
@@ -114,80 +113,6 @@ pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder
     }
 }
 
-/// ts(1184)
-fn modifiers_cannot_be_used_here(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("Modifiers cannot be used here.").with_labels([span.into()])
-}
-
-/// ts(1024)
-fn readonly_only_on_index_signature_or_property_decl(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        "'readonly' modifier can only appear on a property declaration or index signature.",
-    )
-    .with_labels([span.into()])
-}
-/// ts(1042)
-fn async_cannot_be_used_here(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("'async' modifier cannot be used here.").with_labels([span.into()])
-}
-
-/// Returns `true` if the scope described by `scope_flags` supports export
-/// declarations or specifiers.
-pub const fn scope_can_export(scope_flags: ScopeFlags) -> bool {
-    const CAN_EXPORT: ScopeFlags = ScopeFlags::Top.union(ScopeFlags::TsModuleBlock);
-    scope_flags.contains(CAN_EXPORT)
-}
-
-fn check_declaration_modifiers<'a>(
-    modifiers: &Modifiers<'a>,
-    decl_node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    let scope_flags = ctx.scope.get_flags(decl_node.scope_id());
-    let kind = decl_node.kind();
-    let is_class = matches!(kind, AstKind::Class(_));
-    let is_function = matches!(kind, AstKind::Function(_));
-    for modifier in modifiers.iter() {
-        match modifier.kind {
-            ModifierKind::Public
-            | ModifierKind::Private
-            | ModifierKind::Protected
-            | ModifierKind::Static
-            | ModifierKind::Override => {
-                ctx.error(modifiers_cannot_be_used_here(modifier.span));
-            }
-            ModifierKind::Abstract if !is_class => {
-                ctx.error(modifiers_cannot_be_used_here(modifier.span));
-            }
-            ModifierKind::Async if !is_function => {
-                ctx.error(async_cannot_be_used_here(modifier.span));
-            }
-            ModifierKind::Readonly => {
-                ctx.error(readonly_only_on_index_signature_or_property_decl(modifier.span));
-            }
-            ModifierKind::Export if !scope_can_export(scope_flags) => {
-                ctx.error(modifiers_cannot_be_used_here(modifier.span));
-            }
-            _ => {}
-        }
-    }
-}
-
-pub fn check_ts_type_alias_declaration<'a>(
-    decl: &TSTypeAliasDeclaration<'a>,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_declaration_modifiers(&decl.modifiers, node, ctx);
-}
-pub fn check_ts_interface_declaration<'a>(
-    decl: &TSInterfaceDeclaration<'a>,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_declaration_modifiers(&decl.modifiers, node, ctx);
-}
-
 fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "A namespace declaration is only allowed at the top level of a namespace or module.",
@@ -195,12 +120,7 @@ fn not_allowed_namespace_declaration(span0: Span) -> OxcDiagnostic {
     .with_labels([span0.into()])
 }
 
-pub fn check_ts_module_declaration<'a>(
-    decl: &TSModuleDeclaration<'a>,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
-    check_declaration_modifiers(&decl.modifiers, node, ctx);
+pub fn check_ts_module_declaration<'a>(decl: &TSModuleDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     // skip current node
     for node in ctx.nodes.iter_parents(ctx.current_node_id).skip(1) {
         match node.kind() {

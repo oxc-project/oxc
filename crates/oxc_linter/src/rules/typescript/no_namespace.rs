@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ModifierKind, TSModuleDeclarationKind, TSModuleDeclarationName},
+    ast::{TSModuleDeclarationKind, TSModuleDeclarationName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -107,7 +107,7 @@ fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return false;
         };
-        declaration.modifiers.contains(ModifierKind::Declare)
+        declaration.declare
     })
 }
 

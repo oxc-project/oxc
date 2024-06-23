@@ -711,9 +711,9 @@ impl<'a> Declaration<'a> {
             Declaration::FunctionDeclaration(decl) => decl.declare,
             Declaration::ClassDeclaration(decl) => decl.declare,
             Declaration::TSEnumDeclaration(decl) => decl.declare,
-            Declaration::TSTypeAliasDeclaration(decl) => decl.modifiers.is_contains_declare(),
-            Declaration::TSModuleDeclaration(decl) => decl.modifiers.is_contains_declare(),
-            Declaration::TSInterfaceDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
+            Declaration::TSModuleDeclaration(decl) => decl.declare,
+            Declaration::TSInterfaceDeclaration(decl) => decl.declare,
             _ => false,
         }
     }

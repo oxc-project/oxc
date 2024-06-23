@@ -106,7 +106,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_alias_declaration(
         &mut self,
         span: Span,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Type)?;
 
@@ -118,7 +118,23 @@ impl<'a> ParserImpl<'a> {
 
         self.asi()?;
         let span = self.end_span(span);
-        Ok(self.ast.ts_type_alias_declaration(span, id, annotation, params, modifiers))
+
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifiers_cannot_appear(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+
+        Ok(self.ast.ts_type_alias_declaration(
+            span,
+            id,
+            annotation,
+            params,
+            modifiers.is_contains_declare(),
+        ))
     }
 
     /** ---------------------  Interface  ------------------------ */
@@ -126,7 +142,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_interface_declaration(
         &mut self,
         span: Span,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.expect(Kind::Interface)?; // bump interface
         let id = self.parse_binding_identifier()?;
@@ -134,13 +150,23 @@ impl<'a> ParserImpl<'a> {
         let (extends, _) = self.parse_heritage_clause()?;
         let body = self.parse_ts_interface_body()?;
         let extends = extends.map(|e| self.ast.ts_interface_heritages(e));
+
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifiers_cannot_appear(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+
         Ok(self.ast.ts_interface_declaration(
             self.end_span(span),
             id,
             body,
             type_parameters,
             extends,
-            modifiers,
+            modifiers.is_contains_declare(),
         ))
     }
 
@@ -245,7 +271,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         span: Span,
         kind: TSModuleDeclarationKind,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
         let id = match self.cur_kind() {
             Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
@@ -254,8 +280,11 @@ impl<'a> ParserImpl<'a> {
 
         let body = if self.eat(Kind::Dot) {
             let span = self.start_span();
-            let decl =
-                self.parse_ts_namespace_or_module_declaration_body(span, kind, Modifiers::empty())?;
+            let decl = self.parse_ts_namespace_or_module_declaration_body(
+                span,
+                kind,
+                &Modifiers::empty(),
+            )?;
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl))
         } else if self.at(Kind::LCurly) {
             let block = self.parse_ts_module_block()?;
@@ -264,7 +293,21 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        Ok(self.ast.ts_module_declaration(self.end_span(span), id, body, kind, modifiers))
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifiers_cannot_appear(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+        Ok(self.ast.ts_module_declaration(
+            self.end_span(span),
+            id,
+            body,
+            kind,
+            modifiers.is_contains_declare(),
+        ))
     }
 
     /** ----------------------- declare --------------------- */
@@ -276,7 +319,7 @@ impl<'a> ParserImpl<'a> {
         let reserved_ctx = self.ctx;
         let (flags, modifiers) = self.eat_modifiers_before_declaration();
         self.ctx = self.ctx.union_ambient_if(flags.declare()).and_await(flags.r#async());
-        let result = self.parse_declaration(start_span, modifiers);
+        let result = self.parse_declaration(start_span, &modifiers);
         self.ctx = reserved_ctx;
         result.map(Statement::from)
     }
@@ -284,7 +327,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_declaration(
         &mut self,
         start_span: Span,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         match self.cur_kind() {
             Kind::Namespace => {
@@ -306,12 +349,12 @@ impl<'a> ParserImpl<'a> {
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
-            Kind::Enum => self.parse_ts_enum_declaration(start_span, &modifiers),
+            Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
             Kind::Interface if self.is_at_interface_declaration() => {
                 self.parse_ts_interface_declaration(start_span, modifiers)
             }
             Kind::Class => self
-                .parse_class_declaration(start_span, &modifiers)
+                .parse_class_declaration(start_span, modifiers)
                 .map(Declaration::ClassDeclaration),
             Kind::Import => {
                 self.bump_any();
@@ -321,16 +364,16 @@ impl<'a> ParserImpl<'a> {
                 .parse_variable_declaration(
                     start_span,
                     VariableDeclarationContext::new(VariableDeclarationParent::Clause),
-                    &modifiers,
+                    modifiers,
                 )
                 .map(Declaration::VariableDeclaration),
             _ if self.at_function_with_async() => {
                 let declare = modifiers.contains(ModifierKind::Declare);
                 if declare {
-                    self.parse_ts_declare_function(start_span, &modifiers)
+                    self.parse_ts_declare_function(start_span, modifiers)
                         .map(Declaration::FunctionDeclaration)
                 } else if self.ts_enabled() {
-                    self.parse_ts_function_impl(start_span, FunctionKind::Declaration, &modifiers)
+                    self.parse_ts_function_impl(start_span, FunctionKind::Declaration, modifiers)
                         .map(Declaration::FunctionDeclaration)
                 } else {
                     self.parse_function_impl(FunctionKind::Declaration)

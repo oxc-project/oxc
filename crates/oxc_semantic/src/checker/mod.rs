@@ -97,14 +97,8 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::TSTypeParameterDeclaration(declaration) => {
             ts::check_ts_type_parameter_declaration(declaration, ctx);
         }
-        AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, node, ctx),
+        AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
-        AstKind::TSTypeAliasDeclaration(decl) => {
-            ts::check_ts_type_alias_declaration(decl, node, ctx);
-        }
-        AstKind::TSInterfaceDeclaration(decl) => {
-            ts::check_ts_interface_declaration(decl, node, ctx);
-        }
         _ => {}
     }
 }

@@ -292,7 +292,7 @@ impl<'a> ParserImpl<'a> {
             Modifiers::empty()
         };
 
-        let declaration = self.parse_declaration(decl_span, modifiers)?;
+        let declaration = self.parse_declaration(decl_span, &modifiers)?;
         let span = self.end_span(span);
         Ok(self.ast.export_named_declaration(
             span,
@@ -330,7 +330,7 @@ impl<'a> ParserImpl<'a> {
                 && !self.peek_token().is_on_new_line
                 && self.ts_enabled() =>
             {
-                self.parse_ts_interface_declaration(decl_span, Modifiers::empty()).map(|decl| {
+                self.parse_ts_interface_declaration(decl_span, &Modifiers::empty()).map(|decl| {
                     match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
                             ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
