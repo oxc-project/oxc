@@ -11,7 +11,6 @@ use std::{cell::Cell, hash::Hash};
 use oxc_allocator::Vec;
 use oxc_span::{Atom, GetSpan, Span};
 
-use crate::ast::Modifiers;
 use crate::ast::*;
 
 impl<'a> TSEnumDeclaration<'a> {
@@ -150,9 +149,9 @@ impl<'a> TSModuleDeclaration<'a> {
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
         kind: TSModuleDeclarationKind,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Self {
-        Self { span, id, body, kind, modifiers, scope_id: Cell::default() }
+        Self { span, id, body, kind, declare, scope_id: Cell::default() }
     }
 }
 
@@ -161,7 +160,7 @@ impl<'a> Hash for TSModuleDeclaration<'a> {
         self.id.hash(state);
         self.body.hash(state);
         self.kind.hash(state);
-        self.modifiers.hash(state);
+        self.declare.hash(state);
     }
 }
 

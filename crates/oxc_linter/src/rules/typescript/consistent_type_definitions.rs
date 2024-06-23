@@ -72,11 +72,7 @@ impl Rule for ConsistentTypeDefinitions {
                 TSType::TSTypeLiteral(_)
                     if self.config == ConsistentTypeDefinitionsConfig::Interface =>
                 {
-                    let start = if decl.modifiers.is_contains_declare() {
-                        decl.span.start + 8
-                    } else {
-                        decl.span.start
-                    };
+                    let start = if decl.declare { decl.span.start + 8 } else { decl.span.start };
 
                     let name_span_start = &decl.id.span.start;
                     let mut name_span_end = &decl.id.span.end;
@@ -170,11 +166,7 @@ impl Rule for ConsistentTypeDefinitions {
             AstKind::TSInterfaceDeclaration(decl)
                 if self.config == ConsistentTypeDefinitionsConfig::Type =>
             {
-                let start = if decl.modifiers.is_contains_declare() {
-                    decl.span.start + 8
-                } else {
-                    decl.span.start
-                };
+                let start = if decl.declare { decl.span.start + 8 } else { decl.span.start };
 
                 let name_span_start = &decl.id.span.start;
                 let mut name_span_end = &decl.id.span.end;

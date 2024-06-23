@@ -20,7 +20,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-use super::{inherit_variants, js::*, jsx::*, literal::*, Modifiers};
+use super::{inherit_variants, js::*, jsx::*, literal::*};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -597,8 +597,7 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub id: BindingIdentifier<'a>,
     pub type_annotation: TSType<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    /// Valid Modifiers: `declare`, `export`
-    pub modifiers: Modifiers<'a>,
+    pub declare: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -635,8 +634,7 @@ pub struct TSInterfaceDeclaration<'a> {
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
-    /// Valid Modifiers: `export`, `default`, `declare`
-    pub modifiers: Modifiers<'a>,
+    pub declare: bool,
 }
 
 #[visited_node]
@@ -803,8 +801,7 @@ pub struct TSModuleDeclaration<'a> {
     ///         ^^^^^^
     /// ```
     pub kind: TSModuleDeclarationKind,
-    /// Valid Modifiers: `declare`, `export`
-    pub modifiers: Modifiers<'a>,
+    pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

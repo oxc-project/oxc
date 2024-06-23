@@ -1512,9 +1512,9 @@ impl<'a> AstBuilder<'a> {
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
         kind: TSModuleDeclarationKind,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        self.alloc(TSModuleDeclaration::new(span, id, body, kind, modifiers))
+        self.alloc(TSModuleDeclaration::new(span, id, body, kind, declare))
     }
 
     #[inline]
@@ -1847,7 +1847,7 @@ impl<'a> AstBuilder<'a> {
         body: Box<'a, TSInterfaceBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
             span,
@@ -1855,7 +1855,7 @@ impl<'a> AstBuilder<'a> {
             body,
             type_parameters,
             extends,
-            modifiers,
+            declare,
         }))
     }
 
@@ -1866,14 +1866,14 @@ impl<'a> AstBuilder<'a> {
         id: BindingIdentifier<'a>,
         type_annotation: TSType<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration {
             span,
             id,
             type_annotation,
             type_parameters,
-            modifiers,
+            declare,
         }))
     }
 

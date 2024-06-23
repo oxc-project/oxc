@@ -6439,6 +6439,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × TS1044: 'export' modifier cannot appear on a module or namespace element.
+   ╭─[compiler/exportAlreadySeen.ts:7:16]
+ 6 │         export export class C { }
+ 7 │         export export interface I { }
+   ·                ──────
+ 8 │     }  
+   ╰────
+
+  × TS1044: 'export' modifier cannot appear on a module or namespace element.
+   ╭─[compiler/exportAlreadySeen.ts:5:12]
+ 4 │ 
+ 5 │     export export module N {
+   ·            ──────
+ 6 │         export export class C { }
+   ╰────
+
+  × TS1044: 'export' modifier cannot appear on a module or namespace element.
     ╭─[compiler/exportAlreadySeen.ts:12:12]
  11 │ declare module A {
  12 │     export export var x;
@@ -6462,23 +6478,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  17 │         export export interface I { }
     ╰────
 
-  × Modifiers cannot be used here.
-   ╭─[compiler/exportAlreadySeen.ts:7:16]
- 6 │         export export class C { }
- 7 │         export export interface I { }
-   ·                ──────
- 8 │     }  
-   ╰────
-
-  × Modifiers cannot be used here.
-   ╭─[compiler/exportAlreadySeen.ts:5:12]
- 4 │ 
- 5 │     export export module N {
-   ·            ──────
- 6 │         export export class C { }
-   ╰────
-
-  × Modifiers cannot be used here.
+  × TS1044: 'export' modifier cannot appear on a module or namespace element.
     ╭─[compiler/exportAlreadySeen.ts:17:16]
  16 │         export export class C { }
  17 │         export export interface I { }
@@ -6486,7 +6486,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  18 │     }
     ╰────
 
-  × Modifiers cannot be used here.
+  × TS1044: 'export' modifier cannot appear on a module or namespace element.
     ╭─[compiler/exportAlreadySeen.ts:15:12]
  14 │ 
  15 │     export export module N {
@@ -8697,7 +8697,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ if (true) {
    ╰────
 
-  × Modifiers cannot be used here.
+  × TS1044: 'export' modifier cannot appear on a module or namespace element.
      ╭─[compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
  326 │ declare export module "anotherParseError2" {
@@ -10699,14 +10699,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │   }
    ╰────
 
-  × 'async' modifier cannot be used here.
+  × TS1044: 'async' modifier cannot appear on a module or namespace element.
    ╭─[conformance/async/es5/asyncInterface_es5.ts:1:1]
  1 │ async interface I {
    · ─────
  2 │ }
    ╰────
 
-  × 'async' modifier cannot be used here.
+  × TS1044: 'async' modifier cannot appear on a module or namespace element.
    ╭─[conformance/async/es5/asyncModule_es5.ts:1:1]
  1 │ async module M {
    · ─────
@@ -10834,14 +10834,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │   }
    ╰────
 
-  × 'async' modifier cannot be used here.
+  × TS1044: 'async' modifier cannot appear on a module or namespace element.
    ╭─[conformance/async/es6/asyncInterface_es6.ts:1:1]
  1 │ async interface I {  
    · ─────
  2 │ }
    ╰────
 
-  × 'async' modifier cannot be used here.
+  × TS1044: 'async' modifier cannot appear on a module or namespace element.
    ╭─[conformance/async/es6/asyncModule_es6.ts:1:1]
  1 │ async module M {   
    · ─────
@@ -11005,7 +11005,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  17 │ }
     ╰────
 
-  × Modifiers cannot be used here.
+  × TS1044: 'abstract' modifier cannot appear on a module or namespace element.
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
  1 │ abstract interface I {}
    · ────────
@@ -16230,11 +16230,27 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × TS1044: 'public' modifier cannot appear on a module or namespace element.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:13:5]
+ 12 │     public class AA<T> { s: T }
+ 13 │     public interface I { id: number }
+    ·     ──────
+ 14 │ 
+    ╰────
+
+  × TS1044: 'public' modifier cannot appear on a module or namespace element.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:15:5]
  14 │ 
  15 │     public class B extends AA<string> implements I { id: number }
     ·     ──────
  16 │ }
+    ╰────
+
+  × TS1044: 'public' modifier cannot appear on a module or namespace element.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
+ 18 │ module Y3 {
+ 19 │     public module Module {
+    ·     ──────
+ 20 │         class A { s: string }
     ╰────
 
   × TS1044: 'public' modifier cannot appear on a module or namespace element.
@@ -16270,11 +16286,27 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × TS1044: 'private' modifier cannot appear on a module or namespace element.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:38:5]
+ 37 │     private class AA<T> { s: T }
+ 38 │     private interface I { id: number }
+    ·     ───────
+ 39 │ 
+    ╰────
+
+  × TS1044: 'private' modifier cannot appear on a module or namespace element.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:40:5]
  39 │ 
  40 │     private class B extends AA<string> implements I { id: number }
     ·     ───────
  41 │ }
+    ╰────
+
+  × TS1044: 'private' modifier cannot appear on a module or namespace element.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
+ 43 │ module YY3 {
+ 44 │     private module Module {
+    ·     ───────
+ 45 │         class A { s: string }
     ╰────
 
   × TS1044: 'private' modifier cannot appear on a module or namespace element.
@@ -16310,6 +16342,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × TS1044: 'static' modifier cannot appear on a module or namespace element.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:64:5]
+ 63 │     static class AA<T> { s: T }
+ 64 │     static interface I { id: number }
+    ·     ──────
+ 65 │ 
+    ╰────
+
+  × TS1044: 'static' modifier cannot appear on a module or namespace element.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:66:5]
  65 │ 
  66 │     static class B extends AA<string> implements I { id: number }
@@ -16318,59 +16358,19 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × TS1044: 'static' modifier cannot appear on a module or namespace element.
-    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:76:5]
- 75 │ module YYY4 {
- 76 │     static enum Color { Blue, Red }
-    ·     ──────
- 77 │ }
-    ╰────
-
-  × Modifiers cannot be used here.
-    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:13:5]
- 12 │     public class AA<T> { s: T }
- 13 │     public interface I { id: number }
-    ·     ──────
- 14 │ 
-    ╰────
-
-  × Modifiers cannot be used here.
-    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
- 18 │ module Y3 {
- 19 │     public module Module {
-    ·     ──────
- 20 │         class A { s: string }
-    ╰────
-
-  × Modifiers cannot be used here.
-    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:38:5]
- 37 │     private class AA<T> { s: T }
- 38 │     private interface I { id: number }
-    ·     ───────
- 39 │ 
-    ╰────
-
-  × Modifiers cannot be used here.
-    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
- 43 │ module YY3 {
- 44 │     private module Module {
-    ·     ───────
- 45 │         class A { s: string }
-    ╰────
-
-  × Modifiers cannot be used here.
-    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:64:5]
- 63 │     static class AA<T> { s: T }
- 64 │     static interface I { id: number }
-    ·     ──────
- 65 │ 
-    ╰────
-
-  × Modifiers cannot be used here.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
  69 │ module YYY3 {
  70 │     static module Module {
     ·     ──────
  71 │         class A { s: string }
+    ╰────
+
+  × TS1044: 'static' modifier cannot appear on a module or namespace element.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:76:5]
+ 75 │ module YYY4 {
+ 76 │     static enum Color { Blue, Red }
+    ·     ──────
+ 77 │ }
     ╰────
 
   × TS1044: 'public' modifier cannot appear on a module or namespace element.
@@ -17508,21 +17508,21 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
-  × Modifiers cannot be used here.
+  × TS1044: 'public' modifier cannot appear on a module or namespace element.
    ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts:1:1]
  1 │ public interface I {
    · ──────
  2 │ }
    ╰────
 
-  × Modifiers cannot be used here.
+  × TS1044: 'static' modifier cannot appear on a module or namespace element.
    ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts:1:1]
  1 │ static interface I {
    · ──────
  2 │ }
    ╰────
 
-  × Modifiers cannot be used here.
+  × TS1044: 'export' modifier cannot appear on a module or namespace element.
    ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
  1 │ export export interface I {
    ·        ──────
@@ -17758,7 +17758,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Modifiers cannot be used here.
+  × TS1044: 'protected' modifier cannot appear on a module or namespace element.
    ╭─[conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
  1 │ protected module M {
    · ─────────

@@ -3245,10 +3245,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamedTupleMember<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.modifiers.contains(ModifierKind::Export) {
-            p.print_str(b"export ");
-        }
-        if self.modifiers.contains(ModifierKind::Declare) {
+        if self.declare {
             p.print_str(b"declare ");
         }
         p.print_str(b"module");
@@ -3300,10 +3297,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleBlock<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAliasDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.modifiers.contains(ModifierKind::Export) {
-            p.print_str(b"export ");
-        }
-        if self.modifiers.contains(ModifierKind::Declare) {
+        if self.declare {
             p.print_str(b"declare ");
         }
         p.print_str(b"type");
