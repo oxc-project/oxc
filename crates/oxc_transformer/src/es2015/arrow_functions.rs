@@ -219,12 +219,12 @@ impl<'a> ArrowFunctions<'a> {
             id: None,
             generator: false,
             r#async: arrow_function_expr.r#async,
+            declare: false,
             this_param: None,
             params: self.ctx.ast.copy(&arrow_function_expr.params),
             body: Some(body),
             type_parameters: self.ctx.ast.copy(&arrow_function_expr.type_parameters),
             return_type: self.ctx.ast.copy(&arrow_function_expr.return_type),
-            modifiers: Modifiers::empty(),
             scope_id: Cell::new(scope_id),
         };
 

@@ -173,10 +173,6 @@ fn check_declaration_modifiers<'a>(
     }
 }
 
-pub fn check_function<'a>(function: &Function<'a>, node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
-    check_declaration_modifiers(&function.modifiers, node, ctx);
-}
-
 pub fn check_ts_type_alias_declaration<'a>(
     decl: &TSTypeAliasDeclaration<'a>,
     node: &AstNode<'a>,

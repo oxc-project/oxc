@@ -1436,6 +1436,7 @@ pub struct Function<'a> {
     pub id: Option<BindingIdentifier<'a>>,
     pub generator: bool,
     pub r#async: bool,
+    pub declare: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
     ///
@@ -1456,8 +1457,6 @@ pub struct Function<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    /// Valid modifiers: `export`, `default`, `async`
-    pub modifiers: Modifiers<'a>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

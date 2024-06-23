@@ -628,7 +628,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
-            if self.modifiers.contains(ModifierKind::Declare) {
+            if self.declare {
                 p.print_str(b"declare ");
             }
             if self.r#async {

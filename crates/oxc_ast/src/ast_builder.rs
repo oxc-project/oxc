@@ -953,19 +953,7 @@ impl<'a> AstBuilder<'a> {
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
     ) -> Box<'a, Function<'a>> {
-        self.function(
-            r#type,
-            span,
-            id,
-            false,
-            false,
-            None,
-            params,
-            body,
-            None,
-            None,
-            Modifiers::empty(),
-        )
+        self.function(r#type, span, id, false, false, false, None, params, body, None, None)
     }
 
     #[inline]
@@ -976,12 +964,12 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
+        declare: bool,
         this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-        modifiers: Modifiers<'a>,
     ) -> Box<'a, Function<'a>> {
         self.alloc(Function::new(
             r#type,
@@ -989,12 +977,12 @@ impl<'a> AstBuilder<'a> {
             id,
             generator,
             r#async,
+            declare,
             this_param,
             params,
             body,
             type_parameters,
             return_type,
-            modifiers,
         ))
     }
 

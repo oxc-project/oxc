@@ -108,12 +108,12 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&function.id),
             function.generator,
             function.r#async,
+            false,
             self.ast.copy(&function.this_param),
             params,
             None,
             self.ast.copy(&function.type_parameters),
             return_type,
-            Modifiers::empty(),
         );
 
         self.ast.class_method(

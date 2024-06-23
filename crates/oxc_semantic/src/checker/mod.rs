@@ -34,7 +34,6 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::RegExpLiteral(lit) => js::check_regexp_literal(lit, ctx),
 
         AstKind::Directive(dir) => js::check_directive(dir, ctx),
-        AstKind::Function(func) => ts::check_function(func, node, ctx),
         AstKind::ModuleDeclaration(decl) => {
             js::check_module_declaration(decl, node, ctx);
         }

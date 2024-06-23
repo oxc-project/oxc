@@ -18,7 +18,7 @@ impl<'a> IsolatedDeclarations<'a> {
         func: &Function<'a>,
         modifiers: Option<Modifiers<'a>>,
     ) -> Option<Box<'a, Function<'a>>> {
-        if func.modifiers.is_contains_declare() {
+        if func.declare {
             None
         } else {
             let return_type = self.infer_function_return_type(func);
@@ -32,12 +32,12 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.copy(&func.id),
                 false,
                 false,
+                modifiers.unwrap_or_else(|| self.modifiers_declare()).is_contains_declare(),
                 self.ast.copy(&func.this_param),
                 params,
                 None,
                 self.ast.copy(&func.type_parameters),
                 return_type,
-                modifiers.unwrap_or_else(|| self.modifiers_declare()),
             ))
         }
     }

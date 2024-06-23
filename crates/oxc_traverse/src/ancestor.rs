@@ -5173,12 +5173,12 @@ pub(crate) const OFFSET_FUNCTION_SPAN: usize = offset_of!(Function, span);
 pub(crate) const OFFSET_FUNCTION_ID: usize = offset_of!(Function, id);
 pub(crate) const OFFSET_FUNCTION_GENERATOR: usize = offset_of!(Function, generator);
 pub(crate) const OFFSET_FUNCTION_ASYNC: usize = offset_of!(Function, r#async);
+pub(crate) const OFFSET_FUNCTION_DECLARE: usize = offset_of!(Function, declare);
 pub(crate) const OFFSET_FUNCTION_TYPE_PARAMETERS: usize = offset_of!(Function, type_parameters);
 pub(crate) const OFFSET_FUNCTION_THIS_PARAM: usize = offset_of!(Function, this_param);
 pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
 pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
-pub(crate) const OFFSET_FUNCTION_MODIFIERS: usize = offset_of!(Function, modifiers);
 pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
 
 #[repr(transparent)]
@@ -5204,6 +5204,11 @@ impl<'a> FunctionWithoutId<'a> {
     #[inline]
     pub fn r#async(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -5244,11 +5249,6 @@ impl<'a> FunctionWithoutId<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5293,6 +5293,11 @@ impl<'a> FunctionWithoutTypeParameters<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn this_param(&self) -> &Option<TSThisParameter<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
@@ -5322,11 +5327,6 @@ impl<'a> FunctionWithoutTypeParameters<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5371,6 +5371,11 @@ impl<'a> FunctionWithoutThisParam<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5400,11 +5405,6 @@ impl<'a> FunctionWithoutThisParam<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5449,6 +5449,11 @@ impl<'a> FunctionWithoutParams<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5478,11 +5483,6 @@ impl<'a> FunctionWithoutParams<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5527,6 +5527,11 @@ impl<'a> FunctionWithoutBody<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5556,11 +5561,6 @@ impl<'a> FunctionWithoutBody<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5605,6 +5605,11 @@ impl<'a> FunctionWithoutReturnType<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5634,11 +5639,6 @@ impl<'a> FunctionWithoutReturnType<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
                 as *const Option<Box<'a, FunctionBody<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]

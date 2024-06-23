@@ -310,10 +310,10 @@ impl<'a> ParserImpl<'a> {
             _ if self.at_function_with_async() => {
                 let declare = modifiers.contains(ModifierKind::Declare);
                 if declare {
-                    self.parse_ts_declare_function(start_span, modifiers)
+                    self.parse_ts_declare_function(start_span, &modifiers)
                         .map(Declaration::FunctionDeclaration)
                 } else if self.ts_enabled() {
-                    self.parse_ts_function_impl(start_span, FunctionKind::Declaration, modifiers)
+                    self.parse_ts_function_impl(start_span, FunctionKind::Declaration, &modifiers)
                         .map(Declaration::FunctionDeclaration)
                 } else {
                     self.parse_function_impl(FunctionKind::Declaration)
@@ -327,7 +327,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_declare_function(
         &mut self,
         start_span: Span,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;

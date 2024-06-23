@@ -708,7 +708,7 @@ impl<'a> Declaration<'a> {
     pub fn declare(&self) -> bool {
         match self {
             Declaration::VariableDeclaration(decl) => decl.declare,
-            Declaration::FunctionDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::FunctionDeclaration(decl) => decl.declare,
             Declaration::ClassDeclaration(decl) => decl.declare,
             Declaration::TSEnumDeclaration(decl) => decl.modifiers.is_contains_declare(),
             Declaration::TSTypeAliasDeclaration(decl) => decl.modifiers.is_contains_declare(),
@@ -946,12 +946,12 @@ impl<'a> Function<'a> {
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
+        declare: bool,
         this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-        modifiers: Modifiers<'a>,
     ) -> Self {
         Self {
             r#type,
@@ -959,12 +959,12 @@ impl<'a> Function<'a> {
             id,
             generator,
             r#async,
+            declare,
             this_param,
             params,
             body,
             type_parameters,
             return_type,
-            modifiers,
             scope_id: Cell::default(),
         }
     }
@@ -974,7 +974,7 @@ impl<'a> Function<'a> {
             self.r#type,
             FunctionType::TSDeclareFunction | FunctionType::TSEmptyBodyFunctionExpression
         ) || self.body.is_none()
-            || self.modifiers.contains(ModifierKind::Declare)
+            || self.declare
     }
 
     pub fn is_expression(&self) -> bool {
@@ -1004,12 +1004,12 @@ impl<'a> Hash for Function<'a> {
         self.id.hash(state);
         self.generator.hash(state);
         self.r#async.hash(state);
+        self.declare.hash(state);
         self.this_param.hash(state);
         self.params.hash(state);
         self.body.hash(state);
         self.type_parameters.hash(state);
         self.return_type.hash(state);
-        self.modifiers.hash(state);
     }
 }
 
