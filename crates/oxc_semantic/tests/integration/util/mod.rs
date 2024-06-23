@@ -122,19 +122,6 @@ impl<'a> SemanticTester<'a> {
             ),
             _ => semantic_ret.semantic,
         }
-        // if !semantic_ret.errors.is_empty() {
-        //     let report = self.wrap_diagnostics(semantic_ret.errors);
-        //     panic!(
-        //         "Semantic analysis failed:\n\n{}",
-        //         report
-        //             .iter()
-        //             .map(ToString::to_string)
-        //             .intersperse("\n\n".to_owned())
-        //             .collect::<String>()
-        //     );
-        // };
-
-        // semantic_ret.semantic
     }
 
     /// Parse the source text into a new [`Semantic`], but preserves any errors that occur during
