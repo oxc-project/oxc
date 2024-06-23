@@ -410,9 +410,6 @@ pub fn jsx_element_no_match(span0: Span, span1: Span, name: &str) -> OxcDiagnost
 }
 
 #[cold]
-pub fn modifiers_cannot_appear(span: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "TS1044: '{name}' modifier cannot appear on a module or namespace element."
-    ))
-    .with_label(span)
+pub fn modifier_cannot_be_used_here(span: Span, name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("'{name}' modifier cannot be used here.")).with_label(span)
 }

@@ -10137,7 +10137,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·       ──
    ╰────
 
-  × TS1044: 'abstract' modifier cannot appear on a module or namespace element.
+  × 'abstract' modifier cannot be used here.
    ╭─[typescript/interface/abstract/input.ts:1:1]
  1 │ abstract interface Foo {
    · ────────
@@ -10152,7 +10152,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1044: 'abstract' modifier cannot appear on a module or namespace element.
+  × 'abstract' modifier cannot be used here.
    ╭─[typescript/interface/export-abstract-interface/input.ts:1:8]
  1 │ export abstract interface I {
    ·        ────────

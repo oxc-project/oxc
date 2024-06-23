@@ -34,7 +34,7 @@ impl<'a> ParserImpl<'a> {
 
         for modifier in modifiers.iter() {
             if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Const) {
-                self.error(diagnostics::modifiers_cannot_appear(
+                self.error(diagnostics::modifier_cannot_be_used_here(
                     modifier.span,
                     modifier.kind.as_str(),
                 ));
@@ -119,7 +119,7 @@ impl<'a> ParserImpl<'a> {
 
         for modifier in modifiers.iter() {
             if modifier.kind != ModifierKind::Declare {
-                self.error(diagnostics::modifiers_cannot_appear(
+                self.error(diagnostics::modifier_cannot_be_used_here(
                     modifier.span,
                     modifier.kind.as_str(),
                 ));
@@ -151,7 +151,7 @@ impl<'a> ParserImpl<'a> {
 
         for modifier in modifiers.iter() {
             if modifier.kind != ModifierKind::Declare {
-                self.error(diagnostics::modifiers_cannot_appear(
+                self.error(diagnostics::modifier_cannot_be_used_here(
                     modifier.span,
                     modifier.kind.as_str(),
                 ));
@@ -293,7 +293,7 @@ impl<'a> ParserImpl<'a> {
 
         for modifier in modifiers.iter() {
             if modifier.kind != ModifierKind::Declare {
-                self.error(diagnostics::modifiers_cannot_appear(
+                self.error(diagnostics::modifier_cannot_be_used_here(
                     modifier.span,
                     modifier.kind.as_str(),
                 ));
