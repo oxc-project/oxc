@@ -37,7 +37,6 @@ fn test_exported_named_function() {
     }
     ",
     );
-    let SemanticBuilderReturn { semantic, errors } = test.build_with_errors();
     test.has_some_symbol("foo").is_exported().test();
     for name in &["a", "x"] {
         test.has_some_symbol(name).is_not_exported().test();
