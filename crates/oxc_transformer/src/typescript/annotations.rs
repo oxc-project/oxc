@@ -369,6 +369,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         if !self.assignments.is_empty() {
             if let Statement::ExpressionStatement(expr) = &stmt.consequent {
                 if expr.expression.is_super_call_expression() {
+                    // TODO: Need to create a scope for this block
                     stmt.consequent = self.ctx.ast.block_statement(self.ctx.ast.block(
                         expr.span,
                         self.ctx.ast.new_vec_single(self.ctx.ast.copy(&stmt.consequent)),
@@ -386,6 +387,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             };
             if let Some(span) = alternate_span {
                 let alternate = stmt.alternate.take().unwrap();
+                // TODO: Need to create a scope for this block
                 stmt.alternate = Some(self.ctx.ast.block_statement(
                     self.ctx.ast.block(span, self.ctx.ast.new_vec_single(alternate)),
                 ));
@@ -393,6 +395,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
 
         if stmt.consequent.is_typescript_syntax() {
+            // TODO: Need to create a scope for this block
             stmt.consequent = self.ctx.ast.block_statement(
                 self.ctx.ast.block(stmt.consequent.span(), self.ctx.ast.new_vec()),
             );
@@ -405,6 +408,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
+            // TODO: Need to create a scope for this block
             stmt.body = self
                 .ctx
                 .ast
@@ -414,6 +418,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
+            // TODO: Need to create a scope for this block
             stmt.body = self
                 .ctx
                 .ast
@@ -423,6 +428,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
+            // TODO: Need to create a scope for this block
             stmt.body = self
                 .ctx
                 .ast
