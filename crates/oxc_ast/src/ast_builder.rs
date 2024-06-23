@@ -280,7 +280,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn block_statement(self, block: Box<'a, BlockStatement<'a>>) -> Statement<'a> {
-        Statement::BlockStatement(self.block(block.span, block.unbox().body))
+        Statement::BlockStatement(block)
     }
 
     #[inline]
