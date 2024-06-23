@@ -127,16 +127,16 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_jsx_opening_element(elem);
     }
 
-    pub fn transform_method_definition(
+    pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
+        self.annotations.transform_method_definition(def);
+    }
+
+    pub fn transform_method_definition_on_exit(
         &mut self,
         def: &mut MethodDefinition<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        self.annotations.transform_method_definition(def, ctx);
-    }
-
-    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
-        self.annotations.transform_method_definition_on_exit(def);
+        self.annotations.transform_method_definition_on_exit(def, ctx);
     }
 
     pub fn transform_new_expression(&mut self, expr: &mut NewExpression<'a>) {
@@ -151,8 +151,12 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements(stmts);
     }
 
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        self.annotations.transform_statements_on_exit(stmts);
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_statements_on_exit(stmts, ctx);
     }
 
     pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {

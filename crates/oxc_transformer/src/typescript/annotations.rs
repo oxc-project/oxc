@@ -2,10 +2,10 @@
 
 use std::rc::Rc;
 
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::{Atom, GetSpan, SPAN};
-use oxc_syntax::{operator::AssignmentOperator, reference::ReferenceFlag};
+use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_syntax::{operator::AssignmentOperator, reference::ReferenceFlag, symbol::SymbolId};
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
 
@@ -16,7 +16,7 @@ pub struct TypeScriptAnnotations<'a> {
     options: Rc<TypeScriptOptions>,
     ctx: Ctx<'a>,
     /// Assignments to be added to the constructor body
-    assignments: Vec<'a, Statement<'a>>,
+    assignments: Vec<Assignment<'a>>,
     has_super_call: bool,
 
     has_jsx_element: bool,
@@ -42,7 +42,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
         Self {
             has_super_call: false,
-            assignments: ctx.ast.new_vec(),
+            assignments: vec![],
             options,
             ctx,
             has_jsx_element: false,
@@ -58,35 +58,6 @@ impl<'a> TypeScriptAnnotations<'a> {
     fn is_jsx_imports(&self, name: &str) -> bool {
         self.has_jsx_element && name == self.jsx_element_import_name
             || self.has_jsx_fragment && name == self.jsx_fragment_import_name
-    }
-
-    // Creates `this.name = name`
-    fn create_this_property_assignment(
-        &self,
-        id: &BindingIdentifier<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Statement<'a> {
-        let ast = self.ctx.ast;
-
-        let symbol_id = id.symbol_id.get().unwrap();
-        let reference_id =
-            ctx.create_bound_reference(id.name.to_compact_str(), symbol_id, ReferenceFlag::Read);
-        let id = IdentifierReference::new_read(id.span, id.name.clone(), Some(reference_id));
-
-        ast.expression_statement(
-            SPAN,
-            ast.assignment_expression(
-                SPAN,
-                AssignmentOperator::Assign,
-                ast.simple_assignment_target_member_expression(ast.static_member(
-                    SPAN,
-                    ast.this_expression(SPAN),
-                    IdentifierName::new(id.span, id.name.clone()),
-                    false,
-                )),
-                ast.identifier_reference_expression(id),
-            ),
-        )
     }
 
     // Remove type only imports/exports
@@ -306,19 +277,18 @@ impl<'a> TypeScriptAnnotations<'a> {
         elem.type_parameters = None;
     }
 
-    pub fn transform_method_definition(
-        &mut self,
-        def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) {
+    pub fn transform_method_definition(&mut self, def: &mut MethodDefinition<'a>) {
         // Collects parameter properties so that we can add an assignment
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
                 if param.is_public() {
                     if let Some(id) = param.pattern.get_binding_identifier() {
-                        let assignment = self.create_this_property_assignment(id, ctx);
-                        self.assignments.push(assignment);
+                        self.assignments.push(Assignment {
+                            span: id.span,
+                            name: id.name.clone(),
+                            symbol_id: id.symbol_id.get().unwrap(),
+                        });
                     }
                 }
 
@@ -333,7 +303,11 @@ impl<'a> TypeScriptAnnotations<'a> {
         def.r#override = false;
     }
 
-    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
+    pub fn transform_method_definition_on_exit(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if def.kind == MethodDefinitionKind::Constructor && !self.assignments.is_empty() {
             // When the constructor doesn't have a super call,
             // we simply add assignments to the bottom of the function body
@@ -350,7 +324,11 @@ impl<'a> TypeScriptAnnotations<'a> {
                         )
                     })
                     .statements
-                    .extend(self.assignments.drain(..));
+                    .extend(
+                        self.assignments
+                            .drain(..)
+                            .map(|assignment| assignment.create_this_property_assignment(ctx)),
+                    );
             }
         }
     }
@@ -379,7 +357,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         def.type_annotation = None;
     }
 
-    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub fn transform_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         // Remove declare declaration
         stmts.retain(|stmt| match stmt {
             match_declaration!(Statement) => {
@@ -389,7 +367,11 @@ impl<'a> TypeScriptAnnotations<'a> {
         });
     }
 
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
@@ -410,7 +392,11 @@ impl<'a> TypeScriptAnnotations<'a> {
                     let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
                     new_stmts.push(stmt);
                     if is_super_call {
-                        new_stmts.extend(self.ctx.ast.copy(&self.assignments));
+                        new_stmts.extend(
+                            self.assignments
+                                .iter()
+                                .map(|assignment| assignment.create_this_property_assignment(ctx)),
+                        );
                     }
                 }
                 self.has_super_call = true;
@@ -526,5 +512,38 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
 
         self.is_jsx_imports(name)
+    }
+}
+
+struct Assignment<'a> {
+    span: Span,
+    name: Atom<'a>,
+    symbol_id: SymbolId,
+}
+
+impl<'a> Assignment<'a> {
+    // Creates `this.name = name`
+    fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
+        let reference_id = ctx.create_bound_reference(
+            self.name.to_compact_str(),
+            self.symbol_id,
+            ReferenceFlag::Read,
+        );
+        let id = IdentifierReference::new_read(self.span, self.name.clone(), Some(reference_id));
+
+        ctx.ast.expression_statement(
+            SPAN,
+            ctx.ast.assignment_expression(
+                SPAN,
+                AssignmentOperator::Assign,
+                ctx.ast.simple_assignment_target_member_expression(ctx.ast.static_member(
+                    SPAN,
+                    ctx.ast.this_expression(SPAN),
+                    IdentifierName::new(self.span, self.name.clone()),
+                    false,
+                )),
+                ctx.ast.identifier_reference_expression(id),
+            ),
+        )
     }
 }

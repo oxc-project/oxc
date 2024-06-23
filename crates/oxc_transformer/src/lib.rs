@@ -208,17 +208,17 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_method_definition(
         &mut self,
         def: &mut MethodDefinition<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.transform_method_definition(def, ctx);
+        self.x0_typescript.transform_method_definition(def);
     }
 
     fn exit_method_definition(
         &mut self,
         def: &mut MethodDefinition<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.transform_method_definition_on_exit(def);
+        self.x0_typescript.transform_method_definition_on_exit(def, ctx);
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -238,8 +238,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x3_es2015.enter_statements(stmts);
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_statements_on_exit(stmts);
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_statements_on_exit(stmts, ctx);
         self.x3_es2015.exit_statements(stmts);
     }
 
