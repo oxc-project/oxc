@@ -241,6 +241,10 @@ impl<'a> Modifiers<'a> {
         self.0.as_ref().and_then(|modifiers| modifiers.iter().find(|modifier| f(modifier)))
     }
 
+    pub fn is_contains_const(&self) -> bool {
+        self.contains(ModifierKind::Const)
+    }
+
     pub fn is_contains_declare(&self) -> bool {
         self.contains(ModifierKind::Declare)
     }

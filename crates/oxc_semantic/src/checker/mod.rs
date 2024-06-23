@@ -98,7 +98,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
             ts::check_ts_type_parameter_declaration(declaration, ctx);
         }
         AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, node, ctx),
-        AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, node, ctx),
+        AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
         AstKind::TSTypeAliasDeclaration(decl) => {
             ts::check_ts_type_alias_declaration(decl, node, ctx);
         }

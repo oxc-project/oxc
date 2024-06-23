@@ -59,7 +59,7 @@ impl<'a> TypeScriptEnum<'a> {
         is_export: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        if decl.modifiers.contains(ModifierKind::Declare) {
+        if decl.declare {
             return None;
         }
 

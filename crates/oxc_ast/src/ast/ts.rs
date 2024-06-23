@@ -55,8 +55,8 @@ pub struct TSEnumDeclaration<'a> {
     pub span: Span,
     pub id: BindingIdentifier<'a>,
     pub members: Vec<'a, TSEnumMember<'a>>,
-    /// Valid Modifiers: `const`, `export`, `declare`
-    pub modifiers: Modifiers<'a>,
+    pub r#const: bool,
+    pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

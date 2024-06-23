@@ -3357,13 +3357,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceHeritage<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_indent();
-        if self.modifiers.contains(ModifierKind::Export) {
-            p.print_str(b"export ");
-        }
-        if self.modifiers.contains(ModifierKind::Declare) {
+        if self.declare {
             p.print_str(b"declare ");
         }
-        if self.modifiers.contains(ModifierKind::Const) {
+        if self.r#const {
             p.print_str(b"const ");
         }
         p.print_space_before_identifier();

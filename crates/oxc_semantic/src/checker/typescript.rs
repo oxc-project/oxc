@@ -223,13 +223,8 @@ fn enum_member_must_have_initializer(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Enum member must have initializer.").with_labels([span0.into()])
 }
 
-pub fn check_ts_enum_declaration<'a>(
-    decl: &TSEnumDeclaration<'a>,
-    node: &AstNode<'a>,
-    ctx: &SemanticBuilder<'a>,
-) {
+pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &SemanticBuilder<'a>) {
     let mut need_initializer = false;
-    check_declaration_modifiers(&decl.modifiers, node, ctx);
 
     decl.members.iter().for_each(|member| {
         #[allow(clippy::unnested_or_patterns)]

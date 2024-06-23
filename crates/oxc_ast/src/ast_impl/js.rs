@@ -710,7 +710,7 @@ impl<'a> Declaration<'a> {
             Declaration::VariableDeclaration(decl) => decl.declare,
             Declaration::FunctionDeclaration(decl) => decl.declare,
             Declaration::ClassDeclaration(decl) => decl.declare,
-            Declaration::TSEnumDeclaration(decl) => decl.modifiers.is_contains_declare(),
+            Declaration::TSEnumDeclaration(decl) => decl.declare,
             Declaration::TSTypeAliasDeclaration(decl) => decl.modifiers.is_contains_declare(),
             Declaration::TSModuleDeclaration(decl) => decl.modifiers.is_contains_declare(),
             Declaration::TSInterfaceDeclaration(decl) => decl.modifiers.is_contains_declare(),

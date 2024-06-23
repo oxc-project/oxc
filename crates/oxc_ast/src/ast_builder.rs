@@ -1883,10 +1883,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         members: Vec<'a, TSEnumMember<'a>>,
-        modifiers: Modifiers<'a>,
+        r#const: bool,
+        declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(
-            self.alloc(TSEnumDeclaration::new(span, id, members, modifiers)),
+            self.alloc(TSEnumDeclaration::new(span, id, members, r#const, declare)),
         )
     }
 

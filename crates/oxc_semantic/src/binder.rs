@@ -320,7 +320,7 @@ impl<'a> Binder for TSInterfaceDeclaration<'a> {
 
 impl<'a> Binder for TSEnumDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let is_const = self.modifiers.contains(ModifierKind::Const);
+        let is_const = self.r#const;
         let includes = if is_const { SymbolFlags::ConstEnum } else { SymbolFlags::RegularEnum };
         let excludes = if is_const {
             SymbolFlags::ConstEnumExcludes

@@ -19,9 +19,10 @@ impl<'a> TSEnumDeclaration<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         members: Vec<'a, TSEnumMember<'a>>,
-        modifiers: Modifiers<'a>,
+        r#const: bool,
+        declare: bool,
     ) -> Self {
-        Self { span, id, members, modifiers, scope_id: Cell::default() }
+        Self { span, id, members, r#const, declare, scope_id: Cell::default() }
     }
 }
 
@@ -29,7 +30,8 @@ impl<'a> Hash for TSEnumDeclaration<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.id.hash(state);
         self.members.hash(state);
-        self.modifiers.hash(state);
+        self.r#const.hash(state);
+        self.declare.hash(state);
     }
 }
 

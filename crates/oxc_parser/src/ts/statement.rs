@@ -8,6 +8,7 @@ use super::{
     types::ModifierFlags,
 };
 use crate::{
+    diagnostics,
     js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
     lexer::Kind,
     list::{NormalList, SeparatedList},
@@ -25,14 +26,30 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_enum_declaration(
         &mut self,
         span: Span,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.bump_any(); // bump `enum`
 
         let id = self.parse_binding_identifier()?;
         let members = TSEnumMemberList::parse(self)?.members;
         let span = self.end_span(span);
-        Ok(self.ast.ts_enum_declaration(span, id, members, modifiers))
+
+        for modifier in modifiers.iter() {
+            if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Const) {
+                self.error(diagnostics::modifiers_cannot_appear(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+
+        Ok(self.ast.ts_enum_declaration(
+            span,
+            id,
+            members,
+            modifiers.is_contains_const(),
+            modifiers.is_contains_declare(),
+        ))
     }
 
     pub(crate) fn parse_ts_enum_member(&mut self) -> Result<TSEnumMember<'a>> {
@@ -289,7 +306,7 @@ impl<'a> ParserImpl<'a> {
                     .map(Declaration::TSModuleDeclaration)
             }
             Kind::Type => self.parse_ts_type_alias_declaration(start_span, modifiers),
-            Kind::Enum => self.parse_ts_enum_declaration(start_span, modifiers),
+            Kind::Enum => self.parse_ts_enum_declaration(start_span, &modifiers),
             Kind::Interface if self.is_at_interface_declaration() => {
                 self.parse_ts_interface_declaration(start_span, modifiers)
             }

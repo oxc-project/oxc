@@ -8664,8 +8664,8 @@ impl<'a> TSThisParameterWithoutTypeAnnotation<'a> {
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_SPAN: usize = offset_of!(TSEnumDeclaration, span);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_ID: usize = offset_of!(TSEnumDeclaration, id);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_MEMBERS: usize = offset_of!(TSEnumDeclaration, members);
-pub(crate) const OFFSET_TS_ENUM_DECLARATION_MODIFIERS: usize =
-    offset_of!(TSEnumDeclaration, modifiers);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_CONST: usize = offset_of!(TSEnumDeclaration, r#const);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_DECLARE: usize = offset_of!(TSEnumDeclaration, declare);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_SCOPE_ID: usize =
     offset_of!(TSEnumDeclaration, scope_id);
 
@@ -8688,11 +8688,13 @@ impl<'a> TSEnumDeclarationWithoutId<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
-        }
+    pub fn r#const(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -8723,11 +8725,13 @@ impl<'a> TSEnumDeclarationWithoutMembers<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
-        }
+    pub fn r#const(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
     }
 
     #[inline]
