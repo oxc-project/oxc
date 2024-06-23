@@ -11,7 +11,7 @@ use crate::{
     js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    ParserImpl, StatementContext,
+    ParserImpl,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -217,21 +217,11 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_ts_module_block(&mut self) -> Result<Box<'a, TSModuleBlock<'a>>> {
         let span = self.start_span();
-
-        let mut statements = self.ast.new_vec();
-
         self.expect(Kind::LCurly)?;
-
-        while !self.eat(Kind::RCurly) && !self.at(Kind::Eof) {
-            let stmt = self.parse_ts_module_item()?;
-            statements.push(stmt);
-        }
-
-        Ok(self.ast.ts_module_block(self.end_span(span), statements))
-    }
-
-    fn parse_ts_module_item(&mut self) -> Result<Statement<'a>> {
-        self.parse_statement_list_item(StatementContext::StatementList)
+        let (directives, statements) =
+            self.parse_directives_and_statements(/* is_top_level */ false)?;
+        self.expect(Kind::RCurly)?;
+        Ok(self.ast.ts_module_block(self.end_span(span), directives, statements))
     }
 
     pub(crate) fn parse_ts_namespace_or_module_declaration_body(

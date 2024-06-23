@@ -492,7 +492,7 @@ mod test {
         let sources = [
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
-            ("@decorator 'use strict';", 1),
+            (";'use strict';", 2),
         ];
         for (source, body_length) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();

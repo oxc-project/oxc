@@ -51,17 +51,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Program<'a> {
         if let Some(hashbang) = &self.hashbang {
             hashbang.gen(p, ctx);
         }
-        print_directives_and_statements(p, &self.directives, &self.body, ctx);
+        p.print_directives_and_statements(Some(&self.directives), &self.body, ctx);
     }
-}
-
-fn print_directives_and_statements<const MINIFY: bool>(
-    p: &mut Codegen<{ MINIFY }>,
-    directives: &[Directive],
-    statements: &[Statement<'_>],
-    ctx: Context,
-) {
-    p.print_directives_and_statements(Some(directives), statements, ctx);
 }
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Hashbang<'a> {
@@ -3300,11 +3291,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclarationName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.print_curly_braces(self.span, self.body.is_empty(), |p| {
-            for item in &self.body {
-                p.print_semicolon_if_needed();
-                item.gen(p, ctx);
-            }
+        let is_empty = self.directives.is_empty() && self.body.is_empty();
+        p.print_curly_braces(self.span, is_empty, |p| {
+            p.print_directives_and_statements(Some(&self.directives), &self.body, ctx);
         });
     }
 }

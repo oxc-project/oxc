@@ -138,7 +138,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.scope.enter_scope(ScopeFlags::TsModuleBlock);
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
-        self.ast.ts_module_block(SPAN, stmts)
+        self.ast.ts_module_block(SPAN, self.ast.new_vec(), stmts)
     }
 
     pub fn transform_ts_module_declaration(

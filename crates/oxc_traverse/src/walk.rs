@@ -4903,7 +4903,16 @@ pub(crate) unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_block(&mut *node, ctx);
-    ctx.push_stack(Ancestor::TSModuleBlockBody(ancestor::TSModuleBlockWithoutBody(node)));
+    ctx.push_stack(Ancestor::TSModuleBlockDirectives(ancestor::TSModuleBlockWithoutDirectives(
+        node,
+    )));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
+        as *mut Vec<Directive>))
+        .iter_mut()
+    {
+        walk_directive(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSModuleBlockBody);
     walk_statements(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_BODY) as *mut Vec<Statement>,

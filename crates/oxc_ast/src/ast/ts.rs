@@ -1004,6 +1004,7 @@ pub enum TSModuleDeclarationBody<'a> {
 pub struct TSModuleBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 

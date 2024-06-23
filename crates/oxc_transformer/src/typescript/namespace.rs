@@ -141,8 +141,15 @@ impl<'a> TypeScript<'a> {
         let symbol_id = ctx.generate_uid(&real_name, scope_id, SymbolFlags::FunctionScopedVariable);
         let name = self.ctx.ast.new_atom(ctx.symbols().get_name(symbol_id));
 
-        let namespace_top_level = match body {
-            TSModuleDeclarationBody::TSModuleBlock(block) => block.unbox().body,
+        let directives;
+        let namespace_top_level;
+
+        match body {
+            TSModuleDeclarationBody::TSModuleBlock(block) => {
+                let block = block.unbox();
+                directives = block.directives;
+                namespace_top_level = block.body;
+            }
             // We handle `namespace X.Y {}` as if it was
             //   namespace X {
             //     export namespace Y {}
@@ -152,9 +159,10 @@ impl<'a> TypeScript<'a> {
                 let export_named_decl =
                     self.ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
                 let stmt = Statement::ExportNamedDeclaration(export_named_decl);
-                self.ctx.ast.new_vec_single(stmt)
+                directives = self.ctx.ast.new_vec();
+                namespace_top_level = self.ctx.ast.new_vec_single(stmt);
             }
-        };
+        }
 
         let mut new_stmts = self.ctx.ast.new_vec();
 
@@ -256,7 +264,15 @@ impl<'a> TypeScript<'a> {
             return None;
         }
 
-        Some(self.transform_namespace(name, real_name, new_stmts, parent_export, scope_id, ctx))
+        Some(self.transform_namespace(
+            name,
+            real_name,
+            new_stmts,
+            directives,
+            parent_export,
+            scope_id,
+            ctx,
+        ))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -280,35 +296,17 @@ impl<'a> TypeScript<'a> {
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     //                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    #[allow(clippy::needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value, clippy::too_many_arguments)]
     fn transform_namespace(
         &self,
         arg_name: Atom<'a>,
         real_name: Atom<'a>,
-        mut stmts: Vec<'a, Statement<'a>>,
+        stmts: Vec<'a, Statement<'a>>,
+        directives: Vec<'a, Directive<'a>>,
         parent_export: Option<Expression<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx,
     ) -> Statement<'a> {
-        let mut directives = self.ctx.ast.new_vec();
-
-        // Check if the namespace has a `use strict` directive
-        if stmts.first().is_some_and(|stmt| {
-            matches!(stmt, Statement::ExpressionStatement(es) if
-                matches!(&es.expression, Expression::StringLiteral(literal) if
-                literal.value == "use strict")
-            )
-        }) {
-            stmts.remove(0);
-            let directive = self.ctx.ast.new_atom("use strict");
-            let directive = Directive {
-                span: SPAN,
-                expression: StringLiteral::new(SPAN, directive.clone()),
-                directive,
-            };
-            directives.push(directive);
-        }
-
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         let callee = {

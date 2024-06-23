@@ -280,7 +280,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn block_statement(self, block: Box<'a, BlockStatement<'a>>) -> Statement<'a> {
-        Statement::BlockStatement(self.block(block.span, block.unbox().body))
+        Statement::BlockStatement(block)
     }
 
     #[inline]
@@ -575,7 +575,7 @@ impl<'a> AstBuilder<'a> {
         self,
         expr: MemberExpression<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::from(SimpleAssignmentTarget::from(expr))
+        AssignmentTarget::from(expr)
     }
 
     #[inline]
@@ -1761,9 +1761,10 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_module_block(
         self,
         span: Span,
+        directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
-        self.alloc(TSModuleBlock { span, body })
+        self.alloc(TSModuleBlock { span, directives, body })
     }
 
     #[inline]
