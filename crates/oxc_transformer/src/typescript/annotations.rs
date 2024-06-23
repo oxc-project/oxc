@@ -66,116 +66,80 @@ impl<'a> TypeScriptAnnotations<'a> {
         program: &mut Program<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut module_count = 0;
-        let mut removed_count = 0;
+        let mut no_modules_remaining = true;
+        let mut some_modules_deleted = false;
 
         program.body.retain_mut(|stmt| {
-            match stmt {
+            let need_retain = match stmt {
                 // fix namespace/export-type-only/input.ts
                 // The namespace is type only. So if its name appear in the ExportNamedDeclaration, we should remove it.
-                Statement::TSModuleDeclaration(decl) => {
-                    self.type_identifier_names.insert(decl.id.name().clone());
-                    false
+                Statement::TSModuleDeclaration(_) => return false,
+                Statement::ExportNamedDeclaration(decl) => {
+                    if decl.export_kind.is_type() {
+                        false
+                    } else {
+                        decl.specifiers.retain(|specifier| {
+                            !specifier.export_kind.is_type()
+                                && !self.type_identifier_names.contains(&specifier.exported.name())
+                        });
+
+                        !decl.specifiers.is_empty()
+                            || matches!(&decl.declaration, Some(decl) if !decl.is_typescript_syntax())
+                    }
                 }
-                match_module_declaration!(Statement) => {
-                    let module_decl = stmt.to_module_declaration_mut();
-                    let need_delete = match module_decl {
-                        ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                            decl.specifiers.retain(|specifier| {
-                                !(specifier.export_kind.is_type()
-                                    || self
-                                        .type_identifier_names
-                                        .contains(&specifier.exported.name()))
-                            });
-
-                            decl.export_kind.is_type()
-                                || ((decl.declaration.is_none()
-                                    || decl
-                                        .declaration
-                                        .as_ref()
-                                        .is_some_and(Declaration::is_typescript_syntax))
-                                    && decl.specifiers.is_empty())
-                        }
-                        ModuleDeclaration::ExportAllDeclaration(decl) => {
-                            return !decl.export_kind.is_type();
-                        }
-                        ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                            return !decl.is_typescript_syntax();
-                        }
-                        ModuleDeclaration::ImportDeclaration(decl) => {
-                            let is_type = decl.import_kind.is_type();
-
-                            let is_specifiers_empty =
-                                decl.specifiers.as_ref().is_some_and(|s| s.is_empty());
-
-                            if let Some(specifiers) = &mut decl.specifiers {
-                                specifiers.retain(|specifier| match specifier {
+                Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
+                Statement::ExportDefaultDeclaration(decl) => !decl.is_typescript_syntax(),
+                Statement::ImportDeclaration(decl) => {
+                    if decl.import_kind.is_type() {
+                        false
+                    } else if self.options.only_remove_type_imports {
+                        true
+                    } else if let Some(specifiers) = &mut decl.specifiers {
+                        if specifiers.is_empty() {
+                            true
+                        } else {
+                            specifiers.retain(|specifier| {
+                                let id = match specifier {
                                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                        if is_type || s.import_kind.is_type() {
-                                            self.type_identifier_names.insert(s.local.name.clone());
+                                        if s.import_kind.is_type() {
                                             return false;
                                         }
-
-                                        if self.options.only_remove_type_imports {
-                                            return true;
-                                        }
-
-                                        self.has_value_reference(&s.local.name, ctx)
+                                        &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                        if is_type {
-                                            self.type_identifier_names.insert(s.local.name.clone());
-                                            return false;
-                                        }
-
-                                        if self.options.only_remove_type_imports {
-                                            return true;
-                                        }
-
-                                        self.has_value_reference(&s.local.name, ctx)
+                                        &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                        if is_type {
-                                            self.type_identifier_names.insert(s.local.name.clone());
-                                            return false;
-                                        }
-
-                                        if self.options.only_remove_type_imports {
-                                            return true;
-                                        }
-
-                                        self.has_value_reference(&s.local.name, ctx)
+                                        &s.local
                                     }
-                                });
-                            }
-
-                            decl.import_kind.is_type()
-                                || (!self.options.only_remove_type_imports
-                                    && !is_specifiers_empty
-                                    && decl
-                                        .specifiers
-                                        .as_ref()
-                                        .is_some_and(|specifiers| specifiers.is_empty()))
+                                };
+                                self.has_value_reference(&id.name, ctx)
+                            });
+                            !specifiers.is_empty()
                         }
-                        _ => module_decl.is_typescript_syntax(),
-                    };
-
-                    if need_delete {
-                        removed_count += 1;
                     } else {
-                        module_count += 1;
+                        true
                     }
-
-                    !need_delete
                 }
-                _ => true,
+                Statement::TSExportAssignment(_) | Statement::TSNamespaceExportDeclaration(_) => {
+                    false
+                }
+                _ => return true,
+            };
+
+            if need_retain {
+                no_modules_remaining = false;
+            } else {
+                some_modules_deleted = true;
             }
+
+            need_retain
         });
 
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if module_count == 0 && removed_count > 0 {
+        if no_modules_remaining && some_modules_deleted {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
                 self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.new_vec(), None),
             );
@@ -491,6 +455,29 @@ impl<'a> TypeScriptAnnotations<'a> {
         self.has_jsx_fragment = true;
     }
 
+    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
+        let Some(specifiers) = &decl.specifiers else {
+            return;
+        };
+        let is_type = decl.import_kind.is_type();
+        for specifier in specifiers {
+            let mut specifier_is_type = is_type;
+            let id = match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                    if s.import_kind.is_type() {
+                        specifier_is_type = true;
+                    }
+                    &s.local
+                }
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
+            };
+            if specifier_is_type {
+                self.type_identifier_names.insert(id.name.clone());
+            }
+        }
+    }
+
     pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
         let is_type = decl.export_kind.is_type();
         for specifier in &decl.specifiers {
@@ -498,6 +485,13 @@ impl<'a> TypeScriptAnnotations<'a> {
                 self.type_identifier_names.insert(specifier.local.name().clone());
             }
         }
+    }
+
+    pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
+        // NB: Namespace transform happens in `enter_program` visitor, and replaces retained
+        // namespaces with functions. This visitor is called after, by which time any remaining
+        // namespaces need to be deleted.
+        self.type_identifier_names.insert(decl.id.name().clone());
     }
 
     pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {

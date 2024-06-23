@@ -138,12 +138,28 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_class_body(body);
     }
 
+    fn enter_import_declaration(
+        &mut self,
+        decl: &mut ImportDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.transform_import_declaration(decl);
+    }
+
     fn enter_export_named_declaration(
         &mut self,
         decl: &mut ExportNamedDeclaration<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_export_named_declaration(decl);
+    }
+
+    fn enter_ts_module_declaration(
+        &mut self,
+        decl: &mut TSModuleDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.transform_ts_module_declaration(decl);
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
