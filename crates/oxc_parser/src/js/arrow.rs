@@ -216,9 +216,10 @@ impl<'a> ParserImpl<'a> {
                 }
                 _ => unreachable!(),
             };
-            let params_span = self.end_span(ident.span);
+            let span = ident.span;
+            let params_span = self.end_span(span);
             let ident = self.ast.binding_pattern_identifier(ident);
-            let pattern = self.ast.binding_pattern(ident, None, false);
+            let pattern = self.ast.binding_pattern(span, ident, None, false);
             let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
             self.ast.formal_parameters(
                 params_span,

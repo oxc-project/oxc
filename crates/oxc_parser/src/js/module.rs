@@ -7,7 +7,9 @@ use super::{
     list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
     FunctionKind,
 };
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
+use crate::{
+    diagnostics, lexer::Kind, list::SeparatedList, modifiers::Modifiers, Context, ParserImpl,
+};
 
 impl<'a> ParserImpl<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
@@ -292,7 +294,7 @@ impl<'a> ParserImpl<'a> {
             Modifiers::empty()
         };
 
-        let declaration = self.parse_declaration(decl_span, modifiers)?;
+        let declaration = self.parse_declaration(decl_span, &modifiers)?;
         let span = self.end_span(span);
         Ok(self.ast.export_named_declaration(
             span,
@@ -318,19 +320,19 @@ impl<'a> ParserImpl<'a> {
         self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
-                .parse_class_declaration(decl_span, /* modifiers */ Modifiers::empty())
+                .parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty())
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
             _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
                 // eat the abstract modifier
                 let (_, modifiers) = self.eat_modifiers_before_declaration();
-                self.parse_class_declaration(decl_span, modifiers)
+                self.parse_class_declaration(decl_span, &modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }
             _ if self.at(Kind::Interface)
                 && !self.peek_token().is_on_new_line
                 && self.ts_enabled() =>
             {
-                self.parse_ts_interface_declaration(decl_span, Modifiers::empty()).map(|decl| {
+                self.parse_ts_interface_declaration(decl_span, &Modifiers::empty()).map(|decl| {
                     match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
                             ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)

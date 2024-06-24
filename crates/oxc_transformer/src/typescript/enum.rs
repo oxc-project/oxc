@@ -59,7 +59,7 @@ impl<'a> TypeScriptEnum<'a> {
         is_export: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        if decl.modifiers.contains(ModifierKind::Declare) {
+        if decl.declare {
             return None;
         }
 
@@ -67,7 +67,7 @@ impl<'a> TypeScriptEnum<'a> {
         let span = decl.span;
         let ident = decl.id.clone();
         let kind = self.ctx.ast.binding_pattern_identifier(ident);
-        let id = self.ctx.ast.binding_pattern(kind, None, false);
+        let id = self.ctx.ast.binding_pattern(SPAN, kind, None, false);
 
         // ((Foo) => {
         let params =
@@ -127,15 +127,14 @@ impl<'a> TypeScriptEnum<'a> {
 
             let binding_identifier = BindingIdentifier::new(SPAN, enum_name.clone());
             let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
-            let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+            let binding = self.ctx.ast.binding_pattern(SPAN, binding_pattern_kind, None, false);
             let decl =
                 self.ctx.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
 
             decls.push(decl);
             decls
         };
-        let variable_declaration =
-            self.ctx.ast.variable_declaration(span, kind, decls, Modifiers::empty());
+        let variable_declaration = self.ctx.ast.variable_declaration(span, kind, decls, false);
         let variable_declaration = Declaration::VariableDeclaration(variable_declaration);
 
         let stmt = if is_export {

@@ -51,17 +51,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Program<'a> {
         if let Some(hashbang) = &self.hashbang {
             hashbang.gen(p, ctx);
         }
-        print_directives_and_statements(p, &self.directives, &self.body, ctx);
+        p.print_directives_and_statements(Some(&self.directives), &self.body, ctx);
     }
-}
-
-fn print_directives_and_statements<const MINIFY: bool>(
-    p: &mut Codegen<{ MINIFY }>,
-    directives: &[Directive],
-    statements: &[Statement<'_>],
-    ctx: Context,
-) {
-    p.print_directives_and_statements(Some(directives), statements, ctx);
 }
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Hashbang<'a> {
@@ -589,7 +580,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.modifiers.is_contains_declare() {
+        if self.declare {
             p.print_str(b"declare ");
         }
 
@@ -637,7 +628,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
-            if self.modifiers.contains(ModifierKind::Declare) {
+            if self.declare {
                 p.print_str(b"declare ");
             }
             if self.r#async {
@@ -2090,10 +2081,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MetaProperty<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        if self.modifiers.is_contains_declare() {
+        if self.declare {
             p.print_str(b"declare ");
         }
-        if self.modifiers.is_contains_abstract() {
+        if self.r#abstract {
             p.print_str(b"abstract ");
         }
         let n = p.code_len();
@@ -3254,10 +3245,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamedTupleMember<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.modifiers.contains(ModifierKind::Export) {
-            p.print_str(b"export ");
-        }
-        if self.modifiers.contains(ModifierKind::Declare) {
+        if self.declare {
             p.print_str(b"declare ");
         }
         p.print_str(b"module");
@@ -3300,21 +3288,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclarationName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.print_curly_braces(self.span, self.body.is_empty(), |p| {
-            for item in &self.body {
-                p.print_semicolon_if_needed();
-                item.gen(p, ctx);
-            }
+        let is_empty = self.directives.is_empty() && self.body.is_empty();
+        p.print_curly_braces(self.span, is_empty, |p| {
+            p.print_directives_and_statements(Some(&self.directives), &self.body, ctx);
         });
     }
 }
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeAliasDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        if self.modifiers.contains(ModifierKind::Export) {
-            p.print_str(b"export ");
-        }
-        if self.modifiers.contains(ModifierKind::Declare) {
+        if self.declare {
             p.print_str(b"declare ");
         }
         p.print_str(b"type");
@@ -3368,13 +3351,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSInterfaceHeritage<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_indent();
-        if self.modifiers.contains(ModifierKind::Export) {
-            p.print_str(b"export ");
-        }
-        if self.modifiers.contains(ModifierKind::Declare) {
+        if self.declare {
             p.print_str(b"declare ");
         }
-        if self.modifiers.contains(ModifierKind::Const) {
+        if self.r#const {
             p.print_str(b"const ");
         }
         p.print_space_before_identifier();

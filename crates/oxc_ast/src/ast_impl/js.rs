@@ -705,23 +705,23 @@ impl<'a> Declaration<'a> {
         }
     }
 
-    pub fn modifiers(&self) -> Option<&Modifiers<'a>> {
+    pub fn declare(&self) -> bool {
         match self {
-            Declaration::VariableDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::FunctionDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::ClassDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSEnumDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSTypeAliasDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSModuleDeclaration(decl) => Some(&decl.modifiers),
-            Declaration::TSInterfaceDeclaration(decl) => Some(&decl.modifiers),
-            _ => None,
+            Declaration::VariableDeclaration(decl) => decl.declare,
+            Declaration::FunctionDeclaration(decl) => decl.declare,
+            Declaration::ClassDeclaration(decl) => decl.declare,
+            Declaration::TSEnumDeclaration(decl) => decl.declare,
+            Declaration::TSTypeAliasDeclaration(decl) => decl.declare,
+            Declaration::TSModuleDeclaration(decl) => decl.declare,
+            Declaration::TSInterfaceDeclaration(decl) => decl.declare,
+            _ => false,
         }
     }
 }
 
 impl<'a> VariableDeclaration<'a> {
     pub fn is_typescript_syntax(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Declare)
+        self.declare
     }
 
     pub fn has_init(&self) -> bool {
@@ -853,6 +853,7 @@ impl<'a> SwitchCase<'a> {
         self.test.is_none()
     }
 }
+
 impl<'a> CatchClause<'a> {
     pub fn new(
         span: Span,
@@ -871,8 +872,8 @@ impl<'a> Hash for CatchClause<'a> {
 }
 
 impl<'a> BindingPattern<'a> {
-    pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
-        Self { kind, type_annotation: None, optional: false }
+    pub fn new_with_kind(span: Span, kind: BindingPatternKind<'a>) -> Self {
+        Self { span, kind, type_annotation: None, optional: false }
     }
 
     pub fn get_identifier(&self) -> Option<Atom<'a>> {
@@ -946,12 +947,12 @@ impl<'a> Function<'a> {
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
+        declare: bool,
         this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-        modifiers: Modifiers<'a>,
     ) -> Self {
         Self {
             r#type,
@@ -959,12 +960,12 @@ impl<'a> Function<'a> {
             id,
             generator,
             r#async,
+            declare,
             this_param,
             params,
             body,
             type_parameters,
             return_type,
-            modifiers,
             scope_id: Cell::default(),
         }
     }
@@ -974,7 +975,7 @@ impl<'a> Function<'a> {
             self.r#type,
             FunctionType::TSDeclareFunction | FunctionType::TSEmptyBodyFunctionExpression
         ) || self.body.is_none()
-            || self.modifiers.contains(ModifierKind::Declare)
+            || self.declare
     }
 
     pub fn is_expression(&self) -> bool {
@@ -1004,12 +1005,12 @@ impl<'a> Hash for Function<'a> {
         self.id.hash(state);
         self.generator.hash(state);
         self.r#async.hash(state);
+        self.declare.hash(state);
         self.this_param.hash(state);
         self.params.hash(state);
         self.body.hash(state);
         self.type_parameters.hash(state);
         self.return_type.hash(state);
-        self.modifiers.hash(state);
     }
 }
 
@@ -1044,6 +1045,7 @@ impl<'a> FormalParameters<'a> {
         self.items.is_empty()
     }
 }
+
 impl<'a> FunctionBody<'a> {
     pub fn is_empty(&self) -> bool {
         self.directives.is_empty() && self.statements.is_empty()
@@ -1110,7 +1112,8 @@ impl<'a> Class<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
-        modifiers: Modifiers<'a>,
+        r#abstract: bool,
+        declare: bool,
     ) -> Self {
         Self {
             r#type,
@@ -1122,7 +1125,8 @@ impl<'a> Class<'a> {
             type_parameters,
             super_type_parameters,
             implements,
-            modifiers,
+            r#abstract,
+            declare,
             scope_id: Cell::default(),
         }
     }
@@ -1145,30 +1149,12 @@ impl<'a> Class<'a> {
     ///   // ...
     /// }
     /// ```
-    ///
-    /// Not to be confused with [`Class::is_declare`].
     pub fn is_declaration(&self) -> bool {
         self.r#type == ClassType::ClassDeclaration
     }
 
-    /// `true` if this [`Class`] is being within a typescript declaration file
-    /// or `declare` statement.
-    ///
-    /// For example,
-    /// ```ts
-    /// declare global {
-    ///   declare class Foo {
-    ///    // ...
-    ///   }
-    /// }
-    ///
-    /// Not to be confused with [`Class::is_declaration`].
-    pub fn is_declare(&self) -> bool {
-        self.modifiers.contains(ModifierKind::Declare)
-    }
-
     pub fn is_typescript_syntax(&self) -> bool {
-        self.is_declare()
+        self.declare || self.r#abstract
     }
 }
 
@@ -1182,7 +1168,8 @@ impl<'a> Hash for Class<'a> {
         self.type_parameters.hash(state);
         self.super_type_parameters.hash(state);
         self.implements.hash(state);
-        self.modifiers.hash(state);
+        self.r#abstract.hash(state);
+        self.declare.hash(state);
     }
 }
 

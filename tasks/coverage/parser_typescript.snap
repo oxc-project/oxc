@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
 Positive Passed: 5273/5283 (99.81%)
-Negative Passed: 1053/4875 (21.60%)
+Negative Passed: 1073/4875 (22.01%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -652,7 +652,6 @@ Expect Syntax Error: "compiler/exhaustiveSwitchCheckCircularity.ts"
 Expect Syntax Error: "compiler/exhaustiveSwitchImplicitReturn.ts"
 Expect Syntax Error: "compiler/expandoFunctionContextualTypesNoValue.ts"
 Expect Syntax Error: "compiler/expandoFunctionNestedAssigments.ts"
-Expect Syntax Error: "compiler/exportAlreadySeen.ts"
 Expect Syntax Error: "compiler/exportAsNamespaceConflict.ts"
 Expect Syntax Error: "compiler/exportAssignmentWithExports.ts"
 Expect Syntax Error: "compiler/exportDeclarationsInAmbientNamespaces2.ts"
@@ -755,7 +754,6 @@ Expect Syntax Error: "compiler/functionTypeArgumentArityErrors.ts"
 Expect Syntax Error: "compiler/functionTypeArgumentAssignmentCompat.ts"
 Expect Syntax Error: "compiler/functionVariableInReturnTypeAnnotation.ts"
 Expect Syntax Error: "compiler/functionsMissingReturnStatementsAndExpressionsStrictNullChecks.ts"
-Expect Syntax Error: "compiler/functionsWithModifiersInBlocks1.ts"
 Expect Syntax Error: "compiler/fuzzy.ts"
 Expect Syntax Error: "compiler/generatorES6_5.ts"
 Expect Syntax Error: "compiler/generatorReturnExpressionIsChecked.ts"
@@ -1409,7 +1407,6 @@ Expect Syntax Error: "compiler/primitiveTypeAsInterfaceName.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsInterfaceNameGeneric.ts"
 Expect Syntax Error: "compiler/primitiveTypeAssignment.ts"
 Expect Syntax Error: "compiler/privacyGloImportParseErrors.ts"
-Expect Syntax Error: "compiler/privacyImportParseErrors.ts"
 Expect Syntax Error: "compiler/privateAccessInSubclass1.ts"
 Expect Syntax Error: "compiler/privateFieldAssignabilityFromUnknown.ts"
 Expect Syntax Error: "compiler/privateInterfaceProperties.ts"
@@ -1943,11 +1940,7 @@ Expect Syntax Error: "conformance/async/es5/asyncArrowFunction/asyncArrowFunctio
 Expect Syntax Error: "conformance/async/es5/asyncArrowFunction/asyncArrowFunction3_es5.ts"
 Expect Syntax Error: "conformance/async/es5/asyncArrowFunction/asyncArrowFunctionCapturesArguments_es5.ts"
 Expect Syntax Error: "conformance/async/es5/asyncAwaitIsolatedModules_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncClass_es5.ts"
 Expect Syntax Error: "conformance/async/es5/asyncDeclare_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncEnum_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncInterface_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncModule_es5.ts"
 Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDeclaration13_es5.ts"
 Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDeclaration15_es5.ts"
 Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDeclaration3_es5.ts"
@@ -1956,11 +1949,7 @@ Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDe
 Expect Syntax Error: "conformance/async/es6/asyncArrowFunction/asyncArrowFunction10_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncArrowFunction/asyncArrowFunction3_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncAwaitIsolatedModules_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncClass_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncDeclare_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncEnum_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncInterface_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncModule_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncQualifiedReturnType_es6.ts"
 Expect Syntax Error: "conformance/async/es6/await_unaryExpression_es6_1.ts"
 Expect Syntax Error: "conformance/async/es6/await_unaryExpression_es6_2.ts"
@@ -1994,7 +1983,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAndInterfaceMergeConflictingMembers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingClassLikeType.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingNonConstructor.ts"
@@ -2853,8 +2841,6 @@ Expect Syntax Error: "conformance/internalModules/exportDeclarations/ModuleWithE
 Expect Syntax Error: "conformance/internalModules/importDeclarations/circularImportAlias.ts"
 Expect Syntax Error: "conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts"
 Expect Syntax Error: "conformance/internalModules/importDeclarations/shadowedInternalModule.ts"
-Expect Syntax Error: "conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts"
-Expect Syntax Error: "conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts"
 Expect Syntax Error: "conformance/internalModules/moduleDeclarations/InvalidNonInstantiatedModule.ts"
 Expect Syntax Error: "conformance/internalModules/moduleDeclarations/invalidNestedModules.ts"
 Expect Syntax Error: "conformance/jsdoc/assertionsAndNonReturningFunctions.ts"
@@ -3157,9 +3143,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/IndexSignatures/parserIndex
 Expect Syntax Error: "conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature5.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts"
@@ -3192,8 +3175,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParame
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected1.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected6.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected7.ts"
@@ -3205,7 +3186,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser50969
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509698.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser536727.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser579071.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser618973.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression2.ts"
@@ -6434,6 +6414,86 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·         ╰── `from` expected
    ╰────
 
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:2:12]
+ 1 │ module M {
+ 2 │     export export var x = 1;
+   ·            ──────
+ 3 │     export export function f() { }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:3:12]
+ 2 │     export export var x = 1;
+ 3 │     export export function f() { }
+   ·            ──────
+ 4 │ 
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:6:16]
+ 5 │     export export module N {
+ 6 │         export export class C { }
+   ·                ──────
+ 7 │         export export interface I { }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:7:16]
+ 6 │         export export class C { }
+ 7 │         export export interface I { }
+   ·                ──────
+ 8 │     }  
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:5:12]
+ 4 │ 
+ 5 │     export export module N {
+   ·            ──────
+ 6 │         export export class C { }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:12:12]
+ 11 │ declare module A {
+ 12 │     export export var x;
+    ·            ──────
+ 13 │     export export function f()
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:13:12]
+ 12 │     export export var x;
+ 13 │     export export function f()
+    ·            ──────
+ 14 │ 
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:16:16]
+ 15 │     export export module N {
+ 16 │         export export class C { }
+    ·                ──────
+ 17 │         export export interface I { }
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:17:16]
+ 16 │         export export class C { }
+ 17 │         export export interface I { }
+    ·                ──────
+ 18 │     }
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:15:12]
+ 14 │ 
+ 15 │     export export module N {
+    ·            ──────
+ 16 │         export export class C { }
+    ╰────
+
   × Unexpected token
    ╭─[compiler/exportAssignmentWithDeclareAndExportModifiers.ts:2:16]
  1 │ var x;
@@ -6682,6 +6742,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ·     ─
  154 │ }
      ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/functionsWithModifiersInBlocks1.ts:4:12]
+ 3 │    export function f() { }
+ 4 │    declare export function f() { }
+   ·            ──────
+ 5 │ }
+   ╰────
 
   × Unexpected token
    ╭─[compiler/genericCallWithoutArgs.ts:4:18]
@@ -8628,6 +8696,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/prettyContextNotDebugAssertion.ts:1:12]
  1 │ if (true) {
    ╰────
+
+  × 'export' modifier cannot be used here.
+     ╭─[compiler/privacyImportParseErrors.ts:326:9]
+ 325 │ 
+ 326 │ declare export module "anotherParseError2" {
+     ·         ──────
+ 327 │     module m2 {
+     ╰────
 
   × Unexpected token
    ╭─[compiler/privateNameJsx.tsx:4:22]
@@ -10592,12 +10668,26 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncClass_es5.ts:1:1]
+ 1 │ async class C {
+   · ─────
+ 2 │ }
+   ╰────
+
   × Constructor can't be an async method
    ╭─[conformance/async/es5/asyncConstructor_es5.ts:2:9]
  1 │ class C {
  2 │   async constructor() {
    ·         ───────────
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncEnum_es5.ts:1:1]
+ 1 │ async enum E {
+   · ─────
+ 2 │   Value
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10607,6 +10697,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·             ─┬─
    ·              ╰── `(` expected
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncInterface_es5.ts:1:1]
+ 1 │ async interface I {
+   · ─────
+ 2 │ }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncModule_es5.ts:1:1]
+ 1 │ async module M {
+   · ─────
+ 2 │ }
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10699,12 +10803,26 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncClass_es6.ts:1:1]
+ 1 │ async class C {  
+   · ─────
+ 2 │ }
+   ╰────
+
   × Constructor can't be an async method
    ╭─[conformance/async/es6/asyncConstructor_es6.ts:2:9]
  1 │ class C {  
  2 │   async constructor() {    
    ·         ───────────
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncEnum_es6.ts:1:1]
+ 1 │ async enum E {  
+   · ─────
+ 2 │   Value
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10714,6 +10832,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·             ─┬─
    ·              ╰── `(` expected
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncInterface_es6.ts:1:1]
+ 1 │ async interface I {  
+   · ─────
+ 2 │ }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncModule_es6.ts:1:1]
+ 1 │ async module M {   
+   · ─────
+ 2 │ }
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10872,6 +11004,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                      ╰── `(` expected
  17 │ }
     ╰────
+
+  × 'abstract' modifier cannot be used here.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
+ 1 │ abstract interface I {}
+   · ────────
+   ╰────
 
   × Identifier `C` has already been declared
    ╭─[conformance/classes/classDeclarations/classAndVariableWithSameName.ts:1:7]
@@ -16067,6 +16205,222 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │     let;
    ╰────
 
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:4:5]
+ 3 │ module Y {
+ 4 │     public class A { s: string }
+   ·     ──────
+ 5 │ 
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:6:5]
+ 5 │ 
+ 6 │     public class BB<T> extends A {
+   ·     ──────
+ 7 │         id: number;
+   ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:12:5]
+ 11 │ module Y2 {
+ 12 │     public class AA<T> { s: T }
+    ·     ──────
+ 13 │     public interface I { id: number }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:13:5]
+ 12 │     public class AA<T> { s: T }
+ 13 │     public interface I { id: number }
+    ·     ──────
+ 14 │ 
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:15:5]
+ 14 │ 
+ 15 │     public class B extends AA<string> implements I { id: number }
+    ·     ──────
+ 16 │ }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
+ 18 │ module Y3 {
+ 19 │     public module Module {
+    ·     ──────
+ 20 │         class A { s: string }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
+ 24 │ module Y4 {
+ 25 │     public enum Color { Blue, Red }
+    ·     ──────
+ 26 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:29:5]
+ 28 │ module YY {
+ 29 │     private class A { s: string }
+    ·     ───────
+ 30 │ 
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:31:5]
+ 30 │ 
+ 31 │     private class BB<T> extends A {
+    ·     ───────
+ 32 │         id: number;
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:37:5]
+ 36 │ module YY2 {
+ 37 │     private class AA<T> { s: T }
+    ·     ───────
+ 38 │     private interface I { id: number }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:38:5]
+ 37 │     private class AA<T> { s: T }
+ 38 │     private interface I { id: number }
+    ·     ───────
+ 39 │ 
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:40:5]
+ 39 │ 
+ 40 │     private class B extends AA<string> implements I { id: number }
+    ·     ───────
+ 41 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
+ 43 │ module YY3 {
+ 44 │     private module Module {
+    ·     ───────
+ 45 │         class A { s: string }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
+ 49 │ module YY4 {
+ 50 │     private enum Color { Blue, Red }
+    ·     ───────
+ 51 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:55:5]
+ 54 │ module YYY {
+ 55 │     static class A { s: string }
+    ·     ──────
+ 56 │ 
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:57:5]
+ 56 │ 
+ 57 │     static class BB<T> extends A {
+    ·     ──────
+ 58 │         id: number;
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:63:5]
+ 62 │ module YYY2 {
+ 63 │     static class AA<T> { s: T }
+    ·     ──────
+ 64 │     static interface I { id: number }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:64:5]
+ 63 │     static class AA<T> { s: T }
+ 64 │     static interface I { id: number }
+    ·     ──────
+ 65 │ 
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:66:5]
+ 65 │ 
+ 66 │     static class B extends AA<string> implements I { id: number }
+    ·     ──────
+ 67 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
+ 69 │ module YYY3 {
+ 70 │     static module Module {
+    ·     ──────
+ 71 │         class A { s: string }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:76:5]
+ 75 │ module YYY4 {
+ 76 │     static enum Color { Blue, Red }
+    ·     ──────
+ 77 │ }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:4:5]
+ 3 │ module Y {
+ 4 │     public var x: number = 0;
+   ·     ──────
+ 5 │ }
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:8:5]
+ 7 │ module Y2 {
+ 8 │     public function fn(x: string) { }
+   ·     ──────
+ 9 │ }
+   ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:12:5]
+ 11 │ module Y4 {
+ 12 │     static var x: number = 0;
+    ·     ──────
+ 13 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:16:5]
+ 15 │ module YY {
+ 16 │     static function fn(x: string) { }
+    ·     ──────
+ 17 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:20:5]
+ 19 │ module YY2 {
+ 20 │     private var x: number = 0;
+    ·     ───────
+ 21 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:25:5]
+ 24 │ module YY3 {
+ 25 │     private function fn(x: string) { }
+    ·     ───────
+ 26 │ }
+    ╰────
+
   × Identifier `Point` has already been declared
    ╭─[conformance/internalModules/moduleDeclarations/invalidInstantiatedModule.ts:2:18]
  1 │ module M {
@@ -17154,6 +17508,27 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts:1:1]
+ 1 │ public interface I {
+   · ──────
+ 2 │ }
+   ╰────
+
+  × 'static' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts:1:1]
+ 1 │ static interface I {
+   · ──────
+ 2 │ }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
+ 1 │ export export interface I {
+   ·        ──────
+ 2 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:11]
  1 │ class C {
@@ -17376,6 +17751,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
+  × 'protected' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Protected/Protected1.ts:1:1]
+ 1 │ protected class C {
+   · ─────────
+ 2 │ }
+   ╰────
+
+  × 'protected' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
+ 1 │ protected module M {
+   · ─────────
+ 2 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
  1429 │         // Regex for parsing options in the format "@Alpha: Value of any sort"
@@ -17465,6 +17854,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × 'export' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
+ 1 │ export export class Foo {
+   ·        ──────
+ 2 │   public Bar() {
+   ╰────
 
   × The keyword 'static' is reserved
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser642331.ts:2:18]

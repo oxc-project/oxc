@@ -38,10 +38,10 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<(Option<VariableDeclaration<'a>>, ExportDefaultDeclaration<'a>)> {
         let declaration = match &decl.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(decl) => self
-                .transform_function(decl, Some(Modifiers::empty()))
+                .transform_function(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::FunctionDeclaration(d))),
             ExportDefaultDeclarationKind::ClassDeclaration(decl) => self
-                .transform_class(decl, Some(Modifiers::empty()))
+                .transform_class(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                 Some((None, self.ast.copy(&decl.declaration)))
@@ -65,7 +65,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         self.error(default_export_inferred(expr.span()));
                     }
 
-                    let id = BindingPattern { kind: id, type_annotation, optional: false };
+                    let id =
+                        BindingPattern { span: SPAN, kind: id, type_annotation, optional: false };
                     let declarations = self
                         .ast
                         .new_vec_single(self.ast.variable_declarator(SPAN, kind, id, None, true));
@@ -75,7 +76,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             span: SPAN,
                             kind,
                             declarations,
-                            modifiers: self.modifiers_declare(),
+                            declare: self.is_declare(),
                         }),
                         ExportDefaultDeclarationKind::from(
                             self.ast.identifier_reference_expression(

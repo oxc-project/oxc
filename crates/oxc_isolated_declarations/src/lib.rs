@@ -393,14 +393,8 @@ impl<'a> IsolatedDeclarations<'a> {
         })
     }
 
-    pub fn modifiers_declare(&self) -> Modifiers<'a> {
-        if self.scope.is_ts_module_block_flag() {
-            // If we are in a module block, we don't need to add declare
-            Modifiers::empty()
-        } else {
-            Modifiers::new(
-                self.ast.new_vec_single(Modifier { span: SPAN, kind: ModifierKind::Declare }),
-            )
-        }
+    pub fn is_declare(&self) -> bool {
+        // If we are in a module block, we don't need to add declare
+        !self.scope.is_ts_module_block_flag()
     }
 }

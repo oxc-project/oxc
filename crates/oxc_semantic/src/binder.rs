@@ -79,7 +79,7 @@ impl<'a> Binder for VariableDeclarator<'a> {
 impl<'a> Binder for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let Some(ident) = &self.id else { return };
-        if !self.modifiers.contains(ModifierKind::Declare) {
+        if !self.declare {
             let symbol_id = builder.declare_symbol(
                 ident.span,
                 &ident.name,
@@ -320,7 +320,7 @@ impl<'a> Binder for TSInterfaceDeclaration<'a> {
 
 impl<'a> Binder for TSEnumDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let is_const = self.modifiers.contains(ModifierKind::Const);
+        let is_const = self.r#const;
         let includes = if is_const { SymbolFlags::ConstEnum } else { SymbolFlags::RegularEnum };
         let excludes = if is_const {
             SymbolFlags::ConstEnumExcludes
@@ -357,11 +357,7 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
-        let ambient = if self.modifiers.contains(ModifierKind::Declare) {
-            SymbolFlags::Ambient
-        } else {
-            SymbolFlags::None
-        };
+        let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
         builder.declare_symbol(
             self.span,
             self.id.name().as_str(),

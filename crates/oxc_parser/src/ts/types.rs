@@ -1,4 +1,3 @@
-use bitflags::bitflags;
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
@@ -13,99 +12,10 @@ use crate::{
     js::list::{ArrayPatternList, ObjectPatternProperties},
     lexer::Kind,
     list::{NormalList, SeparatedList},
+    modifiers::ModifierFlags,
     ts::list::TSImportAttributeList,
     Context, ParserImpl,
 };
-
-bitflags! {
-  /// Bitflag of modifiers and contextual modifiers.
-  /// Useful to cheaply track all already seen modifiers of a member (instead of using a HashSet<ModifierKind>).
-  #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-  pub struct ModifierFlags: u16 {
-      const DECLARE       = 1 << 0;
-      const PRIVATE       = 1 << 1;
-      const PROTECTED     = 1 << 2;
-      const PUBLIC        = 1 << 3;
-      const STATIC        = 1 << 4;
-      const READONLY      = 1 << 5;
-      const ABSTRACT      = 1 << 6;
-      const OVERRIDE      = 1 << 7;
-      const ASYNC         = 1 << 8;
-      const CONST         = 1 << 9;
-      const IN            = 1 << 10;
-      const OUT           = 1 << 11;
-      const EXPORT        = 1 << 12;
-      const DEFAULT       = 1 << 13;
-      const ACCESSOR      = 1 << 14;
-      const ACCESSIBILITY = Self::PRIVATE.bits() | Self::PROTECTED.bits() | Self::PUBLIC.bits();
-  }
-}
-
-/// It is the caller's safety to always check by `Kind::is_modifier_kind`
-/// before converting [`Kind`] to [`ModifierFlags`] so that we can assume here that
-/// the conversion always succeeds.
-impl From<Kind> for ModifierFlags {
-    fn from(value: Kind) -> Self {
-        match value {
-            Kind::Abstract => Self::ABSTRACT,
-            Kind::Declare => Self::DECLARE,
-            Kind::Private => Self::PRIVATE,
-            Kind::Protected => Self::PROTECTED,
-            Kind::Public => Self::PUBLIC,
-            Kind::Static => Self::STATIC,
-            Kind::Readonly => Self::READONLY,
-            Kind::Override => Self::OVERRIDE,
-            Kind::Async => Self::ASYNC,
-            Kind::Const => Self::CONST,
-            Kind::In => Self::IN,
-            Kind::Out => Self::OUT,
-            Kind::Export => Self::EXPORT,
-            Kind::Default => Self::DEFAULT,
-            Kind::Accessor => Self::ACCESSOR,
-            _ => unreachable!(),
-        }
-    }
-}
-
-impl ModifierFlags {
-    pub(crate) fn accessibility(self) -> Option<TSAccessibility> {
-        if self.contains(Self::PUBLIC) {
-            return Some(TSAccessibility::Public);
-        }
-        if self.contains(Self::PROTECTED) {
-            return Some(TSAccessibility::Protected);
-        }
-
-        if self.contains(Self::PRIVATE) {
-            return Some(TSAccessibility::Private);
-        }
-        None
-    }
-
-    pub(crate) fn readonly(self) -> bool {
-        self.contains(Self::READONLY)
-    }
-
-    pub(crate) fn declare(self) -> bool {
-        self.contains(Self::DECLARE)
-    }
-
-    pub(crate) fn r#async(self) -> bool {
-        self.contains(Self::ASYNC)
-    }
-
-    pub(crate) fn r#override(self) -> bool {
-        self.contains(Self::OVERRIDE)
-    }
-
-    pub(crate) fn r#abstract(self) -> bool {
-        self.contains(Self::ABSTRACT)
-    }
-
-    pub(crate) fn r#static(self) -> bool {
-        self.contains(Self::STATIC)
-    }
-}
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type(&mut self) -> Result<TSType<'a>> {

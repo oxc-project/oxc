@@ -64,6 +64,7 @@
 mod context;
 mod cursor;
 mod list;
+mod modifiers;
 mod state;
 
 mod js;
@@ -313,19 +314,6 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Backdoor to create a `ParserImpl` without holding a `UniquePromise`, for unit tests.
-    /// This function must NOT be exposed in public API as it breaks safety invariants.
-    #[cfg(test)]
-    fn new_for_tests(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        options: ParserOptions,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests();
-        Self::new(allocator, source_text, source_type, options, unique)
-    }
-
     /// Main entry point
     ///
     /// Returns an empty `Program` on unrecoverable error,
@@ -492,7 +480,7 @@ mod test {
         let sources = [
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
-            ("@decorator 'use strict';", 1),
+            (";'use strict';", 2),
         ];
         for (source, body_length) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();

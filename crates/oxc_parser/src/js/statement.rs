@@ -6,7 +6,10 @@ use oxc_span::{Atom, GetSpan, Span};
 use super::{
     grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
 };
-use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
+use crate::{
+    diagnostics, lexer::Kind, list::NormalList, modifiers::Modifiers, Context, ParserImpl,
+    StatementContext,
+};
 
 impl<'a> ParserImpl<'a> {
     // Section 12
@@ -37,52 +40,30 @@ impl<'a> ParserImpl<'a> {
 
         let mut expecting_directives = true;
         while !self.at(Kind::Eof) {
-            match self.cur_kind() {
-                Kind::RCurly if !is_top_level => break,
-                Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
-                    let stmt = self.parse_import_declaration()?;
-                    statements.push(stmt);
-                    expecting_directives = false;
-                }
-                Kind::Export => {
-                    let stmt = self.parse_export_declaration()?;
-                    statements.push(stmt);
-                    expecting_directives = false;
-                }
-                Kind::At => {
-                    self.eat_decorators()?;
-                    expecting_directives = false;
-                    continue;
-                }
-                _ => {
-                    let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
-
-                    // Section 11.2.1 Directive Prologue
-                    // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-                    // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-                    if expecting_directives {
-                        if let Statement::ExpressionStatement(expr) = &stmt {
-                            if let Expression::StringLiteral(string) = &expr.expression {
-                                // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                                if expr.span.start == string.span.start {
-                                    let src = &self.source_text[string.span.start as usize + 1
-                                        ..string.span.end as usize - 1];
-                                    let directive = self.ast.directive(
-                                        expr.span,
-                                        (*string).clone(),
-                                        Atom::from(src),
-                                    );
-                                    directives.push(directive);
-                                    continue;
-                                }
-                            }
+            if !is_top_level && self.at(Kind::RCurly) {
+                break;
+            }
+            let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
+            // Section 11.2.1 Directive Prologue
+            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
+            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+            if expecting_directives {
+                if let Statement::ExpressionStatement(expr) = &stmt {
+                    if let Expression::StringLiteral(string) = &expr.expression {
+                        // span start will mismatch if they are parenthesized when `preserve_parens = false`
+                        if expr.span.start == string.span.start {
+                            let src = &self.source_text
+                                [string.span.start as usize + 1..string.span.end as usize - 1];
+                            let directive =
+                                self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
+                            directives.push(directive);
+                            continue;
                         }
-                        expecting_directives = false;
                     }
-
-                    statements.push(stmt);
                 }
-            };
+                expecting_directives = false;
+            }
+            statements.push(stmt);
         }
 
         Ok((directives, statements))
@@ -182,7 +163,7 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_variable_declaration(
             start_span,
             VariableDeclarationContext::new(VariableDeclarationParent::Statement),
-            Modifiers::empty(),
+            &Modifiers::empty(),
         )?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
@@ -309,7 +290,7 @@ impl<'a> ParserImpl<'a> {
         let start_span = self.start_span();
         let init_declaration = self.context(Context::empty(), Context::In, |p| {
             let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
-            p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
+            p.parse_variable_declaration(start_span, decl_ctx, &Modifiers::empty())
         })?;
 
         // for (.. a in) for (.. a of)

@@ -35,7 +35,7 @@ impl<'a> TypeScript<'a> {
         let decls = {
             let binding_identifier = BindingIdentifier::new(SPAN, decl.id.name.clone());
             let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
-            let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+            let binding = self.ctx.ast.binding_pattern(SPAN, binding_pattern_kind, None, false);
             let decl_span = decl.span;
 
             let init = match &mut decl.module_reference {
@@ -66,8 +66,7 @@ impl<'a> TypeScript<'a> {
                 false,
             ))
         };
-        let variable_declaration =
-            self.ctx.ast.variable_declaration(SPAN, kind, decls, Modifiers::empty());
+        let variable_declaration = self.ctx.ast.variable_declaration(SPAN, kind, decls, false);
 
         Declaration::VariableDeclaration(variable_declaration)
     }

@@ -11,7 +11,7 @@ use crate::{
 
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
-    if class.modifiers.contains(ModifierKind::Abstract) {
+    if class.r#abstract {
         parts.push(ss!("abstract "));
     }
     parts.push(ss!("class "));

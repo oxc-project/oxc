@@ -19,7 +19,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         check_binding: bool,
     ) -> Option<Box<'a, VariableDeclaration<'a>>> {
-        if decl.modifiers.is_contains_declare() {
+        if decl.declare {
             None
         } else {
             let declarations =
@@ -39,7 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             decl.kind,
             self.ast.new_vec_from_iter(declarations),
-            self.modifiers_declare(),
+            self.is_declare(),
         )
     }
 
@@ -95,6 +95,7 @@ impl<'a> IsolatedDeclarations<'a> {
             || self.ast.copy(&decl.id),
             |ts_type| {
                 self.ast.binding_pattern(
+                    SPAN,
                     self.ast.copy(&decl.id.kind),
                     Some(self.ast.ts_type_annotation(SPAN, ts_type)),
                     decl.id.optional,
@@ -126,7 +127,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             VariableDeclarationKind::Const,
             declarations,
-            self.modifiers_declare(),
+            self.is_declare(),
         )
     }
 
@@ -138,14 +139,14 @@ impl<'a> IsolatedDeclarations<'a> {
         self.scope.enter_scope(ScopeFlags::TsModuleBlock);
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
-        self.ast.ts_module_block(SPAN, stmts)
+        self.ast.ts_module_block(SPAN, self.ast.new_vec(), stmts)
     }
 
     pub fn transform_ts_module_declaration(
         &mut self,
         decl: &Box<'a, TSModuleDeclaration<'a>>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        if decl.modifiers.is_contains_declare() {
+        if decl.declare {
             return self.ast.copy(decl);
         }
 
@@ -156,23 +157,23 @@ impl<'a> IsolatedDeclarations<'a> {
         match body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let inner = self.transform_ts_module_declaration(decl);
-                return self.ast.ts_module_declaration(
+                self.ast.ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     decl.kind,
-                    self.modifiers_declare(),
-                );
+                    self.is_declare(),
+                )
             }
             TSModuleDeclarationBody::TSModuleBlock(block) => {
                 let body = self.transform_ts_module_block(block);
-                return self.ast.ts_module_declaration(
+                self.ast.ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     decl.kind,
-                    self.modifiers_declare(),
-                );
+                    self.is_declare(),
+                )
             }
         }
     }

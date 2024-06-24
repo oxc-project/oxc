@@ -16,9 +16,9 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_function(
         &mut self,
         func: &Function<'a>,
-        modifiers: Option<Modifiers<'a>>,
+        declare: Option<bool>,
     ) -> Option<Box<'a, Function<'a>>> {
-        if func.modifiers.is_contains_declare() {
+        if func.declare {
             None
         } else {
             let return_type = self.infer_function_return_type(func);
@@ -32,12 +32,12 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.copy(&func.id),
                 false,
                 false,
+                declare.unwrap_or_else(|| self.is_declare()),
                 self.ast.copy(&func.this_param),
                 params,
                 None,
                 self.ast.copy(&func.type_parameters),
                 return_type,
-                modifiers.unwrap_or_else(|| self.modifiers_declare()),
             ))
         }
     }
@@ -99,6 +99,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 });
 
             pattern = self.ast.binding_pattern(
+                SPAN,
                 self.ast.copy(&pattern.kind),
                 type_annotation,
                 // if it's assignment pattern, it's optional

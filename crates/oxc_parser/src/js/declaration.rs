@@ -4,7 +4,12 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::{VariableDeclarationContext, VariableDeclarationParent};
-use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    modifiers::{ModifierKind, Modifiers},
+    ParserImpl, StatementContext,
+};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
@@ -41,7 +46,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         decl_ctx: VariableDeclarationContext,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
@@ -67,7 +72,21 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
-        Ok(self.ast.variable_declaration(self.end_span(start_span), kind, declarations, modifiers))
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+
+        Ok(self.ast.variable_declaration(
+            self.end_span(start_span),
+            kind,
+            declarations,
+            modifiers.is_contains_declare(),
+        ))
     }
 
     fn parse_variable_declarator(
@@ -95,9 +114,17 @@ impl<'a> ParserImpl<'a> {
             if let Some(type_annotation) = &type_annotation {
                 Self::extend_binding_pattern_span_end(type_annotation.span, &mut binding_kind);
             }
-            (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
+            (
+                self.ast.binding_pattern(
+                    self.end_span(span),
+                    binding_kind,
+                    type_annotation,
+                    optional,
+                ),
+                definite,
+            )
         } else {
-            (self.ast.binding_pattern(binding_kind, None, false), false)
+            (self.ast.binding_pattern(self.end_span(span), binding_kind, None, false), false)
         };
 
         let init =

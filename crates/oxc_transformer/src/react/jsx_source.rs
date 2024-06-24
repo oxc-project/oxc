@@ -152,7 +152,7 @@ impl<'a> ReactJsxSource<'a> {
         let id = {
             let ident = filename_var.create_binding_identifier();
             let ident = self.ctx.ast.binding_pattern_identifier(ident);
-            self.ctx.ast.binding_pattern(ident, None, false)
+            self.ctx.ast.binding_pattern(SPAN, ident, None, false)
         };
         let decl = {
             let string = self.ctx.ast.string_literal(SPAN, &self.ctx.source_path.to_string_lossy());
@@ -160,7 +160,7 @@ impl<'a> ReactJsxSource<'a> {
             let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             self.ctx.ast.new_vec_single(decl)
         };
-        let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
+        let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, false);
         Some(Statement::VariableDeclaration(var_decl))
     }
 

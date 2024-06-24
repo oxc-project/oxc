@@ -281,46 +281,47 @@ pub(crate) enum AncestorType {
     TSTypePredicateTypeAnnotation = 249,
     TSModuleDeclarationId = 250,
     TSModuleDeclarationBody = 251,
-    TSModuleBlockBody = 252,
-    TSTypeLiteralMembers = 253,
-    TSInferTypeTypeParameter = 254,
-    TSTypeQueryExprName = 255,
-    TSTypeQueryTypeParameters = 256,
-    TSImportTypeArgument = 257,
-    TSImportTypeQualifier = 258,
-    TSImportTypeAttributes = 259,
-    TSImportTypeTypeParameters = 260,
-    TSImportAttributesElements = 261,
-    TSImportAttributeName = 262,
-    TSImportAttributeValue = 263,
-    TSFunctionTypeThisParam = 264,
-    TSFunctionTypeParams = 265,
-    TSFunctionTypeReturnType = 266,
-    TSFunctionTypeTypeParameters = 267,
-    TSConstructorTypeParams = 268,
-    TSConstructorTypeReturnType = 269,
-    TSConstructorTypeTypeParameters = 270,
-    TSMappedTypeTypeParameter = 271,
-    TSMappedTypeNameType = 272,
-    TSMappedTypeTypeAnnotation = 273,
-    TSTemplateLiteralTypeQuasis = 274,
-    TSTemplateLiteralTypeTypes = 275,
-    TSAsExpressionExpression = 276,
-    TSAsExpressionTypeAnnotation = 277,
-    TSSatisfiesExpressionExpression = 278,
-    TSSatisfiesExpressionTypeAnnotation = 279,
-    TSTypeAssertionExpression = 280,
-    TSTypeAssertionTypeAnnotation = 281,
-    TSImportEqualsDeclarationId = 282,
-    TSImportEqualsDeclarationModuleReference = 283,
-    TSExternalModuleReferenceExpression = 284,
-    TSNonNullExpressionExpression = 285,
-    DecoratorExpression = 286,
-    TSExportAssignmentExpression = 287,
-    TSNamespaceExportDeclarationId = 288,
-    TSInstantiationExpressionExpression = 289,
-    TSInstantiationExpressionTypeParameters = 290,
-    JSDocNullableTypeTypeAnnotation = 291,
+    TSModuleBlockDirectives = 252,
+    TSModuleBlockBody = 253,
+    TSTypeLiteralMembers = 254,
+    TSInferTypeTypeParameter = 255,
+    TSTypeQueryExprName = 256,
+    TSTypeQueryTypeParameters = 257,
+    TSImportTypeArgument = 258,
+    TSImportTypeQualifier = 259,
+    TSImportTypeAttributes = 260,
+    TSImportTypeTypeParameters = 261,
+    TSImportAttributesElements = 262,
+    TSImportAttributeName = 263,
+    TSImportAttributeValue = 264,
+    TSFunctionTypeThisParam = 265,
+    TSFunctionTypeParams = 266,
+    TSFunctionTypeReturnType = 267,
+    TSFunctionTypeTypeParameters = 268,
+    TSConstructorTypeParams = 269,
+    TSConstructorTypeReturnType = 270,
+    TSConstructorTypeTypeParameters = 271,
+    TSMappedTypeTypeParameter = 272,
+    TSMappedTypeNameType = 273,
+    TSMappedTypeTypeAnnotation = 274,
+    TSTemplateLiteralTypeQuasis = 275,
+    TSTemplateLiteralTypeTypes = 276,
+    TSAsExpressionExpression = 277,
+    TSAsExpressionTypeAnnotation = 278,
+    TSSatisfiesExpressionExpression = 279,
+    TSSatisfiesExpressionTypeAnnotation = 280,
+    TSTypeAssertionExpression = 281,
+    TSTypeAssertionTypeAnnotation = 282,
+    TSImportEqualsDeclarationId = 283,
+    TSImportEqualsDeclarationModuleReference = 284,
+    TSExternalModuleReferenceExpression = 285,
+    TSNonNullExpressionExpression = 286,
+    DecoratorExpression = 287,
+    TSExportAssignmentExpression = 288,
+    TSNamespaceExportDeclarationId = 289,
+    TSInstantiationExpressionExpression = 290,
+    TSInstantiationExpressionTypeParameters = 291,
+    JSDocNullableTypeTypeAnnotation = 292,
 }
 
 /// Ancestor type used in AST traversal.
@@ -781,6 +782,8 @@ pub enum Ancestor<'a> {
         AncestorType::TSModuleDeclarationId as u16,
     TSModuleDeclarationBody(TSModuleDeclarationWithoutBody<'a>) =
         AncestorType::TSModuleDeclarationBody as u16,
+    TSModuleBlockDirectives(TSModuleBlockWithoutDirectives<'a>) =
+        AncestorType::TSModuleBlockDirectives as u16,
     TSModuleBlockBody(TSModuleBlockWithoutBody<'a>) = AncestorType::TSModuleBlockBody as u16,
     TSTypeLiteralMembers(TSTypeLiteralWithoutMembers<'a>) =
         AncestorType::TSTypeLiteralMembers as u16,
@@ -1681,7 +1684,7 @@ impl<'a> Ancestor<'a> {
 
     #[inline]
     pub fn is_ts_module_block(&self) -> bool {
-        matches!(self, Self::TSModuleBlockBody(_))
+        matches!(self, Self::TSModuleBlockDirectives(_) | Self::TSModuleBlockBody(_))
     }
 
     #[inline]
@@ -3832,8 +3835,8 @@ pub(crate) const OFFSET_VARIABLE_DECLARATION_SPAN: usize = offset_of!(VariableDe
 pub(crate) const OFFSET_VARIABLE_DECLARATION_KIND: usize = offset_of!(VariableDeclaration, kind);
 pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARATIONS: usize =
     offset_of!(VariableDeclaration, declarations);
-pub(crate) const OFFSET_VARIABLE_DECLARATION_MODIFIERS: usize =
-    offset_of!(VariableDeclaration, modifiers);
+pub(crate) const OFFSET_VARIABLE_DECLARATION_DECLARE: usize =
+    offset_of!(VariableDeclaration, declare);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -3854,11 +3857,8 @@ impl<'a> VariableDeclarationWithoutDeclarations<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
-        }
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_VARIABLE_DECLARATION_DECLARE) as *const bool) }
     }
 }
 
@@ -4922,6 +4922,7 @@ impl<'a> CatchParameterWithoutPattern<'a> {
     }
 }
 
+pub(crate) const OFFSET_BINDING_PATTERN_SPAN: usize = offset_of!(BindingPattern, span);
 pub(crate) const OFFSET_BINDING_PATTERN_KIND: usize = offset_of!(BindingPattern, kind);
 pub(crate) const OFFSET_BINDING_PATTERN_TYPE_ANNOTATION: usize =
     offset_of!(BindingPattern, type_annotation);
@@ -4932,6 +4933,11 @@ pub(crate) const OFFSET_BINDING_PATTERN_OPTIONAL: usize = offset_of!(BindingPatt
 pub struct BindingPatternWithoutKind<'a>(pub(crate) *const BindingPattern<'a>);
 
 impl<'a> BindingPatternWithoutKind<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_SPAN) as *const Span) }
+    }
+
     #[inline]
     pub fn type_annotation(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
@@ -4951,6 +4957,11 @@ impl<'a> BindingPatternWithoutKind<'a> {
 pub struct BindingPatternWithoutTypeAnnotation<'a>(pub(crate) *const BindingPattern<'a>);
 
 impl<'a> BindingPatternWithoutTypeAnnotation<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_SPAN) as *const Span) }
+    }
+
     #[inline]
     pub fn kind(&self) -> &BindingPatternKind<'a> {
         unsafe {
@@ -5173,12 +5184,12 @@ pub(crate) const OFFSET_FUNCTION_SPAN: usize = offset_of!(Function, span);
 pub(crate) const OFFSET_FUNCTION_ID: usize = offset_of!(Function, id);
 pub(crate) const OFFSET_FUNCTION_GENERATOR: usize = offset_of!(Function, generator);
 pub(crate) const OFFSET_FUNCTION_ASYNC: usize = offset_of!(Function, r#async);
+pub(crate) const OFFSET_FUNCTION_DECLARE: usize = offset_of!(Function, declare);
 pub(crate) const OFFSET_FUNCTION_TYPE_PARAMETERS: usize = offset_of!(Function, type_parameters);
 pub(crate) const OFFSET_FUNCTION_THIS_PARAM: usize = offset_of!(Function, this_param);
 pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
 pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
-pub(crate) const OFFSET_FUNCTION_MODIFIERS: usize = offset_of!(Function, modifiers);
 pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
 
 #[repr(transparent)]
@@ -5204,6 +5215,11 @@ impl<'a> FunctionWithoutId<'a> {
     #[inline]
     pub fn r#async(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -5244,11 +5260,6 @@ impl<'a> FunctionWithoutId<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5293,6 +5304,11 @@ impl<'a> FunctionWithoutTypeParameters<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn this_param(&self) -> &Option<TSThisParameter<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
@@ -5322,11 +5338,6 @@ impl<'a> FunctionWithoutTypeParameters<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5371,6 +5382,11 @@ impl<'a> FunctionWithoutThisParam<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5400,11 +5416,6 @@ impl<'a> FunctionWithoutThisParam<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5449,6 +5460,11 @@ impl<'a> FunctionWithoutParams<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5478,11 +5494,6 @@ impl<'a> FunctionWithoutParams<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5527,6 +5538,11 @@ impl<'a> FunctionWithoutBody<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5556,11 +5572,6 @@ impl<'a> FunctionWithoutBody<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -5605,6 +5616,11 @@ impl<'a> FunctionWithoutReturnType<'a> {
     }
 
     #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
@@ -5634,11 +5650,6 @@ impl<'a> FunctionWithoutReturnType<'a> {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
                 as *const Option<Box<'a, FunctionBody<'a>>>)
         }
-    }
-
-    #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_MODIFIERS) as *const Modifiers<'a>) }
     }
 
     #[inline]
@@ -6124,7 +6135,8 @@ pub(crate) const OFFSET_CLASS_TYPE_PARAMETERS: usize = offset_of!(Class, type_pa
 pub(crate) const OFFSET_CLASS_SUPER_TYPE_PARAMETERS: usize =
     offset_of!(Class, super_type_parameters);
 pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
-pub(crate) const OFFSET_CLASS_MODIFIERS: usize = offset_of!(Class, modifiers);
+pub(crate) const OFFSET_CLASS_ABSTRACT: usize = offset_of!(Class, r#abstract);
+pub(crate) const OFFSET_CLASS_DECLARE: usize = offset_of!(Class, declare);
 pub(crate) const OFFSET_CLASS_SCOPE_ID: usize = offset_of!(Class, scope_id);
 
 #[repr(transparent)]
@@ -6186,8 +6198,13 @@ impl<'a> ClassWithoutDecorators<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6257,8 +6274,13 @@ impl<'a> ClassWithoutId<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6328,8 +6350,13 @@ impl<'a> ClassWithoutSuperClass<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6401,8 +6428,13 @@ impl<'a> ClassWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6471,8 +6503,13 @@ impl<'a> ClassWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6541,8 +6578,13 @@ impl<'a> ClassWithoutSuperTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -6611,8 +6653,13 @@ impl<'a> ClassWithoutImplements<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_MODIFIERS) as *const Modifiers<'a>) }
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -8628,8 +8675,8 @@ impl<'a> TSThisParameterWithoutTypeAnnotation<'a> {
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_SPAN: usize = offset_of!(TSEnumDeclaration, span);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_ID: usize = offset_of!(TSEnumDeclaration, id);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_MEMBERS: usize = offset_of!(TSEnumDeclaration, members);
-pub(crate) const OFFSET_TS_ENUM_DECLARATION_MODIFIERS: usize =
-    offset_of!(TSEnumDeclaration, modifiers);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_CONST: usize = offset_of!(TSEnumDeclaration, r#const);
+pub(crate) const OFFSET_TS_ENUM_DECLARATION_DECLARE: usize = offset_of!(TSEnumDeclaration, declare);
 pub(crate) const OFFSET_TS_ENUM_DECLARATION_SCOPE_ID: usize =
     offset_of!(TSEnumDeclaration, scope_id);
 
@@ -8652,11 +8699,13 @@ impl<'a> TSEnumDeclarationWithoutId<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
-        }
+    pub fn r#const(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -8687,11 +8736,13 @@ impl<'a> TSEnumDeclarationWithoutMembers<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
-        }
+    pub fn r#const(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_CONST) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_ENUM_DECLARATION_DECLARE) as *const bool) }
     }
 
     #[inline]
@@ -9426,8 +9477,8 @@ pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION: usize =
     offset_of!(TSTypeAliasDeclaration, type_annotation);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS: usize =
     offset_of!(TSTypeAliasDeclaration, type_parameters);
-pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_MODIFIERS: usize =
-    offset_of!(TSTypeAliasDeclaration, modifiers);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE: usize =
+    offset_of!(TSTypeAliasDeclaration, declare);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9458,10 +9509,9 @@ impl<'a> TSTypeAliasDeclarationWithoutId<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
         }
     }
 }
@@ -9497,10 +9547,9 @@ impl<'a> TSTypeAliasDeclarationWithoutTypeAnnotation<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
         }
     }
 }
@@ -9536,10 +9585,9 @@ impl<'a> TSTypeAliasDeclarationWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
         }
     }
 }
@@ -9597,8 +9645,8 @@ pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS: usize =
     offset_of!(TSInterfaceDeclaration, type_parameters);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_EXTENDS: usize =
     offset_of!(TSInterfaceDeclaration, extends);
-pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS: usize =
-    offset_of!(TSInterfaceDeclaration, modifiers);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_DECLARE: usize =
+    offset_of!(TSInterfaceDeclaration, declare);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9637,10 +9685,9 @@ impl<'a> TSInterfaceDeclarationWithoutId<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
         }
     }
 }
@@ -9682,10 +9729,9 @@ impl<'a> TSInterfaceDeclarationWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
         }
     }
 }
@@ -9729,10 +9775,9 @@ impl<'a> TSInterfaceDeclarationWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
         }
     }
 }
@@ -9774,10 +9819,9 @@ impl<'a> TSInterfaceDeclarationWithoutExtends<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
         }
     }
 }
@@ -10660,8 +10704,8 @@ pub(crate) const OFFSET_TS_MODULE_DECLARATION_SPAN: usize = offset_of!(TSModuleD
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_ID: usize = offset_of!(TSModuleDeclaration, id);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_BODY: usize = offset_of!(TSModuleDeclaration, body);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_KIND: usize = offset_of!(TSModuleDeclaration, kind);
-pub(crate) const OFFSET_TS_MODULE_DECLARATION_MODIFIERS: usize =
-    offset_of!(TSModuleDeclaration, modifiers);
+pub(crate) const OFFSET_TS_MODULE_DECLARATION_DECLARE: usize =
+    offset_of!(TSModuleDeclaration, declare);
 pub(crate) const OFFSET_TS_MODULE_DECLARATION_SCOPE_ID: usize =
     offset_of!(TSModuleDeclaration, scope_id);
 
@@ -10692,10 +10736,9 @@ impl<'a> TSModuleDeclarationWithoutId<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_DECLARE) as *const bool)
         }
     }
 
@@ -10735,10 +10778,9 @@ impl<'a> TSModuleDeclarationWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn modifiers(&self) -> &Modifiers<'a> {
+    pub fn declare(&self) -> &bool {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_MODIFIERS)
-                as *const Modifiers<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_DECLARATION_DECLARE) as *const bool)
         }
     }
 
@@ -10752,7 +10794,27 @@ impl<'a> TSModuleDeclarationWithoutBody<'a> {
 }
 
 pub(crate) const OFFSET_TS_MODULE_BLOCK_SPAN: usize = offset_of!(TSModuleBlock, span);
+pub(crate) const OFFSET_TS_MODULE_BLOCK_DIRECTIVES: usize = offset_of!(TSModuleBlock, directives);
 pub(crate) const OFFSET_TS_MODULE_BLOCK_BODY: usize = offset_of!(TSModuleBlock, body);
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct TSModuleBlockWithoutDirectives<'a>(pub(crate) *const TSModuleBlock<'a>);
+
+impl<'a> TSModuleBlockWithoutDirectives<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Vec<'a, Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_BODY)
+                as *const Vec<'a, Statement<'a>>)
+        }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -10762,6 +10824,14 @@ impl<'a> TSModuleBlockWithoutBody<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn directives(&self) -> &Vec<'a, Directive<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
+                as *const Vec<'a, Directive<'a>>)
+        }
     }
 }
 

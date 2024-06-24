@@ -71,7 +71,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           cache-key: warm
       # cache build outputs to speed up compilation
-      - uses: mozilla-actions/sccache-action@v0.0.4
+      - uses: mozilla-actions/sccache-action@v0.0.5
         if: ${{ vars.USE_SCCACHE == 'true' }}
       - run: cargo ck
       - run: cargo test --no-run
@@ -157,7 +157,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.22.7
+      - uses: crate-ci/typos@v1.22.9
         with:
           files: .
 
@@ -281,7 +281,7 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: just
 
-      - uses: mozilla-actions/sccache-action@v0.0.4
+      - uses: mozilla-actions/sccache-action@v0.0.5
 
       - name: Clone submodules
         if: steps.filter.outputs.src == 'true'

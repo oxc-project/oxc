@@ -108,12 +108,12 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&function.id),
             function.generator,
             function.r#async,
+            false,
             self.ast.copy(&function.this_param),
             params,
             None,
             self.ast.copy(&function.type_parameters),
             return_type,
-            Modifiers::empty(),
         );
 
         self.ast.class_method(
@@ -306,9 +306,9 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn transform_class(
         &self,
         decl: &Class<'a>,
-        modifiers: Option<Modifiers<'a>>,
+        declare: Option<bool>,
     ) -> Option<Box<'a, Class<'a>>> {
-        if decl.is_declare() {
+        if decl.declare {
             return None;
         }
 
@@ -462,11 +462,6 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = self.ast.class_body(decl.body.span, elements);
 
-        let mut modifiers = modifiers.unwrap_or_else(|| self.modifiers_declare());
-        if decl.modifiers.is_contains_abstract() {
-            modifiers.add_modifier(Modifier { span: SPAN, kind: ModifierKind::Abstract });
-        };
-
         Some(self.ast.class(
             decl.r#type,
             decl.span,
@@ -477,7 +472,8 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&decl.super_type_parameters),
             self.ast.copy(&decl.implements),
             self.ast.new_vec(),
-            modifiers,
+            decl.r#abstract,
+            declare.unwrap_or_else(|| self.is_declare()),
         ))
     }
 
@@ -509,7 +505,7 @@ impl<'a> IsolatedDeclarations<'a> {
         kind: BindingPatternKind<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
-        let pattern = BindingPattern { kind, type_annotation, optional: false };
+        let pattern = BindingPattern { span: SPAN, kind, type_annotation, optional: false };
         let parameter =
             self.ast.formal_parameter(SPAN, pattern, None, false, false, self.ast.new_vec());
         let items = self.ast.new_vec_single(parameter);

@@ -4,7 +4,13 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::list::ClassElements;
-use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    list::NormalList,
+    modifiers::{ModifierKind, Modifiers},
+    Context, ParserImpl, StatementContext,
+};
 
 type Extends<'a> =
     Vec<'a, (Expression<'a>, Option<Box<'a, TSTypeParameterInstantiation<'a>>>, Span)>;
@@ -19,7 +25,7 @@ impl<'a> ParserImpl<'a> {
         stmt_ctx: StatementContext,
         start_span: Span,
     ) -> Result<Statement<'a>> {
-        let decl = self.parse_class_declaration(start_span, Modifiers::empty())?;
+        let decl = self.parse_class_declaration(start_span, &Modifiers::empty())?;
 
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::class_declaration(Span::new(
@@ -35,7 +41,7 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_declaration(
         &mut self,
         start_span: Span,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Class<'a>>> {
         self.parse_class(start_span, ClassType::ClassDeclaration, modifiers)
     }
@@ -45,7 +51,7 @@ impl<'a> ParserImpl<'a> {
     ///     class `BindingIdentifier`[?Yield, ?Await]opt `ClassTail`[?Yield, ?Await]
     pub(crate) fn parse_class_expression(&mut self) -> Result<Expression<'a>> {
         let class =
-            self.parse_class(self.start_span(), ClassType::ClassExpression, Modifiers::empty())?;
+            self.parse_class(self.start_span(), ClassType::ClassExpression, &Modifiers::empty())?;
         Ok(self.ast.class_expression(class))
     }
 
@@ -53,7 +59,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         r#type: ClassType,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Class<'a>>> {
         self.bump_any(); // advance `class`
 
@@ -80,6 +86,15 @@ impl<'a> ParserImpl<'a> {
         }
         let body = self.parse_class_body()?;
 
+        for modifier in modifiers.iter() {
+            if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Abstract) {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+
         Ok(self.ast.class(
             r#type,
             self.end_span(start_span),
@@ -90,7 +105,8 @@ impl<'a> ParserImpl<'a> {
             super_type_parameters,
             implements,
             decorators,
-            modifiers,
+            modifiers.is_contains_abstract(),
+            modifiers.is_contains_declare(),
         ))
     }
 

@@ -1,7 +1,6 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use crate::ast::*;
 use std::cell::Cell;
 
 use oxc_allocator::{Box, Vec};
@@ -17,6 +16,7 @@ use oxc_syntax::{
 };
 
 use super::macros::inherit_variants;
+use super::*;
 
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -1000,8 +1000,7 @@ pub struct VariableDeclaration<'a> {
     pub span: Span,
     pub kind: VariableDeclarationKind,
     pub declarations: Vec<'a, VariableDeclarator<'a>>,
-    /// Valid Modifiers: `export`, `declare`
-    pub modifiers: Modifiers<'a>,
+    pub declare: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1327,6 +1326,8 @@ pub struct DebuggerStatement {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub span: Span,
     // serde(flatten) the attributes because estree has no `BindingPattern`
     #[cfg_attr(feature = "serialize", serde(flatten))]
     #[cfg_attr(
@@ -1437,6 +1438,7 @@ pub struct Function<'a> {
     pub id: Option<BindingIdentifier<'a>>,
     pub generator: bool,
     pub r#async: bool,
+    pub declare: bool,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     /// Declaring `this` in a Function <https://www.typescriptlang.org/docs/handbook/2/functions.html#declaring-this-in-a-function>
     ///
@@ -1457,8 +1459,6 @@ pub struct Function<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    /// Valid modifiers: `export`, `default`, `async`
-    pub modifiers: Modifiers<'a>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1581,8 +1581,8 @@ pub struct Class<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
-    /// Valid Modifiers: `export`, `abstract`
-    pub modifiers: Modifiers<'a>,
+    pub r#abstract: bool,
+    pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
