@@ -148,6 +148,7 @@ mod typescript {
     pub mod prefer_for_of;
     pub mod prefer_function_type;
     pub mod prefer_literal_enum_member;
+    pub mod prefer_namespace_keyword;
     pub mod prefer_ts_expect_error;
     pub mod triple_slash_reference;
 }
@@ -542,6 +543,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_literal_enum_member,
     typescript::explicit_function_return_type,
     typescript::no_non_null_assertion,
+    typescript::prefer_namespace_keyword,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,

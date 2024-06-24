@@ -1,0 +1,35 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(prefer-namespace-keyword): Use 'namespace' instead of 'module' to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:1:1]
+ 1 │ module foo {}
+   · ─────────────
+   ╰────
+  help: 'Require using `namespace` keyword over `module` keyword to declare custom TypeScript modules
+
+  ⚠ typescript-eslint(prefer-namespace-keyword): Use 'namespace' instead of 'module' to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:1:1]
+ 1 │ declare module foo {}
+   · ─────────────────────
+   ╰────
+  help: 'Require using `namespace` keyword over `module` keyword to declare custom TypeScript modules
+
+  ⚠ typescript-eslint(prefer-namespace-keyword): Use 'namespace' instead of 'module' to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:2:10]
+ 1 │     
+ 2 │ ╭─▶             declare module foo {
+ 3 │ │                 declare module bar {}
+ 4 │ ╰─▶             }
+ 5 │                       
+   ╰────
+  help: 'Require using `namespace` keyword over `module` keyword to declare custom TypeScript modules
+
+  ⚠ typescript-eslint(prefer-namespace-keyword): Use 'namespace' instead of 'module' to declare custom TypeScript modules.
+   ╭─[prefer_namespace_keyword.tsx:3:12]
+ 2 │             declare module foo {
+ 3 │               declare module bar {}
+   ·               ─────────────────────
+ 4 │             }
+   ╰────
+  help: 'Require using `namespace` keyword over `module` keyword to declare custom TypeScript modules
