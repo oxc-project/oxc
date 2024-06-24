@@ -1283,13 +1283,13 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "0.17.1"
+version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ffd653f8c5d3dfd8beca79303398ab65d936168109640e00a19629eded86423"
+checksum = "d3185bccb8ad893e683b7a907d297d294efa096f8b199e9ad8be82c8fd05ff5c"
 dependencies = [
  "js-sys",
  "nom",
- "rustc-hash",
+ "rustc-hash 1.1.0",
  "serde",
  "serde-wasm-bindgen",
  "serde_json",
@@ -1357,7 +1357,7 @@ dependencies = [
  "itertools 0.13.0",
  "oxc_syntax",
  "petgraph",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1374,7 +1374,7 @@ dependencies = [
  "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1441,7 +1441,7 @@ dependencies = [
  "oxc_parser",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.0.0",
 ]
 
 [[package]]
@@ -1505,7 +1505,7 @@ dependencies = [
  "rayon",
  "regex",
  "rust-lapper",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "schemars",
  "serde",
  "serde_json",
@@ -1584,7 +1584,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_span",
  "oxc_syntax",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "seq-macro",
  "serde_json",
  "static_assertions",
@@ -1655,7 +1655,7 @@ dependencies = [
  "dunce",
  "json-strip-comments",
  "once_cell",
- "rustc-hash",
+ "rustc-hash 1.1.0",
  "serde",
  "serde_json",
  "thiserror",
@@ -1679,7 +1679,7 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "phf",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "tsify",
  "wasm-bindgen",
@@ -1692,7 +1692,7 @@ dependencies = [
  "base64-simd",
  "cfg-if",
  "rayon",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
 ]
@@ -1717,7 +1717,7 @@ dependencies = [
  "oxc_index",
  "oxc_span",
  "phf",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "ryu-js",
  "serde",
  "tsify",
@@ -1782,7 +1782,7 @@ dependencies = [
  "oxc_syntax",
  "oxc_traverse",
  "ropey",
- "rustc-hash",
+ "rustc-hash 2.0.0",
  "serde",
  "serde_json",
 ]
@@ -2174,6 +2174,12 @@ name = "rustc-hash"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
+name = "rustc-hash"
+version = "2.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "583034fd73374156e66797ed8e5b0d5690409c9226b22d87cb7f19821c05d152"
 
 [[package]]
 name = "rustix"
@@ -2856,7 +2862,7 @@ checksum = "e7cc416eaf05297012ead9d192226fe9a92e9a20f64f8780efb9085aaae9b590"
 dependencies = [
  "clean-path",
  "indexmap",
- "rustc-hash",
+ "rustc-hash 1.1.0",
  "serde",
  "serde_json",
 ]
