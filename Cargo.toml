@@ -99,8 +99,8 @@ oxc_linter       = { path = "crates/oxc_linter" }
 oxc_prettier     = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
 
-napi        = "2.16.6"
-napi-derive = "2.16.5"
+napi        = "3.0.0-alpha.1"
+napi-derive = "3.0.0-alpha.1"
 napi-build  = "2.1.3"
 
 assert-unchecked    = "0.1.2"
