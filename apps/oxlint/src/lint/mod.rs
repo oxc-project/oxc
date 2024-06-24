@@ -113,7 +113,7 @@ impl Runner for LintRunner {
                 let mut err = String::new();
                 handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
                 return CliRunResult::InvalidOptions {
-                    message: "Failed to parse configuration file.\n{err}".to_string(),
+                    message: format!("Failed to parse configuration file.\n{err}"),
                 };
             }
         };
