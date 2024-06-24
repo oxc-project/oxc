@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_strict_equal
 ---
   ⚠ eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.
    ╭─[prefer_strict_equal.tsx:1:19]

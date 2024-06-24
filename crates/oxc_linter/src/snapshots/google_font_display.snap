@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: google_font_display
 ---
   ⚠ eslint-plugin-next(google-font-display): A font-display parameter is missing (adding `&display=optional` is recommended).
    ╭─[google_font_display.tsx:6:16]

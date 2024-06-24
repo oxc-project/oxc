@@ -91,11 +91,16 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Build oxlint with cross
-        run: cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
-
-      - name: Build oxc_language_server with cross
-        run: cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
+      - name: Build
+        run: |
+          # Need to support 16kb-aligned pages for aarch64 systems,
+          # Asahi Linux & Raspberry Pi OS use a 16k page size.
+          # https://github.com/oxc-project/oxc/issues/3783
+          case ${{ matrix.job.target }} in
+            aarch64-*) export JEMALLOC_SYS_WITH_LG_PAGE=16 ;;
+          esac;
+          cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
+          cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries

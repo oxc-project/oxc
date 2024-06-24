@@ -3,9 +3,8 @@ use std::{
     io::{BufWriter, Stdout, Write},
 };
 
-use crate::{Error, Severity};
-
 use super::{writer, DiagnosticReporter, Info};
+use crate::{Error, Severity};
 
 pub struct UnixReporter {
     total: usize,

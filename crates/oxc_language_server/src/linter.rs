@@ -1,4 +1,3 @@
-use log::debug;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -6,6 +5,7 @@ use std::{
     sync::Arc,
 };
 
+use log::debug;
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{
@@ -287,6 +287,7 @@ impl IsolatedLintHandler {
 
             let program = allocator.alloc(ret.program);
             let semantic_ret = SemanticBuilder::new(javascript_source_text, source_type)
+                .with_cfg(true)
                 .with_trivias(ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);

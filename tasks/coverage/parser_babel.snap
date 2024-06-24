@@ -3,7 +3,7 @@ commit: 12619ffe
 parser_babel Summary:
 AST Parsed     : 2095/2101 (99.71%)
 Positive Passed: 2087/2101 (99.33%)
-Negative Passed: 1362/1501 (90.74%)
+Negative Passed: 1364/1501 (90.87%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -96,8 +96,6 @@ Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
 Expect Syntax Error: "typescript/import/export-import-type/input.ts"
 Expect Syntax Error: "typescript/import/type-equals/input.ts"
-Expect Syntax Error: "typescript/interface/abstract/input.ts"
-Expect Syntax Error: "typescript/interface/export-abstract-interface/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-parameters/input.ts"
@@ -10139,6 +10137,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·       ──
    ╰────
 
+  × 'abstract' modifier cannot be used here.
+   ╭─[typescript/interface/abstract/input.ts:1:1]
+ 1 │ abstract interface Foo {
+   · ────────
+ 2 │   foo: string;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/declare-new-line/input.ts:1:8]
  1 │ declare interface
@@ -10146,6 +10151,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ I
    ╰────
   help: Try insert a semicolon here
+
+  × 'abstract' modifier cannot be used here.
+   ╭─[typescript/interface/export-abstract-interface/input.ts:1:8]
+ 1 │ export abstract interface I {
+   ·        ────────
+ 2 │ 
+   ╰────
 
   × Unexpected token
    ╭─[typescript/interface/export-default/input.ts:1:26]

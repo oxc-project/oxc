@@ -2,11 +2,13 @@ use oxc_ast::{
     ast::{ArrowFunctionExpression, Function},
     AstKind,
 };
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    algo, petgraph::visit::Control, AstNodeId, AstNodes, EdgeType, ErrorEdgeKind, InstructionKind,
+use oxc_cfg::{
+    graph::{algo, visit::Control},
+    ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind,
 };
-use oxc_span::{Atom, CompactStr};
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{AstNodeId, AstNodes};
+use oxc_span::CompactStr;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
@@ -110,6 +112,9 @@ impl Rule for RulesOfHooks {
         if !is_react_hook(&call.callee) {
             return;
         }
+
+        let cfg = ctx.cfg();
+
         let span = call.span;
         let hook_name =
             call.callee_name().expect("We identify hooks using their names so it should be named.");
@@ -225,7 +230,7 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if !ctx.semantic().cfg().is_reachable(func_cfg_id, node_cfg_id) {
+        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
             // There should always be a control flow path between a parent and child node.
             // If there is none it means we always do an early exit before reaching our hook call.
             // In some cases it might mean that we are operating on an invalid `cfg` but in either
@@ -234,11 +239,11 @@ impl Rule for RulesOfHooks {
         }
 
         // Is this node cyclic?
-        if semantic.cfg().is_cyclic(node_cfg_id) {
+        if cfg.is_cyclic(node_cfg_id) {
             return ctx.diagnostic(diagnostics::loop_hook(span, hook_name));
         }
 
-        if has_conditional_path_accept_throw(ctx, parent_func, node) {
+        if has_conditional_path_accept_throw(cfg, parent_func, node) {
             #[allow(clippy::needless_return)]
             return ctx.diagnostic(diagnostics::conditional_hook(span, hook_name));
         }
@@ -246,14 +251,13 @@ impl Rule for RulesOfHooks {
 }
 
 fn has_conditional_path_accept_throw(
-    ctx: &LintContext<'_>,
+    cfg: &ControlFlowGraph,
     from: &AstNode<'_>,
     to: &AstNode<'_>,
 ) -> bool {
     let from_graph_id = from.cfg_id();
     let to_graph_id = to.cfg_id();
-    let cfg = ctx.semantic().cfg();
-    let graph = &cfg.graph;
+    let graph = cfg.graph();
     if graph
         .edges(to_graph_id)
         .any(|it| matches!(it.weight(), EdgeType::Error(ErrorEdgeKind::Explicit)))
@@ -371,7 +375,7 @@ fn get_declaration_identifier<'a>(
         match kind {
             // const useHook = () => {};
             AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1 => {
-                decl.declarations[0].id.get_identifier().map(Atom::to_compact_str)
+                decl.declarations[0].id.get_identifier().map(|id| id.to_compact_str())
             }
             // useHook = () => {};
             AstKind::AssignmentExpression(expr)
@@ -382,7 +386,7 @@ fn get_declaration_identifier<'a>(
             // const {useHook = () => {}} = {};
             // ({useHook = () => {}} = {});
             AstKind::AssignmentPattern(patt) => {
-                patt.left.get_identifier().map(Atom::to_compact_str)
+                patt.left.get_identifier().map(|id| id.to_compact_str())
             }
             // { useHook: () => {} }
             // { useHook() {} }

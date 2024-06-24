@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: double_comparisons
 ---
   ⚠ oxc(double-comparisons): Unexpected double comparisons.
    ╭─[double_comparisons.tsx:1:1]

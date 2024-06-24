@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_native_coercion_functions
 ---
   ⚠ eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `String`. Call `String` directly.
    ╭─[prefer_native_coercion_functions.tsx:1:13]

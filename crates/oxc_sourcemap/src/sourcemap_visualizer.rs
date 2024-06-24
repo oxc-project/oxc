@@ -1,5 +1,6 @@
-use crate::SourceMap;
 use rustc_hash::FxHashMap;
+
+use crate::SourceMap;
 
 /// The `SourcemapVisualizer` is a helper for sourcemap testing.
 /// It print the mapping of original content and final content tokens.

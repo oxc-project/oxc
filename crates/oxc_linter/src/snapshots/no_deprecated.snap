@@ -1,5 +1,0 @@
----
-source: crates/oxc_linter/src/tester.rs
-expression: no_deprecated
----
-

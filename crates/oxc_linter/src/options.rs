@@ -1,9 +1,8 @@
 use std::{convert::From, path::PathBuf};
 
+use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 use rustc_hash::FxHashSet;
 use serde_json::{Number, Value};
-
-use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 
 use crate::{config::OxlintConfig, rules::RULES, RuleCategory, RuleEnum, RuleWithSeverity};
 

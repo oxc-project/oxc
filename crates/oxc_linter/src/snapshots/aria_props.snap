@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: aria_props
 ---
   ⚠ eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.
    ╭─[aria_props.tsx:1:6]

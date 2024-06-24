@@ -1,5 +1,4 @@
 use memchr::memmem::Finder;
-
 use oxc_span::{SourceType, Span};
 
 use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START};

@@ -1,6 +1,5 @@
-use pico_args::Arguments;
-
 use oxc_prettier_conformance::{TestLanguage, TestRunner, TestRunnerOptions};
+use pico_args::Arguments;
 
 fn main() {
     let mut args = Arguments::from_env();

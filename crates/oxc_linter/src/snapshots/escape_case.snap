@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: escape_case
 ---
   ⚠ eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.
    ╭─[escape_case.tsx:1:13]

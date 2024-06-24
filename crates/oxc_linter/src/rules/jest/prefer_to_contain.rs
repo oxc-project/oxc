@@ -3,7 +3,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -169,7 +168,10 @@ fn tests() {
         ("expect(a.includes(b)).toBe(...true)", None),
         ("expect(a);", None),
         // typescript
-        ("(expect('Model must be bound to an array if the multiple property is true') as any).toHaveBeenTipped()", None),
+        (
+            "(expect('Model must be bound to an array if the multiple property is true') as any).toHaveBeenTipped()",
+            None,
+        ),
         ("expect(a.includes(b)).toEqual(0 as boolean);", None),
     ];
 

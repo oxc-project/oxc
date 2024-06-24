@@ -1,8 +1,9 @@
 mod ignore;
 mod lint;
 
-use bpaf::Bpaf;
 use std::path::PathBuf;
+
+use bpaf::Bpaf;
 
 pub use self::{
     ignore::IgnoreOptions,
@@ -64,8 +65,7 @@ fn expand_glob(paths: Vec<PathBuf>) -> Vec<PathBuf> {
 
 #[cfg(test)]
 mod misc_options {
-    use super::lint::lint_command;
-    use super::MiscOptions;
+    use super::{lint::lint_command, MiscOptions};
 
     fn get_misc_options(arg: &str) -> MiscOptions {
         let args = arg.split(' ').map(std::string::ToString::to_string).collect::<Vec<_>>();

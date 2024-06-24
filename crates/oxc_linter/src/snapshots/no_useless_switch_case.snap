@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_useless_switch_case
 ---
   ⚠ eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.
    ╭─[no_useless_switch_case.tsx:3:13]

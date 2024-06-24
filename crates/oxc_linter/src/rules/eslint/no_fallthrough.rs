@@ -5,13 +5,15 @@ use oxc_ast::{
     ast::{Statement, SwitchCase, SwitchStatement},
     AstKind,
 };
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    petgraph::{visit::EdgeRef, Direction},
-    pg::neighbors_filtered_by_edge_weight,
+use oxc_cfg::{
+    graph::{
+        visit::{neighbors_filtered_by_edge_weight, EdgeRef},
+        Direction,
+    },
     BasicBlockId, EdgeType, ErrorEdgeKind, InstructionKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
 use rustc_hash::{FxHashMap, FxHashSet};
@@ -89,9 +91,9 @@ impl Rule for NoFallthrough {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::SwitchStatement(switch) = node.kind() else { return };
 
+        let cfg = ctx.cfg();
         let switch_id = node.cfg_id();
-        let cfg = ctx.semantic().cfg();
-        let graph = &cfg.graph;
+        let graph = cfg.graph();
 
         let (cfg_ids, tests, default, exit) = get_switch_semantic_cases(ctx, node, switch);
 
@@ -266,8 +268,8 @@ fn get_switch_semantic_cases(
     /* default */ Option<BasicBlockId>,
     /* exit */ Option<BasicBlockId>,
 ) {
-    let cfg = &ctx.semantic().cfg();
-    let graph = &cfg.graph;
+    let cfg = ctx.cfg();
+    let graph = cfg.graph();
     let has_default = switch.cases.iter().any(SwitchCase::is_default_case);
     let (tests, exit) = graph
         .edges_directed(node.cfg_id(), Direction::Outgoing)
@@ -351,7 +353,10 @@ fn test() {
         ("function foo() { switch(foo) { case 0: {return;}\n case 1: {return;} } }", None),
         ("switch(foo) { case 0: case 1: {break;} }", None),
         ("switch(foo) { }", None),
-        ("switch(foo) { case 0: switch(bar) { case 2: break; } /* falls through */ case 1: break; }", None),
+        (
+            "switch(foo) { case 0: switch(bar) { case 2: break; } /* falls through */ case 1: break; }",
+            None,
+        ),
         ("function foo() { switch(foo) { case 1: return a; a++; }}", None),
         ("switch (foo) { case 0: a(); /* falls through */ default:  b(); /* comment */ }", None),
         ("switch (foo) { case 0: a(); /* falls through */ default: /* comment */ b(); }", None),
@@ -360,12 +365,10 @@ fn test() {
         ("switch (foo) { case 0: try {} finally { break; } default: b(); }", None),
         ("switch (foo) { case 0: try { throw 0; } catch (err) { break; } default: b(); }", None),
         ("switch (foo) { case 0: do { throw 0; } while(a); default: b(); }", None),
-        // TODO: we need a way to handle disables in the higher context, For example purging
-        // disabled diagnostics.
-        // (
-        //     "switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }",
-        //     None,
-        // ),
+        (
+            "switch (foo) { case 0: a(); \n// eslint-disable-next-line no-fallthrough\n case 1: }",
+            None,
+        ),
         (
             "switch(foo) { case 0: a(); /* no break */ case 1: b(); }",
             Some(serde_json::json!([{
@@ -396,10 +399,22 @@ fn test() {
                 "commentPattern": "break[\\s\\w]+omitted"
             }])),
         ),
-        ("switch(foo) { case 0: \n\n\n case 1: b(); }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
-        ("switch(foo) { case 0: \n /* with comments */  \n case 1: b(); }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
-        ("switch (a) {\n case 1: ; break; \n case 3: }", Some(serde_json::json!([{ "allowEmptyCase": true }]))),
-        ("switch (a) {\n case 1: ; break; \n case 3: }", Some(serde_json::json!([{ "allowEmptyCase": false }]))),
+        (
+            "switch(foo) { case 0: \n\n\n case 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch(foo) { case 0: \n /* with comments */  \n case 1: b(); }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch (a) {\n case 1: ; break; \n case 3: }",
+            Some(serde_json::json!([{ "allowEmptyCase": true }])),
+        ),
+        (
+            "switch (a) {\n case 1: ; break; \n case 3: }",
+            Some(serde_json::json!([{ "allowEmptyCase": false }])),
+        ),
         (
             "switch(foo) { case 0: a(); break; /* falls through */ case 1: b(); }",
             Some(serde_json::json!([{

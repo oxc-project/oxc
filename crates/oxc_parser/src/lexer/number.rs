@@ -1,9 +1,10 @@
 //! Parsing utilities for converting Javascript numbers to Rust f64
 //! code copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
 
+use std::borrow::Cow;
+
 use num_bigint::BigInt;
 use num_traits::Num as _;
-use std::borrow::Cow;
 
 use super::kind::Kind;
 

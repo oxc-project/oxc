@@ -1,9 +1,8 @@
 use lazy_static::lazy_static;
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -62,11 +61,11 @@ impl Rule for JsxNoCommentTextnodes {
     }
 }
 
-fn control_patterns(pattern: &Atom) -> bool {
+fn control_patterns(pattern: &str) -> bool {
     lazy_static! {
         static ref CTL_PAT: Regex = Regex::new(r"(?m)^\s*/(/|\*)",).unwrap();
     }
-    CTL_PAT.is_match(pattern.as_str())
+    CTL_PAT.is_match(pattern)
 }
 
 #[test]

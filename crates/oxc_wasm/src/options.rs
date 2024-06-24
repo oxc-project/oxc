@@ -164,6 +164,7 @@ pub struct OxcMinifierOptions {
     whitespace: bool,
     mangle: bool,
     compress: bool,
+    compress_options: OxcCompressOptions,
 }
 
 #[wasm_bindgen]
@@ -202,6 +203,121 @@ impl OxcMinifierOptions {
     #[wasm_bindgen(setter)]
     pub fn set_compress(&mut self, yes: bool) {
         self.compress = yes;
+    }
+
+    #[wasm_bindgen(getter = compressOptions)]
+    pub fn compress_options(&self) -> OxcCompressOptions {
+        self.compress_options
+    }
+
+    #[wasm_bindgen(setter = compressOptions)]
+    pub fn set_compress_options(&mut self, options: OxcCompressOptions) {
+        self.compress_options = options;
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Clone, Copy)]
+pub struct OxcCompressOptions {
+    booleans: bool,
+    drop_debugger: bool,
+    drop_console: bool,
+    evaluate: bool,
+    join_vars: bool,
+    loops: bool,
+    typeofs: bool,
+}
+
+// keep same with `oxc_minifier::options::CompressOptions`
+impl Default for OxcCompressOptions {
+    fn default() -> Self {
+        Self {
+            booleans: true,
+            drop_debugger: true,
+            drop_console: false,
+            evaluate: true,
+            join_vars: true,
+            loops: true,
+            typeofs: true,
+        }
+    }
+}
+
+#[wasm_bindgen]
+impl OxcCompressOptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn booleans(self) -> bool {
+        self.booleans
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_booleans(&mut self, yes: bool) {
+        self.booleans = yes;
+    }
+
+    #[wasm_bindgen(getter = dropDebugger)]
+    pub fn drop_debugger(self) -> bool {
+        self.drop_debugger
+    }
+
+    #[wasm_bindgen(setter = dropDebugger)]
+    pub fn set_drop_debugger(&mut self, yes: bool) {
+        self.drop_debugger = yes;
+    }
+
+    #[wasm_bindgen(getter = dropConsole)]
+    pub fn drop_console(self) -> bool {
+        self.drop_console
+    }
+
+    #[wasm_bindgen(setter = dropConsole)]
+    pub fn set_drop_console(&mut self, yes: bool) {
+        self.drop_console = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn evaluate(self) -> bool {
+        self.evaluate
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_evaluate(&mut self, yes: bool) {
+        self.evaluate = yes;
+    }
+
+    #[wasm_bindgen(getter = joinVars)]
+    pub fn join_vars(self) -> bool {
+        self.join_vars
+    }
+
+    #[wasm_bindgen(setter = joinVars)]
+    pub fn set_join_vars(&mut self, yes: bool) {
+        self.join_vars = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn loops(self) -> bool {
+        self.loops
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_loops(&mut self, yes: bool) {
+        self.loops = yes;
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn typeofs(self) -> bool {
+        self.typeofs
+    }
+
+    #[wasm_bindgen(setter)]
+    pub fn set_typeofs(&mut self, yes: bool) {
+        self.typeofs = yes;
     }
 }
 

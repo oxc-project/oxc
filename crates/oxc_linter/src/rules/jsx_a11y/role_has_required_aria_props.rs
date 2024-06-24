@@ -1,13 +1,13 @@
-use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, phf_set};
+
+use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-has-required-aria-props): `{role}` role is missing required aria props `{props}`."))
@@ -77,8 +77,7 @@ impl Rule for RoleHasRequiredAriaProps {
 
 #[test]
 fn test() {
-    use crate::rules::RoleHasRequiredAriaProps;
-    use crate::tester::Tester;
+    use crate::{rules::RoleHasRequiredAriaProps, tester::Tester};
 
     fn settings() -> serde_json::Value {
         serde_json::json!({
@@ -98,10 +97,25 @@ fn test() {
         ("<div role={role || 'button'} />", None, None, None),
         ("<div role={role || 'foobar'} />", None, None, None),
         ("<div role='row' />", None, None, None),
-        ("<span role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0'></span>", None, None, None),
-        ("<input role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0' {...props} type='checkbox' />", None, None, None),
+        (
+            "<span role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0'></span>",
+            None,
+            None,
+            None,
+        ),
+        (
+            "<input role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0' {...props} type='checkbox' />",
+            None,
+            None,
+            None,
+        ),
         ("<input type='checkbox' role='switch' />", None, None, None),
-        ("<MyComponent role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0' />", None, Some(settings()), None),
+        (
+            "<MyComponent role='checkbox' aria-checked='false' aria-labelledby='foo' tabindex='0' />",
+            None,
+            Some(settings()),
+            None,
+        ),
     ];
 
     let fail = vec![

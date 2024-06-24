@@ -1,30 +1,30 @@
 mod linter;
 
-use crate::linter::{DiagnosticReport, ServerLinter};
+use std::{collections::HashMap, fmt::Debug, path::PathBuf, str::FromStr};
+
+use dashmap::DashMap;
+use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
 use oxc_linter::{LintOptions, Linter};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::fmt::Debug;
-use std::path::PathBuf;
-use std::str::FromStr;
-
-use dashmap::DashMap;
-use futures::future::join_all;
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
-use tower_lsp::jsonrpc::{Error, ErrorCode, Result};
-use tower_lsp::lsp_types::{
-    CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
-    CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
-    DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
-    DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
-    InitializedParams, OneOf, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
-    TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
-    WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+use tower_lsp::{
+    jsonrpc::{Error, ErrorCode, Result},
+    lsp_types::{
+        CodeAction, CodeActionKind, CodeActionOptions, CodeActionOrCommand, CodeActionParams,
+        CodeActionProviderCapability, CodeActionResponse, ConfigurationItem, Diagnostic,
+        DidChangeConfigurationParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams,
+        DidOpenTextDocumentParams, DidSaveTextDocumentParams, InitializeParams, InitializeResult,
+        InitializedParams, OneOf, ServerCapabilities, ServerInfo, TextDocumentSyncCapability,
+        TextDocumentSyncKind, TextEdit, Url, WorkDoneProgressOptions, WorkspaceEdit,
+        WorkspaceFoldersServerCapabilities, WorkspaceServerCapabilities,
+    },
+    Client, LanguageServer, LspService, Server,
 };
-use tower_lsp::{Client, LanguageServer, LspService, Server};
+
+use crate::linter::{DiagnosticReport, ServerLinter};
 
 struct Backend {
     client: Client,
@@ -66,6 +66,7 @@ impl Options {
             SyntheticRunLevel::Disable
         }
     }
+
     fn get_config_path(&self) -> Option<PathBuf> {
         if self.config_path.is_empty() {
             None

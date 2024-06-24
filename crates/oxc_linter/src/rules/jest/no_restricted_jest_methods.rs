@@ -1,3 +1,11 @@
+use std::{collections::HashMap, hash::BuildHasherDefault};
+
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use rustc_hash::{FxHashMap, FxHasher};
+
 use crate::{
     context::LintContext,
     rule::Rule,
@@ -6,13 +14,6 @@ use crate::{
         PossibleJestNode,
     },
 };
-
-use oxc_ast::AstKind;
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHasher};
-use std::{collections::HashMap, hash::BuildHasherDefault};
 
 fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: guard_for_in
 ---
   ⚠ eslint(guard-for-in): Require `for-in` loops to include an `if` statement
    ╭─[guard_for_in.tsx:1:1]

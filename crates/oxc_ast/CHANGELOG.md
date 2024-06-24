@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.15.0] - 2024-06-18
+
+- 0578ece ast: [**BREAKING**] Remove `ExportDefaultDeclarationKind::TSEnumDeclaration` (#3666) (Dunqing)
+
+### Features
+
+- 81e9526 isolated-declarations: Inferring set accessor parameter type from get accessor return type (#3725) (Dunqing)
+- 8f5655d linter: Add eslint/no-useless-constructor (#3594) (Don Isaac)
+- 046ff3f linter/eslint: Add `no_unreachable` rule. (#3238) (rzvxa)
+- 910193e transformer-dts: Report error for super class (#3711) (Dunqing)
+- 413d7be transformer-dts: Transform enum support (#3710) (Dunqing)
+- 35c382e transformer-dts: Remove type annotation from private field (#3689) (Dunqing)
+- 0e6d3ce transformer-dts: Report error for async function and generator (#3688) (Dunqing)
+- b22b59a transformer-dts: Transform namespace support (#3683) (Dunqing)
+- 4f2db46 transformer-dts: `--isolatedDeclarations` dts transform (#3664) (Dunqing)
+
+### Bug Fixes
+
+- 2158268 ast: Incorrect visit order in function (#3681) (Dunqing)
+- da1e2d0 codegen: Improve typescript codegen (#3708) (Boshen)
+- 90743e2 traverse: Change visit order for `Function` (#3685) (overlookmotel)
+
+### Refactor
+
+- fa7a6ba codegen: Add `gen` method to ast nodes (#3687) (Boshen)
+
 ## [0.14.0] - 2024-06-12
 
 ### Features

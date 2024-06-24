@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: require_property_description
 ---
   ⚠ eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.
    ╭─[require_property_description.tsx:4:17]

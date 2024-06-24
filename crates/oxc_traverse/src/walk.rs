@@ -1763,6 +1763,36 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
     }
 }
 
+pub(crate) unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut ForStatementLeft<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_for_statement_left(&mut *node, ctx);
+    match &mut *node {
+        ForStatementLeft::VariableDeclaration(node) => {
+            walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ForStatementLeft::UsingDeclaration(node) => {
+            walk_using_declaration(traverser, (&mut **node) as *mut _, ctx)
+        }
+        ForStatementLeft::AssignmentTargetIdentifier(_)
+        | ForStatementLeft::TSAsExpression(_)
+        | ForStatementLeft::TSSatisfiesExpression(_)
+        | ForStatementLeft::TSNonNullExpression(_)
+        | ForStatementLeft::TSTypeAssertion(_)
+        | ForStatementLeft::TSInstantiationExpression(_)
+        | ForStatementLeft::ArrayAssignmentTarget(_)
+        | ForStatementLeft::ObjectAssignmentTarget(_)
+        | ForStatementLeft::ComputedMemberExpression(_)
+        | ForStatementLeft::StaticMemberExpression(_)
+        | ForStatementLeft::PrivateFieldExpression(_) => {
+            walk_assignment_target(traverser, node as *mut _, ctx)
+        }
+    }
+    traverser.exit_for_statement_left(&mut *node, ctx);
+}
+
 pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     node: *mut ForOfStatement<'a>,
@@ -1800,36 +1830,6 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
-}
-
-pub(crate) unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
-    traverser: &mut Tr,
-    node: *mut ForStatementLeft<'a>,
-    ctx: &mut TraverseCtx<'a>,
-) {
-    traverser.enter_for_statement_left(&mut *node, ctx);
-    match &mut *node {
-        ForStatementLeft::VariableDeclaration(node) => {
-            walk_variable_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
-        ForStatementLeft::UsingDeclaration(node) => {
-            walk_using_declaration(traverser, (&mut **node) as *mut _, ctx)
-        }
-        ForStatementLeft::AssignmentTargetIdentifier(_)
-        | ForStatementLeft::TSAsExpression(_)
-        | ForStatementLeft::TSSatisfiesExpression(_)
-        | ForStatementLeft::TSNonNullExpression(_)
-        | ForStatementLeft::TSTypeAssertion(_)
-        | ForStatementLeft::TSInstantiationExpression(_)
-        | ForStatementLeft::ArrayAssignmentTarget(_)
-        | ForStatementLeft::ObjectAssignmentTarget(_)
-        | ForStatementLeft::ComputedMemberExpression(_)
-        | ForStatementLeft::StaticMemberExpression(_)
-        | ForStatementLeft::PrivateFieldExpression(_) => {
-            walk_assignment_target(traverser, node as *mut _, ctx)
-        }
-    }
-    traverser.exit_for_statement_left(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_continue_statement<'a, Tr: Traverse<'a>>(
@@ -3109,7 +3109,12 @@ pub(crate) unsafe fn walk_module_export_name<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_module_export_name(&mut *node, ctx);
     match &mut *node {
-        ModuleExportName::Identifier(node) => walk_identifier_name(traverser, node as *mut _, ctx),
+        ModuleExportName::IdentifierName(node) => {
+            walk_identifier_name(traverser, node as *mut _, ctx)
+        }
+        ModuleExportName::IdentifierReference(node) => {
+            walk_identifier_reference(traverser, node as *mut _, ctx)
+        }
         ModuleExportName::StringLiteral(node) => {
             walk_string_literal(traverser, node as *mut _, ctx)
         }
@@ -3814,6 +3819,9 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSBooleanKeyword(node) => {
             walk_ts_boolean_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSType::TSIntrinsicKeyword(node) => {
+            walk_ts_intrinsic_keyword(traverser, (&mut **node) as *mut _, ctx)
+        }
         TSType::TSNeverKeyword(node) => {
             walk_ts_never_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -4122,6 +4130,7 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         TSTupleElement::TSAnyKeyword(_)
         | TSTupleElement::TSBigIntKeyword(_)
         | TSTupleElement::TSBooleanKeyword(_)
+        | TSTupleElement::TSIntrinsicKeyword(_)
         | TSTupleElement::TSNeverKeyword(_)
         | TSTupleElement::TSNullKeyword(_)
         | TSTupleElement::TSNumberKeyword(_)
@@ -4201,6 +4210,15 @@ pub(crate) unsafe fn walk_ts_never_keyword<'a, Tr: Traverse<'a>>(
 ) {
     traverser.enter_ts_never_keyword(&mut *node, ctx);
     traverser.exit_ts_never_keyword(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_ts_intrinsic_keyword<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSIntrinsicKeyword,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_intrinsic_keyword(&mut *node, ctx);
+    traverser.exit_ts_intrinsic_keyword(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_unknown_keyword<'a, Tr: Traverse<'a>>(
@@ -4885,7 +4903,16 @@ pub(crate) unsafe fn walk_ts_module_block<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_module_block(&mut *node, ctx);
-    ctx.push_stack(Ancestor::TSModuleBlockBody(ancestor::TSModuleBlockWithoutBody(node)));
+    ctx.push_stack(Ancestor::TSModuleBlockDirectives(ancestor::TSModuleBlockWithoutDirectives(
+        node,
+    )));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_DIRECTIVES)
+        as *mut Vec<Directive>))
+        .iter_mut()
+    {
+        walk_directive(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::TSModuleBlockBody);
     walk_statements(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_TS_MODULE_BLOCK_BODY) as *mut Vec<Statement>,

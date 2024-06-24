@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_math_trunc
 ---
   ⚠ eslint-plugin-unicorn(prefer-math-trunc): Prefer `Math.trunc()` over instead of `| 0`.
    ╭─[prefer_math_trunc.tsx:1:13]

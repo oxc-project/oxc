@@ -1,8 +1,7 @@
 #![allow(clippy::cast_possible_truncation)]
-use oxc_diagnostics::OxcDiagnostic;
-
 use std::{ffi::OsStr, path::Component, sync::Arc};
 
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::{

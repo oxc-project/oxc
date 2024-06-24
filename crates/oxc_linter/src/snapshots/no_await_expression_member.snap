@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_await_expression_member
 ---
   ⚠ eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression
    ╭─[no_await_expression_member.tsx:1:1]

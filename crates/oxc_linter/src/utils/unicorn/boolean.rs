@@ -6,9 +6,8 @@ use oxc_semantic::AstNode;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{ast_util::outermost_paren_parent, LintContext};
-
 use super::is_logical_expression;
+use crate::{ast_util::outermost_paren_parent, LintContext};
 pub fn is_logic_not(node: &AstKind) -> bool {
     matches!(node, AstKind::UnaryExpression(unary_expr) if unary_expr.operator == UnaryOperator::LogicalNot)
 }

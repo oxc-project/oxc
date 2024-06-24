@@ -19,6 +19,7 @@ impl<'a, 'b> TemplateLiteralPrinter<'a, 'b> {
             Self::TSTemplateLiteralType(template_literal) => &template_literal.quasis,
         }
     }
+
     fn get_nth_expr_doc(&self, p: &mut Prettier<'a>, index: usize) -> Option<Doc<'a>> {
         match self {
             Self::TemplateLiteral(template_literal) => {

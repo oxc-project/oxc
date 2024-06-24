@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_regex_spaces
 ---
   ⚠ eslint(no-regex-spaces): Spaces are hard to count.
    ╭─[no_regex_spaces.tsx:1:15]

@@ -5,7 +5,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -183,6 +182,7 @@ impl JasmineProperty {
             _ => None,
         }
     }
+
     fn details(&self) -> (&'static str, &'static str) {
         match self {
             Self::Any => ("Illegal usage of `any`", "prefer use Jest own API `expect.any`"),
@@ -209,6 +209,7 @@ impl JasmineProperty {
             }
         }
     }
+
     fn available_in_jest_expect(&self) -> bool {
         matches!(
             self,

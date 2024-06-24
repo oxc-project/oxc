@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_untyped_mock_factory
 ---
   ⚠ eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.
    ╭─[no_untyped_mock_factory.tsx:2:22]

@@ -2,21 +2,20 @@
 
 use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
+#[cfg(feature = "serialize")]
+use serde::Serialize;
+#[cfg(feature = "serialize")]
+use tsify::Tsify;
 
 use crate::{
     node::AstNodeId,
     reference::{Reference, ReferenceId},
 };
-
-#[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -106,7 +105,7 @@ impl SymbolTable {
         self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 
-    pub fn get_scope_id_from_name(&self, name: &Atom) -> Option<ScopeId> {
+    pub fn get_scope_id_from_name(&self, name: &str) -> Option<ScopeId> {
         self.get_symbol_id_from_name(name).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 

@@ -1,8 +1,7 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 // Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-empty-character-class.js
 use lazy_static::lazy_static;
 use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;

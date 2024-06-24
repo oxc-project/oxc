@@ -1,16 +1,16 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 use std::collections::{HashMap, HashSet};
 
 use oxc_ast::{
     ast::{Expression, MethodDefinitionKind},
     AstKind,
 };
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    petgraph::visit::EdgeRef, pg::neighbors_filtered_by_edge_weight, AstNodeId, BasicBlockId,
-    ControlFlowGraph, EdgeType,
+use oxc_cfg::{
+    graph::visit::{neighbors_filtered_by_edge_weight, EdgeRef},
+    BasicBlockId, ControlFlowGraph, EdgeType, ErrorEdgeKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -56,8 +56,8 @@ enum DefinitelyCallsThisBeforeSuper {
 
 impl Rule for NoThisBeforeSuper {
     fn run_once(&self, ctx: &LintContext) {
+        let cfg = ctx.cfg();
         let semantic = ctx.semantic();
-        let cfg = semantic.cfg();
 
         // first pass -> find super calls and local violations
         let mut wanted_nodes = Vec::new();
@@ -156,11 +156,8 @@ impl NoThisBeforeSuper {
     fn analyze(
         cfg: &ControlFlowGraph,
         id: BasicBlockId,
-        basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
-        basic_blocks_with_local_violations: &HashMap<
-            oxc_semantic::petgraph::prelude::NodeIndex,
-            Vec<AstNodeId>,
-        >,
+        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<AstNodeId>>,
         follow_join: bool,
     ) -> Vec<DefinitelyCallsThisBeforeSuper> {
         neighbors_filtered_by_edge_weight(
@@ -190,8 +187,7 @@ impl NoThisBeforeSuper {
                     if cfg.graph.edges(*basic_block_id).any(|it| {
                         matches!(
                             it.weight(),
-                            EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit)
-                                | EdgeType::Finalize
+                            EdgeType::Error(ErrorEdgeKind::Explicit) | EdgeType::Finalize
                         )
                     }) {
                         (DefinitelyCallsThisBeforeSuper::Maybe(*basic_block_id), false)
@@ -219,11 +215,8 @@ impl NoThisBeforeSuper {
     fn check_for_violation(
         cfg: &ControlFlowGraph,
         output: Vec<DefinitelyCallsThisBeforeSuper>,
-        basic_blocks_with_super_called: &HashSet<oxc_semantic::petgraph::prelude::NodeIndex>,
-        basic_blocks_with_local_violations: &HashMap<
-            oxc_semantic::petgraph::prelude::NodeIndex,
-            Vec<AstNodeId>,
-        >,
+        basic_blocks_with_super_called: &HashSet<BasicBlockId>,
+        basic_blocks_with_local_violations: &HashMap<BasicBlockId, Vec<AstNodeId>>,
     ) -> bool {
         // Deciding whether we definitely call this before super in all
         // codepaths is as simple as seeing if any individual codepath
@@ -233,8 +226,7 @@ impl NoThisBeforeSuper {
             DefinitelyCallsThisBeforeSuper::No => false,
             DefinitelyCallsThisBeforeSuper::Maybe(id) => cfg.graph.edges(id).any(|edge| {
                 let weight = edge.weight();
-                let is_explicit_error =
-                    matches!(weight, EdgeType::Error(oxc_semantic::ErrorEdgeKind::Explicit));
+                let is_explicit_error = matches!(weight, EdgeType::Error(ErrorEdgeKind::Explicit));
                 if is_explicit_error || matches!(weight, EdgeType::Finalize) {
                     Self::check_for_violation(
                         cfg,
@@ -274,7 +266,7 @@ fn test() {
         ("class A extends B { }", None),
         ("class A extends B { constructor() { super(); } }", None),
         (
-        "
+            "
         function f() {
             try {
                 return a();
@@ -290,34 +282,57 @@ fn test() {
                 this.b();
             }
         }
-        ", None),
+        ",
+            None,
+        ),
         ("class A extends B { constructor() { super(); this.c = this.d; } }", None),
         ("class A extends B { constructor() { super(); this.c(); } }", None),
         ("class A extends B { constructor() { super(); super.c(); } }", None),
-        ("class A extends B { constructor() { if (true) { super(); } else { super(); } this.c(); } }", None),
+        (
+            "class A extends B { constructor() { if (true) { super(); } else { super(); } this.c(); } }",
+            None,
+        ),
         ("class A extends B { constructor() { foo = super(); this.c(); } }", None),
         ("class A extends B { constructor() { foo += super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo |= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo &= super().a; this.c(); } }", None),
         // allows `this`/`super` in nested executable scopes, even if before `super()`.
-        ("class A extends B { constructor() { class B extends C { constructor() { super(); this.d = 0; } } super(); } }", None),
-        ("class A extends B { constructor() { var B = class extends C { constructor() { super(); this.d = 0; } }; super(); } }", None),
+        (
+            "class A extends B { constructor() { class B extends C { constructor() { super(); this.d = 0; } } super(); } }",
+            None,
+        ),
+        (
+            "class A extends B { constructor() { var B = class extends C { constructor() { super(); this.d = 0; } }; super(); } }",
+            None,
+        ),
         ("class A extends B { constructor() { function c() { this.d(); } super(); } }", None),
-        ("class A extends B { constructor() { var c = function c() { this.d(); }; super(); } }", None),
+        (
+            "class A extends B { constructor() { var c = function c() { this.d(); }; super(); } }",
+            None,
+        ),
         ("class A extends B { constructor() { var c = () => this.d(); super(); } }", None),
         // ignores out of constructors.
         ("class A { b() { this.c = 0; } }", None),
         ("class A extends B { c() { this.d = 0; } }", None),
         ("function a() { this.b = 0; }", None),
         // multi code path.
-        ("class A extends B { constructor() { if (a) { super(); this.a(); } else { super(); this.b(); } } }", None),
+        (
+            "class A extends B { constructor() { if (a) { super(); this.a(); } else { super(); this.b(); } } }",
+            None,
+        ),
         ("class A extends B { constructor() { if (a) super(); else super(); this.a(); } }", None),
         ("class A extends B { constructor() { try { super(); } finally {} this.a(); } }", None),
         // https://github.com/eslint/eslint/issues/5261
-        ("class A extends B { constructor(a) { super(); for (const b of a) { this.a(); } } }", None),
+        (
+            "class A extends B { constructor(a) { super(); for (const b of a) { this.a(); } } }",
+            None,
+        ),
         ("class A extends B { constructor(a) { for (const b of a) { foo(b); } super(); } }", None),
         // https://github.com/eslint/eslint/issues/5319
-        ("class A extends B { constructor(a) { super(); this.a = a && function(){} && this.foo; } }", None),
+        (
+            "class A extends B { constructor(a) { super(); this.a = a && function(){} && this.foo; } }",
+            None,
+        ),
         // https://github.com/eslint/eslint/issues/5394
         (
             r"class A extends Object {
@@ -371,8 +386,14 @@ fn test() {
         ("class A extends B { constructor() { super(this.c()); } }", None),
         ("class A extends B { constructor() { super(super.c()); } }", None),
         // // even if is nested, reports correctly.
-        ("class A extends B { constructor() { class C extends D { constructor() { super(); this.e(); } } this.f(); super(); } }", None),
-        ("class A extends B { constructor() { class C extends D { constructor() { this.e(); super(); } } super(); this.f(); } }", None),
+        (
+            "class A extends B { constructor() { class C extends D { constructor() { super(); this.e(); } } this.f(); super(); } }",
+            None,
+        ),
+        (
+            "class A extends B { constructor() { class C extends D { constructor() { this.e(); super(); } } super(); this.f(); } }",
+            None,
+        ),
         // multi code path.
         ("class A extends B { constructor() { if (a) super(); this.a(); } }", None),
         ("class A extends B { constructor() { try { super(); } finally { this.a; } } }", None),
@@ -380,7 +401,10 @@ fn test() {
         ("class A extends B { constructor() { foo &&= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo ||= super().a; this.c(); } }", None),
         ("class A extends B { constructor() { foo ??= super().a; this.c(); } }", None),
-        ("class A extends B { constructor() { if (foo) { if (bar) { } super(); } this.a(); }}", None),
+        (
+            "class A extends B { constructor() { if (foo) { if (bar) { } super(); } this.a(); }}",
+            None,
+        ),
         (
             "class A extends B {
                 constructor() {

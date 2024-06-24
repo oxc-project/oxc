@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_function_type
 ---
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:1:17]

@@ -5,15 +5,14 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_span::{Atom, GetSpan};
+use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
-
-use crate::{AstNodeId, AstNodes};
 
 use super::{
     table::{Element, PrivateIdentifierReference},
     ClassTable,
 };
+use crate::{AstNodeId, AstNodes};
 
 #[derive(Debug, Default)]
 pub struct ClassTableBuilder {
@@ -126,7 +125,7 @@ impl ClassTableBuilder {
         }
         let is_private = method.key.is_private_identifier();
         let name = if is_private {
-            method.key.private_name().map(Atom::to_compact_str)
+            method.key.private_name().map(|name| name.to_compact_str())
         } else {
             method.key.static_name()
         };
@@ -154,6 +153,7 @@ impl ClassTableBuilder {
             }
         }
     }
+
     pub fn pop_class(&mut self) {
         self.current_class_id = self
             .current_class_id

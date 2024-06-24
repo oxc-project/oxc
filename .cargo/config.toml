@@ -3,7 +3,7 @@
 ck = "check --workspace --all-features --all-targets --locked"
 lint = "clippy --workspace --all-targets --all-features"
 codecov = "llvm-cov --workspace --ignore-filename-regex tasks"
-coverage = "run -p oxc_coverage --release --"
+coverage = "run -p oxc_coverage --profile release-thin --"
 benchmark = "run -p oxc_benchmark --release --"
 minsize = "run -p oxc_minsize --release --"
 rule = "run -p rulegen"

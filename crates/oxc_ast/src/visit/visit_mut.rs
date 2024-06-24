@@ -3,10 +3,9 @@
 use oxc_allocator::Vec;
 use oxc_syntax::scope::ScopeFlags;
 
-use crate::{ast::*, AstType};
-
 #[allow(clippy::wildcard_imports)]
 use self::walk_mut::*;
+use crate::{ast::*, AstType};
 
 /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
 pub trait VisitMut<'a>: Sized {

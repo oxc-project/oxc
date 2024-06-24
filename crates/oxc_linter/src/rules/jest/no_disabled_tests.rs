@@ -1,6 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -166,10 +165,22 @@ fn test() {
         ("testSomething()", None),
         ("xitSomethingElse()", None),
         ("xitiViewMap()", None),
-        ("import { pending } from 'actions'; test('foo', () => { expect(pending()).toEqual({}) })", None),
-        ("const { pending } = require('actions'); test('foo', () => { expect(pending()).toEqual({}) })", None),
-        ("test('foo', () => { const pending = getPending(); expect(pending()).toEqual({}) })", None),
-        ("test('foo', () => { expect(pending()).toEqual({}) }); function pending() { return {} }", None),
+        (
+            "import { pending } from 'actions'; test('foo', () => { expect(pending()).toEqual({}) })",
+            None,
+        ),
+        (
+            "const { pending } = require('actions'); test('foo', () => { expect(pending()).toEqual({}) })",
+            None,
+        ),
+        (
+            "test('foo', () => { const pending = getPending(); expect(pending()).toEqual({}) })",
+            None,
+        ),
+        (
+            "test('foo', () => { expect(pending()).toEqual({}) }); function pending() { return {} }",
+            None,
+        ),
         ("import { test } from './test-utils'; test('something');", None),
     ];
 

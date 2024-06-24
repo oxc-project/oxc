@@ -1,6 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
@@ -52,6 +51,7 @@ impl Rule for PreferLiteralEnumMember {
                 .unwrap_or(false),
         }
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSEnumMember(decl) = node.kind() else {
             return;

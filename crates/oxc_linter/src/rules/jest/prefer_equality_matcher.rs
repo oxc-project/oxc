@@ -1,17 +1,17 @@
+use oxc_ast::{
+    ast::{Argument, Expression},
+    AstKind,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_syntax::operator::BinaryOperator;
+
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::BinaryOperator;
 
 fn use_equality_matcher_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.")

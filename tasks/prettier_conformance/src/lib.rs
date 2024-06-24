@@ -8,13 +8,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use walkdir::WalkDir;
-
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
+use walkdir::WalkDir;
 
 use crate::{
     ignore_list::{JS_IGNORE_TESTS, TS_IGNORE_TESTS},
@@ -390,8 +389,9 @@ impl TestRunner {
 
 #[cfg(test)]
 mod tests {
-    use crate::{fixtures_root, TestRunner, SNAP_RELATIVE_PATH};
     use std::fs;
+
+    use crate::{fixtures_root, TestRunner, SNAP_RELATIVE_PATH};
 
     fn get_expect_in_arrays(input_name: &str) -> String {
         let base = fixtures_root().join("js/arrays");

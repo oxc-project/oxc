@@ -4,7 +4,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
@@ -601,8 +600,9 @@ fn test_number_decimal_integer() {
 
 #[test]
 fn test_with_config() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("1234567890", Some(json!([{ "onlyIfContainsSeparator": true }]))),

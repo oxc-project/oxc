@@ -1,12 +1,11 @@
 #![allow(clippy::print_stdout)]
 use std::path::Path;
 
-use pico_args::Arguments;
-
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_prettier::{Prettier, PrettierOptions, TrailingComma};
 use oxc_span::SourceType;
+use pico_args::Arguments;
 
 // Instruction:
 // create a `test.js`,

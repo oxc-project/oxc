@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_semantic"
-version                = "0.14.0"
+version                = "0.15.0"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -22,6 +22,7 @@ doctest = false
 oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
 oxc_syntax      = { workspace = true }
+oxc_cfg         = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 oxc_allocator   = { workspace = true }
@@ -30,9 +31,7 @@ indexmap   = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde      = { workspace = true, features = ["derive"], optional = true }
-petgraph   = { workspace = true }
 itertools  = { workspace = true }
-bitflags   = { workspace = true }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }

@@ -1,12 +1,13 @@
-use oxc_ast::ast::{
-    AssignmentTarget, BindingPatternKind, Expression, ForStatementInit, SimpleAssignmentTarget,
-    VariableDeclarationKind,
+use oxc_ast::{
+    ast::{
+        match_member_expression, AssignmentTarget, BindingPatternKind, Expression,
+        ForStatementInit, SimpleAssignmentTarget, VariableDeclarationKind,
+    },
+    AstKind,
 };
-use oxc_ast::{ast::match_member_expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -56,11 +57,11 @@ impl SpanExt for Span {
 }
 
 trait ExpressionExt {
-    fn is_increment_of(&self, var_name: &Atom) -> bool;
+    fn is_increment_of(&self, var_name: &str) -> bool;
 }
 
 impl<'a> ExpressionExt for Expression<'a> {
-    fn is_increment_of(&self, var_name: &Atom) -> bool {
+    fn is_increment_of(&self, var_name: &str) -> bool {
         match self {
             Expression::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
                 (

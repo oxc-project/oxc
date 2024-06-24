@@ -1,7 +1,10 @@
-use super::jsdoc_parts::{JSDocCommentPart, JSDocTagKindPart};
-use super::jsdoc_tag::JSDocTag;
-use super::utils;
 use oxc_span::Span;
+
+use super::{
+    jsdoc_parts::{JSDocCommentPart, JSDocTagKindPart},
+    jsdoc_tag::JSDocTag,
+    utils,
+};
 
 /// source_text: Inside of /**HERE*/, NOT includes `/**` and `*/`
 /// span_start: Global positioned `Span` start for this JSDoc comment

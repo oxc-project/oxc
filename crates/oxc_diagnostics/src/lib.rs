@@ -34,6 +34,7 @@ pub struct OxcDiagnostic {
 
 impl Deref for OxcDiagnostic {
     type Target = Box<OxcDiagnosticInner>;
+
     fn deref(&self) -> &Self::Target {
         &self.inner
     }

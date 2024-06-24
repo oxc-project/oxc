@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: missing_throw
 ---
   ⚠ oxc(missing-throw): Missing throw
    ╭─[missing_throw.tsx:1:18]

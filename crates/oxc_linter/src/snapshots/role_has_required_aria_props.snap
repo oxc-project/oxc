@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: role_has_required_aria_props
 ---
   ⚠ eslint-plugin-jsx-a11y(role-has-required-aria-props): `slider` role is missing required aria props `aria-valuenow`.
    ╭─[role_has_required_aria_props.tsx:1:6]

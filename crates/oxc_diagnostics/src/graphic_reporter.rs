@@ -7,13 +7,12 @@
 /// origin file: https://github.com/zkat/miette/blob/75fea0935e495d0215518c80d32dd820910982e3/src/handlers/graphical.rs#L1
 use std::fmt::{self, Write};
 
-use owo_colors::{OwoColorize, Style};
-use unicode_width::UnicodeWidthChar;
-
 use miette::{
     Diagnostic, LabeledSpan, ReportHandler, Severity, SourceCode, SourceSpan, SpanContents,
     ThemeCharacters,
 };
+use owo_colors::{OwoColorize, Style};
+use unicode_width::UnicodeWidthChar;
 
 use crate::graphical_theme::GraphicalTheme;
 

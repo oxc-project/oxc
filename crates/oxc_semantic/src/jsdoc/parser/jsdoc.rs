@@ -1,8 +1,8 @@
-use super::jsdoc_parts::JSDocCommentPart;
-use super::jsdoc_tag::JSDocTag;
-use super::parse::parse_jsdoc;
-use oxc_span::Span;
 use std::cell::OnceCell;
+
+use oxc_span::Span;
+
+use super::{jsdoc_parts::JSDocCommentPart, jsdoc_tag::JSDocTag, parse::parse_jsdoc};
 
 type ParsedJSDoc<'a> = (JSDocCommentPart<'a>, Vec<JSDocTag<'a>>);
 
@@ -36,10 +36,11 @@ impl<'a> JSDoc<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::{Semantic, SemanticBuilder};
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_span::SourceType;
+
+    use crate::{Semantic, SemanticBuilder};
 
     fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();

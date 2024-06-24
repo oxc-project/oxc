@@ -5,12 +5,15 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    pg::neighbors_filtered_by_edge_weight, EdgeType, InstructionKind, ReturnInstructionKind,
+use oxc_cfg::{
+    graph::{
+        visit::{set_depth_first_search, Control, DfsEvent},
+        Direction,
+    },
+    EdgeType, ErrorEdgeKind, InstructionKind, ReturnInstructionKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -49,7 +52,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     GetterReturn,
-    nursery
+    correctness
 );
 
 impl Rule for GetterReturn {
@@ -124,9 +127,12 @@ impl GetterReturn {
                         return true;
                     }
                 }
-                AstKind::ObjectProperty(ObjectProperty { kind, .. }) => {
+                AstKind::ObjectProperty(ObjectProperty { kind, key: prop_key, .. }) => {
                     if matches!(kind, PropertyKind::Get) {
                         return true;
+                    }
+                    if prop_key.name().is_some_and(|key| key != "get") {
+                        return false;
                     }
 
                     if let Some(parent_2) = ctx.nodes().parent_node(parent.id()) {
@@ -182,135 +188,102 @@ impl GetterReturn {
             return;
         }
 
-        let cfg = ctx.semantic().cfg();
+        let cfg = ctx.cfg();
 
-        let output = neighbors_filtered_by_edge_weight(
-            &cfg.graph,
-            node.cfg_id(),
-            &|edge| match edge {
-                EdgeType::Jump | EdgeType::Normal => None,
-                // We don't need to handle backedges because we would have already visited
-                // them on the forward pass
-                | EdgeType::Backedge
-                // We don't need to visit NewFunction edges because it's not going to be evaluated
-                // immediately, and we are only doing a pass over things that will be immediately evaluated
-                | EdgeType::NewFunction
-                // Unreachable nodes aren't reachable so we don't follow them.
-                | EdgeType::Unreachable
-                // TODO: For now we ignore the error path to simplify this rule, We can also
-                // analyze the error path as a nice to have addition.
-                | EdgeType::Error(_)
-                | EdgeType::Finalize
-                | EdgeType::Join
-                // By returning Some(X),
-                // we signal that we don't walk to this path any farther.
-                //
-                // We stop this path on a ::Yes because if it was a ::No,
-                // we would have already returned early before exploring more edges
-                => Some(DefinitelyReturnsOrThrowsOrUnreachable::Yes),
-            },
-            // We ignore the state going into this rule because we only care whether
-            // or not this path definitely returns or throws.
+        let graph = cfg.graph();
+        let definitely_returns_in_all_codepaths = 'returns: {
+            // The expression is the equivalent of return.
+            // Therefore, if a function is an expression, it always returns its value.
             //
-            // Whether or not the path definitely returns is only has two states, Yes (the default)
-            // or No (when we see this, we immediately stop walking). Other rules that require knowing
-            // previous such as [`no_this_before_super`] we would want to observe this value.
-            &mut |basic_block_id, _state_going_into_this_rule| {
-                // The expression is the equivalent of return.
-                // Therefore, if a function is an expression, it always returns its value.
-                //
-                // Example expression:
-                // ```js
-                // const fn = () => 1;
-                // ```
-                if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
-                    if arrow_expr.expression {
-                        return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
-                    }
+            // Example expression:
+            // ```js
+            // const fn = () => 1;
+            // ```
+            if let AstKind::ArrowFunctionExpression(arrow_expr) = node.kind() {
+                if arrow_expr.expression {
+                    break 'returns true;
                 }
-
                 // If the signature of function supports the return of the `undefined` value,
                 // you do not need to check this rule
                 if let AstKind::Function(func) = node.kind() {
                     if let Some(ref ret) = func.return_type {
                         if ret.type_annotation.is_maybe_undefined() {
-                            return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
+                            break 'returns true;
                         }
                     }
                 }
-
-                // Scan through the values in this basic block.
-                for entry in cfg.basic_block(*basic_block_id).instructions() {
-                    match entry.kind {
-                        // If the element is a return.
-                                // `allow_implicit` allows returning without a value to not
-                                // fail the rule.
-                                // Return false as the second argument to signify we should
-                                // not continue walking this branch, as we know a return
-                                // is the end of this path.
-                        InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined) if !self.allow_implicit => {
-                                return (DefinitelyReturnsOrThrowsOrUnreachable::No, false);
+            }
+            let output = set_depth_first_search(graph, Some(node.cfg_id()), |event| {
+                match event {
+                    // We only need to check paths that are normal or jump.
+                    DfsEvent::TreeEdge(a, b) => {
+                        let edges = graph.edges_connecting(a, b).collect::<Vec<_>>();
+                        if edges.iter().any(|e| {
+                            matches!(
+                                e.weight(),
+                                EdgeType::Normal
+                                    | EdgeType::Jump
+                                    | EdgeType::Error(ErrorEdgeKind::Explicit)
+                            )
+                        }) {
+                            Control::Continue
+                        } else {
+                            Control::Prune
                         }
-                                // Otherwise, we definitely returned since we assigned
-                                // to the return register.
-                                //
-                                // Return false as the second argument to signify we should
-                                // not continue walking this branch, as we know a return
-                                // is the end of this path.
-                        | InstructionKind::Return(_)
-                        // Throws are classified as returning.
-                        //
-                        // todo: test with catching...
-                        | InstructionKind::Throw
-                        // Although the unreachable code is not returned, it will never be executed.
-                        // There is no point in checking it for return.
-                        //
-                        // An example in such cases:
-                        // ```js
-                        // switch (val) {
-                        //     default: return 1;
-                        // }
-                        // return -1;
-                        // ```
-                        // Make return useless.
-                        | InstructionKind::Unreachable =>{
-                                return (DefinitelyReturnsOrThrowsOrUnreachable::Yes, false);
-                        }
-                        // Ignore irrelevant elements.
-                        | InstructionKind::Break(_)
-                        | InstructionKind::Continue(_)
-                        | InstructionKind::Iteration(_)
-                        | InstructionKind::Condition
-                        | InstructionKind::Statement => {}
                     }
+                    DfsEvent::Discover(basic_block_id, _) => {
+                        let return_instruction =
+                            cfg.basic_block(basic_block_id).instructions().iter().find(|it| {
+                                match it.kind {
+                                    // Throws are classified as returning.
+                                    InstructionKind::Return(_) | InstructionKind::Throw => true,
+                                    // Ignore irrelevant elements.
+                                    InstructionKind::Break(_)
+                                    | InstructionKind::Continue(_)
+                                    | InstructionKind::Iteration(_)
+                                    | InstructionKind::Unreachable
+                                    | InstructionKind::Condition
+                                    | InstructionKind::Statement => false,
+                                }
+                            });
+
+                        let does_return = return_instruction.is_some_and(|ret| {
+                            !matches! { ret.kind,
+                            InstructionKind::Return(ReturnInstructionKind::ImplicitUndefined)
+                                if !self.allow_implicit
+                            }
+                        });
+
+                        // Return true as the second argument to signify we should
+                        // continue walking this branch, as we haven't seen anything
+                        // that will signify to us that this path of the program will
+                        // definitely return or throw.
+                        if graph.edges_directed(basic_block_id, Direction::Outgoing).any(|e| {
+                            matches!(
+                                e.weight(),
+                                EdgeType::Jump
+                                    | EdgeType::Normal
+                                    | EdgeType::Error(ErrorEdgeKind::Explicit)
+                            )
+                        }) {
+                            Control::Continue
+                        } else if does_return {
+                            Control::Prune
+                        } else {
+                            Control::Break(())
+                        }
+                    }
+                    _ => Control::Continue,
                 }
+            });
 
-                // Return true as the second argument to signify we should
-                // continue walking this branch, as we haven't seen anything
-                // that will signify to us that this path of the program will
-                // definitely return or throw.
-                (DefinitelyReturnsOrThrowsOrUnreachable::No, true)
-            },
-        );
+            output.break_value().is_none()
+        };
 
-        // Deciding whether we definitely return or throw in all
-        // codepaths is as simple as seeing if each individual codepath
-        // definitely returns or throws.
-        let definitely_returns_in_all_codepaths =
-            output.into_iter().all(|y| matches!(y, DefinitelyReturnsOrThrowsOrUnreachable::Yes));
-
-        // If not, flag it as a diagnostic.
         if !definitely_returns_in_all_codepaths {
             ctx.diagnostic(getter_return_diagnostic(span));
         }
     }
-}
-
-#[derive(Default, Copy, Clone, Debug)]
-enum DefinitelyReturnsOrThrowsOrUnreachable {
-    #[default]
-    No,
-    Yes,
 }
 
 #[test]
@@ -328,8 +301,11 @@ fn test() {
         ("class foo { get bar(){return;} }", Some(serde_json::json!([{ "allowImplicit": true }]))),
         ("Object.defineProperty(foo, \"bar\", { get: function () {return true;}});", None),
         ("Object.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});", None),
+        ("Object.defineProperty(foo, \"bar\", { set: function () {}});", None),
+        ("Object.defineProperty(foo, \"bar\", { set: () => {}});", None),
         ("Object.defineProperties(foo, { bar: { get: function () {return true;}} });", None),
         ("Object.defineProperties(foo, { bar: { get: function () { ~function (){ return true; }(); return true;}} });", None),
+        ("Object.defineProperties(foo, { bar: { set: function () {}} });", None),
         ("Reflect.defineProperty(foo, \"bar\", { get: function () {return true;}});", None),
         ("Reflect.defineProperty(foo, \"bar\", { get: function () { ~function (){ return true; }();return true;}});", None),
         ("Object.create(foo, { bar: { get() {return true;} } });", None),
@@ -360,6 +336,27 @@ fn test() {
         ",
             None,
         ),
+        (r"
+        var foo = {
+                get bar() {
+                        let name = ([] || [])[1];
+                        return name;
+                },
+        };
+        ", None),
+        ("var foo = { get bar() { try { return a(); } finally {  } } };", None),
+        ("
+        var foo = {
+            get bar() {
+                switch (baz) {
+                    case VS_LIGHT_THEME: return a;
+                    case VS_HC_THEME: return b;
+                    case VS_HC_LIGHT_THEME: return c;
+                    default: return d;
+                }
+            }
+        };
+        ", None),
     ];
 
     let fail = vec![
@@ -369,34 +366,72 @@ fn test() {
         ("var foo = { get bar() { ~function () {return true;}} };", None),
         ("var foo = { get bar() { return; } };", None),
         ("var foo = { get bar() {} };", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("var foo = { get bar() {if (baz) {return;}} };", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        (
+            "var foo = { get bar() {if (baz) {return;}} };",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
         ("class foo { get bar(){} }", None),
         ("var foo = class {\n  static get\nbar(){} }", None),
         ("class foo { get bar(){ if (baz) { return true; }}}", None),
         ("class foo { get bar(){ ~function () { return true; }()}}", None),
         ("class foo { get bar(){} }", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("class foo { get bar(){if (baz) {return true;} } }", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        (
+            "class foo { get bar(){if (baz) {return true;} } }",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
         ("Object.defineProperty(foo, 'bar', { get: function (){}});", None),
         ("Object.defineProperty(foo, 'bar', { get: function getfoo (){}});", None),
         ("Object.defineProperty(foo, 'bar', { get(){} });", None),
         ("Object.defineProperty(foo, 'bar', { get: () => {}});", None),
         ("Object.defineProperty(foo, \"bar\", { get: function (){if(bar) {return true;}}});", None),
-        ("Object.defineProperty(foo, \"bar\", { get: function (){ ~function () { return true; }()}});", None),
+        (
+            "Object.defineProperty(foo, \"bar\", { get: function (){ ~function () { return true; }()}});",
+            None,
+        ),
         ("Reflect.defineProperty(foo, 'bar', { get: function (){}});", None),
         ("Object.create(foo, { bar: { get: function() {} } })", None),
         ("Object.create(foo, { bar: { get() {} } })", None),
         ("Object.create(foo, { bar: { get: () => {} } })", None),
-        ("Object.defineProperties(foo, { bar: { get: function () {}} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("Object.defineProperties(foo, { bar: { get: function (){if(bar) {return true;}}}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("Object.defineProperties(foo, { bar: { get: function () {~function () { return true; }()}} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("Object.defineProperty(foo, \"bar\", { get: function (){}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("Object.create(foo, { bar: { get: function (){} } });", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("Reflect.defineProperty(foo, \"bar\", { get: function (){}});", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        (
+            "Object.defineProperties(foo, { bar: { get: function () {}} });",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        (
+            "Object.defineProperties(foo, { bar: { get: function (){if(bar) {return true;}}}});",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        (
+            "Object.defineProperties(foo, { bar: { get: function () {~function () { return true; }()}} });",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        (
+            "Object.defineProperty(foo, \"bar\", { get: function (){}});",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        (
+            "Object.create(foo, { bar: { get: function (){} } });",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        (
+            "Reflect.defineProperty(foo, \"bar\", { get: function (){}});",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
         ("Object?.defineProperty(foo, 'bar', { get: function (){} });", None),
         ("(Object?.defineProperty)(foo, 'bar', { get: function (){} });", None),
-        ("Object?.defineProperty(foo, 'bar', { get: function (){} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("(Object?.defineProperty)(foo, 'bar', { get: function (){} });", Some(serde_json::json!([{ "allowImplicit": true }]))),
-        ("(Object?.create)(foo, { bar: { get: function (){} } });", Some(serde_json::json!([{ "allowImplicit": true }]))),
+        (
+            "Object?.defineProperty(foo, 'bar', { get: function (){} });",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        (
+            "(Object?.defineProperty)(foo, 'bar', { get: function (){} });",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        (
+            "(Object?.create)(foo, { bar: { get: function (){} } });",
+            Some(serde_json::json!([{ "allowImplicit": true }])),
+        ),
+        ("var foo = { get bar() { try { return a(); } catch {} } };", None),
+        ("var foo = { get bar() { try { return a(); } catch {  } finally {  } } };", None),
     ];
 
     Tester::new(GetterReturn::NAME, pass, fail)

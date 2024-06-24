@@ -3,13 +3,16 @@ use std::{collections::HashMap, env, path::Path, sync::Arc};
 
 use itertools::Itertools;
 use oxc_allocator::Allocator;
-use oxc_parser::Parser;
-use oxc_semantic::{DebugDot, DisplayDot, EdgeType, SemanticBuilder};
-use oxc_span::SourceType;
-use petgraph::{
-    dot::{Config, Dot},
-    visit::EdgeRef,
+use oxc_cfg::{
+    graph::{
+        dot::{Config, Dot},
+        visit::EdgeRef,
+    },
+    DisplayDot, EdgeType,
 };
+use oxc_parser::Parser;
+use oxc_semantic::{dot::DebugDot, SemanticBuilder};
+use oxc_span::SourceType;
 
 // Instruction:
 // 1. create a `test.js`,
@@ -43,6 +46,7 @@ fn main() -> std::io::Result<()> {
     let semantic = SemanticBuilder::new(&source_text, source_type)
         .with_check_syntax_error(true)
         .with_trivias(ret.trivias)
+        .with_cfg(true)
         .build(program);
 
     if !semantic.errors.is_empty() {
@@ -56,16 +60,19 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
+    let cfg = semantic
+        .semantic
+        .cfg()
+        .expect("we set semantic to build the control flow (`with_cfg`) for us so it should always be `Some`");
+
     let mut ast_nodes_by_block = HashMap::<_, Vec<_>>::new();
     for node in semantic.semantic.nodes().iter() {
         let block = node.cfg_id();
-        let block_ix = semantic.semantic.cfg().graph.node_weight(block).unwrap();
+        let block_ix = cfg.graph.node_weight(block).unwrap();
         ast_nodes_by_block.entry(*block_ix).or_default().push(node);
     }
 
-    let basic_blocks_printed = semantic
-        .semantic
-        .cfg()
+    let basic_blocks_printed = cfg
         .basic_blocks
         .iter()
         .map(DisplayDot::display_dot)
@@ -90,13 +97,13 @@ fn main() -> std::io::Result<()> {
     let cfg_dot_diagram = format!(
         "{:?}",
         Dot::with_attr_getters(
-            &semantic.semantic.cfg().graph,
+            cfg.graph(),
             &[Config::EdgeNoLabel, Config::NodeNoLabel],
             &|_graph, edge| {
                 let weight = edge.weight();
                 let label = format!("label = \"{weight:?}\"");
                 if matches!(weight, EdgeType::Unreachable)
-                    || semantic.semantic.cfg().basic_block(edge.source()).unreachable
+                    || cfg.basic_block(edge.source()).unreachable
                 {
                     format!("{label}, style = \"dotted\" ")
                 } else {
@@ -121,9 +128,7 @@ fn main() -> std::io::Result<()> {
                     node.1,
                     nodes,
                     node.1,
-                    semantic.semantic.cfg().basic_blocks[*node.1]
-                        .debug_dot(semantic.semantic.nodes().into())
-                        .trim()
+                    cfg.basic_blocks[*node.1].debug_dot(semantic.semantic.nodes().into()).trim()
                 )
             }
         )

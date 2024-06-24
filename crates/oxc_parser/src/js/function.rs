@@ -5,9 +5,14 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl, StatementContext};
-
 use super::{list::FormalParameterList, FunctionKind};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    list::SeparatedList,
+    modifiers::{ModifierKind, Modifiers},
+    Context, ParserImpl, StatementContext,
+};
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {
@@ -58,7 +63,7 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
@@ -103,18 +108,27 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
+        for modifier in modifiers.iter() {
+            if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Async) {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
+
         Ok(self.ast.function(
             function_type,
             self.end_span(span),
             id,
             generator,
             r#async,
+            modifiers.is_contains_declare(),
             this_param,
             params,
             body,
             type_parameters,
             return_type,
-            modifiers,
         ))
     }
 
@@ -153,7 +167,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator)?;
-        self.parse_function(span, id, r#async, generator, func_kind, Modifiers::empty())
+        self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())
     }
 
     /// Parse function implementation in Typescript, cursor
@@ -162,7 +176,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         func_kind: FunctionKind,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;
@@ -183,7 +197,7 @@ impl<'a> ParserImpl<'a> {
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator)?;
         let function =
-            self.parse_function(span, id, r#async, generator, func_kind, Modifiers::empty())?;
+            self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())?;
 
         Ok(self.ast.function_expression(function))
     }
@@ -208,7 +222,7 @@ impl<'a> ParserImpl<'a> {
             r#async,
             generator,
             FunctionKind::Expression,
-            Modifiers::empty(),
+            &Modifiers::empty(),
         )
     }
 

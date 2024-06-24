@@ -1,10 +1,9 @@
 use std::path::{Path, PathBuf};
 
+use oxc_span::SourceType;
 use oxc_transformer::BabelOptions;
 use serde::{de::DeserializeOwned, Deserialize};
 use serde_json::Value;
-
-use oxc_span::SourceType;
 
 use crate::{
     project_root,
@@ -60,6 +59,7 @@ impl<T: Case> Suite<T> for BabelSuite<T> {
     fn get_test_cases(&self) -> &Vec<T> {
         &self.test_cases
     }
+
     fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
         &mut self.test_cases
     }

@@ -3,7 +3,6 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
 use super::call_arguments::print_call_arguments;
-
 use crate::{
     doc::{Doc, DocBuilder, Group},
     ss, Format, Prettier,

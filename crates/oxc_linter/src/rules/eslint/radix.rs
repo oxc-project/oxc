@@ -160,8 +160,9 @@ fn is_valid_radix(node: &Argument) -> bool {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (r#"parseInt("10", 10);"#, None),

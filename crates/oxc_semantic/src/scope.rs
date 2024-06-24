@@ -1,7 +1,6 @@
 use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
-
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};

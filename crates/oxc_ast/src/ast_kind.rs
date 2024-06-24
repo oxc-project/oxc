@@ -112,6 +112,7 @@ ast_kinds! {
     Class(&'a Class<'a>),
     ClassBody(&'a ClassBody<'a>),
     ClassHeritage(&'a Expression<'a>),
+    TSClassImplements(&'a TSClassImplements<'a>),
     StaticBlock(&'a StaticBlock<'a>),
     PropertyDefinition(&'a PropertyDefinition<'a>),
     MethodDefinition(&'a MethodDefinition<'a>),
@@ -125,6 +126,7 @@ ast_kinds! {
     ModuleDeclaration(&'a ModuleDeclaration<'a>),
     ImportDeclaration(&'a ImportDeclaration<'a>),
     ImportSpecifier(&'a ImportSpecifier<'a>),
+    ExportSpecifier(&'a ExportSpecifier<'a>),
     ImportDefaultSpecifier(&'a ImportDefaultSpecifier<'a>),
     ImportNamespaceSpecifier(&'a ImportNamespaceSpecifier<'a>),
     ExportDefaultDeclaration(&'a ExportDefaultDeclaration<'a>),
@@ -154,6 +156,7 @@ ast_kinds! {
     TSAnyKeyword(&'a TSAnyKeyword),
     TSBigIntKeyword(&'a TSBigIntKeyword),
     TSBooleanKeyword(&'a TSBooleanKeyword),
+    TSIntrinsicKeyword(&'a TSIntrinsicKeyword),
     TSNeverKeyword(&'a TSNeverKeyword),
     TSNullKeyword(&'a TSNullKeyword),
     TSNumberKeyword(&'a TSNumberKeyword),
@@ -190,11 +193,13 @@ ast_kinds! {
     TSQualifiedName(&'a TSQualifiedName<'a>),
 
     TSInterfaceDeclaration(&'a TSInterfaceDeclaration<'a>),
+    TSInterfaceHeritage(&'a TSInterfaceHeritage<'a>),
     TSModuleDeclaration(&'a TSModuleDeclaration<'a>),
     TSTypeAliasDeclaration(&'a TSTypeAliasDeclaration<'a>),
     TSTypeAnnotation(&'a TSTypeAnnotation<'a>),
     TSTypeQuery(&'a TSTypeQuery<'a>),
     TSTypeAssertion(&'a TSTypeAssertion<'a>),
+    TSThisParameter(&'a TSThisParameter<'a>),
     TSTypeParameter(&'a TSTypeParameter<'a>),
     TSTypeParameterDeclaration(&'a TSTypeParameterDeclaration<'a>),
     TSTypeParameterInstantiation(&'a TSTypeParameterInstantiation<'a>),
@@ -251,12 +256,12 @@ impl<'a> AstKind<'a> {
 
     #[rustfmt::skip]
     pub fn is_type(self) -> bool {
-        matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSNeverKeyword(_)
-                | Self::TSNullKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_) | Self::TSStringKeyword(_)
-                | Self::TSSymbolKeyword(_) | Self::TSUndefinedKeyword(_) | Self::TSUnknownKeyword(_) | Self::TSVoidKeyword(_)
-                | Self::TSIndexedAccessType(_) | Self::TSInferType(_) | Self::TSIntersectionType(_) | Self::TSLiteralType(_)
-                | Self::TSMethodSignature(_) | Self::TSTemplateLiteralType(_) | Self::TSThisType(_) | Self::TSTypeLiteral(_)
-                | Self::TSTypeReference(_) | Self::TSUnionType(_))
+        matches!(self, Self::TSAnyKeyword(_) | Self::TSBigIntKeyword(_) | Self::TSBooleanKeyword(_) | Self::TSIntrinsicKeyword(_)
+                | Self::TSNeverKeyword(_) | Self::TSNullKeyword(_) | Self::TSNumberKeyword(_) | Self::TSObjectKeyword(_)
+                | Self::TSStringKeyword(_) | Self::TSSymbolKeyword(_) | Self::TSUndefinedKeyword(_) | Self::TSUnknownKeyword(_)
+                | Self::TSVoidKeyword(_) | Self::TSIndexedAccessType(_) | Self::TSInferType(_) | Self::TSIntersectionType(_)
+                | Self::TSLiteralType(_) | Self::TSMethodSignature(_) | Self::TSTemplateLiteralType(_) | Self::TSThisType(_)
+                | Self::TSTypeLiteral(_) | Self::TSTypeReference(_) | Self::TSUnionType(_))
     }
 
     pub fn is_literal(self) -> bool {
@@ -451,6 +456,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::Class(x) => x.span,
             Self::ClassBody(x) => x.span,
             Self::ClassHeritage(x) => x.span(),
+            Self::TSClassImplements(x) => x.span,
             Self::StaticBlock(x) => x.span,
             Self::PropertyDefinition(x) => x.span,
             Self::MethodDefinition(x) => x.span,
@@ -464,6 +470,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::ModuleDeclaration(x) => x.span(),
             Self::ImportDeclaration(x) => x.span,
             Self::ImportSpecifier(x) => x.span,
+            Self::ExportSpecifier(x) => x.span,
             Self::ImportDefaultSpecifier(x) => x.span,
             Self::ImportNamespaceSpecifier(x) => x.span,
             Self::ExportDefaultDeclaration(x) => x.span,
@@ -497,6 +504,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSVoidKeyword(x) => x.span,
             Self::TSBigIntKeyword(x) => x.span,
             Self::TSBooleanKeyword(x) => x.span,
+            Self::TSIntrinsicKeyword(x) => x.span,
             Self::TSNeverKeyword(x) => x.span,
             Self::TSNumberKeyword(x) => x.span,
             Self::TSObjectKeyword(x) => x.span,
@@ -523,11 +531,13 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::TSExternalModuleReference(x) => x.span,
             Self::TSQualifiedName(x) => x.span,
             Self::TSInterfaceDeclaration(x) => x.span,
+            Self::TSInterfaceHeritage(x) => x.span,
             Self::TSModuleDeclaration(x) => x.span,
             Self::TSTypeAliasDeclaration(x) => x.span,
             Self::TSTypeAnnotation(x) => x.span,
             Self::TSTypeQuery(x) => x.span,
             Self::TSTypeAssertion(x) => x.span,
+            Self::TSThisParameter(x) => x.span,
             Self::TSTypeParameter(x) => x.span,
             Self::TSTypeParameterDeclaration(x) => x.span,
             Self::TSTypeParameterInstantiation(x) => x.span,
@@ -651,6 +661,7 @@ impl<'a> AstKind<'a> {
                 c.id.as_ref().map_or_else(|| "<anonymous>", |id| id.name.as_str())
             )
             .into(),
+            Self::TSClassImplements(_) => "TSClassImplements".into(),
             Self::ClassBody(_) => "ClassBody".into(),
             Self::ClassHeritage(_) => "ClassHeritage".into(),
             Self::StaticBlock(_) => "StaticBlock".into(),
@@ -666,6 +677,7 @@ impl<'a> AstKind<'a> {
             Self::ModuleDeclaration(_) => "ModuleDeclaration".into(),
             Self::ImportDeclaration(_) => "ImportDeclaration".into(),
             Self::ImportSpecifier(_) => "ImportSpecifier".into(),
+            Self::ExportSpecifier(_) => "ExportSpecifier".into(),
             Self::ImportDefaultSpecifier(_) => "ImportDefaultSpecifier".into(),
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
@@ -698,6 +710,7 @@ impl<'a> AstKind<'a> {
             Self::TSVoidKeyword(_) => "TSVoidKeyword".into(),
             Self::TSBigIntKeyword(_) => "TSBigIntKeyword".into(),
             Self::TSBooleanKeyword(_) => "TSBooleanKeyword".into(),
+            Self::TSIntrinsicKeyword(_) => "TSIntrinsicKeyword".into(),
             Self::TSNeverKeyword(_) => "TSNeverKeyword".into(),
             Self::TSNumberKeyword(_) => "TSNumberKeyword".into(),
             Self::TSObjectKeyword(_) => "TSObjectKeyword".into(),
@@ -725,11 +738,13 @@ impl<'a> AstKind<'a> {
             Self::TSExternalModuleReference(_) => "TSExternalModuleReference".into(),
             Self::TSQualifiedName(_) => "TSQualifiedName".into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
+            Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
             Self::TSModuleDeclaration(_) => "TSModuleDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
             Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),
             Self::TSTypeQuery(_) => "TSTypeQuery".into(),
             Self::TSTypeAssertion(_) => "TSTypeAssertion".into(),
+            Self::TSThisParameter(_) => "TSThisParameter".into(),
             Self::TSTypeParameter(_) => "TSTypeParameter".into(),
             Self::TSTypeParameterDeclaration(_) => "TSTypeParameterDeclaration".into(),
             Self::TSTypeParameterInstantiation(_) => "TSTypeParameterInstantiation".into(),

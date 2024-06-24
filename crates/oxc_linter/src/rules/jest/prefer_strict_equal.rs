@@ -1,13 +1,13 @@
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_ast::AstKind;
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 fn use_to_strict_equal(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.")

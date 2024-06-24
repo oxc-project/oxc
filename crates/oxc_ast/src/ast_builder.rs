@@ -111,7 +111,7 @@ impl<'a> AstBuilder<'a> {
             Span::default(),
             VariableDeclarationKind::Var,
             self.new_vec(),
-            Modifiers::empty(),
+            false,
         );
         let empty_decl = Declaration::VariableDeclaration(empty_decl);
         mem::replace(decl, empty_decl)
@@ -280,7 +280,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn block_statement(self, block: Box<'a, BlockStatement<'a>>) -> Statement<'a> {
-        Statement::BlockStatement(self.block(block.span, block.unbox().body))
+        Statement::BlockStatement(block)
     }
 
     #[inline]
@@ -575,7 +575,7 @@ impl<'a> AstBuilder<'a> {
         self,
         expr: MemberExpression<'a>,
     ) -> AssignmentTarget<'a> {
-        AssignmentTarget::from(SimpleAssignmentTarget::from(expr))
+        AssignmentTarget::from(expr)
     }
 
     #[inline]
@@ -953,19 +953,7 @@ impl<'a> AstBuilder<'a> {
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
     ) -> Box<'a, Function<'a>> {
-        self.function(
-            r#type,
-            span,
-            id,
-            false,
-            false,
-            None,
-            params,
-            body,
-            None,
-            None,
-            Modifiers::empty(),
-        )
+        self.function(r#type, span, id, false, false, false, None, params, body, None, None)
     }
 
     #[inline]
@@ -976,12 +964,12 @@ impl<'a> AstBuilder<'a> {
         id: Option<BindingIdentifier<'a>>,
         generator: bool,
         r#async: bool,
+        declare: bool,
         this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-        modifiers: Modifiers<'a>,
     ) -> Box<'a, Function<'a>> {
         self.alloc(Function::new(
             r#type,
@@ -989,12 +977,12 @@ impl<'a> AstBuilder<'a> {
             id,
             generator,
             r#async,
+            declare,
             this_param,
             params,
             body,
             type_parameters,
             return_type,
-            modifiers,
         ))
     }
 
@@ -1022,7 +1010,8 @@ impl<'a> AstBuilder<'a> {
         super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         decorators: Vec<'a, Decorator<'a>>,
-        modifiers: Modifiers<'a>,
+        r#abstract: bool,
+        declare: bool,
     ) -> Box<'a, Class<'a>> {
         self.alloc(Class::new(
             r#type,
@@ -1034,7 +1023,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             super_type_parameters,
             implements,
-            modifiers,
+            r#abstract,
+            declare,
         ))
     }
 
@@ -1167,9 +1157,9 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         kind: VariableDeclarationKind,
         declarations: Vec<'a, VariableDeclarator<'a>>,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.alloc(VariableDeclaration { span, kind, declarations, modifiers })
+        self.alloc(VariableDeclaration { span, kind, declarations, declare })
     }
 
     #[inline]
@@ -1199,11 +1189,12 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn binding_pattern(
         self,
+        span: Span,
         kind: BindingPatternKind<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
         optional: bool,
     ) -> BindingPattern<'a> {
-        BindingPattern { kind, type_annotation, optional }
+        BindingPattern { span, kind, type_annotation, optional }
     }
 
     #[inline]
@@ -1264,6 +1255,7 @@ impl<'a> AstBuilder<'a> {
     ) -> BindingPattern<'a> {
         let pattern = self.alloc(AssignmentPattern { span, left, right });
         BindingPattern {
+            span,
             kind: BindingPatternKind::AssignmentPattern(pattern),
             type_annotation: None,
             optional: false,
@@ -1522,9 +1514,9 @@ impl<'a> AstBuilder<'a> {
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
         kind: TSModuleDeclarationKind,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        self.alloc(TSModuleDeclaration::new(span, id, body, kind, modifiers))
+        self.alloc(TSModuleDeclaration::new(span, id, body, kind, declare))
     }
 
     #[inline]
@@ -1761,9 +1753,10 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_module_block(
         self,
         span: Span,
+        directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
-        self.alloc(TSModuleBlock { span, body })
+        self.alloc(TSModuleBlock { span, directives, body })
     }
 
     #[inline]
@@ -1856,7 +1849,7 @@ impl<'a> AstBuilder<'a> {
         body: Box<'a, TSInterfaceBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
             span,
@@ -1864,7 +1857,7 @@ impl<'a> AstBuilder<'a> {
             body,
             type_parameters,
             extends,
-            modifiers,
+            declare,
         }))
     }
 
@@ -1875,14 +1868,14 @@ impl<'a> AstBuilder<'a> {
         id: BindingIdentifier<'a>,
         type_annotation: TSType<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-        modifiers: Modifiers<'a>,
+        declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration {
             span,
             id,
             type_annotation,
             type_parameters,
-            modifiers,
+            declare,
         }))
     }
 
@@ -1892,10 +1885,11 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         id: BindingIdentifier<'a>,
         members: Vec<'a, TSEnumMember<'a>>,
-        modifiers: Modifiers<'a>,
+        r#const: bool,
+        declare: bool,
     ) -> Declaration<'a> {
         Declaration::TSEnumDeclaration(
-            self.alloc(TSEnumDeclaration::new(span, id, members, modifiers)),
+            self.alloc(TSEnumDeclaration::new(span, id, members, r#const, declare)),
         )
     }
 
@@ -1977,6 +1971,11 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn ts_never_keyword(self, span: Span) -> TSType<'a> {
         TSType::TSNeverKeyword(self.alloc(TSNeverKeyword { span }))
+    }
+
+    #[inline]
+    pub fn ts_intrinsic_keyword(self, span: Span) -> TSType<'a> {
+        TSType::TSIntrinsicKeyword(self.alloc(TSIntrinsicKeyword { span }))
     }
 
     #[inline]

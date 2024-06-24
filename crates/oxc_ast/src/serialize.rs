@@ -1,3 +1,5 @@
+use oxc_allocator::{Box, Vec};
+use oxc_span::Span;
 use serde::{
     ser::{SerializeSeq, Serializer},
     Serialize,
@@ -9,8 +11,6 @@ use crate::ast::{
     Elision, FormalParameter, FormalParameterKind, FormalParameters, ObjectAssignmentTarget,
     ObjectPattern, Program, RegExpFlags, TSTypeAnnotation,
 };
-use oxc_allocator::{Box, Vec};
-use oxc_span::Span;
 
 pub struct EcmaFormatter;
 

@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
+use super::assignment::AssignmentLikeNode;
 use crate::{
     array,
     doc::{Doc, DocBuilder},
@@ -8,11 +9,9 @@ use crate::{
     hardline, space, ss, Format, Prettier,
 };
 
-use super::assignment::AssignmentLikeNode;
-
 pub(super) fn print_class<'a>(p: &mut Prettier<'a>, class: &Class<'a>) -> Doc<'a> {
     let mut parts = p.vec();
-    if class.modifiers.contains(ModifierKind::Abstract) {
+    if class.r#abstract {
         parts.push(ss!("abstract "));
     }
     parts.push(ss!("class "));
@@ -106,6 +105,7 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
             ClassMemberish::AccessorProperty(accessor_property) => accessor_property.r#static,
         }
     }
+
     fn is_override(&self) -> bool {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => {
@@ -114,6 +114,7 @@ impl<'a, 'b> ClassMemberish<'a, 'b> {
             ClassMemberish::AccessorProperty(accessor_property) => false,
         }
     }
+
     fn is_readonly(&self) -> bool {
         match self {
             ClassMemberish::PropertyDefinition(property_definition) => property_definition.readonly,

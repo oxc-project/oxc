@@ -4,12 +4,13 @@ pub use builder::ModuleRecordBuilder;
 
 #[cfg(test)]
 mod module_record_tests {
+    use std::{path::PathBuf, sync::Arc};
+
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_span::{SourceType, Span};
     #[allow(clippy::wildcard_imports)]
     use oxc_syntax::module_record::*;
-    use std::{path::PathBuf, sync::Arc};
 
     use crate::SemanticBuilder;
 
@@ -216,7 +217,7 @@ mod module_record_tests {
         let module_record = build("export default function() {}");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(Span::new(7, 14)),
-            local_name: ExportLocalName::Default(Span::new(7, 14)),
+            local_name: ExportLocalName::Null,
             span: Span::new(15, 28),
             ..ExportEntry::default()
         };
@@ -230,7 +231,7 @@ mod module_record_tests {
         let module_record = build("export default 42");
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(Span::new(7, 14)),
-            local_name: ExportLocalName::Default(Span::new(7, 14)),
+            local_name: ExportLocalName::Null,
             span: Span::new(15, 17),
             ..ExportEntry::default()
         };

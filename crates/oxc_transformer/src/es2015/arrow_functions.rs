@@ -114,6 +114,7 @@ impl<'a> ArrowFunctions<'a> {
 
         if let Some(id) = &self.this_var {
             let binding_pattern = self.ctx.ast.binding_pattern(
+                SPAN,
                 self.ctx.ast.binding_pattern_identifier(id.create_binding_identifier()),
                 None,
                 false,
@@ -131,7 +132,7 @@ impl<'a> ArrowFunctions<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 self.ctx.ast.new_vec_single(variable_declarator),
-                Modifiers::empty(),
+                false,
             );
 
             let stmt = Statement::VariableDeclaration(stmt);
@@ -219,12 +220,12 @@ impl<'a> ArrowFunctions<'a> {
             id: None,
             generator: false,
             r#async: arrow_function_expr.r#async,
+            declare: false,
             this_param: None,
             params: self.ctx.ast.copy(&arrow_function_expr.params),
             body: Some(body),
             type_parameters: self.ctx.ast.copy(&arrow_function_expr.type_parameters),
             return_type: self.ctx.ast.copy(&arrow_function_expr.return_type),
-            modifiers: Modifiers::empty(),
             scope_id: Cell::new(scope_id),
         };
 

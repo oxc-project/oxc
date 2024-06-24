@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{
         match_expression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
@@ -7,8 +9,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
-use std::ops::Deref;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -65,6 +66,7 @@ impl JsxNoTargetBlank {
             ctx.diagnostic(target_blank_without_noreferrer(span));
         }
     }
+
     fn check_is_link(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.links {
             return false;
@@ -74,6 +76,7 @@ impl JsxNoTargetBlank {
         }
         return ctx.settings().react.get_link_component_attrs(tag_name).is_some();
     }
+
     fn check_is_forms(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.forms {
             return false;
@@ -210,6 +213,7 @@ impl Rule for JsxNoTargetBlank {
             }
         }
     }
+
     fn from_configuration(value: serde_json::Value) -> Self {
         let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
 
@@ -241,8 +245,8 @@ impl Rule for JsxNoTargetBlank {
     }
 }
 
-fn check_is_external_link(link: &Atom) -> bool {
-    link.as_str().contains("//")
+fn check_is_external_link(link: &str) -> bool {
+    link.contains("//")
 }
 
 fn match_href_expression(

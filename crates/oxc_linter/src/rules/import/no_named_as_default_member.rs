@@ -1,6 +1,4 @@
-use oxc_diagnostics::OxcDiagnostic;
 // #![allow(clippy::significant_drop_tightening)]
-
 use std::collections::HashMap;
 
 use dashmap::mapref::one::Ref;
@@ -8,6 +6,7 @@ use oxc_ast::{
     ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{CompactStr, Span};

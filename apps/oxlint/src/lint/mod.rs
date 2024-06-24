@@ -1,6 +1,6 @@
-use ignore::gitignore::Gitignore;
 use std::{env, io::BufWriter, time::Instant};
 
+use ignore::gitignore::Gitignore;
 use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use oxc_linter::{
     partial_loader::LINT_PARTIAL_LOADER_EXT, LintOptions, LintService, LintServiceOptions, Linter,
@@ -122,7 +122,9 @@ impl Runner for LintRunner {
             if !path.is_file() {
                 let path = if path.is_relative() { cwd.join(path) } else { path.clone() };
                 return CliRunResult::InvalidOptions {
-                    message: format!("The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.", ),
+                    message: format!(
+                        "The tsconfig file {path:?} does not exist, Please provide a valid tsconfig file.",
+                    ),
                 };
             }
         }

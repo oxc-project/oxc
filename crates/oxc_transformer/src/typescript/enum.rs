@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, SPAN};
 use oxc_syntax::{
@@ -19,6 +19,27 @@ impl<'a> TypeScriptEnum<'a> {
     pub fn new(ctx: Ctx<'a>) -> Self {
         Self { ctx, enums: FxHashMap::default() }
     }
+
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {
+        let new_stmt = match stmt {
+            Statement::TSEnumDeclaration(ts_enum_decl) => {
+                self.transform_ts_enum(ts_enum_decl, false, ctx)
+            }
+            Statement::ExportNamedDeclaration(decl) => {
+                if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
+                    self.transform_ts_enum(ts_enum_decl, true, ctx)
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        };
+
+        if let Some(new_stmt) = new_stmt {
+            *stmt = new_stmt;
+        }
+    }
+
     /// ```TypeScript
     /// enum Foo {
     ///   X = 1,
@@ -32,13 +53,13 @@ impl<'a> TypeScriptEnum<'a> {
     ///   return Foo;
     /// })(Foo || {});
     /// ```
-    pub fn transform_ts_enum(
+    fn transform_ts_enum(
         &mut self,
-        decl: &Box<'a, TSEnumDeclaration<'a>>,
+        decl: &TSEnumDeclaration<'a>,
         is_export: bool,
         ctx: &TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
-        if decl.modifiers.contains(ModifierKind::Declare) {
+        if decl.declare {
             return None;
         }
 
@@ -46,7 +67,7 @@ impl<'a> TypeScriptEnum<'a> {
         let span = decl.span;
         let ident = decl.id.clone();
         let kind = self.ctx.ast.binding_pattern_identifier(ident);
-        let id = self.ctx.ast.binding_pattern(kind, None, false);
+        let id = self.ctx.ast.binding_pattern(SPAN, kind, None, false);
 
         // ((Foo) => {
         let params =
@@ -62,7 +83,7 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let enum_name = decl.id.name.clone();
         let is_already_declared = self.enums.contains_key(&enum_name);
-        let statements = self.transform_ts_enum_members(&decl.members, &enum_name, ctx);
+        let statements = self.transform_ts_enum_members(&decl.members, enum_name.clone(), ctx);
         let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
         let r#type = FunctionType::FunctionExpression;
         let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
@@ -106,15 +127,14 @@ impl<'a> TypeScriptEnum<'a> {
 
             let binding_identifier = BindingIdentifier::new(SPAN, enum_name.clone());
             let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
-            let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+            let binding = self.ctx.ast.binding_pattern(SPAN, binding_pattern_kind, None, false);
             let decl =
                 self.ctx.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
 
             decls.push(decl);
             decls
         };
-        let variable_declaration =
-            self.ctx.ast.variable_declaration(span, kind, decls, Modifiers::empty());
+        let variable_declaration = self.ctx.ast.variable_declaration(span, kind, decls, false);
         let variable_declaration = Declaration::VariableDeclaration(variable_declaration);
 
         let stmt = if is_export {
@@ -128,10 +148,10 @@ impl<'a> TypeScriptEnum<'a> {
         Some(stmt)
     }
 
-    pub fn transform_ts_enum_members(
+    fn transform_ts_enum_members(
         &mut self,
         members: &Vec<'a, TSEnumMember<'a>>,
-        enum_name: &Atom<'a>,
+        enum_name: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let mut statements = self.ctx.ast.new_vec();
@@ -271,10 +291,8 @@ impl<'a> TypeScriptEnum<'a> {
 
         self.enums.insert(enum_name.clone(), previous_enum_members.clone());
 
-        let enum_ref = self
-            .ctx
-            .ast
-            .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+        let enum_ref =
+            self.ctx.ast.identifier_reference_expression(IdentifierReference::new(SPAN, enum_name));
         // return Foo;
         let return_stmt = self.ctx.ast.return_statement(SPAN, Some(enum_ref));
         statements.push(return_stmt);
@@ -549,7 +567,7 @@ impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
                 // enum_name.identifier
                 let ident_reference = IdentifierReference::new(SPAN, self.enum_name.clone());
                 let object = self.ctx.ast.identifier_reference_expression(ident_reference);
-                let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
+                let property = IdentifierName::new(SPAN, ident.name.clone());
                 Some(self.ctx.ast.static_member_expression(SPAN, object, property, false))
             }
             _ => None,

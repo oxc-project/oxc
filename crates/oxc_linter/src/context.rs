@@ -1,5 +1,6 @@
 use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
+use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::{SourceType, Span};
@@ -34,7 +35,15 @@ pub struct LintContext<'a> {
 }
 
 impl<'a> LintContext<'a> {
+    /// # Panics
+    /// If `semantic.cfg()` is `None`.
     pub fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
+        // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
+        // unwrapped without any runtime checks after construction.
+        assert!(
+            semantic.cfg().is_some(),
+            "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
+        );
         let disable_directives =
             DisableDirectivesBuilder::new(semantic.source_text(), semantic.trivias().clone())
                 .build();
@@ -76,6 +85,15 @@ impl<'a> LintContext<'a> {
 
     pub fn semantic(&self) -> &Rc<Semantic<'a>> {
         &self.semantic
+    }
+
+    pub fn cfg(&self) -> &ControlFlowGraph {
+        #[allow(unsafe_code)]
+        // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
+        // assert the existence of control flow so it should always be `Some`.
+        unsafe {
+            self.semantic().cfg().unwrap_unchecked()
+        }
     }
 
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {

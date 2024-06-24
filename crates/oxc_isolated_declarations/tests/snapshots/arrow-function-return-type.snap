@@ -1,0 +1,38 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/arrow-function-return-type.ts
+---
+==================== .D.TS ====================
+
+declare function A(): unknown;
+declare const B: unknown;
+declare const C: unknown;
+
+
+==================== Errors ====================
+
+  x TS9007: Function must have an explicit return type annotation with
+  | --isolatedDeclarations.
+   ,-[2:10]
+ 1 | function A() {
+ 2 |   return () => {
+   :          ^^^^^^^
+ 3 |     return C;
+   `----
+
+  x TS9007: Function must have an explicit return type annotation with
+  | --isolatedDeclarations.
+   ,-[7:11]
+ 6 | 
+ 7 | const B = () => { return B };
+   :           ^^^^^^^
+ 8 | 
+   `----
+
+  x TS9007: Function must have an explicit return type annotation with
+  | --isolatedDeclarations.
+   ,-[9:20]
+ 8 | 
+ 9 | const C = function () {}
+   :                    ^
+   `----

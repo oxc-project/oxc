@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_dupe_keys
 ---
   ⚠ eslint(no-dupe-keys): Disallow duplicate keys in object literals
    ╭─[no_dupe_keys.tsx:1:11]

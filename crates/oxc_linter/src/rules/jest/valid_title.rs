@@ -1,11 +1,10 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 use std::{collections::HashMap, hash::Hash};
 
 use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
@@ -373,12 +372,23 @@ enum Message {
 impl Message {
     fn detail(&self) -> (&'static str, &'static str) {
         match self {
-            Self::TitleMustBeString => ("Title must be a string", "Replace your title with a string"),
-            Self::EmptyTitle => ("Should not have an empty title", "Write a meaningful title for your test"),
-            Self::DuplicatePrefix => ("Should not have duplicate prefix", "The function name has already contains the prefix, try remove the duplicate prefix"),
-            Self::AccidentalSpace => ("Should not have leading or trailing spaces", "Remove the leading or trailing spaces"),
+            Self::TitleMustBeString => {
+                ("Title must be a string", "Replace your title with a string")
+            }
+            Self::EmptyTitle => {
+                ("Should not have an empty title", "Write a meaningful title for your test")
+            }
+            Self::DuplicatePrefix => (
+                "Should not have duplicate prefix",
+                "The function name has already contains the prefix, try remove the duplicate prefix",
+            ),
+            Self::AccidentalSpace => (
+                "Should not have leading or trailing spaces",
+                "Remove the leading or trailing spaces",
+            ),
         }
     }
+
     fn diagnostic(&self, ctx: &LintContext, span: Span) {
         let (error, help) = self.detail();
         ctx.diagnostic(valid_title_diagnostic(error, help, span));

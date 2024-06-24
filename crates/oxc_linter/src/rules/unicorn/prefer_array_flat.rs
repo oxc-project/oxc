@@ -5,7 +5,6 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -13,8 +12,10 @@ use crate::{
     ast_util::is_method_call,
     context::LintContext,
     rule::Rule,
-    utils::get_first_parameter_name,
-    utils::{get_return_identifier_name, is_empty_array_expression, is_prototype_property},
+    utils::{
+        get_first_parameter_name, get_return_identifier_name, is_empty_array_expression,
+        is_prototype_property,
+    },
     AstNode,
 };
 

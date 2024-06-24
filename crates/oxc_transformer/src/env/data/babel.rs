@@ -1,5 +1,6 @@
-use rustc_hash::FxHashMap;
 use std::sync::OnceLock;
+
+use rustc_hash::FxHashMap;
 
 use crate::env::{targets::version::Version, Versions};
 

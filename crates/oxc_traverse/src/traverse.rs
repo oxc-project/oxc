@@ -732,12 +732,6 @@ pub trait Traverse<'a> {
     fn exit_for_in_statement(&mut self, node: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
-    fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-    }
-    #[inline]
-    fn exit_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
-
-    #[inline]
     fn enter_for_statement_left(
         &mut self,
         node: &mut ForStatementLeft<'a>,
@@ -751,6 +745,12 @@ pub trait Traverse<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
+
+    #[inline]
+    fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_continue_statement(
@@ -1726,6 +1726,21 @@ pub trait Traverse<'a> {
     fn enter_ts_never_keyword(&mut self, node: &mut TSNeverKeyword, ctx: &mut TraverseCtx<'a>) {}
     #[inline]
     fn exit_ts_never_keyword(&mut self, node: &mut TSNeverKeyword, ctx: &mut TraverseCtx<'a>) {}
+
+    #[inline]
+    fn enter_ts_intrinsic_keyword(
+        &mut self,
+        node: &mut TSIntrinsicKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_intrinsic_keyword(
+        &mut self,
+        node: &mut TSIntrinsicKeyword,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
 
     #[inline]
     fn enter_ts_unknown_keyword(&mut self, node: &mut TSUnknownKeyword, ctx: &mut TraverseCtx<'a>) {

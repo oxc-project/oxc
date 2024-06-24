@@ -1,7 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 161
-expression: no_large_snapshots
 ---
   ⚠ eslint-plugin-jest(no-large-snapshots): Disallow large snapshots.
     ╭─[no_large_snapshots.tsx:1:41]

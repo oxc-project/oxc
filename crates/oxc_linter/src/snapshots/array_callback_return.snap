@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: array_callback_return
 ---
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:26]

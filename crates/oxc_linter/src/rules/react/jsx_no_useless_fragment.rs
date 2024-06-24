@@ -95,6 +95,7 @@ impl JsxNoUselessFragment {
             ctx.diagnostic(child_of_html_element(span));
         }
     }
+
     fn check_fragment(&self, node: &AstNode, elem: &JSXFragment, ctx: &LintContext) {
         if has_less_than_two_children(&elem.children)
             && !is_fragment_with_only_text_and_is_not_child(node.id(), &elem.children, ctx)
@@ -214,8 +215,9 @@ fn is_fragment_with_only_text_and_is_not_child<'a>(
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (r"<><Foo /><Bar /></>", None),

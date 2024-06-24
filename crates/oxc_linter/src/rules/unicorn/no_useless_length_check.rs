@@ -1,15 +1,14 @@
-use itertools::concat;
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use std::fmt::Debug;
 
+use itertools::concat;
 use oxc_ast::{
     ast::{Expression, LogicalExpression},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 

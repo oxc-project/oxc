@@ -1,11 +1,12 @@
+#[cfg(feature = "concurrent")]
+use rayon::prelude::*;
+
 use crate::error::{Error, Result};
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
 /// It is a helper for encode `SourceMap` to vlq sourcemap string, but here some different.
 /// - Quote `source_content` at parallel.
 /// - If you using `ConcatSourceMapBuilder`, serialize `tokens` to vlq `mappings` at parallel.
 use crate::{token::TokenChunk, SourceMap, Token};
-#[cfg(feature = "concurrent")]
-use rayon::prelude::*;
 
 // Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
 // It will escape the string to avoid invalid JSON string.

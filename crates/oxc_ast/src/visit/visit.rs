@@ -6,10 +6,9 @@
 
 use oxc_allocator::Vec;
 use oxc_syntax::scope::ScopeFlags;
+use walk::*;
 
 use crate::{ast::*, ast_kind::AstKind};
-
-use walk::*;
 
 /// Syntax tree traversal
 pub trait Visit<'a>: Sized {
@@ -186,6 +185,10 @@ pub trait Visit<'a>: Sized {
 
     fn visit_class_heritage(&mut self, expr: &Expression<'a>) {
         walk_class_heritage(self, expr);
+    }
+
+    fn visit_ts_class_implements(&mut self, expr: &TSClassImplements<'a>) {
+        walk_ts_class_implements(self, expr);
     }
 
     fn visit_class_body(&mut self, body: &ClassBody<'a>) {
@@ -614,6 +617,14 @@ pub trait Visit<'a>: Sized {
         walk_export_named_declaration(self, decl);
     }
 
+    fn visit_export_specifier(&mut self, specifier: &ExportSpecifier<'a>) {
+        walk_export_specifier(self, specifier);
+    }
+
+    fn visit_module_export_name(&mut self, name: &ModuleExportName<'a>) {
+        walk_module_export_name(self, name);
+    }
+
     fn visit_enum_member(&mut self, member: &TSEnumMember<'a>) {
         walk_enum_member(self, member);
     }
@@ -658,6 +669,10 @@ pub trait Visit<'a>: Sized {
         walk_ts_interface_declaration(self, decl);
     }
 
+    fn visit_ts_interface_heritage(&mut self, heritage: &TSInterfaceHeritage<'a>) {
+        walk_ts_interface_heritage(self, heritage);
+    }
+
     fn visit_ts_as_expression(&mut self, expr: &TSAsExpression<'a>) {
         walk_ts_as_expression(self, expr);
     }
@@ -690,6 +705,10 @@ pub trait Visit<'a>: Sized {
         walk_ts_tuple_element(self, ty);
     }
 
+    fn visit_ts_this_parameter(&mut self, param: &TSThisParameter<'a>) {
+        walk_ts_this_parameter(self, param);
+    }
+
     fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
         walk_ts_type_parameter(self, ty);
     }
@@ -712,6 +731,10 @@ pub trait Visit<'a>: Sized {
 
     fn visit_ts_boolean_keyword(&mut self, ty: &TSBooleanKeyword) {
         walk_ts_boolean_keyword(self, ty);
+    }
+
+    fn visit_ts_intrinsic_keyword(&mut self, ty: &TSIntrinsicKeyword) {
+        walk_ts_intrinsic_keyword(self, ty);
     }
 
     fn visit_ts_never_keyword(&mut self, ty: &TSNeverKeyword) {
@@ -1250,6 +1273,9 @@ pub mod walk {
         if let Some(parameters) = &func.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
+        if let Some(this_param) = &func.this_param {
+            visitor.visit_ts_this_parameter(this_param);
+        }
         visitor.visit_formal_parameters(&func.params);
         if let Some(body) = &func.body {
             visitor.visit_function_body(body);
@@ -1334,6 +1360,11 @@ pub mod walk {
         if let Some(super_class) = &class.super_class {
             visitor.visit_class_heritage(super_class);
         }
+        if let Some(implements) = &class.implements {
+            for implement in implements {
+                visitor.visit_ts_class_implements(implement);
+            }
+        }
         if let Some(super_parameters) = &class.super_type_parameters {
             visitor.visit_ts_type_parameter_instantiation(super_parameters);
         }
@@ -1348,6 +1379,19 @@ pub mod walk {
         let kind = AstKind::ClassHeritage(visitor.alloc(expr));
         visitor.enter_node(kind);
         visitor.visit_expression(expr);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_class_implements<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        implements: &TSClassImplements<'a>,
+    ) {
+        let kind = AstKind::TSClassImplements(visitor.alloc(implements));
+        visitor.enter_node(kind);
+        visitor.visit_ts_type_name(&implements.expression);
+        if let Some(type_parameters) = &implements.type_parameters {
+            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        }
         visitor.leave_node(kind);
     }
 
@@ -2397,7 +2441,7 @@ pub mod walk {
     ) {
         let kind = AstKind::ImportSpecifier(visitor.alloc(specifier));
         visitor.enter_node(kind);
-        // TODO: imported
+        visitor.visit_module_export_name(&specifier.imported);
         visitor.visit_binding_identifier(&specifier.local);
         visitor.leave_node(kind);
     }
@@ -2460,10 +2504,34 @@ pub mod walk {
         if let Some(decl) = &decl.declaration {
             visitor.visit_declaration(decl);
         }
+        for export_specifier in &decl.specifiers {
+            visitor.visit_export_specifier(export_specifier);
+        }
         if let Some(ref source) = decl.source {
             visitor.visit_string_literal(source);
         }
         visitor.leave_node(kind);
+    }
+
+    pub fn walk_export_specifier<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        specifier: &ExportSpecifier<'a>,
+    ) {
+        let kind = AstKind::ExportSpecifier(visitor.alloc(specifier));
+        visitor.enter_node(kind);
+        visitor.visit_module_export_name(&specifier.local);
+        visitor.visit_module_export_name(&specifier.exported);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_module_export_name<'a, V: Visit<'a>>(visitor: &mut V, name: &ModuleExportName<'a>) {
+        match name {
+            ModuleExportName::IdentifierName(ident) => visitor.visit_identifier_name(ident),
+            ModuleExportName::IdentifierReference(ident) => {
+                visitor.visit_identifier_reference(ident);
+            }
+            ModuleExportName::StringLiteral(ident) => visitor.visit_string_literal(ident),
+        }
     }
 
     pub fn walk_enum_member<'a, V: Visit<'a>>(visitor: &mut V, member: &TSEnumMember<'a>) {
@@ -2621,11 +2689,29 @@ pub mod walk {
         let kind = AstKind::TSInterfaceDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&decl.id);
+        if let Some(extends) = &decl.extends {
+            for extend in extends {
+                visitor.visit_ts_interface_heritage(extend);
+            }
+        }
         if let Some(parameters) = &decl.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
         for signature in &decl.body.body {
             visitor.visit_ts_signature(signature);
+        }
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_interface_heritage<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        heritage: &TSInterfaceHeritage<'a>,
+    ) {
+        let kind = AstKind::TSInterfaceHeritage(visitor.alloc(heritage));
+        visitor.enter_node(kind);
+        visitor.visit_expression(&heritage.expression);
+        if let Some(type_parameters) = &heritage.type_parameters {
+            visitor.visit_ts_type_parameter_instantiation(type_parameters);
         }
         visitor.leave_node(kind);
     }
@@ -2691,6 +2777,7 @@ pub mod walk {
             TSType::TSAnyKeyword(ty) => visitor.visit_ts_any_keyword(ty),
             TSType::TSBigIntKeyword(ty) => visitor.visit_ts_big_int_keyword(ty),
             TSType::TSBooleanKeyword(ty) => visitor.visit_ts_boolean_keyword(ty),
+            TSType::TSIntrinsicKeyword(ty) => visitor.visit_ts_intrinsic_keyword(ty),
             TSType::TSNeverKeyword(ty) => visitor.visit_ts_never_keyword(ty),
             TSType::TSNullKeyword(ty) => visitor.visit_ts_null_keyword(ty),
             TSType::TSNumberKeyword(ty) => visitor.visit_ts_number_keyword(ty),
@@ -2782,11 +2869,24 @@ pub mod walk {
     }
 
     pub fn walk_ts_function_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSFunctionType<'a>) {
-        visitor.visit_formal_parameters(&ty.params);
         if let Some(parameters) = &ty.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
+        if let Some(this_param) = &ty.this_param {
+            visitor.visit_ts_this_parameter(this_param);
+        }
+        visitor.visit_formal_parameters(&ty.params);
         visitor.visit_ts_type_annotation(&ty.return_type);
+    }
+
+    pub fn walk_ts_this_parameter<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSThisParameter<'a>) {
+        let kind = AstKind::TSThisParameter(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.visit_identifier_name(&ty.this);
+        if let Some(type_annotation) = &ty.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
+        visitor.leave_node(kind);
     }
 
     pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSTypeParameter<'a>) {
@@ -3066,6 +3166,12 @@ pub mod walk {
 
     pub fn walk_ts_boolean_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSBooleanKeyword) {
         let kind = AstKind::TSBooleanKeyword(visitor.alloc(ty));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
+    pub fn walk_ts_intrinsic_keyword<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSIntrinsicKeyword) {
+        let kind = AstKind::TSIntrinsicKeyword(visitor.alloc(ty));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }

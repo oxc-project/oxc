@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_prototype_methods
 ---
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.push`.
    ╭─[prefer_prototype_methods.tsx:1:13]

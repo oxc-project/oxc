@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: valid_expect
 ---
   ⚠ eslint-plugin-jest(valid-expect): "Expect takes at most 1 argument "
    ╭─[valid_expect.tsx:1:1]

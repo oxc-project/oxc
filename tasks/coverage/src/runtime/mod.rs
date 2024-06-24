@@ -5,13 +5,12 @@ use std::{
     time::Duration,
 };
 
-use oxc_tasks_common::{agent, project_root};
-use phf::{phf_set, Set};
-
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use oxc_tasks_common::{agent, project_root};
+use phf::{phf_set, Set};
 use serde_json::json;
 
 use crate::{
@@ -141,10 +140,7 @@ impl Case for CodegenRuntimeTest262Case {
                 let source_type = SourceType::default().with_module(is_module);
                 let allocator = Allocator::default();
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
-                let mut text =
-                    Codegen::<false>::new("", source_text, ret.trivias, CodegenOptions::default())
-                        .build(&ret.program)
-                        .source_text;
+                let mut text = CodeGenerator::new().build(&ret.program).source_text;
                 if is_only_strict {
                     text = format!("\"use strict\";\n{text}");
                 }

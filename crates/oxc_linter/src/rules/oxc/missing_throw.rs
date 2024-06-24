@@ -1,6 +1,5 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -53,7 +52,7 @@ impl MissingThrow {
                 match ctx.nodes().kind(node_id) {
                     // ignore arrow `const foo = () => new Error()`
                     AstKind::ArrowFunctionExpression(arrow_expr) if arrow_expr.expression => {
-                        return false
+                        return false;
                     }
                     AstKind::ArrayExpression(_) | AstKind::Function(_) => break,
                     _ => {}

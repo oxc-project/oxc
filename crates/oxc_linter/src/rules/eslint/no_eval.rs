@@ -1,8 +1,6 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 // Ported from https://github.com/eslint/eslint/tree/main/lib/rules/no-eval.js
-
 use oxc_ast::{ast::Expression, AstKind};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;

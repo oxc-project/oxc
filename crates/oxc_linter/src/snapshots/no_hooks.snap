@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_hooks
 ---
   ⚠ eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.
    ╭─[no_hooks.tsx:1:1]

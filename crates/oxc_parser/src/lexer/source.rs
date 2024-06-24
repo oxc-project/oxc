@@ -1,9 +1,9 @@
 #![allow(clippy::unnecessary_safety_comment)]
 
+use std::{marker::PhantomData, slice, str};
+
 use super::search::SEARCH_BATCH_SIZE;
 use crate::{UniquePromise, MAX_LEN};
-
-use std::{marker::PhantomData, slice, str};
 
 /// `Source` holds the source text for the lexer, and provides APIs to read it.
 ///

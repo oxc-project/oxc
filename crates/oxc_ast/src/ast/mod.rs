@@ -1,3 +1,5 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
 //! AST Definitions
 //!
 //! # Enum inheritance
@@ -178,5 +180,6 @@ mod literal;
 mod macros;
 mod ts;
 
-pub use self::{js::*, jsx::*, literal::*, ts::*};
 use macros::inherit_variants;
+
+pub use self::{js::*, jsx::*, literal::*, ts::*};

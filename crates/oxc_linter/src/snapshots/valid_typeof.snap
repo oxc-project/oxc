@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: valid_typeof
 ---
   ⚠ eslint(valid-typeof): Invalid typeof comparison value.
    ╭─[valid_typeof.tsx:1:16]

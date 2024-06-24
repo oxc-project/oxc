@@ -1,13 +1,12 @@
 use oxc_allocator::Vec;
 use oxc_span::Span;
 
+use super::{Comment, CommentFlags, DanglingCommentsPrintOptions};
 use crate::{
     array,
     doc::{Doc, DocBuilder, Separator},
     hardline, line, space, Prettier,
 };
-
-use super::{Comment, CommentFlags, DanglingCommentsPrintOptions};
 
 impl<'a> Prettier<'a> {
     #[must_use]

@@ -553,73 +553,75 @@ macro_rules! inherit_variants {
                 /// Inherited from [`TSType`]
                 TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
                 /// Inherited from [`TSType`]
-                TSNeverKeyword(Box<'a, TSNeverKeyword>) = 3,
+                TSIntrinsicKeyword(Box<'a, TSIntrinsicKeyword>) = 3,
                 /// Inherited from [`TSType`]
-                TSNullKeyword(Box<'a, TSNullKeyword>) = 4,
+                TSNeverKeyword(Box<'a, TSNeverKeyword>) = 4,
                 /// Inherited from [`TSType`]
-                TSNumberKeyword(Box<'a, TSNumberKeyword>) = 5,
+                TSNullKeyword(Box<'a, TSNullKeyword>) = 5,
                 /// Inherited from [`TSType`]
-                TSObjectKeyword(Box<'a, TSObjectKeyword>) = 6,
+                TSNumberKeyword(Box<'a, TSNumberKeyword>) = 6,
                 /// Inherited from [`TSType`]
-                TSStringKeyword(Box<'a, TSStringKeyword>) = 7,
+                TSObjectKeyword(Box<'a, TSObjectKeyword>) = 7,
                 /// Inherited from [`TSType`]
-                TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 8,
+                TSStringKeyword(Box<'a, TSStringKeyword>) = 8,
                 /// Inherited from [`TSType`]
-                TSThisType(Box<'a, TSThisType>) = 9,
+                TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 9,
                 /// Inherited from [`TSType`]
-                TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 10,
+                TSThisType(Box<'a, TSThisType>) = 10,
                 /// Inherited from [`TSType`]
-                TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 11,
+                TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 11,
                 /// Inherited from [`TSType`]
-                TSVoidKeyword(Box<'a, TSVoidKeyword>) = 12,
+                TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 12,
+                /// Inherited from [`TSType`]
+                TSVoidKeyword(Box<'a, TSVoidKeyword>) = 13,
 
                 // Compound
                 /// Inherited from [`TSType`]
-                TSArrayType(Box<'a, TSArrayType<'a>>) = 13,
+                TSArrayType(Box<'a, TSArrayType<'a>>) = 14,
                 /// Inherited from [`TSType`]
-                TSConditionalType(Box<'a, TSConditionalType<'a>>) = 14,
+                TSConditionalType(Box<'a, TSConditionalType<'a>>) = 15,
                 /// Inherited from [`TSType`]
-                TSConstructorType(Box<'a, TSConstructorType<'a>>) = 15,
+                TSConstructorType(Box<'a, TSConstructorType<'a>>) = 16,
                 /// Inherited from [`TSType`]
-                TSFunctionType(Box<'a, TSFunctionType<'a>>) = 16,
+                TSFunctionType(Box<'a, TSFunctionType<'a>>) = 17,
                 /// Inherited from [`TSType`]
-                TSImportType(Box<'a, TSImportType<'a>>) = 17,
+                TSImportType(Box<'a, TSImportType<'a>>) = 18,
                 /// Inherited from [`TSType`]
-                TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 18,
+                TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 19,
                 /// Inherited from [`TSType`]
-                TSInferType(Box<'a, TSInferType<'a>>) = 19,
+                TSInferType(Box<'a, TSInferType<'a>>) = 20,
                 /// Inherited from [`TSType`]
-                TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 20,
+                TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 21,
                 /// Inherited from [`TSType`]
-                TSLiteralType(Box<'a, TSLiteralType<'a>>) = 21,
+                TSLiteralType(Box<'a, TSLiteralType<'a>>) = 22,
                 /// Inherited from [`TSType`]
-                TSMappedType(Box<'a, TSMappedType<'a>>) = 22,
+                TSMappedType(Box<'a, TSMappedType<'a>>) = 23,
                 /// Inherited from [`TSType`]
-                TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 23,
+                TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
                 /// Inherited from [`TSType`]
-                TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 24,
+                TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
                 /// Inherited from [`TSType`]
-                TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 25,
+                TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
                 /// Inherited from [`TSType`]
-                TSTupleType(Box<'a, TSTupleType<'a>>) = 26,
+                TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
                 /// Inherited from [`TSType`]
-                TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 27,
+                TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 28,
                 /// Inherited from [`TSType`]
-                TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 28,
+                TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 29,
                 /// Inherited from [`TSType`]
-                TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 29,
+                TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 30,
                 /// Inherited from [`TSType`]
-                TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 30,
+                TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 31,
                 /// Inherited from [`TSType`]
-                TSTypeReference(Box<'a, TSTypeReference<'a>>) = 31,
+                TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
                 /// Inherited from [`TSType`]
-                TSUnionType(Box<'a, TSUnionType<'a>>) = 32,
+                TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
 
                 // JSDoc
                 /// Inherited from [`TSType`]
-                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 33,
+                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 34,
                 /// Inherited from [`TSType`]
-                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 34,
+                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 35,
 
                 $($rest)*
             }
@@ -637,6 +639,7 @@ macro_rules! inherit_variants {
                 TSAnyKeyword,
                 TSBigIntKeyword,
                 TSBooleanKeyword,
+                TSIntrinsicKeyword,
                 TSNeverKeyword,
                 TSNullKeyword,
                 TSNumberKeyword,

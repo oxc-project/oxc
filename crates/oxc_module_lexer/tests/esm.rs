@@ -1,10 +1,9 @@
 //! <https://github.com/guybedford/es-module-lexer/blob/main/test/_unit.cjs>
 
 use oxc_allocator::Allocator;
+use oxc_module_lexer::ImportType;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
-use oxc_module_lexer::ImportType;
 
 #[derive(Debug, Clone)]
 struct ImportSpecifier {
@@ -416,7 +415,9 @@ fn regexp_division() {
 
 #[test]
 fn multiline_string_escapes() {
-    parse("const str = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wAAAAAzJ3zzAAAGTElEQV\\\n\t\tRIx+VXe1BU1xn/zjn7ugvL4sIuQnll5U0ELAQxig7WiQYz6NRHa6O206qdSXXSxs60dTK200zNY9q0dcRpMs1jkrRNWmaijCVoaU';\n");
+    parse(
+        "const str = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wAAAAAzJ3zzAAAGTElEQV\\\n\t\tRIx+VXe1BU1xn/zjn7ugvL4sIuQnll5U0ELAQxig7WiQYz6NRHa6O206qdSXXSxs60dTK200zNY9q0dcRpMs1jkrRNWmaijCVoaU';\n",
+    );
 }
 
 #[test]

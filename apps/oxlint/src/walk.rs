@@ -141,9 +141,8 @@ impl Walk {
 mod test {
     use std::{env, ffi::OsString};
 
-    use crate::IgnoreOptions;
-
     use super::{Extensions, Walk};
+    use crate::IgnoreOptions;
 
     #[test]
     fn test_walk_with_extensions() {

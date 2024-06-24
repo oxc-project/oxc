@@ -1,8 +1,7 @@
 use std::{marker::PhantomData, path::PathBuf, sync::Arc};
 
-use rustc_hash::FxHashSet;
-
 use oxc_span::CompactStr;
+use rustc_hash::FxHashSet;
 
 use crate::module_record::ModuleRecord;
 

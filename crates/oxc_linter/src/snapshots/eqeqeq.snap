@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: eqeqeq
 ---
   ⚠ eslint(eqeqeq): Expected > and instead saw >=
    ╭─[eqeqeq.tsx:1:1]

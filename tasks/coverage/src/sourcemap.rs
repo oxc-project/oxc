@@ -5,7 +5,7 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_sourcemap::SourcemapVisualizer;
 use oxc_span::SourceType;
@@ -127,15 +127,9 @@ impl Case for SourcemapCase {
             }
         }
 
-        let codegen_options =
-            CodegenOptions { enable_source_map: true, ..CodegenOptions::default() };
-        let codegen_ret = Codegen::<false>::new(
-            self.path.to_string_lossy().as_ref(),
-            source_text,
-            ret.trivias,
-            codegen_options,
-        )
-        .build(&ret.program);
+        let codegen_ret = CodeGenerator::new()
+            .enable_source_map(self.path.to_string_lossy().as_ref(), source_text)
+            .build(&ret.program);
 
         TestResult::Snapshot(
             SourcemapVisualizer::new(&codegen_ret.source_text, &codegen_ret.source_map.unwrap())

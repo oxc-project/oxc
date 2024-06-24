@@ -1,7 +1,6 @@
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
-
-use rustc_hash::FxHashMap;
 
 /// Add or remove global variables.
 // <https://eslint.org/docs/v8.x/use/configure/language-options#using-configuration-files-1>

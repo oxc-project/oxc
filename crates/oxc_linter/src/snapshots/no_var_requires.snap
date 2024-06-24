@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_var_requires
 ---
   ⚠ typescript-eslint(no-var-requires): Require statement not part of import statement.
    ╭─[no_var_requires.tsx:1:11]

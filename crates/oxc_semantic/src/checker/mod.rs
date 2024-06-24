@@ -2,16 +2,14 @@ mod javascript;
 mod typescript;
 
 use javascript as js;
-use typescript as ts;
-
+pub use javascript::check_module_record;
 use oxc_ast::{
     ast::{DoWhileStatement, ForStatement, WhileStatement},
     AstKind,
 };
+use typescript as ts;
 
 use crate::{builder::SemanticBuilder, AstNode};
-
-pub use javascript::check_module_record;
 
 pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
     let kind = node.kind();
@@ -70,8 +68,9 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
                 js::check_function_declaration(alternate, true, ctx);
             }
         }
-
-        AstKind::Class(class) => js::check_class(class, node, ctx),
+        AstKind::Class(class) => {
+            js::check_class(class, node, ctx);
+        }
         AstKind::MethodDefinition(method) => js::check_method_definition(method, ctx),
         AstKind::ObjectProperty(prop) => js::check_object_property(prop, ctx),
         AstKind::Super(sup) => js::check_super(sup, node, ctx),

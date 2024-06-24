@@ -1,7 +1,6 @@
 use std::str;
 
 use compact_str::{format_compact, CompactString};
-
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
 use oxc_span::{CompactStr, SPAN};
 use oxc_syntax::{

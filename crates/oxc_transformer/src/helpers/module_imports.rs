@@ -1,6 +1,6 @@
-use indexmap::IndexMap;
 use std::cell::{Cell, RefCell};
 
+use indexmap::IndexMap;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, SPAN};
@@ -90,7 +90,10 @@ impl<'a> ModuleImports<'a> {
             let local = name.local.unwrap_or_else(|| name.imported.clone());
             ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
                 span: SPAN,
-                imported: ModuleExportName::Identifier(IdentifierName::new(SPAN, name.imported)),
+                imported: ModuleExportName::IdentifierName(IdentifierName::new(
+                    SPAN,
+                    name.imported,
+                )),
                 local: BindingIdentifier {
                     span: SPAN,
                     name: local,
@@ -131,14 +134,14 @@ impl<'a> ModuleImports<'a> {
                 name: name.imported,
                 symbol_id: Cell::new(Some(name.symbol_id)),
             };
-            self.ast.binding_pattern(self.ast.binding_pattern_identifier(ident), None, false)
+            self.ast.binding_pattern(SPAN, self.ast.binding_pattern_identifier(ident), None, false)
         };
         let decl = {
             let init = self.ast.call_expression(SPAN, callee, args, false, None);
             let decl = self.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             self.ast.new_vec_single(decl)
         };
-        let var_decl = self.ast.variable_declaration(SPAN, var_kind, decl, Modifiers::empty());
+        let var_decl = self.ast.variable_declaration(SPAN, var_kind, decl, false);
         Statement::VariableDeclaration(var_decl)
     }
 }

@@ -208,7 +208,8 @@ impl<'a> GetSpan for ImportAttributeKey<'a> {
 impl<'a> GetSpan for ModuleExportName<'a> {
     fn span(&self) -> Span {
         match self {
-            Self::Identifier(identifier) => identifier.span,
+            Self::IdentifierName(identifier) => identifier.span,
+            Self::IdentifierReference(identifier) => identifier.span,
             Self::StringLiteral(literal) => literal.span,
         }
     }
@@ -549,6 +550,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSStringKeyword(t) => t.span,
             Self::TSNeverKeyword(t) => t.span,
             Self::TSBooleanKeyword(t) => t.span,
+            Self::TSIntrinsicKeyword(t) => t.span,
             Self::TSSymbolKeyword(t) => t.span,
             Self::TSBigIntKeyword(t) => t.span,
             Self::TSThisType(t) => t.span,

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_to_have_length
 ---
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:25]

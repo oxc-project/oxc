@@ -1,0 +1,90 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/function-parameters.ts
+---
+==================== .D.TS ====================
+
+export declare function fnDeclGood(p?: T, rParam?: string): void;
+export declare function fnDeclGood2(p?: T, rParam?: number): void;
+export declare function fooGood(): number;
+export declare const fooGood2: () => number;
+export declare function fnDeclBad<T>(p: T, rParam: T, r2: T): void;
+export declare function fnDeclBad2<T>(p: T, r2: T): void;
+export declare function fnDeclBad3<T>(p: T, rParam?: T, r2: T): void;
+export declare function fooBad(): number;
+export declare const fooBad2: () => number;
+
+
+==================== Errors ====================
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+   ,-[5:25]
+ 4 | 
+ 5 | export function fooGood([a, b]: any[] = [1, 2]): number {
+   :                         ^^^^^^^^^^^^^^^^^^^^^^
+ 6 |   return 2;
+   `----
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[9:26]
+  8 | 
+  9 | export const fooGood2 = ({a, b}: object = { a: 1, b: 2 }): number => {
+    :                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 |   return 2;
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[14:30]
+ 13 | // Incorrect
+ 14 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
+    :                              ^^^^^^^^^
+ 15 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[14:41]
+ 13 | // Incorrect
+ 14 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
+    :                                         ^^^^^^^^^^^^^^
+ 15 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[15:31]
+ 14 | export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
+ 15 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
+    :                               ^^^^^^^^^
+ 16 | export function fnDeclBad3<T>(p: T = [], rParam?: T, r2: T): void { }
+    `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[16:31]
+ 15 | export function fnDeclBad2<T>(p: T = [], r2: T): void { }
+ 16 | export function fnDeclBad3<T>(p: T = [], rParam?: T, r2: T): void { }
+    :                               ^^^^^^^^^
+ 17 | 
+    `----
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[18:24]
+ 17 | 
+ 18 | export function fooBad([a, b] = [1, 2]): number {
+    :                        ^^^^^^^^^^^^^^^
+ 19 |   return 2;
+    `----
+
+  x TS9011: Parameter must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[22:25]
+ 21 | 
+ 22 | export const fooBad2 = ({a, b} = { a: 1, b: 2 }): number => {
+    :                         ^^^^^^^^^^^^^^^^^^^^^^^
+ 23 |   return 2;
+    `----

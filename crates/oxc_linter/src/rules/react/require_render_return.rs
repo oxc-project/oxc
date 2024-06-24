@@ -1,11 +1,10 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    pg::neighbors_filtered_by_edge_weight, EdgeType, Instruction, InstructionKind,
+use oxc_cfg::{
+    graph::visit::neighbors_filtered_by_edge_weight, EdgeType, Instruction, InstructionKind,
     ReturnInstructionKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -91,10 +90,10 @@ enum FoundReturn {
 const KEEP_WALKING_ON_THIS_PATH: bool = true;
 const STOP_WALKING_ON_THIS_PATH: bool = false;
 
-fn contains_return_statement<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let cfg = ctx.semantic().cfg();
+fn contains_return_statement(node: &AstNode, ctx: &LintContext) -> bool {
+    let cfg = ctx.cfg();
     let state = neighbors_filtered_by_edge_weight(
-        &cfg.graph,
+        cfg.graph(),
         node.cfg_id(),
         &|edge| match edge {
             // We only care about normal edges having a return statement.

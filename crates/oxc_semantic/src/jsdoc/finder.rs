@@ -1,7 +1,9 @@
+use std::collections::BTreeMap;
+
+use oxc_span::{GetSpan, Span};
+
 use super::parser::JSDoc;
 use crate::AstNode;
-use oxc_span::{GetSpan, Span};
-use std::collections::BTreeMap;
 
 #[derive(Debug)]
 pub struct JSDocFinder<'a> {

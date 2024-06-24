@@ -1,18 +1,20 @@
-use oxc_diagnostics::OxcDiagnostic;
-
-use regex::Regex;
-
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use regex::Regex;
 
-use crate::utils::{
-    get_element_type, get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{
+        get_element_type, get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+    },
+    AstNode,
 };
-use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn img_redundant_alt_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.").with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_labels([span0.into()])
@@ -101,6 +103,7 @@ impl Rule for ImgRedundantAlt {
 
         Self(Box::new(img_redundant_alt))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;

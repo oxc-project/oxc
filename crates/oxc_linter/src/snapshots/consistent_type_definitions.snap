@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: consistent_type_definitions
 ---
   ⚠ typescript-eslint(consistent-type-definitions):
    ╭─[consistent_type_definitions.tsx:1:1]

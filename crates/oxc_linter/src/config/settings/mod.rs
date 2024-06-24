@@ -30,8 +30,9 @@ pub struct OxlintSettings {
 
 #[cfg(test)]
 mod test {
-    use super::OxlintSettings;
     use serde::Deserialize;
+
+    use super::OxlintSettings;
 
     #[test]
     fn test_parse_settings() {

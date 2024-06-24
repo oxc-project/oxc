@@ -1,11 +1,10 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 use std::str::Chars;
 
 use oxc_ast::{
     ast::{StringLiteral, TemplateLiteral},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 

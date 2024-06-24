@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_focused_tests
 ---
   ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
    ╭─[no_focused_tests.tsx:1:1]

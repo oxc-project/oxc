@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_anonymous_default_export
 ---
   ⚠ eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export
    ╭─[no_anonymous_default_export.tsx:1:1]

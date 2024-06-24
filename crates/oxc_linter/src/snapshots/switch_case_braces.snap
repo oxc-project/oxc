@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: switch_case_braces
 ---
   ⚠ eslint-plugin-unicorn(switch-case-braces):  Empty switch case shouldn't have braces and not-empty case should have braces around it.
    ╭─[switch_case_braces.tsx:1:29]

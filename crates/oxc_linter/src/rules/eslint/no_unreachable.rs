@@ -1,13 +1,13 @@
 use oxc_ast::{ast::VariableDeclarationKind, AstKind};
-use oxc_diagnostics::OxcDiagnostic;
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{
-    petgraph::{
+use oxc_cfg::{
+    graph::{
         visit::{depth_first_search, Control, DfsEvent, EdgeRef},
         Direction,
     },
-    EdgeType, ErrorEdgeKind, InstructionKind,
+    EdgeType, ErrorEdgeKind, Instruction, InstructionKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
@@ -33,8 +33,8 @@ impl Rule for NoUnreachable {
     fn run_once(&self, ctx: &LintContext) {
         let nodes = ctx.nodes();
         let Some(root) = nodes.root_node() else { return };
-        let cfg = ctx.semantic().cfg();
-        let graph = &cfg.graph;
+        let cfg = ctx.cfg();
+        let graph = cfg.graph();
 
         // A pre-allocated vector containing the reachability status of all the basic blocks.
         // We initialize this vector with all nodes set to `unreachable` since if we don't visit a
@@ -56,7 +56,18 @@ impl Rule for NoUnreachable {
                 unreachables[node.index()] = unreachable;
 
                 if !unreachable {
-                    if let Some(it) = cfg.is_infinite_loop_start(node, nodes) {
+                    if let Some(it) = cfg.is_infinite_loop_start(node, |instruction| {
+                        use oxc_cfg::EvalConstConditionResult::{Eval, Fail, NotFound};
+                        match instruction {
+                            Instruction { kind: InstructionKind::Condition, node_id: Some(id) } => {
+                                match nodes.kind(*id) {
+                                    AstKind::BooleanLiteral(lit) => Eval(lit.value),
+                                    _ => Fail,
+                                }
+                            }
+                            _ => NotFound,
+                        }
+                    }) {
                         infinite_loops.push(it);
                     }
                 }

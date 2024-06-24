@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
-use oxc_span::Atom;
 
 use super::{Expect, SemanticTester};
 
@@ -22,8 +21,7 @@ impl<'a> SymbolTester<'a> {
         semantic: Semantic<'a>,
         target: &str,
     ) -> Self {
-        let decl =
-            semantic.scopes().get_binding(semantic.scopes().root_scope_id(), &Atom::from(target));
+        let decl = semantic.scopes().get_binding(semantic.scopes().root_scope_id(), target);
         let data = decl.map_or_else(
             || Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
             Ok,
@@ -49,9 +47,15 @@ impl<'a> SymbolTester<'a> {
             .collect();
         let data = match symbols_with_target_name.len() {
             0 => Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
-            1 => Ok(symbols_with_target_name.iter().map(|(_, symbol_id, _)| *symbol_id).next().unwrap()),
-            n if n > 1 => Err(OxcDiagnostic::error(format!("Couldn't uniquely resolve symbol id for target {target}; {n} symbols with that name are declared in the source."))),
-            _ => unreachable!()
+            1 => Ok(symbols_with_target_name
+                .iter()
+                .map(|(_, symbol_id, _)| *symbol_id)
+                .next()
+                .unwrap()),
+            n if n > 1 => Err(OxcDiagnostic::error(format!(
+                "Couldn't uniquely resolve symbol id for target {target}; {n} symbols with that name are declared in the source."
+            ))),
+            _ => unreachable!(),
         };
 
         SymbolTester {
@@ -139,7 +143,9 @@ impl<'a> SymbolTester<'a> {
                 if num_accepted == ref_count {
                     Ok(symbol_id)
                 } else {
-                    Err(OxcDiagnostic::error(format!("Expected to find {ref_count} acceptable references, but only found {num_accepted}")))
+                    Err(OxcDiagnostic::error(format!(
+                        "Expected to find {ref_count} acceptable references, but only found {num_accepted}"
+                    )))
                 }
             }
             e => e,
@@ -153,21 +159,12 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let binding = self.target_symbol_name.clone();
-                let is_in_module_record =
-                    self.semantic.module_record().exported_bindings.contains_key(binding.as_str())
-                        && self.semantic.scopes().get_root_binding(&binding) == Some(symbol_id);
-                let has_export_flag = self.semantic.symbols().get_flag(symbol_id).is_export();
-                match (is_in_module_record, has_export_flag) {
-                    (false, false) => Err(OxcDiagnostic::error(format!(
-                            "Expected {binding} to be exported. Symbol is not in module record and does not have SymbolFlags::Export"
-                        ))),
-                    (false, true) => Err(OxcDiagnostic::error(format!(
-                            "Expected {binding} to be exported. Symbol is not in module record, but has SymbolFlags::Export"
-                        ))),
-                    (true, false) => Err(OxcDiagnostic::error(format!(
-                            "Expected {binding} to be exported. Symbol is in module record, but does not have SymbolFlags::Export"
-                        ))),
-                    (true, true) => Ok(symbol_id)
+                if self.semantic.symbols().get_flag(symbol_id).is_export() {
+                    Ok(symbol_id)
+                } else {
+                    Err(OxcDiagnostic::error(format!(
+                        "Expected {binding} to be exported with SymbolFlags::Export"
+                    )))
                 }
             }
             e => e,
@@ -184,15 +181,6 @@ impl<'a> SymbolTester<'a> {
                 if self.semantic.symbols().get_flag(symbol_id).contains(SymbolFlags::Export) {
                     Err(OxcDiagnostic::error(format!(
                         "Expected {binding} to not be exported. Symbol has export flag."
-                    )))
-                } else if self
-                    .semantic
-                    .module_record()
-                    .exported_bindings
-                    .contains_key(binding.as_str())
-                {
-                    Err(OxcDiagnostic::error(format!(
-                        "Expected {binding} to not be exported. Binding is in the module record"
                     )))
                 } else {
                     Ok(symbol_id)
@@ -214,7 +202,9 @@ impl<'a> SymbolTester<'a> {
                 if scope_flags.contains(expected_flags) {
                     Ok(symbol_id)
                 } else {
-                    Err(OxcDiagnostic::error(format!("Binding {target_name} is not in a scope with expected flags.\n\tExpected: {expected_flags:?}\n\tActual: {scope_flags:?}")))
+                    Err(OxcDiagnostic::error(format!(
+                        "Binding {target_name} is not in a scope with expected flags.\n\tExpected: {expected_flags:?}\n\tActual: {scope_flags:?}"
+                    )))
                 }
             }
             e => e,
@@ -231,7 +221,9 @@ impl<'a> SymbolTester<'a> {
                 let scope_id = self.semantic.symbol_scope(symbol_id);
                 let scope_flags = self.semantic.scopes().get_flags(scope_id);
                 if scope_flags.contains(excluded_flags) {
-                    Err(OxcDiagnostic::error(format!("Binding {target_name} is in a scope with excluded flags.\n\tExpected: not {excluded_flags:?}\n\tActual: {scope_flags:?}")))
+                    Err(OxcDiagnostic::error(format!(
+                        "Binding {target_name} is in a scope with excluded flags.\n\tExpected: not {excluded_flags:?}\n\tActual: {scope_flags:?}"
+                    )))
                 } else {
                     Ok(symbol_id)
                 }

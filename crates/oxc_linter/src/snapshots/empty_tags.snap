@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: empty_tags
 ---
   ⚠ eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.
    ╭─[empty_tags.tsx:3:27]

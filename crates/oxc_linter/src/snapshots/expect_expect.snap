@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: expect_expect
 ---
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]

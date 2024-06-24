@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_template_curly_in_string
 ---
   ⚠ eslint(no-template-curly-in-string): Unexpected template string expression
    ╭─[no_template_curly_in_string.tsx:1:9]

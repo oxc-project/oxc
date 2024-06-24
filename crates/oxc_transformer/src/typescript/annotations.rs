@@ -2,22 +2,21 @@
 
 use std::rc::Rc;
 
-use crate::context::Ctx;
-use crate::TypeScriptOptions;
-
-use oxc_allocator::Vec;
+use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
-use oxc_span::{Atom, SPAN};
-use oxc_syntax::operator::AssignmentOperator;
+use oxc_span::{Atom, GetSpan, Span, SPAN};
+use oxc_syntax::{operator::AssignmentOperator, reference::ReferenceFlag, symbol::SymbolId};
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
+
+use crate::{context::Ctx, TypeScriptOptions};
 
 pub struct TypeScriptAnnotations<'a> {
     #[allow(dead_code)]
     options: Rc<TypeScriptOptions>,
     ctx: Ctx<'a>,
     /// Assignments to be added to the constructor body
-    assignments: Vec<'a, Statement<'a>>,
+    assignments: Vec<Assignment<'a>>,
     has_super_call: bool,
 
     has_jsx_element: bool,
@@ -43,7 +42,7 @@ impl<'a> TypeScriptAnnotations<'a> {
 
         Self {
             has_super_call: false,
-            assignments: ctx.ast.new_vec(),
+            assignments: vec![],
             options,
             ctx,
             has_jsx_element: false,
@@ -61,142 +60,83 @@ impl<'a> TypeScriptAnnotations<'a> {
             || self.has_jsx_fragment && name == self.jsx_fragment_import_name
     }
 
-    // Creates `this.name = name`
-    fn create_this_property_assignment(&self, name: &Atom<'a>) -> Statement<'a> {
-        let ast = self.ctx.ast;
-
-        ast.expression_statement(
-            SPAN,
-            ast.assignment_expression(
-                SPAN,
-                AssignmentOperator::Assign,
-                ast.simple_assignment_target_member_expression(ast.static_member(
-                    SPAN,
-                    ast.this_expression(SPAN),
-                    ast.identifier_name(SPAN, name),
-                    false,
-                )),
-                ast.identifier_reference_expression(ast.identifier_reference(SPAN, name)),
-            ),
-        )
-    }
-
     // Remove type only imports/exports
     pub fn transform_program_on_exit(
         &mut self,
         program: &mut Program<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let mut module_count = 0;
-        let mut removed_count = 0;
+        let mut no_modules_remaining = true;
+        let mut some_modules_deleted = false;
 
         program.body.retain_mut(|stmt| {
-            match stmt {
-                // fix namespace/export-type-only/input.ts
-                // The namespace is type only. So if its name appear in the ExportNamedDeclaration, we should remove it.
-                Statement::TSModuleDeclaration(decl) => {
-                    self.type_identifier_names.insert(decl.id.name().clone());
-                    false
+            let need_retain = match stmt {
+                Statement::ExportNamedDeclaration(decl) => {
+                    if decl.export_kind.is_type() {
+                        false
+                    } else {
+                        decl.specifiers.retain(|specifier| {
+                            !specifier.export_kind.is_type()
+                                && !self.type_identifier_names.contains(&specifier.exported.name())
+                        });
+
+                        !decl.specifiers.is_empty()
+                            || matches!(&decl.declaration, Some(decl) if !decl.is_typescript_syntax())
+                    }
                 }
-                match_module_declaration!(Statement) => {
-                    let module_decl = stmt.to_module_declaration_mut();
-                    let need_delete = match module_decl {
-                        ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                            decl.specifiers.retain(|specifier| {
-                                !(specifier.export_kind.is_type()
-                                    || self
-                                        .type_identifier_names
-                                        .contains(specifier.exported.name()))
-                            });
-
-                            decl.export_kind.is_type()
-                                || ((decl.declaration.is_none()
-                                    || decl
-                                        .declaration
-                                        .as_ref()
-                                        .is_some_and(Declaration::is_typescript_syntax))
-                                    && decl.specifiers.is_empty())
-                        }
-                        ModuleDeclaration::ExportAllDeclaration(decl) => {
-                            return !decl.export_kind.is_type()
-                        }
-                        ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                            return !decl.is_typescript_syntax()
-                        }
-                        ModuleDeclaration::ImportDeclaration(decl) => {
-                            let is_type = decl.import_kind.is_type();
-
-                            let is_specifiers_empty =
-                                decl.specifiers.as_ref().is_some_and(|s| s.is_empty());
-
-                            if let Some(specifiers) = &mut decl.specifiers {
-                                specifiers.retain(|specifier| match specifier {
+                Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
+                Statement::ExportDefaultDeclaration(decl) => !decl.is_typescript_syntax(),
+                Statement::ImportDeclaration(decl) => {
+                    if decl.import_kind.is_type() {
+                        false
+                    } else if self.options.only_remove_type_imports {
+                        true
+                    } else if let Some(specifiers) = &mut decl.specifiers {
+                        if specifiers.is_empty() {
+                            true
+                        } else {
+                            specifiers.retain(|specifier| {
+                                let id = match specifier {
                                     ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                                        if is_type || s.import_kind.is_type() {
-                                            self.type_identifier_names.insert(s.local.name.clone());
+                                        if s.import_kind.is_type() {
                                             return false;
                                         }
-
-                                        if self.options.only_remove_type_imports {
-                                            return true;
-                                        }
-
-                                        self.has_value_reference(&s.local.name, ctx)
+                                        &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                                        if is_type {
-                                            self.type_identifier_names.insert(s.local.name.clone());
-                                            return false;
-                                        }
-
-                                        if self.options.only_remove_type_imports {
-                                            return true;
-                                        }
-
-                                        self.has_value_reference(&s.local.name, ctx)
+                                        &s.local
                                     }
                                     ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                                        if is_type {
-                                            self.type_identifier_names.insert(s.local.name.clone());
-                                            return false;
-                                        }
-
-                                        if self.options.only_remove_type_imports {
-                                            return true;
-                                        }
-
-                                        self.has_value_reference(&s.local.name, ctx)
+                                        &s.local
                                     }
-                                });
-                            }
-
-                            decl.import_kind.is_type()
-                                || (!self.options.only_remove_type_imports
-                                    && !is_specifiers_empty
-                                    && decl
-                                        .specifiers
-                                        .as_ref()
-                                        .is_some_and(|specifiers| specifiers.is_empty()))
+                                };
+                                self.has_value_reference(&id.name, ctx)
+                            });
+                            !specifiers.is_empty()
                         }
-                        _ => module_decl.is_typescript_syntax(),
-                    };
-
-                    if need_delete {
-                        removed_count += 1;
                     } else {
-                        module_count += 1;
+                        true
                     }
-
-                    !need_delete
                 }
-                _ => true,
+                Statement::TSExportAssignment(_) | Statement::TSNamespaceExportDeclaration(_) => {
+                    false
+                }
+                _ => return true,
+            };
+
+            if need_retain {
+                no_modules_remaining = false;
+            } else {
+                some_modules_deleted = true;
             }
+
+            need_retain
         });
 
         // Determine if we still have import/export statements, otherwise we
         // need to inject an empty statement (`export {}`) so that the file is
         // still considered a module
-        if module_count == 0 && removed_count > 0 {
+        if no_modules_remaining && some_modules_deleted {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
                 self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.new_vec(), None),
             );
@@ -225,7 +165,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         class.type_parameters = None;
         class.super_type_parameters = None;
         class.implements = None;
-        class.modifiers = Modifiers::empty();
+        class.r#abstract = false;
+        class.declare = false;
     }
 
     pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
@@ -260,27 +201,18 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
         if let Some(expr) = target.get_expression() {
-            if let Some(ident) = expr.get_inner_expression().get_identifier_reference() {
-                let ident = self.ctx.ast.alloc(self.ctx.ast.copy(ident));
+            if let Expression::Identifier(ident) = expr.get_inner_expression() {
+                let ident = self.ctx.ast.copy(ident);
                 *target = SimpleAssignmentTarget::AssignmentTargetIdentifier(ident);
             }
         }
     }
 
     pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
-        if let Some(new_target) = target
-            .get_expression()
-            .map(Expression::get_inner_expression)
-            .and_then(|expr| match expr {
-                match_member_expression!(Expression) => {
-                    Some(self.ctx.ast.simple_assignment_target_member_expression(
-                        self.ctx.ast.copy(expr.as_member_expression().unwrap()),
-                    ))
-                }
-                _ => None,
-            })
-        {
-            *target = new_target;
+        if let Some(expr) = target.get_expression() {
+            if let Some(member_expr) = expr.get_inner_expression().as_member_expression() {
+                *target = AssignmentTarget::from(self.ctx.ast.copy(member_expr));
+            }
         }
     }
 
@@ -304,9 +236,12 @@ impl<'a> TypeScriptAnnotations<'a> {
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
                 if param.is_public() {
-                    if let Some(id) = param.pattern.get_identifier() {
-                        let assignment = self.create_this_property_assignment(id);
-                        self.assignments.push(assignment);
+                    if let Some(id) = param.pattern.get_binding_identifier() {
+                        self.assignments.push(Assignment {
+                            span: id.span,
+                            name: id.name.clone(),
+                            symbol_id: id.symbol_id.get().unwrap(),
+                        });
                     }
                 }
 
@@ -321,7 +256,11 @@ impl<'a> TypeScriptAnnotations<'a> {
         def.r#override = false;
     }
 
-    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
+    pub fn transform_method_definition_on_exit(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if def.kind == MethodDefinitionKind::Constructor && !self.assignments.is_empty() {
             // When the constructor doesn't have a super call,
             // we simply add assignments to the bottom of the function body
@@ -338,7 +277,11 @@ impl<'a> TypeScriptAnnotations<'a> {
                         )
                     })
                     .statements
-                    .extend(self.assignments.drain(..));
+                    .extend(
+                        self.assignments
+                            .drain(..)
+                            .map(|assignment| assignment.create_this_property_assignment(ctx)),
+                    );
             }
         }
     }
@@ -367,21 +310,29 @@ impl<'a> TypeScriptAnnotations<'a> {
         def.type_annotation = None;
     }
 
-    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub fn transform_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         // Remove declare declaration
-        stmts.retain(|stmt| match stmt {
-            match_declaration!(Statement) => {
-                stmt.to_declaration().modifiers().map_or(true, |m| !m.is_contains_declare())
-            }
-            _ => true,
-        });
+        stmts.retain(
+            |stmt| {
+                if let Some(decl) = stmt.as_declaration() {
+                    !decl.declare()
+                } else {
+                    true
+                }
+            },
+        );
     }
 
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         // Remove TS specific statements
         stmts.retain(|stmt| match stmt {
             Statement::ExpressionStatement(s) => !s.expression.is_typescript_syntax(),
-            Statement::TSModuleDeclaration(_) => true,
+            // Any namespaces left after namespace transform are type only, so remove them
+            Statement::TSModuleDeclaration(_) => false,
             match_declaration!(Statement) => !stmt.to_declaration().is_typescript_syntax(),
             // Ignore ModuleDeclaration as it's handled in the program
             _ => true,
@@ -398,7 +349,11 @@ impl<'a> TypeScriptAnnotations<'a> {
                     let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
                     new_stmts.push(stmt);
                     if is_super_call {
-                        new_stmts.extend(self.ctx.ast.copy(&self.assignments));
+                        new_stmts.extend(
+                            self.assignments
+                                .iter()
+                                .map(|assignment| assignment.create_this_property_assignment(ctx)),
+                        );
                     }
                 }
                 self.has_super_call = true;
@@ -415,29 +370,38 @@ impl<'a> TypeScriptAnnotations<'a> {
     /// ```
     pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
         if !self.assignments.is_empty() {
-            if matches!(&stmt.consequent, Statement::ExpressionStatement(expr) if expr.expression.is_super_call_expression())
-            {
-                stmt.consequent =
-                    self.ctx.ast.block_statement(self.ctx.ast.block(
-                        SPAN,
+            if let Statement::ExpressionStatement(expr) = &stmt.consequent {
+                if expr.expression.is_super_call_expression() {
+                    // TODO: Need to create a scope for this block
+                    stmt.consequent = self.ctx.ast.block_statement(self.ctx.ast.block(
+                        expr.span,
                         self.ctx.ast.new_vec_single(self.ctx.ast.copy(&stmt.consequent)),
                     ));
-            }
-            if let Some(alternate) = &stmt.alternate {
-                if matches!(alternate, Statement::ExpressionStatement(expr) if expr.expression.is_super_call_expression())
-                {
-                    stmt.alternate =
-                        Some(self.ctx.ast.block_statement(self.ctx.ast.block(
-                            SPAN,
-                            self.ctx.ast.new_vec_single(self.ctx.ast.copy(alternate)),
-                        )));
                 }
+            }
+
+            let alternate_span = match &stmt.alternate {
+                Some(Statement::ExpressionStatement(expr))
+                    if expr.expression.is_super_call_expression() =>
+                {
+                    Some(expr.span)
+                }
+                _ => None,
+            };
+            if let Some(span) = alternate_span {
+                let alternate = stmt.alternate.take().unwrap();
+                // TODO: Need to create a scope for this block
+                stmt.alternate = Some(self.ctx.ast.block_statement(
+                    self.ctx.ast.block(span, self.ctx.ast.new_vec_single(alternate)),
+                ));
             }
         }
 
         if stmt.consequent.is_typescript_syntax() {
-            stmt.consequent =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            // TODO: Need to create a scope for this block
+            stmt.consequent = self.ctx.ast.block_statement(
+                self.ctx.ast.block(stmt.consequent.span(), self.ctx.ast.new_vec()),
+            );
         }
 
         if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
@@ -447,22 +411,31 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
-            stmt.body =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            // TODO: Need to create a scope for this block
+            stmt.body = self
+                .ctx
+                .ast
+                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
         }
     }
 
     pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
-            stmt.body =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            // TODO: Need to create a scope for this block
+            stmt.body = self
+                .ctx
+                .ast
+                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
         }
     }
 
     pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
         if stmt.body.is_typescript_syntax() {
-            stmt.body =
-                self.ctx.ast.block_statement(self.ctx.ast.block(SPAN, self.ctx.ast.new_vec()));
+            // TODO: Need to create a scope for this block
+            stmt.body = self
+                .ctx
+                .ast
+                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
         }
     }
 
@@ -481,6 +454,29 @@ impl<'a> TypeScriptAnnotations<'a> {
         self.has_jsx_fragment = true;
     }
 
+    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
+        let Some(specifiers) = &decl.specifiers else {
+            return;
+        };
+        let is_type = decl.import_kind.is_type();
+        for specifier in specifiers {
+            let mut specifier_is_type = is_type;
+            let id = match specifier {
+                ImportDeclarationSpecifier::ImportSpecifier(s) => {
+                    if s.import_kind.is_type() {
+                        specifier_is_type = true;
+                    }
+                    &s.local
+                }
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
+            };
+            if specifier_is_type {
+                self.type_identifier_names.insert(id.name.clone());
+            }
+        }
+    }
+
     pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
         let is_type = decl.export_kind.is_type();
         for specifier in &decl.specifiers {
@@ -490,13 +486,15 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
     }
 
-    pub fn has_value_reference(&self, name: &Atom<'a>, ctx: &TraverseCtx<'a>) -> bool {
+    pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
+        // NB: Namespace transform happens in `enter_program` visitor, and replaces retained
+        // namespaces with functions. This visitor is called after, by which time any remaining
+        // namespaces need to be deleted.
+        self.type_identifier_names.insert(decl.id.name().clone());
+    }
+
+    pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {
         if let Some(symbol_id) = ctx.scopes().get_root_binding(name) {
-            if ctx.symbols().get_flag(symbol_id).is_export()
-                && !self.type_identifier_names.contains(name)
-            {
-                return true;
-            }
             if ctx
                 .symbols()
                 .get_resolved_references(symbol_id)
@@ -507,5 +505,38 @@ impl<'a> TypeScriptAnnotations<'a> {
         }
 
         self.is_jsx_imports(name)
+    }
+}
+
+struct Assignment<'a> {
+    span: Span,
+    name: Atom<'a>,
+    symbol_id: SymbolId,
+}
+
+impl<'a> Assignment<'a> {
+    // Creates `this.name = name`
+    fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
+        let reference_id = ctx.create_bound_reference(
+            self.name.to_compact_str(),
+            self.symbol_id,
+            ReferenceFlag::Read,
+        );
+        let id = IdentifierReference::new_read(self.span, self.name.clone(), Some(reference_id));
+
+        ctx.ast.expression_statement(
+            SPAN,
+            ctx.ast.assignment_expression(
+                SPAN,
+                AssignmentOperator::Assign,
+                ctx.ast.simple_assignment_target_member_expression(ctx.ast.static_member(
+                    SPAN,
+                    ctx.ast.this_expression(SPAN),
+                    IdentifierName::new(self.span, self.name.clone()),
+                    false,
+                )),
+                ctx.ast.identifier_reference_expression(id),
+            ),
+        )
     }
 }

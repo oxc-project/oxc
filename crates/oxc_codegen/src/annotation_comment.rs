@@ -55,7 +55,7 @@ pub fn print_comment<const MINIFY: bool>(
 }
 
 pub fn gen_comment<const MINIFY: bool>(node_start: u32, codegen: &mut Codegen<{ MINIFY }>) {
-    if !codegen.options.preserve_annotate_comments {
+    if !codegen.comment_options.preserve_annotate_comments {
         return;
     }
     if let Some((comment_start, comment)) = codegen.try_take_moved_comment(node_start) {

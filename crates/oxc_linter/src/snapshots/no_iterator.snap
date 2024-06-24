@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_iterator
 ---
   ⚠ eslint(no-iterator): Reserved name '__iterator__'
    ╭─[no_iterator.tsx:1:9]

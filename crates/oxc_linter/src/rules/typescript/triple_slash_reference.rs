@@ -1,11 +1,10 @@
-use oxc_diagnostics::OxcDiagnostic;
-
 use std::collections::HashMap;
 
 use oxc_ast::{
     ast::{Statement, TSModuleReference},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -101,6 +100,7 @@ impl Rule for TripleSlashReference {
                 }),
         }))
     }
+
     fn run_once(&self, ctx: &LintContext) {
         let Some(root) = ctx.nodes().root_node() else {
             return;

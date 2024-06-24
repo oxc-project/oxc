@@ -1,6 +1,5 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
@@ -126,9 +125,10 @@ impl NoExplicitAny {
 
 #[cfg(test)]
 mod tests {
+    use serde_json::json;
+
     use super::*;
     use crate::tester::Tester;
-    use serde_json::json;
 
     #[test]
     fn test_simple() {

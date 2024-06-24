@@ -2,17 +2,15 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{CodeGenerator, WhitespaceRemover};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
 use pico_args::Arguments;
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_minifier --example minifier`
-// or `just watch "run -p oxc_minifier --example minifier"`
+// run `cargo run -p oxc_minifier --example minifier` or `just example minifier`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
@@ -44,10 +42,9 @@ fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: 
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
     Minifier::new(options).build(&allocator, program);
     if whitespace {
-        Codegen::<true>::new("", source_text, ret.trivias, CodegenOptions::default()).build(program)
+        WhitespaceRemover::new().build(program)
     } else {
-        Codegen::<false>::new("", source_text, ret.trivias, CodegenOptions::default())
-            .build(program)
+        CodeGenerator::new().build(program)
     }
     .source_text
 }

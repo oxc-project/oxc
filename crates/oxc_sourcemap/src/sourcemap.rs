@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     decode::{decode, decode_from_string, JSONSourceMap},
     encode::encode,
@@ -5,7 +7,6 @@ use crate::{
     token::{Token, TokenChunk},
     SourceViewToken,
 };
-use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct SourceMap {

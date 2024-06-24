@@ -1,8 +1,7 @@
 use miette::JSONReportHandler;
 
-use crate::Error;
-
 use super::DiagnosticReporter;
+use crate::Error;
 
 #[derive(Default)]
 pub struct JsonReporter {

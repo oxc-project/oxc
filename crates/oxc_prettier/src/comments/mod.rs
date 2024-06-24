@@ -1,7 +1,6 @@
 mod print;
 
 use bitflags::bitflags;
-
 use oxc_ast::CommentKind;
 
 #[derive(Debug, Clone, Copy)]

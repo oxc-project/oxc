@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_exponentiation_operator
 ---
   ⚠ eslint-plugin-unicorn(prefer-exponentian-operator): Prefer `**` over `Math.pow`.
    ╭─[prefer_exponentiation_operator.tsx:1:1]

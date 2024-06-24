@@ -3,8 +3,9 @@
 //! References:
 //! * <https://github.com/prettier/prettier/blob/main/commands.md>
 
-use oxc_allocator::{Allocator, Box, String, Vec};
 use std::fmt;
+
+use oxc_allocator::{Allocator, Box, String, Vec};
 
 use crate::{array, line, ss, GroupId};
 
@@ -113,6 +114,7 @@ impl<'a> IndentIfBreak<'a> {
     pub fn new(contents: Vec<'a, Doc<'a>>) -> Self {
         Self { contents, group_id: None }
     }
+
     pub fn with_id(mut self, id: GroupId) -> Self {
         self.group_id = Some(id);
         self
@@ -142,6 +144,7 @@ impl<'a> Fill<'a> {
             None
         }
     }
+
     pub fn enqueue(&mut self, doc: Doc<'a>) {
         self.parts.insert(0, doc);
     }

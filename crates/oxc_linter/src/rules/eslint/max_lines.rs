@@ -1,9 +1,7 @@
 use oxc_diagnostics::OxcDiagnostic;
-
-use serde_json::Value;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -80,6 +78,7 @@ impl Rule for MaxLines {
             Self(Box::new(MaxLinesConfig { max, skip_blank_lines, skip_comments }))
         }
     }
+
     fn run_once(&self, ctx: &LintContext) {
         let comment_lines = if self.skip_comments {
             let mut comment_lines: usize = 0;

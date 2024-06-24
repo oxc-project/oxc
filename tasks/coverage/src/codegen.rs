@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{CodeGenerator, WhitespaceRemover};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -29,36 +29,25 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
 
 /// Idempotency test
 fn get_normal_result(source_text: &str, source_type: SourceType) -> bool {
-    let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let source_text1 = {
         let ret = Parser::new(&allocator, source_text, source_type).parse();
-        Codegen::<false>::new("", source_text, ret.trivias, options).build(&ret.program).source_text
+        CodeGenerator::new().build(&ret.program).source_text
     };
-
     let source_text2 = {
         let ret = Parser::new(&allocator, &source_text1, source_type).parse();
-        Codegen::<false>::new("", &source_text1, ret.trivias, options)
-            .build(&ret.program)
-            .source_text
+        CodeGenerator::new().build(&ret.program).source_text
     };
-
     source_text1 == source_text2
 }
 
 /// Minify idempotency test
 fn get_minify_result(source_text: &str, source_type: SourceType) -> bool {
-    let options = CodegenOptions::default();
     let allocator = Allocator::default();
     let parse_result1 = Parser::new(&allocator, source_text, source_type).parse();
-    let source_text1 =
-        Codegen::<true>::new("", source_text, parse_result1.trivias.clone(), options)
-            .build(&parse_result1.program)
-            .source_text;
+    let source_text1 = WhitespaceRemover::new().build(&parse_result1.program).source_text;
     let parse_result2 = Parser::new(&allocator, source_text1.as_str(), source_type).parse();
-    let source_text2 = Codegen::<true>::new("", &source_text1, parse_result2.trivias, options)
-        .build(&parse_result2.program)
-        .source_text;
+    let source_text2 = WhitespaceRemover::new().build(&parse_result2.program).source_text;
     source_text1 == source_text2
 }
 

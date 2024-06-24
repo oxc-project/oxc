@@ -1,6 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
@@ -81,7 +80,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::LogicalExpression(right_await_expr),
         ) => {
             return is_same_node(&left_await_expr.left, &right_await_expr.left, ctx)
-                && is_same_node(&left_await_expr.right, &right_await_expr.right, ctx)
+                && is_same_node(&left_await_expr.right, &right_await_expr.right, ctx);
         }
         (
             Expression::UnaryExpression(left_await_expr),
@@ -89,7 +88,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
         ) => return is_same_node(&left_await_expr.argument, &right_await_expr.argument, ctx),
         (Expression::UpdateExpression(_), Expression::UpdateExpression(_)) => return false,
         (Expression::ParenthesizedExpression(left_paren_expr), _) => {
-            return is_same_node(&left_paren_expr.expression, right, ctx)
+            return is_same_node(&left_paren_expr.expression, right, ctx);
         }
         (_, Expression::ParenthesizedExpression(right_paren_expr)) => {
             return is_same_node(left, &right_paren_expr.expression, ctx);

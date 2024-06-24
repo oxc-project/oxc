@@ -1,10 +1,3 @@
-use crate::utils::is_boolean_node;
-use crate::{
-    ast_util::{call_expr_method_callee_info, is_method_call, outermost_paren_parent},
-    context::LintContext,
-    rule::Rule,
-    AstNode,
-};
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
@@ -13,6 +6,14 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
+
+use crate::{
+    ast_util::{call_expr_method_callee_info, is_method_call, outermost_paren_parent},
+    context::LintContext,
+    rule::Rule,
+    utils::is_boolean_node,
+    AstNode,
+};
 
 fn over_method(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.").with_labels([span0.into()])

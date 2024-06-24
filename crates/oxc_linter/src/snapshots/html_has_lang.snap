@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: html_has_lang
 ---
   ⚠ eslint-plugin-jsx-a11y(html-has-lang): Missing lang attribute.
    ╭─[html_has_lang.tsx:1:2]

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: number_literal_case
 ---
   ⚠ eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.
    ╭─[number_literal_case.tsx:1:14]

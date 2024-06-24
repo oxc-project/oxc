@@ -6,11 +6,15 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::utils::{
-    get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_lowercase,
-    object_has_accessible_child,
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{
+        get_element_type, get_prop_value, get_string_literal_prop_value, has_jsx_prop_lowercase,
+        object_has_accessible_child,
+    },
+    AstNode,
 };
-use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn missing_alt_prop(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.")

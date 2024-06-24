@@ -1,6 +1,5 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -74,8 +73,9 @@ impl Rule for NoShadowRestrictedNames {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         ("function foo(bar){ var baz; }", None),
@@ -120,9 +120,18 @@ fn test() {
 
     let fail = vec![
         ("function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }", None),
-        ("function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }", None),
-        ("function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }", None),
-        ("function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }", None),
+        (
+            "function undefined(undefined) { !function undefined(undefined) { try {} catch(undefined) {} }; }",
+            None,
+        ),
+        (
+            "function Infinity(Infinity) { var Infinity; !function Infinity(Infinity) { try {} catch(Infinity) {} }; }",
+            None,
+        ),
+        (
+            "function arguments(arguments) { var arguments; !function arguments(arguments) { try {} catch(arguments) {} }; }",
+            None,
+        ),
         ("function eval(eval) { var eval; !function eval(eval) { try {} catch(eval) {} }; }", None),
         (
             "var eval = (eval) => { var eval; !function eval(eval) { try {} catch(eval) {} }; }",

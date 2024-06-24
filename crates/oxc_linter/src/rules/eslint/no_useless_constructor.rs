@@ -103,7 +103,7 @@ impl Rule for NoUselessConstructor {
             return;
         };
         let AstKind::Class(class) = class_node.kind() else { unreachable!() };
-        if class.is_declare() {
+        if class.declare {
             return;
         }
 

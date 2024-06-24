@@ -4,10 +4,9 @@ use std::{
     ops::{Deref, Index},
 };
 
+use compact_str::CompactString;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
-
-use compact_str::CompactString;
 
 use crate::Span;
 

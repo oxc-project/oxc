@@ -1,3 +1,12 @@
+use oxc_ast::{
+    ast::{Argument, BinaryExpression, Expression},
+    AstKind,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_syntax::operator::BinaryOperator;
+
 use crate::{
     context::LintContext,
     fixer::RuleFixer,
@@ -7,15 +16,6 @@ use crate::{
         KnownMemberExpressionProperty, PossibleJestNode,
     },
 };
-use oxc_ast::{
-    ast::{Argument, BinaryExpression, Expression},
-    AstKind,
-};
-use oxc_diagnostics::OxcDiagnostic;
-
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::BinaryOperator;
 
 fn use_to_be_comparison(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers")

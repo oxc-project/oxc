@@ -5,15 +5,15 @@
 
 mod command;
 
-use oxc_allocator::Allocator;
 use std::collections::{HashMap, VecDeque};
 
+use oxc_allocator::Allocator;
+
+use self::command::{Command, Indent, Mode};
 use crate::{
     doc::{Doc, DocBuilder, Fill, IfBreak, IndentIfBreak, Line},
     GroupId, PrettierOptions,
 };
-
-use self::command::{Command, Indent, Mode};
 
 pub struct Printer<'a> {
     options: PrettierOptions,

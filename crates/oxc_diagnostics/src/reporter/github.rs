@@ -3,9 +3,8 @@ use std::{
     io::{BufWriter, Stdout, Write},
 };
 
-use crate::{Error, Severity};
-
 use super::{writer, DiagnosticReporter, Info};
+use crate::{Error, Severity};
 
 pub struct GithubReporter {
     writer: BufWriter<Stdout>,
@@ -40,7 +39,9 @@ fn format_github(diagnostic: &Error) -> String {
     let title = rule_id.map_or(Cow::Borrowed("oxlint"), Cow::Owned);
     let filename = escape_property(&filename);
     let message = escape_data(&message);
-    format!("::{severity} file={filename},line={line},endLine={line},col={column},endColumn={column},title={title}::{message}\n")
+    format!(
+        "::{severity} file={filename},line={line},endLine={line},col={column},endColumn={column},title={title}::{message}\n"
+    )
 }
 
 fn escape_data(value: &str) -> String {

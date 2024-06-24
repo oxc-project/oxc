@@ -34,12 +34,15 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
             whitelist_functions: None,
         }
     }
+
     pub fn with_whitelist_modules(self, whitelist_modules: &'b Vec<WhitelistModule>) -> Self {
         Self { whitelist_modules: Some(whitelist_modules), ..self }
     }
+
     pub fn with_whitelist_functions(self, whitelist_functions: &'b Vec<String>) -> Self {
         Self { whitelist_functions: Some(whitelist_functions), ..self }
     }
+
     pub fn insert_mutated_node(&self, symbol_id: SymbolId) -> bool {
         self.checked_mutated_nodes.borrow_mut().insert(symbol_id)
     }
@@ -97,6 +100,7 @@ impl Value {
             _ => Value::Unknown,
         }
     }
+
     pub fn get_falsy_value(&self) -> Option<bool> {
         match &self {
             Value::Unknown => None,
@@ -105,6 +109,7 @@ impl Value {
             Value::String(str) => Some(!matches!(str, StringValue::Empty)),
         }
     }
+
     /// If the value is a boolean, return the negation of the boolean, otherwise return `None`.
     pub fn neg_bool(&self) -> Option<Value> {
         match self {
@@ -112,6 +117,7 @@ impl Value {
             _ => None,
         }
     }
+
     pub fn to_bool(self) -> Option<bool> {
         match self {
             Value::Boolean(boolean) => Some(boolean),
@@ -331,7 +337,7 @@ pub fn is_function_side_effect_free(
             match &module.functions {
                 ModuleFunctions::All => return true,
                 ModuleFunctions::Specific(functions) => {
-                    return functions.contains(&name.to_string())
+                    return functions.contains(&name.to_string());
                 }
             }
         }

@@ -11,11 +11,6 @@ use console::Style;
 use encoding_rs::UTF_16LE;
 use encoding_rs_io::DecodeReaderBytesBuilder;
 use futures::future::join_all;
-use rayon::prelude::*;
-use similar::{ChangeTag, TextDiff};
-use tokio::runtime::Runtime;
-use walkdir::WalkDir;
-
 use oxc_allocator::Allocator;
 use oxc_ast::Trivias;
 use oxc_diagnostics::{GraphicalReportHandler, GraphicalTheme, NamedSource};
@@ -23,6 +18,10 @@ use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};
 use oxc_tasks_common::{normalize_path, Snapshot};
+use rayon::prelude::*;
+use similar::{ChangeTag, TextDiff};
+use tokio::runtime::Runtime;
+use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
 
@@ -32,6 +31,7 @@ pub enum TestResult {
     Passed,
     IncorrectlyPassed,
     #[allow(unused)]
+    // (actual, expected)
     Mismatch(String, String),
     ParseError(String, /* panicked */ bool),
     CorrectError(String, /* panicked */ bool),
@@ -148,7 +148,7 @@ pub trait Suite<T: Case> {
 
                 let path = path.strip_prefix(test_root).unwrap().to_owned();
                 // remove the Byte Order Mark in some of the TypeScript files
-                let code = code.trim_start_matches(|c| c == '\u{feff}').to_string();
+                let code = code.trim_start_matches('\u{feff}').to_string();
                 T::new(path, code)
             })
             .filter(|case| !case.skip_test_case())
@@ -424,7 +424,7 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
         origin_string: &str,
         expected_string: &str,
     ) -> std::io::Result<()> {
-        let diff = TextDiff::from_lines(origin_string, expected_string);
+        let diff = TextDiff::from_lines(expected_string, origin_string);
         for change in diff.iter_all_changes() {
             let (sign, style) = match change.tag() {
                 ChangeTag::Delete => ("-", Style::new().red()),

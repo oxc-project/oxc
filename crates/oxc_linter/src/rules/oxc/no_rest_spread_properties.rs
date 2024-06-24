@@ -79,6 +79,7 @@ impl Rule for NoRestSpreadProperties {
             object_rest_message: object_rest_message.to_string(),
         }))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::SpreadElement(spread_element) => {

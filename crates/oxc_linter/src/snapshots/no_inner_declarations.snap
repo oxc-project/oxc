@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_inner_declarations
 ---
   ⚠ eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks
    ╭─[no_inner_declarations.tsx:1:13]

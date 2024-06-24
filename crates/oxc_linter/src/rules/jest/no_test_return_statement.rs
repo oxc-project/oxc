@@ -1,18 +1,18 @@
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
-};
-use oxc_diagnostics::OxcDiagnostic;
-
 use oxc_allocator::Box as OBox;
 use oxc_ast::{
     ast::{CallExpression, Expression, FunctionBody, Statement},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
+
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+};
 
 fn no_test_return_statement_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(

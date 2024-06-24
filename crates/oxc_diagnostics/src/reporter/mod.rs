@@ -4,13 +4,12 @@ mod graphical;
 mod json;
 mod unix;
 
+use std::io::{BufWriter, Stdout};
+
 pub use self::{
     checkstyle::CheckstyleReporter, github::GithubReporter, graphical::GraphicalReporter,
     json::JsonReporter, unix::UnixReporter,
 };
-
-use std::io::{BufWriter, Stdout};
-
 use crate::{Error, Severity};
 
 /// stdio is blocked by LineWriter, use a BufWriter to reduce syscalls.

@@ -8,11 +8,12 @@ use oxc_ast::{
     AstKind,
 };
 use oxc_semantic::AstNode;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
-use crate::context::LintContext;
-
-use crate::utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode};
+use crate::{
+    context::LintContext,
+    utils::jest::{is_pure_string, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+};
 
 pub fn parse_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
@@ -53,7 +54,7 @@ pub fn parse_jest_fn_call<'a>(
             return None;
         }
 
-        let name = resolved.original.unwrap_or(resolved.local).as_str();
+        let name = resolved.original.unwrap_or(resolved.local);
         let kind = JestFnKind::from(name);
         let mut members = Vec::new();
         let mut iter = chain.into_iter();
@@ -260,7 +261,7 @@ pub struct ExpectFnCallOptions<'a, 'b> {
     pub call_expr: &'a CallExpression<'a>,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: &'a str,
-    pub local: &'a Atom<'a>,
+    pub local: &'a str,
     pub head: KnownMemberExpressionProperty<'a>,
     pub node: &'b AstNode<'a>,
     pub ctx: &'b LintContext<'a>,
@@ -287,10 +288,10 @@ fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
 
 fn resolve_to_jest_fn<'a>(
     call_expr: &'a CallExpression<'a>,
-    original: Option<&'a Atom<'a>>,
+    original: Option<&'a str>,
 ) -> Option<ResolvedJestFn<'a>> {
     let ident = resolve_first_ident(&call_expr.callee)?;
-    Some(ResolvedJestFn { local: &ident.name, original })
+    Some(ResolvedJestFn { local: ident.name.as_str(), original })
 }
 
 fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierReference<'a>> {
@@ -349,14 +350,15 @@ impl<'a> ParsedExpectFnCall<'a> {
         let matcher_index = self.matcher_index?;
         self.members.get(matcher_index)
     }
+
     pub fn modifiers(&self) -> Vec<&KnownMemberExpressionProperty<'a>> {
         self.modifier_indices.iter().filter_map(|i| self.members.get(*i)).collect::<Vec<_>>()
     }
 }
 
 struct ResolvedJestFn<'a> {
-    pub local: &'a Atom<'a>,
-    pub original: Option<&'a Atom<'a>>,
+    pub local: &'a str,
+    pub original: Option<&'a str>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -392,12 +394,15 @@ impl<'a> KnownMemberExpressionProperty<'a> {
             }
         }
     }
+
     pub fn is_name_equal(&self, name: &str) -> bool {
         self.name().map_or(false, |n| n == name)
     }
+
     pub fn is_name_unequal(&self, name: &str) -> bool {
         !self.is_name_equal(name)
     }
+
     pub fn is_name_in_modifiers(&self, modifiers: &[ModifierName]) -> bool {
         self.name().map_or(false, |name| {
             if let Some(modifier_name) = ModifierName::from(name.as_ref()) {
@@ -429,6 +434,7 @@ impl<'a> MemberExpressionElement<'a> {
             MemberExpression::PrivateFieldExpression(_) => None,
         }
     }
+
     pub fn is_string_literal(&self) -> bool {
         matches!(
             self,

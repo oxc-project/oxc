@@ -7,7 +7,6 @@ use std::{
 };
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
-
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -280,6 +279,7 @@ impl Span {
 
 impl Index<Span> for str {
     type Output = str;
+
     #[inline]
     fn index(&self, index: Span) -> &Self::Output {
         &self[index.start as usize..index.end as usize]

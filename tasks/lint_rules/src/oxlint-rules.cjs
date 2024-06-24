@@ -1,5 +1,6 @@
 const { resolve } = require("node:path");
 const { readFile } = require("node:fs/promises");
+const { pluginTypeScriptRulesNames } = require("./eslint-rules.cjs");
 
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(
@@ -33,6 +34,17 @@ const readAllImplementedRuleNames = async () => {
 
       // Ignore no reference rules
       if (prefixedName.startsWith("oxc/")) continue;
+
+      // some tyescript rules are extensions of eslint core rules
+      if (prefixedName.startsWith("eslint/")) {
+        const ruleName = prefixedName.replace('eslint/', '');
+
+        // there is an alias, so we add it with this in mind.
+        if (pluginTypeScriptRulesNames.includes(ruleName)) {
+          rules.add(`typescript/${ruleName}`);
+          continue;
+        }
+      }
 
       rules.add(prefixedName);
     }
