@@ -2727,7 +2727,13 @@ pub mod walk_mut {
             TSModuleDeclarationName::Identifier(ident) => visitor.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => visitor.visit_string_literal(lit),
         }
-        visitor.enter_scope(ScopeFlags::TsModuleBlock);
+        visitor.enter_scope({
+            let mut flags = ScopeFlags::TsModuleBlock;
+            if decl.is_strict() {
+                flags |= ScopeFlags::StrictMode;
+            }
+            flags
+        });
         match &mut decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
                 visitor.visit_ts_module_declaration(decl);

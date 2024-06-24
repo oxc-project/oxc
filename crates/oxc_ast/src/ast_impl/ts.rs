@@ -153,6 +153,10 @@ impl<'a> TSModuleDeclaration<'a> {
     ) -> Self {
         Self { span, id, body, kind, declare, scope_id: Cell::default() }
     }
+
+    pub fn is_strict(&self) -> bool {
+        self.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict)
+    }
 }
 
 impl<'a> Hash for TSModuleDeclaration<'a> {
@@ -174,6 +178,18 @@ impl<'a> TSModuleDeclarationName<'a> {
             Self::Identifier(ident) => ident.name.clone(),
             Self::StringLiteral(lit) => lit.value.clone(),
         }
+    }
+}
+
+impl<'a> TSModuleDeclarationBody<'a> {
+    pub fn is_strict(&self) -> bool {
+        matches!(self, Self::TSModuleBlock(block) if block.is_strict())
+    }
+}
+
+impl<'a> TSModuleBlock<'a> {
+    pub fn is_strict(&self) -> bool {
+        self.directives.iter().any(Directive::is_use_strict)
     }
 }
 

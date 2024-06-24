@@ -424,7 +424,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let parent_scope_flags = self.scope.get_flags(parent_scope_id);
 
             if !strict_mode
-                && parent_scope_flags.is_function()
+                && (parent_scope_flags.is_function() || parent_scope_flags.is_ts_module_block())
                 && parent_scope_flags.is_strict_mode()
             {
                 strict_mode = true;

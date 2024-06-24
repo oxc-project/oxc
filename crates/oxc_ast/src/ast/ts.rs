@@ -782,7 +782,11 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType),
 }
 
-#[visited_node(scope(ScopeFlags::TsModuleBlock), enter_scope_before(body))]
+#[visited_node(
+    scope(ScopeFlags::TsModuleBlock),
+    enter_scope_before(body),
+    strict_if(self.body.as_ref().is_some_and(|body| body.is_strict()))
+)]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
