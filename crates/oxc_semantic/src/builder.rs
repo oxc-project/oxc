@@ -1912,7 +1912,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
         let name = ident.name.to_compact_str();
-        let reference = Reference::new(ident.span, name.clone(), self.current_node_id, flag);
+        let reference = Reference::new(ident.span, name, self.current_node_id, flag);
         // `function foo({bar: identifier_reference}) {}`
         //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
         //                                          to avoid binding to variables inside the scope
