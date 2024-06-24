@@ -2,7 +2,7 @@ import {readFile} from 'fs/promises';
 import {join as pathJoin} from 'path';
 import {fileURLToPath} from 'url';
 import assert from 'assert';
-import {typeAndWrappers} from './utils.mjs';
+import {typeAndWrappers, snakeToCamel} from './utils.mjs';
 
 const FILENAMES = ['js.rs', 'jsx.rs', 'literal.rs', 'ts.rs'];
 
@@ -145,7 +145,8 @@ function parseScopeArgs(argsStr, filename, lineIndex) {
             }
             assert(bracketCount === 0);
 
-            args[key] = argsStr.slice(0, index).trim();
+            const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+            args[camelKey] = argsStr.slice(0, index).trim();
             argsStr = argsStr.slice(index + 1);
             if (argsStr === '') break;
 
