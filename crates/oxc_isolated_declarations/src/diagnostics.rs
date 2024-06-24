@@ -112,7 +112,6 @@ pub fn implicitly_adding_undefined_to_type(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[allow(dead_code)]
 pub fn function_with_assigning_properties(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.",
