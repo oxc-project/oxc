@@ -27,24 +27,24 @@ pub struct Alternative<'a> {
 /// The type which includes all atom nodes.
 #[derive(Debug)]
 pub enum Element<'a> {
-    Assertion(Assertion<'a>),
+    Assertion(Box<'a, Assertion<'a>>),
     #[allow(clippy::enum_variant_names)]
-    QuantifiableElement(QuantifiableElement<'a>),
-    Quantifier(Quantifier<'a>),
+    QuantifiableElement(Box<'a, QuantifiableElement<'a>>),
+    Quantifier(Box<'a, Quantifier<'a>>),
 }
 
 /// The assertion.
 #[derive(Debug)]
 pub enum Assertion<'a> {
-    BoundaryAssertion(BoundaryAssertion),
-    LookaroundAssertion(LookaroundAssertion<'a>),
+    BoundaryAssertion(Box<'a, BoundaryAssertion<'a>>),
+    LookaroundAssertion(Box<'a, LookaroundAssertion<'a>>),
 }
 
 /// The boundary assertion.
 #[derive(Debug)]
-pub enum BoundaryAssertion {
-    EdgeAssertion(EdgeAssertion),
-    WordBoundaryAssertion(WordBoundaryAssertion),
+pub enum BoundaryAssertion<'a> {
+    EdgeAssertion(Box<'a, EdgeAssertion>),
+    WordBoundaryAssertion(Box<'a, WordBoundaryAssertion>),
 }
 
 /// The edge boundary assertion.
@@ -74,8 +74,8 @@ pub struct WordBoundaryAssertion {
 /// The lookaround assertion.
 #[derive(Debug)]
 pub enum LookaroundAssertion<'a> {
-    LookaheadAssertion(LookaheadAssertion<'a>),
-    LookbehindAssertion(LookbehindAssertion<'a>),
+    LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
+    LookbehindAssertion(Box<'a, LookbehindAssertion<'a>>),
 }
 
 /// The lookahead assertion.
@@ -99,22 +99,22 @@ pub struct LookbehindAssertion<'a> {
 /// The type which includes all atom nodes that Quantifier node can have as children.
 #[derive(Debug)]
 pub enum QuantifiableElement<'a> {
-    Backreference(Backreference<'a>),
-    CapturingGroup(CapturingGroup<'a>),
-    Character(Character),
-    CharacterClass(CharacterClass<'a>),
-    CharacterSet(CharacterSet<'a>),
-    ExpressionCharacterClass(ExpressionCharacterClass<'a>),
-    Group(Group<'a>),
-    LookaheadAssertion(LookaheadAssertion<'a>),
+    Backreference(Box<'a, Backreference<'a>>),
+    CapturingGroup(Box<'a, CapturingGroup<'a>>),
+    Character(Box<'a, Character>),
+    CharacterClass(Box<'a, CharacterClass<'a>>),
+    CharacterSet(Box<'a, CharacterSet<'a>>),
+    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
+    Group(Box<'a, Group<'a>>),
+    LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
 }
 
 /// The backreference.
 /// E.g. `\1`, `\k<name>`
 #[derive(Debug)]
 pub enum Backreference<'a> {
-    AmbiguousBackreference(AmbiguousBackreference<'a>),
-    UnambiguousBackreference(UnambiguousBackreference<'a>),
+    AmbiguousBackreference(Box<'a, AmbiguousBackreference<'a>>),
+    UnambiguousBackreference(Box<'a, UnambiguousBackreference<'a>>),
 }
 
 #[derive(Debug)]
@@ -154,8 +154,8 @@ pub struct Character {
 /// E.g. `[ab]`, `[^ab]`
 #[derive(Debug)]
 pub enum CharacterClass<'a> {
-    ClassRangesCharacterClass(ClassRangesCharacterClass<'a>),
-    UnicodeSetsCharacterClass(UnicodeSetsCharacterClass<'a>),
+    ClassRangesCharacterClass(Box<'a, ClassRangesCharacterClass<'a>>),
+    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
 }
 
 /// The character class used in legacy (neither `u` nor `v` flag) and Unicode mode (`u` flag).
@@ -171,10 +171,10 @@ pub struct ClassRangesCharacterClass<'a> {
 
 #[derive(Debug)]
 pub enum ClassRangesCharacterClassElement<'a> {
-    Character(Character),
-    CharacterClassRange(CharacterClassRange),
-    CharacterUnicodePropertyCharacterSet(CharacterUnicodePropertyCharacterSet<'a>),
-    EscapeCharacterSet(EscapeCharacterSet),
+    Character(Box<'a, Character>),
+    CharacterClassRange(Box<'a, CharacterClassRange>),
+    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet<'a>>),
+    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
 }
 
 /// The character class.
@@ -221,13 +221,13 @@ pub struct UnicodeSetsCharacterClass<'a> {
 
 #[derive(Debug)]
 pub enum UnicodeSetsCharacterClassElement<'a> {
-    Character(Character),
-    CharacterClassRange(CharacterClassRange),
-    ClassStringDisjunction(ClassStringDisjunction<'a>),
-    EscapeCharacterSet(EscapeCharacterSet),
-    ExpressionCharacterClass(ExpressionCharacterClass<'a>),
-    UnicodePropertyCharacterSet(UnicodePropertyCharacterSet<'a>),
-    UnicodeSetsCharacterClass(UnicodeSetsCharacterClass<'a>),
+    Character(Box<'a, Character>),
+    CharacterClassRange(Box<'a, CharacterClassRange>),
+    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
+    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
+    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
+    UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
+    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
 }
 
 /// The character set.
@@ -235,8 +235,8 @@ pub enum UnicodeSetsCharacterClassElement<'a> {
 #[allow(clippy::enum_variant_names)]
 pub enum CharacterSet<'a> {
     AnyCharacterSet,
-    EscapeCharacterSet(EscapeCharacterSet),
-    UnicodePropertyCharacterSet(UnicodePropertyCharacterSet<'a>),
+    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
+    UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
 }
 
 /// The character class escape.
@@ -259,8 +259,8 @@ pub enum EscapeCharacterSetKind {
 /// E.g. `\p{ASCII}`, `\P{ASCII}`, `\p{Script=Hiragana}`
 #[derive(Debug)]
 pub enum UnicodePropertyCharacterSet<'a> {
-    CharacterUnicodePropertyCharacterSet(CharacterUnicodePropertyCharacterSet<'a>),
-    StringsUnicodePropertyCharacterSet(StringsUnicodePropertyCharacterSet<'a>),
+    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet<'a>>),
+    StringsUnicodePropertyCharacterSet(Box<'a, StringsUnicodePropertyCharacterSet<'a>>),
 }
 
 /// The unicode property escape with property of strings.
@@ -281,18 +281,18 @@ pub struct ExpressionCharacterClass<'a> {
 
 #[derive(Debug)]
 pub enum ExpressionCharacterClassExpr<'a> {
-    ClassIntersection(ClassIntersection<'a>),
-    ClassSubtraction(ClassSubtraction<'a>),
+    ClassIntersection(Box<'a, ClassIntersection<'a>>),
+    ClassSubtraction(Box<'a, ClassSubtraction<'a>>),
 }
 
 #[derive(Debug)]
 pub enum ClassSetOperand<'a> {
-    Character(Character),
-    ClassStringDisjunction(ClassStringDisjunction<'a>),
-    EscapeCharacterSet(EscapeCharacterSet),
+    Character(Box<'a, Character>),
+    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
+    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
     ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
-    UnicodePropertyCharacterSet(UnicodePropertyCharacterSet<'a>),
-    UnicodeSetsCharacterClass(UnicodeSetsCharacterClass<'a>),
+    UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
+    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
 }
 
 /// The character class intersection.
@@ -307,7 +307,7 @@ pub struct ClassIntersection<'a> {
 #[derive(Debug)]
 pub enum ClassIntersectionLeft<'a> {
     ClassIntersection(Box<'a, ClassIntersection<'a>>),
-    ClassSetOperand(ClassSetOperand<'a>),
+    ClassSetOperand(Box<'a, ClassSetOperand<'a>>),
 }
 
 /// The character class subtraction.
@@ -321,7 +321,7 @@ pub struct ClassSubtraction<'a> {
 
 #[derive(Debug)]
 pub enum ClassSubtractionLeft<'a> {
-    ClassSetOperand(ClassSetOperand<'a>),
+    ClassSetOperand(Box<'a, ClassSetOperand<'a>>),
     ClassSubtraction(Box<'a, ClassSubtraction<'a>>),
 }
 
