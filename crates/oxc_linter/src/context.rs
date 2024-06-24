@@ -7,6 +7,7 @@ use oxc_span::{SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
+    config::OxlintRules,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{Fix, Message, RuleFixer},
     javascript_globals::GLOBALS,
@@ -129,6 +130,10 @@ impl<'a> LintContext<'a> {
 
     pub fn env(&self) -> &OxlintEnv {
         &self.eslint_config.env
+    }
+
+    pub fn rules(&self) -> &OxlintRules {
+        &self.eslint_config.rules
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {
