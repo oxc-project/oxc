@@ -37,7 +37,7 @@ function parseFile(code, filename, types) {
                 line = lines[++lineIndex];
             }
             scopeArgsStr += ` ${line.slice(0, -2)}`;
-            scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ');
+            scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ').replace(/,$/, '');
 
             scopeArgs = parseScopeArgs(scopeArgsStr, filename, lineIndex);
         }

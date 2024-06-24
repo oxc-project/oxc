@@ -25,7 +25,7 @@ use tsify::Tsify;
 
 #[visited_node(
     scope(ScopeFlags::Top),
-    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict))
+    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1101,7 +1101,7 @@ pub struct WhileStatement<'a> {
 /// For Statement
 #[visited_node(
     scope(ScopeFlags::empty()),
-    scope_if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration))
+    scope_if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration)),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1426,7 +1426,7 @@ pub struct BindingRestElement<'a> {
 #[visited_node(
     // TODO: `ScopeFlags::Function` is not correct if this is a `MethodDefinition`
     scope(ScopeFlags::Function),
-    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
+    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1533,7 +1533,7 @@ pub struct FunctionBody<'a> {
 /// Arrow Function Definitions
 #[visited_node(
     scope(ScopeFlags::Function | ScopeFlags::Arrow),
-    strict_if(self.body.has_use_strict_directive())
+    strict_if(self.body.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
