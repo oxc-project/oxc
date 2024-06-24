@@ -373,23 +373,19 @@ impl<'a> SemanticBuilder<'a> {
 
         if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
             let symbol_flags = self.symbols.get_flag(symbol_id);
-            for reference_id in &reference_ids {
-                let reference = &mut self.symbols.references[*reference_id];
+            let mut unresolved: Vec<ReferenceId> = Vec::with_capacity(reference_ids.len());
+            for reference_id in reference_ids {
+                let reference = &mut self.symbols.references[reference_id];
                 let meaning =
                     if reference.is_type() { SymbolFlags::Type } else { SymbolFlags::Value };
                 if symbol_flags.intersects(meaning) {
                     reference.set_symbol_id(symbol_id);
-                    self.symbols.resolved_references[symbol_id].push(*reference_id);
+                    self.symbols.resolved_references[symbol_id].push(reference_id);
                 } else {
-                    // FIXME: this may cause a lot of cloning. @Boshen can you
-                    // think of a workaround?
-                    self.scope.add_unresolved_reference(
-                        parent_scope_id,
-                        name.clone(),
-                        *reference_id,
-                    );
+                    unresolved.push(reference_id)
                 }
             }
+            self.scope.extend_unresolved_reference(parent_scope_id, name, unresolved);
         } else {
             self.scope.extend_unresolved_reference(parent_scope_id, name, reference_ids);
         }
