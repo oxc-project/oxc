@@ -178,7 +178,7 @@ saphyr              = "0.0.1"
 base64-simd         = "0.8"
 cfg-if              = "1.0.0"
 schemars            = "0.8.21"
-oxc-browserslist    = "1.0.0"
+oxc-browserslist    = "1.0.1"
 criterion2          = { version = "0.11.0", default-features = false }
 daachorse           = { version = "1.0.0" }
 
