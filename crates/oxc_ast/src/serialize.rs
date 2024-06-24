@@ -8,8 +8,9 @@ use serde::{
 use crate::ast::{
     ArrayAssignmentTarget, ArrayPattern, AssignmentTargetMaybeDefault, AssignmentTargetProperty,
     AssignmentTargetRest, BindingPattern, BindingPatternKind, BindingProperty, BindingRestElement,
-    Elision, FormalParameter, FormalParameterKind, FormalParameters, ObjectAssignmentTarget,
-    ObjectPattern, Program, RegExpFlags, TSTypeAnnotation,
+    Directive, Elision, FormalParameter, FormalParameterKind, FormalParameters,
+    ObjectAssignmentTarget, ObjectPattern, Program, RegExpFlags, Statement, StringLiteral,
+    TSModuleBlock, TSTypeAnnotation,
 };
 
 pub struct EcmaFormatter;
@@ -198,4 +199,53 @@ impl<'a, 'b, E: Serialize, R: Serialize> Serialize for ElementsAndRest<'a, 'b, E
             self.elements.serialize(serializer)
         }
     }
+}
+
+/// Serialize `TSModuleBlock` to be ESTree compatible, with `body` and `directives` fields combined,
+/// and directives output as `StringLiteral` expression statements
+impl<'a> Serialize for TSModuleBlock<'a> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let converted = SerTSModuleBlock {
+            span: self.span,
+            body: DirectivesAndStatements { directives: &self.directives, body: &self.body },
+        };
+        converted.serialize(serializer)
+    }
+}
+
+#[derive(Serialize)]
+#[serde(tag = "type", rename = "TSModuleBlock")]
+struct SerTSModuleBlock<'a, 'b> {
+    #[serde(flatten)]
+    span: Span,
+    body: DirectivesAndStatements<'a, 'b>,
+}
+
+struct DirectivesAndStatements<'a, 'b> {
+    directives: &'b [Directive<'a>],
+    body: &'b [Statement<'a>],
+}
+
+impl<'a, 'b> Serialize for DirectivesAndStatements<'a, 'b> {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let mut seq = serializer.serialize_seq(Some(self.directives.len() + self.body.len()))?;
+        for directive in self.directives {
+            seq.serialize_element(&DirectiveAsStatement {
+                span: directive.span,
+                expression: &directive.expression,
+            })?;
+        }
+        for stmt in self.body {
+            seq.serialize_element(stmt)?;
+        }
+        seq.end()
+    }
+}
+
+#[derive(Serialize)]
+#[serde(tag = "type", rename = "ExpressionStatement")]
+struct DirectiveAsStatement<'a, 'b> {
+    #[serde(flatten)]
+    span: Span,
+    expression: &'b StringLiteral<'a>,
 }
