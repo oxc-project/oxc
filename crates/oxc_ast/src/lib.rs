@@ -24,6 +24,7 @@ pub mod syntax_directed_operations;
 mod trivia;
 
 mod generated {
+    pub mod ast_builder;
     pub mod ast_kind;
     pub mod span;
     pub mod visit;
