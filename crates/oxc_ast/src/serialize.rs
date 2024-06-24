@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Box;
 use oxc_span::Span;
 use serde::{
     ser::{SerializeSeq, Serializer},
@@ -80,7 +80,7 @@ struct SerArrayAssignmentTarget<'a, 'b> {
     #[serde(flatten)]
     span: Span,
     elements:
-        ElementsAndRest<'a, 'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
+        ElementsAndRest<'b, Option<AssignmentTargetMaybeDefault<'a>>, AssignmentTargetRest<'a>>,
 }
 
 impl<'a> Serialize for ObjectAssignmentTarget<'a> {
@@ -98,7 +98,7 @@ impl<'a> Serialize for ObjectAssignmentTarget<'a> {
 struct SerObjectAssignmentTarget<'a, 'b> {
     #[serde(flatten)]
     span: Span,
-    properties: ElementsAndRest<'a, 'b, AssignmentTargetProperty<'a>, AssignmentTargetRest<'a>>,
+    properties: ElementsAndRest<'b, AssignmentTargetProperty<'a>, AssignmentTargetRest<'a>>,
 }
 
 impl<'a> Serialize for ObjectPattern<'a> {
@@ -116,7 +116,7 @@ impl<'a> Serialize for ObjectPattern<'a> {
 struct SerObjectPattern<'a, 'b> {
     #[serde(flatten)]
     span: Span,
-    properties: ElementsAndRest<'a, 'b, BindingProperty<'a>, Box<'a, BindingRestElement<'a>>>,
+    properties: ElementsAndRest<'b, BindingProperty<'a>, Box<'a, BindingRestElement<'a>>>,
 }
 
 impl<'a> Serialize for ArrayPattern<'a> {
@@ -134,7 +134,7 @@ impl<'a> Serialize for ArrayPattern<'a> {
 struct SerArrayPattern<'a, 'b> {
     #[serde(flatten)]
     span: Span,
-    elements: ElementsAndRest<'a, 'b, Option<BindingPattern<'a>>, Box<'a, BindingRestElement<'a>>>,
+    elements: ElementsAndRest<'b, Option<BindingPattern<'a>>, Box<'a, BindingRestElement<'a>>>,
 }
 
 /// Serialize `FormalParameters`, to be estree compatible, with `items` and `rest` fields combined
@@ -162,7 +162,7 @@ struct SerFormalParameters<'a, 'b> {
     #[serde(flatten)]
     span: Span,
     kind: FormalParameterKind,
-    items: ElementsAndRest<'a, 'b, FormalParameter<'a>, SerFormalParameterRest<'a, 'b>>,
+    items: ElementsAndRest<'b, FormalParameter<'a>, SerFormalParameterRest<'a, 'b>>,
 }
 
 #[derive(Serialize)]
@@ -175,18 +175,18 @@ struct SerFormalParameterRest<'a, 'b> {
     optional: bool,
 }
 
-pub struct ElementsAndRest<'a, 'b, E, R> {
-    elements: &'b Vec<'a, E>,
+pub struct ElementsAndRest<'b, E, R> {
+    elements: &'b [E],
     rest: &'b Option<R>,
 }
 
-impl<'a, 'b, E, R> ElementsAndRest<'a, 'b, E, R> {
-    pub fn new(elements: &'b Vec<'a, E>, rest: &'b Option<R>) -> Self {
+impl<'b, E, R> ElementsAndRest<'b, E, R> {
+    pub fn new(elements: &'b [E], rest: &'b Option<R>) -> Self {
         Self { elements, rest }
     }
 }
 
-impl<'a, 'b, E: Serialize, R: Serialize> Serialize for ElementsAndRest<'a, 'b, E, R> {
+impl<'b, E: Serialize, R: Serialize> Serialize for ElementsAndRest<'b, E, R> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         if let Some(rest) = self.rest {
             let mut seq = serializer.serialize_seq(Some(self.elements.len() + 1))?;
