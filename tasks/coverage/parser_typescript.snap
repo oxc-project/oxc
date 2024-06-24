@@ -15431,11 +15431,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:16:2]
- 15 │ // Missing the first operand
- 16 │ (, ANY);
-    ·  ─
- 17 │ (, BOOLEAN);
+    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:7]
+  8 │ // Missing the second operand
+  9 │ (ANY, );
+    ·       ─
+ 10 │ (BOOLEAN, );
     ╰────
 
   × 'with' statements are not allowed
@@ -15952,13 +15952,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                      ─
    ╰────
 
-  × Expected `>` but found `,`
-   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:5:14]
+  × Unexpected token
+   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:4:10]
+ 3 │ // reparse call as invalid await should error
  4 │ await (1,);
+   ·          ─
  5 │ await <number, string>(1);
-   ·              ┬
-   ·              ╰── `>` expected
- 6 │ 
    ╰────
 
   × Cannot use `await` as an identifier in an async context
