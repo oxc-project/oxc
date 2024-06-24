@@ -1228,7 +1228,7 @@ pub struct WithStatement<'a> {
 }
 
 /// Switch Statement
-#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(cases))]
+#[visited_node(scope(ScopeFlags::empty()))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1236,6 +1236,7 @@ pub struct SwitchStatement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub discriminant: Expression<'a>,
+    #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1566,7 +1567,7 @@ pub struct YieldExpression<'a> {
 }
 
 /// Class Definitions
-#[visited_node(scope(ScopeFlags::StrictMode), enter_scope_before(id))]
+#[visited_node(scope(ScopeFlags::StrictMode))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -1575,6 +1576,7 @@ pub struct Class<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
+    #[scope(enter_before)]
     pub id: Option<BindingIdentifier<'a>>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
