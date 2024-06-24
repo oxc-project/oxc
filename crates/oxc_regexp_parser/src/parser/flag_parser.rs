@@ -4,23 +4,20 @@ use rustc_hash::FxHashSet;
 
 use crate::{
     ast,
-    ast_builder::AstBuilder,
     parser::{options::ParserOptions, span::SpanFactory},
 };
 
 pub struct FlagsParser<'a> {
     source_text: &'a str,
     // options: ParserOptions,
-    ast: AstBuilder<'a>,
     span_factory: SpanFactory,
 }
 
 impl<'a> FlagsParser<'a> {
-    pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
+    pub fn new(_allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
         Self {
             source_text,
             // options,
-            ast: AstBuilder::new(allocator),
             span_factory: SpanFactory::new(options.span_offset),
         }
     }
@@ -59,8 +56,8 @@ impl<'a> FlagsParser<'a> {
             return Err(OxcDiagnostic::error("Invalid regular expression flags"));
         }
 
-        Ok(self.ast.flags(
-            self.span_factory.new_with_offset(0, self.source_text.len()),
+        Ok(ast::Flags {
+            span: self.span_factory.new_with_offset(0, self.source_text.len()),
             global,
             ignore_case,
             multiline,
@@ -69,6 +66,6 @@ impl<'a> FlagsParser<'a> {
             dot_all,
             has_indices,
             unicode_sets,
-        ))
+        })
     }
 }

@@ -4,7 +4,6 @@ use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
     ast,
-    ast_builder::AstBuilder,
     parser::{
         body_parser::PatternParser, flag_parser::FlagsParser, options::ParserOptions,
         reader::Reader, span::SpanFactory,
@@ -16,7 +15,6 @@ pub struct Parser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     options: ParserOptions,
-    ast: AstBuilder<'a>,
     span_factory: SpanFactory,
 }
 
@@ -26,7 +24,6 @@ impl<'a> Parser<'a> {
             allocator,
             source_text,
             options,
-            ast: AstBuilder::new(allocator),
             span_factory: SpanFactory::new(options.span_offset),
         }
     }
@@ -54,7 +51,7 @@ impl<'a> Parser<'a> {
         .parse()?;
 
         let span = self.span_factory.new_with_offset(0, self.source_text.len());
-        Ok(self.ast.reg_exp_literal(span, pattern, flags))
+        Ok(ast::RegExpLiteral { span, pattern, flags })
     }
 }
 
