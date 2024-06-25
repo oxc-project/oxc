@@ -52,6 +52,8 @@ impl<'a> FlagsParser<'a> {
             }
         }
 
+        // This should be a `SyntaxError`
+        // https://tc39.es/ecma262/#sec-parsepattern
         if unicode && unicode_sets {
             return Err(OxcDiagnostic::error("Invalid regular expression flags"));
         }
