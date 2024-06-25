@@ -98,6 +98,7 @@ oxc_macros       = { path = "crates/oxc_macros" }
 oxc_linter       = { path = "crates/oxc_linter" }
 oxc_prettier     = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
+oxc_ast_codegen  = { path = "tasks/oxc_ast_codegen" }
 
 napi        = "2.16.6"
 napi-derive = "2.16.5"
@@ -179,11 +180,12 @@ base64-simd         = "0.8"
 cfg-if              = "1.0.0"
 schemars            = "0.8.21"
 oxc-browserslist    = "1.0.1"
+prettyplease        = "0.2.20"
 criterion2          = { version = "0.11.0", default-features = false }
 daachorse           = { version = "1.0.0" }
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_traverse"]
+ignored = ["napi", "oxc_traverse", "oxc_ast_codegen", "prettyplease"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
