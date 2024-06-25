@@ -3,9 +3,12 @@ use proc_macro2::TokenStream as TokenStream2;
 use quote::{format_ident, quote};
 use syn::{
     parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Expr,
-    ExprGroup, ExprLit, Field, Fields, GenericArgument, Ident, Item, ItemEnum, ItemStruct, Lit,
-    Meta, Path, PathArguments, PathSegment, Token, Type, TypePath, TypeReference, Variant,
+    ExprGroup, ExprLit, Field, Fields, GenericArgument, Ident, ImplItemFn, Item, ItemEnum,
+    ItemStruct, Lit, Meta, Path, PathArguments, PathSegment, Token, Type, TypePath, TypeReference,
+    Variant,
 };
+
+const TRAVERSABLE: &str = "Traversable";
 
 pub fn ast_node(mut item: Item) -> TokenStream2 {
     let result = match &mut item {
@@ -146,76 +149,165 @@ fn validate_variant(var: &Variant) {
 // generators
 
 fn generate_traversable_struct(item: &ItemStruct) -> TokenStream2 {
-    let ident = format_ident!("Traversable{}", item.ident);
+    let ident = format_ident!("{TRAVERSABLE}{}", item.ident);
     let generics = &item.generics;
+
+    let fields = transform_fields(&item.fields);
+    let methods: Vec<_> = fields.iter().flat_map(generate_traversable_methods).collect();
 
     // TODO: traits like serialization, Debug and Hash fail with `GCell`;
     // But we may want to keep other attributes.
-    // let attrs_len = item.attrs.len();
-    // let (outer_attrs, inner_attrs) = item
-    //     .attrs
-    //     .iter()
-    //     .filter_map(|attr| {
-    //         println!("HERE {},", attr.to_token_stream());
-    //         match attr.path() {
-    //             path if path.is_ident("derive") => Some(transform_derive_attribute(attr.clone())),
-    //             _ => Some(attr.clone()),
-    //         }
-    //     })
-    //     // allocate for worst possible case.
-    //     .fold((Vec::with_capacity(attrs_len), Vec::with_capacity(attrs_len)), |mut acc, attr| {
-    //         match &attr.style {
-    //             AttrStyle::Outer => acc.0.push(attr),
-    //             AttrStyle::Inner(_) => acc.1.push(attr),
-    //         }
-    //
-    //         acc
-    //     });
-
-    let fields = transform_fields(&item.fields);
-
     let output = quote! {
-        #[repr(C)] // TODO: we can replace it with outer_attrs if we fix the issues with it.
-        // #(#outer_attrs)*
+        #[repr(C)] // TODO: we can derive attributes from `item` if we filter invalid attributes.
         pub struct #ident #generics {
-            // #(#inner_attrs)*
             #fields
         }
 
+        impl #generics #ident #generics {
+            #(#methods)*
+        }
+
+        impl #generics GCell<#ident #generics> {
+
+        }
     };
 
     output
 }
 
 fn generate_traversable_enum(item: &ItemEnum) -> TokenStream2 {
-    let ident = format_ident!("Traversable{}", item.ident);
+    let ident = format_ident!("{TRAVERSABLE}{}", item.ident);
     let generics = &item.generics;
-
-    // TODO: traits like serialization, Debug and Hash fail with `GCell`;
-    // But we may want to keep other attributes.
 
     let variants = transform_variants(&item.variants);
 
-    // let mut attributes: Vec<Attribute> = Vec::new();
-
-    /*
-    if has_clone(&item.attrs) {
-        println!("HERE");
-        attributes.push(parse_quote!(#[derive(Clone)]));
-    }
-    */
-
+    // TODO: traits like serialization, Debug and Hash fail with `GCell`;
+    // But we may want to keep other attributes.
     let output = quote! {
         #[repr(C, u8)]
         // #(#attributes)*
         pub enum #ident #generics {
             #variants
         }
-
     };
 
     output
 }
+
+fn generate_traversable_methods(field: &Field) -> Vec<ImplItemFn> {
+    let type_name = &type_name(&field.ty);
+    let mut methods = Vec::new();
+
+    // Early reaturn if we are visiting a non traversable/shared type.
+    if !is_traversable_type_name(type_name) && !is_shared_type_name(type_name) {
+        return methods;
+    }
+
+    let v = &mut methods;
+
+    if is_collection(type_name) {
+        generate_traversable_vec_methods(v, field);
+    }
+
+    if is_ast_enum_type_name(type_name) {
+        generate_traversable_enum_method(v, field);
+    } else {
+        generate_traversable_struct_method(v, field);
+    }
+
+    methods
+}
+
+fn generate_traversable_vec_methods(v: &mut Vec<ImplItemFn>, field: &Field) {
+    let ident =
+        field.ident.as_ref().expect("`ast_node` attribute only supports named struct fields.");
+
+    debug_assert_eq!(ident, "SharedVec");
+
+    let ty = &field.ty;
+    let (_lifetime, ref generic_ty) = {
+        let generics = type_generics(ty).expect("We only accept generic collections.");
+        let mut iter = (&generics.args).into_iter();
+        let GenericArgument::Lifetime(lifetime) =
+            iter.next().expect("`ast_node` only support's arena vectors")
+        else {
+            panic!("`ast_node` expected the first argument to the `Vec` to be a lifetime.");
+        };
+        let GenericArgument::Type(generic_ty) =
+            iter.next().expect("`ast_node` only accepts arena vectors.")
+        else {
+            panic!("`ast_node` expected the second argument to the `Vec` to be a generic type argument.");
+        };
+
+        assert!(iter.next().is_none(), "`ast_node` only accepts arena vectors.");
+
+        (lifetime, transform_type(generic_ty.clone()))
+    };
+
+    TraversableStructVecMethodsGenerator { ident, generic_ty }.generate(v);
+}
+
+struct TraversableStructVecMethodsGenerator<'a> {
+    ident: &'a Ident,
+    generic_ty: &'a Type,
+}
+
+impl<'a> TraversableStructVecMethodsGenerator<'a> {
+    fn generate_as_struct(self, _: &mut Vec<ImplItemFn>) {
+        #![allow(clippy::unused_self)]
+        // TODO: implement me when we stabilized the struct version of these methods
+    }
+
+    fn generate_as_enum(self, v: &mut Vec<ImplItemFn>) {
+        macro_rules! vquote {
+            ($($tt:tt)*) => {{
+                v.push(parse_quote!($($tt)*))
+            }};
+        }
+        let ident = self.ident;
+        let generic_ty = self.generic_ty;
+
+        let ident_len = format_ident!("{ident}_len");
+        let ident_item = format_ident!("{ident}_item");
+        let ident_item_get = format_ident!("{ident}_item_get");
+
+        vquote! {
+            /// Get length of #ident.
+            fn #ident_len(&self) -> usize {
+                self.#ident.len()
+            }
+        }
+
+        vquote! {
+            /// Get #ident item.
+            /// # Panic
+            /// Panics if `index` is out of bounds.
+            fn #ident_item(&self, index: usize) -> #generic_ty {
+                self.#ident[index]
+            }
+        }
+
+        vquote! {
+            /// Get #ident item.
+            /// Returns `None` if `index` is out of bounds.
+            fn #ident_item_get(&self, index: usize) -> #generic_ty {
+                self.#ident.get(index).copied()
+            }
+        }
+    }
+
+    fn generate(self, v: &mut Vec<ImplItemFn>) {
+        if is_ast_enum_type_name(&type_name(self.generic_ty)) {
+            self.generate_as_enum(v);
+        } else {
+            self.generate_as_struct(v);
+        }
+    }
+}
+
+fn generate_traversable_struct_method(_: &mut Vec<ImplItemFn>, _: &Field) {}
+
+fn generate_traversable_enum_method(_: &mut Vec<ImplItemFn>, _: &Field) {}
 
 // transformers
 
@@ -314,7 +406,7 @@ fn transform_generic_type(mut ty: TypePath) -> TypePath {
             } else if seg.ident == "Box" {
                 parse_quote!(SharedBox)
             } else if !is_special_type_name(&seg.ident) {
-                let new_ident = format_ident!("Traversable{}", seg.ident);
+                let new_ident = format_ident!("{TRAVERSABLE}{}", seg.ident);
                 parse_quote!(#new_ident)
             } else {
                 recreate_original_path(ty.path, seg.ident, PathArguments::None)
@@ -351,6 +443,77 @@ fn is_special_type_name(ident: &Ident) -> bool {
         || ident == "TemplateElementValue"
         || ident == "IdentifierName"
         || ident == "Modifiers"
+}
+
+fn is_traversable_type_name(ident: &str) -> bool {
+    ident.starts_with(TRAVERSABLE)
+}
+
+fn is_shared_type_name(ident: &str) -> bool {
+    ident.starts_with("Shared")
+}
+
+fn is_ast_enum_type_name(ident: &str) -> bool {
+    if ident.len() <= TRAVERSABLE.len() {
+        return false;
+    }
+    let ident = &ident[TRAVERSABLE.len()..];
+    matches! {
+        ident,
+        | "Statement"
+    }
+}
+
+fn is_collection(ident: &str) -> bool {
+    ident == "Vec"
+}
+
+fn type_name(ty: &Type) -> String {
+    fn type_path_name(ty: &TypePath) -> String {
+        assert!(!ty.path.segments.is_empty());
+        let seg = &ty
+            .path
+            .segments
+            .last()
+            .expect("Expected generic type with one or more path segments.");
+
+        // TODO: is there any way to get this as `&str`?
+        seg.ident.to_string()
+    }
+
+    fn type_ref_name(ty: &TypeReference) -> String {
+        type_name(ty.elem.as_ref())
+    }
+
+    match ty {
+        Type::Path(ty) => type_path_name(ty),
+        Type::Reference(ty) => type_ref_name(ty),
+        _ => panic!("Unsupported type!"),
+    }
+}
+
+fn type_generics(ty: &Type) -> Option<&AngleBracketedGenericArguments> {
+    fn type_path_generics(ty: &TypePath) -> Option<&AngleBracketedGenericArguments> {
+        assert!(!ty.path.segments.is_empty());
+        let seg = &ty
+            .path
+            .segments
+            .last()
+            .expect("Expected generic type with one or more path segments.");
+
+        match &seg.arguments {
+            PathArguments::AngleBracketed(args) => Some(args),
+            PathArguments::Parenthesized(_) => {
+                panic!("Parenthesized type arguments are not allowed with `ast_node` attribute.")
+            }
+            PathArguments::None => None,
+        }
+    }
+
+    match ty {
+        Type::Path(ty) => type_path_generics(ty),
+        _ => panic!("Unsupported type!"),
+    }
 }
 
 #[allow(dead_code)]

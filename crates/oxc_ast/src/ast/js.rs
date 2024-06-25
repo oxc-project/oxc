@@ -19,7 +19,7 @@ use serde::Serialize;
 use tsify::Tsify;
 
 use crate::dummy;
-use crate::traverse::{ast::*, SharedBox, SharedVec, Token, Traverse, TraverseCtx};
+use crate::traverse::{ast::*, GCell, SharedBox, SharedVec, Token, Traverse, TraverseCtx};
 
 use super::inherit_variants;
 use super::{jsx::*, literal::*, ts::*};

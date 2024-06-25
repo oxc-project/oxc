@@ -16,8 +16,7 @@ use tsify::Tsify;
 
 use super::{inherit_variants, js::*, jsx::*, literal::*};
 use crate::dummy;
-use crate::traverse::ast::*;
-use crate::traverse::{SharedBox, SharedVec};
+use crate::traverse::{ast::*, GCell, SharedBox, SharedVec};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]

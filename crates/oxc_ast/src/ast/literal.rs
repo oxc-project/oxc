@@ -17,6 +17,8 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+use crate::traverse::GCell;
+
 #[ast_node]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
