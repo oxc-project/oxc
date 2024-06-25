@@ -178,8 +178,8 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::NumericLiteral(lit) => {
                 Some(self.ast.ts_literal_type(SPAN, TSLiteral::NumericLiteral(self.ast.copy(lit))))
             }
-            Expression::BigintLiteral(lit) => {
-                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BigintLiteral(self.ast.copy(lit))))
+            Expression::BigIntLiteral(lit) => {
+                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BigIntLiteral(self.ast.copy(lit))))
             }
             Expression::StringLiteral(lit) => {
                 Some(self.ast.ts_literal_type(SPAN, TSLiteral::StringLiteral(self.ast.copy(lit))))

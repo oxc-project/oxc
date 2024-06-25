@@ -17,13 +17,13 @@ impl<'a> IsolatedDeclarations<'a> {
         match key {
             PropertyKey::StringLiteral(_)
             | PropertyKey::NumericLiteral(_)
-            | PropertyKey::BigintLiteral(_) => true,
+            | PropertyKey::BigIntLiteral(_) => true,
             PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
             PropertyKey::UnaryExpression(expr) => {
                 expr.operator.is_arithmetic()
                     && matches!(
                         expr.argument,
-                        Expression::NumericLiteral(_) | Expression::BigintLiteral(_)
+                        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
                     )
             }
             _ => false,

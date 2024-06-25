@@ -235,7 +235,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn literal_bigint_expression(self, literal: BigIntLiteral<'a>) -> Expression<'a> {
-        Expression::BigintLiteral(self.alloc(literal))
+        Expression::BigIntLiteral(self.alloc(literal))
     }
 
     #[inline]

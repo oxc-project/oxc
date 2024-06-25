@@ -55,7 +55,7 @@ pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
     NullLiteral(Box<'a, NullLiteral>) = 1,
     NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
-    BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
     StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
@@ -110,7 +110,7 @@ macro_rules! match_expression {
         $ty::BooleanLiteral(_)
             | $ty::NullLiteral(_)
             | $ty::NumericLiteral(_)
-            | $ty::BigintLiteral(_)
+            | $ty::BigIntLiteral(_)
             | $ty::RegExpLiteral(_)
             | $ty::StringLiteral(_)
             | $ty::TemplateLiteral(_)

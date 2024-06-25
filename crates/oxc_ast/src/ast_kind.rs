@@ -62,7 +62,7 @@ ast_kinds! {
     StringLiteral(&'a StringLiteral<'a>),
     BooleanLiteral(&'a BooleanLiteral),
     NullLiteral(&'a NullLiteral),
-    BigintLiteral(&'a BigIntLiteral<'a>),
+    BigIntLiteral(&'a BigIntLiteral<'a>),
     RegExpLiteral(&'a RegExpLiteral<'a>),
     TemplateLiteral(&'a TemplateLiteral<'a>),
 
@@ -271,7 +271,7 @@ impl<'a> AstKind<'a> {
                 | Self::StringLiteral(_)
                 | Self::BooleanLiteral(_)
                 | Self::NullLiteral(_)
-                | Self::BigintLiteral(_)
+                | Self::BigIntLiteral(_)
                 | Self::RegExpLiteral(_)
                 | Self::TemplateLiteral(_)
         )
@@ -316,7 +316,7 @@ impl<'a> AstKind<'a> {
             Expression::BooleanLiteral(e) => Self::BooleanLiteral(e),
             Expression::NullLiteral(e) => Self::NullLiteral(e),
             Expression::NumericLiteral(e) => Self::NumericLiteral(e),
-            Expression::BigintLiteral(e) => Self::BigintLiteral(e),
+            Expression::BigIntLiteral(e) => Self::BigIntLiteral(e),
             Expression::RegExpLiteral(e) => Self::RegExpLiteral(e),
             Expression::StringLiteral(e) => Self::StringLiteral(e),
             Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
@@ -406,7 +406,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::StringLiteral(x) => x.span,
             Self::BooleanLiteral(x) => x.span,
             Self::NullLiteral(x) => x.span,
-            Self::BigintLiteral(x) => x.span,
+            Self::BigIntLiteral(x) => x.span,
             Self::RegExpLiteral(x) => x.span,
             Self::TemplateLiteral(x) => x.span,
 
@@ -601,7 +601,7 @@ impl<'a> AstKind<'a> {
             Self::StringLiteral(s) => format!("StringLiteral({})", s.value).into(),
             Self::BooleanLiteral(b) => format!("BooleanLiteral({})", b.value).into(),
             Self::NullLiteral(_) => "NullLiteral".into(),
-            Self::BigintLiteral(b) => format!("BigintLiteral({})", b.raw).into(),
+            Self::BigIntLiteral(b) => format!("BigIntLiteral({})", b.raw).into(),
             Self::RegExpLiteral(r) => format!("RegExpLiteral({})", r.regex).into(),
             Self::TemplateLiteral(t) => format!(
                 "TemplateLiteral({})",

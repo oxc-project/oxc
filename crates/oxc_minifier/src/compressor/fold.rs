@@ -125,7 +125,7 @@ impl<'a> From<&Expression<'a>> for Ty {
     fn from(expr: &Expression<'a>) -> Self {
         // TODO: complete this
         match expr {
-            Expression::BigintLiteral(_) => Self::BigInt,
+            Expression::BigIntLiteral(_) => Self::BigInt,
             Expression::BooleanLiteral(_) => Self::Boolean,
             Expression::NullLiteral(_) => Self::Null,
             Expression::NumericLiteral(_) => Self::Number,
@@ -616,7 +616,7 @@ impl<'a> Compressor<'a> {
                         let bool_literal = self.ast.boolean_literal(unary_expr.span, !boolean);
                         return Some(self.ast.literal_boolean_expression(bool_literal));
                     }
-                    Expression::BigintLiteral(_) => {
+                    Expression::BigIntLiteral(_) => {
                         let bool_literal = self.ast.boolean_literal(unary_expr.span, !boolean);
                         return Some(self.ast.literal_boolean_expression(bool_literal));
                     }
@@ -676,7 +676,7 @@ impl<'a> Compressor<'a> {
                         );
                         return Some(self.ast.literal_number_expression(literal));
                     }
-                    Expression::BigintLiteral(_big_int_literal) => {
+                    Expression::BigIntLiteral(_big_int_literal) => {
                         // let value = big_int_literal.value.clone().neg();
                         // let literal =
                         // self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
@@ -706,7 +706,7 @@ impl<'a> Compressor<'a> {
                             return Some(self.ast.literal_number_expression(literal));
                         }
                     }
-                    Expression::BigintLiteral(_big_int_literal) => {
+                    Expression::BigIntLiteral(_big_int_literal) => {
                         // let value = big_int_literal.value.clone().not();
                         // let leteral =
                         // self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
