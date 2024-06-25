@@ -15,6 +15,7 @@ mod import {
     pub mod no_cycle;
     pub mod no_default_export;
     // pub mod no_deprecated;
+    pub mod max_dependencies;
     pub mod no_duplicates;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
@@ -694,6 +695,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_object_as_prop,
     import::default,
     import::export,
+    import::max_dependencies,
     import::named,
     import::namespace,
     import::no_amd,
