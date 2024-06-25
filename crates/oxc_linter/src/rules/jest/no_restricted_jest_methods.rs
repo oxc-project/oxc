@@ -1,10 +1,8 @@
-use std::{collections::HashMap, hash::BuildHasherDefault};
-
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -146,7 +144,7 @@ impl NoRestrictedJestMethods {
     #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_jest_methods(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<HashMap<String, String, BuildHasherDefault<FxHasher>>> {
+    ) -> Option<FxHashMap<String, String>> {
         Some(
             matchers
                 .iter()

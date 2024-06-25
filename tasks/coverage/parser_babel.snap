@@ -3,7 +3,7 @@ commit: 12619ffe
 parser_babel Summary:
 AST Parsed     : 2095/2101 (99.71%)
 Positive Passed: 2087/2101 (99.33%)
-Negative Passed: 1364/1501 (90.87%)
+Negative Passed: 1365/1501 (90.94%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -27,7 +27,6 @@ Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/335/input.js"
 Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
-Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-for-in/input.js"
@@ -5152,6 +5151,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2017/trailing-function-commas/6/input.js:1:14]
  1 │ function log(,) { }
    ·              ─
+   ╰────
+
+  × Unexpected token
+   ╭─[es2017/trailing-function-commas/7/input.js:1:8]
+ 1 │ ('foo',)
+   ·        ─
    ╰────
 
   × Expected `(` but found `await`

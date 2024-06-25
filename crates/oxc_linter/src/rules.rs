@@ -15,6 +15,7 @@ mod import {
     pub mod no_cycle;
     pub mod no_default_export;
     // pub mod no_deprecated;
+    pub mod max_dependencies;
     pub mod no_duplicates;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
@@ -137,6 +138,7 @@ mod typescript {
     pub mod no_misused_new;
     pub mod no_namespace;
     pub mod no_non_null_asserted_optional_chain;
+    pub mod no_non_null_assertion;
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
@@ -540,6 +542,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::triple_slash_reference,
     typescript::prefer_literal_enum_member,
     typescript::explicit_function_return_type,
+    typescript::no_non_null_assertion,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,
@@ -692,6 +695,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_object_as_prop,
     import::default,
     import::export,
+    import::max_dependencies,
     import::named,
     import::namespace,
     import::no_amd,

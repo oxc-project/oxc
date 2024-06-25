@@ -253,12 +253,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "clean-path"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aaa6b4b263a5d737e9bf6b7c09b72c41a5480aec4d7219af827f6564e950b6a5"
-
-[[package]]
 name = "codspeed"
 version = "2.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -908,9 +902,9 @@ checksum = "d4345964bb142484797b161f473a503a434de77149dd8c7427788c6e13379388"
 
 [[package]]
 name = "lazy_static"
-version = "1.4.0"
+version = "1.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
+checksum = "bbd2bcb4c963f2ddae06a2efc7e9f3591312473c50c6685e1f298068316e66fe"
 
 [[package]]
 name = "libc"
@@ -936,9 +930,9 @@ checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
 
 [[package]]
 name = "libmimalloc-sys"
-version = "0.1.38"
+version = "0.1.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e7bb23d733dfcc8af652a78b7bf232f0e967710d044732185e561e47c0336b6"
+checksum = "23aa6811d3bd4deb8a84dde645f943476d13b248d818edcf8ce0b2f37f036b44"
 dependencies = [
  "cc",
  "libc",
@@ -1027,9 +1021,9 @@ dependencies = [
 
 [[package]]
 name = "mimalloc"
-version = "0.1.42"
+version = "0.1.43"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e9186d86b79b52f4a77af65604b51225e8db1d6ee7e3f41aec1e40829c71a176"
+checksum = "68914350ae34959d83f732418d51e2427a794055d0b9529f48259ac07af65633"
 dependencies = [
  "libmimalloc-sys",
 ]
@@ -1283,9 +1277,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-browserslist"
-version = "0.17.1"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ffd653f8c5d3dfd8beca79303398ab65d936168109640e00a19629eded86423"
+checksum = "0d67676f247b63c0f6a8ed20f6c1faa39ff5e0e4af923284a0857623eec5ab14"
 dependencies = [
  "js-sys",
  "nom",
@@ -1323,6 +1317,20 @@ dependencies = [
  "static_assertions",
  "tsify",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "oxc_ast_codegen"
+version = "0.0.0"
+dependencies = [
+ "itertools 0.13.0",
+ "lazy_static",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "regex",
+ "serde",
+ "syn",
 ]
 
 [[package]]
@@ -1647,12 +1655,13 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "1.8.1"
+version = "1.8.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ebd177c1f521d3c6631fa96abb6d97220ce4bed102e1e0172b11496ed9442fae"
+checksum = "5b9acc6904f2556785bcd5f436d854fb5cb9f66289e26ba9179a02ea3732a6f4"
 dependencies = [
  "dashmap",
  "dunce",
+ "indexmap",
  "json-strip-comments",
  "once_cell",
  "rustc-hash",
@@ -1660,7 +1669,6 @@ dependencies = [
  "serde_json",
  "thiserror",
  "tracing",
- "typescript_tsconfig_json",
 ]
 
 [[package]]
@@ -2003,10 +2011,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "439ee305def115ba05938db6eb1644ff94165c5ab5e9420d1c1bcedbba909391"
 
 [[package]]
-name = "proc-macro2"
-version = "1.0.85"
+name = "prettyplease"
+version = "0.2.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "22244ce15aa966053a896d1accb3a6e68469b97c7f33f284b99f0d576879fc23"
+checksum = "5f12335488a2f3b0a83b14edad48dca9879ce89b2edd10e80237e4e852dd645e"
+dependencies = [
+ "proc-macro2",
+ "syn",
+]
+
+[[package]]
+name = "proc-macro2"
+version = "1.0.86"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5e719e8df665df0d1c8fbfd238015744736151d4445ec0836b8e628aae103b77"
 dependencies = [
  "unicode-ident",
 ]
@@ -2171,9 +2189,9 @@ checksum = "719b953e2095829ee67db738b3bfa9fa368c94900df327b3f07fe6e794d2fe1f"
 
 [[package]]
 name = "rustc-hash"
-version = "1.1.0"
+version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+checksum = "583034fd73374156e66797ed8e5b0d5690409c9226b22d87cb7f19821c05d152"
 
 [[package]]
 name = "rustix"
@@ -2849,19 +2867,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42ff0bf0c66b8238c6f3b578df37d0b7848e55df8577b3f74f92a69acceeb825"
 
 [[package]]
-name = "typescript_tsconfig_json"
-version = "0.1.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e7cc416eaf05297012ead9d192226fe9a92e9a20f64f8780efb9085aaae9b590"
-dependencies = [
- "clean-path",
- "indexmap",
- "rustc-hash",
- "serde",
- "serde_json",
-]
-
-[[package]]
 name = "ucd-trie"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2947,9 +2952,9 @@ dependencies = [
 
 [[package]]
 name = "url"
-version = "2.5.0"
+version = "2.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31e6302e3bb753d46e83516cae55ae196fc0c309407cf11ab35cc51a4c2a4633"
+checksum = "22784dbdf76fdde8af1aeda5622b546b422b6fc585325248a2bf9f5e41e94d6c"
 dependencies = [
  "form_urlencoded",
  "idna",

@@ -93,7 +93,7 @@ macro_rules! inherit_variants {
                 /// Inherited from [`Expression`]
                 NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
                 /// Inherited from [`Expression`]
-                BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+                BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
                 /// Inherited from [`Expression`]
                 RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
                 /// Inherited from [`Expression`]
@@ -189,7 +189,7 @@ macro_rules! inherit_variants {
                 BooleanLiteral,
                 NullLiteral,
                 NumericLiteral,
-                BigintLiteral,
+                BigIntLiteral,
                 RegExpLiteral,
                 StringLiteral,
                 TemplateLiteral,

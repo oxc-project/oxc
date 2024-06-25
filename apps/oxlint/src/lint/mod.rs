@@ -101,6 +101,7 @@ impl Runner for LintRunner {
             .with_import_plugin(enable_plugins.import_plugin)
             .with_jsdoc_plugin(enable_plugins.jsdoc_plugin)
             .with_jest_plugin(enable_plugins.jest_plugin)
+            .with_vitest_plugin(enable_plugins.vitest_plugin)
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
             .with_nextjs_plugin(enable_plugins.nextjs_plugin)
             .with_react_perf_plugin(enable_plugins.react_perf_plugin);
@@ -112,7 +113,7 @@ impl Runner for LintRunner {
                 let mut err = String::new();
                 handler.render_report(&mut err, diagnostic.as_ref()).unwrap();
                 return CliRunResult::InvalidOptions {
-                    message: "Failed to parse configuration file.\n{err}".to_string(),
+                    message: format!("Failed to parse configuration file.\n{err}"),
                 };
             }
         };
@@ -487,5 +488,27 @@ mod test {
         // failed
         assert!(test_invalid_options(&["--tsconfig", "oxc/tsconfig.json"])
             .contains("oxc/tsconfig.json\" does not exist, Please provide a valid tsconfig file."));
+    }
+
+    #[test]
+    fn test_enable_vitest_plugin() {
+        let args = &[
+            "-c",
+            "fixtures/eslintrc_vitest_replace/eslintrc.json",
+            "fixtures/eslintrc_vitest_replace/foo.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_errors, 0);
+
+        let args = &[
+            "--vitest-plugin",
+            "-c",
+            "fixtures/eslintrc_vitest_replace/eslintrc.json",
+            "fixtures/eslintrc_vitest_replace/foo.js",
+        ];
+        let result = test(args);
+        assert_eq!(result.number_of_files, 1);
+        assert_eq!(result.number_of_errors, 1);
     }
 }

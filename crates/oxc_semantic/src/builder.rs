@@ -434,7 +434,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let parent_scope_flags = self.scope.get_flags(parent_scope_id);
 
             if !strict_mode
-                && parent_scope_flags.is_function()
+                && (parent_scope_flags.is_function() || parent_scope_flags.is_ts_module_block())
                 && parent_scope_flags.is_strict_mode()
             {
                 strict_mode = true;
@@ -1922,7 +1922,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
         let name = ident.name.to_compact_str();
-        let reference = Reference::new(ident.span, name.clone(), self.current_node_id, flag);
+        let reference = Reference::new(ident.span, name, self.current_node_id, flag);
         // `function foo({bar: identifier_reference}) {}`
         //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
         //                                          to avoid binding to variables inside the scope

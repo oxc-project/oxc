@@ -152,7 +152,7 @@ impl<'a> ReactJsxSource<'a> {
         let id = {
             let ident = filename_var.create_binding_identifier();
             let ident = self.ctx.ast.binding_pattern_identifier(ident);
-            self.ctx.ast.binding_pattern(SPAN, ident, None, false)
+            self.ctx.ast.binding_pattern(ident, None, false)
         };
         let decl = {
             let string = self.ctx.ast.string_literal(SPAN, &self.ctx.source_path.to_string_lossy());

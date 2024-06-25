@@ -25,7 +25,7 @@ use tsify::Tsify;
 
 #[visited_node(
     scope(ScopeFlags::Top),
-    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict))
+    strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -55,7 +55,7 @@ pub enum Expression<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
     NullLiteral(Box<'a, NullLiteral>) = 1,
     NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
-    BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
     StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
@@ -110,7 +110,7 @@ macro_rules! match_expression {
         $ty::BooleanLiteral(_)
             | $ty::NullLiteral(_)
             | $ty::NumericLiteral(_)
-            | $ty::BigintLiteral(_)
+            | $ty::BigIntLiteral(_)
             | $ty::RegExpLiteral(_)
             | $ty::StringLiteral(_)
             | $ty::TemplateLiteral(_)
@@ -1101,7 +1101,7 @@ pub struct WhileStatement<'a> {
 /// For Statement
 #[visited_node(
     scope(ScopeFlags::empty()),
-    scope_if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration))
+    scope_if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration)),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1228,7 +1228,7 @@ pub struct WithStatement<'a> {
 }
 
 /// Switch Statement
-#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(cases))]
+#[visited_node(scope(ScopeFlags::empty()))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1236,6 +1236,7 @@ pub struct SwitchStatement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub discriminant: Expression<'a>,
+    #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
@@ -1326,8 +1327,6 @@ pub struct DebuggerStatement {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
 pub struct BindingPattern<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
     // serde(flatten) the attributes because estree has no `BindingPattern`
     #[cfg_attr(feature = "serialize", serde(flatten))]
     #[cfg_attr(
@@ -1426,7 +1425,7 @@ pub struct BindingRestElement<'a> {
 #[visited_node(
     // TODO: `ScopeFlags::Function` is not correct if this is a `MethodDefinition`
     scope(ScopeFlags::Function),
-    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive()))
+    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1533,7 +1532,7 @@ pub struct FunctionBody<'a> {
 /// Arrow Function Definitions
 #[visited_node(
     scope(ScopeFlags::Function | ScopeFlags::Arrow),
-    strict_if(self.body.has_use_strict_directive())
+    strict_if(self.body.has_use_strict_directive()),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1566,7 +1565,7 @@ pub struct YieldExpression<'a> {
 }
 
 /// Class Definitions
-#[visited_node(scope(ScopeFlags::StrictMode), enter_scope_before(id))]
+#[visited_node(scope(ScopeFlags::StrictMode))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -1575,6 +1574,7 @@ pub struct Class<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
+    #[scope(enter_before)]
     pub id: Option<BindingIdentifier<'a>>,
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,

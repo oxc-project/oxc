@@ -93,6 +93,8 @@ impl<'a> TypeScriptAnnotations<'a> {
                         true
                     } else if let Some(specifiers) = &mut decl.specifiers {
                         if specifiers.is_empty() {
+                            // import {} from 'mod' -> import 'mod'
+                            decl.specifiers = None;
                             true
                         } else {
                             specifiers.retain(|specifier| {

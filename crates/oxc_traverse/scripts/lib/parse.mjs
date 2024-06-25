@@ -2,7 +2,7 @@ import {readFile} from 'fs/promises';
 import {join as pathJoin} from 'path';
 import {fileURLToPath} from 'url';
 import assert from 'assert';
-import {typeAndWrappers} from './utils.mjs';
+import {typeAndWrappers, snakeToCamel} from './utils.mjs';
 
 const FILENAMES = ['js.rs', 'jsx.rs', 'literal.rs', 'ts.rs'];
 
@@ -37,7 +37,7 @@ function parseFile(code, filename, types) {
                 line = lines[++lineIndex];
             }
             scopeArgsStr += ` ${line.slice(0, -2)}`;
-            scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ');
+            scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ').replace(/,$/, '');
 
             scopeArgs = parseScopeArgs(scopeArgsStr, filename, lineIndex);
         }
@@ -68,8 +68,11 @@ function parseFile(code, filename, types) {
 function parseStruct(name, rawName, lines, scopeArgs, filename, startLineIndex) {
     const fields = [];
     for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.startsWith('#[')) {
+        let line = lines[i];
+        const isScopeEntry = line === '#[scope(enter_before)]';
+        if (isScopeEntry) {
+            line = lines[++i];
+        } else if (line.startsWith('#[')) {
             while (!lines[i].endsWith(']')) {
                 i++;
             }
@@ -86,6 +89,8 @@ function parseStruct(name, rawName, lines, scopeArgs, filename, startLineIndex) 
             {name: innerTypeName, wrappers} = typeAndWrappers(typeName);
 
         fields.push({name, typeName, rawName, rawTypeName, innerTypeName, wrappers});
+
+        if (isScopeEntry) scopeArgs.enterScopeBefore = name;
     }
     return {kind: 'struct', name, rawName, fields, scopeArgs};
 }
@@ -128,7 +133,7 @@ function parseScopeArgs(argsStr, filename, lineIndex) {
         while (true) {
             const [key] = matchAndConsume(/^([a-z_]+)\(/);
             assert(
-                ['scope', 'scope_if', 'strict_if', 'enter_scope_before'].includes(key),
+                ['scope', 'scope_if', 'strict_if'].includes(key),
                 `Unexpected visited_node macro arg: ${key}`
             );
 
@@ -145,7 +150,8 @@ function parseScopeArgs(argsStr, filename, lineIndex) {
             }
             assert(bracketCount === 0);
 
-            args[key] = argsStr.slice(0, index).trim();
+            const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+            args[camelKey] = argsStr.slice(0, index).trim();
             argsStr = argsStr.slice(index + 1);
             if (argsStr === '') break;
 

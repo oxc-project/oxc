@@ -1459,7 +1459,7 @@ pub mod walk_mut {
 
     pub fn walk_expression_mut<'a, V: VisitMut<'a>>(visitor: &mut V, expr: &mut Expression<'a>) {
         match expr {
-            Expression::BigintLiteral(lit) => visitor.visit_bigint_literal(lit),
+            Expression::BigIntLiteral(lit) => visitor.visit_bigint_literal(lit),
             Expression::BooleanLiteral(lit) => visitor.visit_boolean_literal(lit),
             Expression::NullLiteral(lit) => visitor.visit_null_literal(lit),
             Expression::NumericLiteral(lit) => visitor.visit_number_literal(lit),
@@ -2402,7 +2402,7 @@ pub mod walk_mut {
         visitor: &mut V,
         _lit: &mut BigIntLiteral<'a>,
     ) {
-        let kind = AstType::BigintLiteral;
+        let kind = AstType::BigIntLiteral;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
@@ -2727,7 +2727,13 @@ pub mod walk_mut {
             TSModuleDeclarationName::Identifier(ident) => visitor.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => visitor.visit_string_literal(lit),
         }
-        visitor.enter_scope(ScopeFlags::TsModuleBlock);
+        visitor.enter_scope({
+            let mut flags = ScopeFlags::TsModuleBlock;
+            if decl.is_strict() {
+                flags |= ScopeFlags::StrictMode;
+            }
+            flags
+        });
         match &mut decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
                 visitor.visit_ts_module_declaration(decl);
@@ -3072,7 +3078,7 @@ pub mod walk_mut {
         let kind = AstType::TSLiteralType;
         visitor.enter_node(kind);
         match &mut ty.literal {
-            TSLiteral::BigintLiteral(lit) => visitor.visit_bigint_literal(lit),
+            TSLiteral::BigIntLiteral(lit) => visitor.visit_bigint_literal(lit),
             TSLiteral::BooleanLiteral(lit) => visitor.visit_boolean_literal(lit),
             TSLiteral::NullLiteral(lit) => visitor.visit_null_literal(lit),
             TSLiteral::NumericLiteral(lit) => visitor.visit_number_literal(lit),

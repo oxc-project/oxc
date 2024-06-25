@@ -85,7 +85,7 @@ fn not_promise(expr: &Expression) -> bool {
         | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
         | Expression::NumericLiteral(_)
-        | Expression::BigintLiteral(_)
+        | Expression::BigIntLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_)
         | Expression::TemplateLiteral(_)

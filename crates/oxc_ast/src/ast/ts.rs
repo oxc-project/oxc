@@ -46,7 +46,7 @@ pub struct TSThisParameter<'a> {
 /// Enum Declaration
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
-#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(members))]
+#[visited_node(scope(ScopeFlags::empty()))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -54,6 +54,7 @@ pub struct TSEnumDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
+    #[scope(enter_before)]
     pub members: Vec<'a, TSEnumMember<'a>>,
     pub r#const: bool,
     pub declare: bool,
@@ -121,7 +122,7 @@ pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigIntLiteral<'a>>),
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>>),
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
@@ -782,7 +783,10 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType),
 }
 
-#[visited_node(scope(ScopeFlags::TsModuleBlock), enter_scope_before(body))]
+#[visited_node(
+    scope(ScopeFlags::TsModuleBlock),
+    strict_if(self.body.as_ref().is_some_and(|body| body.is_strict())),
+)]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -790,6 +794,7 @@ pub struct TSModuleDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: TSModuleDeclarationName<'a>,
+    #[scope(enter_before)]
     pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration
     /// ```text
@@ -832,13 +837,15 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>),
 }
 
+// See serializer in serialize.rs
 #[visited_node]
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(feature = "serialize", serde(skip))]
     pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }

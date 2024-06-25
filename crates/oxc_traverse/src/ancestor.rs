@@ -4922,7 +4922,6 @@ impl<'a> CatchParameterWithoutPattern<'a> {
     }
 }
 
-pub(crate) const OFFSET_BINDING_PATTERN_SPAN: usize = offset_of!(BindingPattern, span);
 pub(crate) const OFFSET_BINDING_PATTERN_KIND: usize = offset_of!(BindingPattern, kind);
 pub(crate) const OFFSET_BINDING_PATTERN_TYPE_ANNOTATION: usize =
     offset_of!(BindingPattern, type_annotation);
@@ -4933,11 +4932,6 @@ pub(crate) const OFFSET_BINDING_PATTERN_OPTIONAL: usize = offset_of!(BindingPatt
 pub struct BindingPatternWithoutKind<'a>(pub(crate) *const BindingPattern<'a>);
 
 impl<'a> BindingPatternWithoutKind<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_SPAN) as *const Span) }
-    }
-
     #[inline]
     pub fn type_annotation(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
@@ -4957,11 +4951,6 @@ impl<'a> BindingPatternWithoutKind<'a> {
 pub struct BindingPatternWithoutTypeAnnotation<'a>(pub(crate) *const BindingPattern<'a>);
 
 impl<'a> BindingPatternWithoutTypeAnnotation<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_SPAN) as *const Span) }
-    }
-
     #[inline]
     pub fn kind(&self) -> &BindingPatternKind<'a> {
         unsafe {

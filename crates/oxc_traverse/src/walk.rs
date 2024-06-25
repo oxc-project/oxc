@@ -77,7 +77,7 @@ pub(crate) unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         Expression::NumericLiteral(node) => {
             walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
         }
-        Expression::BigintLiteral(node) => {
+        Expression::BigIntLiteral(node) => {
             walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
         }
         Expression::RegExpLiteral(node) => {
@@ -264,7 +264,7 @@ pub(crate) unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         ArrayExpressionElement::BooleanLiteral(_)
         | ArrayExpressionElement::NullLiteral(_)
         | ArrayExpressionElement::NumericLiteral(_)
-        | ArrayExpressionElement::BigintLiteral(_)
+        | ArrayExpressionElement::BigIntLiteral(_)
         | ArrayExpressionElement::RegExpLiteral(_)
         | ArrayExpressionElement::StringLiteral(_)
         | ArrayExpressionElement::TemplateLiteral(_)
@@ -398,7 +398,7 @@ pub(crate) unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         PropertyKey::BooleanLiteral(_)
         | PropertyKey::NullLiteral(_)
         | PropertyKey::NumericLiteral(_)
-        | PropertyKey::BigintLiteral(_)
+        | PropertyKey::BigIntLiteral(_)
         | PropertyKey::RegExpLiteral(_)
         | PropertyKey::StringLiteral(_)
         | PropertyKey::TemplateLiteral(_)
@@ -713,7 +713,7 @@ pub(crate) unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
         Argument::BooleanLiteral(_)
         | Argument::NullLiteral(_)
         | Argument::NumericLiteral(_)
-        | Argument::BigintLiteral(_)
+        | Argument::BigIntLiteral(_)
         | Argument::RegExpLiteral(_)
         | Argument::StringLiteral(_)
         | Argument::TemplateLiteral(_)
@@ -1679,7 +1679,7 @@ pub(crate) unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         ForStatementInit::BooleanLiteral(_)
         | ForStatementInit::NullLiteral(_)
         | ForStatementInit::NumericLiteral(_)
-        | ForStatementInit::BigintLiteral(_)
+        | ForStatementInit::BigIntLiteral(_)
         | ForStatementInit::RegExpLiteral(_)
         | ForStatementInit::StringLiteral(_)
         | ForStatementInit::TemplateLiteral(_)
@@ -3057,7 +3057,7 @@ pub(crate) unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         ExportDefaultDeclarationKind::BooleanLiteral(_)
         | ExportDefaultDeclarationKind::NullLiteral(_)
         | ExportDefaultDeclarationKind::NumericLiteral(_)
-        | ExportDefaultDeclarationKind::BigintLiteral(_)
+        | ExportDefaultDeclarationKind::BigIntLiteral(_)
         | ExportDefaultDeclarationKind::RegExpLiteral(_)
         | ExportDefaultDeclarationKind::StringLiteral(_)
         | ExportDefaultDeclarationKind::TemplateLiteral(_)
@@ -3336,7 +3336,7 @@ pub(crate) unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
         JSXExpression::BooleanLiteral(_)
         | JSXExpression::NullLiteral(_)
         | JSXExpression::NumericLiteral(_)
-        | JSXExpression::BigintLiteral(_)
+        | JSXExpression::BigIntLiteral(_)
         | JSXExpression::RegExpLiteral(_)
         | JSXExpression::StringLiteral(_)
         | JSXExpression::TemplateLiteral(_)
@@ -3693,7 +3693,7 @@ pub(crate) unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
         TSEnumMemberName::BooleanLiteral(_)
         | TSEnumMemberName::NullLiteral(_)
         | TSEnumMemberName::NumericLiteral(_)
-        | TSEnumMemberName::BigintLiteral(_)
+        | TSEnumMemberName::BigIntLiteral(_)
         | TSEnumMemberName::RegExpLiteral(_)
         | TSEnumMemberName::StringLiteral(_)
         | TSEnumMemberName::TemplateLiteral(_)
@@ -3786,7 +3786,7 @@ pub(crate) unsafe fn walk_ts_literal<'a, Tr: Traverse<'a>>(
         TSLiteral::NumericLiteral(node) => {
             walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSLiteral::BigintLiteral(node) => {
+        TSLiteral::BigIntLiteral(node) => {
             walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
         }
         TSLiteral::RegExpLiteral(node) => {
