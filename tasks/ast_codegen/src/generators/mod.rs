@@ -27,7 +27,7 @@ macro_rules! generated_header {
             "// To edit this generated file you have to edit `{file}`"
         ));
         // TODO add generation date, AST source hash, etc here.
-        quote! {
+        quote::quote! {
             insert!("// Auto-generated code, DO NOT EDIT DIRECTLY!");
             #edit_comment
             endl!();

@@ -197,12 +197,25 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let outputs: HashMap<_, _> = outputs.into_iter().collect();
 
     {
-        let span_path = format!("{output_dir}/span.rs");
-        let mut span_file = fs::File::create(span_path)?;
+        // write `span.rs` file
         let output = outputs[ImplGetSpanGenerator.name()].as_one();
         let span_content = pprint(output);
 
-        span_file.write_all(span_content.as_bytes())?;
+        let path = format!("{output_dir}/span.rs");
+        let mut file = fs::File::create(path)?;
+
+        file.write_all(span_content.as_bytes())?;
+    }
+
+    {
+        // write `ast_kind.rs` file
+        let output = outputs[AstKindGenerator.name()].as_one();
+        let span_content = pprint(output);
+
+        let path = format!("{output_dir}/ast_kind.rs");
+        let mut file = fs::File::create(path)?;
+
+        file.write_all(span_content.as_bytes())?;
     }
 
     // NOTE: Print AstKind

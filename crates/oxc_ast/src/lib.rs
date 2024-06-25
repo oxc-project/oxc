@@ -15,15 +15,18 @@ mod serialize;
 pub mod ast;
 mod ast_builder;
 mod ast_impl;
-mod ast_kind;
+mod ast_kind_impl;
 pub mod precedence;
 pub mod syntax_directed_operations;
 mod trivia;
 pub mod visit;
 
 mod generated {
+    pub mod ast_kind;
     pub mod span;
 }
+
+pub use generated::ast_kind;
 
 pub use num_bigint::BigUint;
 
