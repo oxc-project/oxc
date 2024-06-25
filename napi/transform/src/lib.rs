@@ -4,6 +4,7 @@ use oxc_codegen::CodeGenerator;
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+mod transformer;
 
 #[napi(object)]
 pub struct IsolatedDeclarationsResult {

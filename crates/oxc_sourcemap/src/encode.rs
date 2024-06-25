@@ -2,15 +2,30 @@
 use rayon::prelude::*;
 
 use crate::error::{Error, Result};
+use crate::JSONSourceMap;
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
 /// It is a helper for encode `SourceMap` to vlq sourcemap string, but here some different.
 /// - Quote `source_content` at parallel.
 /// - If you using `ConcatSourceMapBuilder`, serialize `tokens` to vlq `mappings` at parallel.
 use crate::{token::TokenChunk, SourceMap, Token};
 
+pub fn encode(sourcemap: &SourceMap) -> JSONSourceMap {
+    JSONSourceMap {
+        file: sourcemap.get_file().map(ToString::to_string),
+        mappings: Some(serialize_sourcemap_mappings(sourcemap)),
+        source_root: sourcemap.get_source_root().map(ToString::to_string),
+        sources: Some(sourcemap.sources.iter().map(ToString::to_string).map(Some).collect()),
+        sources_content: sourcemap
+            .source_contents
+            .as_ref()
+            .map(|x| x.iter().map(ToString::to_string).map(Some).collect()),
+        names: Some(sourcemap.names.iter().map(ToString::to_string).collect()),
+    }
+}
+
 // Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
 // It will escape the string to avoid invalid JSON string.
-pub fn encode(sourcemap: &SourceMap) -> Result<String> {
+pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
     let mut buf = String::new();
     buf.push_str("{\"version\":3,");
     if let Some(file) = sourcemap.get_file() {
