@@ -93,6 +93,7 @@ pub struct TransformBindingOptions {
     pub typescript: TypeScriptBindingOptions,
     pub react: ReactBindingOptions,
     pub es2015: ES2015BindingOptions,
+    pub sourcemap: bool,
 }
 
 impl From<TransformBindingOptions> for TransformOptions {
@@ -140,6 +141,8 @@ pub fn transform(
         errors.extend(parser_ret.errors.into_iter().map(|error| error.message.to_string()));
     }
 
+    let enable_sourcemap = options.sourcemap;
+
     let mut program = parser_ret.program;
     let transform_options = options.into();
     if let Err(e) = Transformer::new(
@@ -155,9 +158,13 @@ pub fn transform(
         errors.extend(e.into_iter().map(|error| error.to_string()));
     }
 
-    let CodegenReturn { source_text, source_map } = CodeGenerator::new()
-        .enable_source_map(source_path.to_string_lossy().as_ref(), &source_text)
-        .build(&program);
+    let CodegenReturn { source_text, source_map } = if enable_sourcemap {
+        CodeGenerator::new()
+            .enable_source_map(source_path.to_string_lossy().as_ref(), &source_text)
+            .build(&program)
+    } else {
+        CodeGenerator::new().build(&program)
+    };
 
     TransformResult {
         source_text,
