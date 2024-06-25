@@ -396,7 +396,6 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_type_assertion(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-        self.re_lex_ts_l_angle();
         self.expect(Kind::LAngle)?;
         let type_annotation = self.parse_ts_type()?;
         self.expect(Kind::RAngle)?;

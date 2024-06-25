@@ -96,6 +96,7 @@ pub struct Tester {
     current_working_directory: Box<Path>,
     import_plugin: bool,
     jest_plugin: bool,
+    vitest_plugin: bool,
     jsx_a11y_plugin: bool,
     nextjs_plugin: bool,
     react_perf_plugin: bool,
@@ -125,6 +126,7 @@ impl Tester {
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
             react_perf_plugin: false,
+            vitest_plugin: false,
         }
     }
 
@@ -147,6 +149,11 @@ impl Tester {
 
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
         self.jest_plugin = yes;
+        self
+    }
+
+    pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
+        self.vitest_plugin = yes;
         self
     }
 
@@ -255,6 +262,7 @@ impl Tester {
             .with_fix(is_fix)
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
+            .with_vitest_plugin(self.vitest_plugin)
             .with_jsx_a11y_plugin(self.jsx_a11y_plugin)
             .with_nextjs_plugin(self.nextjs_plugin)
             .with_react_perf_plugin(self.react_perf_plugin);

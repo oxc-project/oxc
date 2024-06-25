@@ -193,7 +193,7 @@ fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
             | (Expression::NullLiteral(_), Expression::NullLiteral(_))
             | (Expression::StringLiteral(_), Expression::StringLiteral(_))
             | (Expression::NumericLiteral(_), Expression::NumericLiteral(_))
-            | (Expression::BigintLiteral(_), Expression::BigintLiteral(_))
+            | (Expression::BigIntLiteral(_), Expression::BigIntLiteral(_))
             | (Expression::RegExpLiteral(_), Expression::RegExpLiteral(_))
             | (Expression::TemplateLiteral(_), Expression::TemplateLiteral(_))
     )

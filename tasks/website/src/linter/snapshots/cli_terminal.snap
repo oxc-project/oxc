@@ -35,6 +35,7 @@ Enable Plugins
                               recommended to use along side with the `--tsconfig` option.
         --jsdoc-plugin        Enable the experimental jsdoc plugin and detect JSDoc problems
         --jest-plugin         Enable the Jest plugin and detect test problems
+        --vitest-plugin       Enable the Vitest plugin and detect test problems
         --jsx-a11y-plugin     Enable the JSX-a11y plugin and detect accessibility problems
         --nextjs-plugin       Enable the Next.js plugin and detect Next.js problems
         --react-perf-plugin   Enable the React performance plugin and detect rendering performance

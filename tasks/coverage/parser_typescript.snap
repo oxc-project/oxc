@@ -3999,20 +3999,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[compiler/ParameterList5.ts:1:23]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList5.ts:1:16]
  1 │ function A(): (public B) => C {
-   ·                       ┬
-   ·                       ╰── `)` expected
+   ·                ────────
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[compiler/ParameterList6.ts:2:26]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList6.ts:2:19]
  1 │ class C {
  2 │   constructor(C: (public A) => any) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·                   ────────
  3 │   }
    ╰────
 
@@ -15431,11 +15429,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Unexpected token
-    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:16:2]
- 15 │ // Missing the first operand
- 16 │ (, ANY);
-    ·  ─
- 17 │ (, BOOLEAN);
+    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:7]
+  8 │ // Missing the second operand
+  9 │ (ANY, );
+    ·       ─
+ 10 │ (BOOLEAN, );
     ╰────
 
   × 'with' statements are not allowed
@@ -15952,13 +15950,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                      ─
    ╰────
 
-  × Expected `>` but found `,`
-   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:5:14]
+  × Unexpected token
+   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:4:10]
+ 3 │ // reparse call as invalid await should error
  4 │ await (1,);
+   ·          ─
  5 │ await <number, string>(1);
-   ·              ┬
-   ·              ╰── `>` expected
- 6 │ 
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -17726,20 +17723,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:23]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:16]
  1 │ function A(): (public B) => C {
-   ·                       ┬
-   ·                       ╰── `)` expected
+   ·                ────────
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:26]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:19]
  1 │ class C {
  2 │   constructor(C: (public A) => any) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·                   ────────
  3 │   }
    ╰────
 

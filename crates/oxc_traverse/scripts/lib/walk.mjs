@@ -61,7 +61,7 @@ function generateWalkForStruct(type, types) {
     let scopeEnterField, enterScopeCode = '', exitScopeCode = '';
     if (scopeArgs && scopeIdField) {
         // Get field to enter scope before
-        const enterFieldName = scopeArgs.enter_scope_before;
+        const enterFieldName = scopeArgs.enterScopeBefore;
         if (enterFieldName) {
             scopeEnterField = visitedFields.find(field => field.name === enterFieldName);
             assert(

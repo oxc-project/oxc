@@ -99,7 +99,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 });
 
             pattern = self.ast.binding_pattern(
-                SPAN,
                 self.ast.copy(&pattern.kind),
                 type_annotation,
                 // if it's assignment pattern, it's optional

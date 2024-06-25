@@ -197,7 +197,7 @@ impl PreferToBe {
 
         matches!(
             expr,
-            Expression::BigintLiteral(_)
+            Expression::BigIntLiteral(_)
                 | Expression::BooleanLiteral(_)
                 | Expression::NumericLiteral(_)
                 | Expression::NullLiteral(_)

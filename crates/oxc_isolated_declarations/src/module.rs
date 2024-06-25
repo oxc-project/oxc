@@ -65,8 +65,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         self.error(default_export_inferred(expr.span()));
                     }
 
-                    let id =
-                        BindingPattern { span: SPAN, kind: id, type_annotation, optional: false };
+                    let id = BindingPattern { kind: id, type_annotation, optional: false };
                     let declarations = self
                         .ast
                         .new_vec_single(self.ast.variable_declarator(SPAN, kind, id, None, true));

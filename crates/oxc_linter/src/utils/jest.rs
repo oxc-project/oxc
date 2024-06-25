@@ -206,7 +206,7 @@ fn collect_ids_referenced_to_import<'a>(
                 };
                 let name = ctx.symbols().get_name(symbol_id);
 
-                if import_decl.source.value == "@jest/globals" {
+                if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
                     let mut ret = vec![];
                     for reference_id in reference_ids {

@@ -19,7 +19,7 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::BooleanLiteral(_) => Some(self.ast.ts_boolean_keyword(SPAN)),
             Expression::NullLiteral(_) => Some(self.ast.ts_null_keyword(SPAN)),
             Expression::NumericLiteral(_) => Some(self.ast.ts_number_keyword(SPAN)),
-            Expression::BigintLiteral(_) => Some(self.ast.ts_bigint_keyword(SPAN)),
+            Expression::BigIntLiteral(_) => Some(self.ast.ts_bigint_keyword(SPAN)),
             Expression::StringLiteral(_) => Some(self.ast.ts_string_keyword(SPAN)),
             Expression::TemplateLiteral(lit) => {
                 if lit.expressions.is_empty() {
@@ -139,7 +139,7 @@ impl<'a> IsolatedDeclarations<'a> {
     pub fn is_need_to_infer_type_from_expression(expr: &Expression) -> bool {
         match expr {
             Expression::NumericLiteral(_)
-            | Expression::BigintLiteral(_)
+            | Expression::BigIntLiteral(_)
             | Expression::StringLiteral(_) => false,
             Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
             _ => true,
