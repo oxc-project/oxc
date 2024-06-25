@@ -68,11 +68,13 @@ impl<'a> AstBuilder<'a> {
         Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
     }
 
+    /// # SAFETY
+    /// This method is completely unsound and should not be used.
+    /// We need to remove all uses of it. Please don't add any more!
+    /// <https://github.com/oxc-project/oxc/issues/3483>
     #[inline]
     pub fn copy<T>(self, src: &T) -> T {
-        // SAFETY:
-        // This should be safe as long as `src` is an reference from the allocator.
-        // But honestly, I'm not really sure if this is safe.
+        // SAFETY: Not safe (see above)
         #[allow(unsafe_code)]
         unsafe {
             std::mem::transmute_copy(src)
