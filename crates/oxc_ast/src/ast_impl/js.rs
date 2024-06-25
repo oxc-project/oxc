@@ -872,8 +872,8 @@ impl<'a> Hash for CatchClause<'a> {
 }
 
 impl<'a> BindingPattern<'a> {
-    pub fn new_with_kind(span: Span, kind: BindingPatternKind<'a>) -> Self {
-        Self { span, kind, type_annotation: None, optional: false }
+    pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
+        Self { kind, type_annotation: None, optional: false }
     }
 
     pub fn get_identifier(&self) -> Option<Atom<'a>> {

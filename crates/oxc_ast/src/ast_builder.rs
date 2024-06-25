@@ -1191,12 +1191,11 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn binding_pattern(
         self,
-        span: Span,
         kind: BindingPatternKind<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
         optional: bool,
     ) -> BindingPattern<'a> {
-        BindingPattern { span, kind, type_annotation, optional }
+        BindingPattern { kind, type_annotation, optional }
     }
 
     #[inline]
@@ -1257,7 +1256,6 @@ impl<'a> AstBuilder<'a> {
     ) -> BindingPattern<'a> {
         let pattern = self.alloc(AssignmentPattern { span, left, right });
         BindingPattern {
-            span,
             kind: BindingPatternKind::AssignmentPattern(pattern),
             type_annotation: None,
             optional: false,

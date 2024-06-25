@@ -20,7 +20,6 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         allow_question: bool,
     ) -> Result<BindingPattern<'a>> {
-        let span = self.start_span();
         let mut kind = self.parse_binding_pattern_kind()?;
         let optional =
             if allow_question && self.ts_enabled() { self.eat(Kind::Question) } else { false };
@@ -28,7 +27,7 @@ impl<'a> ParserImpl<'a> {
         if let Some(type_annotation) = &type_annotation {
             Self::extend_binding_pattern_span_end(type_annotation.span, &mut kind);
         }
-        Ok(self.ast.binding_pattern(self.end_span(span), kind, type_annotation, optional))
+        Ok(self.ast.binding_pattern(kind, type_annotation, optional))
     }
 
     pub(crate) fn parse_binding_pattern_kind(&mut self) -> Result<BindingPatternKind<'a>> {
@@ -73,7 +72,7 @@ impl<'a> ParserImpl<'a> {
         }
         // The span is not extended to its type_annotation
         let type_annotation = self.parse_ts_type_annotation()?;
-        let pattern = self.ast.binding_pattern(self.end_span(span), kind, type_annotation, false);
+        let pattern = self.ast.binding_pattern(kind, type_annotation, false);
         // Rest element does not allow `= initializer`, .
         let argument = self
             .context(Context::In, Context::empty(), |p| p.parse_initializer(init_span, pattern))?;
@@ -110,7 +109,7 @@ impl<'a> ParserImpl<'a> {
                 shorthand = true;
                 let binding_identifier = BindingIdentifier::new(ident.span, ident.name.clone());
                 let identifier = self.ast.binding_pattern_identifier(binding_identifier);
-                let left = self.ast.binding_pattern(ident.span, identifier, None, false);
+                let left = self.ast.binding_pattern(identifier, None, false);
                 self.context(Context::In, Context::empty(), |p| p.parse_initializer(span, left))?
             } else {
                 return Err(self.unexpected());
