@@ -18,128 +18,144 @@ pub struct AstBuilder<'a> {
 }
 
 impl<'a> AstBuilder<'a> {
-    fn boolean_literal(self, span: Span, value: bool) -> BooleanLiteral {
-        BooleanLiteral { span, value }
+    pub fn boolean_literal(self, span: Span, value: bool) -> Box<'a, BooleanLiteral> {
+        self.alloc(BooleanLiteral { span, value })
     }
-    fn null_literal(self, span: Span) -> NullLiteral {
-        NullLiteral { span }
+    pub fn null_literal(self, span: Span) -> Box<'a, NullLiteral> {
+        self.alloc(NullLiteral { span })
     }
-    fn numeric_literal(
+    pub fn numeric_literal(
         self,
         span: Span,
         value: f64,
         raw: &'a str,
         base: NumberBase,
-    ) -> NumericLiteral<'a> {
-        NumericLiteral {
+    ) -> Box<'a, NumericLiteral<'a>> {
+        self.alloc(NumericLiteral {
             span,
             value,
             raw,
             base,
-        }
+        })
     }
-    fn big_int_literal(
+    pub fn big_int_literal(
         self,
         span: Span,
         raw: Atom<'a>,
         base: BigintBase,
-    ) -> BigIntLiteral<'a> {
-        BigIntLiteral { span, raw, base }
+    ) -> Box<'a, BigIntLiteral<'a>> {
+        self.alloc(BigIntLiteral { span, raw, base })
     }
-    fn reg_exp_literal(
+    pub fn reg_exp_literal(
         self,
         span: Span,
         value: EmptyObject,
         regex: RegExp<'a>,
-    ) -> RegExpLiteral<'a> {
-        RegExpLiteral {
+    ) -> Box<'a, RegExpLiteral<'a>> {
+        self.alloc(RegExpLiteral {
             span,
             value,
             regex,
-        }
+        })
     }
-    fn reg_exp(self, pattern: Atom<'a>, flags: RegExpFlags) -> RegExp<'a> {
-        RegExp { pattern, flags }
+    pub fn reg_exp(self, pattern: Atom<'a>, flags: RegExpFlags) -> Box<'a, RegExp<'a>> {
+        self.alloc(RegExp { pattern, flags })
     }
-    fn empty_object(self) -> EmptyObject {
-        EmptyObject {}
+    pub fn empty_object(self) -> Box<'a, EmptyObject> {
+        self.alloc(EmptyObject {})
     }
-    fn string_literal(self, span: Span, value: Atom<'a>) -> StringLiteral<'a> {
-        StringLiteral { span, value }
+    pub fn string_literal(
+        self,
+        span: Span,
+        value: Atom<'a>,
+    ) -> Box<'a, StringLiteral<'a>> {
+        self.alloc(StringLiteral { span, value })
     }
-    fn program(
+    pub fn program(
         self,
         span: Span,
         source_type: SourceType,
         directives: Vec<'a, Directive<'a>>,
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
-    ) -> Program<'a> {
-        Program {
+    ) -> Box<'a, Program<'a>> {
+        self.alloc(Program {
             span,
             source_type,
             directives,
             hashbang,
             body,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn identifier_name(self, span: Span, name: Atom<'a>) -> IdentifierName<'a> {
-        IdentifierName { span, name }
-    }
-    fn identifier_reference(
+    pub fn identifier_name(
         self,
         span: Span,
         name: Atom<'a>,
-    ) -> IdentifierReference<'a> {
-        IdentifierReference {
+    ) -> Box<'a, IdentifierName<'a>> {
+        self.alloc(IdentifierName { span, name })
+    }
+    pub fn identifier_reference(
+        self,
+        span: Span,
+        name: Atom<'a>,
+    ) -> Box<'a, IdentifierReference<'a>> {
+        self.alloc(IdentifierReference {
             span,
             name,
             reference_id: Default::default(),
             reference_flag: Default::default(),
-        }
+        })
     }
-    fn binding_identifier(self, span: Span, name: Atom<'a>) -> BindingIdentifier<'a> {
-        BindingIdentifier {
+    pub fn binding_identifier(
+        self,
+        span: Span,
+        name: Atom<'a>,
+    ) -> Box<'a, BindingIdentifier<'a>> {
+        self.alloc(BindingIdentifier {
             span,
             name,
             symbol_id: Default::default(),
-        }
+        })
     }
-    fn label_identifier(self, span: Span, name: Atom<'a>) -> LabelIdentifier<'a> {
-        LabelIdentifier { span, name }
+    pub fn label_identifier(
+        self,
+        span: Span,
+        name: Atom<'a>,
+    ) -> Box<'a, LabelIdentifier<'a>> {
+        self.alloc(LabelIdentifier { span, name })
     }
-    fn this_expression(self, span: Span) -> ThisExpression {
-        ThisExpression { span }
+    pub fn this_expression(self, span: Span) -> Box<'a, ThisExpression> {
+        self.alloc(ThisExpression { span })
     }
-    fn array_expression(
+    pub fn array_expression(
         self,
         span: Span,
         elements: Vec<'a, ArrayExpressionElement<'a>>,
         trailing_comma: Option<Span>,
-    ) -> ArrayExpression<'a> {
-        ArrayExpression {
+    ) -> Box<'a, ArrayExpression<'a>> {
+        self.alloc(ArrayExpression {
             span,
             elements,
             trailing_comma,
-        }
+        })
     }
-    fn elision(self, span: Span) -> Elision {
-        Elision { span }
+    pub fn elision(self, span: Span) -> Box<'a, Elision> {
+        self.alloc(Elision { span })
     }
-    fn object_expression(
+    pub fn object_expression(
         self,
         span: Span,
         properties: Vec<'a, ObjectPropertyKind<'a>>,
         trailing_comma: Option<Span>,
-    ) -> ObjectExpression<'a> {
-        ObjectExpression {
+    ) -> Box<'a, ObjectExpression<'a>> {
+        self.alloc(ObjectExpression {
             span,
             properties,
             trailing_comma,
-        }
+        })
     }
-    fn object_property(
+    pub fn object_property(
         self,
         span: Span,
         kind: PropertyKind,
@@ -149,8 +165,8 @@ impl<'a> AstBuilder<'a> {
         method: bool,
         shorthand: bool,
         computed: bool,
-    ) -> ObjectProperty<'a> {
-        ObjectProperty {
+    ) -> Box<'a, ObjectProperty<'a>> {
+        self.alloc(ObjectProperty {
             span,
             kind,
             key,
@@ -159,703 +175,707 @@ impl<'a> AstBuilder<'a> {
             method,
             shorthand,
             computed,
-        }
+        })
     }
-    fn template_literal(
+    pub fn template_literal(
         self,
         span: Span,
         quasis: Vec<'a, TemplateElement<'a>>,
         expressions: Vec<'a, Expression<'a>>,
-    ) -> TemplateLiteral<'a> {
-        TemplateLiteral {
+    ) -> Box<'a, TemplateLiteral<'a>> {
+        self.alloc(TemplateLiteral {
             span,
             quasis,
             expressions,
-        }
+        })
     }
-    fn tagged_template_expression(
+    pub fn tagged_template_expression(
         self,
         span: Span,
         tag: Expression<'a>,
         quasi: TemplateLiteral<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> TaggedTemplateExpression<'a> {
-        TaggedTemplateExpression {
+    ) -> Box<'a, TaggedTemplateExpression<'a>> {
+        self.alloc(TaggedTemplateExpression {
             span,
             tag,
             quasi,
             type_parameters,
-        }
+        })
     }
-    fn template_element(
+    pub fn template_element(
         self,
         span: Span,
         tail: bool,
         value: TemplateElementValue<'a>,
-    ) -> TemplateElement<'a> {
-        TemplateElement {
+    ) -> Box<'a, TemplateElement<'a>> {
+        self.alloc(TemplateElement {
             span,
             tail,
             value,
-        }
+        })
     }
-    fn template_element_value(
+    pub fn template_element_value(
         self,
         raw: Atom<'a>,
         cooked: Option<Atom<'a>>,
-    ) -> TemplateElementValue<'a> {
-        TemplateElementValue {
+    ) -> Box<'a, TemplateElementValue<'a>> {
+        self.alloc(TemplateElementValue {
             raw,
             cooked,
-        }
+        })
     }
-    fn computed_member_expression(
+    pub fn computed_member_expression(
         self,
         span: Span,
         object: Expression<'a>,
         expression: Expression<'a>,
         optional: bool,
-    ) -> ComputedMemberExpression<'a> {
-        ComputedMemberExpression {
+    ) -> Box<'a, ComputedMemberExpression<'a>> {
+        self.alloc(ComputedMemberExpression {
             span,
             object,
             expression,
             optional,
-        }
+        })
     }
-    fn static_member_expression(
+    pub fn static_member_expression(
         self,
         span: Span,
         object: Expression<'a>,
         property: IdentifierName<'a>,
         optional: bool,
-    ) -> StaticMemberExpression<'a> {
-        StaticMemberExpression {
+    ) -> Box<'a, StaticMemberExpression<'a>> {
+        self.alloc(StaticMemberExpression {
             span,
             object,
             property,
             optional,
-        }
+        })
     }
-    fn private_field_expression(
+    pub fn private_field_expression(
         self,
         span: Span,
         object: Expression<'a>,
         field: PrivateIdentifier<'a>,
         optional: bool,
-    ) -> PrivateFieldExpression<'a> {
-        PrivateFieldExpression {
+    ) -> Box<'a, PrivateFieldExpression<'a>> {
+        self.alloc(PrivateFieldExpression {
             span,
             object,
             field,
             optional,
-        }
+        })
     }
-    fn call_expression(
+    pub fn call_expression(
         self,
         span: Span,
         arguments: Vec<'a, Argument<'a>>,
         callee: Expression<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> CallExpression<'a> {
-        CallExpression {
+    ) -> Box<'a, CallExpression<'a>> {
+        self.alloc(CallExpression {
             span,
             callee,
             arguments,
             optional,
             type_parameters,
-        }
+        })
     }
-    fn new_expression(
+    pub fn new_expression(
         self,
         span: Span,
         callee: Expression<'a>,
         arguments: Vec<'a, Argument<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> NewExpression<'a> {
-        NewExpression {
+    ) -> Box<'a, NewExpression<'a>> {
+        self.alloc(NewExpression {
             span,
             callee,
             arguments,
             type_parameters,
-        }
+        })
     }
-    fn meta_property(
+    pub fn meta_property(
         self,
         span: Span,
         meta: IdentifierName<'a>,
         property: IdentifierName<'a>,
-    ) -> MetaProperty<'a> {
-        MetaProperty {
+    ) -> Box<'a, MetaProperty<'a>> {
+        self.alloc(MetaProperty {
             span,
             meta,
             property,
-        }
+        })
     }
-    fn spread_element(self, span: Span, argument: Expression<'a>) -> SpreadElement<'a> {
-        SpreadElement { span, argument }
+    pub fn spread_element(
+        self,
+        span: Span,
+        argument: Expression<'a>,
+    ) -> Box<'a, SpreadElement<'a>> {
+        self.alloc(SpreadElement { span, argument })
     }
-    fn update_expression(
+    pub fn update_expression(
         self,
         span: Span,
         operator: UpdateOperator,
         prefix: bool,
         argument: SimpleAssignmentTarget<'a>,
-    ) -> UpdateExpression<'a> {
-        UpdateExpression {
+    ) -> Box<'a, UpdateExpression<'a>> {
+        self.alloc(UpdateExpression {
             span,
             operator,
             prefix,
             argument,
-        }
+        })
     }
-    fn unary_expression(
+    pub fn unary_expression(
         self,
         span: Span,
         operator: UnaryOperator,
         argument: Expression<'a>,
-    ) -> UnaryExpression<'a> {
-        UnaryExpression {
+    ) -> Box<'a, UnaryExpression<'a>> {
+        self.alloc(UnaryExpression {
             span,
             operator,
             argument,
-        }
+        })
     }
-    fn binary_expression(
+    pub fn binary_expression(
         self,
         span: Span,
         left: Expression<'a>,
         operator: BinaryOperator,
         right: Expression<'a>,
-    ) -> BinaryExpression<'a> {
-        BinaryExpression {
+    ) -> Box<'a, BinaryExpression<'a>> {
+        self.alloc(BinaryExpression {
             span,
             left,
             operator,
             right,
-        }
+        })
     }
-    fn private_in_expression(
+    pub fn private_in_expression(
         self,
         span: Span,
         left: PrivateIdentifier<'a>,
         operator: BinaryOperator,
         right: Expression<'a>,
-    ) -> PrivateInExpression<'a> {
-        PrivateInExpression {
+    ) -> Box<'a, PrivateInExpression<'a>> {
+        self.alloc(PrivateInExpression {
             span,
             left,
             operator,
             right,
-        }
+        })
     }
-    fn logical_expression(
+    pub fn logical_expression(
         self,
         span: Span,
         left: Expression<'a>,
         operator: LogicalOperator,
         right: Expression<'a>,
-    ) -> LogicalExpression<'a> {
-        LogicalExpression {
+    ) -> Box<'a, LogicalExpression<'a>> {
+        self.alloc(LogicalExpression {
             span,
             left,
             operator,
             right,
-        }
+        })
     }
-    fn conditional_expression(
+    pub fn conditional_expression(
         self,
         span: Span,
         test: Expression<'a>,
         consequent: Expression<'a>,
         alternate: Expression<'a>,
-    ) -> ConditionalExpression<'a> {
-        ConditionalExpression {
+    ) -> Box<'a, ConditionalExpression<'a>> {
+        self.alloc(ConditionalExpression {
             span,
             test,
             consequent,
             alternate,
-        }
+        })
     }
-    fn assignment_expression(
+    pub fn assignment_expression(
         self,
         span: Span,
         operator: AssignmentOperator,
         left: AssignmentTarget<'a>,
         right: Expression<'a>,
-    ) -> AssignmentExpression<'a> {
-        AssignmentExpression {
+    ) -> Box<'a, AssignmentExpression<'a>> {
+        self.alloc(AssignmentExpression {
             span,
             operator,
             left,
             right,
-        }
+        })
     }
-    fn array_assignment_target(
+    pub fn array_assignment_target(
         self,
         span: Span,
         elements: Vec<'a, Option<AssignmentTargetMaybeDefault<'a>>>,
         rest: Option<AssignmentTargetRest<'a>>,
         trailing_comma: Option<Span>,
-    ) -> ArrayAssignmentTarget<'a> {
-        ArrayAssignmentTarget {
+    ) -> Box<'a, ArrayAssignmentTarget<'a>> {
+        self.alloc(ArrayAssignmentTarget {
             span,
             elements,
             rest,
             trailing_comma,
-        }
+        })
     }
-    fn object_assignment_target(
+    pub fn object_assignment_target(
         self,
         span: Span,
         properties: Vec<'a, AssignmentTargetProperty<'a>>,
         rest: Option<AssignmentTargetRest<'a>>,
-    ) -> ObjectAssignmentTarget<'a> {
-        ObjectAssignmentTarget {
+    ) -> Box<'a, ObjectAssignmentTarget<'a>> {
+        self.alloc(ObjectAssignmentTarget {
             span,
             properties,
             rest,
-        }
+        })
     }
-    fn assignment_target_rest(
+    pub fn assignment_target_rest(
         self,
         span: Span,
         target: AssignmentTarget<'a>,
-    ) -> AssignmentTargetRest<'a> {
-        AssignmentTargetRest {
+    ) -> Box<'a, AssignmentTargetRest<'a>> {
+        self.alloc(AssignmentTargetRest {
             span,
             target,
-        }
+        })
     }
-    fn assignment_target_with_default(
+    pub fn assignment_target_with_default(
         self,
         span: Span,
         binding: AssignmentTarget<'a>,
         init: Expression<'a>,
-    ) -> AssignmentTargetWithDefault<'a> {
-        AssignmentTargetWithDefault {
+    ) -> Box<'a, AssignmentTargetWithDefault<'a>> {
+        self.alloc(AssignmentTargetWithDefault {
             span,
             binding,
             init,
-        }
+        })
     }
-    fn assignment_target_property_identifier(
+    pub fn assignment_target_property_identifier(
         self,
         span: Span,
         binding: IdentifierReference<'a>,
         init: Option<Expression<'a>>,
-    ) -> AssignmentTargetPropertyIdentifier<'a> {
-        AssignmentTargetPropertyIdentifier {
+    ) -> Box<'a, AssignmentTargetPropertyIdentifier<'a>> {
+        self.alloc(AssignmentTargetPropertyIdentifier {
             span,
             binding,
             init,
-        }
+        })
     }
-    fn assignment_target_property_property(
+    pub fn assignment_target_property_property(
         self,
         span: Span,
         name: PropertyKey<'a>,
         binding: AssignmentTargetMaybeDefault<'a>,
-    ) -> AssignmentTargetPropertyProperty<'a> {
-        AssignmentTargetPropertyProperty {
+    ) -> Box<'a, AssignmentTargetPropertyProperty<'a>> {
+        self.alloc(AssignmentTargetPropertyProperty {
             span,
             name,
             binding,
-        }
+        })
     }
-    fn sequence_expression(
+    pub fn sequence_expression(
         self,
         span: Span,
         expressions: Vec<'a, Expression<'a>>,
-    ) -> SequenceExpression<'a> {
-        SequenceExpression {
+    ) -> Box<'a, SequenceExpression<'a>> {
+        self.alloc(SequenceExpression {
             span,
             expressions,
-        }
+        })
     }
-    fn super_(self, span: Span) -> Super {
-        Super { span }
+    pub fn super_(self, span: Span) -> Box<'a, Super> {
+        self.alloc(Super { span })
     }
-    fn await_expression(
+    pub fn await_expression(
         self,
         span: Span,
         argument: Expression<'a>,
-    ) -> AwaitExpression<'a> {
-        AwaitExpression { span, argument }
+    ) -> Box<'a, AwaitExpression<'a>> {
+        self.alloc(AwaitExpression { span, argument })
     }
-    fn chain_expression(
+    pub fn chain_expression(
         self,
         span: Span,
         expression: ChainElement<'a>,
-    ) -> ChainExpression<'a> {
-        ChainExpression {
+    ) -> Box<'a, ChainExpression<'a>> {
+        self.alloc(ChainExpression {
             span,
             expression,
-        }
+        })
     }
-    fn parenthesized_expression(
+    pub fn parenthesized_expression(
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> ParenthesizedExpression<'a> {
-        ParenthesizedExpression {
+    ) -> Box<'a, ParenthesizedExpression<'a>> {
+        self.alloc(ParenthesizedExpression {
             span,
             expression,
-        }
+        })
     }
-    fn directive(
+    pub fn directive(
         self,
         span: Span,
         expression: StringLiteral<'a>,
         directive: Atom<'a>,
-    ) -> Directive<'a> {
-        Directive {
+    ) -> Box<'a, Directive<'a>> {
+        self.alloc(Directive {
             span,
             expression,
             directive,
-        }
+        })
     }
-    fn hashbang(self, span: Span, value: Atom<'a>) -> Hashbang<'a> {
-        Hashbang { span, value }
+    pub fn hashbang(self, span: Span, value: Atom<'a>) -> Box<'a, Hashbang<'a>> {
+        self.alloc(Hashbang { span, value })
     }
-    fn block_statement(
+    pub fn block_statement(
         self,
         span: Span,
         body: Vec<'a, Statement<'a>>,
-    ) -> BlockStatement<'a> {
-        BlockStatement {
+    ) -> Box<'a, BlockStatement<'a>> {
+        self.alloc(BlockStatement {
             span,
             body,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn variable_declaration(
+    pub fn variable_declaration(
         self,
         span: Span,
         kind: VariableDeclarationKind,
         declarations: Vec<'a, VariableDeclarator<'a>>,
         declare: bool,
-    ) -> VariableDeclaration<'a> {
-        VariableDeclaration {
+    ) -> Box<'a, VariableDeclaration<'a>> {
+        self.alloc(VariableDeclaration {
             span,
             kind,
             declarations,
             declare,
-        }
+        })
     }
-    fn variable_declarator(
+    pub fn variable_declarator(
         self,
         span: Span,
         kind: VariableDeclarationKind,
         id: BindingPattern<'a>,
         init: Option<Expression<'a>>,
         definite: bool,
-    ) -> VariableDeclarator<'a> {
-        VariableDeclarator {
+    ) -> Box<'a, VariableDeclarator<'a>> {
+        self.alloc(VariableDeclarator {
             span,
             kind,
             id,
             init,
             definite,
-        }
+        })
     }
-    fn using_declaration(
+    pub fn using_declaration(
         self,
         span: Span,
         is_await: bool,
         declarations: Vec<'a, VariableDeclarator<'a>>,
-    ) -> UsingDeclaration<'a> {
-        UsingDeclaration {
+    ) -> Box<'a, UsingDeclaration<'a>> {
+        self.alloc(UsingDeclaration {
             span,
             is_await,
             declarations,
-        }
+        })
     }
-    fn empty_statement(self, span: Span) -> EmptyStatement {
-        EmptyStatement { span }
+    pub fn empty_statement(self, span: Span) -> Box<'a, EmptyStatement> {
+        self.alloc(EmptyStatement { span })
     }
-    fn expression_statement(
+    pub fn expression_statement(
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> ExpressionStatement<'a> {
-        ExpressionStatement {
+    ) -> Box<'a, ExpressionStatement<'a>> {
+        self.alloc(ExpressionStatement {
             span,
             expression,
-        }
+        })
     }
-    fn if_statement(
+    pub fn if_statement(
         self,
         span: Span,
         test: Expression<'a>,
         consequent: Statement<'a>,
         alternate: Option<Statement<'a>>,
-    ) -> IfStatement<'a> {
-        IfStatement {
+    ) -> Box<'a, IfStatement<'a>> {
+        self.alloc(IfStatement {
             span,
             test,
             consequent,
             alternate,
-        }
+        })
     }
-    fn do_while_statement(
+    pub fn do_while_statement(
         self,
         span: Span,
         body: Statement<'a>,
         test: Expression<'a>,
-    ) -> DoWhileStatement<'a> {
-        DoWhileStatement {
+    ) -> Box<'a, DoWhileStatement<'a>> {
+        self.alloc(DoWhileStatement {
             span,
             body,
             test,
-        }
+        })
     }
-    fn while_statement(
+    pub fn while_statement(
         self,
         span: Span,
         test: Expression<'a>,
         body: Statement<'a>,
-    ) -> WhileStatement<'a> {
-        WhileStatement { span, test, body }
+    ) -> Box<'a, WhileStatement<'a>> {
+        self.alloc(WhileStatement { span, test, body })
     }
-    fn for_statement(
+    pub fn for_statement(
         self,
         span: Span,
         init: Option<ForStatementInit<'a>>,
         test: Option<Expression<'a>>,
         update: Option<Expression<'a>>,
         body: Statement<'a>,
-    ) -> ForStatement<'a> {
-        ForStatement {
+    ) -> Box<'a, ForStatement<'a>> {
+        self.alloc(ForStatement {
             span,
             init,
             test,
             update,
             body,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn for_in_statement(
+    pub fn for_in_statement(
         self,
         span: Span,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
-    ) -> ForInStatement<'a> {
-        ForInStatement {
+    ) -> Box<'a, ForInStatement<'a>> {
+        self.alloc(ForInStatement {
             span,
             left,
             right,
             body,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn for_of_statement(
+    pub fn for_of_statement(
         self,
         span: Span,
         r#await: bool,
         left: ForStatementLeft<'a>,
         right: Expression<'a>,
         body: Statement<'a>,
-    ) -> ForOfStatement<'a> {
-        ForOfStatement {
+    ) -> Box<'a, ForOfStatement<'a>> {
+        self.alloc(ForOfStatement {
             span,
             r#await,
             left,
             right,
             body,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn continue_statement(
+    pub fn continue_statement(
         self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> ContinueStatement<'a> {
-        ContinueStatement { span, label }
+    ) -> Box<'a, ContinueStatement<'a>> {
+        self.alloc(ContinueStatement { span, label })
     }
-    fn break_statement(
+    pub fn break_statement(
         self,
         span: Span,
         label: Option<LabelIdentifier<'a>>,
-    ) -> BreakStatement<'a> {
-        BreakStatement { span, label }
+    ) -> Box<'a, BreakStatement<'a>> {
+        self.alloc(BreakStatement { span, label })
     }
-    fn return_statement(
+    pub fn return_statement(
         self,
         span: Span,
         argument: Option<Expression<'a>>,
-    ) -> ReturnStatement<'a> {
-        ReturnStatement { span, argument }
+    ) -> Box<'a, ReturnStatement<'a>> {
+        self.alloc(ReturnStatement { span, argument })
     }
-    fn with_statement(
+    pub fn with_statement(
         self,
         span: Span,
         object: Expression<'a>,
         body: Statement<'a>,
-    ) -> WithStatement<'a> {
-        WithStatement {
+    ) -> Box<'a, WithStatement<'a>> {
+        self.alloc(WithStatement {
             span,
             object,
             body,
-        }
+        })
     }
-    fn switch_statement(
+    pub fn switch_statement(
         self,
         span: Span,
         discriminant: Expression<'a>,
         cases: Vec<'a, SwitchCase<'a>>,
-    ) -> SwitchStatement<'a> {
-        SwitchStatement {
+    ) -> Box<'a, SwitchStatement<'a>> {
+        self.alloc(SwitchStatement {
             span,
             discriminant,
             cases,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn switch_case(
+    pub fn switch_case(
         self,
         span: Span,
         test: Option<Expression<'a>>,
         consequent: Vec<'a, Statement<'a>>,
-    ) -> SwitchCase<'a> {
-        SwitchCase {
+    ) -> Box<'a, SwitchCase<'a>> {
+        self.alloc(SwitchCase {
             span,
             test,
             consequent,
-        }
+        })
     }
-    fn labeled_statement(
+    pub fn labeled_statement(
         self,
         span: Span,
         label: LabelIdentifier<'a>,
         body: Statement<'a>,
-    ) -> LabeledStatement<'a> {
-        LabeledStatement {
+    ) -> Box<'a, LabeledStatement<'a>> {
+        self.alloc(LabeledStatement {
             span,
             label,
             body,
-        }
+        })
     }
-    fn throw_statement(
+    pub fn throw_statement(
         self,
         span: Span,
         argument: Expression<'a>,
-    ) -> ThrowStatement<'a> {
-        ThrowStatement { span, argument }
+    ) -> Box<'a, ThrowStatement<'a>> {
+        self.alloc(ThrowStatement { span, argument })
     }
-    fn try_statement(
+    pub fn try_statement(
         self,
         span: Span,
         block: Box<'a, BlockStatement<'a>>,
         handler: Option<Box<'a, CatchClause<'a>>>,
         finalizer: Option<Box<'a, BlockStatement<'a>>>,
-    ) -> TryStatement<'a> {
-        TryStatement {
+    ) -> Box<'a, TryStatement<'a>> {
+        self.alloc(TryStatement {
             span,
             block,
             handler,
             finalizer,
-        }
+        })
     }
-    fn catch_clause(
+    pub fn catch_clause(
         self,
         span: Span,
         param: Option<CatchParameter<'a>>,
         body: Box<'a, BlockStatement<'a>>,
-    ) -> CatchClause<'a> {
-        CatchClause {
+    ) -> Box<'a, CatchClause<'a>> {
+        self.alloc(CatchClause {
             span,
             param,
             body,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn catch_parameter(
+    pub fn catch_parameter(
         self,
         span: Span,
         pattern: BindingPattern<'a>,
-    ) -> CatchParameter<'a> {
-        CatchParameter { span, pattern }
+    ) -> Box<'a, CatchParameter<'a>> {
+        self.alloc(CatchParameter { span, pattern })
     }
-    fn debugger_statement(self, span: Span) -> DebuggerStatement {
-        DebuggerStatement { span }
+    pub fn debugger_statement(self, span: Span) -> Box<'a, DebuggerStatement> {
+        self.alloc(DebuggerStatement { span })
     }
-    fn binding_pattern(
+    pub fn binding_pattern(
         self,
         kind: BindingPatternKind<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
         optional: bool,
-    ) -> BindingPattern<'a> {
-        BindingPattern {
+    ) -> Box<'a, BindingPattern<'a>> {
+        self.alloc(BindingPattern {
             kind,
             type_annotation,
             optional,
-        }
+        })
     }
-    fn assignment_pattern(
+    pub fn assignment_pattern(
         self,
         span: Span,
         left: BindingPattern<'a>,
         right: Expression<'a>,
-    ) -> AssignmentPattern<'a> {
-        AssignmentPattern {
+    ) -> Box<'a, AssignmentPattern<'a>> {
+        self.alloc(AssignmentPattern {
             span,
             left,
             right,
-        }
+        })
     }
-    fn object_pattern(
+    pub fn object_pattern(
         self,
         span: Span,
         properties: Vec<'a, BindingProperty<'a>>,
         rest: Option<Box<'a, BindingRestElement<'a>>>,
-    ) -> ObjectPattern<'a> {
-        ObjectPattern {
+    ) -> Box<'a, ObjectPattern<'a>> {
+        self.alloc(ObjectPattern {
             span,
             properties,
             rest,
-        }
+        })
     }
-    fn binding_property(
+    pub fn binding_property(
         self,
         span: Span,
         key: PropertyKey<'a>,
         value: BindingPattern<'a>,
         shorthand: bool,
         computed: bool,
-    ) -> BindingProperty<'a> {
-        BindingProperty {
+    ) -> Box<'a, BindingProperty<'a>> {
+        self.alloc(BindingProperty {
             span,
             key,
             value,
             shorthand,
             computed,
-        }
+        })
     }
-    fn array_pattern(
+    pub fn array_pattern(
         self,
         span: Span,
         elements: Vec<'a, Option<BindingPattern<'a>>>,
         rest: Option<Box<'a, BindingRestElement<'a>>>,
-    ) -> ArrayPattern<'a> {
-        ArrayPattern {
+    ) -> Box<'a, ArrayPattern<'a>> {
+        self.alloc(ArrayPattern {
             span,
             elements,
             rest,
-        }
+        })
     }
-    fn binding_rest_element(
+    pub fn binding_rest_element(
         self,
         span: Span,
         argument: BindingPattern<'a>,
-    ) -> BindingRestElement<'a> {
-        BindingRestElement {
+    ) -> Box<'a, BindingRestElement<'a>> {
+        self.alloc(BindingRestElement {
             span,
             argument,
-        }
+        })
     }
-    fn function(
+    pub fn function(
         self,
         r#type: FunctionType,
         span: Span,
@@ -868,8 +888,8 @@ impl<'a> AstBuilder<'a> {
         params: Box<'a, FormalParameters<'a>>,
         body: Option<Box<'a, FunctionBody<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> Function<'a> {
-        Function {
+    ) -> Box<'a, Function<'a>> {
+        self.alloc(Function {
             r#type,
             span,
             id,
@@ -882,23 +902,23 @@ impl<'a> AstBuilder<'a> {
             body,
             return_type,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn formal_parameters(
+    pub fn formal_parameters(
         self,
         span: Span,
         kind: FormalParameterKind,
         items: Vec<'a, FormalParameter<'a>>,
         rest: Option<Box<'a, BindingRestElement<'a>>>,
-    ) -> FormalParameters<'a> {
-        FormalParameters {
+    ) -> Box<'a, FormalParameters<'a>> {
+        self.alloc(FormalParameters {
             span,
             kind,
             items,
             rest,
-        }
+        })
     }
-    fn formal_parameter(
+    pub fn formal_parameter(
         self,
         span: Span,
         pattern: BindingPattern<'a>,
@@ -906,29 +926,29 @@ impl<'a> AstBuilder<'a> {
         readonly: bool,
         r#override: bool,
         decorators: Vec<'a, Decorator<'a>>,
-    ) -> FormalParameter<'a> {
-        FormalParameter {
+    ) -> Box<'a, FormalParameter<'a>> {
+        self.alloc(FormalParameter {
             span,
             pattern,
             accessibility,
             readonly,
             r#override,
             decorators,
-        }
+        })
     }
-    fn function_body(
+    pub fn function_body(
         self,
         span: Span,
         directives: Vec<'a, Directive<'a>>,
         statements: Vec<'a, Statement<'a>>,
-    ) -> FunctionBody<'a> {
-        FunctionBody {
+    ) -> Box<'a, FunctionBody<'a>> {
+        self.alloc(FunctionBody {
             span,
             directives,
             statements,
-        }
+        })
     }
-    fn arrow_function_expression(
+    pub fn arrow_function_expression(
         self,
         span: Span,
         expression: bool,
@@ -937,8 +957,8 @@ impl<'a> AstBuilder<'a> {
         body: Box<'a, FunctionBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> ArrowFunctionExpression<'a> {
-        ArrowFunctionExpression {
+    ) -> Box<'a, ArrowFunctionExpression<'a>> {
+        self.alloc(ArrowFunctionExpression {
             span,
             expression,
             r#async,
@@ -947,21 +967,21 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             return_type,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn yield_expression(
+    pub fn yield_expression(
         self,
         span: Span,
         delegate: bool,
         argument: Option<Expression<'a>>,
-    ) -> YieldExpression<'a> {
-        YieldExpression {
+    ) -> Box<'a, YieldExpression<'a>> {
+        self.alloc(YieldExpression {
             span,
             delegate,
             argument,
-        }
+        })
     }
-    fn class(
+    pub fn class(
         self,
         r#type: ClassType,
         span: Span,
@@ -974,8 +994,8 @@ impl<'a> AstBuilder<'a> {
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
         r#abstract: bool,
         declare: bool,
-    ) -> Class<'a> {
-        Class {
+    ) -> Box<'a, Class<'a>> {
+        self.alloc(Class {
             r#type,
             span,
             decorators,
@@ -988,12 +1008,16 @@ impl<'a> AstBuilder<'a> {
             r#abstract,
             declare,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn class_body(self, span: Span, body: Vec<'a, ClassElement<'a>>) -> ClassBody<'a> {
-        ClassBody { span, body }
+    pub fn class_body(
+        self,
+        span: Span,
+        body: Vec<'a, ClassElement<'a>>,
+    ) -> Box<'a, ClassBody<'a>> {
+        self.alloc(ClassBody { span, body })
     }
-    fn method_definition(
+    pub fn method_definition(
         self,
         r#type: MethodDefinitionType,
         span: Span,
@@ -1006,8 +1030,8 @@ impl<'a> AstBuilder<'a> {
         r#override: bool,
         optional: bool,
         accessibility: Option<TSAccessibility>,
-    ) -> MethodDefinition<'a> {
-        MethodDefinition {
+    ) -> Box<'a, MethodDefinition<'a>> {
+        self.alloc(MethodDefinition {
             r#type,
             span,
             decorators,
@@ -1019,9 +1043,9 @@ impl<'a> AstBuilder<'a> {
             r#override,
             optional,
             accessibility,
-        }
+        })
     }
-    fn property_definition(
+    pub fn property_definition(
         self,
         r#type: PropertyDefinitionType,
         span: Span,
@@ -1038,8 +1062,8 @@ impl<'a> AstBuilder<'a> {
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
         accessibility: Option<TSAccessibility>,
         decorators: Vec<'a, Decorator<'a>>,
-    ) -> PropertyDefinition<'a> {
-        PropertyDefinition {
+    ) -> Box<'a, PropertyDefinition<'a>> {
+        self.alloc(PropertyDefinition {
             r#type,
             span,
             decorators,
@@ -1054,19 +1078,28 @@ impl<'a> AstBuilder<'a> {
             readonly,
             type_annotation,
             accessibility,
-        }
+            decorators,
+        })
     }
-    fn private_identifier(self, span: Span, name: Atom<'a>) -> PrivateIdentifier<'a> {
-        PrivateIdentifier { span, name }
+    pub fn private_identifier(
+        self,
+        span: Span,
+        name: Atom<'a>,
+    ) -> Box<'a, PrivateIdentifier<'a>> {
+        self.alloc(PrivateIdentifier { span, name })
     }
-    fn static_block(self, span: Span, body: Vec<'a, Statement<'a>>) -> StaticBlock<'a> {
-        StaticBlock {
+    pub fn static_block(
+        self,
+        span: Span,
+        body: Vec<'a, Statement<'a>>,
+    ) -> Box<'a, StaticBlock<'a>> {
+        self.alloc(StaticBlock {
             span,
             body,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn accessor_property(
+    pub fn accessor_property(
         self,
         r#type: AccessorPropertyType,
         span: Span,
@@ -1075,8 +1108,8 @@ impl<'a> AstBuilder<'a> {
         computed: bool,
         r#static: bool,
         decorators: Vec<'a, Decorator<'a>>,
-    ) -> AccessorProperty<'a> {
-        AccessorProperty {
+    ) -> Box<'a, AccessorProperty<'a>> {
+        self.alloc(AccessorProperty {
             r#type,
             span,
             key,
@@ -1084,95 +1117,95 @@ impl<'a> AstBuilder<'a> {
             computed,
             r#static,
             decorators,
-        }
+        })
     }
-    fn import_expression(
+    pub fn import_expression(
         self,
         span: Span,
         source: Expression<'a>,
         arguments: Vec<'a, Expression<'a>>,
-    ) -> ImportExpression<'a> {
-        ImportExpression {
+    ) -> Box<'a, ImportExpression<'a>> {
+        self.alloc(ImportExpression {
             span,
             source,
             arguments,
-        }
+        })
     }
-    fn import_declaration(
+    pub fn import_declaration(
         self,
         span: Span,
         specifiers: Option<Vec<'a, ImportDeclarationSpecifier<'a>>>,
         source: StringLiteral<'a>,
         with_clause: Option<WithClause<'a>>,
         import_kind: ImportOrExportKind,
-    ) -> ImportDeclaration<'a> {
-        ImportDeclaration {
+    ) -> Box<'a, ImportDeclaration<'a>> {
+        self.alloc(ImportDeclaration {
             span,
             specifiers,
             source,
             with_clause,
             import_kind,
-        }
+        })
     }
-    fn import_specifier(
+    pub fn import_specifier(
         self,
         span: Span,
         imported: ModuleExportName<'a>,
         local: BindingIdentifier<'a>,
         import_kind: ImportOrExportKind,
-    ) -> ImportSpecifier<'a> {
-        ImportSpecifier {
+    ) -> Box<'a, ImportSpecifier<'a>> {
+        self.alloc(ImportSpecifier {
             span,
             imported,
             local,
             import_kind,
-        }
+        })
     }
-    fn import_default_specifier(
+    pub fn import_default_specifier(
         self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> ImportDefaultSpecifier<'a> {
-        ImportDefaultSpecifier {
+    ) -> Box<'a, ImportDefaultSpecifier<'a>> {
+        self.alloc(ImportDefaultSpecifier {
             span,
             local,
-        }
+        })
     }
-    fn import_namespace_specifier(
+    pub fn import_namespace_specifier(
         self,
         span: Span,
         local: BindingIdentifier<'a>,
-    ) -> ImportNamespaceSpecifier<'a> {
-        ImportNamespaceSpecifier {
+    ) -> Box<'a, ImportNamespaceSpecifier<'a>> {
+        self.alloc(ImportNamespaceSpecifier {
             span,
             local,
-        }
+        })
     }
-    fn with_clause(
+    pub fn with_clause(
         self,
         span: Span,
         attributes_keyword: IdentifierName<'a>,
         with_entries: Vec<'a, ImportAttribute<'a>>,
-    ) -> WithClause<'a> {
-        WithClause {
+    ) -> Box<'a, WithClause<'a>> {
+        self.alloc(WithClause {
             span,
             attributes_keyword,
             with_entries,
-        }
+        })
     }
-    fn import_attribute(
+    pub fn import_attribute(
         self,
         span: Span,
         key: ImportAttributeKey<'a>,
         value: StringLiteral<'a>,
-    ) -> ImportAttribute<'a> {
-        ImportAttribute {
+    ) -> Box<'a, ImportAttribute<'a>> {
+        self.alloc(ImportAttribute {
             span,
             key,
             value,
-        }
+        })
     }
-    fn export_named_declaration(
+    pub fn export_named_declaration(
         self,
         span: Span,
         declaration: Option<Declaration<'a>>,
@@ -1180,282 +1213,295 @@ impl<'a> AstBuilder<'a> {
         source: Option<StringLiteral<'a>>,
         export_kind: ImportOrExportKind,
         with_clause: Option<WithClause<'a>>,
-    ) -> ExportNamedDeclaration<'a> {
-        ExportNamedDeclaration {
+    ) -> Box<'a, ExportNamedDeclaration<'a>> {
+        self.alloc(ExportNamedDeclaration {
             span,
             declaration,
             specifiers,
             source,
             export_kind,
             with_clause,
-        }
+        })
     }
-    fn export_default_declaration(
+    pub fn export_default_declaration(
         self,
         span: Span,
         declaration: ExportDefaultDeclarationKind<'a>,
         exported: ModuleExportName<'a>,
-    ) -> ExportDefaultDeclaration<'a> {
-        ExportDefaultDeclaration {
+    ) -> Box<'a, ExportDefaultDeclaration<'a>> {
+        self.alloc(ExportDefaultDeclaration {
             span,
             declaration,
             exported,
-        }
+        })
     }
-    fn export_all_declaration(
+    pub fn export_all_declaration(
         self,
         span: Span,
         exported: Option<ModuleExportName<'a>>,
         source: StringLiteral<'a>,
         with_clause: Option<WithClause<'a>>,
         export_kind: ImportOrExportKind,
-    ) -> ExportAllDeclaration<'a> {
-        ExportAllDeclaration {
+    ) -> Box<'a, ExportAllDeclaration<'a>> {
+        self.alloc(ExportAllDeclaration {
             span,
             exported,
             source,
             with_clause,
             export_kind,
-        }
+        })
     }
-    fn export_specifier(
+    pub fn export_specifier(
         self,
         span: Span,
         local: ModuleExportName<'a>,
         exported: ModuleExportName<'a>,
         export_kind: ImportOrExportKind,
-    ) -> ExportSpecifier<'a> {
-        ExportSpecifier {
+    ) -> Box<'a, ExportSpecifier<'a>> {
+        self.alloc(ExportSpecifier {
             span,
             local,
             exported,
             export_kind,
-        }
+        })
     }
-    fn ts_this_parameter(
+    pub fn ts_this_parameter(
         self,
         span: Span,
         this: IdentifierName<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> TSThisParameter<'a> {
-        TSThisParameter {
+    ) -> Box<'a, TSThisParameter<'a>> {
+        self.alloc(TSThisParameter {
             span,
             this,
             type_annotation,
-        }
+        })
     }
-    fn ts_enum_declaration(
+    pub fn ts_enum_declaration(
         self,
         span: Span,
         id: BindingIdentifier<'a>,
         members: Vec<'a, TSEnumMember<'a>>,
         r#const: bool,
         declare: bool,
-    ) -> TSEnumDeclaration<'a> {
-        TSEnumDeclaration {
+    ) -> Box<'a, TSEnumDeclaration<'a>> {
+        self.alloc(TSEnumDeclaration {
             span,
             id,
             members,
             r#const,
             declare,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn ts_enum_member(
+    pub fn ts_enum_member(
         self,
         span: Span,
         id: TSEnumMemberName<'a>,
         initializer: Option<Expression<'a>>,
-    ) -> TSEnumMember<'a> {
-        TSEnumMember {
+    ) -> Box<'a, TSEnumMember<'a>> {
+        self.alloc(TSEnumMember {
             span,
             id,
             initializer,
-        }
+        })
     }
-    fn ts_type_annotation(
+    pub fn ts_type_annotation(
         self,
         span: Span,
         type_annotation: TSType<'a>,
-    ) -> TSTypeAnnotation<'a> {
-        TSTypeAnnotation {
+    ) -> Box<'a, TSTypeAnnotation<'a>> {
+        self.alloc(TSTypeAnnotation {
             span,
             type_annotation,
-        }
+        })
     }
-    fn ts_literal_type(self, span: Span, literal: TSLiteral<'a>) -> TSLiteralType<'a> {
-        TSLiteralType { span, literal }
+    pub fn ts_literal_type(
+        self,
+        span: Span,
+        literal: TSLiteral<'a>,
+    ) -> Box<'a, TSLiteralType<'a>> {
+        self.alloc(TSLiteralType { span, literal })
     }
-    fn ts_conditional_type(
+    pub fn ts_conditional_type(
         self,
         span: Span,
         check_type: TSType<'a>,
         extends_type: TSType<'a>,
         true_type: TSType<'a>,
         false_type: TSType<'a>,
-    ) -> TSConditionalType<'a> {
-        TSConditionalType {
+    ) -> Box<'a, TSConditionalType<'a>> {
+        self.alloc(TSConditionalType {
             span,
             check_type,
             extends_type,
             true_type,
             false_type,
-        }
+        })
     }
-    fn ts_union_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSUnionType<'a> {
-        TSUnionType { span, types }
-    }
-    fn ts_intersection_type(
+    pub fn ts_union_type(
         self,
         span: Span,
         types: Vec<'a, TSType<'a>>,
-    ) -> TSIntersectionType<'a> {
-        TSIntersectionType { span, types }
+    ) -> Box<'a, TSUnionType<'a>> {
+        self.alloc(TSUnionType { span, types })
     }
-    fn ts_parenthesized_type(self, span: Span, type_annotation: TSType<'a>) -> TSParenthesizedType {
-        TSParenthesizedType { span, type_annotation }
+    pub fn ts_intersection_type(
+        self,
+        span: Span,
+        types: Vec<'a, TSType<'a>>,
+    ) -> Box<'a, TSIntersectionType<'a>> {
+        self.alloc(TSIntersectionType { span, types })
     }
-    fn ts_type_operator(
+    pub fn ts_type_operator(
         self,
         span: Span,
         operator: TSTypeOperatorOperator,
         type_annotation: TSType<'a>,
-    ) -> TSTypeOperator<'a> {
-        TSTypeOperator {
+    ) -> Box<'a, TSTypeOperator<'a>> {
+        self.alloc(TSTypeOperator {
             span,
             operator,
             type_annotation,
-        }
+        })
     }
-    fn ts_array_type(self, span: Span, element_type: TSType<'a>) -> TSArrayType<'a> {
-        TSArrayType { span, element_type }
+    pub fn ts_array_type(
+        self,
+        span: Span,
+        element_type: TSType<'a>,
+    ) -> Box<'a, TSArrayType<'a>> {
+        self.alloc(TSArrayType { span, element_type })
     }
-    fn ts_indexed_access_type(
+    pub fn ts_indexed_access_type(
         self,
         span: Span,
         object_type: TSType<'a>,
         index_type: TSType<'a>,
-    ) -> TSIndexedAccessType<'a> {
-        TSIndexedAccessType {
+    ) -> Box<'a, TSIndexedAccessType<'a>> {
+        self.alloc(TSIndexedAccessType {
             span,
             object_type,
             index_type,
-        }
+        })
     }
-    fn ts_tuple_type(
+    pub fn ts_tuple_type(
         self,
         span: Span,
         element_types: Vec<'a, TSTupleElement<'a>>,
-    ) -> TSTupleType<'a> {
-        TSTupleType { span, element_types }
+    ) -> Box<'a, TSTupleType<'a>> {
+        self.alloc(TSTupleType { span, element_types })
     }
-    fn ts_named_tuple_member(
+    pub fn ts_named_tuple_member(
         self,
         span: Span,
         element_type: TSTupleElement<'a>,
         label: IdentifierName<'a>,
         optional: bool,
-    ) -> TSNamedTupleMember<'a> {
-        TSNamedTupleMember {
+    ) -> Box<'a, TSNamedTupleMember<'a>> {
+        self.alloc(TSNamedTupleMember {
             span,
             element_type,
             label,
             optional,
-        }
+        })
     }
-    fn ts_optional_type(
+    pub fn ts_optional_type(
         self,
         span: Span,
         type_annotation: TSType<'a>,
-    ) -> TSOptionalType<'a> {
-        TSOptionalType {
+    ) -> Box<'a, TSOptionalType<'a>> {
+        self.alloc(TSOptionalType {
             span,
             type_annotation,
-        }
+        })
     }
-    fn ts_rest_type(self, span: Span, type_annotation: TSType<'a>) -> TSRestType<'a> {
-        TSRestType {
+    pub fn ts_rest_type(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+    ) -> Box<'a, TSRestType<'a>> {
+        self.alloc(TSRestType {
             span,
             type_annotation,
-        }
+        })
     }
-    fn ts_any_keyword(self, span: Span) -> TSAnyKeyword {
-        TSAnyKeyword { span }
+    pub fn ts_any_keyword(self, span: Span) -> Box<'a, TSAnyKeyword> {
+        self.alloc(TSAnyKeyword { span })
     }
-    fn ts_string_keyword(self, span: Span) -> TSStringKeyword {
-        TSStringKeyword { span }
+    pub fn ts_string_keyword(self, span: Span) -> Box<'a, TSStringKeyword> {
+        self.alloc(TSStringKeyword { span })
     }
-    fn ts_boolean_keyword(self, span: Span) -> TSBooleanKeyword {
-        TSBooleanKeyword { span }
+    pub fn ts_boolean_keyword(self, span: Span) -> Box<'a, TSBooleanKeyword> {
+        self.alloc(TSBooleanKeyword { span })
     }
-    fn ts_number_keyword(self, span: Span) -> TSNumberKeyword {
-        TSNumberKeyword { span }
+    pub fn ts_number_keyword(self, span: Span) -> Box<'a, TSNumberKeyword> {
+        self.alloc(TSNumberKeyword { span })
     }
-    fn ts_never_keyword(self, span: Span) -> TSNeverKeyword {
-        TSNeverKeyword { span }
+    pub fn ts_never_keyword(self, span: Span) -> Box<'a, TSNeverKeyword> {
+        self.alloc(TSNeverKeyword { span })
     }
-    fn ts_intrinsic_keyword(self, span: Span) -> TSIntrinsicKeyword {
-        TSIntrinsicKeyword { span }
+    pub fn ts_intrinsic_keyword(self, span: Span) -> Box<'a, TSIntrinsicKeyword> {
+        self.alloc(TSIntrinsicKeyword { span })
     }
-    fn ts_unknown_keyword(self, span: Span) -> TSUnknownKeyword {
-        TSUnknownKeyword { span }
+    pub fn ts_unknown_keyword(self, span: Span) -> Box<'a, TSUnknownKeyword> {
+        self.alloc(TSUnknownKeyword { span })
     }
-    fn ts_null_keyword(self, span: Span) -> TSNullKeyword {
-        TSNullKeyword { span }
+    pub fn ts_null_keyword(self, span: Span) -> Box<'a, TSNullKeyword> {
+        self.alloc(TSNullKeyword { span })
     }
-    fn ts_undefined_keyword(self, span: Span) -> TSUndefinedKeyword {
-        TSUndefinedKeyword { span }
+    pub fn ts_undefined_keyword(self, span: Span) -> Box<'a, TSUndefinedKeyword> {
+        self.alloc(TSUndefinedKeyword { span })
     }
-    fn ts_void_keyword(self, span: Span) -> TSVoidKeyword {
-        TSVoidKeyword { span }
+    pub fn ts_void_keyword(self, span: Span) -> Box<'a, TSVoidKeyword> {
+        self.alloc(TSVoidKeyword { span })
     }
-    fn ts_symbol_keyword(self, span: Span) -> TSSymbolKeyword {
-        TSSymbolKeyword { span }
+    pub fn ts_symbol_keyword(self, span: Span) -> Box<'a, TSSymbolKeyword> {
+        self.alloc(TSSymbolKeyword { span })
     }
-    fn ts_this_type(self, span: Span) -> TSThisType {
-        TSThisType { span }
+    pub fn ts_this_type(self, span: Span) -> Box<'a, TSThisType> {
+        self.alloc(TSThisType { span })
     }
-    fn ts_object_keyword(self, span: Span) -> TSObjectKeyword {
-        TSObjectKeyword { span }
+    pub fn ts_object_keyword(self, span: Span) -> Box<'a, TSObjectKeyword> {
+        self.alloc(TSObjectKeyword { span })
     }
-    fn ts_big_int_keyword(self, span: Span) -> TSBigIntKeyword {
-        TSBigIntKeyword { span }
+    pub fn ts_big_int_keyword(self, span: Span) -> Box<'a, TSBigIntKeyword> {
+        self.alloc(TSBigIntKeyword { span })
     }
-    fn ts_type_reference(
+    pub fn ts_type_reference(
         self,
         span: Span,
         type_name: TSTypeName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> TSTypeReference<'a> {
-        TSTypeReference {
+    ) -> Box<'a, TSTypeReference<'a>> {
+        self.alloc(TSTypeReference {
             span,
             type_name,
             type_parameters,
-        }
+        })
     }
-    fn ts_qualified_name(
+    pub fn ts_qualified_name(
         self,
         span: Span,
         left: TSTypeName<'a>,
         right: IdentifierName<'a>,
-    ) -> TSQualifiedName<'a> {
-        TSQualifiedName {
+    ) -> Box<'a, TSQualifiedName<'a>> {
+        self.alloc(TSQualifiedName {
             span,
             left,
             right,
-        }
+        })
     }
-    fn ts_type_parameter_instantiation(
+    pub fn ts_type_parameter_instantiation(
         self,
         span: Span,
         params: Vec<'a, TSType<'a>>,
-    ) -> TSTypeParameterInstantiation<'a> {
-        TSTypeParameterInstantiation {
+    ) -> Box<'a, TSTypeParameterInstantiation<'a>> {
+        self.alloc(TSTypeParameterInstantiation {
             span,
             params,
-        }
+        })
     }
-    fn ts_type_parameter(
+    pub fn ts_type_parameter(
         self,
         span: Span,
         name: BindingIdentifier<'a>,
@@ -1464,8 +1510,8 @@ impl<'a> AstBuilder<'a> {
         r#in: bool,
         out: bool,
         r#const: bool,
-    ) -> TSTypeParameter<'a> {
-        TSTypeParameter {
+    ) -> Box<'a, TSTypeParameter<'a>> {
+        self.alloc(TSTypeParameter {
             span,
             name,
             constraint,
@@ -1474,47 +1520,47 @@ impl<'a> AstBuilder<'a> {
             out,
             r#const,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn ts_type_parameter_declaration(
+    pub fn ts_type_parameter_declaration(
         self,
         span: Span,
         params: Vec<'a, TSTypeParameter<'a>>,
-    ) -> TSTypeParameterDeclaration<'a> {
-        TSTypeParameterDeclaration {
+    ) -> Box<'a, TSTypeParameterDeclaration<'a>> {
+        self.alloc(TSTypeParameterDeclaration {
             span,
             params,
-        }
+        })
     }
-    fn ts_type_alias_declaration(
+    pub fn ts_type_alias_declaration(
         self,
         span: Span,
         id: BindingIdentifier<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         type_annotation: TSType<'a>,
         declare: bool,
-    ) -> TSTypeAliasDeclaration<'a> {
-        TSTypeAliasDeclaration {
+    ) -> Box<'a, TSTypeAliasDeclaration<'a>> {
+        self.alloc(TSTypeAliasDeclaration {
             span,
             id,
             type_annotation,
             type_parameters,
             declare,
-        }
+        })
     }
-    fn ts_class_implements(
+    pub fn ts_class_implements(
         self,
         span: Span,
         expression: TSTypeName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> TSClassImplements<'a> {
-        TSClassImplements {
+    ) -> Box<'a, TSClassImplements<'a>> {
+        self.alloc(TSClassImplements {
             span,
             expression,
             type_parameters,
-        }
+        })
     }
-    fn ts_interface_declaration(
+    pub fn ts_interface_declaration(
         self,
         span: Span,
         id: BindingIdentifier<'a>,
@@ -1522,24 +1568,24 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         body: Box<'a, TSInterfaceBody<'a>>,
         declare: bool,
-    ) -> TSInterfaceDeclaration<'a> {
-        TSInterfaceDeclaration {
+    ) -> Box<'a, TSInterfaceDeclaration<'a>> {
+        self.alloc(TSInterfaceDeclaration {
             span,
             id,
             body,
             type_parameters,
             extends,
             declare,
-        }
+        })
     }
-    fn ts_interface_body(
+    pub fn ts_interface_body(
         self,
         span: Span,
         body: Vec<'a, TSSignature<'a>>,
-    ) -> TSInterfaceBody<'a> {
-        TSInterfaceBody { span, body }
+    ) -> Box<'a, TSInterfaceBody<'a>> {
+        self.alloc(TSInterfaceBody { span, body })
     }
-    fn ts_property_signature(
+    pub fn ts_property_signature(
         self,
         span: Span,
         computed: bool,
@@ -1547,47 +1593,47 @@ impl<'a> AstBuilder<'a> {
         readonly: bool,
         key: PropertyKey<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> TSPropertySignature<'a> {
-        TSPropertySignature {
+    ) -> Box<'a, TSPropertySignature<'a>> {
+        self.alloc(TSPropertySignature {
             span,
             computed,
             optional,
             readonly,
             key,
             type_annotation,
-        }
+        })
     }
-    fn ts_index_signature(
+    pub fn ts_index_signature(
         self,
         span: Span,
         parameters: Vec<'a, TSIndexSignatureName<'a>>,
         type_annotation: Box<'a, TSTypeAnnotation<'a>>,
         readonly: bool,
-    ) -> TSIndexSignature<'a> {
-        TSIndexSignature {
+    ) -> Box<'a, TSIndexSignature<'a>> {
+        self.alloc(TSIndexSignature {
             span,
             parameters,
             type_annotation,
             readonly,
-        }
+        })
     }
-    fn ts_call_signature_declaration(
+    pub fn ts_call_signature_declaration(
         self,
         span: Span,
         this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    ) -> TSCallSignatureDeclaration<'a> {
-        TSCallSignatureDeclaration {
+    ) -> Box<'a, TSCallSignatureDeclaration<'a>> {
+        self.alloc(TSCallSignatureDeclaration {
             span,
             this_param,
             params,
             return_type,
             type_parameters,
-        }
+        })
     }
-    fn ts_method_signature(
+    pub fn ts_method_signature(
         self,
         span: Span,
         key: PropertyKey<'a>,
@@ -1598,8 +1644,8 @@ impl<'a> AstBuilder<'a> {
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    ) -> TSMethodSignature<'a> {
-        TSMethodSignature {
+    ) -> Box<'a, TSMethodSignature<'a>> {
+        self.alloc(TSMethodSignature {
             span,
             key,
             computed,
@@ -1609,119 +1655,119 @@ impl<'a> AstBuilder<'a> {
             params,
             return_type,
             type_parameters,
-        }
+        })
     }
-    fn ts_construct_signature_declaration(
+    pub fn ts_construct_signature_declaration(
         self,
         span: Span,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    ) -> TSConstructSignatureDeclaration<'a> {
-        TSConstructSignatureDeclaration {
+    ) -> Box<'a, TSConstructSignatureDeclaration<'a>> {
+        self.alloc(TSConstructSignatureDeclaration {
             span,
             params,
             return_type,
             type_parameters,
-        }
+        })
     }
-    fn ts_index_signature_name(
+    pub fn ts_index_signature_name(
         self,
         span: Span,
         name: Atom<'a>,
         type_annotation: Box<'a, TSTypeAnnotation<'a>>,
-    ) -> TSIndexSignatureName<'a> {
-        TSIndexSignatureName {
+    ) -> Box<'a, TSIndexSignatureName<'a>> {
+        self.alloc(TSIndexSignatureName {
             span,
             name,
             type_annotation,
-        }
+        })
     }
-    fn ts_interface_heritage(
+    pub fn ts_interface_heritage(
         self,
         span: Span,
         expression: Expression<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> TSInterfaceHeritage<'a> {
-        TSInterfaceHeritage {
+    ) -> Box<'a, TSInterfaceHeritage<'a>> {
+        self.alloc(TSInterfaceHeritage {
             span,
             expression,
             type_parameters,
-        }
+        })
     }
-    fn ts_type_predicate(
+    pub fn ts_type_predicate(
         self,
         span: Span,
         parameter_name: TSTypePredicateName<'a>,
         asserts: bool,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
-    ) -> TSTypePredicate<'a> {
-        TSTypePredicate {
+    ) -> Box<'a, TSTypePredicate<'a>> {
+        self.alloc(TSTypePredicate {
             span,
             parameter_name,
             asserts,
             type_annotation,
-        }
+        })
     }
-    fn ts_module_declaration(
+    pub fn ts_module_declaration(
         self,
         span: Span,
         id: TSModuleDeclarationName<'a>,
         body: Option<TSModuleDeclarationBody<'a>>,
         kind: TSModuleDeclarationKind,
         declare: bool,
-    ) -> TSModuleDeclaration<'a> {
-        TSModuleDeclaration {
+    ) -> Box<'a, TSModuleDeclaration<'a>> {
+        self.alloc(TSModuleDeclaration {
             span,
             id,
             body,
             kind,
             declare,
             scope_id: Default::default(),
-        }
+        })
     }
-    fn ts_module_block(
+    pub fn ts_module_block(
         self,
         span: Span,
         directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
-    ) -> TSModuleBlock<'a> {
-        TSModuleBlock {
+    ) -> Box<'a, TSModuleBlock<'a>> {
+        self.alloc(TSModuleBlock {
             span,
             directives,
             body,
-        }
+        })
     }
-    fn ts_type_literal(
+    pub fn ts_type_literal(
         self,
         span: Span,
         members: Vec<'a, TSSignature<'a>>,
-    ) -> TSTypeLiteral<'a> {
-        TSTypeLiteral { span, members }
+    ) -> Box<'a, TSTypeLiteral<'a>> {
+        self.alloc(TSTypeLiteral { span, members })
     }
-    fn ts_infer_type(
+    pub fn ts_infer_type(
         self,
         span: Span,
         type_parameter: Box<'a, TSTypeParameter<'a>>,
-    ) -> TSInferType<'a> {
-        TSInferType {
+    ) -> Box<'a, TSInferType<'a>> {
+        self.alloc(TSInferType {
             span,
             type_parameter,
-        }
+        })
     }
-    fn ts_type_query(
+    pub fn ts_type_query(
         self,
         span: Span,
         expr_name: TSTypeQueryExprName<'a>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> TSTypeQuery<'a> {
-        TSTypeQuery {
+    ) -> Box<'a, TSTypeQuery<'a>> {
+        self.alloc(TSTypeQuery {
             span,
             expr_name,
             type_parameters,
-        }
+        })
     }
-    fn ts_import_type(
+    pub fn ts_import_type(
         self,
         span: Span,
         is_type_of: bool,
@@ -1729,70 +1775,70 @@ impl<'a> AstBuilder<'a> {
         qualifier: Option<TSTypeName<'a>>,
         attributes: Option<TSImportAttributes<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> TSImportType<'a> {
-        TSImportType {
+    ) -> Box<'a, TSImportType<'a>> {
+        self.alloc(TSImportType {
             span,
             argument,
             qualifier,
             attributes,
             type_parameters,
-        }
+        })
     }
-    fn ts_import_attributes(
+    pub fn ts_import_attributes(
         self,
         span: Span,
         elements: Vec<'a, TSImportAttribute<'a>>,
-    ) -> TSImportAttributes<'a> {
-        TSImportAttributes {
+    ) -> Box<'a, TSImportAttributes<'a>> {
+        self.alloc(TSImportAttributes {
             span,
             elements,
-        }
+        })
     }
-    fn ts_import_attribute(
+    pub fn ts_import_attribute(
         self,
         span: Span,
         name: TSImportAttributeName<'a>,
         value: Expression<'a>,
-    ) -> TSImportAttribute<'a> {
-        TSImportAttribute {
+    ) -> Box<'a, TSImportAttribute<'a>> {
+        self.alloc(TSImportAttribute {
             span,
             name,
             value,
-        }
+        })
     }
-    fn ts_function_type(
+    pub fn ts_function_type(
         self,
         span: Span,
         this_param: Option<TSThisParameter<'a>>,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Box<'a, TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    ) -> TSFunctionType<'a> {
-        TSFunctionType {
+    ) -> Box<'a, TSFunctionType<'a>> {
+        self.alloc(TSFunctionType {
             span,
             this_param,
             params,
             return_type,
             type_parameters,
-        }
+        })
     }
-    fn ts_constructor_type(
+    pub fn ts_constructor_type(
         self,
         span: Span,
         r#abstract: bool,
         params: Box<'a, FormalParameters<'a>>,
         return_type: Box<'a, TSTypeAnnotation<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    ) -> TSConstructorType<'a> {
-        TSConstructorType {
+    ) -> Box<'a, TSConstructorType<'a>> {
+        self.alloc(TSConstructorType {
             span,
             r#abstract,
             params,
             return_type,
             type_parameters,
-        }
+        })
     }
-    fn ts_mapped_type(
+    pub fn ts_mapped_type(
         self,
         span: Span,
         type_parameter: Box<'a, TSTypeParameter<'a>>,
@@ -1800,271 +1846,279 @@ impl<'a> AstBuilder<'a> {
         type_annotation: Option<TSType<'a>>,
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
-    ) -> TSMappedType<'a> {
-        TSMappedType {
+    ) -> Box<'a, TSMappedType<'a>> {
+        self.alloc(TSMappedType {
             span,
             type_parameter,
             name_type,
             type_annotation,
             optional,
             readonly,
-        }
+        })
     }
-    fn ts_template_literal_type(
+    pub fn ts_template_literal_type(
         self,
         span: Span,
         quasis: Vec<'a, TemplateElement<'a>>,
         types: Vec<'a, TSType<'a>>,
-    ) -> TSTemplateLiteralType<'a> {
-        TSTemplateLiteralType {
+    ) -> Box<'a, TSTemplateLiteralType<'a>> {
+        self.alloc(TSTemplateLiteralType {
             span,
             quasis,
             types,
-        }
+        })
     }
-    fn ts_as_expression(
+    pub fn ts_as_expression(
         self,
         span: Span,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
-    ) -> TSAsExpression<'a> {
-        TSAsExpression {
+    ) -> Box<'a, TSAsExpression<'a>> {
+        self.alloc(TSAsExpression {
             span,
             expression,
             type_annotation,
-        }
+        })
     }
-    fn ts_satisfies_expression(
+    pub fn ts_satisfies_expression(
         self,
         span: Span,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
-    ) -> TSSatisfiesExpression<'a> {
-        TSSatisfiesExpression {
+    ) -> Box<'a, TSSatisfiesExpression<'a>> {
+        self.alloc(TSSatisfiesExpression {
             span,
             expression,
             type_annotation,
-        }
+        })
     }
-    fn ts_type_assertion(
+    pub fn ts_type_assertion(
         self,
         span: Span,
         expression: Expression<'a>,
         type_annotation: TSType<'a>,
-    ) -> TSTypeAssertion<'a> {
-        TSTypeAssertion {
+    ) -> Box<'a, TSTypeAssertion<'a>> {
+        self.alloc(TSTypeAssertion {
             span,
             expression,
             type_annotation,
-        }
+        })
     }
-    fn ts_import_equals_declaration(
+    pub fn ts_import_equals_declaration(
         self,
         span: Span,
         id: BindingIdentifier<'a>,
         module_reference: TSModuleReference<'a>,
         import_kind: ImportOrExportKind,
-    ) -> TSImportEqualsDeclaration<'a> {
-        TSImportEqualsDeclaration {
+    ) -> Box<'a, TSImportEqualsDeclaration<'a>> {
+        self.alloc(TSImportEqualsDeclaration {
             span,
             id,
             module_reference,
             import_kind,
-        }
+        })
     }
-    fn ts_external_module_reference(
+    pub fn ts_external_module_reference(
         self,
         span: Span,
         expression: StringLiteral<'a>,
-    ) -> TSExternalModuleReference<'a> {
-        TSExternalModuleReference {
+    ) -> Box<'a, TSExternalModuleReference<'a>> {
+        self.alloc(TSExternalModuleReference {
             span,
             expression,
-        }
+        })
     }
-    fn ts_non_null_expression(
+    pub fn ts_non_null_expression(
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> TSNonNullExpression<'a> {
-        TSNonNullExpression {
+    ) -> Box<'a, TSNonNullExpression<'a>> {
+        self.alloc(TSNonNullExpression {
             span,
             expression,
-        }
+        })
     }
-    fn decorator(self, span: Span, expression: Expression<'a>) -> Decorator<'a> {
-        Decorator { span, expression }
-    }
-    fn ts_export_assignment(
+    pub fn decorator(
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> TSExportAssignment<'a> {
-        TSExportAssignment {
+    ) -> Box<'a, Decorator<'a>> {
+        self.alloc(Decorator { span, expression })
+    }
+    pub fn ts_export_assignment(
+        self,
+        span: Span,
+        expression: Expression<'a>,
+    ) -> Box<'a, TSExportAssignment<'a>> {
+        self.alloc(TSExportAssignment {
             span,
             expression,
-        }
+        })
     }
-    fn ts_namespace_export_declaration(
+    pub fn ts_namespace_export_declaration(
         self,
         span: Span,
         id: IdentifierName<'a>,
-    ) -> TSNamespaceExportDeclaration<'a> {
-        TSNamespaceExportDeclaration {
+    ) -> Box<'a, TSNamespaceExportDeclaration<'a>> {
+        self.alloc(TSNamespaceExportDeclaration {
             span,
             id,
-        }
+        })
     }
-    fn ts_instantiation_expression(
+    pub fn ts_instantiation_expression(
         self,
         span: Span,
         expression: Expression<'a>,
         type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
-    ) -> TSInstantiationExpression<'a> {
-        TSInstantiationExpression {
+    ) -> Box<'a, TSInstantiationExpression<'a>> {
+        self.alloc(TSInstantiationExpression {
             span,
             expression,
             type_parameters,
-        }
+        })
     }
-    fn js_doc_nullable_type(
+    pub fn js_doc_nullable_type(
         self,
         span: Span,
         type_annotation: TSType<'a>,
         postfix: bool,
-    ) -> JSDocNullableType<'a> {
-        JSDocNullableType {
+    ) -> Box<'a, JSDocNullableType<'a>> {
+        self.alloc(JSDocNullableType {
             span,
             type_annotation,
             postfix,
-        }
+        })
     }
-    fn js_doc_unknown_type(self, span: Span) -> JSDocUnknownType {
-        JSDocUnknownType { span }
+    pub fn js_doc_unknown_type(self, span: Span) -> Box<'a, JSDocUnknownType> {
+        self.alloc(JSDocUnknownType { span })
     }
-    fn jsx_element(
+    pub fn jsx_element(
         self,
         span: Span,
         opening_element: Box<'a, JSXOpeningElement<'a>>,
         closing_element: Option<Box<'a, JSXClosingElement<'a>>>,
         children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXElement<'a> {
-        JSXElement {
+    ) -> Box<'a, JSXElement<'a>> {
+        self.alloc(JSXElement {
             span,
             opening_element,
             closing_element,
             children,
-        }
+        })
     }
-    fn jsx_opening_element(
+    pub fn jsx_opening_element(
         self,
         span: Span,
         self_closing: bool,
         name: JSXElementName<'a>,
         attributes: Vec<'a, JSXAttributeItem<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
-    ) -> JSXOpeningElement<'a> {
-        JSXOpeningElement {
+    ) -> Box<'a, JSXOpeningElement<'a>> {
+        self.alloc(JSXOpeningElement {
             span,
             self_closing,
             name,
             attributes,
             type_parameters,
-        }
+        })
     }
-    fn jsx_closing_element(
+    pub fn jsx_closing_element(
         self,
         span: Span,
         name: JSXElementName<'a>,
-    ) -> JSXClosingElement<'a> {
-        JSXClosingElement { span, name }
+    ) -> Box<'a, JSXClosingElement<'a>> {
+        self.alloc(JSXClosingElement { span, name })
     }
-    fn jsx_fragment(
+    pub fn jsx_fragment(
         self,
         span: Span,
         opening_fragment: JSXOpeningFragment,
         closing_fragment: JSXClosingFragment,
         children: Vec<'a, JSXChild<'a>>,
-    ) -> JSXFragment<'a> {
-        JSXFragment {
+    ) -> Box<'a, JSXFragment<'a>> {
+        self.alloc(JSXFragment {
             span,
             opening_fragment,
             closing_fragment,
             children,
-        }
+        })
     }
-    fn jsx_opening_fragment(self, span: Span) -> JSXOpeningFragment {
-        JSXOpeningFragment { span }
+    pub fn jsx_opening_fragment(self, span: Span) -> Box<'a, JSXOpeningFragment> {
+        self.alloc(JSXOpeningFragment { span })
     }
-    fn jsx_closing_fragment(self, span: Span) -> JSXClosingFragment {
-        JSXClosingFragment { span }
+    pub fn jsx_closing_fragment(self, span: Span) -> Box<'a, JSXClosingFragment> {
+        self.alloc(JSXClosingFragment { span })
     }
-    fn jsx_namespaced_name(
+    pub fn jsx_namespaced_name(
         self,
         span: Span,
         namespace: JSXIdentifier<'a>,
         property: JSXIdentifier<'a>,
-    ) -> JSXNamespacedName<'a> {
-        JSXNamespacedName {
+    ) -> Box<'a, JSXNamespacedName<'a>> {
+        self.alloc(JSXNamespacedName {
             span,
             namespace,
             property,
-        }
+        })
     }
-    fn jsx_member_expression(
+    pub fn jsx_member_expression(
         self,
         span: Span,
         object: JSXMemberExpressionObject<'a>,
         property: JSXIdentifier<'a>,
-    ) -> JSXMemberExpression<'a> {
-        JSXMemberExpression {
+    ) -> Box<'a, JSXMemberExpression<'a>> {
+        self.alloc(JSXMemberExpression {
             span,
             object,
             property,
-        }
+        })
     }
-    fn jsx_expression_container(
+    pub fn jsx_expression_container(
         self,
         span: Span,
         expression: JSXExpression<'a>,
-    ) -> JSXExpressionContainer<'a> {
-        JSXExpressionContainer {
+    ) -> Box<'a, JSXExpressionContainer<'a>> {
+        self.alloc(JSXExpressionContainer {
             span,
             expression,
-        }
+        })
     }
-    fn jsx_empty_expression(self, span: Span) -> JSXEmptyExpression {
-        JSXEmptyExpression { span }
+    pub fn jsx_empty_expression(self, span: Span) -> Box<'a, JSXEmptyExpression> {
+        self.alloc(JSXEmptyExpression { span })
     }
-    fn jsx_attribute(
+    pub fn jsx_attribute(
         self,
         span: Span,
         name: JSXAttributeName<'a>,
         value: Option<JSXAttributeValue<'a>>,
-    ) -> JSXAttribute<'a> {
-        JSXAttribute { span, name, value }
+    ) -> Box<'a, JSXAttribute<'a>> {
+        self.alloc(JSXAttribute { span, name, value })
     }
-    fn jsx_spread_attribute(
+    pub fn jsx_spread_attribute(
         self,
         span: Span,
         argument: Expression<'a>,
-    ) -> JSXSpreadAttribute<'a> {
-        JSXSpreadAttribute {
+    ) -> Box<'a, JSXSpreadAttribute<'a>> {
+        self.alloc(JSXSpreadAttribute {
             span,
             argument,
-        }
+        })
     }
-    fn jsx_identifier(self, span: Span, name: Atom<'a>) -> JSXIdentifier<'a> {
-        JSXIdentifier { span, name }
+    pub fn jsx_identifier(
+        self,
+        span: Span,
+        name: Atom<'a>,
+    ) -> Box<'a, JSXIdentifier<'a>> {
+        self.alloc(JSXIdentifier { span, name })
     }
-    fn jsx_spread_child(
+    pub fn jsx_spread_child(
         self,
         span: Span,
         expression: Expression<'a>,
-    ) -> JSXSpreadChild<'a> {
-        JSXSpreadChild { span, expression }
+    ) -> Box<'a, JSXSpreadChild<'a>> {
+        self.alloc(JSXSpreadChild { span, expression })
     }
-    fn jsx_text(self, span: Span, value: Atom<'a>) -> JSXText<'a> {
-        JSXText { span, value }
+    pub fn jsx_text(self, span: Span, value: Atom<'a>) -> Box<'a, JSXText<'a>> {
+        self.alloc(JSXText { span, value })
     }
 }

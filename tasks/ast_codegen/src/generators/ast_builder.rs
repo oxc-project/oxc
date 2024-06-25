@@ -137,8 +137,8 @@ fn generate_struct_builder_fn(ty: &RStruct) -> ImplItemFn {
         .collect_vec();
 
     parse_quote! {
-        fn #fn_name(self, #(#params),*) -> #as_type {
-            #ident { #(#fields),* }
+        pub fn #fn_name(self, #(#params),*) -> Box<'a, #as_type> {
+            self.alloc(#ident { #(#fields),* })
         }
     }
 }

@@ -16,7 +16,7 @@
 mod serialize;
 
 pub mod ast;
-mod ast_builder;
+mod ast_builder_impl;
 mod ast_impl;
 mod ast_kind_impl;
 pub mod precedence;
@@ -36,6 +36,7 @@ pub mod visit {
     pub use crate::generated::visit_mut::*;
 }
 
+pub use generated::ast_builder;
 pub use generated::ast_kind;
 
 pub use num_bigint::BigUint;
