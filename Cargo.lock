@@ -1324,11 +1324,12 @@ name = "oxc_ast_codegen"
 version = "0.0.0"
 dependencies = [
  "itertools 0.13.0",
+ "lazy_static",
  "prettyplease",
  "proc-macro2",
  "quote",
+ "regex",
  "serde",
- "serde_json",
  "syn",
 ]
 

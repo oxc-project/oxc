@@ -39,6 +39,7 @@ impl From<Ident> for Inherit {
 #[derive(Debug, Default, Clone)]
 pub struct EnumMeta {
     pub inherits: Vec<Inherit>,
+    pub visitable: bool,
 }
 
 #[derive(Debug)]
@@ -55,6 +56,12 @@ impl REnum {
     pub fn ident(&self) -> &Ident {
         &self.item.ident
     }
+
+    pub fn as_type(&self) -> Type {
+        let ident = self.ident();
+        let generics = &self.item.generics;
+        parse_quote!(#ident #generics)
+    }
 }
 
 impl From<ItemEnum> for REnum {
@@ -65,7 +72,9 @@ impl From<ItemEnum> for REnum {
 
 /// Placeholder for now!
 #[derive(Debug, Default, Clone)]
-pub struct StructMeta;
+pub struct StructMeta {
+    pub visitable: bool,
+}
 
 #[derive(Debug)]
 pub struct RStruct {
@@ -77,11 +86,17 @@ impl RStruct {
     pub fn ident(&self) -> &Ident {
         &self.item.ident
     }
+
+    pub fn as_type(&self) -> Type {
+        let ident = self.ident();
+        let generics = &self.item.generics;
+        parse_quote!(#ident #generics)
+    }
 }
 
 impl From<ItemStruct> for RStruct {
     fn from(item: ItemStruct) -> Self {
-        Self { item, meta: StructMeta }
+        Self { item, meta: StructMeta::default() }
     }
 }
 
@@ -121,13 +136,28 @@ impl RType {
     }
 
     pub fn as_type(&self) -> Option<Type> {
-        if let RType::Enum(REnum { item: ItemEnum { ident, generics, .. }, .. })
-        | RType::Struct(RStruct { item: ItemStruct { ident, generics, .. }, .. }) = self
-        {
-            Some(parse_quote!(#ident #generics))
-        } else {
-            None
+        match self {
+            RType::Enum(it) => Some(it.as_type()),
+            RType::Struct(it) => Some(it.as_type()),
+            _ => None,
         }
+    }
+
+    pub fn visitable(&self) -> bool {
+        match self {
+            RType::Enum(it) => it.meta.visitable,
+            RType::Struct(it) => it.meta.visitable,
+            _ => false,
+        }
+    }
+
+    pub fn set_visitable(&mut self, value: bool) -> Result<()> {
+        match self {
+            RType::Enum(it) => it.meta.visitable = value,
+            RType::Struct(it) => it.meta.visitable = value,
+            _ => return Err("Unsupported type!".to_string()),
+        }
+        Ok(())
     }
 }
 
@@ -183,25 +213,20 @@ impl Module {
             .items
             .into_iter()
             .filter(|it| match it {
-                // Path through these for generators, doesn't get included in the final schema.
-                Item::Use(_) | Item::Const(_) => true,
+                Item::Enum(_) | Item::Struct(_) | Item::Use(_) | Item::Const(_) => true,
                 // These contain enums with inheritance
                 Item::Macro(m) if m.mac.path.is_ident("inherit_variants") => true,
-                // Only include types with `visited_node` since right now we don't have dedicated
-                // definition files.
-                Item::Enum(ItemEnum { attrs, .. }) | Item::Struct(ItemStruct { attrs, .. }) => {
-                    attrs.iter().any(|attr| attr.path().is_ident("visited_node"))
-                }
                 _ => false,
             })
             .map(TryInto::try_into)
             .map_ok(|it| Rc::new(RefCell::new(it)))
-            // .collect::<Vec<RType>>();
             .collect::<Result<_>>()?;
         self.loaded = true;
         Ok(self)
     }
 
+    /// Expand `inherit_variants` macros to their inner enum.
+    /// This would also populate `inherits` field of `EnumMeta` types.
     pub fn expand(self) -> Result<Self> {
         if !self.loaded {
             return Err(String::from(LOAD_ERROR));
@@ -211,12 +236,23 @@ impl Module {
         Ok(self)
     }
 
+    /// Fills the Meta types.
+    pub fn analyze(self) -> Result<Self> {
+        if !self.loaded {
+            return Err(String::from(LOAD_ERROR));
+        }
+
+        self.items.iter().try_for_each(analyze)?;
+        Ok(self)
+    }
+
     pub fn build(self) -> Result<Schema> {
         if !self.loaded {
             return Err(String::from(LOAD_ERROR));
         }
 
         let definitions = Definitions {
+            // We filter map to get rid of stuff we don't need in our schema.
             types: self.items.into_iter().filter_map(|it| (&*it.borrow()).into()).collect(),
         };
         Ok(Schema { source: self.path, definitions })
@@ -229,6 +265,11 @@ pub fn expand(type_def: &TypeRef) -> Result<()> {
             let (enum_, inherits) = mac
                 .mac
                 .parse_body_with(|input: &ParseBuffer| {
+                    // Because of `@inherit`s we can't use the actual `ItemEnum` parse,
+                    // This closure is similar to how `ItemEnum` parser works, With the exception
+                    // of how we approach our variants, First we try to parse a variant out of our
+                    // tokens if we fail we try parsing the inheritance, And we would raise an
+                    // error only if both of these fail.
                     let attrs = input.call(Attribute::parse_outer)?;
                     let vis = input.parse::<Visibility>()?;
                     let enum_token = input.parse::<Token![enum]>()?;
@@ -273,7 +314,10 @@ pub fn expand(type_def: &TypeRef) -> Result<()> {
                 .map_err(|e| e.to_string())?;
             Some(RType::Enum(REnum::with_meta(
                 enum_,
-                EnumMeta { inherits: inherits.into_iter().map(Into::into).collect() },
+                EnumMeta {
+                    inherits: inherits.into_iter().map(Into::into).collect(),
+                    ..EnumMeta::default()
+                },
             )))
         }
         _ => None,
@@ -281,6 +325,22 @@ pub fn expand(type_def: &TypeRef) -> Result<()> {
 
     if let Some(to_replace) = to_replace {
         *type_def.borrow_mut() = to_replace;
+    }
+
+    Ok(())
+}
+
+pub fn analyze(type_def: &TypeRef) -> Result<()> {
+    let is_visitable = match &*type_def.borrow() {
+        RType::Enum(REnum { item: ItemEnum { attrs, .. }, .. })
+        | RType::Struct(RStruct { item: ItemStruct { attrs, .. }, .. }) => {
+            Some(attrs.iter().any(|attr| attr.path().is_ident("visited_node")))
+        }
+        _ => None,
+    };
+
+    if let Some(is_visitable) = is_visitable {
+        type_def.borrow_mut().set_visitable(is_visitable)?;
     }
 
     Ok(())

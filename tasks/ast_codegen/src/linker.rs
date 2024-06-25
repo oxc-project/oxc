@@ -6,12 +6,38 @@ pub trait Linker<'a> {
     fn link(&'a self, linker: impl FnMut(&mut RType, &'a Self) -> Result<bool>) -> Result<&'a ()>;
 }
 
+pub trait Unresolved {
+    fn unresolved(&self) -> bool;
+    fn resolved(&self) -> bool {
+        !self.unresolved()
+    }
+}
+
+impl Unresolved for Inherit {
+    fn unresolved(&self) -> bool {
+        matches!(self, Self::Unlinked(_))
+    }
+}
+
+impl Unresolved for Vec<Inherit> {
+    fn unresolved(&self) -> bool {
+        self.iter().any(Unresolved::unresolved)
+    }
+}
+
 impl<'a> Linker<'a> for CodegenCtx {
     fn link(
         &'a self,
         mut linker: impl FnMut(&mut RType, &'a Self) -> Result<bool>,
     ) -> Result<&'a ()> {
-        let mut unresolved = self.ident_table.keys().collect::<VecDeque<_>>();
+        // we sort by `TypeId` so we always have the same ordering as how it is written in the rust.
+        let mut unresolved = self
+            .ident_table
+            .iter()
+            .sorted_by_key(|it| it.1)
+            .map(|it| it.0)
+            .collect::<VecDeque<_>>();
+
         while let Some(next) = unresolved.pop_back() {
             let next_id = *self.type_id(next).unwrap();
 
@@ -27,8 +53,7 @@ impl<'a> Linker<'a> for CodegenCtx {
     }
 }
 
-/// Returns false if can't resolve
-/// TODO: right now we don't resolve nested inherits, return is always true for now.
+/// Returns false if can't resolve at the moment
 /// # Panics
 /// On invalid inheritance.
 #[allow(clippy::unnecessary_wraps)]
@@ -43,25 +68,33 @@ pub fn linker(ty: &mut RType, ctx: &CodegenCtx) -> Result<bool> {
         return Ok(true);
     }
 
-    ty.meta.inherits = ty
+    let inherits = ty
         .meta
         .inherits
         .drain(..)
         .map(|it| match it {
-            Inherit::Unlinked(it) => {
-                let linkee = ctx.find(&Cow::Owned(it.to_string())).unwrap();
+            Inherit::Unlinked(ref sup) => {
+                let linkee = ctx.find(&Cow::Owned(sup.to_string())).unwrap();
                 let variants = match &*linkee.borrow() {
-                    RType::Enum(enum_) => enum_.item.variants.clone(),
+                    RType::Enum(enum_) => {
+                        if enum_.meta.inherits.unresolved() {
+                            return Err(it);
+                        }
+                        enum_.item.variants.clone()
+                    }
                     _ => {
                         panic!("invalid inheritance, you can only inherit from enums and in enums.")
                     }
                 };
                 ty.item.variants.extend(variants.clone());
-                Inherit::Linked { super_: it.clone(), variants }
+                Ok(Inherit::Linked { super_: sup.clone(), variants })
             }
-            Inherit::Linked { .. } => it,
+            Inherit::Linked { .. } => Ok(it),
         })
-        .collect_vec();
+        .collect::<Vec<std::result::Result<Inherit, Inherit>>>();
+    let unresolved = inherits.iter().any(std::result::Result::is_err);
 
-    Ok(true)
+    ty.meta.inherits = inherits.into_iter().map(|it| it.unwrap_or_else(|it| it)).collect();
+
+    Ok(!unresolved)
 }

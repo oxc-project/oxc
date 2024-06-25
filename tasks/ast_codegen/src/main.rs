@@ -1,13 +1,23 @@
 // TODO: remove me please!
-#![allow(dead_code)]
+#![allow(dead_code, unused_imports)]
 mod defs;
 mod generators;
 mod linker;
+mod pprint;
 mod schema;
 
-use std::{borrow::Cow, cell::RefCell, collections::HashMap, io::Read, path::PathBuf, rc::Rc};
+use std::{
+    borrow::Cow,
+    cell::RefCell,
+    collections::HashMap,
+    fs,
+    io::{Read, Write},
+    path::PathBuf,
+    rc::Rc,
+};
 
 use itertools::Itertools;
+use pprint::pprint;
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
@@ -15,6 +25,8 @@ use defs::TypeDef;
 use generators::{AstGenerator, AstKindGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
+
+use crate::generators::ImplGetSpanGenerator;
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -34,11 +46,42 @@ trait Generator {
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum GeneratorOutput {
     None,
     One(TokenStream),
     Many(HashMap<String, TokenStream>),
+    Info(String),
+}
+
+impl GeneratorOutput {
+    pub fn as_none(&self) {
+        assert!(matches!(self, Self::None));
+    }
+
+    pub fn as_one(&self) -> &TokenStream {
+        if let Self::One(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn as_many(&self) -> &HashMap<String, TokenStream> {
+        if let Self::Many(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn as_info(&self) -> &String {
+        if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
 }
 
 struct CodegenCtx {
@@ -73,7 +116,7 @@ impl CodegenCtx {
     }
 
     fn find(&self, key: &TypeName) -> Option<TypeRef> {
-        self.ident_table.get(key).map(|id| TypeRef::clone(&self.ty_table[*id]))
+        self.type_id(key).map(|id| TypeRef::clone(&self.ty_table[*id]))
     }
 
     fn type_id<'b>(&'b self, key: &'b TypeName) -> Option<&'b TypeId> {
@@ -107,6 +150,8 @@ impl AstCodegen {
             .map(Module::from)
             .map(Module::load)
             .map_ok(Module::expand)
+            .flatten()
+            .map_ok(Module::analyze)
             .collect::<Result<Result<Vec<_>>>>()??;
 
         let ctx = CodegenCtx::new(modules);
@@ -123,21 +168,42 @@ impl AstCodegen {
     }
 }
 
-fn files() -> std::array::IntoIter<String, 4> {
+const AST_ROOT_DIR: &str = "crates/oxc_ast";
+
+fn files() -> impl std::iter::Iterator<Item = String> {
     fn path(path: &str) -> String {
-        format!("crates/oxc_ast/src/ast/{path}.rs")
+        format!("{AST_ROOT_DIR}/src/ast/{path}.rs")
     }
 
-    [path("literal"), path("js"), path("ts"), path("jsx")].into_iter()
+    vec![path("literal"), path("js"), path("ts"), path("jsx")].into_iter()
+}
+
+fn output_dir() -> Result<String> {
+    let dir = format!("{AST_ROOT_DIR}/src/generated");
+    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    Ok(dir)
 }
 
 #[allow(clippy::print_stdout)]
-fn main() -> Result<()> {
-    let CodegenResult { schema, .. } = files()
+fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
+    let CodegenResult { outputs, .. } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .with(AstGenerator)
         .with(AstKindGenerator)
+        .with(ImplGetSpanGenerator)
         .generate()?;
+
+    let output_dir = output_dir()?;
+    let outputs: HashMap<_, _> = outputs.into_iter().collect();
+
+    {
+        let span_path = format!("{output_dir}/span.rs");
+        let mut span_file = fs::File::create(span_path)?;
+        let output = outputs[ImplGetSpanGenerator.name()].as_one();
+        let span_content = pprint(output);
+
+        span_file.write_all(span_content.as_bytes())?;
+    }
 
     // NOTE: Print AstKind
     // println!(
@@ -175,7 +241,7 @@ fn main() -> Result<()> {
     //         .unwrap()
     // );
 
-    let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
-    println!("{schema}");
+    // let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
+    // println!("{schema}");
     Ok(())
 }

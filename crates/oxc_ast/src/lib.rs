@@ -17,10 +17,13 @@ mod ast_builder;
 mod ast_impl;
 mod ast_kind;
 pub mod precedence;
-mod span;
 pub mod syntax_directed_operations;
 mod trivia;
 pub mod visit;
+
+mod generated {
+    pub mod span;
+}
 
 pub use num_bigint::BigUint;
 

@@ -9,7 +9,7 @@
 use std::{cell::Cell, hash::Hash};
 
 use oxc_allocator::Vec;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, Span};
 
 use crate::ast::*;
 
@@ -100,15 +100,6 @@ impl<'a> TSTypeName<'a> {
 
     pub fn is_qualified_name(&self) -> bool {
         matches!(self, Self::QualifiedName(_))
-    }
-}
-
-impl GetSpan for TSTypeName<'_> {
-    fn span(&self) -> Span {
-        match self {
-            TSTypeName::IdentifierReference(ident) => ident.span,
-            TSTypeName::QualifiedName(name) => name.span,
-        }
     }
 }
 
