@@ -3999,20 +3999,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[compiler/ParameterList5.ts:1:23]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList5.ts:1:16]
  1 │ function A(): (public B) => C {
-   ·                       ┬
-   ·                       ╰── `)` expected
+   ·                ────────
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[compiler/ParameterList6.ts:2:26]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList6.ts:2:19]
  1 │ class C {
  2 │   constructor(C: (public A) => any) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·                   ────────
  3 │   }
    ╰────
 
@@ -17725,20 +17723,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:23]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:16]
  1 │ function A(): (public B) => C {
-   ·                       ┬
-   ·                       ╰── `)` expected
+   ·                ────────
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:26]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:19]
  1 │ class C {
  2 │   constructor(C: (public A) => any) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·                   ────────
  3 │   }
    ╰────
 

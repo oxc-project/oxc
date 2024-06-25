@@ -48,7 +48,8 @@ pub fn check_formal_parameters(params: &FormalParameters, ctx: &SemanticBuilder<
         check_duplicate_bound_names(params, ctx);
     }
 
-    let is_inside_constructor = ctx.current_scope_flags().is_constructor();
+    let is_inside_constructor =
+        !params.kind.is_signature() && ctx.current_scope_flags().is_constructor();
     let mut has_optional = false;
 
     for item in &params.items {

@@ -9,7 +9,6 @@ use super::list::{
 };
 use crate::{
     diagnostics,
-    js::list::{ArrayPatternList, ObjectPatternProperties},
     lexer::Kind,
     list::{NormalList, SeparatedList},
     modifiers::ModifierFlags,
@@ -19,18 +18,91 @@ use crate::{
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type(&mut self) -> Result<TSType<'a>> {
-        if self.is_at_constructor_type() {
-            return self.parse_ts_constructor_type();
+        if self.is_start_of_function_type_or_constructor_type() {
+            return self.parse_function_or_constructor_type();
         }
-
-        if self.is_at_function_type() {
-            return self.parse_ts_function_type();
-        }
-
         let left_span = self.start_span();
         let left = self.parse_ts_union_type()?;
-
         self.parse_ts_conditional_type(left_span, left)
+    }
+
+    fn parse_function_or_constructor_type(&mut self) -> Result<TSType<'a>> {
+        let span = self.start_span();
+        let r#abstract = self.eat(Kind::Abstract);
+        let is_constructor_type = self.eat(Kind::New);
+        let type_parameters = self.parse_ts_type_parameters()?;
+        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
+        self.expect(Kind::Arrow)?;
+        let return_type = {
+            let return_type_span = self.start_span();
+            let return_type = self.parse_ts_return_type()?;
+            self.ast.ts_type_annotation(self.end_span(return_type_span), return_type)
+        };
+
+        let span = self.end_span(span);
+        Ok(if is_constructor_type {
+            if let Some(this_param) = &this_param {
+                // type Foo = new (this: number) => any;
+                self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
+            }
+            self.ast.ts_constructor_type(span, r#abstract, params, return_type, type_parameters)
+        } else {
+            self.ast.ts_function_type(span, this_param, params, return_type, type_parameters)
+        })
+    }
+
+    fn is_start_of_function_type_or_constructor_type(&mut self) -> bool {
+        if self.at(Kind::LAngle) {
+            return true;
+        }
+        if self.at(Kind::LParen) && self.lookahead(Self::is_unambiguously_start_of_function_type) {
+            return true;
+        }
+        self.at(Kind::New) || (self.at(Kind::Abstract) && self.peek_at(Kind::New))
+    }
+
+    fn is_unambiguously_start_of_function_type(&mut self) -> bool {
+        self.bump_any();
+        // ( )
+        // ( ...
+        if matches!(self.cur_kind(), Kind::RParen | Kind::Dot3) {
+            return true;
+        }
+        if self.skip_parameter_start() {
+            // ( xxx :
+            // ( xxx ,
+            // ( xxx ?
+            // ( xxx =
+            if matches!(self.cur_kind(), Kind::Colon | Kind::Comma | Kind::Question | Kind::Eq) {
+                return true;
+            }
+            // ( xxx ) =>
+            if self.eat(Kind::RParen) && self.at(Kind::Arrow) {
+                return true;
+            }
+        }
+        false
+    }
+
+    fn skip_parameter_start(&mut self) -> bool {
+        // Skip modifiers
+        loop {
+            if self.cur_kind().is_modifier_kind() && !self.peek_at(Kind::Comma) {
+                self.bump_any();
+            } else {
+                break;
+            }
+        }
+        if self.cur_kind().is_identifier() || self.at(Kind::This) {
+            self.bump_any();
+            return true;
+        }
+        if matches!(self.cur_kind(), Kind::LBrack | Kind::LCurly)
+            && self.parse_binding_pattern_kind().is_ok()
+        {
+            return true;
+        }
+        false
     }
 
     pub(crate) fn parse_ts_type_parameters(
@@ -160,10 +232,6 @@ impl<'a> ParserImpl<'a> {
         }
 
         Ok(left)
-    }
-
-    fn is_at_constructor_type(&mut self) -> bool {
-        self.at(Kind::New) || (self.at(Kind::Abstract) && self.peek_at(Kind::New))
     }
 
     // test ts ts_union_type
@@ -474,51 +542,6 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.ts_tuple_type(self.end_span(span), elements))
     }
 
-    fn is_at_function_type(&mut self) -> bool {
-        if self.at(Kind::LAngle) {
-            return true;
-        }
-
-        if !self.at(Kind::LParen) {
-            return false;
-        }
-
-        let checkpoint = self.checkpoint();
-
-        self.bump_any(); // bump (
-
-        if self.at(Kind::RParen) || self.at(Kind::Dot3) {
-            self.rewind(checkpoint);
-            return true;
-        }
-
-        let mut is_function_parameter_start =
-            self.at(Kind::This) || self.cur_kind().is_binding_identifier();
-
-        if is_function_parameter_start {
-            self.bump_any();
-        }
-
-        if match self.cur_kind() {
-            Kind::LBrack => ArrayPatternList::parse(self).is_ok(),
-            Kind::LCurly => ObjectPatternProperties::parse(self).is_ok(),
-            _ => false,
-        } {
-            is_function_parameter_start = true;
-        }
-
-        let result = if is_function_parameter_start {
-            matches!(self.cur_kind(), Kind::Colon | Kind::Eq | Kind::Comma | Kind::Question)
-                || (self.at(Kind::RParen) && self.peek_at(Kind::Arrow))
-        } else {
-            false
-        };
-
-        self.rewind(checkpoint);
-
-        result
-    }
-
     fn is_at_mapped_type(&mut self) -> bool {
         if !self.at(Kind::LCurly) {
             return false;
@@ -729,49 +752,6 @@ impl<'a> ParserImpl<'a> {
         let elements = TSImportAttributeList::parse(self)?.elements;
         self.expect(Kind::RCurly)?;
         Ok(TSImportAttributes { span, elements })
-    }
-
-    fn parse_ts_constructor_type(&mut self) -> Result<TSType<'a>> {
-        let span = self.start_span();
-        let r#abstract = self.eat(Kind::Abstract);
-        self.expect(Kind::New)?;
-        let type_parameters = self.parse_ts_type_parameters()?;
-        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
-
-        if let Some(this_param) = this_param {
-            // type Foo = new (this: number) => any;
-            self.error(diagnostics::ts_constructor_this_parameter(this_param.span));
-        }
-
-        self.expect(Kind::Arrow)?;
-        let return_type_span = self.start_span();
-        let return_type = self.parse_ts_return_type()?;
-        let return_type = self.ast.ts_type_annotation(self.end_span(return_type_span), return_type);
-
-        Ok(self.ast.ts_constructor_type(
-            self.end_span(span),
-            r#abstract,
-            params,
-            return_type,
-            type_parameters,
-        ))
-    }
-
-    fn parse_ts_function_type(&mut self) -> Result<TSType<'a>> {
-        let span = self.start_span();
-        let type_parameters = self.parse_ts_type_parameters()?;
-        let (this_param, params) = self.parse_formal_parameters(FormalParameterKind::Signature)?;
-        let return_type_span = self.start_span();
-        self.expect(Kind::Arrow)?;
-        let return_type = self.parse_ts_return_type()?;
-        let return_type = self.ast.ts_type_annotation(self.end_span(return_type_span), return_type);
-        Ok(self.ast.ts_function_type(
-            self.end_span(span),
-            this_param,
-            params,
-            return_type,
-            type_parameters,
-        ))
     }
 
     fn parse_ts_infer_type(&mut self) -> Result<TSType<'a>> {
