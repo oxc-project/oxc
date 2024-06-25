@@ -45,6 +45,7 @@ declare_oxc_lint!(
     /// (Obj.foo as jest.Mock).mockReturnValue(1);
     /// ([].foo as jest.Mock).mockReturnValue(1);
     ///
+    /// // valid
     /// jest.mocked(foo).mockReturnValue(1);
     /// const mock = jest.mocked(foo).mockReturnValue(1);
     /// jest.mocked(Obj.foo).mockReturnValue(1);
@@ -107,9 +108,7 @@ impl PreferJestMocked {
         ctx.diagnostic_with_fix(use_jest_mocked(span), |fixer| {
             let span_source_code = fixer.source_range(arg_span);
             let mut formatter = fixer.codegen();
-            formatter.print_str(b"jest.mocked(");
-            formatter.print_str(span_source_code.as_bytes());
-            formatter.print_str(b")");
+            formatter.print_str(format!("jest.mocked({span_source_code})"));
 
             fixer.replace(span, formatter)
         });
