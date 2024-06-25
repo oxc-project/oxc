@@ -19,6 +19,7 @@ pub struct ParserCheckpoint<'a> {
 }
 
 impl<'a> ParserImpl<'a> {
+    #[inline]
     pub(crate) fn start_span(&self) -> Span {
         let token = self.cur_token();
         Span::new(token.start, 0)
@@ -32,11 +33,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Get current token
+    #[inline]
     pub(crate) fn cur_token(&self) -> Token {
         self.token
     }
 
     /// Get current Kind
+    #[inline]
     pub(crate) fn cur_kind(&self) -> Kind {
         self.token.kind
     }
@@ -63,21 +66,25 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Peek next token, returns EOF for final peek
+    #[inline]
     pub(crate) fn peek_token(&mut self) -> Token {
         self.lexer.lookahead(1)
     }
 
     /// Peek next kind, returns EOF for final peek
+    #[inline]
     pub(crate) fn peek_kind(&mut self) -> Kind {
         self.peek_token().kind
     }
 
     /// Peek at kind
+    #[inline]
     pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
         self.peek_token().kind == kind
     }
 
     /// Peek nth token
+    #[inline]
     pub(crate) fn nth(&mut self, n: u8) -> Token {
         if n == 0 {
             return self.cur_token();
@@ -86,16 +93,19 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Peek at nth kind
+    #[inline]
     pub(crate) fn nth_at(&mut self, n: u8, kind: Kind) -> bool {
         self.nth(n).kind == kind
     }
 
     /// Peek nth kind
+    #[inline]
     pub(crate) fn nth_kind(&mut self, n: u8) -> Kind {
         self.nth(n).kind
     }
 
     /// Checks if the current index has token `Kind`
+    #[inline]
     pub(crate) fn at(&self, kind: Kind) -> bool {
         self.cur_kind() == kind
     }
@@ -113,6 +123,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Move to the next token
     /// Checks if the current token is escaped if it is a keyword
+    #[inline]
     fn advance(&mut self, kind: Kind) {
         self.test_escaped_keyword(kind);
         self.prev_token_end = self.token.end;
@@ -128,6 +139,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
+    #[inline]
     pub(crate) fn eat(&mut self, kind: Kind) -> bool {
         if self.at(kind) {
             self.advance(kind);
@@ -137,6 +149,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance and return true if we are at `Kind`
+    #[inline]
     pub(crate) fn bump(&mut self, kind: Kind) {
         if self.at(kind) {
             self.advance(kind);
@@ -144,11 +157,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance any token
+    #[inline]
     pub(crate) fn bump_any(&mut self) {
         self.advance(self.cur_kind());
     }
 
     /// Advance and change token type, useful for changing keyword to ident
+    #[inline]
     pub(crate) fn bump_remap(&mut self, kind: Kind) {
         self.advance(kind);
     }
@@ -185,6 +200,7 @@ impl<'a> ParserImpl<'a> {
 
     /// Expect a `Kind` or return error
     /// # Errors
+    #[inline]
     pub(crate) fn expect(&mut self, kind: Kind) -> Result<()> {
         self.expect_without_advance(kind)?;
         self.advance(kind);
@@ -287,6 +303,7 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
+    #[inline]
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
         let checkpoint = self.checkpoint();
         let answer = predicate(self);
