@@ -59,7 +59,7 @@ impl<'a> FlagsParser<'a> {
         }
 
         Ok(ast::Flags {
-            span: self.span_factory.new_with_offset(0, self.source_text.len()),
+            span: self.span_factory.create(0, self.source_text.len()),
             global,
             ignore_case,
             multiline,

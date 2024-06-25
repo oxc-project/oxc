@@ -13,11 +13,11 @@ pub struct Reader<'a> {
 }
 
 impl<'a> Reader<'a> {
-    pub fn new() -> Self {
-        Self {
-            source: "",
+    pub fn new(source: &'a str, unicode_mode: bool) -> Self {
+        let mut reader = Self {
+            source,
             idx: 0,
-            end: 0,
+            end: source.len(),
             c1: None,
             w1: 0,
             c2: None,
@@ -25,19 +25,10 @@ impl<'a> Reader<'a> {
             c3: None,
             w3: 0,
             c4: None,
-            r_impl: Box::new(LegacyImpl),
-        }
-    }
-
-    pub fn reset(&mut self, source: &'a str, start: usize, end: usize, u_flag: bool) {
-        self.source = source;
-        self.end = end;
-        if u_flag {
-            self.r_impl = Box::new(UnicodeImpl);
-        } else {
-            self.r_impl = Box::new(LegacyImpl);
-        }
-        self.rewind(start);
+            r_impl: if unicode_mode { Box::new(UnicodeImpl) } else { Box::new(LegacyImpl) },
+        };
+        reader.rewind(0);
+        reader
     }
 
     pub fn rewind(&mut self, index: usize) {

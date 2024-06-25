@@ -8,6 +8,7 @@ fn main() {
         ("/ab/", ParserOptions::default()),
         ("/abc/i", ParserOptions::default()),
         ("/abcd/igv", ParserOptions::default()),
+        ("//", ParserOptions::default()),
         ("/duplicated-flags/ii", ParserOptions::default()),
         ("/invalid-flags/x", ParserOptions::default()),
     ] {
