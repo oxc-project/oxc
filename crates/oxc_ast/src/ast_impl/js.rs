@@ -104,6 +104,10 @@ impl<'a> Expression<'a> {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
     }
 
+    pub fn is_number_literal(&self) -> bool {
+        matches!(self, Self::NumericLiteral(_) | Self::BigIntLiteral(_))
+    }
+
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
         match self {
             Self::StringLiteral(s) => s.value == string,
