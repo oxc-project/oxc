@@ -23,4 +23,7 @@ fn remove_dead_code() {
     test("if (true) { foo }", "{foo}");
     test("if (true) { foo } else { bar }", "{foo}");
     test("if (false) { foo } else { bar }", "{bar}");
+
+    test("false ? foo : bar;", "bar");
+    test("true ? foo : bar;", "foo");
 }
