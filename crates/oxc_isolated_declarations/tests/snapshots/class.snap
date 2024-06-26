@@ -10,3 +10,6 @@ export declare class Foo {
 export declare class Bar {
 	constructor(a?: number);
 }
+export declare class Zoo {
+	foo<F>(f: F): F;
+}
