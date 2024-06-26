@@ -4,6 +4,50 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.0] - 2024-06-26
+
+- 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)
+
+- 1f85f1a ast: [**BREAKING**] Revert adding `span` field to the `BindingPattern` type. (#3899) (rzvxa)
+
+- ae09a97 ast: [**BREAKING**] Remove `Modifiers` from ts nodes (#3846) (Boshen)
+
+- 1af5ed3 ast: [**BREAKING**] Replace `Modifiers` with `declare` and `const` on `EnumDeclaration` (#3845) (Boshen)
+
+- 0673677 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `Function` (#3844) (Boshen)
+
+- ee6ec4e ast: [**BREAKING**] Replace `Modifiers` with `declare` and `abstract` on `Class` (#3841) (Boshen)
+
+- 9b38119 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `VariableDeclaration` (#3839) (Boshen)
+
+- cfcef24 ast: [**BREAKING**] Add `directives` field to `TSModuleBlock` (#3830) (Boshen)
+
+- 4456034 ast: [**BREAKING**] Add `IdentifierReference` to `ExportSpecifier` (#3820) (Boshen)
+
+### Features
+
+- 5847e16 ast,parser: Add `intrinsic` keyword (#3767) (Boshen)
+- dd540c8 minifier: Add skeleton for ReplaceGlobalDefines ast pass (#3803) (Boshen)
+
+### Bug Fixes
+
+- 275349a parser: Parse function type parameter name `accessor` (#3926) (Boshen)
+- ef82c78 parser: Trailing comma is not allowed in ParenthesizedExpression (#3885) (Dunqing)
+- 13754cb parser: Change diagnostic to "modifier cannot be used here" (#3853) (Boshen)
+
+### Performance
+
+- 4bf405d parser: Add a few more inline hints to cursor functions (#3894) (Boshen)- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+
+### Refactor
+
+- 363d3d5 ast: Add span field to the `BindingPattern` type. (#3855) (rzvxa)
+- a471e62 parser: Clean up `try_parse` (#3925) (Boshen)
+- 3db2553 parser: Improve parsing of TypeScript type arguments (#3923) (Boshen)
+- 4cf3c76 parser: Improve parsing of TypeScript types (#3903) (Boshen)
+- 187f078 parser: Improve parsing of `parse_function_or_constructor_type` (#3892) (Boshen)
+- 97d59fc parser: Move code around for parsing `Modifiers` (#3849) (Boshen)- d6437fe Clean up some usages of `with_labels` (#3854) (Boshen)
+
 ## [0.15.0] - 2024-06-18
 
 ### Features

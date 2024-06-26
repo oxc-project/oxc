@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.0] - 2024-06-26
+
+- 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)
+
+### Features
+
+- dd540c8 minifier: Add skeleton for ReplaceGlobalDefines ast pass (#3803) (Boshen)
+- f3c3970 minifier: Add skeleton for RemoveDeadCode ast pass (#3802) (Boshen)
+
+### Bug Fixes
+
+
+### Refactor
+
+- 8027b1e minifier: Change prepass to ast_passes::remove_parens (#3801) (Boshen)
+
 ## [0.15.0] - 2024-06-18
 
 - 5c38a0f codegen: [**BREAKING**] New code gen API (#3740) (Boshen)

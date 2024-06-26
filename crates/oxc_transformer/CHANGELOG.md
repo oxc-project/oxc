@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.0] - 2024-06-26
+
+- 1f85f1a ast: [**BREAKING**] Revert adding `span` field to the `BindingPattern` type. (#3899) (rzvxa)
+
+- ae09a97 ast: [**BREAKING**] Remove `Modifiers` from ts nodes (#3846) (Boshen)
+
+- 1af5ed3 ast: [**BREAKING**] Replace `Modifiers` with `declare` and `const` on `EnumDeclaration` (#3845) (Boshen)
+
+- 0673677 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `Function` (#3844) (Boshen)
+
+- ee6ec4e ast: [**BREAKING**] Replace `Modifiers` with `declare` and `abstract` on `Class` (#3841) (Boshen)
+
+- 9b38119 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `VariableDeclaration` (#3839) (Boshen)
+
+- cfcef24 ast: [**BREAKING**] Add `directives` field to `TSModuleBlock` (#3830) (Boshen)
+
+- 4456034 ast: [**BREAKING**] Add `IdentifierReference` to `ExportSpecifier` (#3820) (Boshen)
+
+### Features
+
+- 5501d5c transformer/typescript: Transform `import {} from "mod"` to import `"mod"` (#3866) (Dunqing)
+
+### Bug Fixes
+
+- 08fcfb3 transformer: Fix spans and scopes in TS enum transform (#3911) (overlookmotel)
+- 17ad8f7 transformer: Create new scopes for new blocks in TS transform (#3908) (overlookmotel)
+- d76f34b transformer: TODO comments for missing scopes (#3837) (overlookmotel)
+- e470731 transformer: TS transform handle when type exports first (#3833) (overlookmotel)
+- d774e54 transformer: TS transform generate do not copy statements (#3832) (overlookmotel)
+- ff1da27 transformer: Correct comment in example (#3831) (overlookmotel)
+- 6dcc3f4 transformer: Fix TS annotation transform scopes (#3816) (overlookmotel)
+- aea3e9a transformer: Correct spans for TS annotations transform (#3782) (overlookmotel)
+
+### Performance
+- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+
+### Refactor
+
+- 363d3d5 ast: Add span field to the `BindingPattern` type. (#3855) (rzvxa)
+- 5ef28b7 transformer: Shorten code (#3912) (overlookmotel)
+- d9f268d transformer: Shorten TS transform code (#3836) (overlookmotel)
+- 21b0d01 transformer: Pass ref to function (#3781) (overlookmotel)
+- 7c44703 transformer: Remove needless `pub` on TS enum transform methods (#3774) (overlookmotel)
+- 22c56d7 transformer: Move TSImportEqualsDeclaration transform code (#3764) (overlookmotel)
+- cd56aa9 transformer: Simplify TS export assignment transform (#3762) (overlookmotel)
+- 512740d transformer: Move and simplify TS enum transform entry point (#3760) (overlookmotel)
+
 ## [0.15.0] - 2024-06-18
 
 - 5c38a0f codegen: [**BREAKING**] New code gen API (#3740) (Boshen)
