@@ -118,12 +118,8 @@ impl<'a> ParserImpl<'a> {
 
     fn skip_parameter_start(&mut self) -> bool {
         // Skip modifiers
-        loop {
-            if self.cur_kind().is_modifier_kind() && !self.peek_at(Kind::Comma) {
-                self.bump_any();
-            } else {
-                break;
-            }
+        if self.cur_kind().is_modifier_kind() {
+            self.parse_modifiers(false, false, false);
         }
         if self.cur_kind().is_identifier() || self.at(Kind::This) {
             self.bump_any();
