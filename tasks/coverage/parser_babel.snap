@@ -1,8 +1,8 @@
 commit: 12619ffe
 
 parser_babel Summary:
-AST Parsed     : 2095/2101 (99.71%)
-Positive Passed: 2087/2101 (99.33%)
+AST Parsed     : 2091/2101 (99.52%)
+Positive Passed: 2083/2101 (99.14%)
 Negative Passed: 1364/1501 (90.87%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -350,6 +350,36 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
    ·                                  ╰── `,` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts"
+
+  × Expected `{` but found `<<`
+   ╭─[typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts:1:17]
+ 1 │ (class extends f<<T>(v: T) => void> {});
+   ·                 ─┬
+   ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx"
+
+  × Unexpected token
+   ╭─[typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx:1:11]
+ 1 │ <Component<<T>(v: T) => void> />
+   ·           ──
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts"
+
+  × Expected `{` but found `<<`
+   ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts:1:17]
+ 1 │ (class extends f<<T>(v: T) => void> {});
+   ·                 ─┬
+   ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx"
+
+  × Unexpected token
+   ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx:1:11]
+ 1 │ <Component<<T>(v: T) => void> />
+   ·           ──
    ╰────
 Expect to Parse: "typescript/types/const-type-parameters/input.ts"
 
@@ -10563,11 +10593,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:10]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:9]
  1 │ new A<T> if (0);
-   ·          ──
+   ·         ─
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/type-only-import-export-specifiers/export-invalid-type-only-keyword/input.ts:1:7]

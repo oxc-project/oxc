@@ -643,15 +643,6 @@ impl Kind {
             BigInt => "bigint",
         }
     }
-
-    #[rustfmt::skip]
-    pub fn can_follow_type_arguments_in_expr(self) -> bool {
-        matches!(self, Self::LParen | Self::NoSubstitutionTemplate | Self::TemplateHead
-            | Self::Comma | Self::Dot | Self::QuestionDot | Self::RParen | Self::RBrack
-            | Self::Colon | Self::Semicolon | Self::Question | Self::Eq3 | Self::Eq2 | Self::Eq
-            | Self::Neq | Self::Neq2 | Self::Amp2 | Self::Pipe2 | Self::Question2
-            | Self::Caret | Self::Amp | Self::Pipe | Self::RCurly | Self::Eof)
-    }
 }
 
 impl fmt::Display for Kind {

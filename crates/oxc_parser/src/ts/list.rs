@@ -159,8 +159,7 @@ impl<'a> SeparatedList<'a> for TSTypeArgumentList<'a> {
 
         if self.in_expression {
             // `a < b> = c`` is valid but `a < b >= c` is BinaryExpression
-            let kind = p.re_lex_right_angle();
-            if matches!(kind, Kind::GtEq) {
+            if matches!(p.re_lex_right_angle(), Kind::GtEq) {
                 return Err(p.unexpected());
             }
             p.re_lex_ts_r_angle();

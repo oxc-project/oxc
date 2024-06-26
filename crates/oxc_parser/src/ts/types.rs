@@ -649,12 +649,8 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // `bump `typeof`
         let entity_name = self.parse_ts_type_name()?; // TODO: parseEntityName
         let entity_name = self.ast.ts_type_query_expr_name_type_name(entity_name);
-        let type_arguments = if self.cur_token().is_on_new_line {
-            None
-        } else {
-            // TODO: tryParseTypeArguments
-            self.parse_ts_type_arguments()?
-        };
+        let type_arguments =
+            if self.cur_token().is_on_new_line { None } else { self.try_parse_type_arguments()? };
         Ok(self.ast.ts_type_query_type(self.end_span(span), entity_name, type_arguments))
     }
 
@@ -751,18 +747,15 @@ impl<'a> ParserImpl<'a> {
     fn parse_type_reference(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         let type_name = self.parse_ts_type_name()?;
-        let type_parameters =
-            if self.cur_token().is_on_new_line { None } else { self.parse_ts_type_arguments()? };
+        let type_parameters = self.parse_type_arguments_of_type_reference()?;
         Ok(self.ast.ts_type_reference(self.end_span(span), type_name, type_parameters))
     }
 
     fn parse_ts_implement_name(&mut self) -> Result<TSClassImplements<'a>> {
         let span = self.start_span();
-        let expression = self.parse_ts_type_name()?;
-        let type_parameters =
-            if self.cur_token().is_on_new_line { None } else { self.parse_ts_type_arguments()? };
-
-        Ok(self.ast.ts_type_implement(self.end_span(span), expression, type_parameters))
+        let type_name = self.parse_ts_type_name()?;
+        let type_parameters = self.parse_type_arguments_of_type_reference()?;
+        Ok(self.ast.ts_type_implement(self.end_span(span), type_name, type_parameters))
     }
 
     pub(crate) fn parse_ts_type_name(&mut self) -> Result<TSTypeName<'a>> {
@@ -781,40 +774,56 @@ impl<'a> ParserImpl<'a> {
         Ok(left)
     }
 
-    pub(crate) fn parse_ts_type_arguments(
+    pub(crate) fn try_parse_type_arguments(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
-        self.re_lex_ts_l_angle();
-        if !self.at(Kind::LAngle) {
-            return Ok(None);
+        if self.at(Kind::LAngle) {
+            let span = self.start_span();
+            let params = TSTypeArgumentList::parse(self, false)?.params;
+            return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
         }
-        let span = self.start_span();
-        let params = TSTypeArgumentList::parse(self, false)?.params;
-        Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)))
+        Ok(None)
     }
 
-    pub(crate) fn parse_ts_type_arguments_in_expression(
+    fn parse_type_arguments_of_type_reference(
+        &mut self,
+    ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
+        self.re_lex_l_angle();
+        if !self.cur_token().is_on_new_line && self.re_lex_l_angle() == Kind::LAngle {
+            let span = self.start_span();
+            let params = TSTypeArgumentList::parse(self, false)?.params;
+            return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
+        }
+        Ok(None)
+    }
+
+    pub(crate) fn parse_type_arguments_in_expression(
         &mut self,
     ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
         if !self.ts_enabled() {
             return Ok(None);
         }
-
         let span = self.start_span();
-        self.re_lex_ts_l_angle();
-        if !self.at(Kind::LAngle) {
+        if self.re_lex_l_angle() != Kind::LAngle {
             return Ok(None);
         }
-
         let params = TSTypeArgumentList::parse(self, /* in_expression */ true)?.params;
-
-        let token = self.cur_token();
-
-        if token.is_on_new_line || token.kind.can_follow_type_arguments_in_expr() {
+        if self.can_follow_type_arguments_in_expr() {
             return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
         }
-
         Err(self.unexpected())
+    }
+
+    fn can_follow_type_arguments_in_expr(&mut self) -> bool {
+        match self.cur_kind() {
+            Kind::LParen | Kind::NoSubstitutionTemplate | Kind::TemplateHead => true,
+            Kind::LAngle | Kind::RAngle | Kind::Plus | Kind::Minus => false,
+            _ => {
+                self.cur_token().is_on_new_line
+                    || self.is_binary_operator()
+                    || !self.is_start_of_expression()
+            }
+        }
     }
 
     fn parse_tuple_type(&mut self) -> Result<TSType<'a>> {
@@ -951,7 +960,7 @@ impl<'a> ParserImpl<'a> {
             if self.eat(Kind::Comma) { Some(self.parse_ts_import_attributes()?) } else { None };
         self.expect(Kind::RParen)?;
         let qualifier = if self.eat(Kind::Dot) { Some(self.parse_ts_type_name()?) } else { None };
-        let type_parameters = self.parse_ts_type_arguments()?;
+        let type_parameters = self.parse_type_arguments_of_type_reference()?;
         Ok(self.ast.ts_import_type(
             self.end_span(span),
             is_type_of,
@@ -1306,5 +1315,46 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `!`
         let ty = self.parse_non_array_type()?;
         Ok(self.ast.js_doc_non_nullable_type(self.end_span(span), ty, /* postfix */ false))
+    }
+
+    fn is_binary_operator(&mut self) -> bool {
+        if self.ctx.has_in() && self.at(Kind::In) {
+            return false;
+        }
+        self.cur_kind().is_binary_operator()
+    }
+
+    fn is_start_of_expression(&mut self) -> bool {
+        if self.is_start_of_left_hand_side_expression() {
+            return true;
+        }
+        match self.cur_kind() {
+            kind if kind.is_unary_operator() => true,
+            kind if kind.is_update_operator() => true,
+            Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At => true,
+            kind if kind.is_binary_operator() => true,
+            kind => kind.is_identifier(),
+        }
+    }
+
+    fn is_start_of_left_hand_side_expression(&mut self) -> bool {
+        match self.cur_kind() {
+            kind if kind.is_literal() => true,
+            kind if kind.is_template_start_of_tagged_template() => true,
+            Kind::This
+            | Kind::Super
+            | Kind::LParen
+            | Kind::LBrack
+            | Kind::LCurly
+            | Kind::Function
+            | Kind::Class
+            | Kind::New
+            | Kind::Slash
+            | Kind::SlashEq => true,
+            Kind::Import => {
+                matches!(self.peek_kind(), Kind::LParen | Kind::LAngle | Kind::Dot)
+            }
+            kind => kind.is_identifier(),
+        }
     }
 }

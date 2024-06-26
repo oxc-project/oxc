@@ -602,7 +602,7 @@ impl<'a> ParserImpl<'a> {
                 }
                 Kind::LAngle | Kind::ShiftLeft => {
                     if let Ok(Some(arguments)) =
-                        self.try_parse(Self::parse_ts_type_arguments_in_expression)
+                        self.try_parse(Self::parse_type_arguments_in_expression)
                     {
                         lhs = self.ast.ts_instantiation_expression(
                             self.end_span(lhs_span),
@@ -713,8 +713,7 @@ impl<'a> ParserImpl<'a> {
             *in_optional_chain = if optional_call { true } else { *in_optional_chain };
 
             if optional_call {
-                if let Ok(Some(args)) = self.try_parse(Self::parse_ts_type_arguments_in_expression)
-                {
+                if let Ok(Some(args)) = self.try_parse(Self::parse_type_arguments_in_expression) {
                     type_arguments = Some(args);
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {

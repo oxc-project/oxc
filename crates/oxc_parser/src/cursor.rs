@@ -254,17 +254,23 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn re_lex_ts_l_angle(&mut self) {
+    pub(crate) fn re_lex_l_angle(&mut self) -> Kind {
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftLeft | Kind::ShiftLeftEq | Kind::LtEq) {
             self.token = self.lexer.re_lex_as_typescript_l_angle(kind);
+            self.token.kind
+        } else {
+            kind
         }
     }
 
-    pub(crate) fn re_lex_ts_r_angle(&mut self) {
+    pub(crate) fn re_lex_ts_r_angle(&mut self) -> Kind {
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftRight | Kind::ShiftRight3) {
             self.token = self.lexer.re_lex_as_typescript_r_angle(kind);
+            self.token.kind
+        } else {
+            kind
         }
     }
 

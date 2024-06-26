@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
 Positive Passed: 5273/5283 (99.81%)
-Negative Passed: 1069/4875 (21.93%)
+Negative Passed: 1068/4875 (21.91%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -967,6 +967,7 @@ Expect Syntax Error: "compiler/inlineSourceMap2.ts"
 Expect Syntax Error: "compiler/innerAliases.ts"
 Expect Syntax Error: "compiler/innerTypeCheckOfLambdaArgument.ts"
 Expect Syntax Error: "compiler/instanceSubtypeCheck2.ts"
+Expect Syntax Error: "compiler/instanceofOnInstantiationExpression.ts"
 Expect Syntax Error: "compiler/instanceofOperator.ts"
 Expect Syntax Error: "compiler/instanceofWithPrimitiveUnion.ts"
 Expect Syntax Error: "compiler/instanceofWithStructurallyIdenticalTypes.ts"
@@ -6954,14 +6955,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │         var non_export_var = 0;
    ╰────
   help: Try insert a semicolon here
-
-  × Unexpected token
-    ╭─[compiler/instanceofOnInstantiationExpression.ts:14:13]
- 13 │ 
- 14 │ Box<number> instanceof Object; // OK
-    ·             ──────────
- 15 │ (Box<number>) instanceof Object; // OK
-    ╰────
 
   × Unexpected token
     ╭─[compiler/intTypeCheck.ts:37:17]
