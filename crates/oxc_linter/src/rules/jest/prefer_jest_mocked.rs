@@ -107,10 +107,7 @@ impl PreferJestMocked {
 
         ctx.diagnostic_with_fix(use_jest_mocked(span), |fixer| {
             let span_source_code = fixer.source_range(arg_span);
-            let mut formatter = fixer.codegen();
-            formatter.print_str(format!("jest.mocked({span_source_code})"));
-
-            fixer.replace(span, formatter)
+            fixer.replace(span, format!("jest.mocked({span_source_code})"))
         });
     }
 }
