@@ -220,6 +220,7 @@ mod react {
     pub mod no_string_refs;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
+    pub mod prefer_es6_class;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -690,6 +691,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_unescaped_entities,
     react::no_is_mounted,
     react::no_unknown_property,
+    react::prefer_es6_class,
     react::require_render_return,
     react::rules_of_hooks,
     react::void_dom_elements_no_children,
