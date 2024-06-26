@@ -50,54 +50,8 @@ impl<'a> SeparatedList<'a> for TSTupleElementList<'a> {
     }
 
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        let span = p.start_span();
-        if p.is_at_named_tuple_element() {
-            if p.eat(Kind::Dot3) {
-                let member_span = p.start_span();
-                let label = p.parse_identifier_name()?;
-                p.expect(Kind::Colon)?;
-                let element_type = p.parse_ts_type()?;
-                self.elements.push(TSTupleElement::TSRestType(p.ast.alloc(TSRestType {
-                    span: p.end_span(span),
-                    type_annotation: TSType::TSNamedTupleMember(p.ast.alloc(TSNamedTupleMember {
-                        span: p.end_span(member_span),
-                        element_type,
-                        label,
-                        optional: false, // A tuple member cannot be both optional and rest. (TS5085)
-                    })),
-                })));
-                return Ok(());
-            }
-
-            let label = p.parse_identifier_name()?;
-            let optional = p.eat(Kind::Question);
-            p.expect(Kind::Colon)?;
-
-            let element_type = p.parse_ts_type()?;
-            self.elements.push(TSTupleElement::TSNamedTupleMember(p.ast.alloc(
-                TSNamedTupleMember { span: p.end_span(span), element_type, label, optional },
-            )));
-
-            return Ok(());
-        }
-
-        if p.eat(Kind::Dot3) {
-            let type_annotation = p.parse_ts_type()?;
-            self.elements.push(TSTupleElement::TSRestType(
-                p.ast.alloc(TSRestType { span: p.end_span(span), type_annotation }),
-            ));
-            return Ok(());
-        }
-
-        let type_annotation = p.parse_ts_type()?;
-        if p.eat(Kind::Question) {
-            self.elements.push(TSTupleElement::TSOptionalType(
-                p.ast.alloc(TSOptionalType { span: p.end_span(span), type_annotation }),
-            ));
-        } else {
-            self.elements.push(TSTupleElement::from(type_annotation));
-        }
-
+        let ty = p.parse_tuple_element_name_or_tuple_element_type()?;
+        self.elements.push(ty);
         Ok(())
     }
 }

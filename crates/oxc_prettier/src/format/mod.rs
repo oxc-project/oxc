@@ -687,6 +687,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSTypeReference(v) => v.format(p),
             TSType::TSUnionType(v) => v.format(p),
             TSType::JSDocNullableType(v) => v.format(p),
+            TSType::JSDocNonNullableType(v) => v.format(p),
             TSType::JSDocUnknownType(v) => v.format(p),
         }
     }
@@ -926,6 +927,12 @@ impl<'a> Format<'a> for TSUnionType<'a> {
 }
 
 impl<'a> Format<'a> for JSDocNullableType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for JSDocNonNullableType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }

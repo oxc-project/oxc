@@ -258,7 +258,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
-        let return_type = self.parse_ts_return_type_annotation()?;
+        let return_type = self.parse_ts_return_type_annotation(Kind::Arrow, false)?;
 
         self.ctx = self.ctx.and_await(has_await);
 

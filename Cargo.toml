@@ -185,7 +185,7 @@ criterion2          = { version = "0.11.0", default-features = false }
 daachorse           = { version = "1.0.0" }
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_traverse", "oxc_ast_codegen", "prettyplease"]
+ignored = ["napi", "oxc_ast_codegen", "oxc_traverse", "prettyplease"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

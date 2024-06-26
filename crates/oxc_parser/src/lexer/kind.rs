@@ -76,7 +76,7 @@ pub enum Kind {
     Out,
     Readonly,
     Require,
-    Number,
+    Number, // the "number" keyword for TypeScript
     Object,
     Satisfies,
     String, // the "string" keyword for TypeScript
@@ -87,7 +87,7 @@ pub enum Kind {
     Using,
     Unknown,
     Global,
-    BigInt,
+    BigInt, // the "bigint" keyword for TypeScript
     Override,
     // Future keywords (strict mode reserved words)
     Implements,
@@ -104,7 +104,7 @@ pub enum Kind {
     Amp2,
     Amp2Eq,
     AmpEq,
-    Bang,
+    Bang, // !
     Caret,
     CaretEq,
     Colon,
@@ -365,6 +365,10 @@ impl Kind {
     pub fn is_modifier_kind(self) -> bool {
         matches!(self, Abstract | Accessor | Async | Const | Declare | Default
           | Export | In | Out | Public | Private | Protected | Readonly | Static | Override)
+    }
+
+    pub fn is_binding_identifier_or_private_identifier_or_pattern(self) -> bool {
+        matches!(self, LCurly | LBrack | PrivateIdentifier) || self.is_binding_identifier()
     }
 
     pub fn match_keyword(s: &str) -> Self {

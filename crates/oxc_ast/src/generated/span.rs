@@ -1385,6 +1385,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSTypeReference(it) => it.span(),
             Self::TSUnionType(it) => it.span(),
             Self::JSDocNullableType(it) => it.span(),
+            Self::JSDocNonNullableType(it) => it.span(),
             Self::JSDocUnknownType(it) => it.span(),
         }
     }
@@ -1500,6 +1501,7 @@ impl<'a> GetSpan for TSTupleElement<'a> {
             Self::TSTypeReference(it) => it.span(),
             Self::TSUnionType(it) => it.span(),
             Self::JSDocNullableType(it) => it.span(),
+            Self::JSDocNonNullableType(it) => it.span(),
             Self::JSDocUnknownType(it) => it.span(),
         }
     }
@@ -1954,6 +1956,13 @@ impl<'a> GetSpan for TSInstantiationExpression<'a> {
 }
 
 impl<'a> GetSpan for JSDocNullableType<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl<'a> GetSpan for JSDocNonNullableType<'a> {
     #[inline]
     fn span(&self) -> Span {
         self.span

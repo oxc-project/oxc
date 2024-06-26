@@ -3,7 +3,7 @@ commit: 12619ffe
 parser_babel Summary:
 AST Parsed     : 2095/2101 (99.71%)
 Positive Passed: 2087/2101 (99.33%)
-Negative Passed: 1365/1501 (90.94%)
+Negative Passed: 1364/1501 (90.87%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -138,6 +138,7 @@ Expect Syntax Error: "typescript/types/read-only-1/input.ts"
 Expect Syntax Error: "typescript/types/read-only-2/input.ts"
 Expect Syntax Error: "typescript/types/read-only-3/input.ts"
 Expect Syntax Error: "typescript/types/read-only-4/input.ts"
+Expect Syntax Error: "typescript/types/tuple-labeled-invalid-optional/input.ts"
 Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
@@ -10668,13 +10669,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·               ╰── `,` expected
    ╰────
 
-  × Expected `,` but found `?`
-   ╭─[typescript/types/tuple-labeled-invalid-optional/input.ts:1:15]
- 1 │ type T = [x: A?];
-   ·               ┬
-   ·               ╰── `,` expected
-   ╰────
-
   × Expected `,` but found `Identifier`
     ╭─[typescript/types/variance-annotations/input.ts:95:17]
  94 │ 
@@ -10711,22 +10705,22 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `]` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `}` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `]` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `}` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────

@@ -2697,6 +2697,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             Self::TSTypeQuery(ty) => ty.gen(p, ctx),
             Self::TSTypeReference(ty) => ty.gen(p, ctx),
             Self::JSDocNullableType(ty) => ty.gen(p, ctx),
+            Self::JSDocNonNullableType(ty) => ty.gen(p, ctx),
             Self::JSDocUnknownType(_ty) => p.print_str(b"unknown"),
         }
     }
@@ -2899,6 +2900,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSDocNullableType<'a> {
             p.print_str(b"?");
         } else {
             p.print_str(b"?");
+            self.type_annotation.gen(p, ctx);
+        }
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for JSDocNonNullableType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.postfix {
+            self.type_annotation.gen(p, ctx);
+            p.print_str(b"!");
+        } else {
+            p.print_str(b"!");
             self.type_annotation.gen(p, ctx);
         }
     }
@@ -3145,8 +3158,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportType<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.is_type_of {
+            p.print_str(b"typeof ");
+        }
         p.print_str(b"import(");
-        self.argument.gen(p, ctx);
+        self.parameter.gen(p, ctx);
         if let Some(attributes) = &self.attributes {
             p.print_str(", ");
             attributes.gen(p, ctx);

@@ -414,7 +414,10 @@ impl<'a> ParserImpl<'a> {
         Ok(TemplateLiteral { span: self.end_span(span), quasis, expressions })
     }
 
-    fn parse_template_literal_expression(&mut self, tagged: bool) -> Result<Expression<'a>> {
+    pub(crate) fn parse_template_literal_expression(
+        &mut self,
+        tagged: bool,
+    ) -> Result<Expression<'a>> {
         self.parse_template_literal(tagged)
             .map(|template_literal| self.ast.template_literal_expression(template_literal))
     }

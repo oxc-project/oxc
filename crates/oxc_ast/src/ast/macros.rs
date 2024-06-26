@@ -621,7 +621,9 @@ macro_rules! inherit_variants {
                 /// Inherited from [`TSType`]
                 JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 34,
                 /// Inherited from [`TSType`]
-                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 35,
+                JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 35,
+                /// Inherited from [`TSType`]
+                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 36,
 
                 $($rest)*
             }
@@ -671,6 +673,7 @@ macro_rules! inherit_variants {
                 TSTypeReference,
                 TSUnionType,
                 JSDocNullableType,
+                JSDocNonNullableType,
                 JSDocUnknownType,
             ]
         );

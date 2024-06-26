@@ -174,7 +174,8 @@ pub enum TSType<'a> {
     TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
     // JSDoc
     JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 34,
-    JSDocUnknownType(Box<'a, JSDocUnknownType>) = 35,
+    JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 35,
+    JSDocUnknownType(Box<'a, JSDocUnknownType>) = 36,
 }
 
 /// Macro for matching `TSType`'s variants.
@@ -216,6 +217,7 @@ macro_rules! match_ts_type {
             | $ty::TSTypeReference(_)
             | $ty::TSUnionType(_)
             | $ty::JSDocNullableType(_)
+            | $ty::JSDocNonNullableType(_)
             | $ty::JSDocUnknownType(_)
     };
 }
@@ -333,7 +335,7 @@ pub struct TSTupleType<'a> {
 pub struct TSNamedTupleMember<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub element_type: TSType<'a>,
+    pub element_type: TSTupleElement<'a>,
     pub label: IdentifierName<'a>,
     pub optional: bool,
 }
@@ -909,7 +911,8 @@ pub enum TSTypeQueryExprName<'a> {
 pub struct TSImportType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub argument: TSType<'a>,
+    pub is_type_of: bool, // `typeof import("foo")`
+    pub parameter: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub attributes: Option<TSImportAttributes<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1154,6 +1157,18 @@ pub enum ImportOrExportKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSDocNullableType<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub type_annotation: TSType<'a>,
+    pub postfix: bool,
+}
+
+/// `type foo = ty!` or `type foo = !ty`
+#[visited_node]
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+pub struct JSDocNonNullableType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub type_annotation: TSType<'a>,
