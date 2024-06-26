@@ -202,7 +202,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.transform_accessibility(method.accessibility),
                 )
             }
-            MethodDefinitionKind::Get => {
+            MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
                 let params = self.ast.formal_parameters(
                     SPAN,
                     FormalParameterKind::Signature,
@@ -220,9 +220,6 @@ impl<'a> IsolatedDeclarations<'a> {
                     None,
                 );
                 self.transform_class_method_definition(method, params, None)
-            }
-            MethodDefinitionKind::Constructor => {
-                unreachable!()
             }
         }
     }
