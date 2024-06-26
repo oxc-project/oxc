@@ -16,7 +16,7 @@ categories.workspace   = true
 workspace = true
 
 [lib]
-crate-type = ["cdylib"]
+crate-type = ["cdylib", "lib"]
 test       = false
 doctest    = false
 
