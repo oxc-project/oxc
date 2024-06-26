@@ -3,8 +3,8 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
-// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
+// NB: `#[visited_node]` and `#[scope]` attributes on AST nodes do not do anything to the code in this file.
+// They are purely markers for codegen used in `oxc_traverse`. See docs in that crate.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
@@ -46,7 +46,8 @@ pub struct TSThisParameter<'a> {
 /// Enum Declaration
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
-#[visited_node(scope(ScopeFlags::empty()))]
+#[visited_node]
+#[scope]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -562,7 +563,8 @@ pub struct TSTypeParameterInstantiation<'a> {
     pub params: Vec<'a, TSType<'a>>,
 }
 
-#[visited_node(scope(ScopeFlags::empty()))]
+#[visited_node]
+#[scope]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -783,8 +785,9 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType),
 }
 
-#[visited_node(
-    scope(ScopeFlags::TsModuleBlock),
+#[visited_node]
+#[scope(
+    flags(ScopeFlags::TsModuleBlock),
     strict_if(self.body.as_ref().is_some_and(|body| body.is_strict())),
 )]
 #[derive(Debug)]
