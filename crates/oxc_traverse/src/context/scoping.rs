@@ -1,4 +1,4 @@
-use std::str;
+use std::{cell::Cell, str};
 
 use compact_str::{format_compact, CompactString};
 #[allow(clippy::wildcard_imports)]
@@ -7,7 +7,7 @@ use oxc_ast::{
     visit::{walk, Visit},
 };
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
-use oxc_span::{CompactStr, SPAN};
+use oxc_span::{Atom, CompactStr, Span, SPAN};
 use oxc_syntax::{
     reference::{ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -270,6 +270,23 @@ impl TraverseScoping {
         reference_id
     }
 
+    /// Create an `IdentifierReference` bound to a `SymbolId`
+    pub fn create_bound_reference_id<'a>(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: SymbolId,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        let reference_id = self.create_bound_reference(name.to_compact_str(), symbol_id, flag);
+        IdentifierReference {
+            span,
+            name,
+            reference_id: Cell::new(Some(reference_id)),
+            reference_flag: flag,
+        }
+    }
+
     /// Create an unbound reference
     pub fn create_unbound_reference(
         &mut self,
@@ -280,6 +297,22 @@ impl TraverseScoping {
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
         reference_id
+    }
+
+    /// Create an unbound `IdentifierReference`
+    pub fn create_unbound_reference_id<'a>(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        let reference_id = self.create_unbound_reference(name.to_compact_str(), flag);
+        IdentifierReference {
+            span,
+            name,
+            reference_id: Cell::new(Some(reference_id)),
+            reference_flag: flag,
+        }
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -296,6 +329,24 @@ impl TraverseScoping {
             self.create_bound_reference(name, symbol_id, flag)
         } else {
             self.create_unbound_reference(name, flag)
+        }
+    }
+
+    /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
+    ///
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
+    /// or `TraverseCtx::create_unbound_reference_id`.
+    pub fn create_reference_id<'a>(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: Option<SymbolId>,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        if let Some(symbol_id) = symbol_id {
+            self.create_bound_reference_id(span, name, symbol_id, flag)
+        } else {
+            self.create_unbound_reference_id(span, name, flag)
         }
     }
 

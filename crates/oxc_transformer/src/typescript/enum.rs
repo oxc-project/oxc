@@ -1,9 +1,13 @@
+use std::cell::Cell;
+
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
-use oxc_span::{Atom, SPAN};
+use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
+    reference::ReferenceFlag,
+    symbol::SymbolFlags,
 };
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashMap;
@@ -20,14 +24,14 @@ impl<'a> TypeScriptEnum<'a> {
         Self { ctx, enums: FxHashMap::default() }
     }
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         let new_stmt = match stmt {
             Statement::TSEnumDeclaration(ts_enum_decl) => {
-                self.transform_ts_enum(ts_enum_decl, false, ctx)
+                self.transform_ts_enum(ts_enum_decl, None, ctx)
             }
             Statement::ExportNamedDeclaration(decl) => {
                 if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
-                    self.transform_ts_enum(ts_enum_decl, true, ctx)
+                    self.transform_ts_enum(ts_enum_decl, Some(decl.span), ctx)
                 } else {
                     None
                 }
@@ -56,16 +60,29 @@ impl<'a> TypeScriptEnum<'a> {
     fn transform_ts_enum(
         &mut self,
         decl: &TSEnumDeclaration<'a>,
-        is_export: bool,
-        ctx: &TraverseCtx<'a>,
+        export_span: Option<Span>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         if decl.declare {
             return None;
         }
 
+        let is_export = export_span.is_some();
         let is_not_top_scope = !ctx.scopes().get_flags(ctx.current_scope_id()).is_top();
-        let span = decl.span;
-        let ident = decl.id.clone();
+
+        let enum_name = decl.id.name.clone();
+        let func_scope_id = decl.scope_id.get().unwrap();
+        let param_symbol_id = ctx.symbols_mut().create_symbol(
+            decl.id.span,
+            enum_name.to_compact_str(),
+            SymbolFlags::FunctionScopedVariable,
+            func_scope_id,
+        );
+        let ident = BindingIdentifier {
+            span: decl.id.span,
+            name: decl.id.name.clone(),
+            symbol_id: Cell::new(Some(param_symbol_id)),
+        };
         let kind = self.ctx.ast.binding_pattern_identifier(ident);
         let id = self.ctx.ast.binding_pattern(kind, None, false);
 
@@ -81,14 +98,25 @@ impl<'a> TypeScriptEnum<'a> {
         );
 
         // Foo[Foo["X"] = 0] = "X";
-        let enum_name = decl.id.name.clone();
         let is_already_declared = self.enums.contains_key(&enum_name);
         let statements = self.transform_ts_enum_members(&decl.members, enum_name.clone(), ctx);
         let body = self.ctx.ast.function_body(decl.span, self.ctx.ast.new_vec(), statements);
-        let r#type = FunctionType::FunctionExpression;
-        let callee = self.ctx.ast.plain_function(r#type, SPAN, None, params, Some(body));
-        let callee = Expression::FunctionExpression(callee);
+        let callee = Expression::FunctionExpression(ctx.alloc(Function {
+            r#type: FunctionType::FunctionExpression,
+            span: SPAN,
+            id: None,
+            generator: false,
+            r#async: false,
+            declare: false,
+            this_param: None,
+            params,
+            body: Some(body),
+            type_parameters: None,
+            return_type: None,
+            scope_id: Cell::new(Some(func_scope_id)),
+        }));
 
+        let var_symbol_id = decl.id.symbol_id.get().unwrap();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
             let object_expr = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
@@ -96,10 +124,13 @@ impl<'a> TypeScriptEnum<'a> {
         } else {
             // }(Foo || {});
             let op = LogicalOperator::Or;
-            let left = self
-                .ctx
-                .ast
-                .identifier_reference_expression(IdentifierReference::new(SPAN, enum_name.clone()));
+            let left = ctx.create_bound_reference_id(
+                decl.id.span,
+                enum_name.clone(),
+                var_symbol_id,
+                ReferenceFlag::Read,
+            );
+            let left = ctx.ast.identifier_reference_expression(left);
             let right = self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
             let expression = self.ctx.ast.logical_expression(SPAN, left, op, right);
             self.ctx.ast.new_vec_single(Argument::from(expression))
@@ -109,12 +140,15 @@ impl<'a> TypeScriptEnum<'a> {
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;
-            let left = self.ctx.ast.simple_assignment_target_identifier(IdentifierReference::new(
-                SPAN,
+            let left = ctx.create_bound_reference_id(
+                decl.id.span,
                 enum_name.clone(),
-            ));
+                var_symbol_id,
+                ReferenceFlag::Write,
+            );
+            let left = ctx.ast.simple_assignment_target_identifier(left);
             let expr = self.ctx.ast.assignment_expression(SPAN, op, left, call_expression);
-            return Some(self.ctx.ast.expression_statement(SPAN, expr));
+            return Some(self.ctx.ast.expression_statement(decl.span, expr));
         }
 
         let kind = if is_export || is_not_top_scope {
@@ -123,25 +157,21 @@ impl<'a> TypeScriptEnum<'a> {
             VariableDeclarationKind::Var
         };
         let decls = {
-            let mut decls = self.ctx.ast.new_vec();
-
-            let binding_identifier = BindingIdentifier::new(SPAN, enum_name.clone());
+            let binding_identifier = decl.id.clone();
             let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
             let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
             let decl =
                 self.ctx.ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
-
-            decls.push(decl);
-            decls
+            ctx.ast.new_vec_single(decl)
         };
-        let variable_declaration = self.ctx.ast.variable_declaration(span, kind, decls, false);
+        let variable_declaration = self.ctx.ast.variable_declaration(decl.span, kind, decls, false);
         let variable_declaration = Declaration::VariableDeclaration(variable_declaration);
 
-        let stmt = if is_export {
-            let declaration =
-                self.ctx.ast.plain_export_named_declaration_declaration(SPAN, variable_declaration);
-
-            self.ctx.ast.module_declaration(ModuleDeclaration::ExportNamedDeclaration(declaration))
+        let stmt = if let Some(export_span) = export_span {
+            let declaration = ctx
+                .ast
+                .plain_export_named_declaration_declaration(export_span, variable_declaration);
+            Statement::ExportNamedDeclaration(declaration)
         } else {
             Statement::from(variable_declaration)
         };
@@ -154,6 +184,8 @@ impl<'a> TypeScriptEnum<'a> {
         enum_name: Atom<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Vec<'a, Statement<'a>> {
+        // TODO: Set `span` and `references_id` on all `IdentifierReference`s created here
+
         let mut statements = self.ctx.ast.new_vec();
         let mut prev_constant_value = Some(ConstantValue::Number(-1.0));
         let mut previous_enum_members = self.enums.entry(enum_name.clone()).or_default().clone();

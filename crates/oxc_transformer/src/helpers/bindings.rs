@@ -37,7 +37,7 @@ impl<'a> BoundIdentifier<'a> {
 
     /// Create `IdentifierReference` referencing this binding which is read from
     /// in current scope
-    pub fn create_read_reference(&self, ctx: &mut TraverseCtx) -> IdentifierReference<'a> {
+    pub fn create_read_reference(&self, ctx: &mut TraverseCtx<'a>) -> IdentifierReference<'a> {
         self.create_spanned_read_reference(SPAN, ctx)
     }
 
@@ -46,14 +46,9 @@ impl<'a> BoundIdentifier<'a> {
     pub fn create_spanned_read_reference(
         &self,
         span: Span,
-        ctx: &mut TraverseCtx,
+        ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
-        let reference_id = ctx.create_bound_reference(
-            self.name.to_compact_str(),
-            self.symbol_id,
-            ReferenceFlag::Read,
-        );
-        IdentifierReference::new_read(span, self.name.clone(), Some(reference_id))
+        ctx.create_bound_reference_id(span, self.name.clone(), self.symbol_id, ReferenceFlag::Read)
     }
 
     /// Create `BindingIdentifier` for this binding

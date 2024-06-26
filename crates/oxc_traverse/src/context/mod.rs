@@ -1,10 +1,10 @@
 use oxc_allocator::{Allocator, Box};
 use oxc_ast::{
-    ast::{Expression, Statement},
+    ast::{Expression, IdentifierReference, Statement},
     AstBuilder,
 };
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::CompactStr;
+use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -358,6 +358,19 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.create_bound_reference(name, symbol_id, flag)
     }
 
+    /// Create an `IdentifierReference` bound to a `SymbolId`.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_bound_reference_id`.
+    pub fn create_bound_reference_id(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: SymbolId,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        self.scoping.create_bound_reference_id(span, name, symbol_id, flag)
+    }
+
     /// Create an unbound reference.
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
@@ -367,6 +380,18 @@ impl<'a> TraverseCtx<'a> {
         flag: ReferenceFlag,
     ) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flag)
+    }
+
+    /// Create an unbound `IdentifierReference`.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_unbound_reference_id`.
+    pub fn create_unbound_reference_id(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        self.scoping.create_unbound_reference_id(span, name, flag)
     }
 
     /// Create a reference optionally bound to a `SymbolId`.
@@ -382,6 +407,22 @@ impl<'a> TraverseCtx<'a> {
         flag: ReferenceFlag,
     ) -> ReferenceId {
         self.scoping.create_reference(name, symbol_id, flag)
+    }
+
+    /// Create an `IdentifierReference` optionally bound to a `SymbolId`.
+    ///
+    /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
+    /// or `TraverseCtx::create_unbound_reference_id`.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_reference_id`.
+    pub fn create_reference_id(
+        &mut self,
+        span: Span,
+        name: Atom<'a>,
+        symbol_id: Option<SymbolId>,
+        flag: ReferenceFlag,
+    ) -> IdentifierReference<'a> {
+        self.scoping.create_reference_id(span, name, symbol_id, flag)
     }
 
     /// Create reference in current scope, looking up binding for `name`,

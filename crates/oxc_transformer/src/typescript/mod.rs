@@ -167,7 +167,7 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements_on_exit(stmts, ctx);
     }
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.r#enum.transform_statement(stmt, ctx);
     }
 
