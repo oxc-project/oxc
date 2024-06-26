@@ -1772,6 +1772,7 @@ dependencies = [
  "oxc_isolated_declarations",
  "oxc_parser",
  "oxc_span",
+ "oxc_transformer",
 ]
 
 [[package]]
