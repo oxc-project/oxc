@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -11,12 +11,12 @@ use crate::{
 };
 
 fn unexpected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(prefer-es6-class): Component should use createClass instead of es6 class")
+    OxcDiagnostic::warn("eslint-plugin-react(prefer-es6-class): Components should use createClass instead of ES6 class.")
         .with_label(span0)
 }
 
 fn expected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(prefer-es6-class): Component should use es6 class instead of createClass")
+    OxcDiagnostic::warn("eslint-plugin-react(prefer-es6-class): Components should use es6 class instead of createClass.")
         .with_label(span0)
 }
 
@@ -58,19 +58,22 @@ impl Rule for PreferEs6Class {
                 .unwrap_or_default(),
         }
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always) {
             if is_es5_component(node) {
                 let AstKind::CallExpression(call_expr) = node.kind() else {
                     return;
                 };
-                ctx.diagnostic(expected_es6_class_diagnostic(call_expr.span));
+                ctx.diagnostic(expected_es6_class_diagnostic(call_expr.callee.span()));
             }
         } else if is_es6_component(node) {
             let AstKind::Class(class_expr) = node.kind() else {
                 return;
             };
-            ctx.diagnostic(unexpected_es6_class_diagnostic(class_expr.span));
+            ctx.diagnostic(unexpected_es6_class_diagnostic(
+                class_expr.id.as_ref().map_or(class_expr.span, |id| id.span),
+            ));
         }
     }
 }
