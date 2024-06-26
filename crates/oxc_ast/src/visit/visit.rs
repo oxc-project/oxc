@@ -2897,7 +2897,7 @@ pub mod walk {
 
     pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(visitor.alloc(ty));
-        visitor.enter_scope(ScopeFlags::empty());
+        // visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
             visitor.visit_ts_type(constraint);
@@ -2907,7 +2907,7 @@ pub mod walk {
             visitor.visit_ts_type(default);
         }
         visitor.leave_node(kind);
-        visitor.leave_scope();
+        // visitor.leave_scope();
     }
 
     pub fn walk_ts_type_parameter_instantiation<'a, V: Visit<'a>>(

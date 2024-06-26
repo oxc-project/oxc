@@ -2,12 +2,138 @@ commit: a1587416
 
 parser_test262 Summary:
 AST Parsed     : 45859/45859 (100.00%)
-Positive Passed: 45859/45859 (100.00%)
+Positive Passed: 45851/45859 (99.98%)
 Negative Passed: 3925/3929 (99.90%)
 Expect Syntax Error: "language/import/import-assertions/json-invalid.js"
 Expect Syntax Error: "language/import/import-assertions/json-named-bindings.js"
 Expect Syntax Error: "language/import/import-attributes/json-invalid.js"
 Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
+Expect to Parse: "built-ins/Function/prototype/toString/class-expression-explicit-ctor.js"
+
+  × Identifier `A` has already been declared
+    ╭─[built-ins/Function/prototype/toString/class-expression-explicit-ctor.js:10:5]
+  9 │ 
+ 10 │ let A = /* before */class /* a */ A /* b */ extends /* c */ B /* d */ { /* e */ constructor /* f */ ( /* g */ ) /* h */ { /* i */ ; /* j */ } /* k */ m /* l */ ( /* m */ ) /* n */ { /* o */ } /* p */ }/* after */;
+    ·     ┬                             ┬
+    ·     │                             ╰── It can not be redeclared here
+    ·     ╰── `A` has already been declared here
+ 11 │ 
+    ╰────
+Expect to Parse: "built-ins/Function/prototype/toString/class-expression-implicit-ctor.js"
+
+  × Identifier `A` has already been declared
+    ╭─[built-ins/Function/prototype/toString/class-expression-implicit-ctor.js:10:5]
+  9 │ 
+ 10 │ let A = /* before */class /* a */ A /* b */ { /* c */ }/* after */;
+    ·     ┬                             ┬
+    ·     │                             ╰── It can not be redeclared here
+    ·     ╰── `A` has already been declared here
+ 11 │ let B = /* before */class /* a */ B /* b */ extends /* c */ A /* d */ { /* e */ }/* after */;
+    ╰────
+
+  × Identifier `B` has already been declared
+    ╭─[built-ins/Function/prototype/toString/class-expression-implicit-ctor.js:11:5]
+ 10 │ let A = /* before */class /* a */ A /* b */ { /* c */ }/* after */;
+ 11 │ let B = /* before */class /* a */ B /* b */ extends /* c */ A /* d */ { /* e */ }/* after */;
+    ·     ┬                             ┬
+    ·     │                             ╰── It can not be redeclared here
+    ·     ╰── `B` has already been declared here
+ 12 │ let C = /* before */class /* a */ C /* b */ extends /* c */ B /* d */ { /* e */ m /* f */ ( /* g */ ) /* h */ { /* i */ } /* j */ }/* after */;
+    ╰────
+
+  × Identifier `C` has already been declared
+    ╭─[built-ins/Function/prototype/toString/class-expression-implicit-ctor.js:12:5]
+ 11 │ let B = /* before */class /* a */ B /* b */ extends /* c */ A /* d */ { /* e */ }/* after */;
+ 12 │ let C = /* before */class /* a */ C /* b */ extends /* c */ B /* d */ { /* e */ m /* f */ ( /* g */ ) /* h */ { /* i */ } /* j */ }/* after */;
+    ·     ┬                             ┬
+    ·     │                             ╰── It can not be redeclared here
+    ·     ╰── `C` has already been declared here
+ 13 │ 
+    ╰────
+Expect to Parse: "language/expressions/class/name.js"
+
+  × Identifier `cls` has already been declared
+    ╭─[language/expressions/class/name.js:44:22]
+ 43 │ 
+ 44 │ verifyProperty(class cls {}, "name", {
+    ·                      ─┬─
+    ·                       ╰── `cls` has already been declared here
+ 45 │   value: "cls", writable: false, enumerable: false, configurable: true
+ 46 │ });
+ 47 │ 
+ 48 │ verifyProperty(class { constructor() {} }, "name", {
+ 49 │   value: "", writable: false, enumerable: false, configurable: true
+ 50 │ });
+ 51 │ 
+ 52 │ verifyProperty(class cls { constructor() {} }, "name", {
+    ·                      ─┬─
+    ·                       ╰── It can not be redeclared here
+ 53 │   value: "cls", writable: false, enumerable: false, configurable: true
+    ╰────
+Expect to Parse: "language/expressions/class/scope-name-lex-close.js"
+
+  × Identifier `C` has already been declared
+    ╭─[language/expressions/class/scope-name-lex-close.js:12:5]
+ 11 │ 
+ 12 │ var C = 'outside';
+    ·     ┬
+    ·     ╰── `C` has already been declared here
+ 13 │ 
+ 14 │ var cls = class C {
+    ·                 ┬
+    ·                 ╰── It can not be redeclared here
+ 15 │   method() {
+    ╰────
+Expect to Parse: "language/expressions/class/scope-name-lex-open-heritage.js"
+
+  × Identifier `C` has already been declared
+    ╭─[language/expressions/class/scope-name-lex-open-heritage.js:22:5]
+ 21 │ var probeHeritage, setHeritage;
+ 22 │ var C = 'outside';
+    ·     ┬
+    ·     ╰── `C` has already been declared here
+ 23 │ 
+ 24 │ var cls = class C extends (
+    ·                 ┬
+    ·                 ╰── It can not be redeclared here
+ 25 │     probeHeritage = function() { return C; },
+    ╰────
+Expect to Parse: "language/expressions/class/scope-name-lex-open-no-heritage.js"
+
+  × Identifier `C` has already been declared
+    ╭─[language/expressions/class/scope-name-lex-open-no-heritage.js:23:5]
+ 22 │ var probeBefore = function() { return C; };
+ 23 │ var C = 'outside';
+    ·     ┬
+    ·     ╰── `C` has already been declared here
+ 24 │ 
+ 25 │ var cls = class C {
+    ·                 ┬
+    ·                 ╰── It can not be redeclared here
+ 26 │   probe() {
+    ╰────
+Expect to Parse: "language/statements/class/definition/basics.js"
+
+  × Identifier `C` has already been declared
+   ╭─[language/statements/class/definition/basics.js:8:5]
+ 7 │ ---*/
+ 8 │ var C = class C {}
+   ·     ┬         ┬
+   ·     │         ╰── It can not be redeclared here
+   ·     ╰── `C` has already been declared here
+ 9 │ assert.sameValue(typeof C, 'function', "`typeof C` is `'function'`");
+   ╰────
+Expect to Parse: "language/statements/class/name-binding/in-extends-expression-assigned.js"
+
+  × Identifier `x` has already been declared
+    ╭─[language/statements/class/name-binding/in-extends-expression-assigned.js:9:7]
+  8 │ assert.throws(ReferenceError, function() {
+  9 │   var x = (class x extends x {});
+    ·       ┬          ┬
+    ·       │          ╰── It can not be redeclared here
+    ·       ╰── `x` has already been declared here
+ 10 │ });
+    ╰────
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:18:4]
@@ -12627,6 +12753,14 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/static-init-await-binding.js:21:12]
+ 20 │   static {
+ 21 │     (class await {});
+    ·            ─────
+ 22 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
     ╭─[language/expressions/class/static-init-await-binding.js:21:12]
  20 │   static {
  21 │     (class await {});

@@ -1523,15 +1523,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         let kind = AstKind::Class(self.alloc(class));
 
-        // FIXME(don): Should we enter a scope when visiting class declarations?
-        let is_class_expr = class.r#type == ClassType::ClassExpression;
-        if is_class_expr {
-            // Class expressions create a temporary scope with the class name as its only variable
-            // E.g., `let c = class A { foo() { console.log(A) } }`
-            self.enter_scope(ScopeFlags::empty());
-            class.scope_id.set(Some(self.current_scope_id));
-        }
-
         self.enter_node(kind);
 
         if let Some(id) = &class.id {
@@ -1550,9 +1541,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_class_body(&class.body);
 
         self.leave_node(kind);
-        if is_class_expr {
-            self.leave_scope();
-        }
     }
 
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
@@ -1650,7 +1638,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(self.alloc(ty));
-        self.enter_scope(ScopeFlags::empty());
+        // self.enter_scope(ScopeFlags::empty());
         ty.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
@@ -1661,7 +1649,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_type(default);
         }
         self.leave_node(kind);
-        self.leave_scope();
+        // self.leave_scope();
     }
 }
 
@@ -1791,6 +1779,12 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::IdentifierReference(ident) => {
+                if matches!(
+                    self.nodes.parent_kind(self.current_node_id),
+                    Some(AstKind::TSTypeName(_))
+                ) {
+                    return;
+                }
                 self.reference_identifier(ident);
             }
             AstKind::JSXIdentifier(ident) => {

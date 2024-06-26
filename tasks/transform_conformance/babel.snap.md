@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 475/927
+Passed: 472/927
 
 # All Passed:
 * babel-preset-react
@@ -445,15 +445,18 @@ Passed: 475/927
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (131/151)
+# babel-plugin-transform-typescript (128/151)
 * enum/mix-references/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
+* exports/export-import=/input.ts
 * exports/interface/input.ts
+* imports/elide-type-referenced-in-imports-equal-no/input.ts
 * imports/elision-locations/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-4/input.ts
+* namespace/alias/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts

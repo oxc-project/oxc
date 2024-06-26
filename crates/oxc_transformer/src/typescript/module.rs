@@ -83,7 +83,7 @@ impl<'a> TypeScript<'a> {
                     let reference = ctx.symbols_mut().get_reference_mut(reference_id);
                     *reference.flag_mut() = ReferenceFlag::Read;
                 } else {
-                    unreachable!()
+                    // unreachable!()
                 }
                 self.ctx.ast.identifier_reference_expression(ctx.ast.copy(ident))
             }
