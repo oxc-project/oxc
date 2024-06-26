@@ -2,7 +2,7 @@ use std::path::Path;
 
 use napi_derive::napi;
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenReturn};
+use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_transformer::{
@@ -45,13 +45,12 @@ pub struct ReactBindingOptions {
     pub use_spread: Option<bool>,
 }
 
-#[allow(clippy::wildcard_in_or_patterns)]
 impl From<ReactBindingOptions> for ReactOptions {
     fn from(options: ReactBindingOptions) -> Self {
         ReactOptions {
             runtime: match options.runtime.as_str() {
                 "classic" => ReactJsxRuntime::Classic,
-                "automatic" | _ => ReactJsxRuntime::Automatic,
+                /* "automatic" */ _ => ReactJsxRuntime::Automatic,
             },
             development: options.development,
             throw_if_namespace: options.throw_if_namespace,
@@ -93,7 +92,12 @@ pub struct TransformBindingOptions {
     pub typescript: TypeScriptBindingOptions,
     pub react: ReactBindingOptions,
     pub es2015: ES2015BindingOptions,
-    pub sourcemap: bool,
+    /// Enable Sourcemaps
+    ///
+    /// * `true` to generate a sourcemap for the code and include it in the result object.
+    ///
+    /// Default: false
+    pub sourcemaps: bool,
 }
 
 impl From<TransformBindingOptions> for TransformOptions {
@@ -102,7 +106,7 @@ impl From<TransformBindingOptions> for TransformOptions {
             typescript: options.typescript.into(),
             react: options.react.into(),
             es2015: options.es2015.into(),
-            ..Default::default()
+            ..TransformOptions::default()
         }
     }
 }
@@ -120,6 +124,7 @@ pub struct Sourcemap {
 #[napi(object)]
 pub struct TransformResult {
     pub source_text: String,
+    /// Sourcemap
     pub map: Option<Sourcemap>,
     pub errors: Vec<String>,
 }
@@ -131,6 +136,7 @@ pub fn transform(
     source_text: String,
     options: TransformBindingOptions,
 ) -> TransformResult {
+    let sourcemaps = options.sourcemaps;
     let mut errors = vec![];
 
     let source_path = Path::new(&filename);
@@ -141,10 +147,8 @@ pub fn transform(
         errors.extend(parser_ret.errors.into_iter().map(|error| error.message.to_string()));
     }
 
-    let enable_sourcemap = options.sourcemap;
-
     let mut program = parser_ret.program;
-    let transform_options = options.into();
+    let transform_options = TransformOptions::from(options);
     if let Err(e) = Transformer::new(
         &allocator,
         source_path,
@@ -158,17 +162,15 @@ pub fn transform(
         errors.extend(e.into_iter().map(|error| error.to_string()));
     }
 
-    let CodegenReturn { source_text, source_map } = if enable_sourcemap {
-        CodeGenerator::new()
-            .enable_source_map(source_path.to_string_lossy().as_ref(), &source_text)
-            .build(&program)
-    } else {
-        CodeGenerator::new().build(&program)
-    };
+    let mut codegen = CodeGenerator::new();
+    if sourcemaps {
+        codegen = codegen.enable_source_map(source_path.to_string_lossy().as_ref(), &source_text);
+    }
+    let ret = codegen.build(&program);
 
     TransformResult {
-        source_text,
-        map: source_map.map(|sourcemap| {
+        source_text: ret.source_text,
+        map: ret.source_map.map(|sourcemap| {
             let json = sourcemap.to_json();
             Sourcemap {
                 file: json.file,
