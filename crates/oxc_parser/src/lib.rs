@@ -417,6 +417,10 @@ impl<'a> ParserImpl<'a> {
         self.errors.push(error);
     }
 
+    fn errors_count(&self) -> usize {
+        self.errors.len() + self.lexer.errors.len()
+    }
+
     fn ts_enabled(&self) -> bool {
         self.source_type.is_typescript()
     }

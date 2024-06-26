@@ -129,10 +129,11 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
             return true;
         }
-        if matches!(self.cur_kind(), Kind::LBrack | Kind::LCurly)
-            && self.parse_binding_pattern_kind().is_ok()
-        {
-            return true;
+        if matches!(self.cur_kind(), Kind::LBrack | Kind::LCurly) {
+            let errors_count = self.errors_count();
+            if self.parse_binding_pattern_kind().is_ok() && errors_count == self.errors_count() {
+                return true;
+            }
         }
         false
     }
@@ -342,7 +343,7 @@ impl<'a> ParserImpl<'a> {
             | Kind::Undefined
             | Kind::Never
             | Kind::Object => {
-                if let Ok(Some(ty)) = self.try_parse(Self::parse_keyword_and_no_dot) {
+                if let Some(ty) = self.try_parse(Self::parse_keyword_and_no_dot) {
                     Ok(ty)
                 } else {
                     self.parse_type_reference()
@@ -421,62 +422,62 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    fn parse_keyword_and_no_dot(&mut self) -> Result<Option<TSType<'a>>> {
+    fn parse_keyword_and_no_dot(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
         let ty = match self.cur_kind() {
             Kind::Any => {
                 self.bump_any();
-                Some(self.ast.ts_any_keyword(self.end_span(span)))
+                self.ast.ts_any_keyword(self.end_span(span))
             }
             Kind::BigInt => {
                 self.bump_any();
-                Some(self.ast.ts_bigint_keyword(self.end_span(span)))
+                self.ast.ts_bigint_keyword(self.end_span(span))
             }
             Kind::Boolean => {
                 self.bump_any();
-                Some(self.ast.ts_boolean_keyword(self.end_span(span)))
+                self.ast.ts_boolean_keyword(self.end_span(span))
             }
             Kind::Intrinsic => {
                 self.bump_any();
-                Some(self.ast.ts_intrinsic_keyword(self.end_span(span)))
+                self.ast.ts_intrinsic_keyword(self.end_span(span))
             }
             Kind::Never => {
                 self.bump_any();
-                Some(self.ast.ts_never_keyword(self.end_span(span)))
+                self.ast.ts_never_keyword(self.end_span(span))
             }
             Kind::Null => {
                 self.bump_any();
-                Some(self.ast.ts_null_keyword(self.end_span(span)))
+                self.ast.ts_null_keyword(self.end_span(span))
             }
             Kind::Number => {
                 self.bump_any();
-                Some(self.ast.ts_number_keyword(self.end_span(span)))
+                self.ast.ts_number_keyword(self.end_span(span))
             }
             Kind::Object => {
                 self.bump_any();
-                Some(self.ast.ts_object_keyword(self.end_span(span)))
+                self.ast.ts_object_keyword(self.end_span(span))
             }
             Kind::String => {
                 self.bump_any();
-                Some(self.ast.ts_string_keyword(self.end_span(span)))
+                self.ast.ts_string_keyword(self.end_span(span))
             }
             Kind::Symbol => {
                 self.bump_any();
-                Some(self.ast.ts_symbol_keyword(self.end_span(span)))
+                self.ast.ts_symbol_keyword(self.end_span(span))
             }
             Kind::Undefined => {
                 self.bump_any();
-                Some(self.ast.ts_undefined_keyword(self.end_span(span)))
+                self.ast.ts_undefined_keyword(self.end_span(span))
             }
             Kind::Unknown => {
                 self.bump_any();
-                Some(self.ast.ts_unknown_keyword(self.end_span(span)))
+                self.ast.ts_unknown_keyword(self.end_span(span))
             }
             Kind::Void => {
                 self.bump_any();
-                Some(self.ast.ts_void_keyword(self.end_span(span)))
+                self.ast.ts_void_keyword(self.end_span(span))
             }
-            _ => None,
+            _ => return Err(self.unexpected()),
         };
         if self.at(Kind::Dot) {
             return Err(self.unexpected());
@@ -1053,11 +1054,11 @@ impl<'a> ParserImpl<'a> {
         let type_predicate_variable = if self.cur_kind().is_identifier_name() {
             self.try_parse(Self::parse_type_predicate_prefix)
         } else {
-            Ok(None)
+            None
         };
         let type_span = self.start_span();
         let ty = self.parse_ts_type()?;
-        if let Ok(Some(id)) = type_predicate_variable {
+        if let Some(id) = type_predicate_variable {
             let type_annotation = Some(self.ast.ts_type_annotation(self.end_span(type_span), ty));
             let parameter_name = self.ast.ts_type_predicate_name_identifier(id);
             return Ok(self.ast.ts_type_predicate(
@@ -1070,12 +1071,12 @@ impl<'a> ParserImpl<'a> {
         Ok(ty)
     }
 
-    fn parse_type_predicate_prefix(&mut self) -> Result<Option<IdentifierName<'a>>> {
+    fn parse_type_predicate_prefix(&mut self) -> Result<IdentifierName<'a>> {
         let id = self.parse_identifier_name()?;
         let token = self.cur_token();
         if token.kind == Kind::Is && !token.is_on_new_line {
             self.bump_any();
-            return Ok(Some(id));
+            return Ok(id);
         }
         Err(self.unexpected())
     }
