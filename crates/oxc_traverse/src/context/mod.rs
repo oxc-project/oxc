@@ -1,5 +1,8 @@
 use oxc_allocator::{Allocator, Box};
-use oxc_ast::AstBuilder;
+use oxc_ast::{
+    ast::{Expression, Statement},
+    AstBuilder,
+};
 use oxc_semantic::{ScopeTree, SymbolTable};
 use oxc_span::CompactStr;
 use oxc_syntax::{
@@ -209,6 +212,14 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.current_scope_id()
     }
 
+    /// Get current scope flags.
+    ///
+    /// Shortcut for `ctx.scoping.current_scope_flags`.
+    #[inline]
+    pub fn current_scope_flags(&self) -> ScopeFlags {
+        self.scoping.current_scope_flags()
+    }
+
     /// Get scopes tree.
     ///
     /// Shortcut for `ctx.scoping.scopes`.
@@ -273,6 +284,45 @@ impl<'a> TraverseCtx<'a> {
         F: Fn(ScopeFlags) -> FinderRet<O>,
     {
         self.scoping.find_scope_by_flags(finder)
+    }
+
+    /// Create new scope as child of current scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_scope_child_of_current`.
+    pub fn create_scope_child_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
+        self.scoping.create_scope_child_of_current(flags)
+    }
+
+    /// Insert a scope into scope tree below a statement.
+    ///
+    /// Statement must be in current scope.
+    /// New scope is created as child of current scope.
+    /// All child scopes of the statement are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.insert_scope_below_statement`.
+    pub fn insert_scope_below_statement(&mut self, stmt: &Statement, flags: ScopeFlags) -> ScopeId {
+        self.scoping.insert_scope_below_statement(stmt, flags)
+    }
+
+    /// Insert a scope into scope tree below an expression.
+    ///
+    /// Expression must be in current scope.
+    /// New scope is created as child of current scope.
+    /// All child scopes of the expression are reassigned to be children of the new scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.insert_scope_below_expression`.
+    pub fn insert_scope_below_expression(
+        &mut self,
+        expr: &Expression,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        self.scoping.insert_scope_below_expression(expr, flags)
     }
 
     /// Generate UID.

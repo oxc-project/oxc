@@ -70,6 +70,10 @@ impl ScopeTree {
         self.child_ids.get(&scope_id)
     }
 
+    pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> Option<&mut Vec<ScopeId>> {
+        self.child_ids.get_mut(&scope_id)
+    }
+
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
         self.parent_ids.iter_enumerated().map(|(scope_id, _)| scope_id)
     }
@@ -95,8 +99,41 @@ impl ScopeTree {
         &mut self.flags[scope_id]
     }
 
+    pub fn get_new_scope_flags(&self, flags: ScopeFlags, parent_scope_id: ScopeId) -> ScopeFlags {
+        let mut strict_mode = self.root_flags().is_strict_mode();
+        let parent_scope_flags = self.get_flags(parent_scope_id);
+
+        // Inherit strict mode for functions
+        // https://tc39.es/ecma262/#sec-strict-mode-code
+        if !strict_mode
+            && (parent_scope_flags.is_function() || parent_scope_flags.is_ts_module_block())
+            && parent_scope_flags.is_strict_mode()
+        {
+            strict_mode = true;
+        }
+
+        // inherit flags for non-function scopes
+        let mut flags = flags;
+        if !flags.contains(ScopeFlags::Function) {
+            flags |= parent_scope_flags & ScopeFlags::Modifiers;
+        };
+
+        if strict_mode {
+            flags |= ScopeFlags::StrictMode;
+        }
+
+        flags
+    }
+
     pub fn get_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
         self.parent_ids[scope_id]
+    }
+
+    pub fn set_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
+        self.parent_ids[scope_id] = parent_id;
+        if let Some(parent_id) = parent_id {
+            self.child_ids.entry(parent_id).or_default().push(scope_id);
+        }
     }
 
     /// Get a variable binding by name that was declared in the top-level scope
@@ -143,7 +180,7 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
-    pub(crate) fn add_scope(&mut self, parent_id: Option<ScopeId>, flags: ScopeFlags) -> ScopeId {
+    pub fn add_scope(&mut self, parent_id: Option<ScopeId>, flags: ScopeFlags) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);
         _ = self.flags.push(flags);
         _ = self.bindings.push(Bindings::default());
