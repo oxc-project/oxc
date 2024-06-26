@@ -4,6 +4,61 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.5.0] - 2024-06-26
+
+- 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)
+
+- ae09a97 ast: [**BREAKING**] Remove `Modifiers` from ts nodes (#3846) (Boshen)
+
+- 1af5ed3 ast: [**BREAKING**] Replace `Modifiers` with `declare` and `const` on `EnumDeclaration` (#3845) (Boshen)
+
+- ee6ec4e ast: [**BREAKING**] Replace `Modifiers` with `declare` and `abstract` on `Class` (#3841) (Boshen)
+
+- 4456034 ast: [**BREAKING**] Add `IdentifierReference` to `ExportSpecifier` (#3820) (Boshen)
+
+- 0537d29 cfg: [**BREAKING**] Move control flow to its own crate. (#3728) (rzvxa)
+
+- 5c38a0f codegen: [**BREAKING**] New code gen API (#3740) (Boshen)
+
+- 4bce59d semantic/cfg: [**BREAKING**] Re-export `petgraph` as `control_flow::graph`. (#3722) (rzvxa)
+
+### Features
+
+- 3ae2628 linter: Change `no-import-assign` to correctness (#3928) (Boshen)
+- a89d501 linter: Implement @typescript-eslint/no-non-null-asserted-nulli… (#3850) (kaykdm)
+- fc48cb4 linter: eslint-plugin-jest/prefer-jest-mocked (#3865) (cinchen)
+- 63b98bd linter: Accept multiple fixes when fix code (#3842) (mysteryven)
+- 328445b linter: Support `vitest/no-disabled-tests` (#3717) (mysteryven)
+- 8c61f9c linter: Implement @typescript-eslint/no-non-null-assertion (#3825) (kaykdm)
+- 080ecbd linter: Add `no-fallthrough`. (#3673) (rzvxa)
+- 9493fbe linter: Add `oxc/no-optional-chaining` rule (#3700) (mysteryven)
+- 139adfe linter: Add `@typescript-eslint/no-import-type-side_effects` (#3699) (mysteryven)
+- 5f84500 linter/eslint-plugin-react: Implement prefer-es6-class (#3812) (Jelle van der Waa)
+- fafe67c linter/import: Implement max-dependencies (#3814) (Jelle van der Waa)
+- d5f6aeb semantic: Check for illegal symbol modifiers (#3838) (Don Isaac)
+
+### Bug Fixes
+
+- 4bd2c88 linter: Fix and promote `getter-return` to correctness. (#3777) (rzvxa)
+- 1190dee linter: False positives with setters in the `getter-return` rule. (#3714) (rzvxa)
+- de0690f linter: Do not run getter-return in typescript (#3693) (Boshen)
+- cf71c23 linter: Edge case with infinite loops. (#3672) (rzvxa)
+- 99a40ce semantic: `export default foo` should have `ExportLocalName::Default(NameSpan)` entry (#3823) (Boshen)
+- abd6ac8 semantic/cfg: Discrete finalization path after `NewFunction`s. (#3671) (rzvxa)
+
+### Performance
+- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+
+### Refactor
+
+- 4d2b7f1 linter: `LintContext` can now only be constructed with a cfg enabled semantic. (#3761) (rzvxa)
+- 7302429 linter/prefer_number_properties: Remove the unused `IdentifierName` check (#3822) (Boshen)
+- d8ad321 semantic: Make control flow generation optional. (#3737) (rzvxa)
+
+### Testing
+
+- 887da40 linter: Enable `no-fallthrough` test with `disable-next-line`. (#3766) (rzvxa)
+
 ## [0.4.4] - 2024-06-14
 
 ### Features
