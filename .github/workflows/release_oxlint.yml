@@ -92,6 +92,7 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build
+        shell: bash
         run: |
           # Need to support 16kb-aligned pages for aarch64 systems,
           # Asahi Linux & Raspberry Pi OS use a 16k page size.
