@@ -188,7 +188,7 @@ mod test {
     }
 
     #[test]
-    fn test_position_basic() {
+    fn test_position() {
         let source_text = "^ Catch😎 @ symbols🇺🇳 $";
 
         let unicode_reader = Reader::new(source_text, true);
