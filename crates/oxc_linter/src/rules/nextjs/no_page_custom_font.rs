@@ -11,13 +11,13 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn not_added_in_document(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-next(no-page-custom-font): Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged.")
         .with_help("See: https://nextjs.org/docs/messages/no-page-custom-font")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn link_outside_of_head(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-next(no-page-custom-font): Using `<link />` outside of `<Head>` will disable automatic font optimization. This is discouraged.")
         .with_help("See: 'https://nextjs.org/docs/messages/no-page-custom-font")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

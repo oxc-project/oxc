@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_styled_jsx_in_document_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-next(no-styled-jsx-in-document): `styled-jsx` should not be used in `pages/_document.js`")
         .with_help("Possible to fix it please see: https://nextjs.org/docs/messages/no-styled-jsx-in-document#possible-ways-to-fix-it")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
