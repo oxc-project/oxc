@@ -37,7 +37,10 @@ impl<'a> PatternParser<'a> {
             return Err(OxcDiagnostic::error("Empty"));
         }
 
-        self.reader.eat1('/');
+        // TODO: ...
+        self.reader.eat1('a');
+        self.reader.eat2('a', 'b');
+        self.reader.eat3('a', 'b', 'c');
         self.reader.rewind(0);
 
         let pattern = ast::Pattern {
