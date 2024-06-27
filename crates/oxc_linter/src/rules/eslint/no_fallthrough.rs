@@ -74,7 +74,7 @@ declare_oxc_lint!(
     /// Disallow fallthrough of `case` statements
     ///
     NoFallthrough,
-    correctness
+    pedantic // Fall through code are still incorrect.
 );
 
 impl Rule for NoFallthrough {
