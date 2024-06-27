@@ -10,7 +10,7 @@ pub struct SymbolDescription;
 
 fn symbol_description_diagnostic(span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(symbol-description): Expected Symbol to have a description.")
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 declare_oxc_lint!(

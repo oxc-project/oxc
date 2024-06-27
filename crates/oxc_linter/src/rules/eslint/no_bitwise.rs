@@ -9,7 +9,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_bitwise_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint(no-bitwise): Unexpected use of {x0:?}"))
         .with_help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`")
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

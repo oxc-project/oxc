@@ -15,7 +15,7 @@ pub struct RequireAwait;
 
 fn require_await_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(require-await): Async function has no 'await' expression.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 declare_oxc_lint!(

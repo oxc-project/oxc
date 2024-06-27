@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_inner_declarations_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks")
         .with_help(format!("Move {x0} declaration to {x1} root"))
-        .with_labels([span2.into()])
+        .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

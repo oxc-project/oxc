@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule};
 fn max_lines_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint(max-lines): {x0:?}"))
         .with_help("Reduce the number of lines in this file")
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

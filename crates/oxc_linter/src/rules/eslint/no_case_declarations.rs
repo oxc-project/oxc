@@ -12,7 +12,7 @@ fn no_case_declarations_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint(no-case-declarations): Unexpected lexical declaration in case block.",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
