@@ -3,7 +3,6 @@ mod body_parser;
 mod flag_parser;
 mod literal_parser;
 mod options;
-mod reader;
 mod span;
 
 pub use body_parser::PatternParser;
