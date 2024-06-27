@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, utils::get_element_type, AstNode};
 fn media_has_caption_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(media-has-caption): Missing <track> element with captions inside <audio> or <video> element")
         .with_help("Media elements such as <audio> and <video> must have a <track> for captions.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

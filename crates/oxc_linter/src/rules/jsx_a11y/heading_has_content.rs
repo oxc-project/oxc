@@ -13,7 +13,7 @@ use crate::{
 fn heading_has_content_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(heading-has-content): Headings must have content and the content must be accessible by a screen reader.")
         .with_help("Provide screen reader accessible content when using heading elements.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

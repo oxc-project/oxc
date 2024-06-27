@@ -11,7 +11,7 @@ use crate::{
 fn aria_props_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.")
         .with_help(format!("`{x1}` is an invalid ARIA attribute."))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

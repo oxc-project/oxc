@@ -17,7 +17,7 @@ use crate::{
 };
 
 fn img_redundant_alt_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.").with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.").with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
