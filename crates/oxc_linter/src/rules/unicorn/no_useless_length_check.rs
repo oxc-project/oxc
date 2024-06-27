@@ -17,7 +17,7 @@ fn some(span0: Span) -> OxcDiagnostic {
         .with_help(
             "The non-empty check is useless as `Array#some()` returns `false` for an empty array.",
         )
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn every(span0: Span) -> OxcDiagnostic {
@@ -25,7 +25,7 @@ fn every(span0: Span) -> OxcDiagnostic {
         .with_help(
             "The empty check is useless as `Array#every()` returns `true` for an empty array.",
         )
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

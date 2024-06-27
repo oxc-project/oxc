@@ -14,7 +14,7 @@ fn prefer_date_now(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`",
     )
     .with_help("Change to `Date.now()`.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
@@ -22,7 +22,7 @@ fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
         "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().{x1}()`"
     ))
     .with_help("Change to `Date.now()`.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn prefer_date_now_over_number_date_object(span0: Span) -> OxcDiagnostic {
@@ -30,7 +30,7 @@ fn prefer_date_now_over_number_date_object(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`",
     )
     .with_help("Change to `Date.now()`.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -13,7 +13,7 @@ fn prefer_modern_dom_apis_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiag
     OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `{x0}` over `{x1}`."
     ))
-    .with_labels([span2.into()])
+    .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]
