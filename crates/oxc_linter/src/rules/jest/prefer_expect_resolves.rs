@@ -19,7 +19,7 @@ use crate::{
 fn expect_resolves(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")
         .with_help("Use `await expect(...).resolves` instead")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

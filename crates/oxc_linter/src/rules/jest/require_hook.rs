@@ -22,7 +22,7 @@ fn use_hook(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.",
     )
     .with_help("This should be done within a hook")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

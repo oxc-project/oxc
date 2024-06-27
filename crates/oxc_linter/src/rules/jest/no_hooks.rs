@@ -14,7 +14,7 @@ use crate::{
 
 fn unexpected_hook_diagonsitc(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
