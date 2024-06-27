@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn prefer_enum_initializers_diagnostic(x0: &str, x1: usize, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("typescript-eslint(prefer-enum-initializers): The value of the member {x0:?} should be explicitly defined."))
         .with_help(format!("Can be fixed to {x0:?} = {x1:?}."))
-        .with_labels([span2.into()])
+        .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]
