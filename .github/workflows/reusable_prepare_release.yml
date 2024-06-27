@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
-      version: ${{ steps.version.outputs.VERSION }}
+      version: ${{ steps.run.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
         with:
