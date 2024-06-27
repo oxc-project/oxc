@@ -4,6 +4,61 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.0] - 2024-06-26
+
+- 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)
+
+- 1f85f1a ast: [**BREAKING**] Revert adding `span` field to the `BindingPattern` type. (#3899) (rzvxa)
+
+- ae09a97 ast: [**BREAKING**] Remove `Modifiers` from ts nodes (#3846) (Boshen)
+
+- 1af5ed3 ast: [**BREAKING**] Replace `Modifiers` with `declare` and `const` on `EnumDeclaration` (#3845) (Boshen)
+
+- 0673677 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `Function` (#3844) (Boshen)
+
+- ee6ec4e ast: [**BREAKING**] Replace `Modifiers` with `declare` and `abstract` on `Class` (#3841) (Boshen)
+
+- 9b38119 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `VariableDeclaration` (#3839) (Boshen)
+
+- cfcef24 ast: [**BREAKING**] Add `directives` field to `TSModuleBlock` (#3830) (Boshen)
+
+- 4456034 ast: [**BREAKING**] Add `IdentifierReference` to `ExportSpecifier` (#3820) (Boshen)
+
+### Features
+
+- 497769c ast: Add some visitor functions (#3785) (Dunqing)
+- 4b06dc7 ast: Add TSType::TSIntrinsicKeyword to is_keyword (#3775) (Dunqing)
+- 5847e16 ast,parser: Add `intrinsic` keyword (#3767) (Boshen)
+- 2e026e1 ast_codegen: Generate `ast_kind.rs`. (#3888) (rzvxa)
+- 09f4d3c ast_codegen: Add `ImplGetSpanGenerator`. (#3852) (rzvxa)
+- d5f6aeb semantic: Check for illegal symbol modifiers (#3838) (Don Isaac)
+
+### Bug Fixes
+
+- 063cfde ast: Correct JSON serialization of `TSModuleBlock` (#3858) (overlookmotel)
+- 66f404c ast: Fix JSON serialization of `BindingPattern` (#3856) (overlookmotel)
+- 59ce38b isolated-declarations: Inferring of UnrayExpression incorrectly (#3920) (Dunqing)
+- 8c9fc63 semantic: Apply strict mode scope flag for strict mode TS Modules (#3861) (overlookmotel)
+- aea3e9a transformer: Correct spans for TS annotations transform (#3782) (overlookmotel)
+
+### Performance
+- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+
+### Refactor
+
+- 6f26087 ast: Add comment about alternatives to `AstBuilder::copy` (#3905) (overlookmotel)
+- 442aca3 ast: Add comment not to use `AstBuilder::copy` (#3891) (overlookmotel)
+- acf69fa ast: Refactor custom `Serialize` impls (#3859) (overlookmotel)
+- 9e148e9 ast: Add line breaks (#3860) (overlookmotel)
+- 363d3d5 ast: Add span field to the `BindingPattern` type. (#3855) (rzvxa)
+- a648748 ast: Shorten code in AST builder (#3835) (overlookmotel)
+- 1206967 ast: Reduce allocations in AST builder (#3834) (overlookmotel)
+- 4cf3c76 parser: Improve parsing of TypeScript types (#3903) (Boshen)
+- 97d59fc parser: Move code around for parsing `Modifiers` (#3849) (Boshen)
+- 1061baa traverse: Separate `#[scope]` attr (#3901) (overlookmotel)
+- fcd21a6 traverse: Indicate scope entry point with `scope(enter_before)` attr (#3882) (overlookmotel)
+- 2045c92 traverse: Improve parsing attrs in traverse codegen (#3879) (overlookmotel)
+
 ## [0.15.0] - 2024-06-18
 
 - 0578ece ast: [**BREAKING**] Remove `ExportDefaultDeclarationKind::TSEnumDeclaration` (#3666) (Dunqing)
