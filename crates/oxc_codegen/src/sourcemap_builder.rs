@@ -26,7 +26,6 @@ pub struct SourcemapBuilder {
     source_id: u32,
     original_source: Arc<str>,
     last_generated_update: usize,
-    last_position: Option<u32>,
     line_offset_tables: Vec<LineOffsetTable>,
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
@@ -39,7 +38,6 @@ impl Default for SourcemapBuilder {
             source_id: 0,
             original_source: "".into(),
             last_generated_update: 0,
-            last_position: None,
             line_offset_tables: vec![],
             sourcemap_builder: oxc_sourcemap::SourceMapBuilder::default(),
             generated_line: 0,
@@ -76,9 +74,6 @@ impl SourcemapBuilder {
     }
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<Arc<str>>) {
-        if matches!(self.last_position, Some(last_position) if last_position >= position) {
-            return;
-        }
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
         let name_id = name.map(|s| self.sourcemap_builder.add_name(&s));
@@ -90,7 +85,6 @@ impl SourcemapBuilder {
             Some(self.source_id),
             name_id,
         );
-        self.last_position = Some(position);
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -395,6 +389,27 @@ mod test {
         assert_eq!(
             sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
             Some("b")
+        );
+    }
+
+    #[test]
+    fn add_source_mapping_for_unordered_position() {
+        let output = "ba".as_bytes();
+        let mut builder = SourcemapBuilder::default();
+        builder.with_name_and_source("x.js", "ab");
+        builder.add_source_mapping_for_name(output, Span::new(1, 2), "a");
+        builder.add_source_mapping_for_name(output, Span::new(0, 1), "b");
+        let sm = builder.into_sourcemap();
+        assert_eq!(sm.get_tokens().count(), 2);
+        // Here tokens is also unordered, but it could be used at chrome devtool and source-map-visualization.
+        // TODO maybe we need to order tokens at future.
+        assert_eq!(
+            sm.get_source_view_token(0_u32).as_ref().and_then(|token| token.get_name()),
+            Some("b")
+        );
+        assert_eq!(
+            sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
+            Some("a")
         );
     }
 }
