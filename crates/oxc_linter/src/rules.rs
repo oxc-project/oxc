@@ -205,6 +205,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod jsx_curly_brace_presence;
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
@@ -676,6 +677,7 @@ oxc_macros::declare_all_lint_rules! {
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
     react::jsx_no_target_blank,
+    react::jsx_curly_brace_presence,
     react::jsx_key,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,
