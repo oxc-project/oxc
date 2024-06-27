@@ -1,29 +1,38 @@
-pub struct Reader {
-    units: Vec<u32>,
-    pub index: usize,
+pub struct Reader<'a> {
+    source: &'a str,
+    char_indices: std::str::CharIndices<'a>,
+    unicode_mode: bool,
+    index: usize,
 }
 
-impl<'a> Reader {
+impl<'a> Reader<'a> {
     pub fn new(source: &'a str, unicode_mode: bool) -> Self {
-        // NOTE: Is there a better way to avoid using `Vec`?
-        // - To implement `peek2`, `peek3`, `Peekable` is not enough
-        // - To `rewind` at any point, consuming `Iter` need more efforts(e.g. cache)
-        let units = if unicode_mode {
-            source.chars().map(|c| c as u32).collect()
-        } else {
-            #[allow(clippy::cast_lossless)]
-            source.encode_utf16().map(|u| u as u32).collect()
-        };
-
-        Self { units, index: 0 }
+        Self { source, char_indices: source.char_indices(), unicode_mode, index: 0 }
     }
 
-    // NOTE: How to know global unicode(utf8?) `Span` position?
-    // - If reader is non-unicode mode, the `index` is not a valid position anymore
-    // - Need map or something with using `ch.len_utf8|16`?
-    #[allow(clippy::unused_self, dead_code)]
+    // NOTE: Should be decoupled from the reader...?
+    // ```
+    // let pos = Position::new(source, unicode_mode);
+    // pos.get(reader.index);
+    // ````
     pub fn position(&self) -> usize {
-        0
+        let mut char_indices = self.char_indices.clone();
+
+        if self.unicode_mode {
+            char_indices.nth(self.index).map_or(self.source.len(), |(i, _)| i)
+        } else {
+            let mut utf16_units = 0;
+            let mut byte_index = 0;
+            for (idx, ch) in char_indices {
+                if utf16_units == self.index {
+                    return idx;
+                }
+
+                utf16_units += ch.len_utf16();
+                byte_index = idx + ch.len_utf8();
+            }
+            byte_index
+        }
     }
 
     pub fn rewind(&mut self, index: usize) {
@@ -34,14 +43,26 @@ impl<'a> Reader {
         self.index += 1;
     }
 
+    fn peek_nth(&self, n: usize) -> Option<u32> {
+        let nth = self.index + n;
+
+        // NOTE: This may affect performance?
+        if self.unicode_mode {
+            self.source.chars().nth(nth).map(|c| c as u32)
+        } else {
+            #[allow(clippy::cast_lossless)]
+            self.source.encode_utf16().nth(nth).map(|u| u as u32)
+        }
+    }
+
     pub fn peek1(&self) -> Option<u32> {
-        self.units.get(self.index).copied()
+        self.peek_nth(0)
     }
     pub fn peek2(&self) -> Option<u32> {
-        self.units.get(self.index + 1).copied()
+        self.peek_nth(1)
     }
     pub fn peek3(&self) -> Option<u32> {
-        self.units.get(self.index + 2).copied()
+        self.peek_nth(2)
     }
 
     pub fn eat1(&mut self, ch: char) -> bool {
@@ -164,5 +185,40 @@ mod test {
 
         legacy_reader.rewind(start);
         assert!(legacy_reader.eat1('は'));
+    }
+
+    #[test]
+    fn test_position_basic() {
+        let source_text = "^ Catch😎 @ symbols🇺🇳 $";
+
+        let unicode_reader = Reader::new(source_text, true);
+        let legacy_reader = Reader::new(source_text, false);
+
+        for mut reader in [unicode_reader, legacy_reader] {
+            while reader.peek1() != Some('^' as u32) {
+                reader.advance();
+            }
+            let s1 = reader.position();
+            assert!(reader.eat1('^'));
+            let e1 = reader.position();
+
+            while reader.peek1() != Some('@' as u32) {
+                reader.advance();
+            }
+            let s2 = reader.position();
+            assert!(reader.eat1('@'));
+            let e2 = reader.position();
+
+            while reader.peek1() != Some('$' as u32) {
+                reader.advance();
+            }
+            let s3 = reader.position();
+            assert!(reader.eat1('$'));
+            let e3 = reader.position();
+
+            assert_eq!(&source_text[s1..e1], "^");
+            assert_eq!(&source_text[s2..e2], "@");
+            assert_eq!(&source_text[s3..e3], "$");
+        }
     }
 }

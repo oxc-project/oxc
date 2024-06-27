@@ -17,7 +17,7 @@ pub struct PatternParser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
     span_factory: SpanFactory,
-    reader: Reader,
+    reader: Reader<'a>,
     _state: ParserState,
 }
 
@@ -38,10 +38,12 @@ impl<'a> PatternParser<'a> {
         }
 
         // TODO: ...
+        self.reader.position();
         self.reader.eat1('a');
         self.reader.eat2('a', 'b');
         self.reader.eat3('a', 'b', 'c');
         self.reader.rewind(0);
+        self.reader.position();
 
         let pattern = ast::Pattern {
             span: self.span_factory.create(0, self.source_text.len()),
