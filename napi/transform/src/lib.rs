@@ -1,12 +1,11 @@
 mod transformer;
-
 use napi_derive::napi;
-
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_isolated_declarations::IsolatedDeclarations;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+use std::sync::Arc;
 
 #[napi(object)]
 pub struct IsolatedDeclarationsResult {
@@ -18,6 +17,7 @@ pub struct IsolatedDeclarationsResult {
 #[allow(clippy::needless_pass_by_value)]
 #[napi]
 pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDeclarationsResult {
+    let source_text = Arc::new(source_text);
     let source_type = SourceType::from_path(filename).unwrap_or_default().with_typescript(true);
     let allocator = Allocator::default();
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
@@ -31,7 +31,7 @@ pub fn isolated_declaration(filename: String, source_text: String) -> IsolatedDe
                 .errors
                 .into_iter()
                 .chain(transformed_ret.errors)
-                .map(|error| error.message.to_string()),
+                .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text)))),
         );
     }
 
