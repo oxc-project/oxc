@@ -11,7 +11,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn escape_case_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-unicorn(escape-case): Use uppercase characters for the value of the escape sequence.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

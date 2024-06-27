@@ -13,7 +13,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn erasing_op_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("oxc(erasing-op): Unexpected erasing operation. This expression will always evaluate to zero.")
         .with_help("This is most likely not the intended outcome. Consider removing the operation, or directly assigning zero to the variable")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

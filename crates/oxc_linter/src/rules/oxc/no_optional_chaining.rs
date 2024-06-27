@@ -8,11 +8,11 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_optional_chaining_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     if x1.is_empty() {
         OxcDiagnostic::warn("oxc(no-optional-chaining): Optional chaining is not allowed.")
-            .with_labels([span0.into()])
+            .with_label(span0)
     } else {
         OxcDiagnostic::warn("oxc(no-optional-chaining): Optional chaining is not allowed.")
             .with_help(x1)
-            .with_labels([span0.into()])
+            .with_label(span0)
     }
 }
 

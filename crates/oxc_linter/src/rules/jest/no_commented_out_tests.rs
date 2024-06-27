@@ -11,7 +11,7 @@ fn no_commented_out_tests_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented",
     )
     .with_help("Remove or uncomment this comment")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -12,13 +12,13 @@ use crate::{
 fn use_to_be_called_with(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
         .with_help("Prefer toBeCalledWith(/* expected args */)")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn use_have_been_called_with(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
         .with_help("Prefer toHaveBeenCalledWith(/* expected args */)")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

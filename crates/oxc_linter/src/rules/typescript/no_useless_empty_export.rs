@@ -10,7 +10,7 @@ fn no_useless_empty_export_diagnostic(span0: Span) -> OxcDiagnostic {
         "typescript-eslint(no-useless-empty-export): Disallow empty exports that don't change anything in a module file",
     )
     .with_help("Empty export does nothing and can be removed.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

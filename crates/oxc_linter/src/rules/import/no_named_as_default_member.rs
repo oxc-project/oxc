@@ -24,7 +24,7 @@ fn no_named_as_default_member_dignostic(
         "eslint-plugin-import(no-named-as-default-member): {x1:?} also has a named export {x2:?}"
     ))
     .with_help(format!("Check if you meant to write `import {{{x2:}}} from {x3:?}`"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>

@@ -9,11 +9,11 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn identifier(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `{x1}`.")).with_labels([span0.into()])
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `{x1}`.")).with_label(span0)
 }
 
 fn non_identifier(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

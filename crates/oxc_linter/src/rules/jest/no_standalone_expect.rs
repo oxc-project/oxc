@@ -22,7 +22,7 @@ fn no_standalone_expect_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-standalone-expect): Expect must be inside of a test block.",
     )
     .with_help("Did you forget to wrap `expect` in a `test` or `it` block?")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>

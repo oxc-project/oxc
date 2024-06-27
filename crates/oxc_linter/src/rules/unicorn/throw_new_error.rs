@@ -18,7 +18,7 @@ use crate::{
 fn throw_new_error_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.")
         .with_help("While it's possible to create a new error without using the `new` keyword, it's better to be explicit.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, utils::get_string_literal_prop_val
 fn no_css_tags_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-next(no-css-tags): Do not include stylesheets manually.")
         .with_help("See https://nextjs.org/docs/messages/no-css-tags")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

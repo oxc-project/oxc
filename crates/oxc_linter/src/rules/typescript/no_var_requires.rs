@@ -10,7 +10,7 @@ fn no_var_requires_diagnostic(span0: Span) -> OxcDiagnostic {
         "typescript-eslint(no-var-requires): Require statement not part of import statement.",
     )
     .with_help("Use ES6 style imports or import instead.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

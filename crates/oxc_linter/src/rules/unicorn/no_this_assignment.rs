@@ -13,7 +13,7 @@ fn no_this_assignment_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
         "eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `{x1}`"
     ))
     .with_help("Reference `this` directly instead of assigning it to a variable.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

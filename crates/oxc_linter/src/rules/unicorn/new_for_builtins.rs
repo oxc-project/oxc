@@ -14,14 +14,14 @@ fn enforce(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(new-for-builtins): Use `new {x1}()` instead of `{x1}()`"
     ))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn disallow(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(new-for-builtins): Use `{x1}()` instead of `new {x1}()`"
     ))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
