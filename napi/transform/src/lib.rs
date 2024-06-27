@@ -1,4 +1,7 @@
+mod transformer;
+
 use napi_derive::napi;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_isolated_declarations::IsolatedDeclarations;

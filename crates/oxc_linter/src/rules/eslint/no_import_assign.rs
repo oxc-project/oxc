@@ -40,7 +40,7 @@ declare_oxc_lint!(
     /// Object.assign(mod_ns, { foo: "foo" }) // ERROR: The members of 'mod_ns' are readonly.
     /// ```
     NoImportAssign,
-    nursery
+    correctness
 );
 
 const OBJECT_MUTATION_METHODS: phf::Set<&'static str> =

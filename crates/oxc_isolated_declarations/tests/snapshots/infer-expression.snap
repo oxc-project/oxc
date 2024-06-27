@@ -8,3 +8,36 @@ declare const n: number;
 declare const s: string;
 declare const t: string;
 declare const b: boolean;
+declare let unaryA: number;
+declare const unaryB = -1_2n;
+declare const unaryC: unknown;
+declare const unaryD: unknown;
+declare const unaryE: {};
+
+
+==================== Errors ====================
+
+  x TS9010: Variable must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[16:7]
+ 15 | // UnaryExpression
+ 16 | const unaryC = +"str"
+    :       ^^^^^^
+ 17 | const unaryD = typeof "str"
+    `----
+
+  x TS9010: Variable must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[17:7]
+ 16 | const unaryC = +"str"
+ 17 | const unaryD = typeof "str"
+    :       ^^^^^^
+ 18 | const unaryE = {E: -"str"} as const
+    `----
+
+  x TS9013: Expression type can't be inferred with --isolatedDeclarations.
+    ,-[18:20]
+ 17 | const unaryD = typeof "str"
+ 18 | const unaryE = {E: -"str"} as const
+    :                    ^^^^^^
+    `----

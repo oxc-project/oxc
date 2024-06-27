@@ -1,11 +1,11 @@
-use std::{collections::HashMap, hash::BuildHasherDefault, path::Path};
+use std::path::Path;
 
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -155,7 +155,7 @@ impl NoRestrictedMatchers {
     #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_matchers(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<HashMap<String, String, BuildHasherDefault<FxHasher>>> {
+    ) -> Option<FxHashMap<String, String>> {
         Some(
             matchers
                 .iter()

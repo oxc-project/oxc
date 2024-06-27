@@ -289,7 +289,7 @@ jobs:
 
       - name: Set up Bun
         if: steps.filter.outputs.src == 'true'
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Install Node.js
         if: steps.filter.outputs.src == 'true'

@@ -94,7 +94,7 @@ impl<'a> Expression<'a> {
             Self::BooleanLiteral(_)
                 | Self::NullLiteral(_)
                 | Self::NumericLiteral(_)
-                | Self::BigintLiteral(_)
+                | Self::BigIntLiteral(_)
                 | Self::RegExpLiteral(_)
                 | Self::StringLiteral(_)
         )
@@ -102,6 +102,10 @@ impl<'a> Expression<'a> {
 
     pub fn is_string_literal(&self) -> bool {
         matches!(self, Self::StringLiteral(_) | Self::TemplateLiteral(_))
+    }
+
+    pub fn is_number_literal(&self) -> bool {
+        matches!(self, Self::NumericLiteral(_) | Self::BigIntLiteral(_))
     }
 
     pub fn is_specific_string_literal(&self, string: &str) -> bool {
@@ -246,7 +250,7 @@ impl<'a> Expression<'a> {
             Self::BooleanLiteral(lit) => Some(lit.value),
             Self::NullLiteral(_) => Some(false),
             Self::NumericLiteral(lit) => Some(lit.value != 0.0),
-            Self::BigintLiteral(lit) => Some(!lit.is_zero()),
+            Self::BigIntLiteral(lit) => Some(!lit.is_zero()),
             Self::RegExpLiteral(_) => Some(true),
             Self::StringLiteral(lit) => Some(!lit.value.is_empty()),
             _ => None,
@@ -265,7 +269,7 @@ impl<'a> Expression<'a> {
             Self::BooleanLiteral(_)
             | Self::NullLiteral(_)
             | Self::NumericLiteral(_)
-            | Self::BigintLiteral(_)
+            | Self::BigIntLiteral(_)
             | Self::RegExpLiteral(_)
             | Self::StringLiteral(_) => true,
             Self::TemplateLiteral(lit) if lit.is_no_substitution_template() => true,
@@ -337,7 +341,7 @@ impl<'a> PropertyKey<'a> {
             Self::StringLiteral(lit) => Some(lit.value.to_compact_str()),
             Self::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
             Self::NumericLiteral(lit) => Some(lit.value.to_string().into()),
-            Self::BigintLiteral(lit) => Some(lit.raw.to_compact_str()),
+            Self::BigIntLiteral(lit) => Some(lit.raw.to_compact_str()),
             Self::NullLiteral(_) => Some("null".into()),
             Self::TemplateLiteral(lit) => lit
                 .expressions
@@ -872,8 +876,8 @@ impl<'a> Hash for CatchClause<'a> {
 }
 
 impl<'a> BindingPattern<'a> {
-    pub fn new_with_kind(span: Span, kind: BindingPatternKind<'a>) -> Self {
-        Self { span, kind, type_annotation: None, optional: false }
+    pub fn new_with_kind(kind: BindingPatternKind<'a>) -> Self {
+        Self { kind, type_annotation: None, optional: false }
     }
 
     pub fn get_identifier(&self) -> Option<Atom<'a>> {

@@ -1020,7 +1020,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::BooleanLiteral(lit) => lit.gen(p, ctx),
             Self::NullLiteral(lit) => lit.gen(p, ctx),
             Self::NumericLiteral(lit) => lit.gen(p, ctx),
-            Self::BigintLiteral(lit) => lit.gen(p, ctx),
+            Self::BigIntLiteral(lit) => lit.gen(p, ctx),
             Self::RegExpLiteral(lit) => lit.gen(p, ctx),
             Self::StringLiteral(lit) => lit.gen(p, ctx),
             Self::Identifier(ident) => ident.gen(p, ctx),
@@ -2410,6 +2410,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
         if self.computed {
             p.print(b']');
         }
+        if let Some(type_parameters) = self.value.type_parameters.as_ref() {
+            type_parameters.gen(p, ctx);
+        }
         p.print(b'(');
         self.value.params.gen(p, ctx);
         p.print(b')');
@@ -2697,6 +2700,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSType<'a> {
             Self::TSTypeQuery(ty) => ty.gen(p, ctx),
             Self::TSTypeReference(ty) => ty.gen(p, ctx),
             Self::JSDocNullableType(ty) => ty.gen(p, ctx),
+            Self::JSDocNonNullableType(ty) => ty.gen(p, ctx),
             Self::JSDocUnknownType(_ty) => p.print_str(b"unknown"),
         }
     }
@@ -2904,6 +2908,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSDocNullableType<'a> {
     }
 }
 
+impl<'a, const MINIFY: bool> Gen<MINIFY> for JSDocNonNullableType<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.postfix {
+            self.type_annotation.gen(p, ctx);
+            p.print_str(b"!");
+        } else {
+            p.print_str(b"!");
+            self.type_annotation.gen(p, ctx);
+        }
+    }
+}
+
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTemplateLiteralType<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_str(b"`");
@@ -2958,7 +2974,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
             Self::BooleanLiteral(decl) => decl.gen(p, ctx),
             Self::NullLiteral(decl) => decl.gen(p, ctx),
             Self::NumericLiteral(decl) => decl.gen(p, ctx),
-            Self::BigintLiteral(decl) => decl.gen(p, ctx),
+            Self::BigIntLiteral(decl) => decl.gen(p, ctx),
             Self::RegExpLiteral(decl) => decl.gen(p, ctx),
             Self::StringLiteral(decl) => decl.gen(p, ctx),
             Self::TemplateLiteral(decl) => decl.gen(p, ctx),
@@ -3145,8 +3161,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeQueryExprName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportType<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.is_type_of {
+            p.print_str(b"typeof ");
+        }
         p.print_str(b"import(");
-        self.argument.gen(p, ctx);
+        self.parameter.gen(p, ctx);
         if let Some(attributes) = &self.attributes {
             p.print_str(", ");
             attributes.gen(p, ctx);

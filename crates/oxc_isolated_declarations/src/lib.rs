@@ -19,11 +19,13 @@ mod types;
 
 use std::{cell::RefCell, collections::VecDeque, mem};
 
+use diagnostics::function_with_assigning_properties;
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, SPAN};
+use rustc_hash::FxHashSet;
 
 use crate::scope::ScopeTree;
 
@@ -105,6 +107,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
         }
+        self.report_error_for_expando_function(stmts);
         new_ast_stmts
     }
 
@@ -321,6 +324,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         }
 
+        self.report_error_for_expando_function(stmts);
         new_ast_stmts
     }
 
@@ -391,6 +395,85 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             _ => Some(stmt),
         })
+    }
+
+    pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+        let mut can_expando_function_names = FxHashSet::default();
+        for stmt in stmts {
+            match stmt {
+                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
+                    Some(Declaration::FunctionDeclaration(func)) => {
+                        if func.body.is_some() {
+                            if let Some(id) = func.id.as_ref() {
+                                can_expando_function_names.insert(id.name.clone());
+                            }
+                        }
+                    }
+                    Some(Declaration::VariableDeclaration(decl)) => {
+                        for declarator in &decl.declarations {
+                            if declarator.id.type_annotation.is_none()
+                                && declarator.init.as_ref().is_some_and(Expression::is_function)
+                            {
+                                if let Some(name) = declarator.id.get_identifier() {
+                                    can_expando_function_names.insert(name.clone());
+                                }
+                            }
+                        }
+                    }
+                    _ => (),
+                },
+                Statement::ExportDefaultDeclaration(decl) => {
+                    if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
+                        &decl.declaration
+                    {
+                        if func.body.is_some() {
+                            if let Some(id) = func.id.as_ref() {
+                                can_expando_function_names.insert(id.name.clone());
+                            }
+                        }
+                    }
+                }
+                Statement::FunctionDeclaration(func) => {
+                    if func.body.is_some() {
+                        if let Some(id) = func.id.as_ref() {
+                            if self.scope.has_reference(&id.name) {
+                                can_expando_function_names.insert(id.name.clone());
+                            }
+                        }
+                    }
+                }
+                Statement::VariableDeclaration(decl) => {
+                    for declarator in &decl.declarations {
+                        if declarator.id.type_annotation.is_none()
+                            && declarator.init.as_ref().is_some_and(Expression::is_function)
+                        {
+                            if let Some(name) = declarator.id.get_identifier() {
+                                if self.scope.has_reference(&name) {
+                                    can_expando_function_names.insert(name.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+                Statement::ExpressionStatement(stmt) => {
+                    if let Expression::AssignmentExpression(assignment) = &stmt.expression {
+                        if let AssignmentTarget::StaticMemberExpression(static_member_expr) =
+                            &assignment.left
+                        {
+                            if let Expression::Identifier(ident) = &static_member_expr.object {
+                                if can_expando_function_names.contains(&ident.name) {
+                                    self.error(function_with_assigning_properties(
+                                        static_member_expr.span,
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                _ => {}
+            }
+        }
     }
 
     pub fn is_declare(&self) -> bool {

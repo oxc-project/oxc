@@ -145,7 +145,7 @@ impl<'a> ParserImpl<'a> {
             first_extends = expr.expression;
             first_type_argument = Some(expr.type_parameters);
         } else {
-            first_type_argument = self.parse_ts_type_arguments()?;
+            first_type_argument = self.try_parse_type_arguments()?;
         }
         extends.push((first_extends, first_type_argument, self.end_span(span)));
 
@@ -158,7 +158,7 @@ impl<'a> ParserImpl<'a> {
                 extend = expr.expression;
                 type_argument = Some(expr.type_parameters);
             } else {
-                type_argument = self.parse_ts_type_arguments()?;
+                type_argument = self.try_parse_type_arguments()?;
             }
 
             extends.push((extend, type_argument, self.end_span(span)));

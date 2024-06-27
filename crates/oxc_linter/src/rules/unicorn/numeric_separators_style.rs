@@ -101,7 +101,7 @@ impl Rule for NumericSeparatorsStyle {
                     );
                 }
             }
-            AstKind::BigintLiteral(number) => {
+            AstKind::BigIntLiteral(number) => {
                 let raw = number.span.source_text(ctx.source_text());
 
                 if self.only_if_contains_separator && !raw.contains('_') {

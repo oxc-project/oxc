@@ -52,7 +52,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     GetterReturn,
-    correctness
+    nursery
 );
 
 impl Rule for GetterReturn {

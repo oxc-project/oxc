@@ -1,0 +1,5 @@
+{
+    "rules": {
+        "vitest/no-disabled-tests": "error"
+    }
+}

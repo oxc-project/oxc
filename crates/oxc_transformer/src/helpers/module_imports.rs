@@ -134,7 +134,7 @@ impl<'a> ModuleImports<'a> {
                 name: name.imported,
                 symbol_id: Cell::new(Some(name.symbol_id)),
             };
-            self.ast.binding_pattern(SPAN, self.ast.binding_pattern_identifier(ident), None, false)
+            self.ast.binding_pattern(self.ast.binding_pattern_identifier(ident), None, false)
         };
         let decl = {
             let init = self.ast.call_expression(SPAN, callee, args, false, None);

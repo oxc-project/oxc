@@ -92,11 +92,12 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Build
+        shell: bash
         run: |
           # Need to support 16kb-aligned pages for aarch64 systems,
           # Asahi Linux & Raspberry Pi OS use a 16k page size.
           # https://github.com/oxc-project/oxc/issues/3783
-          case ${{ matrix.job.target }} in
+          case ${{ matrix.target }} in
             aarch64-*) export JEMALLOC_SYS_WITH_LG_PAGE=16 ;;
           esac;
           cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator

@@ -76,7 +76,7 @@ pub enum Kind {
     Out,
     Readonly,
     Require,
-    Number,
+    Number, // the "number" keyword for TypeScript
     Object,
     Satisfies,
     String, // the "string" keyword for TypeScript
@@ -87,7 +87,7 @@ pub enum Kind {
     Using,
     Unknown,
     Global,
-    BigInt,
+    BigInt, // the "bigint" keyword for TypeScript
     Override,
     // Future keywords (strict mode reserved words)
     Implements,
@@ -104,7 +104,7 @@ pub enum Kind {
     Amp2,
     Amp2Eq,
     AmpEq,
-    Bang,
+    Bang, // !
     Caret,
     CaretEq,
     Colon,
@@ -365,6 +365,10 @@ impl Kind {
     pub fn is_modifier_kind(self) -> bool {
         matches!(self, Abstract | Accessor | Async | Const | Declare | Default
           | Export | In | Out | Public | Private | Protected | Readonly | Static | Override)
+    }
+
+    pub fn is_binding_identifier_or_private_identifier_or_pattern(self) -> bool {
+        matches!(self, LCurly | LBrack | PrivateIdentifier) || self.is_binding_identifier()
     }
 
     pub fn match_keyword(s: &str) -> Self {
@@ -638,15 +642,6 @@ impl Kind {
             Global => "global",
             BigInt => "bigint",
         }
-    }
-
-    #[rustfmt::skip]
-    pub fn can_follow_type_arguments_in_expr(self) -> bool {
-        matches!(self, Self::LParen | Self::NoSubstitutionTemplate | Self::TemplateHead
-            | Self::Comma | Self::Dot | Self::QuestionDot | Self::RParen | Self::RBrack
-            | Self::Colon | Self::Semicolon | Self::Question | Self::Eq3 | Self::Eq2 | Self::Eq
-            | Self::Neq | Self::Neq2 | Self::Amp2 | Self::Pipe2 | Self::Question2
-            | Self::Caret | Self::Amp | Self::Pipe | Self::RCurly | Self::Eof)
     }
 }
 

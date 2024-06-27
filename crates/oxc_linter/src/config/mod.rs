@@ -16,7 +16,9 @@ pub use self::{
     rules::OxlintRules,
     settings::{jsdoc::JSDocPluginSettings, OxlintSettings},
 };
-use crate::{rules::RuleEnum, AllowWarnDeny, RuleWithSeverity};
+use crate::{
+    rules::RuleEnum, utils::is_jest_rule_adapted_to_vitest, AllowWarnDeny, RuleWithSeverity,
+};
 
 /// Oxlint Configuration File
 ///
@@ -113,8 +115,10 @@ impl OxlintConfig {
                 0 => unreachable!(),
                 1 => {
                     let rule_config = &rule_configs[0];
-                    let rule_name = &rule_config.rule_name;
-                    let plugin_name = &rule_config.plugin_name;
+                    let (rule_name, plugin_name) = transform_rule_and_plugin_name(
+                        &rule_config.rule_name,
+                        &rule_config.plugin_name,
+                    );
                     let severity = rule_config.severity;
                     match severity {
                         AllowWarnDeny::Warn | AllowWarnDeny::Deny => {
@@ -168,11 +172,25 @@ impl OxlintConfig {
     }
 }
 
+fn transform_rule_and_plugin_name<'a>(
+    rule_name: &'a str,
+    plugin_name: &'a str,
+) -> (&'a str, &'a str) {
+    if plugin_name == "vitest" && is_jest_rule_adapted_to_vitest(rule_name) {
+        return (rule_name, "jest");
+    }
+
+    (rule_name, plugin_name)
+}
+
 #[cfg(test)]
 mod test {
     use std::env;
 
+    use rustc_hash::FxHashSet;
     use serde::Deserialize;
+
+    use crate::rules::RULES;
 
     use super::OxlintConfig;
 
@@ -220,5 +238,18 @@ mod test {
         assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
         assert_eq!(env.iter().count(), 1);
         assert!(globals.is_enabled("foo"));
+    }
+
+    #[test]
+    fn test_vitest_rule_replace() {
+        let fixture_path: std::path::PathBuf =
+            env::current_dir().unwrap().join("fixtures/eslint_config_vitest_replace.json");
+        let config = OxlintConfig::from_file(&fixture_path).unwrap();
+        let mut set = FxHashSet::default();
+        config.override_rules(&mut set, &RULES);
+
+        let rule = set.into_iter().next().unwrap();
+        assert_eq!(rule.name(), "no-disabled-tests");
+        assert_eq!(rule.plugin_name(), "jest");
     }
 }

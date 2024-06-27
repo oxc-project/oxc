@@ -282,7 +282,7 @@ impl<'a> TypeScript<'a> {
         let declarations = {
             let ident = BindingIdentifier::new(SPAN, name);
             let pattern_kind = self.ctx.ast.binding_pattern_identifier(ident);
-            let binding = self.ctx.ast.binding_pattern(SPAN, pattern_kind, None, false);
+            let binding = self.ctx.ast.binding_pattern(pattern_kind, None, false);
             let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
             self.ctx.ast.new_vec_single(decl)
         };
@@ -314,7 +314,7 @@ impl<'a> TypeScript<'a> {
             let params = {
                 let ident =
                     self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name));
-                let pattern = self.ctx.ast.binding_pattern(SPAN, ident, None, false);
+                let pattern = self.ctx.ast.binding_pattern(ident, None, false);
                 let items =
                     self.ctx.ast.new_vec_single(self.ctx.ast.plain_formal_parameter(SPAN, pattern));
                 self.ctx.ast.formal_parameters(

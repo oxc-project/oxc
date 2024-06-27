@@ -93,7 +93,7 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
         PropertyKey::StringLiteral(_) => MethodKind::Normal,
         PropertyKey::NumericLiteral(_)
-        | PropertyKey::BigintLiteral(_)
+        | PropertyKey::BigIntLiteral(_)
         | PropertyKey::TemplateLiteral(_)
         | PropertyKey::RegExpLiteral(_)
         | PropertyKey::NullLiteral(_) => MethodKind::Quoted,

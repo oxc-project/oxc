@@ -77,7 +77,7 @@ pub(crate) unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
         Expression::NumericLiteral(node) => {
             walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
         }
-        Expression::BigintLiteral(node) => {
+        Expression::BigIntLiteral(node) => {
             walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
         }
         Expression::RegExpLiteral(node) => {
@@ -264,7 +264,7 @@ pub(crate) unsafe fn walk_array_expression_element<'a, Tr: Traverse<'a>>(
         ArrayExpressionElement::BooleanLiteral(_)
         | ArrayExpressionElement::NullLiteral(_)
         | ArrayExpressionElement::NumericLiteral(_)
-        | ArrayExpressionElement::BigintLiteral(_)
+        | ArrayExpressionElement::BigIntLiteral(_)
         | ArrayExpressionElement::RegExpLiteral(_)
         | ArrayExpressionElement::StringLiteral(_)
         | ArrayExpressionElement::TemplateLiteral(_)
@@ -398,7 +398,7 @@ pub(crate) unsafe fn walk_property_key<'a, Tr: Traverse<'a>>(
         PropertyKey::BooleanLiteral(_)
         | PropertyKey::NullLiteral(_)
         | PropertyKey::NumericLiteral(_)
-        | PropertyKey::BigintLiteral(_)
+        | PropertyKey::BigIntLiteral(_)
         | PropertyKey::RegExpLiteral(_)
         | PropertyKey::StringLiteral(_)
         | PropertyKey::TemplateLiteral(_)
@@ -713,7 +713,7 @@ pub(crate) unsafe fn walk_argument<'a, Tr: Traverse<'a>>(
         Argument::BooleanLiteral(_)
         | Argument::NullLiteral(_)
         | Argument::NumericLiteral(_)
-        | Argument::BigintLiteral(_)
+        | Argument::BigIntLiteral(_)
         | Argument::RegExpLiteral(_)
         | Argument::StringLiteral(_)
         | Argument::TemplateLiteral(_)
@@ -1679,7 +1679,7 @@ pub(crate) unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
         ForStatementInit::BooleanLiteral(_)
         | ForStatementInit::NullLiteral(_)
         | ForStatementInit::NumericLiteral(_)
-        | ForStatementInit::BigintLiteral(_)
+        | ForStatementInit::BigIntLiteral(_)
         | ForStatementInit::RegExpLiteral(_)
         | ForStatementInit::StringLiteral(_)
         | ForStatementInit::TemplateLiteral(_)
@@ -3057,7 +3057,7 @@ pub(crate) unsafe fn walk_export_default_declaration_kind<'a, Tr: Traverse<'a>>(
         ExportDefaultDeclarationKind::BooleanLiteral(_)
         | ExportDefaultDeclarationKind::NullLiteral(_)
         | ExportDefaultDeclarationKind::NumericLiteral(_)
-        | ExportDefaultDeclarationKind::BigintLiteral(_)
+        | ExportDefaultDeclarationKind::BigIntLiteral(_)
         | ExportDefaultDeclarationKind::RegExpLiteral(_)
         | ExportDefaultDeclarationKind::StringLiteral(_)
         | ExportDefaultDeclarationKind::TemplateLiteral(_)
@@ -3336,7 +3336,7 @@ pub(crate) unsafe fn walk_jsx_expression<'a, Tr: Traverse<'a>>(
         JSXExpression::BooleanLiteral(_)
         | JSXExpression::NullLiteral(_)
         | JSXExpression::NumericLiteral(_)
-        | JSXExpression::BigintLiteral(_)
+        | JSXExpression::BigIntLiteral(_)
         | JSXExpression::RegExpLiteral(_)
         | JSXExpression::StringLiteral(_)
         | JSXExpression::TemplateLiteral(_)
@@ -3693,7 +3693,7 @@ pub(crate) unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
         TSEnumMemberName::BooleanLiteral(_)
         | TSEnumMemberName::NullLiteral(_)
         | TSEnumMemberName::NumericLiteral(_)
-        | TSEnumMemberName::BigintLiteral(_)
+        | TSEnumMemberName::BigIntLiteral(_)
         | TSEnumMemberName::RegExpLiteral(_)
         | TSEnumMemberName::StringLiteral(_)
         | TSEnumMemberName::TemplateLiteral(_)
@@ -3786,7 +3786,7 @@ pub(crate) unsafe fn walk_ts_literal<'a, Tr: Traverse<'a>>(
         TSLiteral::NumericLiteral(node) => {
             walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSLiteral::BigintLiteral(node) => {
+        TSLiteral::BigIntLiteral(node) => {
             walk_big_int_literal(traverser, (&mut **node) as *mut _, ctx)
         }
         TSLiteral::RegExpLiteral(node) => {
@@ -3898,6 +3898,9 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSUnionType(node) => walk_ts_union_type(traverser, (&mut **node) as *mut _, ctx),
         TSType::JSDocNullableType(node) => {
             walk_js_doc_nullable_type(traverser, (&mut **node) as *mut _, ctx)
+        }
+        TSType::JSDocNonNullableType(node) => {
+            walk_js_doc_non_nullable_type(traverser, (&mut **node) as *mut _, ctx)
         }
         TSType::JSDocUnknownType(node) => {
             walk_js_doc_unknown_type(traverser, (&mut **node) as *mut _, ctx)
@@ -4063,9 +4066,10 @@ pub(crate) unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
     ctx.push_stack(Ancestor::TSNamedTupleMemberElementType(
         ancestor::TSNamedTupleMemberWithoutElementType(node),
     ));
-    walk_ts_type(
+    walk_ts_tuple_element(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
+            as *mut TSTupleElement,
         ctx,
     );
     ctx.retag_stack(AncestorType::TSNamedTupleMemberLabel);
@@ -4162,6 +4166,7 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSTypeReference(_)
         | TSTupleElement::TSUnionType(_)
         | TSTupleElement::JSDocNullableType(_)
+        | TSTupleElement::JSDocNonNullableType(_)
         | TSTupleElement::JSDocUnknownType(_) => walk_ts_type(traverser, node as *mut _, ctx),
     }
     traverser.exit_ts_tuple_element(&mut *node, ctx);
@@ -5004,10 +5009,10 @@ pub(crate) unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    ctx.push_stack(Ancestor::TSImportTypeArgument(ancestor::TSImportTypeWithoutArgument(node)));
+    ctx.push_stack(Ancestor::TSImportTypeParameter(ancestor::TSImportTypeWithoutParameter(node)));
     walk_ts_type(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_PARAMETER) as *mut TSType,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
@@ -5472,6 +5477,25 @@ pub(crate) unsafe fn walk_js_doc_nullable_type<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack();
     traverser.exit_js_doc_nullable_type(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_js_doc_non_nullable_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSDocNonNullableType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_js_doc_non_nullable_type(&mut *node, ctx);
+    ctx.push_stack(Ancestor::JSDocNonNullableTypeTypeAnnotation(
+        ancestor::JSDocNonNullableTypeWithoutTypeAnnotation(node),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JS_DOC_NON_NULLABLE_TYPE_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack();
+    traverser.exit_js_doc_non_nullable_type(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_js_doc_unknown_type<'a, Tr: Traverse<'a>>(

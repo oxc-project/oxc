@@ -34,11 +34,31 @@ impl<'a> RemoveDeadCode<'a> {
             _ => {}
         }
     }
+
+    pub fn remove_conditional(&mut self, stmt: &mut Statement<'a>) {
+        let Statement::ExpressionStatement(expression_stmt) = stmt else { return };
+        let Expression::ConditionalExpression(conditional_expr) = &mut expression_stmt.expression
+        else {
+            return;
+        };
+        match conditional_expr.test.get_boolean_value() {
+            Some(true) => {
+                expression_stmt.expression =
+                    self.ast.move_expression(&mut conditional_expr.consequent);
+            }
+            Some(false) => {
+                expression_stmt.expression =
+                    self.ast.move_expression(&mut conditional_expr.alternate);
+            }
+            _ => {}
+        }
+    }
 }
 
 impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.remove_if(stmt);
+        self.remove_conditional(stmt);
         walk_mut::walk_statement_mut(self, stmt);
     }
 }

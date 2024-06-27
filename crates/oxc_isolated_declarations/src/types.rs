@@ -178,8 +178,8 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::NumericLiteral(lit) => {
                 Some(self.ast.ts_literal_type(SPAN, TSLiteral::NumericLiteral(self.ast.copy(lit))))
             }
-            Expression::BigintLiteral(lit) => {
-                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BigintLiteral(self.ast.copy(lit))))
+            Expression::BigIntLiteral(lit) => {
+                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BigIntLiteral(self.ast.copy(lit))))
             }
             Expression::StringLiteral(lit) => {
                 Some(self.ast.ts_literal_type(SPAN, TSLiteral::StringLiteral(self.ast.copy(lit))))
@@ -192,9 +192,16 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::TemplateLiteral(lit) => self
                 .transform_template_to_string(lit)
                 .map(|string| self.ast.ts_literal_type(lit.span, TSLiteral::StringLiteral(string))),
-            Expression::UnaryExpression(expr) => Some(
-                self.ast.ts_literal_type(SPAN, TSLiteral::UnaryExpression(self.ast.copy(expr))),
-            ),
+            Expression::UnaryExpression(expr) => {
+                if Self::can_infer_unary_expression(expr) {
+                    Some(
+                        self.ast
+                            .ts_literal_type(SPAN, TSLiteral::UnaryExpression(self.ast.copy(expr))),
+                    )
+                } else {
+                    None
+                }
+            }
             Expression::ArrayExpression(expr) => {
                 Some(self.transform_array_expression_to_ts_type(expr, true))
             }

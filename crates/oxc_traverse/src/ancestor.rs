@@ -287,7 +287,7 @@ pub(crate) enum AncestorType {
     TSInferTypeTypeParameter = 255,
     TSTypeQueryExprName = 256,
     TSTypeQueryTypeParameters = 257,
-    TSImportTypeArgument = 258,
+    TSImportTypeParameter = 258,
     TSImportTypeQualifier = 259,
     TSImportTypeAttributes = 260,
     TSImportTypeTypeParameters = 261,
@@ -322,6 +322,7 @@ pub(crate) enum AncestorType {
     TSInstantiationExpressionExpression = 290,
     TSInstantiationExpressionTypeParameters = 291,
     JSDocNullableTypeTypeAnnotation = 292,
+    JSDocNonNullableTypeTypeAnnotation = 293,
 }
 
 /// Ancestor type used in AST traversal.
@@ -792,8 +793,8 @@ pub enum Ancestor<'a> {
     TSTypeQueryExprName(TSTypeQueryWithoutExprName<'a>) = AncestorType::TSTypeQueryExprName as u16,
     TSTypeQueryTypeParameters(TSTypeQueryWithoutTypeParameters<'a>) =
         AncestorType::TSTypeQueryTypeParameters as u16,
-    TSImportTypeArgument(TSImportTypeWithoutArgument<'a>) =
-        AncestorType::TSImportTypeArgument as u16,
+    TSImportTypeParameter(TSImportTypeWithoutParameter<'a>) =
+        AncestorType::TSImportTypeParameter as u16,
     TSImportTypeQualifier(TSImportTypeWithoutQualifier<'a>) =
         AncestorType::TSImportTypeQualifier as u16,
     TSImportTypeAttributes(TSImportTypeWithoutAttributes<'a>) =
@@ -861,6 +862,8 @@ pub enum Ancestor<'a> {
         AncestorType::TSInstantiationExpressionTypeParameters as u16,
     JSDocNullableTypeTypeAnnotation(JSDocNullableTypeWithoutTypeAnnotation<'a>) =
         AncestorType::JSDocNullableTypeTypeAnnotation as u16,
+    JSDocNonNullableTypeTypeAnnotation(JSDocNonNullableTypeWithoutTypeAnnotation<'a>) =
+        AncestorType::JSDocNonNullableTypeTypeAnnotation as u16,
 }
 
 impl<'a> Ancestor<'a> {
@@ -1706,7 +1709,7 @@ impl<'a> Ancestor<'a> {
     pub fn is_ts_import_type(&self) -> bool {
         matches!(
             self,
-            Self::TSImportTypeArgument(_)
+            Self::TSImportTypeParameter(_)
                 | Self::TSImportTypeQualifier(_)
                 | Self::TSImportTypeAttributes(_)
                 | Self::TSImportTypeTypeParameters(_)
@@ -1823,6 +1826,11 @@ impl<'a> Ancestor<'a> {
     #[inline]
     pub fn is_js_doc_nullable_type(&self) -> bool {
         matches!(self, Self::JSDocNullableTypeTypeAnnotation(_))
+    }
+
+    #[inline]
+    pub fn is_js_doc_non_nullable_type(&self) -> bool {
+        matches!(self, Self::JSDocNonNullableTypeTypeAnnotation(_))
     }
 
     #[inline]
@@ -2084,14 +2092,13 @@ impl<'a> Ancestor<'a> {
                 | Self::TSArrayTypeElementType(_)
                 | Self::TSIndexedAccessTypeObjectType(_)
                 | Self::TSIndexedAccessTypeIndexType(_)
-                | Self::TSNamedTupleMemberElementType(_)
                 | Self::TSOptionalTypeTypeAnnotation(_)
                 | Self::TSRestTypeTypeAnnotation(_)
                 | Self::TSTypeParameterInstantiationParams(_)
                 | Self::TSTypeParameterConstraint(_)
                 | Self::TSTypeParameterDefault(_)
                 | Self::TSTypeAliasDeclarationTypeAnnotation(_)
-                | Self::TSImportTypeArgument(_)
+                | Self::TSImportTypeParameter(_)
                 | Self::TSMappedTypeNameType(_)
                 | Self::TSMappedTypeTypeAnnotation(_)
                 | Self::TSTemplateLiteralTypeTypes(_)
@@ -2099,6 +2106,7 @@ impl<'a> Ancestor<'a> {
                 | Self::TSSatisfiesExpressionTypeAnnotation(_)
                 | Self::TSTypeAssertionTypeAnnotation(_)
                 | Self::JSDocNullableTypeTypeAnnotation(_)
+                | Self::JSDocNonNullableTypeTypeAnnotation(_)
         )
     }
 
@@ -2109,7 +2117,7 @@ impl<'a> Ancestor<'a> {
 
     #[inline]
     pub fn is_via_ts_tuple_element(&self) -> bool {
-        matches!(self, Self::TSTupleTypeElementTypes(_))
+        matches!(self, Self::TSTupleTypeElementTypes(_) | Self::TSNamedTupleMemberElementType(_))
     }
 
     #[inline]
@@ -4922,7 +4930,6 @@ impl<'a> CatchParameterWithoutPattern<'a> {
     }
 }
 
-pub(crate) const OFFSET_BINDING_PATTERN_SPAN: usize = offset_of!(BindingPattern, span);
 pub(crate) const OFFSET_BINDING_PATTERN_KIND: usize = offset_of!(BindingPattern, kind);
 pub(crate) const OFFSET_BINDING_PATTERN_TYPE_ANNOTATION: usize =
     offset_of!(BindingPattern, type_annotation);
@@ -4933,11 +4940,6 @@ pub(crate) const OFFSET_BINDING_PATTERN_OPTIONAL: usize = offset_of!(BindingPatt
 pub struct BindingPatternWithoutKind<'a>(pub(crate) *const BindingPattern<'a>);
 
 impl<'a> BindingPatternWithoutKind<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_SPAN) as *const Span) }
-    }
-
     #[inline]
     pub fn type_annotation(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
@@ -4957,11 +4959,6 @@ impl<'a> BindingPatternWithoutKind<'a> {
 pub struct BindingPatternWithoutTypeAnnotation<'a>(pub(crate) *const BindingPattern<'a>);
 
 impl<'a> BindingPatternWithoutTypeAnnotation<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_BINDING_PATTERN_SPAN) as *const Span) }
-    }
-
     #[inline]
     pub fn kind(&self) -> &BindingPatternKind<'a> {
         unsafe {
@@ -9139,10 +9136,10 @@ impl<'a> TSNamedTupleMemberWithoutLabel<'a> {
     }
 
     #[inline]
-    pub fn element_type(&self) -> &TSType<'a> {
+    pub fn element_type(&self) -> &TSTupleElement<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
-                as *const TSType<'a>)
+                as *const TSTupleElement<'a>)
         }
     }
 
@@ -10908,7 +10905,8 @@ impl<'a> TSTypeQueryWithoutTypeParameters<'a> {
 }
 
 pub(crate) const OFFSET_TS_IMPORT_TYPE_SPAN: usize = offset_of!(TSImportType, span);
-pub(crate) const OFFSET_TS_IMPORT_TYPE_ARGUMENT: usize = offset_of!(TSImportType, argument);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF: usize = offset_of!(TSImportType, is_type_of);
+pub(crate) const OFFSET_TS_IMPORT_TYPE_PARAMETER: usize = offset_of!(TSImportType, parameter);
 pub(crate) const OFFSET_TS_IMPORT_TYPE_QUALIFIER: usize = offset_of!(TSImportType, qualifier);
 pub(crate) const OFFSET_TS_IMPORT_TYPE_ATTRIBUTES: usize = offset_of!(TSImportType, attributes);
 pub(crate) const OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS: usize =
@@ -10916,12 +10914,17 @@ pub(crate) const OFFSET_TS_IMPORT_TYPE_TYPE_PARAMETERS: usize =
 
 #[repr(transparent)]
 #[derive(Debug)]
-pub struct TSImportTypeWithoutArgument<'a>(pub(crate) *const TSImportType<'a>);
+pub struct TSImportTypeWithoutParameter<'a>(pub(crate) *const TSImportType<'a>);
 
-impl<'a> TSImportTypeWithoutArgument<'a> {
+impl<'a> TSImportTypeWithoutParameter<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn is_type_of(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
     }
 
     #[inline]
@@ -10960,9 +10963,14 @@ impl<'a> TSImportTypeWithoutQualifier<'a> {
     }
 
     #[inline]
-    pub fn argument(&self) -> &TSType<'a> {
+    pub fn is_type_of(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
+    }
+
+    #[inline]
+    pub fn parameter(&self) -> &TSType<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *const TSType<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_PARAMETER) as *const TSType<'a>)
         }
     }
 
@@ -10994,9 +11002,14 @@ impl<'a> TSImportTypeWithoutAttributes<'a> {
     }
 
     #[inline]
-    pub fn argument(&self) -> &TSType<'a> {
+    pub fn is_type_of(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
+    }
+
+    #[inline]
+    pub fn parameter(&self) -> &TSType<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *const TSType<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_PARAMETER) as *const TSType<'a>)
         }
     }
 
@@ -11028,9 +11041,14 @@ impl<'a> TSImportTypeWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn argument(&self) -> &TSType<'a> {
+    pub fn is_type_of(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_IS_TYPE_OF) as *const bool) }
+    }
+
+    #[inline]
+    pub fn parameter(&self) -> &TSType<'a> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *const TSType<'a>)
+            &*((self.0 as *const u8).add(OFFSET_TS_IMPORT_TYPE_PARAMETER) as *const TSType<'a>)
         }
     }
 
@@ -11907,5 +11925,34 @@ impl<'a> JSDocNullableTypeWithoutTypeAnnotation<'a> {
     #[inline]
     pub fn postfix(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_JS_DOC_NULLABLE_TYPE_POSTFIX) as *const bool) }
+    }
+}
+
+pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_SPAN: usize =
+    offset_of!(JSDocNonNullableType, span);
+pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(JSDocNonNullableType, type_annotation);
+pub(crate) const OFFSET_JS_DOC_NON_NULLABLE_TYPE_POSTFIX: usize =
+    offset_of!(JSDocNonNullableType, postfix);
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct JSDocNonNullableTypeWithoutTypeAnnotation<'a>(
+    pub(crate) *const JSDocNonNullableType<'a>,
+);
+
+impl<'a> JSDocNonNullableTypeWithoutTypeAnnotation<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JS_DOC_NON_NULLABLE_TYPE_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn postfix(&self) -> &bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_JS_DOC_NON_NULLABLE_TYPE_POSTFIX) as *const bool)
+        }
     }
 }

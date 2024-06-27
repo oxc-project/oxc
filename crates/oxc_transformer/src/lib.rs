@@ -280,24 +280,24 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x3_es2015.transform_declaration_on_exit(decl);
     }
 
-    fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_if_statement(stmt);
+    fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_if_statement(stmt, ctx);
     }
 
-    fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_while_statement(stmt);
+    fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_while_statement(stmt, ctx);
     }
 
     fn enter_do_while_statement(
         &mut self,
         stmt: &mut DoWhileStatement<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.transform_do_while_statement(stmt);
+        self.x0_typescript.transform_do_while_statement(stmt, ctx);
     }
 
-    fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_for_statement(stmt);
+    fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_for_statement(stmt, ctx);
     }
 
     fn enter_ts_export_assignment(

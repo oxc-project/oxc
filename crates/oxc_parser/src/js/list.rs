@@ -215,8 +215,27 @@ impl<'a> SeparatedList<'a> for SequenceExpressionList<'a> {
     // read everything as expression and map to it to either
     // ParenthesizedExpression or ArrowFormalParameters later
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        let element = p.parse_assignment_expression_or_higher()?;
-        self.elements.push(element);
+        let element = p.parse_assignment_expression_or_higher();
+        self.elements.push(element?);
+        Ok(())
+    }
+
+    fn parse_list(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
+        p.expect(self.open())?;
+
+        let mut first = true;
+
+        while !p.at(self.close()) && !p.at(Kind::Eof) {
+            if first {
+                first = false;
+            } else {
+                p.expect(self.separator())?;
+            }
+
+            self.parse_element(p)?;
+        }
+
+        p.expect(self.close())?;
         Ok(())
     }
 }

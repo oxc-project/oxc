@@ -1,8 +1,8 @@
 commit: 12619ffe
 
 parser_babel Summary:
-AST Parsed     : 2095/2101 (99.71%)
-Positive Passed: 2087/2101 (99.33%)
+AST Parsed     : 2091/2101 (99.52%)
+Positive Passed: 2083/2101 (99.14%)
 Negative Passed: 1364/1501 (90.87%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -27,7 +27,6 @@ Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/335/input.js"
 Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
-Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-for-in/input.js"
@@ -139,6 +138,7 @@ Expect Syntax Error: "typescript/types/read-only-1/input.ts"
 Expect Syntax Error: "typescript/types/read-only-2/input.ts"
 Expect Syntax Error: "typescript/types/read-only-3/input.ts"
 Expect Syntax Error: "typescript/types/read-only-4/input.ts"
+Expect Syntax Error: "typescript/types/tuple-labeled-invalid-optional/input.ts"
 Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
@@ -350,6 +350,36 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
    ·                                  ╰── `,` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts"
+
+  × Expected `{` but found `<<`
+   ╭─[typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts:1:17]
+ 1 │ (class extends f<<T>(v: T) => void> {});
+   ·                 ─┬
+   ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx"
+
+  × Unexpected token
+   ╭─[typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx:1:11]
+ 1 │ <Component<<T>(v: T) => void> />
+   ·           ──
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts"
+
+  × Expected `{` but found `<<`
+   ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts:1:17]
+ 1 │ (class extends f<<T>(v: T) => void> {});
+   ·                 ─┬
+   ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx"
+
+  × Unexpected token
+   ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx:1:11]
+ 1 │ <Component<<T>(v: T) => void> />
+   ·           ──
    ╰────
 Expect to Parse: "typescript/types/const-type-parameters/input.ts"
 
@@ -5152,6 +5182,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2017/trailing-function-commas/6/input.js:1:14]
  1 │ function log(,) { }
    ·              ─
+   ╰────
+
+  × Unexpected token
+   ╭─[es2017/trailing-function-commas/7/input.js:1:8]
+ 1 │ ('foo',)
+   ·        ─
    ╰────
 
   × Expected `(` but found `await`
@@ -10557,11 +10593,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:10]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:9]
  1 │ new A<T> if (0);
-   ·          ──
+   ·         ─
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/type-only-import-export-specifiers/export-invalid-type-only-keyword/input.ts:1:7]
@@ -10663,13 +10700,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·               ╰── `,` expected
    ╰────
 
-  × Expected `,` but found `?`
-   ╭─[typescript/types/tuple-labeled-invalid-optional/input.ts:1:15]
- 1 │ type T = [x: A?];
-   ·               ┬
-   ·               ╰── `,` expected
-   ╰────
-
   × Expected `,` but found `Identifier`
     ╭─[typescript/types/variance-annotations/input.ts:95:17]
  94 │ 
@@ -10706,22 +10736,22 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `]` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `}` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `]` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `}` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────

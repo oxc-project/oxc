@@ -17,13 +17,13 @@ impl<'a> IsolatedDeclarations<'a> {
         match key {
             PropertyKey::StringLiteral(_)
             | PropertyKey::NumericLiteral(_)
-            | PropertyKey::BigintLiteral(_) => true,
+            | PropertyKey::BigIntLiteral(_) => true,
             PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
             PropertyKey::UnaryExpression(expr) => {
                 expr.operator.is_arithmetic()
                     && matches!(
                         expr.argument,
-                        Expression::NumericLiteral(_) | Expression::BigintLiteral(_)
+                        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
                     )
             }
             _ => false,
@@ -202,7 +202,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.transform_accessibility(method.accessibility),
                 )
             }
-            MethodDefinitionKind::Get => {
+            MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
                 let params = self.ast.formal_parameters(
                     SPAN,
                     FormalParameterKind::Signature,
@@ -220,9 +220,6 @@ impl<'a> IsolatedDeclarations<'a> {
                     None,
                 );
                 self.transform_class_method_definition(method, params, None)
-            }
-            MethodDefinitionKind::Constructor => {
-                unreachable!()
             }
         }
     }
@@ -505,7 +502,7 @@ impl<'a> IsolatedDeclarations<'a> {
         kind: BindingPatternKind<'a>,
         type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     ) -> Box<'a, FormalParameters<'a>> {
-        let pattern = BindingPattern { span: SPAN, kind, type_annotation, optional: false };
+        let pattern = BindingPattern { kind, type_annotation, optional: false };
         let parameter =
             self.ast.formal_parameter(SPAN, pattern, None, false, false, self.ast.new_vec());
         let items = self.ast.new_vec_single(parameter);

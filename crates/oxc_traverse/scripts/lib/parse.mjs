@@ -1,7 +1,6 @@
 import {readFile} from 'fs/promises';
 import {join as pathJoin} from 'path';
 import {fileURLToPath} from 'url';
-import assert from 'assert';
 import {typeAndWrappers} from './utils.mjs';
 
 const FILENAMES = ['js.rs', 'jsx.rs', 'literal.rs', 'ts.rs'];
@@ -20,80 +19,137 @@ export default async function getTypesFromCode() {
     return types;
 }
 
+class Position {
+    constructor(filename, index) {
+        this.filename = filename;
+        this.index = index;
+    }
+
+    assert(condition, message) {
+        if (!condition) this.throw(message);
+    }
+    throw(message) {
+        throw new Error(`${message || 'Unknown error'} (at ${this.filename}:${this.index + 1})`);
+    }
+}
+
+class Lines {
+    constructor(lines, filename, offset = 0) {
+        this.lines = lines;
+        this.filename = filename;
+        this.offset = offset;
+        this.index = 0;
+    }
+
+    static fromCode(code, filename) {
+        const lines = code.split(/\r?\n/)
+            .map(line => line.replace(/\s+/g, ' ').replace(/ ?\/\/.*$/, '').replace(/ $/, ''));
+        return new Lines(lines, filename, 0);
+    }
+
+    child() {
+        return new Lines([], this.filename, this.index);
+    }
+
+    current() {
+        return this.lines[this.index];
+    }
+    next() {
+        return this.lines[this.index++];
+    }
+    isEnd() {
+        return this.index === this.lines.length;
+    }
+
+    position() {
+        return new Position(this.filename, this.index + this.offset);
+    }
+    positionPrevious() {
+        return new Position(this.filename, this.index + this.offset - 1);
+    }
+}
+
 function parseFile(code, filename, types) {
-    const lines = code.split(/\r?\n/).map(
-        line => line.replace(/\s+/g, ' ').replace(/ ?\/\/.*$/, '')
-    );
-    for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-        const lineMatch = lines[lineIndex].match(/^#\[visited_node ?([\]\(])/);
-        if (!lineMatch) continue;
-
-        let scopeArgs = null;
-        if (lineMatch[1] === '(') {
-            let line = lines[lineIndex].slice(lineMatch[0].length),
-                scopeArgsStr = '';
-            while (!line.endsWith(')]')) {
-                scopeArgsStr += ` ${line}`;
-                line = lines[++lineIndex];
-            }
-            scopeArgsStr += ` ${line.slice(0, -2)}`;
-            scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ');
-
-            scopeArgs = parseScopeArgs(scopeArgsStr, filename, lineIndex);
+    const lines = Lines.fromCode(code, filename);
+    while (!lines.isEnd()) {
+        if (lines.current() !== '#[visited_node]') {
+            lines.next();
+            continue;
         }
 
-        let match;
-        while (true) {
-            match = lines[++lineIndex].match(/^pub (enum|struct) ((.+?)(?:<'a>)?) \{/);
+        // Consume attrs and comments, parse `#[scope]` attr
+        let match, scopeArgs = null;
+        while (!lines.isEnd()) {
+            if (/^#\[scope[(\]]/.test(lines.current())) {
+                scopeArgs = parseScopeArgs(lines, scopeArgs);
+                continue;
+            }
+            match = lines.next().match(/^pub (enum|struct) ((.+?)(?:<'a>)?) \{/);
             if (match) break;
         }
-        const [, kind, rawName, name] = match,
-            startLineIndex = lineIndex;
+        lines.position().assert(match, `Could not find enum or struct after #[visited_node]`);
+        const [, kind, rawName, name] = match;
 
-        const itemLines = [];
-        while (true) {
-            const line = lines[++lineIndex].trim();
+        // Find end of struct / enum
+        const itemLines = lines.child();
+        while (!lines.isEnd()) {
+            const line = lines.next();
             if (line === '}') break;
-            if (line !== '') itemLines.push(line);
+            itemLines.lines.push(line.trim());
         }
 
         if (kind === 'struct') {
-            types[name] = parseStruct(name, rawName, itemLines, scopeArgs, filename, startLineIndex);
+            types[name] = parseStruct(name, rawName, itemLines, scopeArgs);
         } else {
-            types[name] = parseEnum(name, rawName, itemLines, filename, startLineIndex);
+            types[name] = parseEnum(name, rawName, itemLines);
         }
     }
 }
 
-function parseStruct(name, rawName, lines, scopeArgs, filename, startLineIndex) {
+function parseStruct(name, rawName, lines, scopeArgs) {
     const fields = [];
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-        if (line.startsWith('#[')) {
-            while (!lines[i].endsWith(']')) {
-                i++;
+    while (!lines.isEnd()) {
+        let isScopeEntry = false, line;
+        while (!lines.isEnd()) {
+            line = lines.next();
+            if (line === '') continue;
+            if (line === '#[scope(enter_before)]') {
+                isScopeEntry = true;
+            } else if (line.startsWith('#[')) {
+                while (!line.endsWith(']')) {
+                    line = lines.next();
+                }
+            } else {
+                break;
             }
-            continue;
         }
 
         const match = line.match(/^pub ((?:r#)?([a-z_]+)): (.+),$/);
-        assert(
-            match,
-            `Cannot parse line ${startLineIndex + i} in '${filename}' as struct field: '${line}'`
-        );
+        lines.positionPrevious().assert(match, `Cannot parse line as struct field: '${line}'`);
         const [, rawName, name, rawTypeName] = match,
             typeName = rawTypeName.replace(/<'a>/g, '').replace(/<'a, ?/g, '<'),
             {name: innerTypeName, wrappers} = typeAndWrappers(typeName);
 
         fields.push({name, typeName, rawName, rawTypeName, innerTypeName, wrappers});
+
+        if (isScopeEntry) scopeArgs.enterScopeBefore = name;
     }
     return {kind: 'struct', name, rawName, fields, scopeArgs};
 }
 
-function parseEnum(name, rawName, lines, filename, startLineIndex) {
+function parseEnum(name, rawName, lines) {
     const variants = [],
         inherits = [];
-    for (const [lineIndex, line] of lines.entries()) {
+    while (!lines.isEnd()) {
+        let line = lines.next();
+        if (line === '') continue;
+        if (line.startsWith('#[')) {
+            while (!line.endsWith(']')) {
+                line = lines.next();
+            }
+            continue;
+        }
+
         const match = line.match(/^(.+?)\((.+?)\)(?: ?= ?(\d+))?,$/);
         if (match) {
             const [, name, rawTypeName, discriminantStr] = match,
@@ -103,34 +159,50 @@ function parseEnum(name, rawName, lines, filename, startLineIndex) {
             variants.push({name, typeName, rawTypeName, innerTypeName, wrappers, discriminant});
         } else {
             const match2 = line.match(/^@inherit ([A-Za-z]+)$/);
-            assert(
-                match2,
-                `Cannot parse line ${startLineIndex + lineIndex} in '${filename}' as enum variant: '${line}'`
-            );
+            lines.positionPrevious().assert(match2, `Cannot parse line as enum variant: '${line}'`);
             inherits.push(match2[1]);
         }
     }
     return {kind: 'enum', name, rawName, variants, inherits};
 }
 
-function parseScopeArgs(argsStr, filename, lineIndex) {
-    if (!argsStr) return null;
+function parseScopeArgs(lines, scopeArgs) {
+    const position = lines.position();
+
+    // Get whole of `#[scope]` attr text as a single line string
+    let scopeArgsStr = '';
+    let line = lines.next();
+    if (line !== '#[scope]') {
+        line = line.slice('#[scope('.length);
+        while (!line.endsWith(')]')) {
+            scopeArgsStr += ` ${line}`;
+            line = lines.next();
+        }
+        scopeArgsStr += ` ${line.slice(0, -2)}`;
+        scopeArgsStr = scopeArgsStr.trim().replace(/  +/g, ' ').replace(/,$/, '');
+    }
+
+    // Parse attr
+    return parseScopeArgsStr(scopeArgsStr, scopeArgs, position);
+}
+
+function parseScopeArgsStr(argsStr, args, position) {
+    if (!args) args = {flags: 'ScopeFlags::empty()', if: null, strictIf: null};
+
+    if (!argsStr) return args;
 
     const matchAndConsume = (regex) => {
         const match = argsStr.match(regex);
-        assert(match);
+        position.assert(match);
         argsStr = argsStr.slice(match[0].length);
         return match.slice(1);
     };
 
-    const args = {};
     try {
         while (true) {
-            const [key] = matchAndConsume(/^([a-z_]+)\(/);
-            assert(
-                ['scope', 'scope_if', 'strict_if', 'enter_scope_before'].includes(key),
-                `Unexpected visited_node macro arg: ${key}`
-            );
+            let [key] = matchAndConsume(/^([a-z_]+)\(/);
+            key = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+            position.assert(Object.hasOwn(args, key), `Unexpected scope macro arg: ${key}`);
 
             let bracketCount = 1,
                 index = 0;
@@ -143,7 +215,7 @@ function parseScopeArgs(argsStr, filename, lineIndex) {
                     if (bracketCount === 0) break;
                 }
             }
-            assert(bracketCount === 0);
+            position.assert(bracketCount === 0);
 
             args[key] = argsStr.slice(0, index).trim();
             argsStr = argsStr.slice(index + 1);
@@ -151,12 +223,8 @@ function parseScopeArgs(argsStr, filename, lineIndex) {
 
             matchAndConsume(/^ ?, ?/);
         }
-
-        assert(args.scope, 'Missing key `scope`');
     } catch (err) {
-        throw new Error(
-            `Cannot parse visited_node args: ${argsStr} in ${filename}:${lineIndex}\n${err?.message}`
-        );
+        position.throw(`Cannot parse scope args: '${argsStr}': ${err?.message || 'Unknown error'}`);
     }
 
     return args;

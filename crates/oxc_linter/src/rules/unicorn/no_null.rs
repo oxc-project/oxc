@@ -10,7 +10,11 @@ use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{
-    ast_util::is_method_call, context::LintContext, fixer::RuleFixer, rule::Rule, AstNode, Fix,
+    ast_util::is_method_call,
+    context::LintContext,
+    fixer::{Fix, RuleFixer},
+    rule::Rule,
+    AstNode,
 };
 
 fn replace_null_diagnostic(span0: Span) -> OxcDiagnostic {

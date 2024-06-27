@@ -1,11 +1,13 @@
 #![allow(clippy::unused_self)]
 
-use std::rc::Rc;
+use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
-use oxc_syntax::{operator::AssignmentOperator, reference::ReferenceFlag, symbol::SymbolId};
+use oxc_syntax::{
+    operator::AssignmentOperator, reference::ReferenceFlag, scope::ScopeFlags, symbol::SymbolId,
+};
 use oxc_traverse::TraverseCtx;
 use rustc_hash::FxHashSet;
 
@@ -370,16 +372,23 @@ impl<'a> TypeScriptAnnotations<'a> {
     /// // to
     /// if (true) { super() } else { super() }
     /// ```
-    pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
+    pub fn transform_if_statement(
+        &mut self,
+        stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if !self.assignments.is_empty() {
-            if let Statement::ExpressionStatement(expr) = &stmt.consequent {
-                if expr.expression.is_super_call_expression() {
-                    // TODO: Need to create a scope for this block
-                    stmt.consequent = self.ctx.ast.block_statement(self.ctx.ast.block(
-                        expr.span,
-                        self.ctx.ast.new_vec_single(self.ctx.ast.copy(&stmt.consequent)),
-                    ));
+            let consequent_span = match &stmt.consequent {
+                Statement::ExpressionStatement(expr)
+                    if expr.expression.is_super_call_expression() =>
+                {
+                    Some(expr.span)
                 }
+                _ => None,
+            };
+            if let Some(span) = consequent_span {
+                let consequent = ctx.ast.move_statement(&mut stmt.consequent);
+                stmt.consequent = Self::create_block_with_statement(consequent, span, ctx);
             }
 
             let alternate_span = match &stmt.alternate {
@@ -392,52 +401,64 @@ impl<'a> TypeScriptAnnotations<'a> {
             };
             if let Some(span) = alternate_span {
                 let alternate = stmt.alternate.take().unwrap();
-                // TODO: Need to create a scope for this block
-                stmt.alternate = Some(self.ctx.ast.block_statement(
-                    self.ctx.ast.block(span, self.ctx.ast.new_vec_single(alternate)),
-                ));
+                stmt.alternate = Some(Self::create_block_with_statement(alternate, span, ctx));
             }
         }
 
-        if stmt.consequent.is_typescript_syntax() {
-            // TODO: Need to create a scope for this block
-            stmt.consequent = self.ctx.ast.block_statement(
-                self.ctx.ast.block(stmt.consequent.span(), self.ctx.ast.new_vec()),
-            );
-        }
+        Self::replace_with_empty_block_if_ts(&mut stmt.consequent, ctx);
 
         if stmt.alternate.as_ref().is_some_and(Statement::is_typescript_syntax) {
             stmt.alternate = None;
         }
     }
 
-    pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
-        if stmt.body.is_typescript_syntax() {
-            // TODO: Need to create a scope for this block
-            stmt.body = self
-                .ctx
-                .ast
-                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
-        }
+    fn create_block_with_statement(
+        stmt: Statement<'a>,
+        span: Span,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
+        let block = BlockStatement {
+            span,
+            body: ctx.ast.new_vec_single(stmt),
+            scope_id: Cell::new(Some(scope_id)),
+        };
+        Statement::BlockStatement(ctx.ast.alloc(block))
     }
 
-    pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
-        if stmt.body.is_typescript_syntax() {
-            // TODO: Need to create a scope for this block
-            stmt.body = self
-                .ctx
-                .ast
-                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
-        }
+    pub fn transform_for_statement(
+        &mut self,
+        stmt: &mut ForStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
     }
 
-    pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
-        if stmt.body.is_typescript_syntax() {
-            // TODO: Need to create a scope for this block
-            stmt.body = self
-                .ctx
-                .ast
-                .block_statement(self.ctx.ast.block(stmt.body.span(), self.ctx.ast.new_vec()));
+    pub fn transform_while_statement(
+        &mut self,
+        stmt: &mut WhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+    }
+
+    pub fn transform_do_while_statement(
+        &mut self,
+        stmt: &mut DoWhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx);
+    }
+
+    fn replace_with_empty_block_if_ts(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        if stmt.is_typescript_syntax() {
+            let scope_id = ctx.create_scope_child_of_current(ScopeFlags::empty());
+            let block = BlockStatement {
+                span: stmt.span(),
+                body: ctx.ast.new_vec(),
+                scope_id: Cell::new(Some(scope_id)),
+            };
+            *stmt = Statement::BlockStatement(ctx.ast.alloc(block));
         }
     }
 

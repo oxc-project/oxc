@@ -208,6 +208,10 @@ pub struct EnablePlugins {
     #[bpaf(switch, hide_usage)]
     pub jest_plugin: bool,
 
+    /// Enable the Vitest plugin and detect test problems
+    #[bpaf(switch, hide_usage)]
+    pub vitest_plugin: bool,
+
     /// Enable the JSX-a11y plugin and detect accessibility problems
     #[bpaf(switch, hide_usage)]
     pub jsx_a11y_plugin: bool,
