@@ -666,7 +666,7 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template) => {
                 if allowed.is_never() && template.is_no_substitution_template() {
                     let string = template.quasi().unwrap();
-                    if is_allowed_string_like(ctx, string, container, node.id(), is_prop) {
+                    if is_allowed_string_like(ctx, &string, container, node.id(), is_prop) {
                         return;
                     }
                     report_unneccessary_curly(ctx, container, node, template.span);
