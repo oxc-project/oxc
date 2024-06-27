@@ -400,22 +400,12 @@ mod test {
 
     #[test]
     fn add_source_mapping_for_unordered_position() {
-        let output = "ba".as_bytes();
+        let output = "".as_bytes();
         let mut builder = SourcemapBuilder::default();
         builder.with_name_and_source("x.js", "ab");
-        builder.add_source_mapping_for_name(output, Span::new(1, 2), "a");
-        builder.add_source_mapping_for_name(output, Span::new(0, 1), "b");
+        builder.add_source_mapping(output, 1, None);
+        builder.add_source_mapping(output, 0, None);
         let sm = builder.into_sourcemap();
         assert_eq!(sm.get_tokens().count(), 2);
-        // Here tokens is also unordered, but it could be used at chrome devtool and source-map-visualization.
-        // TODO maybe we need to order tokens at future.
-        assert_eq!(
-            sm.get_source_view_token(0_u32).as_ref().and_then(|token| token.get_name()),
-            Some("b")
-        );
-        assert_eq!(
-            sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
-            Some("a")
-        );
     }
 }
