@@ -8,7 +8,7 @@ use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, AstNode};
 fn no_constant_condition_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-constant-condition): Unexpected constant condition")
         .with_help("Constant expression as a test condition is not allowed")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

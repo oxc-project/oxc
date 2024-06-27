@@ -11,7 +11,7 @@ fn no_loss_of_precision_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint(no-loss-of-precision): This number literal will lose precision at runtime.",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -13,7 +13,7 @@ fn no_cond_assign_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment",
     )
     .with_help("Consider wrapping the assignment in additional parentheses")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

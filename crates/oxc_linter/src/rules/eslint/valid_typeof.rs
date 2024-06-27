@@ -11,7 +11,7 @@ fn not_string(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
     let mut d = OxcDiagnostic::warn(
         "eslint(valid-typeof): Typeof comparisons should be to string literals.",
     )
-    .with_labels([span1.into()]);
+    .with_label(span1);
     if let Some(x) = x0 {
         d = d.with_help(x);
     }
@@ -20,7 +20,7 @@ fn not_string(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
 
 fn invalid_value(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
     let mut d = OxcDiagnostic::warn("eslint(valid-typeof): Invalid typeof comparison value.")
-        .with_labels([span1.into()]);
+        .with_label(span1);
     if let Some(x) = x0 {
         d = d.with_help(x);
     }

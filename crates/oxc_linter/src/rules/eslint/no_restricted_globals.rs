@@ -14,7 +14,7 @@ fn no_restricted_globals(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         format!("eslint(no-restricted-globals): Unexpected use of '{x0}'. {x1}")
     };
 
-    OxcDiagnostic::warn(warn_text).with_labels([span2.into()])
+    OxcDiagnostic::warn(warn_text).with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn default_param_last_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(default-param-last): Default parameters should be last")
         .with_help("Enforce default parameters to be last.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

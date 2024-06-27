@@ -18,7 +18,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_this_before_super_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-this-before-super): Expected to always call super() before this/super property access.")
         .with_help("Call super() before this/super property access.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
