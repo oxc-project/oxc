@@ -26,6 +26,7 @@ pub struct SourcemapBuilder {
     source_id: u32,
     original_source: Arc<str>,
     last_generated_update: usize,
+    last_position: Option<u32>,
     line_offset_tables: Vec<LineOffsetTable>,
     sourcemap_builder: oxc_sourcemap::SourceMapBuilder,
     generated_line: u32,
@@ -38,6 +39,7 @@ impl Default for SourcemapBuilder {
             source_id: 0,
             original_source: "".into(),
             last_generated_update: 0,
+            last_position: None,
             line_offset_tables: vec![],
             sourcemap_builder: oxc_sourcemap::SourceMapBuilder::default(),
             generated_line: 0,
@@ -74,6 +76,9 @@ impl SourcemapBuilder {
     }
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<Arc<str>>) {
+        if matches!(self.last_position, Some(last_position) if last_position == position) {
+            return;
+        }
         let (original_line, original_column) = self.search_original_line_and_column(position);
         self.update_generated_line_and_column(output);
         let name_id = name.map(|s| self.sourcemap_builder.add_name(&s));
@@ -85,6 +90,7 @@ impl SourcemapBuilder {
             Some(self.source_id),
             name_id,
         );
+        self.last_position = Some(position);
     }
 
     #[allow(clippy::cast_possible_truncation)]
