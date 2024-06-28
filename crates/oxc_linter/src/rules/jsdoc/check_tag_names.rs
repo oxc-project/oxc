@@ -13,7 +13,7 @@ use crate::{
 fn check_tag_names_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.")
         .with_help(x1.to_string())
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -15,7 +15,7 @@ fn bad_min_max_func_diagnostic(x0: f64, span1: Span) -> OxcDiagnostic {
     .with_help(format!(
         "This evaluates to {x0:?} because of the incorrect `Math.min`/`Math.max` combination"
     ))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

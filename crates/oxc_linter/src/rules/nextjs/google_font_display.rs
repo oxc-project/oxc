@@ -13,7 +13,7 @@ use crate::{
 fn font_display_parameter_missing(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-next(google-font-display): A font-display parameter is missing (adding `&display=optional` is recommended).")
         .with_help("See https://nextjs.org/docs/messages/google-font-display")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn not_recommended_font_display_value(span0: Span, x1: &str) -> OxcDiagnostic {
@@ -21,7 +21,7 @@ fn not_recommended_font_display_value(span0: Span, x1: &str) -> OxcDiagnostic {
         "eslint-plugin-next(google-font-display): `{x1}` is not a recommended font-display value."
     ))
     .with_help("See https://nextjs.org/docs/messages/google-font-display")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

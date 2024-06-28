@@ -14,7 +14,7 @@ fn no_root(span0: Span, x1: &str) -> OxcDiagnostic {
         "eslint-plugin-jsdoc(check-property-names): No root defined for @property path.",
     )
     .with_help(format!("@property path declaration `{x1}` appears before any real property."))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

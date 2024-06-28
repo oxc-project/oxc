@@ -13,7 +13,7 @@ fn bad_array_method_on_arguments_diagnostic(x0: &str, span1: Span) -> OxcDiagnos
         .with_help(format!(
             "The 'arguments' object does not have '{x0}()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead."
         ))
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

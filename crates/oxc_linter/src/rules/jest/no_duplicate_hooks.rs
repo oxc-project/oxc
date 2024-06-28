@@ -20,7 +20,7 @@ fn no_duplicate_hooks_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-duplicate-hooks): Disallow duplicate setup and teardown hooks.",
     )
     .with_help(format!("Duplicate {x0:?} in describe block."))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

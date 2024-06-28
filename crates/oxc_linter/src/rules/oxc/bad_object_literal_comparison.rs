@@ -11,13 +11,13 @@ fn object_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
         .with_help(format!(
             "This comparison will always return {x1:?} as object literals are never equal to each other. Consider using `Object.entries()` of `Object.keys()` and comparing their lengths."
         ))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn array_comparison(span0: Span, x1: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("oxc(bad-object-literal-comparison): Unexpected array literal comparison.")
         .with_help(format!("This comparison will always return {x1:?} as array literals are never equal to each other. Consider using `Array.length` if empty checking was intended."))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

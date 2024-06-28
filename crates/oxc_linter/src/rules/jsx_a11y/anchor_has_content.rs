@@ -16,13 +16,13 @@ use crate::{
 fn missing_content(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")
         .with_help("Provide screen reader accessible content when using `a` elements.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn remove_aria_hidden(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")
         .with_help("Remove the `aria-hidden` attribute to allow the anchor element and its content visible to assistive technologies.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

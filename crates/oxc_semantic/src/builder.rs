@@ -183,22 +183,6 @@ impl<'a> SemanticBuilder<'a> {
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
 
-    pub fn build2(self) -> Semantic<'a> {
-        Semantic {
-            source_text: self.source_text,
-            source_type: self.source_type,
-            trivias: self.trivias,
-            nodes: self.nodes,
-            scopes: self.scope,
-            symbols: self.symbols,
-            classes: self.class_table_builder.build(),
-            module_record: Arc::new(ModuleRecord::default()),
-            jsdoc: self.jsdoc.build(),
-            unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg.map(ControlFlowGraphBuilder::build),
-        }
-    }
-
     /// Push a Syntax Error
     pub fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error);

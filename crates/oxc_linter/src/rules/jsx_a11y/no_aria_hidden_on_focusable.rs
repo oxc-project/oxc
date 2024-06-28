@@ -16,7 +16,7 @@ use crate::{
 fn no_aria_hidden_on_focusable_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.")
         .with_help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

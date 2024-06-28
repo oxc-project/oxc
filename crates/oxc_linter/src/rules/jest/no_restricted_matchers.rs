@@ -21,7 +21,7 @@ fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers",
     )
     .with_help(format!("Use of `{x0:?}` is disallowed`"))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 fn restricted_chain_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -29,7 +29,7 @@ fn restricted_chain_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers",
     )
     .with_help(format!("{x0:?}"))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

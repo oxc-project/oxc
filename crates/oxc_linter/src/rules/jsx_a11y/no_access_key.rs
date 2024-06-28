@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, Ast
 fn no_access_key_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(no-access-key): No access key attribute allowed.")
         .with_help("Remove the accessKey attribute. Inconsistencies between keyboard shortcuts and keyboard commands used by screenreaders and keyboard-only users create a11y complications.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

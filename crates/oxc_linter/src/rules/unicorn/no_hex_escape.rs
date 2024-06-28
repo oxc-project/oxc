@@ -12,7 +12,7 @@ fn no_hex_escape_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-hex-escape): Use Unicode escapes instead of hexadecimal escapes.",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
