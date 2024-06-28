@@ -16,9 +16,13 @@ mod tests {
 
         let ret = IsolatedDeclarations::new(&allocator).build(&program);
         let actual = CodeGenerator::new().build(&ret.program).source_text;
-        let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
-        let expected = CodeGenerator::new().build(&expected_program).source_text;
+        // let expected_program = Parser::new(&allocator, expected, source_type).parse().program;
+        // let expected = CodeGenerator::new().build(&expected_program).source_text;
 
+        println!("program {:#?}", program);
+        println!("ret errors {:#?}", ret.errors);
+        println!("ret program {:#?}", ret.program);
+        println!("actual {:#?}", actual);
         assert_eq!(actual.trim(), expected.trim());
     }
 
@@ -157,7 +161,7 @@ export function foo(a: any): number {
         transform_dts_test(
             "export class Foo { declare a: string }",
             "export declare class Foo {
-  a: string;
+\ta: string;
 }",
         );
     }
@@ -398,4 +402,8 @@ export function foo(a: any): number {
         transform_dts_test("export const {a} = b()", "export declare const a: unknown;");
     }
 
+    #[test]
+    fn dts_tuple_optional_item() {
+        transform_dts_test("export const a: [x?: number | null] = [null]", "export declare const a: [x?: ((number) | (null))];\n");
+    }
 }

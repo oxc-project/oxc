@@ -3259,6 +3259,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamedTupleMember<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.label.gen(p, ctx);
+        if self.optional {
+            p.print_str(b"?");
+        }
         p.print_str(b":");
         p.print_soft_space();
         self.element_type.gen(p, ctx);
