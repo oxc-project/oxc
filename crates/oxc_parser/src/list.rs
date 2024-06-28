@@ -42,6 +42,13 @@ pub trait SeparatedList<'a>: Sized {
         Kind::Comma
     }
 
+    /// When [`Some`], allows the parser to continue parsing when
+    /// [`Self::separator`] is not found. Illegal separators will be reported as
+    /// errors, but the parser will attempt to parse the rest of the list.
+    fn illegal_separator(&self) -> Option<Kind> {
+        Some(Kind::Semicolon)
+    }
+
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()>;
 
     /// Main entry point, parse the list
@@ -54,7 +61,16 @@ pub trait SeparatedList<'a>: Sized {
             if first {
                 first = false;
             } else {
-                p.expect(self.separator())?;
+                if let Err(e) = p.expect(self.separator()) {
+                    let Some(illegal_sep) = self.illegal_separator() else { return Err(e) };
+                    match p.expect(illegal_sep) {
+                        Err(_) => return Err(e),
+                        Ok(_) => {
+                            // report illegal separator, but continue parsing
+                            p.error(e);
+                        }
+                    }
+                }
                 if p.at(self.close()) {
                     break;
                 }

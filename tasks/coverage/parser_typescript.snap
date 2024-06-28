@@ -8145,12 +8145,28 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Expected `,` but found `;`
+   ╭─[compiler/objectLiteralWithSemicolons1.ts:1:15]
+ 1 │ var v = { a; b; c }
+   ·               ┬
+   ·               ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `;`
    ╭─[compiler/objectLiteralWithSemicolons2.ts:2:4]
  1 │ var v = {
  2 │   a;
    ·    ┬
    ·    ╰── `,` expected
  3 │   b;
+   ╰────
+
+  × Expected `,` but found `;`
+   ╭─[compiler/objectLiteralWithSemicolons2.ts:3:4]
+ 2 │   a;
+ 3 │   b;
+   ·    ┬
+   ·    ╰── `,` expected
+ 4 │   c
    ╰────
 
   × Expected `,` but found `;`
@@ -8163,6 +8179,24 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × Expected `,` but found `;`
+   ╭─[compiler/objectLiteralWithSemicolons3.ts:3:4]
+ 2 │   a;
+ 3 │   b;
+   ·    ┬
+   ·    ╰── `,` expected
+ 4 │   c;
+   ╰────
+
+  × Expected `,` but found `;`
+   ╭─[compiler/objectLiteralWithSemicolons3.ts:4:4]
+ 3 │   b;
+ 4 │   c;
+   ·    ┬
+   ·    ╰── `,` expected
+ 5 │ }
+   ╰────
+
+  × Expected `,` but found `;`
    ╭─[compiler/objectLiteralWithSemicolons4.ts:3:1]
  2 │   a
  3 │ ;
@@ -8170,11 +8204,31 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    · ╰── `,` expected
    ╰────
 
+  × Unexpected token
+   ╭─[compiler/objectLiteralWithSemicolons4.ts:3:2]
+ 2 │   a
+ 3 │ ;
+   ╰────
+
   × Expected `,` but found `;`
    ╭─[compiler/objectLiteralWithSemicolons5.ts:1:20]
  1 │ var v = { foo() { }; a: b; get baz() { }; }
    ·                    ┬
    ·                    ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `;`
+   ╭─[compiler/objectLiteralWithSemicolons5.ts:1:26]
+ 1 │ var v = { foo() { }; a: b; get baz() { }; }
+   ·                          ┬
+   ·                          ╰── `,` expected
+   ╰────
+
+  × Expected `,` but found `;`
+   ╭─[compiler/objectLiteralWithSemicolons5.ts:1:41]
+ 1 │ var v = { foo() { }; a: b; get baz() { }; }
+   ·                                         ┬
+   ·                                         ╰── `,` expected
    ╰────
 
   × Expected `,` but found `?`
@@ -12425,6 +12479,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                  ┬
     ·                  ╰── `,` expected
  49 │     postColonValueComma: 2,
+    ╰────
+
+  × Expected `,` but found `:`
+    ╭─[conformance/enums/enumErrors.ts:49:24]
+ 48 │     postSemicolon;
+ 49 │     postColonValueComma: 2,
+    ·                        ┬
+    ·                        ╰── `,` expected
+ 50 │     postColonValueSemicolon: 3;
     ╰────
 
   × Bad escape sequence in untagged template literal
