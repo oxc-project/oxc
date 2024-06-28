@@ -147,43 +147,97 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    if let AstKind::SpreadElement(spread_elem) = parent.kind() {
-        let Some(parent_parent) = outermost_paren_parent(parent, ctx) else {
-            return;
-        };
+    // we're in ...[]
+    let AstKind::SpreadElement(spread_elem) = parent.kind() else {
+        return;
+    };
+    let Some(parent_parent) = outermost_paren_parent(parent, ctx) else {
+        return;
+    };
 
-        let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
+    let span = Span::new(spread_elem.span.start, spread_elem.span.start + 3);
 
-        match node.kind() {
-            AstKind::ObjectExpression(_) => {
-                // { ...{ } }
-                if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
-                    ctx.diagnostic(spread_in_list(span, "object"));
+    match node.kind() {
+        AstKind::ObjectExpression(_) => {
+            // { ...{ } }
+            if matches!(parent_parent.kind(), AstKind::ObjectExpression(_)) {
+                ctx.diagnostic(spread_in_list(span, "object"));
+            }
+        }
+        AstKind::ArrayExpression(array_expr) => match parent_parent.kind() {
+            // ...[ ...[] ]
+            AstKind::ArrayExpressionElement(_) => {
+                let diagnostic = spread_in_list(span, "array");
+                if let Some(outer_array) = ctx.nodes().parent_kind(parent_parent.id()) {
+                    diagnose_array_in_array_spread(ctx, diagnostic, &outer_array, array_expr);
+                } else {
+                    ctx.diagnostic(diagnostic);
                 }
             }
-            AstKind::ArrayExpression(array_expr) => match parent_parent.kind() {
-                // ...[ ]
-                AstKind::ArrayExpressionElement(_) => {
-                    let diagnostic = spread_in_list(span, "array");
-                    if let Some(outer_array) = ctx.nodes().parent_kind(parent_parent.id()) {
-                        ctx.diagnostic_with_fix(diagnostic, |fixer| {
-                            fix_replace(fixer, &outer_array, array_expr)
-                        });
-                    } else {
-                        ctx.diagnostic(diagnostic);
+            // foo(...[ ])
+            AstKind::Argument(_) => {
+                ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
+                    fix_by_removing_spread(fixer, array_expr, spread_elem)
+                });
+            }
+            _ => {}
+        },
+        _ => {
+            unreachable!()
+        }
+    }
+}
+
+/// `...[ ...[] ]`. May contain multiple spread elements.
+fn diagnose_array_in_array_spread<'a>(
+    ctx: &LintContext<'a>,
+    diagnostic: OxcDiagnostic,
+    outer_array: &AstKind<'a>,
+    inner_array: &ArrayExpression<'a>,
+) {
+    let AstKind::ArrayExpression(outer_array) = outer_array else {
+        ctx.diagnostic(diagnostic);
+        return;
+    };
+    match outer_array.elements.len() {
+        0 => unreachable!(),
+        1 => {
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                fix_replace(fixer, &outer_array.span, inner_array)
+            });
+        }
+        _ => {
+            // If all elements are array spreads, we can merge them all together
+            let mut spreads: Vec<&'a ArrayExpression> = vec![];
+            for el in &outer_array.elements {
+                let ArrayExpressionElement::SpreadElement(spread) = el else {
+                    ctx.diagnostic(diagnostic);
+                    return;
+                };
+                let Expression::ArrayExpression(arr) = &spread.argument else {
+                    ctx.diagnostic(diagnostic);
+                    return;
+                };
+                spreads.push(arr.as_ref());
+            }
+
+            // [ ...[a, b, c], ...[d, e, f] ] -> [a, b, c, d, e, f]
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                let mut codegen = fixer.codegen();
+                codegen.print(b'[');
+                let elements =
+                    spreads.iter().flat_map(|arr| arr.elements.iter()).collect::<Vec<_>>();
+                let n = elements.len();
+                for (i, el) in elements.into_iter().enumerate() {
+                    codegen.print_expression(el.to_expression());
+                    if i < n - 1 {
+                        codegen.print(b',');
+                        codegen.print_hard_space();
                     }
                 }
-                // foo(...[ ])
-                AstKind::Argument(_) => {
-                    ctx.diagnostic_with_fix(spread_in_arguments(span), |fixer| {
-                        fix_by_removing_spread(fixer, array_expr, spread_elem)
-                    });
-                }
-                _ => {}
-            },
-            _ => {
-                unreachable!()
-            }
+                codegen.print(b']');
+                fixer.replace(outer_array.span, codegen)
+            });
         }
     }
 }
@@ -608,6 +662,8 @@ fn test() {
 
     let fix = vec![
         ("[...[1,2,3]]", "[1,2,3]"),
+        ("[...[1,2,3], ...[4,5,6]]", "[1, 2, 3, 4, 5, 6]"),
+        ("[...[1,2,3], ...x]", "[...[1,2,3], ...x]"),
         ("[...[...[1,2,3]]]", "[...[1,2,3]]"),
         ("[...foo.map(x => !!x)]", "foo.map(x => !!x)"),
         (r"[...await Promise.all(foo)]", r"await Promise.all(foo)"),
