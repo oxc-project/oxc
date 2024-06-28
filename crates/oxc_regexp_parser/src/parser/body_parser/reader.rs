@@ -55,7 +55,7 @@ impl<'a> Reader<'a> {
         }
     }
 
-    pub fn peek1(&self) -> Option<u32> {
+    pub fn peek(&self) -> Option<u32> {
         self.peek_nth(0)
     }
     pub fn peek2(&self) -> Option<u32> {
@@ -65,15 +65,15 @@ impl<'a> Reader<'a> {
         self.peek_nth(2)
     }
 
-    pub fn eat1(&mut self, ch: char) -> bool {
-        if self.peek1() == Some(ch as u32) {
+    pub fn eat(&mut self, ch: char) -> bool {
+        if self.peek() == Some(ch as u32) {
             self.advance();
             return true;
         }
         false
     }
     pub fn eat2(&mut self, ch: char, ch2: char) -> bool {
-        if self.peek1() == Some(ch as u32) && self.peek2() == Some(ch2 as u32) {
+        if self.peek() == Some(ch as u32) && self.peek2() == Some(ch2 as u32) {
             self.advance();
             self.advance();
             return true;
@@ -81,7 +81,7 @@ impl<'a> Reader<'a> {
         false
     }
     pub fn eat3(&mut self, ch: char, ch2: char, ch3: char) -> bool {
-        if self.peek1() == Some(ch as u32)
+        if self.peek() == Some(ch as u32)
             && self.peek2() == Some(ch2 as u32)
             && self.peek3() == Some(ch3 as u32)
         {
@@ -106,35 +106,35 @@ mod test {
 
         for mut reader in [unicode_reader, legacy_reader] {
             assert_eq!(reader.index, 0);
-            assert_eq!(reader.peek1(), Some('/' as u32));
+            assert_eq!(reader.peek(), Some('/' as u32));
 
             reader.advance();
             assert_eq!(reader.index, 1);
-            assert_eq!(reader.peek1(), Some('R' as u32));
+            assert_eq!(reader.peek(), Some('R' as u32));
             assert_eq!(reader.peek2(), Some('e' as u32));
             assert_eq!(reader.peek3(), Some('g' as u32));
 
-            assert!(reader.eat1('R'));
-            assert!(!reader.eat1('R'));
-            assert!(reader.eat1('e'));
-            assert!(reader.eat1('g'));
-            assert!(reader.eat1('E'));
+            assert!(reader.eat('R'));
+            assert!(!reader.eat('R'));
+            assert!(reader.eat('e'));
+            assert!(reader.eat('g'));
+            assert!(reader.eat('E'));
             assert!(!reader.eat3('E', 'x', 'p'));
             assert!(reader.eat2('x', 'p'));
 
             let start = reader.index;
             assert_eq!(start, 7);
-            assert_eq!(reader.peek1(), Some('✨' as u32));
+            assert_eq!(reader.peek(), Some('✨' as u32));
 
             reader.advance();
             reader.advance();
-            assert_eq!(reader.peek1(), Some('i' as u32));
+            assert_eq!(reader.peek(), Some('i' as u32));
 
             reader.advance();
-            assert_eq!(reader.peek1(), None);
+            assert_eq!(reader.peek(), None);
 
             reader.rewind(start);
-            assert_eq!(reader.peek1(), Some('✨' as u32));
+            assert_eq!(reader.peek(), Some('✨' as u32));
         }
     }
 
@@ -144,47 +144,47 @@ mod test {
 
         let mut unicode_reader = Reader::new(source_text, true);
 
-        assert!(unicode_reader.eat1('𠮷')); // Can eat
+        assert!(unicode_reader.eat('𠮷')); // Can eat
         assert!(unicode_reader.eat2('野', '家'));
         let start = unicode_reader.index;
-        assert!(unicode_reader.eat1('は'));
+        assert!(unicode_reader.eat('は'));
 
         // Emoji + Skin tone
         unicode_reader.advance();
         unicode_reader.advance();
 
-        assert!(unicode_reader.eat1('あ'));
-        assert_eq!(unicode_reader.peek1(), Some('っ' as u32));
+        assert!(unicode_reader.eat('あ'));
+        assert_eq!(unicode_reader.peek(), Some('っ' as u32));
         assert_eq!(unicode_reader.peek2(), Some('ち' as u32));
         assert_eq!(unicode_reader.peek3(), None);
 
         unicode_reader.rewind(start);
-        assert!(unicode_reader.eat1('は'));
+        assert!(unicode_reader.eat('は'));
 
         let mut legacy_reader = Reader::new(source_text, false);
 
-        assert!(!legacy_reader.eat1('𠮷')); // Can not eat
+        assert!(!legacy_reader.eat('𠮷')); // Can not eat
         legacy_reader.advance();
-        assert!(!legacy_reader.eat1('𠮷')); // Also can not
+        assert!(!legacy_reader.eat('𠮷')); // Also can not
         legacy_reader.advance();
 
-        assert!(legacy_reader.eat1('野'));
-        assert!(legacy_reader.eat1('家'));
+        assert!(legacy_reader.eat('野'));
+        assert!(legacy_reader.eat('家'));
         let start = unicode_reader.index;
-        assert!(legacy_reader.eat1('は'));
+        assert!(legacy_reader.eat('は'));
 
         legacy_reader.advance();
         legacy_reader.advance();
         legacy_reader.advance();
         legacy_reader.advance();
 
-        assert_eq!(legacy_reader.peek1(), Some('あ' as u32));
+        assert_eq!(legacy_reader.peek(), Some('あ' as u32));
         assert_eq!(legacy_reader.peek2(), Some('っ' as u32));
         assert_eq!(legacy_reader.peek3(), Some('ち' as u32));
         assert!(legacy_reader.eat3('あ', 'っ', 'ち'));
 
         legacy_reader.rewind(start);
-        assert!(legacy_reader.eat1('は'));
+        assert!(legacy_reader.eat('は'));
     }
 
     #[test]
@@ -195,25 +195,25 @@ mod test {
         let legacy_reader = Reader::new(source_text, false);
 
         for mut reader in [unicode_reader, legacy_reader] {
-            while reader.peek1() != Some('^' as u32) {
+            while reader.peek() != Some('^' as u32) {
                 reader.advance();
             }
             let s1 = reader.position();
-            assert!(reader.eat1('^'));
+            assert!(reader.eat('^'));
             let e1 = reader.position();
 
-            while reader.peek1() != Some('@' as u32) {
+            while reader.peek() != Some('@' as u32) {
                 reader.advance();
             }
             let s2 = reader.position();
-            assert!(reader.eat1('@'));
+            assert!(reader.eat('@'));
             let e2 = reader.position();
 
-            while reader.peek1() != Some('$' as u32) {
+            while reader.peek() != Some('$' as u32) {
                 reader.advance();
             }
             let s3 = reader.position();
-            assert!(reader.eat1('$'));
+            assert!(reader.eat('$'));
             let e3 = reader.position();
 
             assert_eq!(&source_text[s1..e1], "^");
