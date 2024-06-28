@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn prefer_type_error_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement")
         .with_help("Change to `throw new TypeError(...)`")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

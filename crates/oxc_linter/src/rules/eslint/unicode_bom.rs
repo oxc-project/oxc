@@ -7,13 +7,13 @@ use crate::{context::LintContext, rule::Rule};
 fn unexpected_unicode_bom_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(unicode-bom): Unexpected Unicode BOM (Byte Order Mark)")
         .with_help("File must not begin with the Unicode BOM")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn expected_unicode_bom_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(unicode-bom): Expected Unicode BOM (Byte Order Mark)")
         .with_help("File must begin with the Unicode BOM")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

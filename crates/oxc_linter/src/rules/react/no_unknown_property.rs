@@ -18,25 +18,25 @@ use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, Ast
 fn invalid_prop_on_tag(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): Invalid property found")
         .with_help(format!("Property '{x1}' is only allowed on: {x2}"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn data_lowercase_required(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): React does not recognize data-* props with uppercase characters on a DOM element")
         .with_help(format!("Use '{x1}' instead"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn unknown_prop_with_standard_name(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): Unknown property found")
         .with_help(format!("Use '{x1}' instead"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn unknown_prop(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-react(no-unknown-property): Unknown property found")
         .with_help("Remove unknown property")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

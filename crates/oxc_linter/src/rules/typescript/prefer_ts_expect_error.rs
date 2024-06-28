@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule};
 fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`")
         .with_help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

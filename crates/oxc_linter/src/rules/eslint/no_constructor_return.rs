@@ -13,7 +13,7 @@ fn no_constructor_return_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint(no-constructor-return): Unexpected return statement in constructor.",
     )
-    .with_labels([span.into()])
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

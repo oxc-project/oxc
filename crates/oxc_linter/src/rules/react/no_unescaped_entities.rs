@@ -10,7 +10,7 @@ fn no_unescaped_entities_diagnostic(span0: Span, x1: char, x2: &str) -> OxcDiagn
     OxcDiagnostic::warn(format!(
         "eslint-plugin-react(no-unescaped-entities): `{x1}` can be escaped with {x2}"
     ))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

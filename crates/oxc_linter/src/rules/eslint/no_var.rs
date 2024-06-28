@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_var_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-var): Unexpected var, use let or const instead.")
         .with_help("Replace var with let or const")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -13,7 +13,7 @@ fn no_amd_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
         "eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.",
     )
     .with_help(format!("Expected imports instead of AMD {x1}()"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

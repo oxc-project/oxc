@@ -12,7 +12,7 @@ fn no_named_export(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "eslint-plugin-import(export): No named exports found in module '{x1}'"
     ))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>

@@ -16,7 +16,7 @@ fn no_document_cookie_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly",
     )
     .with_help("Use the Cookie Store API or a cookie library instead")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

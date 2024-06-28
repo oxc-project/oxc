@@ -14,7 +14,7 @@ fn use_jest_mocked(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.",
     )
     .with_help("Prefer `jest.mocked()`")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

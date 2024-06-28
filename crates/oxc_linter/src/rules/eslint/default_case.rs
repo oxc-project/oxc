@@ -9,7 +9,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn default_case_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(default-case): Require default cases in switch statements.")
         .with_help("Add a default case.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

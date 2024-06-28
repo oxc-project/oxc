@@ -10,7 +10,7 @@ fn no_useless_switch_case_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(no-useless-switch-case): Useless case in switch statement.",
     )
     .with_help("Consider removing this case or removing the `default` case.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

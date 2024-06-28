@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_empty_function_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-empty-function): Disallow empty functions")
         .with_help("Unexpected empty function block")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -12,7 +12,7 @@ fn no_unused_private_class_members_diagnostic(x0: &str, span1: Span) -> OxcDiagn
     OxcDiagnostic::warn(format!(
         "eslint(no-unused-private-class-members): '{x0}' is defined but never used."
     ))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

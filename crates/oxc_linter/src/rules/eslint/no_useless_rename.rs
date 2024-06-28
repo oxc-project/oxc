@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_useless_rename_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-useless-rename): Disallow renaming import, export, and destructured assignments to the same name")
         .with_help("Either remove the renaming or rename the variable.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

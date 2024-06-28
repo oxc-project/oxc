@@ -16,7 +16,7 @@ fn scope_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements",
     )
     .with_help("Must use scope prop only on <th> elements")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

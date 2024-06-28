@@ -18,7 +18,7 @@ fn no_test_return_statement_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

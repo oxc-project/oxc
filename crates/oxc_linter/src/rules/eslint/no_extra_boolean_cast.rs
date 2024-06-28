@@ -10,13 +10,13 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_extra_double_negation_cast_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-extra-boolean-cast): Redundant double negation")
         .with_help("Remove the double negation as it will already be coerced to a boolean")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn no_extra_boolean_cast_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-extra-boolean-cast): Redundant Boolean call")
         .with_help("Remove the Boolean call as it will already be coerced to a boolean")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

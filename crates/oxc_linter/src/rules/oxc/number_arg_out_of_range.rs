@@ -13,7 +13,7 @@ fn number_arg_out_of_range_diagnostic(
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn("oxc(number-arg-out-of-range): Radix or precision arguments of number-related functions should not exceed the limit")
         .with_help(format!("The first argument of 'Number.prototype.{x0}' should be a number between {x1} and {x2}"))
-        .with_labels([span3.into()])
+        .with_label(span3)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -11,13 +11,13 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_this_alias_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.")
         .with_help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn no_this_destructure_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(no-this-alias): Unexpected aliasing of members of 'this' to local variables.")
         .with_help("Disabling destructuring of this is not a default, consider allowing destructuring")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -10,7 +10,7 @@ fn prefer_string_trim_start_end_diagnostic(span0: Span, x1: &str, x2: &str) -> O
         "eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `{x1}` over `{x2}`"
     ))
     .with_help(format!("Replace with `{x1}`"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

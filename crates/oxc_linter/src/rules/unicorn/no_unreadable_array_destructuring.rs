@@ -9,7 +9,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_unreadable_array_destructuring_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring")
         .with_help("Array destructuring may not contain consecutive ignored values.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

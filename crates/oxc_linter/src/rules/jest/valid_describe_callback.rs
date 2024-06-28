@@ -18,7 +18,7 @@ use crate::{
 fn valid_describe_callback_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jest(valid-describe-callback): {x0:?}"))
         .with_help(format!("{x1:?}"))
-        .with_labels([span2.into()])
+        .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

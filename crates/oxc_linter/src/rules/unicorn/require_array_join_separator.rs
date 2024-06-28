@@ -11,7 +11,7 @@ use crate::{
 fn require_array_join_separator_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()")
         .with_help("Missing the separator argument.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

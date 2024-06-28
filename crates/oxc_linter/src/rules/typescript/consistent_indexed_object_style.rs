@@ -13,7 +13,7 @@ fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> O
         "typescript-eslint(consistent-indexed-object-style):A {a} is preferred over an {b}."
     ))
     .with_help(format!("A {a} is preferred over an {b}."))
-    .with_labels([span.into()])
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

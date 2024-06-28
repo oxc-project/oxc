@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn missing_key_prop_for_element_in_array(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in array."#)
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiagnostic {
@@ -22,7 +22,7 @@ fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiag
 fn key_prop_must_be_placed_before_spread(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`"#)
         .with_help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
