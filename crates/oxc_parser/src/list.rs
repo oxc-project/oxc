@@ -65,7 +65,7 @@ pub trait SeparatedList<'a>: Sized {
                     let Some(illegal_sep) = self.illegal_separator() else { return Err(e) };
                     match p.expect(illegal_sep) {
                         Err(_) => return Err(e),
-                        Ok(_) => {
+                        Ok(()) => {
                             // report illegal separator, but continue parsing
                             p.error(e);
                         }
