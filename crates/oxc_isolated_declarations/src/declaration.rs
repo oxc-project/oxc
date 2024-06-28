@@ -8,7 +8,7 @@ use oxc_syntax::scope::ScopeFlags;
 use crate::{
     diagnostics::{
         binding_element_export, inferred_type_of_expression, signature_computed_property_name,
-        variable_must_have_explicit_type,
+        variable_must_have_explicit_type, destructuring_export,
     },
     IsolatedDeclarations,
 };
@@ -56,6 +56,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                 });
             }
+            self.error(destructuring_export(decl.id.span()));
             return None;
         }
 

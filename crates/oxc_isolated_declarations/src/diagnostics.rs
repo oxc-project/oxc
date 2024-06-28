@@ -139,3 +139,8 @@ pub fn type_containing_private_name(name: &str, span: Span) -> OxcDiagnostic {
     ))
     .with_label(span)
 }
+
+pub fn destructuring_export(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("TS9999: Not supported yet")
+        .with_label(span)
+}

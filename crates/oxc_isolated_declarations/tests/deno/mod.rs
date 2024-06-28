@@ -393,4 +393,9 @@ export function foo(a: any): number {
         transform_dts_test("export default function<T>(arg1: T) {}", "export default function<T>(arg1: T);");
     }
 
+    #[test]
+    fn dts_destructed_export() {
+        transform_dts_test("export const {a} = b()", "export declare const a: unknown;");
+    }
+
 }
