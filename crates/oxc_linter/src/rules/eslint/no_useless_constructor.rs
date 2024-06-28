@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
         Argument, BindingPattern, BindingPatternKind, BindingRestElement, CallExpression,
-        Expression, FormalParameters, FunctionBody, MethodDefinition, Statement,
+        Expression, FormalParameters, FunctionBody, MethodDefinition, Statement, TSAccessibility,
     },
     AstKind,
 };
@@ -77,7 +77,7 @@ declare_oxc_lint!(
     /// }
     ///```
     NoUselessConstructor,
-    nursery,
+    suspicious,
 );
 
 impl Rule for NoUselessConstructor {
@@ -91,6 +91,13 @@ impl Rule for NoUselessConstructor {
         let Some(body) = &constructor.value.body else {
             return;
         };
+        // allow `private private constructor() {}`. However, `public private
+        // constructor() {}` is the same as `constructor() {}` and so is not allowed.
+        if constructor.accessibility.is_some_and(|access| {
+            matches!(access, TSAccessibility::Private | TSAccessibility::Protected)
+        }) {
+            return;
+        }
 
         let class = ctx
             .nodes()
@@ -114,6 +121,7 @@ impl Rule for NoUselessConstructor {
     }
 }
 
+// Check for an empty constructor in a class without a superclass.
 fn lint_empty_constructor<'a>(
     ctx: &LintContext<'a>,
     constructor: &MethodDefinition<'a>,
@@ -122,6 +130,19 @@ fn lint_empty_constructor<'a>(
     if !body.statements.is_empty() {
         return;
     }
+
+    // allow constructors with access modifiers since they actually declare
+    // class members
+    if constructor
+        .value
+        .params
+        .items
+        .iter()
+        .any(|param| param.accessibility.is_some() || param.readonly)
+    {
+        return;
+    }
+
     ctx.diagnostic_with_fix(no_empty_constructor(constructor.span), |fixer| {
         fixer.delete_range(constructor.span)
     });
@@ -140,6 +161,7 @@ fn lint_redundant_super_call<'a>(
     let super_args = &super_call.arguments;
 
     if is_only_simple_params(params)
+        && !is_overriding(params)
         && (is_spread_arguments(super_args) || is_passing_through(params, super_args))
     {
         ctx.diagnostic_with_fix(no_redundant_super_call(constructor.span), |fixer| {
@@ -147,6 +169,11 @@ fn lint_redundant_super_call<'a>(
         });
     }
 }
+
+fn is_overriding(params: &FormalParameters) -> bool {
+    params.items.iter().any(|param| param.r#override)
+}
+
 /// Check if a function body only contains a single super call. Ignores directives.
 ///
 /// Returns the call expression if the body contains a single super call, otherwise [`None`].
@@ -232,7 +259,16 @@ fn test() {
         "class A extends B { constructor(test) { super(); } }",
         "class A extends B { constructor() { foo; } }",
         "class A extends B { constructor(foo, bar) { super(bar); } }",
+        // ts
         "declare class A { constructor(options: any); }", // {                "parser": require("../../fixtures/parsers/typescript-parsers/declare-class")            }
+        "class A { private constructor() {} }",
+        "class A { protected constructor() {} }",
+        "class A { constructor(private x: number) {} }",
+        "class A { constructor(public x: number) {} }",
+        "class A { constructor(protected x: number) {} }",
+        "class A { constructor(readonly x: number) {} }",
+        "class A { constructor(private readonly x: number) {} }",
+        "class A extends B { constructor(override x: number) { super(x); } }",
     ];
 
     let fail = vec![
@@ -245,6 +281,8 @@ fn test() {
         "class A extends B.C { constructor() { super(...arguments); } }",
         "class A extends B { constructor(a, b, ...c) { super(...arguments); } }",
         "class A extends B { constructor(a, b, ...c) { super(a, b, ...c); } }",
+        // ts
+        "class A { public constructor(){} }",
     ];
 
     let fix = vec![
