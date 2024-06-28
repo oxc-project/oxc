@@ -382,4 +382,15 @@ export function foo(a: any): number {
     fn dts_default_export_all() {
         transform_dts_test("export * as foo from \"foo\";", "export * as foo from \"foo\";");
     }
+
+    #[test]
+    fn dts_class_type_param() {
+        transform_dts_test("export class A<T> extends B<T> implements C<T>{};", "export declare class A<T> extends B<T> implements C<T> {}");
+    }
+
+    #[test]
+    fn dts_fn_type_param() {
+        transform_dts_test("export default function<T>(arg1: T) {}", "export default function<T>(arg1: T);");
+    }
+
 }

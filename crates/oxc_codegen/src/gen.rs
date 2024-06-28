@@ -2095,6 +2095,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
             if let Some(id) = &self.id {
                 p.print_hard_space();
                 id.gen(p, ctx);
+                if let Some(type_parameters) = self.type_parameters.as_ref() {
+                    type_parameters.gen(p, ctx);
+                }
             }
             if let Some(super_class) = self.super_class.as_ref() {
                 p.print_str(b" extends ");
