@@ -40,7 +40,8 @@ macro_rules! control_flow {
 // Imported symbols could be a type or value - we don't know without a checker.
 // NOTE: `import type { Foo }` does not get recorded in SymbolFlags as a `Type`;
 // adding support for that would make this work even better.
-const MEANING_VALUELIKE: SymbolFlags = SymbolFlags::Value.union(SymbolFlags::ImportBinding);
+const MEANING_VALUELIKE: SymbolFlags =
+    SymbolFlags::Value.union(SymbolFlags::ImportBinding).union(SymbolFlags::Ambient);
 const MEANING_TYPELIKE: SymbolFlags = SymbolFlags::Type.union(SymbolFlags::ImportBinding);
 const MEANING_ANY: SymbolFlags = SymbolFlags::all();
 
@@ -1774,6 +1775,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_node_flags |= NodeFlags::Parameter;
                 param.bind(self);
             }
+            AstKind::TSImportEqualsDeclaration(_) => {
+                self.meaning_stack.push(SymbolFlags::NameSpaceModule.union(SymbolFlags::Enum));
+            }
             AstKind::TSModuleDeclaration(module_declaration) => {
                 module_declaration.bind(self);
                 let symbol_id = self
@@ -1931,7 +1935,8 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeName(_) => {
                 self.current_reference_flag -= ReferenceFlag::Type;
             }
-            AstKind::TSTypeAliasDeclaration(_)
+            AstKind::TSImportEqualsDeclaration(_)
+            | AstKind::TSTypeAliasDeclaration(_)
             | AstKind::TSInterfaceDeclaration(_)
             | AstKind::TSInterfaceHeritage(_)
             | AstKind::TSQualifiedName(_)

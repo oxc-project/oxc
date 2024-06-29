@@ -27,9 +27,11 @@ pub fn check_symbol_resolution_failures(ctx: &SemanticBuilder<'_>) {
             for (reference_id, meaning) in reference_ids {
                 let reference = ctx.symbols.get_reference(*reference_id);
                 // note: is_value() does not imply !is_type()
+                // if meaning.is_value() && !symbol_flags.intersects(*meaning) {
                 if meaning.is_value() && symbol_flags.is_type() {
                     // checker.ts, checkAndReportErrorForUsingTypeAsValue
                     ctx.error(type_used_as_value(reference.span(), name));
+                // } else if meaning.is_type() && !symbol_flags.intersects(*meaning) {
                 } else if meaning.is_type() && symbol_flags.is_value() {
                     // checker.ts, checkAndReportErrorForUsingValueAsType
                     ctx.error(value_used_as_type(reference.span(), name));
