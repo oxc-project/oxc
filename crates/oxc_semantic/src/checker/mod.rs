@@ -11,7 +11,7 @@ use typescript as ts;
 
 use crate::{builder::SemanticBuilder, AstNode};
 
-pub fn check_last<'a>(ctx: &SemanticBuilder<'a>) {
+pub fn check_last(ctx: &SemanticBuilder<'_>) {
     ts::check_symbol_resolution_failures(ctx);
 }
 pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {

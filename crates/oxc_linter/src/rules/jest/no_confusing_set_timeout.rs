@@ -91,7 +91,8 @@ impl Rule for NoConfusingSetTimeout {
         let mut seen_jest_set_timeout = false;
 
         for reference_ids_and_meanings in scopes.root_unresolved_references().values() {
-            let reference_ids: Vec<_> = reference_ids_and_meanings.iter().map(|(reference_id, _)| *reference_id).collect();
+            let reference_ids: Vec<_> =
+                reference_ids_and_meanings.iter().map(|(reference_id, _)| *reference_id).collect();
             collect_jest_reference_id(&reference_ids, &mut jest_reference_id_list, ctx);
         }
 
@@ -100,7 +101,8 @@ impl Rule for NoConfusingSetTimeout {
         }
 
         for reference_ids_and_meanings in scopes.root_unresolved_references().values() {
-            let reference_ids: Vec<_> = reference_ids_and_meanings.iter().map(|(reference_id, _)| *reference_id).collect();
+            let reference_ids: Vec<_> =
+                reference_ids_and_meanings.iter().map(|(reference_id, _)| *reference_id).collect();
             handle_jest_set_time_out(
                 ctx,
                 &reference_ids,

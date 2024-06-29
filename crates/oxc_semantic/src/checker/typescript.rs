@@ -9,18 +9,18 @@ use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
 
 /// ts(2749)
 fn value_used_as_type(span: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("'{}' refers to a value, but is being used as a type here.", name))
+    OxcDiagnostic::error(format!("'{name}' refers to a value, but is being used as a type here."))
         .with_label(span)
         .with_help(format!("Did you mean 'typeof {name}'?"))
 }
 
 /// ts(2693)
 fn type_used_as_value(span: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("'{}' refers to a type, but is being used as a value here.", name))
+    OxcDiagnostic::error(format!("'{name}' refers to a type, but is being used as a value here."))
         .with_label(span)
 }
 
-pub fn check_symbol_resolution_failures<'a>(ctx: &SemanticBuilder<'a>) {
+pub fn check_symbol_resolution_failures(ctx: &SemanticBuilder<'_>) {
     for (scope_id, name, reference_ids) in ctx.scope.iter_unresolved_references() {
         if let Some(symbol_id) = ctx.scope.find_binding(scope_id, name) {
             let symbol_flags = ctx.symbols.get_flag(symbol_id);
@@ -28,7 +28,6 @@ pub fn check_symbol_resolution_failures<'a>(ctx: &SemanticBuilder<'a>) {
                 let reference = ctx.symbols.get_reference(*reference_id);
                 // note: is_value() does not imply !is_type()
                 if meaning.is_value() && symbol_flags.is_type() {
-
                     // checker.ts, checkAndReportErrorForUsingTypeAsValue
                     ctx.error(type_used_as_value(reference.span(), name));
                 } else if meaning.is_type() && symbol_flags.is_value() {

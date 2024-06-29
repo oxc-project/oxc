@@ -12,7 +12,7 @@ use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
-type UnresolvedReferences = FxHashMap<CompactStr, Vec<(ReferenceId, /* meaning */SymbolFlags)>>;
+type UnresolvedReferences = FxHashMap<CompactStr, Vec<(ReferenceId, /* meaning */ SymbolFlags)>>;
 
 /// Scope Tree
 ///
@@ -142,7 +142,12 @@ impl ScopeTree {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId, meaning: SymbolFlags) {
+    pub fn add_root_unresolved_reference(
+        &mut self,
+        name: CompactStr,
+        reference_id: ReferenceId,
+        meaning: SymbolFlags,
+    ) {
         self.add_unresolved_reference(self.root_scope_id(), name, reference_id, meaning);
     }
 
@@ -233,9 +238,15 @@ impl ScopeTree {
     }
 
     /// [`Iterator`] over `(scope the reference is in, the unresolved symbol name, reference ids)`
-    pub(crate) fn iter_unresolved_references(&self) -> impl Iterator<Item = (ScopeId, &CompactStr, &[(ReferenceId, SymbolFlags)])> + '_ {
-        self.unresolved_references.iter_enumerated().flat_map(|(scope_id, unresolved_references)| {
-            unresolved_references.iter().map(move |(name, reference_ids)| (scope_id, name, reference_ids.as_slice()))
-        })
+    pub(crate) fn iter_unresolved_references(
+        &self,
+    ) -> impl Iterator<Item = (ScopeId, &CompactStr, &[(ReferenceId, SymbolFlags)])> + '_ {
+        self.unresolved_references.iter_enumerated().flat_map(
+            |(scope_id, unresolved_references)| {
+                unresolved_references
+                    .iter()
+                    .map(move |(name, reference_ids)| (scope_id, name, reference_ids.as_slice()))
+            },
+        )
     }
 }

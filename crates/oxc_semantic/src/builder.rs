@@ -393,7 +393,7 @@ impl<'a> SemanticBuilder<'a> {
                     reference.set_symbol_id(symbol_id);
                     self.symbols.resolved_references[symbol_id].push(reference_id);
                 } else {
-                    unresolved.push((reference_id, meaning))
+                    unresolved.push((reference_id, meaning));
                 }
             }
             self.scope.extend_unresolved_reference(parent_scope_id, name, unresolved);
@@ -1822,7 +1822,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeQuery(_) => {
                 // checks types of a value symbol (e.g. `typeof x`), so we're
                 // looking for a value even though its used as a type
-                self.meaning_stack.push(MEANING_VALUELIKE)
+                self.meaning_stack.push(MEANING_VALUELIKE);
             }
             AstKind::TSTypeAnnotation(_) => {
                 self.meaning_stack.push(MEANING_TYPELIKE);
@@ -1877,7 +1877,6 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
-                self.meaning_stack.push(MEANING_VALUELIKE);
                 self.set_function_node_flag(NodeFlags::HasYield);
             }
             _ => {}
@@ -1929,37 +1928,19 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
             }
-            AstKind::TSTypeAliasDeclaration(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSInterfaceDeclaration(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSInterfaceHeritage(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSTypeParameter(_) => {
-                self.meaning_stack.pop();
-            }
             AstKind::TSTypeName(_) => {
                 self.current_reference_flag -= ReferenceFlag::Type;
             }
-            AstKind::TSTypeQuery(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSTypeAnnotation(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSTypeReference(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSTypeParameterInstantiation(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSPropertySignature(_) => {
-                self.meaning_stack.pop();
-            }
-            AstKind::TSQualifiedName(_) => {
+            AstKind::TSTypeAliasDeclaration(_)
+            | AstKind::TSInterfaceDeclaration(_)
+            | AstKind::TSInterfaceHeritage(_)
+            | AstKind::TSQualifiedName(_)
+            | AstKind::TSPropertySignature(_)
+            | AstKind::TSTypeParameterInstantiation(_)
+            | AstKind::TSTypeReference(_)
+            | AstKind::TSTypeAnnotation(_)
+            | AstKind::TSTypeQuery(_)
+            | AstKind::TSTypeParameter(_) => {
                 self.meaning_stack.pop();
             }
             AstKind::UpdateExpression(_) => {
@@ -1977,9 +1958,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::MemberExpression(_) => self.current_reference_flag = ReferenceFlag::empty(),
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
-            AstKind::YieldExpression(_) => {
-                self.meaning_stack.pop();
-            }
             _ => {}
         }
     }
