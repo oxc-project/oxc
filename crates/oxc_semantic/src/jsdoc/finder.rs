@@ -5,7 +5,7 @@ use oxc_span::{GetSpan, Span};
 use super::parser::JSDoc;
 use crate::AstNode;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct JSDocFinder<'a> {
     /// JSDocs by Span
     attached: BTreeMap<Span, Vec<JSDoc<'a>>>,

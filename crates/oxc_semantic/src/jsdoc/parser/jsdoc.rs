@@ -48,6 +48,7 @@ mod test {
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
+            .with_build_jsdoc(true)
             .build(program)
             .semantic;
         semantic

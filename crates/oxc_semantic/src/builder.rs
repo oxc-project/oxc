@@ -24,7 +24,7 @@ use crate::{
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
-    Semantic,
+    JSDocFinder, Semantic,
 };
 
 macro_rules! control_flow {
@@ -70,6 +70,7 @@ pub struct SemanticBuilder<'a> {
 
     pub label_builder: LabelBuilder<'a>,
 
+    build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
 
     check_syntax_error: bool,
@@ -109,6 +110,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: SymbolTable::default(),
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
+            build_jsdoc: false,
             jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
             cfg: None,
@@ -127,6 +129,12 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
+        self.build_jsdoc = yes;
         self
     }
 
@@ -167,6 +175,8 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
+        let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
+
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
@@ -176,7 +186,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: self.symbols,
             classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
-            jsdoc: self.jsdoc.build(),
+            jsdoc,
             unused_labels: self.label_builder.unused_node_ids,
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
         };
