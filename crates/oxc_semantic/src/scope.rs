@@ -2,7 +2,7 @@ use std::hash::BuildHasherDefault;
 
 use indexmap::IndexMap;
 use oxc_index::IndexVec;
-use oxc_span::CompactStr;
+use oxc_span::{Atom, CompactStr};
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
@@ -11,13 +11,13 @@ use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
-type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
+type UnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<ReferenceId>>;
 
 /// Scope Tree
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
-pub struct ScopeTree {
+pub struct ScopeTree<'a> {
     /// Maps a scope to the parent scope it belongs in
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
 
@@ -27,10 +27,10 @@ pub struct ScopeTree {
     node_ids: FxHashMap<ScopeId, AstNodeId>,
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
-    unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
+    unresolved_references: IndexVec<ScopeId, UnresolvedReferences<'a>>,
 }
 
-impl ScopeTree {
+impl<'a> ScopeTree<'a> {
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
@@ -141,7 +141,7 @@ impl ScopeTree {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId) {
+    pub fn add_root_unresolved_reference(&mut self, name: Atom<'a>, reference_id: ReferenceId) {
         self.add_unresolved_reference(self.root_scope_id(), name, reference_id);
     }
 
@@ -208,7 +208,7 @@ impl ScopeTree {
     pub(crate) fn add_unresolved_reference(
         &mut self,
         scope_id: ScopeId,
-        name: CompactStr,
+        name: Atom<'a>,
         reference_id: ReferenceId,
     ) {
         self.unresolved_references[scope_id].entry(name).or_default().push(reference_id);
@@ -217,7 +217,7 @@ impl ScopeTree {
     pub(crate) fn extend_unresolved_reference(
         &mut self,
         scope_id: ScopeId,
-        name: CompactStr,
+        name: Atom<'a>,
         reference_ids: Vec<ReferenceId>,
     ) {
         self.unresolved_references[scope_id].entry(name).or_default().extend(reference_ids);
@@ -226,7 +226,7 @@ impl ScopeTree {
     pub(crate) fn unresolved_references_mut(
         &mut self,
         scope_id: ScopeId,
-    ) -> &mut UnresolvedReferences {
+    ) -> &mut UnresolvedReferences<'a> {
         &mut self.unresolved_references[scope_id]
     }
 }

@@ -42,9 +42,9 @@ pub struct Semantic<'a> {
 
     nodes: AstNodes<'a>,
 
-    scopes: ScopeTree,
+    scopes: ScopeTree<'a>,
 
-    symbols: SymbolTable,
+    symbols: SymbolTable<'a>,
 
     classes: ClassTable,
 
@@ -60,7 +60,7 @@ pub struct Semantic<'a> {
 }
 
 impl<'a> Semantic<'a> {
-    pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable, ScopeTree) {
+    pub fn into_symbol_table_and_scope_tree(self) -> (SymbolTable<'a>, ScopeTree<'a>) {
         (self.symbols, self.scopes)
     }
 
@@ -84,7 +84,7 @@ impl<'a> Semantic<'a> {
         &self.classes
     }
 
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
+    pub fn scopes_mut(&mut self) -> &mut ScopeTree<'a> {
         &mut self.scopes
     }
 

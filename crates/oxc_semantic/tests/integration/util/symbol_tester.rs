@@ -112,12 +112,12 @@ impl<'a> SymbolTester<'a> {
 
     #[must_use]
     pub fn has_number_of_reads(self, ref_count: usize) -> Self {
-        self.has_number_of_references_where(ref_count, Reference::is_read)
+        self.has_number_of_references_where(ref_count, |r| r.is_read())
     }
 
     #[must_use]
     pub fn has_number_of_writes(self, ref_count: usize) -> Self {
-        self.has_number_of_references_where(ref_count, Reference::is_write)
+        self.has_number_of_references_where(ref_count, |r| r.is_write())
     }
 
     #[must_use]
