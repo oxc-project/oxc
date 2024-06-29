@@ -290,8 +290,8 @@ mod test {
         OxcDiagnostic::warn("removestart")
     }
 
-    fn remove_middle(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("removemiddle").with_labels([span0.into()])
+    fn remove_middle(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("removemiddle").with_labels([span])
     }
 
     fn remove_end() -> OxcDiagnostic {
@@ -302,16 +302,16 @@ mod test {
         OxcDiagnostic::warn("reversed range")
     }
 
-    fn no_fix(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix").with_labels([span0.into()])
+    fn no_fix(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("nofix").with_labels([span])
     }
 
-    fn no_fix_1(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix1").with_labels([span0.into()])
+    fn no_fix_1(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("nofix1").with_labels([span])
     }
 
-    fn no_fix_2(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix2").with_labels([span0.into()])
+    fn no_fix_2(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("nofix2").with_labels([span])
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";

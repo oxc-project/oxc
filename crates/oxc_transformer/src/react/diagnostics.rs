@@ -21,16 +21,16 @@ pub fn invalid_import_source() -> OxcDiagnostic {
         .with_help("Fix `importSource` option.")
 }
 
-pub fn namespace_does_not_support(span0: Span) -> OxcDiagnostic {
+pub fn namespace_does_not_support(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Namespace tags are not supported by default. React's JSX doesn't support namespace tags. You can set `throwIfNamespace: false` to bypass this warning.")
-.with_labels([span0.into()])
+        .with_label(span)
 }
 
-pub fn valueless_key(span0: Span) -> OxcDiagnostic {
+pub fn valueless_key(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Please provide an explicit key value. Using \"key\" as a shorthand for \"key={true}\" is not allowed.")
-.with_labels([span0.into()])
+        .with_label(span)
 }
 
-pub fn spread_children_are_not_supported(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Spread children are not supported in React.").with_labels([span0.into()])
+pub fn spread_children_are_not_supported(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Spread children are not supported in React.").with_label(span)
 }

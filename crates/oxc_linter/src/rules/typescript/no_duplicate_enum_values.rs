@@ -11,7 +11,7 @@ fn no_duplicate_enum_values_diagnostic(span0: Span, span1: Span) -> OxcDiagnosti
         "typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values",
     )
     .with_help("Duplicate values can lead to bugs that are hard to track down")
-    .with_labels([span0.into(), span1.into()])
+    .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]

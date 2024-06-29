@@ -1,11 +1,11 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
 #[cold]
-pub fn redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+pub fn redeclaration(x0: &str, declare_span: Span, redeclare_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Identifier `{x0}` has already been declared")).with_labels([
-        LabeledSpan::new_with_span(Some(format!("`{x0}` has already been declared here")), span1),
-        LabeledSpan::new_with_span(Some("It can not be redeclared here".to_string()), span2),
+        declare_span.label(format!("`{x0}` has already been declared here")),
+        redeclare_span.label("It can not be redeclared here"),
     ])
 }
 
@@ -25,9 +25,9 @@ pub fn unexpected_token(span0: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn expect_token(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
-        .with_labels([LabeledSpan::new_with_span(Some(format!("`{x0}` expected")), span2)])
+        .with_label(span.label(format!("`{x0}` expected")))
 }
 
 #[cold]
@@ -290,8 +290,8 @@ pub fn empty_parenthesized_expression(span0: Span) -> OxcDiagnostic {
 #[cold]
 pub fn illegal_newline(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Illegal newline after {x0}")).with_labels([
-        LabeledSpan::new_with_span(Some(format!("{x0} starts here")), span1),
-        LabeledSpan::new_with_span(Some("A newline is not expected here".to_string()), span2),
+        span1.label(format!("{x0} starts here")),
+        span2.label("A newline is not expected here"),
     ])
 }
 
@@ -396,7 +396,7 @@ pub fn static_constructor(span0: Span) -> OxcDiagnostic {
 #[cold]
 pub fn jsx_element_no_match(span0: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
-        .with_labels([span0.into(), span1.into()])
+        .with_labels([span0, span1])
 }
 
 #[cold]
