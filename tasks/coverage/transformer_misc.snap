@@ -1,7 +1,5 @@
 transformer_misc Summary:
 AST Parsed     : 19/19 (100.00%)
-Positive Passed: 15/19 (78.95%)
-Mismatch: "pass/oxc-1740.tsx"
+Positive Passed: 17/19 (89.47%)
 Mismatch: "pass/oxc-2674.tsx"
 Mismatch: "pass/oxc-2723.jsx"
-Mismatch: "pass/swc-8243.tsx"

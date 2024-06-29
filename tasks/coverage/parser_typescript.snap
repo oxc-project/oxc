@@ -2,8 +2,8 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
-Positive Passed: 5223/5283 (98.86%)
-Negative Passed: 1144/4875 (23.47%)
+Positive Passed: 5224/5283 (98.88%)
+Negative Passed: 1140/4875 (23.38%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -642,6 +642,7 @@ Expect Syntax Error: "compiler/exportAsNamespaceConflict.ts"
 Expect Syntax Error: "compiler/exportAssignmentWithExports.ts"
 Expect Syntax Error: "compiler/exportDeclarationsInAmbientNamespaces2.ts"
 Expect Syntax Error: "compiler/exportDeclareClass1.ts"
+Expect Syntax Error: "compiler/exportDefaultAlias_excludesEverything.ts"
 Expect Syntax Error: "compiler/exportDefaultClassAndValue.ts"
 Expect Syntax Error: "compiler/exportDefaultClassInNamespace.ts"
 Expect Syntax Error: "compiler/exportDefaultDuplicateCrash.ts"
@@ -650,6 +651,9 @@ Expect Syntax Error: "compiler/exportDefaultInterfaceAndTwoFunctions.ts"
 Expect Syntax Error: "compiler/exportDefaultInterfaceClassAndFunctionOverloads.ts"
 Expect Syntax Error: "compiler/exportDefaultInterfaceClassAndValue.ts"
 Expect Syntax Error: "compiler/exportDefaultMissingName.ts"
+Expect Syntax Error: "compiler/exportDefaultTypeAndClass.ts"
+Expect Syntax Error: "compiler/exportDefaultTypeAndFunctionOverloads.ts"
+Expect Syntax Error: "compiler/exportDefaultTypeClassAndValue.ts"
 Expect Syntax Error: "compiler/exportInterfaceClassAndValue.ts"
 Expect Syntax Error: "compiler/exportInterfaceClassAndValueWithDuplicatesInImportList.ts"
 Expect Syntax Error: "compiler/exportSameNameFuncVar.ts"
@@ -4584,15 +4588,6 @@ Expect to Parse: "compiler/intersectionTypeNormalization.ts"
  97 │ };
     ╰────
   help: Did you mean 'typeof enums'?
-Expect to Parse: "compiler/jsxCallbackWithDestructuring.tsx"
-
-  × 'Component' refers to a type, but is being used as a value here.
-    ╭─[compiler/jsxCallbackWithDestructuring.tsx:25:69]
- 24 │ }
- 25 │ export class MyComponent<T extends RouteProps = RouteProps> extends Component<T> { }
-    ·                                                                     ─────────
- 26 │ <MyComponent children={({ x }) => {}}/>
-    ╰────
 Expect to Parse: "compiler/keyRemappingKeyofResult.ts"
 
   × 'sym' refers to a value, but is being used as a type here.
@@ -8306,34 +8301,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
     ·                   ───
  14 │ }
     ╰────
-
-  × 'B' refers to a type, but is being used as a value here.
-   ╭─[compiler/exportDefaultAlias_excludesEverything.ts:3:16]
- 2 │ interface B {}
- 3 │ export default B;
-   ·                ─
-   ╰────
-
-  × 'Bar' refers to a type, but is being used as a value here.
-   ╭─[compiler/exportDefaultTypeAndClass.ts:3:16]
- 2 │ type Bar = {}
- 3 │ export default Bar
-   ·                ───
-   ╰────
-
-  × 'Foo' refers to a type, but is being used as a value here.
-   ╭─[compiler/exportDefaultTypeAndFunctionOverloads.ts:7:16]
- 6 │ type Foo = {}
- 7 │ export default Foo
-   ·                ───
-   ╰────
-
-  × 'Bar' refers to a type, but is being used as a value here.
-   ╭─[compiler/exportDefaultTypeClassAndValue.ts:5:16]
- 4 │ type Bar = {}
- 5 │ export default Bar
-   ·                ───
-   ╰────
 
   × Identifier `someProp` has already been declared
    ╭─[compiler/exportEqualsClassRedeclarationError.ts:6:16]

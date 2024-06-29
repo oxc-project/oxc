@@ -1681,9 +1681,11 @@ impl<'a> SemanticBuilder<'a> {
         // println!("enter - {}", kind.debug_name());
         match kind {
             AstKind::ExportDefaultDeclaration(_) => {
+                self.meaning_stack.push(SymbolFlags::all());
                 self.current_symbol_flags |= SymbolFlags::Export;
             }
             AstKind::ExportNamedDeclaration(decl) => {
+                self.meaning_stack.push(SymbolFlags::all());
                 self.current_symbol_flags |= SymbolFlags::Export;
                 if decl.export_kind.is_type() {
                     self.current_reference_flag = ReferenceFlag::Type;
@@ -1858,9 +1860,11 @@ impl<'a> SemanticBuilder<'a> {
                 self.class_table_builder.pop_class();
             }
             AstKind::ExportDefaultDeclaration(_) => {
+                self.meaning_stack.pop();
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::ExportNamedDeclaration(decl) => {
+                self.meaning_stack.pop();
                 self.current_symbol_flags -= SymbolFlags::Export;
                 if decl.export_kind.is_type() {
                     self.current_reference_flag -= ReferenceFlag::Type;

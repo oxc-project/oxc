@@ -2,7 +2,7 @@ commit: 12619ffe
 
 parser_babel Summary:
 AST Parsed     : 2091/2101 (99.52%)
-Positive Passed: 2073/2101 (98.67%)
+Positive Passed: 2078/2101 (98.91%)
 Negative Passed: 1364/1501 (90.87%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -318,14 +318,6 @@ Expect to Parse: "typescript/declare/eval/input.ts"
     ·                  ─────────
  10 │ 
     ╰────
-Expect to Parse: "typescript/export/export-type/input.ts"
-
-  × 'A' refers to a type, but is being used as a value here.
-   ╭─[typescript/export/export-type/input.ts:2:15]
- 1 │ type A = 2;
- 2 │ export type { A };
-   ·               ─
-   ╰────
 Expect to Parse: "typescript/function/declare-pattern-parameters/input.ts"
 
   × A required parameter cannot follow an optional parameter.
@@ -358,38 +350,6 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel
  1 │ type Equals = A extends (x: B extends C ? D : E) => 0 ? F : G;
    ·                               ───┬───
    ·                                  ╰── `,` expected
-   ╰────
-Expect to Parse: "typescript/scope/export-interface-after/input.ts"
-
-  × 'A' refers to a type, but is being used as a value here.
-   ╭─[typescript/scope/export-interface-after/input.ts:2:10]
- 1 │ interface A {}
- 2 │ export { A };
-   ·          ─
-   ╰────
-Expect to Parse: "typescript/scope/export-interface-before/input.ts"
-
-  × 'A' refers to a type, but is being used as a value here.
-   ╭─[typescript/scope/export-interface-before/input.ts:1:10]
- 1 │ export { A };
-   ·          ─
- 2 │ interface A {}
-   ╰────
-Expect to Parse: "typescript/scope/export-type-after/input.ts"
-
-  × 'A' refers to a type, but is being used as a value here.
-   ╭─[typescript/scope/export-type-after/input.ts:2:10]
- 1 │ type A = number;
- 2 │ export { A };
-   ·          ─
-   ╰────
-Expect to Parse: "typescript/scope/export-type-before/input.ts"
-
-  × 'A' refers to a type, but is being used as a value here.
-   ╭─[typescript/scope/export-type-before/input.ts:1:10]
- 1 │ export { A };
-   ·          ─
- 2 │ type A = number;
    ╰────
 Expect to Parse: "typescript/scope/redeclaration-import-let/input.ts"
 
