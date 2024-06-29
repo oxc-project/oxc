@@ -110,18 +110,24 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    // Note: can't use `Reference::is_read()` due to error warning about overly
+    // generic FnMut impl.
+
     #[must_use]
     pub fn has_number_of_reads(self, ref_count: usize) -> Self {
+        #[allow(clippy::redundant_closure_for_method_calls)]
         self.has_number_of_references_where(ref_count, |r| r.is_read())
     }
 
     #[must_use]
     pub fn has_number_of_writes(self, ref_count: usize) -> Self {
+        #[allow(clippy::redundant_closure_for_method_calls)]
         self.has_number_of_references_where(ref_count, |r| r.is_write())
     }
 
     #[must_use]
     pub fn has_number_of_references(self, ref_count: usize) -> Self {
+        #[allow(clippy::redundant_closure_for_method_calls)]
         self.has_number_of_references_where(ref_count, |_| true)
     }
 
