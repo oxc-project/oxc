@@ -1484,7 +1484,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "convert_case",
  "dashmap",
@@ -1824,7 +1824,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.5.0"
+version = "0.5.1"
 dependencies = [
  "bpaf",
  "glob",
