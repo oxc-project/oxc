@@ -1,0 +1,92 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:3:10]
+ 2 │             const container: { [i: string]: 0 } = {};
+ 3 │             delete container['aa' + 'b'];
+   ·             ────────────────────────────
+ 4 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:3:10]
+ 2 │             const container: { [i: string]: 0 } = {};
+ 3 │             delete container[+7];
+   ·             ────────────────────
+ 4 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:3:10]
+ 2 │             const container: { [i: string]: 0 } = {};
+ 3 │             delete container[-Infinity];
+   ·             ───────────────────────────
+ 4 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:3:10]
+ 2 │             const container: { [i: string]: 0 } = {};
+ 3 │             delete container[+Infinity];
+   ·             ───────────────────────────
+ 4 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:3:10]
+ 2 │             const container: { [i: string]: 0 } = {};
+ 3 │             delete container[NaN];
+   ·             ─────────────────────
+ 4 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:4:10]
+ 3 │             const name = 'name';
+ 4 │             delete container[name];
+   ·             ──────────────────────
+ 5 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:4:10]
+ 3 │             const getName = () => 'aaa';
+ 4 │             delete container[getName()];
+   ·             ───────────────────────────
+ 5 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:4:10]
+ 3 │             const name = { foo: { bar: 'bar' } };
+ 4 │             delete container[name.foo.bar];
+   ·             ──────────────────────────────
+ 5 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:3:10]
+ 2 │             const container: { [i: string]: 0 } = {};
+ 3 │             delete container[+'Infinity'];
+   ·             ─────────────────────────────
+ 4 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
+
+  ⚠ typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.
+   ╭─[no_dynamic_delete.tsx:3:10]
+ 2 │             const container: { [i: string]: 0 } = {};
+ 3 │             delete container[typeof 1];
+   ·             ──────────────────────────
+ 4 │                   
+   ╰────
+  help: Disallow using the `delete` operator on computed key expressions
