@@ -37,6 +37,13 @@ macro_rules! control_flow {
     };
 }
 
+// Imported symbols could be a type or value - we don't know without a checker.
+// NOTE: `import type { Foo }` does not get recorded in SymbolFlags as a `Type`;
+// adding support for that would make this work even better.
+const MEANING_VALUELIKE: SymbolFlags = SymbolFlags::Value.union(SymbolFlags::ImportBinding);
+const MEANING_TYPELIKE: SymbolFlags = SymbolFlags::Type.union(SymbolFlags::ImportBinding);
+const MEANING_ANY: SymbolFlags = SymbolFlags::all();
+
 pub struct SemanticBuilder<'a> {
     pub source_text: &'a str,
 
@@ -106,7 +113,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
-            meaning_stack: vec![SymbolFlags::Value],
+            meaning_stack: vec![MEANING_VALUELIKE],
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
@@ -1681,11 +1688,11 @@ impl<'a> SemanticBuilder<'a> {
         // println!("enter - {}", kind.debug_name());
         match kind {
             AstKind::ExportDefaultDeclaration(_) => {
-                self.meaning_stack.push(SymbolFlags::all());
+                self.meaning_stack.push(MEANING_ANY);
                 self.current_symbol_flags |= SymbolFlags::Export;
             }
             AstKind::ExportNamedDeclaration(decl) => {
-                self.meaning_stack.push(SymbolFlags::all());
+                self.meaning_stack.push(MEANING_ANY);
                 self.current_symbol_flags |= SymbolFlags::Export;
                 if decl.export_kind.is_type() {
                     self.current_reference_flag = ReferenceFlag::Type;
@@ -1766,11 +1773,11 @@ impl<'a> SemanticBuilder<'a> {
                 self.namespace_stack.push(*symbol_id.unwrap());
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
-                self.meaning_stack.push(SymbolFlags::Type);
+                self.meaning_stack.push(MEANING_TYPELIKE);
                 type_alias_declaration.bind(self);
             }
             AstKind::TSInterfaceDeclaration(interface_declaration) => {
-                self.meaning_stack.push(SymbolFlags::Type);
+                self.meaning_stack.push(MEANING_TYPELIKE);
                 interface_declaration.bind(self);
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
@@ -1782,14 +1789,14 @@ impl<'a> SemanticBuilder<'a> {
                 enum_member.bind(self);
             }
             AstKind::TSTypeParameter(type_parameter) => {
-                self.meaning_stack.push(SymbolFlags::Type);
+                self.meaning_stack.push(MEANING_TYPELIKE);
                 type_parameter.bind(self);
             }
             AstKind::TSTypeReference(_) => {
-                self.meaning_stack.push(SymbolFlags::Type);
+                self.meaning_stack.push(MEANING_TYPELIKE);
             }
             AstKind::TSTypeParameterInstantiation(_) => {
-                self.meaning_stack.push(SymbolFlags::Type);
+                self.meaning_stack.push(MEANING_TYPELIKE);
             }
             AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
                 self.current_reference_flag = ReferenceFlag::Type;
@@ -1801,10 +1808,10 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeQuery(_) => {
                 // checks types of a value symbol (e.g. `typeof x`), so we're
                 // looking for a value even though its used as a type
-                self.meaning_stack.push(SymbolFlags::Value)
+                self.meaning_stack.push(MEANING_VALUELIKE)
             }
             AstKind::TSTypeAnnotation(_) => {
-                self.meaning_stack.push(SymbolFlags::Type);
+                self.meaning_stack.push(MEANING_TYPELIKE);
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -1841,7 +1848,7 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
-                self.meaning_stack.push(SymbolFlags::Value);
+                self.meaning_stack.push(MEANING_VALUELIKE);
                 self.set_function_node_flag(NodeFlags::HasYield);
             }
             _ => {}

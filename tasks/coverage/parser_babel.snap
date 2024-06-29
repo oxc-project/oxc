@@ -2,7 +2,7 @@ commit: 12619ffe
 
 parser_babel Summary:
 AST Parsed     : 2091/2101 (99.52%)
-Positive Passed: 2078/2101 (98.91%)
+Positive Passed: 2082/2101 (99.10%)
 Negative Passed: 1364/1501 (90.87%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -351,114 +351,6 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel
    ·                               ───┬───
    ·                                  ╰── `,` expected
    ╰────
-Expect to Parse: "typescript/scope/redeclaration-import-let/input.ts"
-
-  × 'a' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-let/input.ts:6:8]
- 5 │ let Context: Context<{}> = React.createContext({});
- 6 │ let a: a = 1;
-   ·        ─
- 7 │ let b: b = 1;
-   ╰────
-  help: Did you mean 'typeof a'?
-
-  × 'b' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-let/input.ts:7:8]
- 6 │ let a: a = 1;
- 7 │ let b: b = 1;
-   ·        ─
-   ╰────
-  help: Did you mean 'typeof b'?
-
-  × 'Context' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-let/input.ts:5:14]
- 4 │ 
- 5 │ let Context: Context<{}> = React.createContext({});
-   ·              ───────
- 6 │ let a: a = 1;
-   ╰────
-  help: Did you mean 'typeof Context'?
-Expect to Parse: "typescript/scope/redeclaration-import-type-let/input.ts"
-
-  × 'a' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-type-let/input.ts:6:8]
- 5 │ let Context: Context<{}> = React.createContext({});
- 6 │ let a: a = 1;
-   ·        ─
- 7 │ let b: b = 1;
-   ╰────
-  help: Did you mean 'typeof a'?
-
-  × 'b' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-type-let/input.ts:7:8]
- 6 │ let a: a = 1;
- 7 │ let b: b = 1;
-   ·        ─
-   ╰────
-  help: Did you mean 'typeof b'?
-
-  × 'Context' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-type-let/input.ts:5:14]
- 4 │ 
- 5 │ let Context: Context<{}> = React.createContext({});
-   ·              ───────
- 6 │ let a: a = 1;
-   ╰────
-  help: Did you mean 'typeof Context'?
-Expect to Parse: "typescript/scope/redeclaration-import-type-var/input.ts"
-
-  × 'a' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-type-var/input.ts:6:8]
- 5 │ var Context: Context<{}> = React.createContext({});
- 6 │ var a: a = 1;
-   ·        ─
- 7 │ var b: b = 1;
-   ╰────
-  help: Did you mean 'typeof a'?
-
-  × 'b' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-type-var/input.ts:7:8]
- 6 │ var a: a = 1;
- 7 │ var b: b = 1;
-   ·        ─
-   ╰────
-  help: Did you mean 'typeof b'?
-
-  × 'Context' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-type-var/input.ts:5:14]
- 4 │ 
- 5 │ var Context: Context<{}> = React.createContext({});
-   ·              ───────
- 6 │ var a: a = 1;
-   ╰────
-  help: Did you mean 'typeof Context'?
-Expect to Parse: "typescript/scope/redeclaration-import-var/input.ts"
-
-  × 'a' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-var/input.ts:6:8]
- 5 │ var Context: Context<{}> = React.createContext({});
- 6 │ var a: a = 1;
-   ·        ─
- 7 │ var b: b = 1;
-   ╰────
-  help: Did you mean 'typeof a'?
-
-  × 'b' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-var/input.ts:7:8]
- 6 │ var a: a = 1;
- 7 │ var b: b = 1;
-   ·        ─
-   ╰────
-  help: Did you mean 'typeof b'?
-
-  × 'Context' refers to a value, but is being used as a type here.
-   ╭─[typescript/scope/redeclaration-import-var/input.ts:5:14]
- 4 │ 
- 5 │ var Context: Context<{}> = React.createContext({});
-   ·              ───────
- 6 │ var a: a = 1;
-   ╰────
-  help: Did you mean 'typeof Context'?
 Expect to Parse: "typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts"
 
   × Expected `{` but found `<<`
