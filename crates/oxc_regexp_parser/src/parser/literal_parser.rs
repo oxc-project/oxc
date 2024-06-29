@@ -1,6 +1,5 @@
 use oxc_allocator::Allocator;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_syntax::identifier::is_line_terminator;
 
 use crate::{
     ast,
@@ -85,12 +84,7 @@ fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
     let mut in_character_class = false;
     loop {
         match chars.peek() {
-            None => {
-                let kind =
-                    if in_character_class { "character class" } else { "regular expression" };
-                return Err(OxcDiagnostic::error(format!("Unterminated {kind}")));
-            }
-            Some(&ch) if is_line_terminator(ch) => {
+            Some('\u{a}' | '\u{d}' | '\u{2028}' | '\u{2029}') | None => {
                 let kind =
                     if in_character_class { "character class" } else { "regular expression" };
                 return Err(OxcDiagnostic::error(format!("Unterminated {kind}")));

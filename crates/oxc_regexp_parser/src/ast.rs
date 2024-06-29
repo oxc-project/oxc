@@ -147,7 +147,7 @@ pub struct CapturingGroup<'a> {
 #[derive(Debug)]
 pub struct Character {
     pub span: Span,
-    pub value: char,
+    pub value: u32,
 }
 
 /// The character class.
