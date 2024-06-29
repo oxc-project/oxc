@@ -1,9 +1,8 @@
 commit: 12619ffe
 
-Passed: 475/927
+Passed: 472/927
 
 # All Passed:
-* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
@@ -467,8 +466,13 @@ Passed: 475/927
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-plugin-transform-react-jsx (141/142)
+# babel-preset-react (8/9)
+* regression/11294/input.mjs
+
+# babel-plugin-transform-react-jsx (139/142)
 * react-automatic/does-not-add-source-self-automatic/input.mjs
+* react-automatic/handle-fragments-with-key/input.js
+* sourcemaps/JSXText/input.js
 
 # babel-plugin-transform-react-jsx-development (9/10)
 * cross-platform/within-ts-module-block/input.ts
