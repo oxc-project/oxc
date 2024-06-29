@@ -1780,6 +1780,10 @@ impl<'a> SemanticBuilder<'a> {
                 self.meaning_stack.push(MEANING_TYPELIKE);
                 interface_declaration.bind(self);
             }
+            AstKind::TSInterfaceHeritage(_) => {
+                // https://github.com/oxc-project/oxc/issues/3963
+                self.meaning_stack.push(MEANING_TYPELIKE.union(SymbolFlags::NameSpaceModule));
+            }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
                 // TODO: const enum?
@@ -1919,6 +1923,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.meaning_stack.pop();
             }
             AstKind::TSInterfaceDeclaration(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSInterfaceHeritage(_) => {
                 self.meaning_stack.pop();
             }
             AstKind::TSTypeParameter(_) => {

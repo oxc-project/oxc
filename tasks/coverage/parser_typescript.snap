@@ -2,8 +2,8 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
-Positive Passed: 5267/5283 (99.70%)
-Negative Passed: 1101/4875 (22.58%)
+Positive Passed: 5268/5283 (99.72%)
+Negative Passed: 1099/4875 (22.54%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -2782,6 +2782,7 @@ Expect Syntax Error: "conformance/interfaces/declarationMerging/twoGenericInterf
 Expect Syntax Error: "conformance/interfaces/declarationMerging/twoInterfacesDifferentRootModule.ts"
 Expect Syntax Error: "conformance/interfaces/declarationMerging/twoInterfacesDifferentRootModule2.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/derivedInterfaceIncompatibleWithBaseIndexer.ts"
+Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceExtendingOptionalChain.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceThatHidesBaseProperty2.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceThatIndirectlyInheritsFromItself.ts"
 Expect Syntax Error: "conformance/interfaces/interfaceDeclarations/interfaceThatInheritsFromItself.ts"
@@ -3560,6 +3561,7 @@ Expect Syntax Error: "conformance/types/specifyingTypes/typeQueries/typeofClassW
 Expect Syntax Error: "conformance/types/specifyingTypes/typeQueries/typeofThis.ts"
 Expect Syntax Error: "conformance/types/specifyingTypes/typeQueries/typeofTypeParameter.ts"
 Expect Syntax Error: "conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument.d.ts"
+Expect Syntax Error: "conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument.ts"
 Expect Syntax Error: "conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument3.ts"
 Expect Syntax Error: "conformance/types/specifyingTypes/typeReferences/nonGenericTypeReferenceWithTypeArguments.ts"
 Expect Syntax Error: "conformance/types/spread/objectSpreadIndexSignature.ts"
@@ -3821,16 +3823,6 @@ Expect to Parse: "compiler/functionExpressionWithResolutionOfTypeOfSameName01.ts
    ·        ─
  6 │ }
    ╰────
-Expect to Parse: "compiler/genericConstraintOnExtendedBuiltinTypes2.ts"
-
-  × 'EndGate' refers to a value, but is being used as a type here.
-   ╭─[compiler/genericConstraintOnExtendedBuiltinTypes2.ts:7:26]
- 6 │ 
- 7 │ interface Number extends EndGate.ICloneable { }
-   ·                          ───────
- 8 │ 
-   ╰────
-  help: Did you mean 'typeof EndGate'?
 Expect to Parse: "compiler/staticAnonymousTypeNotReferencingTypeParameter.ts"
 
   × 'Array' refers to a type, but is being used as a value here.
@@ -16700,14 +16692,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  11 │ I           // This should be the identifier 'I'
     ╰────
 
-  × 'Foo' refers to a value, but is being used as a type here.
-   ╭─[conformance/interfaces/interfaceDeclarations/interfaceExtendingOptionalChain.ts:5:22]
- 4 │ 
- 5 │ interface C1 extends Foo?.Bar {}
-   ·                      ───
-   ╰────
-  help: Did you mean 'typeof Foo'?
-
   × 'Constructor' refers to a type, but is being used as a value here.
     ╭─[conformance/interfaces/interfaceDeclarations/interfaceExtendsObjectIntersectionErrors.ts:16:18]
  15 │ 
@@ -21380,15 +21364,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                ─
  2 │ var x2: typeof (): void;
    ╰────
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument.ts:31:22]
- 30 │ class D3<T extends M.E> { }
- 31 │ interface I2 extends M.E { }
-    ·                      ─
- 32 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
 
   × 'I' refers to a type, but is being used as a value here.
     ╭─[conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument2.ts:20:17]
