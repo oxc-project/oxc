@@ -1,9 +1,9 @@
 // TODO: remove me please!
 #![allow(dead_code, unused_imports)]
 mod defs;
+mod fmt;
 mod generators;
 mod linker;
-mod pprint;
 mod schema;
 
 use std::{
@@ -16,8 +16,8 @@ use std::{
     rc::Rc,
 };
 
+use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
-use pprint::pprint;
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
@@ -218,41 +218,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         file.write_all(span_content.as_bytes())?;
     }
 
-    // NOTE: Print AstKind
-    // println!(
-    //     "{}",
-    //     outputs
-    //         .into_iter()
-    //         .find(|it| it.0 == AstKindGenerator.name())
-    //         .map(|(_, output)| {
-    //             let GeneratorOutput::One(result) = output else { unreachable!() };
-    //             prettyplease::unparse(&parse_file(result.to_string().as_str()).unwrap())
-    //         })
-    //         .unwrap()
-    // );
-
-    // NOTE: Print AST
-    // println!(
-    //     "{}",
-    //     outputs
-    //         .into_iter()
-    //         .find(|it| it.0 == AstGenerator.name())
-    //         .map(|(_, output)| {
-    //             let GeneratorOutput::Many(results) = output else { unreachable!() };
-    //
-    //             results
-    //                 .into_iter()
-    //                 .map(|(k, v)| {
-    //                     format!(
-    //                         "file \"{}\":\n{}",
-    //                         k,
-    //                         prettyplease::unparse(&parse_file(v.to_string().as_str()).unwrap())
-    //                     )
-    //                 })
-    //                 .join("\n //-nextfile")
-    //         })
-    //         .unwrap()
-    // );
+    cargo_fmt(".")?;
 
     // let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
     // println!("{schema}");

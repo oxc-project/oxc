@@ -15,7 +15,8 @@ macro_rules! endl {
 /// Wraps the result of the given expression in `insert!({value here});` and outputs it as `TokenStream`.
 macro_rules! insert {
     ($txt:expr) => {{
-        format!(r#"insert!("{}");"#, $txt.as_str()).parse::<proc_macro2::TokenStream>().unwrap()
+        let txt: &str = &*$txt;
+        format!(r#"insert!("{}");"#, txt).parse::<proc_macro2::TokenStream>().unwrap()
     }};
 }
 
