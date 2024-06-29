@@ -1783,6 +1783,12 @@ impl<'a> SemanticBuilder<'a> {
                 self.meaning_stack.push(SymbolFlags::Type);
                 type_parameter.bind(self);
             }
+            AstKind::TSTypeReference(_) => {
+                self.meaning_stack.push(SymbolFlags::Type);
+            }
+            AstKind::TSTypeParameterInstantiation(_) => {
+                self.meaning_stack.push(SymbolFlags::Type);
+            }
             AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
@@ -1899,6 +1905,12 @@ impl<'a> SemanticBuilder<'a> {
                 self.meaning_stack.pop();
             }
             AstKind::TSTypeAnnotation(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSTypeReference(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSTypeParameterInstantiation(_) => {
                 self.meaning_stack.pop();
             }
             AstKind::UpdateExpression(_) => {
