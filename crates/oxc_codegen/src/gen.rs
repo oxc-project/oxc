@@ -2822,6 +2822,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSMappedType<'a> {
             p.print_str(b" = ");
             default.gen(p, ctx);
         }
+        if let Some(name_type) = &self.name_type {
+            p.print_str(b" as ");
+            name_type.gen(p, ctx);
+        }
         p.print_str(b"]");
         match self.optional {
             TSMappedTypeModifierOperator::True => {

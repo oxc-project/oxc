@@ -352,3 +352,9 @@ fn unicode_escape() {
     test("console.log('안녕하세요');", "console.log('안녕하세요');\n");
     test("console.log('🧑‍🤝‍🧑');", "console.log('🧑‍🤝‍🧑');\n");
 }
+
+#[test]
+fn ts_misc() {
+    test_ts("type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }", "type A<T> = { [K in keyof T as K extends (string) ? B<K> : K] : T[K]};\n", false);
+}
+
