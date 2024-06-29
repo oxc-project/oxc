@@ -5,15 +5,16 @@ use oxc_span::Span;
 use super::kind::Kind;
 
 #[derive(Debug, Clone, Copy, Default)]
+#[repr(C, align(4))]
 pub struct Token {
-    /// Token Kind
-    pub kind: Kind,
-
     /// Start offset in source
     pub start: u32,
 
     /// End offset in source
     pub end: u32,
+
+    /// Token Kind
+    pub kind: Kind,
 
     /// Indicates the token is on a newline
     pub is_on_new_line: bool,
