@@ -59,6 +59,8 @@ pub struct SemanticBuilder<'a> {
     // and when we reach a value declaration we set it
     // to value like
     pub namespace_stack: Vec<SymbolId>,
+    /// symbol meaning criteria stack. For resolving symbol references.
+    meaning_stack: Vec<SymbolFlags>,
     current_reference_flag: ReferenceFlag,
 
     // builders
@@ -104,6 +106,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
+            meaning_stack: vec![],
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
@@ -307,6 +310,7 @@ impl<'a> SemanticBuilder<'a> {
         &mut self,
         reference: Reference,
         add_unresolved_reference: bool,
+        meaning: SymbolFlags
     ) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
@@ -315,9 +319,10 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_scope_id,
                 reference_name,
                 reference_id,
+                meaning
             );
         } else {
-            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
+            self.resolve_reference_ids(reference_name.clone(), vec![(reference_id, meaning)]);
         }
         reference_id
     }
@@ -351,22 +356,20 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
+    fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<(ReferenceId, SymbolFlags)>) {
         let parent_scope_id =
             self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
 
         if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
             let symbol_flags = self.symbols.get_flag(symbol_id);
-            let mut unresolved: Vec<ReferenceId> = Vec::with_capacity(reference_ids.len());
-            for reference_id in reference_ids {
+            let mut unresolved: Vec<(ReferenceId, SymbolFlags)> = Vec::with_capacity(reference_ids.len());
+            for (reference_id, meaning) in reference_ids {
                 let reference = &mut self.symbols.references[reference_id];
-                let meaning =
-                    if reference.is_type() { SymbolFlags::Type } else { SymbolFlags::Value };
                 if symbol_flags.intersects(meaning) {
                     reference.set_symbol_id(symbol_id);
                     self.symbols.resolved_references[symbol_id].push(reference_id);
                 } else {
-                    unresolved.push(reference_id)
+                    unresolved.push((reference_id, meaning))
                 }
             }
             self.scope.extend_unresolved_reference(parent_scope_id, name, unresolved);
@@ -1892,7 +1895,7 @@ impl<'a> SemanticBuilder<'a> {
         //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
         //                                          to avoid binding to variables inside the scope
         let add_unresolved_reference = !self.current_node_flags.has_parameter();
-        let reference_id = self.declare_reference(reference, add_unresolved_reference);
+        let reference_id = self.declare_reference(reference, add_unresolved_reference, SymbolFlags::Value);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1921,7 +1924,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_node_id,
             ReferenceFlag::read(),
         );
-        self.declare_reference(reference, true);
+        self.declare_reference(reference, true, SymbolFlags::Value);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

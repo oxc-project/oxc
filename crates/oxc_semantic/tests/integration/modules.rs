@@ -151,6 +151,29 @@ fn test_exported_enum() {
     test.has_some_symbol("B").is_not_exported().contains_flags(SymbolFlags::EnumMember).test();
 }
 
+#[test]
+fn test_exported_variable() {
+    SemanticTester::ts(
+        "
+const x = 1;
+export { x }
+    ",
+    )
+    .has_root_symbol("x")
+    .is_exported()
+    .test();
+
+    SemanticTester::ts(
+        "
+const x = 1;
+export { x as default }
+    ",
+    )
+    .has_root_symbol("x")
+    .is_exported()
+    .test();
+}
+
 // FIXME
 #[test]
 #[ignore]
@@ -186,6 +209,18 @@ fn test_exports_in_namespace() {
     test.has_some_symbol("bar").is_exported().test();
     let semantic = test.build();
     assert!(!semantic.module_record().exported_bindings.contains_key("bar"));
+}
+
+#[test]
+fn test_reexport() {
+    let test = SemanticTester::ts(
+        "
+    import { x } from './foo';
+    export { x as y }
+    ",
+    );
+    test.has_root_symbol("y").is_exported().test();
+    test.has_root_symbol("x").is_not_exported().test();
 }
 
 #[test]

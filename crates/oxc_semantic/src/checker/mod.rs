@@ -18,6 +18,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::Program(_) => {
             js::check_labeled_statement(ctx);
             js::check_duplicate_class_elements(ctx);
+            // ts::check_symbol_resolution_failures(ctx);
         }
         AstKind::BindingIdentifier(ident) => {
             js::check_identifier(&ident.name, ident.span, node, ctx);

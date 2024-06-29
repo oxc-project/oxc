@@ -90,18 +90,20 @@ impl Rule for NoConfusingSetTimeout {
         let mut jest_reference_id_list: Vec<(ReferenceId, Span)> = vec![];
         let mut seen_jest_set_timeout = false;
 
-        for reference_ids in scopes.root_unresolved_references().values() {
-            collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
+        for reference_ids_and_meanings in scopes.root_unresolved_references().values() {
+            let reference_ids: Vec<_> = reference_ids_and_meanings.iter().map(|(reference_id, _)| *reference_id).collect();
+            collect_jest_reference_id(&reference_ids, &mut jest_reference_id_list, ctx);
         }
 
         for reference_ids in &symbol_table.resolved_references {
             collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
         }
 
-        for reference_id_list in scopes.root_unresolved_references().values() {
+        for reference_ids_and_meanings in scopes.root_unresolved_references().values() {
+            let reference_ids: Vec<_> = reference_ids_and_meanings.iter().map(|(reference_id, _)| *reference_id).collect();
             handle_jest_set_time_out(
                 ctx,
-                reference_id_list,
+                &reference_ids,
                 &jest_reference_id_list,
                 &mut seen_jest_set_timeout,
                 &id_to_jest_node_map,

@@ -131,6 +131,14 @@ function foo<T extends number>(a: T) {
 }
 
 #[test]
+fn test_type_used_as_value() {
+    SemanticTester::ts("
+    type T = number;
+    let x = T;
+    ").expect_errors(true).has_some_symbol("T").has_number_of_reads(0).test();
+}
+
+#[test]
 fn test_export_flag() {
     let tester = SemanticTester::js(
         "

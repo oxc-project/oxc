@@ -27,8 +27,12 @@ bitflags! {
         const None = 0;
         const Read = 1 << 0;
         const Write = 1 << 1;
-        // Used in type definitions.
+        /// Used in type definitions.
         const Type = 1 << 2;
+        /// Used as a value.
+        const Value = 1 << 3;
+        /// Could be a [value](`ReferenceFlag::Value`) or a [type](`ReferenceFlag::Type`).
+        const Agnostic = Self::Type.bits() | Self::Value.bits();
         const ReadWrite = Self::Read.bits() | Self::Write.bits();
     }
 }
@@ -73,6 +77,16 @@ impl ReferenceFlag {
 
     /// The identifier is used in a type definition.
     pub const fn is_type(&self) -> bool {
-        self.contains(Self::Type)
+        self.contains(Self::Type) && !self.contains(Self::Value)
+    }
+
+    /// The identifier is used in a value-like context.
+    pub const fn is_value(&self) -> bool {
+        self.contains(Self::Value) && !self.contains(Self::Type)
+    }
+
+    /// The identifier is used either as a value or a type.
+    pub const fn is_agnostic(&self) -> bool {
+        self.contains(Self::Agnostic)
     }
 }

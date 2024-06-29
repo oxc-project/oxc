@@ -2,5 +2,8 @@ commit: 12619ffe
 
 transformer_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 2100/2101 (99.95%)
+Positive Passed: 2097/2101 (99.81%)
 Mismatch: "typescript/class/accessor/input.ts"
+Mismatch: "typescript/tsx/assignment-in-conditional-expression/input.ts"
+Mismatch: "typescript/tsx/brace-is-block/input.tsx"
+Mismatch: "typescript/type-arguments/tsx/input.ts"
