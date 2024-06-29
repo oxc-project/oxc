@@ -1665,6 +1665,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
         self.leave_scope();
     }
+
+    fn visit_ts_type_assertion(&mut self, expr: &TSTypeAssertion<'a>) {
+        let kind = AstKind::TSTypeAssertion(self.alloc(expr));
+        self.enter_node(kind);
+        self.meaning_stack.push(MEANING_VALUELIKE);
+        self.visit_expression(&expr.expression);
+        self.meaning_stack.pop();
+        self.visit_ts_type(&expr.type_annotation);
+        self.leave_node(kind);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
