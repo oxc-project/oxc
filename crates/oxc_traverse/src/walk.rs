@@ -3840,7 +3840,6 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSSymbolKeyword(node) => {
             walk_ts_symbol_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSType::TSThisType(node) => walk_ts_this_type(traverser, (&mut **node) as *mut _, ctx),
         TSType::TSUndefinedKeyword(node) => {
             walk_ts_undefined_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -3881,6 +3880,7 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSTemplateLiteralType(node) => {
             walk_ts_template_literal_type(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSType::TSThisType(node) => walk_ts_this_type(traverser, (&mut **node) as *mut _, ctx),
         TSType::TSTupleType(node) => walk_ts_tuple_type(traverser, (&mut **node) as *mut _, ctx),
         TSType::TSTypeLiteral(node) => {
             walk_ts_type_literal(traverser, (&mut **node) as *mut _, ctx)
@@ -4141,7 +4141,6 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSObjectKeyword(_)
         | TSTupleElement::TSStringKeyword(_)
         | TSTupleElement::TSSymbolKeyword(_)
-        | TSTupleElement::TSThisType(_)
         | TSTupleElement::TSUndefinedKeyword(_)
         | TSTupleElement::TSUnknownKeyword(_)
         | TSTupleElement::TSVoidKeyword(_)
@@ -4158,6 +4157,7 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSNamedTupleMember(_)
         | TSTupleElement::TSQualifiedName(_)
         | TSTupleElement::TSTemplateLiteralType(_)
+        | TSTupleElement::TSThisType(_)
         | TSTupleElement::TSTupleType(_)
         | TSTupleElement::TSTypeLiteral(_)
         | TSTupleElement::TSTypeOperatorType(_)
