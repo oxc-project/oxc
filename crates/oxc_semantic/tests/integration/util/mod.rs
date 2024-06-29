@@ -189,6 +189,14 @@ impl<'a> SemanticTester<'a> {
         SymbolTester::new_at_root(self, self.build(), name)
     }
 
+    /// Find first symbol by name in the source code.
+    ///
+    /// ## Fails
+    /// 1. No symbol with the given name exists,
+    pub fn has_symbol(&self, name: &str) -> SymbolTester {
+        SymbolTester::new_first_binding(self, self.build(), name)
+    }
+
     /// Tests that a class with the given name exists
     ///
     /// ## Fails

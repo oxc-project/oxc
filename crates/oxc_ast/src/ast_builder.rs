@@ -1716,12 +1716,9 @@ impl<'a> AstBuilder<'a> {
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
-        TSSignature::TSConstructSignatureDeclaration(self.alloc(TSConstructSignatureDeclaration {
-            span,
-            params,
-            return_type,
-            type_parameters,
-        }))
+        TSSignature::TSConstructSignatureDeclaration(self.alloc(
+            TSConstructSignatureDeclaration::new(span, params, return_type, type_parameters),
+        ))
     }
 
     #[inline]
@@ -1737,7 +1734,7 @@ impl<'a> AstBuilder<'a> {
         return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     ) -> TSSignature<'a> {
-        TSSignature::TSMethodSignature(self.alloc(TSMethodSignature {
+        TSSignature::TSMethodSignature(self.alloc(TSMethodSignature::new(
             span,
             key,
             computed,
@@ -1747,7 +1744,7 @@ impl<'a> AstBuilder<'a> {
             params,
             return_type,
             type_parameters,
-        }))
+        )))
     }
 
     #[inline]
@@ -1847,19 +1844,19 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         id: BindingIdentifier<'a>,
-        body: Box<'a, TSInterfaceBody<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+        body: Box<'a, TSInterfaceBody<'a>>,
         declare: bool,
     ) -> Declaration<'a> {
-        Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
+        Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration::new(
             span,
             id,
-            body,
             type_parameters,
             extends,
+            body,
             declare,
-        }))
+        )))
     }
 
     #[inline]
@@ -1871,13 +1868,13 @@ impl<'a> AstBuilder<'a> {
         type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
         declare: bool,
     ) -> Declaration<'a> {
-        Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration {
+        Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration::new(
             span,
             id,
             type_annotation,
             type_parameters,
             declare,
-        }))
+        )))
     }
 
     #[inline]
@@ -2008,13 +2005,13 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> TSType<'a> {
-        TSType::TSConditionalType(self.alloc(TSConditionalType {
+        TSType::TSConditionalType(self.alloc(TSConditionalType::new(
             span,
             check_type,
             extends_type,
             true_type,
             false_type,
-        }))
+        )))
     }
 
     #[inline]
@@ -2027,14 +2024,14 @@ impl<'a> AstBuilder<'a> {
         optional: TSMappedTypeModifierOperator,
         readonly: TSMappedTypeModifierOperator,
     ) -> TSType<'a> {
-        TSType::TSMappedType(self.alloc(TSMappedType {
+        TSType::TSMappedType(self.alloc(TSMappedType::new(
             span,
             type_parameter,
             name_type,
             type_annotation,
             optional,
             readonly,
-        }))
+        )))
     }
 
     #[inline]

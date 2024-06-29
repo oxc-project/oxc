@@ -1332,6 +1332,7 @@ pub mod walk {
     }
 
     pub fn walk_class<'a, V: Visit<'a>>(visitor: &mut V, class: &Class<'a>) {
+        visitor.enter_scope(ScopeFlags::empty());
         // Class level decorators are transpiled as functions outside of the class taking the class
         // itvisitor as argument. They should be visited before class is entered. E.g., they inherit
         // strict mode from the enclosing scope rather than from class.
@@ -1339,14 +1340,6 @@ pub mod walk {
             visitor.visit_decorator(decorator);
         }
         let kind = AstKind::Class(visitor.alloc(class));
-
-        // FIXME(don): Should we enter a scope when visiting class declarations?
-        let is_class_expr = class.r#type == ClassType::ClassExpression;
-        if is_class_expr {
-            // Class expressions create a temporary scope with the class name as its only variable
-            // E.g., `let c = class A { foo() { console.log(A) } }`
-            visitor.enter_scope(ScopeFlags::empty());
-        }
 
         visitor.enter_node(kind);
 
@@ -1370,9 +1363,7 @@ pub mod walk {
         }
         visitor.visit_class_body(&class.body);
         visitor.leave_node(kind);
-        if is_class_expr {
-            visitor.leave_scope();
-        }
+        visitor.leave_scope();
     }
 
     pub fn walk_class_heritage<'a, V: Visit<'a>>(visitor: &mut V, expr: &Expression<'a>) {
@@ -2681,10 +2672,12 @@ pub mod walk {
         let kind = AstKind::TSTypeAliasDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&decl.id);
+        visitor.enter_scope(ScopeFlags::empty());
         if let Some(parameters) = &decl.type_parameters {
             visitor.visit_ts_type_parameter_declaration(parameters);
         }
         visitor.visit_ts_type(&decl.type_annotation);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -2695,6 +2688,7 @@ pub mod walk {
         let kind = AstKind::TSInterfaceDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&decl.id);
+        visitor.enter_scope(ScopeFlags::empty());
         if let Some(extends) = &decl.extends {
             for extend in extends {
                 visitor.visit_ts_interface_heritage(extend);
@@ -2706,6 +2700,7 @@ pub mod walk {
         for signature in &decl.body.body {
             visitor.visit_ts_signature(signature);
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -2867,6 +2862,7 @@ pub mod walk {
     }
 
     pub fn walk_ts_mapped_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSMappedType<'a>) {
+        visitor.enter_scope(ScopeFlags::empty());
         visitor.visit_ts_type_parameter(&ty.type_parameter);
         if let Some(name) = &ty.name_type {
             visitor.visit_ts_type(name);
@@ -2874,6 +2870,7 @@ pub mod walk {
         if let Some(type_annotation) = &ty.type_annotation {
             visitor.visit_ts_type(type_annotation);
         }
+        visitor.leave_scope();
     }
 
     pub fn walk_ts_function_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSFunctionType<'a>) {
@@ -2899,7 +2896,6 @@ pub mod walk {
 
     pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(visitor.alloc(ty));
-        visitor.enter_scope(ScopeFlags::empty());
         visitor.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
             visitor.visit_ts_type(constraint);
@@ -2909,7 +2905,6 @@ pub mod walk {
             visitor.visit_ts_type(default);
         }
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     pub fn walk_ts_type_parameter_instantiation<'a, V: Visit<'a>>(
@@ -2945,10 +2940,13 @@ pub mod walk {
     }
 
     pub fn walk_ts_conditional_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSConditionalType<'a>) {
+        // https://github.com/Dunqing/TypeScript/blob/main/src/compiler/binder.ts#L3766-L3771
+        visitor.enter_scope(ScopeFlags::empty());
         visitor.visit_ts_type(&ty.check_type);
         visitor.visit_ts_type(&ty.extends_type);
         visitor.visit_ts_type(&ty.true_type);
         visitor.visit_ts_type(&ty.false_type);
+        visitor.leave_scope();
     }
 
     pub fn walk_ts_array_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSArrayType<'a>) {

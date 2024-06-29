@@ -227,7 +227,8 @@ pub use match_ts_type;
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#handbook-content>
 #[visited_node]
-#[derive(Debug, Hash)]
+#[scope]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSConditionalType<'a> {
@@ -237,6 +238,7 @@ pub struct TSConditionalType<'a> {
     pub extends_type: TSType<'a>,
     pub true_type: TSType<'a>,
     pub false_type: TSType<'a>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 /// string | string[] | (() => string) | { s: string }
@@ -566,8 +568,7 @@ pub struct TSTypeParameterInstantiation<'a> {
 }
 
 #[visited_node]
-#[scope]
-#[derive(Debug)]
+#[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeParameter<'a> {
@@ -579,7 +580,6 @@ pub struct TSTypeParameter<'a> {
     pub r#in: bool,
     pub out: bool,
     pub r#const: bool,
-    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[visited_node]
@@ -593,16 +593,19 @@ pub struct TSTypeParameterDeclaration<'a> {
 }
 
 #[visited_node]
-#[derive(Debug, Hash)]
+#[scope]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSTypeAliasDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
+    #[scope(enter_before)]
     pub type_annotation: TSType<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub declare: bool,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -629,17 +632,20 @@ pub struct TSClassImplements<'a> {
 ///
 ///   interface `BindingIdentifier` `TypeParameters_opt` `InterfaceExtendsClause_opt` `ObjectType`
 #[visited_node]
-#[derive(Debug, Hash)]
+#[scope]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSInterfaceDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
+    #[scope(enter_before)]
     pub body: Box<'a, TSInterfaceBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
     pub declare: bool,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[visited_node]
@@ -713,7 +719,8 @@ pub enum TSMethodSignatureKind {
 }
 
 #[visited_node]
-#[derive(Debug, Hash)]
+#[scope]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSMethodSignature<'a> {
@@ -727,10 +734,12 @@ pub struct TSMethodSignature<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[visited_node]
-#[derive(Debug, Hash)]
+#[scope]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSConstructSignatureDeclaration<'a> {
@@ -739,6 +748,7 @@ pub struct TSConstructSignatureDeclaration<'a> {
     pub params: Box<'a, FormalParameters<'a>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[visited_node]
@@ -981,7 +991,8 @@ pub struct TSConstructorType<'a> {
 }
 
 #[visited_node]
-#[derive(Debug, Hash)]
+#[scope]
+#[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSMappedType<'a> {
@@ -992,6 +1003,7 @@ pub struct TSMappedType<'a> {
     pub type_annotation: Option<TSType<'a>>,
     pub optional: TSMappedTypeModifierOperator,
     pub readonly: TSMappedTypeModifierOperator,
+    pub scope_id: Cell<Option<ScopeId>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
