@@ -324,18 +324,18 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let mut has_private_key = false;
         let mut elements = self.ast.new_vec();
-        let mut is_function_overloads = false;
+        // let mut is_function_overloads = false;
         for element in &decl.body.body {
             match element {
                 ClassElement::StaticBlock(_) => {}
                 ClassElement::MethodDefinition(ref method) => {
-                    if method.value.body.is_none() {
-                        is_function_overloads = true;
-                    } else if is_function_overloads {
-                        // Skip implementation of function overloads
-                        is_function_overloads = false;
-                        continue;
-                    }
+                    // if method.value.body.is_none() {
+                    //     is_function_overloads = true;
+                    // } else if is_function_overloads {
+                    //     // Skip implementation of function overloads
+                    //     is_function_overloads = false;
+                    //     continue;
+                    // }
                     if method.key.is_private_identifier() {
                         has_private_key = true;
                         continue;

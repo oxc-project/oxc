@@ -415,4 +415,12 @@ export function foo(a: any): number {
             "export declare const a: [x?: ((number) | (null))];\n",
         );
     }
+
+    #[test]
+    fn dts_abstract_class_methods() {
+        transform_dts_test(
+            "export abstract class A { b(): boolean; c(): void {};}",
+            "export declare abstract class A {\n\tb(): boolean;\n\tc(): void;\n}\n",
+        );
+    }
 }
