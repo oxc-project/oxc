@@ -423,4 +423,16 @@ export function foo(a: any): number {
             "export declare abstract class A {\n\tb(): boolean;\n\tc(): void;\n}\n",
         );
     }
+
+    #[test]
+    fn dts_class_field_literal() {
+        transform_dts_test(
+            "export class A {readonly type = 'frame'}",
+            "export declare class A {\n\treadonly type: 'frame';\n}\n",
+        );
+        transform_dts_test(
+            "export class A {type = 'frame'}",
+            "export declare class A {\n\ttype: string;\n}\n",
+        );
+    }
 }
