@@ -4,5 +4,5 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/declare-global.ts
 ---
 ==================== .D.TS ====================
 
-declare module global {}
+declare global {}
 export {};

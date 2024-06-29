@@ -3267,9 +3267,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
         if self.declare {
             p.print_str(b"declare ");
         }
-        p.print_str(b"module");
-        p.print_space_before_identifier();
-        self.id.gen(p, ctx);
+        self.kind.gen(p, ctx);
+        // If the kind is global, then the id is also `global`, so we don't need to print it
+        if !self.kind.is_global() {
+            p.print_space_before_identifier();
+            self.id.gen(p, ctx);
+        }
 
         if let Some(body) = &self.body {
             let mut body = body;
@@ -3293,6 +3296,22 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleDeclaration<'a> {
             }
         }
         p.needs_semicolon = false;
+    }
+}
+
+impl<const MINIFY: bool> Gen<MINIFY> for TSModuleDeclarationKind {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _: Context) {
+        match self {
+            TSModuleDeclarationKind::Global => {
+                p.print_str(b"global");
+            }
+            TSModuleDeclarationKind::Module => {
+                p.print_str(b"module");
+            }
+            TSModuleDeclarationKind::Namespace => {
+                p.print_str(b"namespace");
+            }
+        }
     }
 }
 
