@@ -9,7 +9,7 @@ use crate::{
     js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    modifiers::{ModifierKind, Modifiers},
     ParserImpl,
 };
 
@@ -32,18 +32,21 @@ impl<'a> ParserImpl<'a> {
         let members = TSEnumMemberList::parse(self)?.members;
         let span = self.end_span(span);
 
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE | ModifierFlags::CONST,
-            diagnostics::modifier_cannot_be_used_here,
-        );
+        for modifier in modifiers.iter() {
+            if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Const) {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
 
         Ok(self.ast.ts_enum_declaration(
             span,
             id,
             members,
-            modifiers.contains_const(),
-            modifiers.contains_declare(),
+            modifiers.is_contains_const(),
+            modifiers.is_contains_declare(),
         ))
     }
 
@@ -114,18 +117,21 @@ impl<'a> ParserImpl<'a> {
         self.asi()?;
         let span = self.end_span(span);
 
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE,
-            diagnostics::modifier_cannot_be_used_here,
-        );
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
 
         Ok(self.ast.ts_type_alias_declaration(
             span,
             id,
             annotation,
             params,
-            modifiers.contains_declare(),
+            modifiers.is_contains_declare(),
         ))
     }
 
@@ -143,11 +149,14 @@ impl<'a> ParserImpl<'a> {
         let body = self.parse_ts_interface_body()?;
         let extends = extends.map(|e| self.ast.ts_interface_heritages(e));
 
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE,
-            diagnostics::modifier_cannot_be_used_here,
-        );
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
 
         Ok(self.ast.ts_interface_declaration(
             self.end_span(span),
@@ -155,7 +164,7 @@ impl<'a> ParserImpl<'a> {
             body,
             type_parameters,
             extends,
-            modifiers.contains_declare(),
+            modifiers.is_contains_declare(),
         ))
     }
 
@@ -282,18 +291,20 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE,
-            diagnostics::modifier_cannot_be_used_here,
-        );
-
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
         Ok(self.ast.ts_module_declaration(
             self.end_span(span),
             id,
             body,
             kind,
-            modifiers.contains_declare(),
+            modifiers.is_contains_declare(),
         ))
     }
 
@@ -304,11 +315,8 @@ impl<'a> ParserImpl<'a> {
         start_span: Span,
     ) -> Result<Statement<'a>> {
         let reserved_ctx = self.ctx;
-        let modifiers = self.eat_modifiers_before_declaration()?;
-        self.ctx = self
-            .ctx
-            .union_ambient_if(modifiers.contains_declare())
-            .and_await(modifiers.contains_async());
+        let (flags, modifiers) = self.eat_modifiers_before_declaration();
+        self.ctx = self.ctx.union_ambient_if(flags.declare()).and_await(flags.r#async());
         let result = self.parse_declaration(start_span, &modifiers);
         self.ctx = reserved_ctx;
         result.map(Statement::from)

@@ -2,7 +2,7 @@ commit: a1587416
 
 prettier_test262 Summary:
 AST Parsed     : 46406/46406 (100.00%)
-Positive Passed: 43244/46406 (93.19%)
+Positive Passed: 43242/46406 (93.18%)
 Expect to Parse: "annexB/built-ins/RegExp/RegExp-leading-escape-BMP.js"
 Expect to Parse: "annexB/built-ins/RegExp/RegExp-trailing-escape-BMP.js"
 Expect to Parse: "annexB/built-ins/escape/to-primitive-err.js"
@@ -2224,6 +2224,7 @@ Expect to Parse: "language/expressions/class/elements/async-gen-private-method-s
 Expect to Parse: "language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-next.js"
 Expect to Parse: "language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-return.js"
 Expect to Parse: "language/expressions/class/elements/async-gen-private-method-static/yield-star-sync-throw.js"
+Expect to Parse: "language/expressions/class/elements/syntax/valid/grammar-field-accessor.js"
 Expect to Parse: "language/expressions/comma/S11.14_A2.1_T1.js"
 Expect to Parse: "language/expressions/comma/S11.14_A3.js"
 Expect to Parse: "language/expressions/compound-assignment/S11.13.2_A4.1_T2.8.js"
@@ -2894,6 +2895,7 @@ Expect to Parse: "language/statements/class/elements/async-gen-private-method-st
 Expect to Parse: "language/statements/class/elements/async-gen-private-method-static/yield-star-sync-return.js"
 Expect to Parse: "language/statements/class/elements/async-gen-private-method-static/yield-star-sync-throw.js"
 Expect to Parse: "language/statements/class/elements/class-field-is-observable-by-proxy.js"
+Expect to Parse: "language/statements/class/elements/syntax/valid/grammar-field-accessor.js"
 Expect to Parse: "language/statements/class/subclass/derived-class-return-override-for-of-arrow.js"
 Expect to Parse: "language/statements/class/subclass/derived-class-return-override-for-of.js"
 Expect to Parse: "language/statements/const/dstr/obj-ptrn-prop-eval-err.js"

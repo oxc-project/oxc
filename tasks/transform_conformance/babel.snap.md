@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 473/927
+Passed: 475/927
 
 # All Passed:
 * babel-preset-react
@@ -445,9 +445,7 @@ Passed: 473/927
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (129/151)
-* class/accessor-allowDeclareFields-false/input.ts
-* class/accessor-allowDeclareFields-true/input.ts
+# babel-plugin-transform-typescript (131/151)
 * enum/mix-references/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts

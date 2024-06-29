@@ -7,7 +7,7 @@ use super::{VariableDeclarationContext, VariableDeclarationParent};
 use crate::{
     diagnostics,
     lexer::Kind,
-    modifiers::{ModifierFlags, Modifiers},
+    modifiers::{ModifierKind, Modifiers},
     ParserImpl, StatementContext,
 };
 
@@ -72,17 +72,20 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
-        self.verify_modifiers(
-            modifiers,
-            ModifierFlags::DECLARE,
-            diagnostics::modifier_cannot_be_used_here,
-        );
+        for modifier in modifiers.iter() {
+            if modifier.kind != ModifierKind::Declare {
+                self.error(diagnostics::modifier_cannot_be_used_here(
+                    modifier.span,
+                    modifier.kind.as_str(),
+                ));
+            }
+        }
 
         Ok(self.ast.variable_declaration(
             self.end_span(start_span),
             kind,
             declarations,
-            modifiers.contains_declare(),
+            modifiers.is_contains_declare(),
         ))
     }
 

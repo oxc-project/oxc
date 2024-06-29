@@ -8,7 +8,6 @@ use crate::{
     diagnostics,
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    modifiers::ModifierFlags,
     ParserImpl,
 };
 
@@ -268,15 +267,8 @@ impl<'a> SeparatedList<'a> for FormalParameterList<'a> {
 
         let modifiers = p.parse_class_element_modifiers(true);
         let accessibility = modifiers.accessibility();
-        let readonly = modifiers.contains_readonly();
-        let r#override = modifiers.contains_override();
-        p.verify_modifiers(
-            &modifiers,
-            ModifierFlags::ACCESSIBILITY
-                .union(ModifierFlags::READONLY)
-                .union(ModifierFlags::OVERRIDE),
-            diagnostics::cannot_appear_on_a_parameter,
-        );
+        let readonly = modifiers.readonly();
+        let r#override = modifiers.r#override();
 
         match p.cur_kind() {
             Kind::This if p.ts_enabled() => {
