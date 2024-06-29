@@ -20,30 +20,36 @@ fn type_used_as_value(span: Span, name: &str) -> OxcDiagnostic {
         .with_label(span)
 }
 
-// pub fn check_symbol_resolution_failures<'a>(ctx: &SemanticBuilder<'a>) {
-//     for (scope_id, name, reference_ids) in ctx.scope.iter_unresolved_references() {
-//         if let Some(symbol_id) = ctx.scope.find_binding(scope_id, name) {
-//             let symbol_flags = ctx.symbols.get_flag(symbol_id);
-//             for reference_id in reference_ids {
-//                 let reference = ctx.symbols.get_reference(*reference_id);
-//                 if reference.is_agnostic() {
-//                     continue;
-//                 }
-//                 match (symbol_flags.is_type(), reference.is_type()) {
-//                     (true, false) => {
-//                         // checker.ts, checkAndReportErrorForUsingValueAsType
-//                         ctx.error(value_used_as_type(reference.span(), name));
-//                     }
-//                     (false, true) => {
-//                         // checker.ts, checkAndReportErrorForUsingTypeAsValue
-//                         ctx.error(type_used_as_value(reference.span(), name));
-//                     }
-//                     _ => {}
-//                 }
-//             }
-//         }
-//     }
-// }
+pub fn check_symbol_resolution_failures<'a>(ctx: &SemanticBuilder<'a>) {
+    for (scope_id, name, reference_ids) in ctx.scope.iter_unresolved_references() {
+        if let Some(symbol_id) = ctx.scope.find_binding(scope_id, name) {
+            let symbol_flags = ctx.symbols.get_flag(symbol_id);
+            for (reference_id, meaning) in reference_ids {
+                let reference = ctx.symbols.get_reference(*reference_id);
+                // note: is_value() does not imply !is_type()
+                if meaning.is_value() && symbol_flags.is_type() {
+
+                    // checker.ts, checkAndReportErrorForUsingTypeAsValue
+                    ctx.error(type_used_as_value(reference.span(), name));
+                } else if meaning.is_type() && symbol_flags.is_value() {
+                    // checker.ts, checkAndReportErrorForUsingValueAsType
+                    ctx.error(value_used_as_type(reference.span(), name));
+                }
+                // match (symbol_flags.is_type(), meaning.is_type()) {
+                //     (true, false) => {
+                //         // checker.ts, checkAndReportErrorForUsingValueAsType
+                //         ctx.error(value_used_as_type(reference.span(), name));
+                //     }
+                //     (false, true) => {
+                //         // checker.ts, checkAndReportErrorForUsingTypeAsValue
+                //         ctx.error(type_used_as_value(reference.span(), name));
+                //     }
+                //     _ => {}
+                // }
+            }
+        }
+    }
+}
 
 fn empty_type_parameter_list(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span0)

@@ -106,7 +106,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
-            meaning_stack: vec![],
+            meaning_stack: vec![SymbolFlags::Value],
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
@@ -163,6 +163,9 @@ impl<'a> SemanticBuilder<'a> {
             program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
+            if self.check_syntax_error {
+                checker::check_last(&self);
+            }
 
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
@@ -235,6 +238,14 @@ impl<'a> SemanticBuilder<'a> {
         if let Some(records) = self.ast_nodes_records.last_mut() {
             records.push(self.current_node_id);
         }
+    }
+
+    pub fn current_meaning(&self) -> SymbolFlags {
+        let meaning = self.meaning_stack.last().copied();
+        #[cfg(debug_assertions)]
+        return meaning.unwrap();
+        #[cfg(not(debug_assertions))]
+        return meaning.unwrap_or(SymbolFlags::all());
     }
 
     pub fn current_scope_flags(&self) -> ScopeFlags {
@@ -310,7 +321,7 @@ impl<'a> SemanticBuilder<'a> {
         &mut self,
         reference: Reference,
         add_unresolved_reference: bool,
-        meaning: SymbolFlags
+        meaning: SymbolFlags,
     ) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
@@ -319,7 +330,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_scope_id,
                 reference_name,
                 reference_id,
-                meaning
+                meaning,
             );
         } else {
             self.resolve_reference_ids(reference_name.clone(), vec![(reference_id, meaning)]);
@@ -356,19 +367,27 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<(ReferenceId, SymbolFlags)>) {
+    fn resolve_reference_ids(
+        &mut self,
+        name: CompactStr,
+        reference_ids: Vec<(ReferenceId, SymbolFlags)>,
+    ) {
         let parent_scope_id =
             self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
 
         if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
             let symbol_flags = self.symbols.get_flag(symbol_id);
-            let mut unresolved: Vec<(ReferenceId, SymbolFlags)> = Vec::with_capacity(reference_ids.len());
+            let mut unresolved: Vec<(ReferenceId, SymbolFlags)> =
+                Vec::with_capacity(reference_ids.len());
             for (reference_id, meaning) in reference_ids {
                 let reference = &mut self.symbols.references[reference_id];
+                // if dbg!(symbol_flags).intersects(dbg!(meaning)) {
                 if symbol_flags.intersects(meaning) {
+                    // println!("true");
                     reference.set_symbol_id(symbol_id);
                     self.symbols.resolved_references[symbol_id].push(reference_id);
                 } else {
+                    // println!("false");
                     unresolved.push((reference_id, meaning))
                 }
             }
@@ -1746,9 +1765,11 @@ impl<'a> SemanticBuilder<'a> {
                 self.namespace_stack.push(*symbol_id.unwrap());
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
+                self.meaning_stack.push(SymbolFlags::Type);
                 type_alias_declaration.bind(self);
             }
             AstKind::TSInterfaceDeclaration(interface_declaration) => {
+                self.meaning_stack.push(SymbolFlags::Type);
                 interface_declaration.bind(self);
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
@@ -1760,13 +1781,23 @@ impl<'a> SemanticBuilder<'a> {
                 enum_member.bind(self);
             }
             AstKind::TSTypeParameter(type_parameter) => {
+                self.meaning_stack.push(SymbolFlags::Type);
                 type_parameter.bind(self);
             }
             AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::TSTypeName(_) => {
+                self.meaning_stack.push(SymbolFlags::Type);
                 self.current_reference_flag = ReferenceFlag::Type;
+            }
+            AstKind::TSTypeQuery(_) => {
+                // checks types of a value symbol (e.g. `typeof x`), so we're
+                // looking for a value even though its used as a type
+                self.meaning_stack.push(SymbolFlags::Value)
+            }
+            AstKind::TSTypeAnnotation(_) => {
+                self.meaning_stack.push(SymbolFlags::Type);
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -1803,6 +1834,7 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::YieldExpression(_) => {
+                self.meaning_stack.push(SymbolFlags::Value);
                 self.set_function_node_flag(NodeFlags::HasYield);
             }
             _ => {}
@@ -1851,8 +1883,24 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
             }
+            AstKind::TSTypeAliasDeclaration(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSInterfaceDeclaration(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSTypeParameter(_) => {
+                self.meaning_stack.pop();
+            }
             AstKind::TSTypeName(_) => {
+                self.meaning_stack.pop();
                 self.current_reference_flag -= ReferenceFlag::Type;
+            }
+            AstKind::TSTypeQuery(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSTypeAnnotation(_) => {
+                self.meaning_stack.pop();
             }
             AstKind::UpdateExpression(_) => {
                 if self.is_not_expression_statement_parent() {
@@ -1869,6 +1917,9 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::MemberExpression(_) => self.current_reference_flag = ReferenceFlag::empty(),
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
+            AstKind::YieldExpression(_) => {
+                self.meaning_stack.pop();
+            }
             _ => {}
         }
     }
@@ -1895,7 +1946,9 @@ impl<'a> SemanticBuilder<'a> {
         //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
         //                                          to avoid binding to variables inside the scope
         let add_unresolved_reference = !self.current_node_flags.has_parameter();
-        let reference_id = self.declare_reference(reference, add_unresolved_reference, SymbolFlags::Value);
+        let reference_id =
+            self.declare_reference(reference, add_unresolved_reference, self.current_meaning());
+        // self.declare_reference(reference, add_unresolved_reference, dbg!(self.current_meaning()));
         ident.reference_id.set(Some(reference_id));
     }
 

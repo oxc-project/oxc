@@ -77,8 +77,13 @@ impl SymbolFlags {
         self.intersects(Self::Variable)
     }
 
+    pub fn is_value(&self) -> bool {
+        self.intersects(Self::Value)
+    }
+
+    /// Note: Some values can be types (e.g. classes, enums)
     pub fn is_type(&self) -> bool {
-        !self.intersects(Self::Value)
+        self.intersects(Self::Type)
     }
 
     pub fn is_const_variable(&self) -> bool {

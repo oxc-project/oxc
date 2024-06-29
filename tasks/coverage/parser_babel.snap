@@ -2,7 +2,7 @@ commit: 12619ffe
 
 parser_babel Summary:
 AST Parsed     : 2091/2101 (99.52%)
-Positive Passed: 2083/2101 (99.14%)
+Positive Passed: 2073/2101 (98.67%)
 Negative Passed: 1364/1501 (90.87%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -318,6 +318,14 @@ Expect to Parse: "typescript/declare/eval/input.ts"
     ·                  ─────────
  10 │ 
     ╰────
+Expect to Parse: "typescript/export/export-type/input.ts"
+
+  × 'A' refers to a type, but is being used as a value here.
+   ╭─[typescript/export/export-type/input.ts:2:15]
+ 1 │ type A = 2;
+ 2 │ export type { A };
+   ·               ─
+   ╰────
 Expect to Parse: "typescript/function/declare-pattern-parameters/input.ts"
 
   × A required parameter cannot follow an optional parameter.
@@ -351,6 +359,146 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel
    ·                               ───┬───
    ·                                  ╰── `,` expected
    ╰────
+Expect to Parse: "typescript/scope/export-interface-after/input.ts"
+
+  × 'A' refers to a type, but is being used as a value here.
+   ╭─[typescript/scope/export-interface-after/input.ts:2:10]
+ 1 │ interface A {}
+ 2 │ export { A };
+   ·          ─
+   ╰────
+Expect to Parse: "typescript/scope/export-interface-before/input.ts"
+
+  × 'A' refers to a type, but is being used as a value here.
+   ╭─[typescript/scope/export-interface-before/input.ts:1:10]
+ 1 │ export { A };
+   ·          ─
+ 2 │ interface A {}
+   ╰────
+Expect to Parse: "typescript/scope/export-type-after/input.ts"
+
+  × 'A' refers to a type, but is being used as a value here.
+   ╭─[typescript/scope/export-type-after/input.ts:2:10]
+ 1 │ type A = number;
+ 2 │ export { A };
+   ·          ─
+   ╰────
+Expect to Parse: "typescript/scope/export-type-before/input.ts"
+
+  × 'A' refers to a type, but is being used as a value here.
+   ╭─[typescript/scope/export-type-before/input.ts:1:10]
+ 1 │ export { A };
+   ·          ─
+ 2 │ type A = number;
+   ╰────
+Expect to Parse: "typescript/scope/redeclaration-import-let/input.ts"
+
+  × 'a' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-let/input.ts:6:8]
+ 5 │ let Context: Context<{}> = React.createContext({});
+ 6 │ let a: a = 1;
+   ·        ─
+ 7 │ let b: b = 1;
+   ╰────
+  help: Did you mean 'typeof a'?
+
+  × 'b' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-let/input.ts:7:8]
+ 6 │ let a: a = 1;
+ 7 │ let b: b = 1;
+   ·        ─
+   ╰────
+  help: Did you mean 'typeof b'?
+
+  × 'Context' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-let/input.ts:5:14]
+ 4 │ 
+ 5 │ let Context: Context<{}> = React.createContext({});
+   ·              ───────
+ 6 │ let a: a = 1;
+   ╰────
+  help: Did you mean 'typeof Context'?
+Expect to Parse: "typescript/scope/redeclaration-import-type-let/input.ts"
+
+  × 'a' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-type-let/input.ts:6:8]
+ 5 │ let Context: Context<{}> = React.createContext({});
+ 6 │ let a: a = 1;
+   ·        ─
+ 7 │ let b: b = 1;
+   ╰────
+  help: Did you mean 'typeof a'?
+
+  × 'b' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-type-let/input.ts:7:8]
+ 6 │ let a: a = 1;
+ 7 │ let b: b = 1;
+   ·        ─
+   ╰────
+  help: Did you mean 'typeof b'?
+
+  × 'Context' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-type-let/input.ts:5:14]
+ 4 │ 
+ 5 │ let Context: Context<{}> = React.createContext({});
+   ·              ───────
+ 6 │ let a: a = 1;
+   ╰────
+  help: Did you mean 'typeof Context'?
+Expect to Parse: "typescript/scope/redeclaration-import-type-var/input.ts"
+
+  × 'a' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-type-var/input.ts:6:8]
+ 5 │ var Context: Context<{}> = React.createContext({});
+ 6 │ var a: a = 1;
+   ·        ─
+ 7 │ var b: b = 1;
+   ╰────
+  help: Did you mean 'typeof a'?
+
+  × 'b' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-type-var/input.ts:7:8]
+ 6 │ var a: a = 1;
+ 7 │ var b: b = 1;
+   ·        ─
+   ╰────
+  help: Did you mean 'typeof b'?
+
+  × 'Context' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-type-var/input.ts:5:14]
+ 4 │ 
+ 5 │ var Context: Context<{}> = React.createContext({});
+   ·              ───────
+ 6 │ var a: a = 1;
+   ╰────
+  help: Did you mean 'typeof Context'?
+Expect to Parse: "typescript/scope/redeclaration-import-var/input.ts"
+
+  × 'a' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-var/input.ts:6:8]
+ 5 │ var Context: Context<{}> = React.createContext({});
+ 6 │ var a: a = 1;
+   ·        ─
+ 7 │ var b: b = 1;
+   ╰────
+  help: Did you mean 'typeof a'?
+
+  × 'b' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-var/input.ts:7:8]
+ 6 │ var a: a = 1;
+ 7 │ var b: b = 1;
+   ·        ─
+   ╰────
+  help: Did you mean 'typeof b'?
+
+  × 'Context' refers to a value, but is being used as a type here.
+   ╭─[typescript/scope/redeclaration-import-var/input.ts:5:14]
+ 4 │ 
+ 5 │ var Context: Context<{}> = React.createContext({});
+   ·              ───────
+ 6 │ var a: a = 1;
+   ╰────
+  help: Did you mean 'typeof Context'?
 Expect to Parse: "typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts"
 
   × Expected `{` but found `<<`
@@ -399,6 +547,16 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
     ·            ─────
  15 │ class E<const in T> {}
     ╰────
+Expect to Parse: "typescript/types/import-type-dynamic/input.ts"
+
+  × 'Y' refers to a value, but is being used as a type here.
+   ╭─[typescript/types/import-type-dynamic/input.ts:2:22]
+ 1 │ let x: typeof import('./x');
+ 2 │ let Y: import('./y').Y;
+   ·                      ─
+ 3 │ let z: import("/z").foo.bar<string>;
+   ╰────
+  help: Did you mean 'typeof Y'?
 
   × Identifier `f` has already been declared
    ╭─[annex-b/disabled/3.4-var-redeclaration-catch-binding/input.js:2:17]

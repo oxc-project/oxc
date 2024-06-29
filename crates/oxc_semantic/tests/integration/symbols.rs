@@ -154,3 +154,11 @@ fn test_export_flag() {
     tester.has_root_symbol("b").contains_flags(SymbolFlags::Export).test();
     tester.has_root_symbol("c").contains_flags(SymbolFlags::Export).test();
 }
+
+#[test]
+fn foo() {
+    SemanticTester::ts("
+        type T = number;
+        type U = T;
+    ").has_root_symbol("T").test();
+}
