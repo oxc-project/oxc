@@ -18,3 +18,7 @@ export declare abstract class Qux {
 	bar(): void;
 	baz(): void;
 }
+export declare class Baz {
+	readonly prop1: 'some string';
+	prop2: string;
+}

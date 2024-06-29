@@ -66,7 +66,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         .value
                         .as_ref()
                         .and_then(|expr| {
-                            let ts_type = self.infer_type_from_expression(expr);
+                            let ts_type = if property.readonly {
+                                self.transform_expression_to_ts_type(expr)
+                            } else {
+                                self.infer_type_from_expression(expr)
+                            };
                             if ts_type.is_none() {
                                 self.error(property_must_have_explicit_type(property.key.span()));
                             }
@@ -75,6 +79,9 @@ impl<'a> IsolatedDeclarations<'a> {
                         .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type))
                 })
         };
+
+        // TODO if inferred type_annotations is TSLiteral, it should stand as value,
+        // so `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
 
         self.ast.class_property(
             property.r#type,
