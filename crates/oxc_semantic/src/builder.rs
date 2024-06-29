@@ -1813,6 +1813,14 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeAnnotation(_) => {
                 self.meaning_stack.push(MEANING_TYPELIKE);
             }
+            AstKind::TSPropertySignature(sig) => {
+                debug_assert!(self.current_meaning().is_type());
+                if sig.computed {
+                    self.meaning_stack.push(MEANING_TYPELIKE.union(SymbolFlags::ConstVariable));
+                } else {
+                    self.meaning_stack.push(MEANING_TYPELIKE);
+                }
+            }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
@@ -1922,6 +1930,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.meaning_stack.pop();
             }
             AstKind::TSTypeParameterInstantiation(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSPropertySignature(_) => {
                 self.meaning_stack.pop();
             }
             AstKind::UpdateExpression(_) => {

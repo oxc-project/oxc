@@ -2,8 +2,8 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
-Positive Passed: 5224/5283 (98.88%)
-Negative Passed: 1140/4875 (23.38%)
+Positive Passed: 5233/5283 (99.05%)
+Negative Passed: 1130/4875 (23.18%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -263,6 +263,7 @@ Expect Syntax Error: "compiler/circularOptionalityRemoval.ts"
 Expect Syntax Error: "compiler/circularReferenceInReturnType.ts"
 Expect Syntax Error: "compiler/circularReferenceInReturnType2.ts"
 Expect Syntax Error: "compiler/circularResolvedSignature.ts"
+Expect Syntax Error: "compiler/circularlyConstrainedMappedTypeContainingConditionalNoInfiniteInstantiationDepth.ts"
 Expect Syntax Error: "compiler/circularlyReferentialInterfaceAccessNoCrash.ts"
 Expect Syntax Error: "compiler/classDeclarationShouldBeOutOfScopeInComputedNames.ts"
 Expect Syntax Error: "compiler/classExpressionAssignment.ts"
@@ -677,6 +678,7 @@ Expect Syntax Error: "compiler/extendsClauseAlreadySeen.ts"
 Expect Syntax Error: "compiler/extendsClauseAlreadySeen2.ts"
 Expect Syntax Error: "compiler/externSemantics.ts"
 Expect Syntax Error: "compiler/externSyntax.ts"
+Expect Syntax Error: "compiler/extractInferenceImprovement.ts"
 Expect Syntax Error: "compiler/fakeInfinity1.ts"
 Expect Syntax Error: "compiler/fallFromLastCase2.ts"
 Expect Syntax Error: "compiler/fatarrowfunctionsOptionalArgsErrors4.ts"
@@ -1089,6 +1091,7 @@ Expect Syntax Error: "compiler/lambdaParamTypes.ts"
 Expect Syntax Error: "compiler/lambdaPropSelf.ts"
 Expect Syntax Error: "compiler/largeControlFlowGraph.ts"
 Expect Syntax Error: "compiler/lastPropertyInLiteralWins.ts"
+Expect Syntax Error: "compiler/lateBoundConstraintTypeChecksCorrectly.ts"
 Expect Syntax Error: "compiler/lateBoundDestructuringImplicitAnyError.ts"
 Expect Syntax Error: "compiler/letAsIdentifier.ts"
 Expect Syntax Error: "compiler/letConstInCaseClauses.ts"
@@ -1429,6 +1432,7 @@ Expect Syntax Error: "compiler/reactDefaultPropsInferenceSuccess.tsx"
 Expect Syntax Error: "compiler/reactImportUnusedInNewJSXEmit.tsx"
 Expect Syntax Error: "compiler/reactNamespaceInvalidInput.tsx"
 Expect Syntax Error: "compiler/reactNamespaceMissingDeclaration.tsx"
+Expect Syntax Error: "compiler/reactReduxLikeDeferredInferenceAllowsAssignment.ts"
 Expect Syntax Error: "compiler/readonlyAssignmentInSubclassOfClassExpression.ts"
 Expect Syntax Error: "compiler/readonlyInNonPropertyParameters.ts"
 Expect Syntax Error: "compiler/readonlyMembers.ts"
@@ -1685,6 +1689,7 @@ Expect Syntax Error: "compiler/typeParametersShouldNotBeEqual3.ts"
 Expect Syntax Error: "compiler/typePredicateInLoop.ts"
 Expect Syntax Error: "compiler/typePredicateInherit.ts"
 Expect Syntax Error: "compiler/typePredicatesInUnion3.ts"
+Expect Syntax Error: "compiler/typeUsedAsTypeLiteralIndex.ts"
 Expect Syntax Error: "compiler/typeValueConflict1.ts"
 Expect Syntax Error: "compiler/typeValueConflict2.ts"
 Expect Syntax Error: "compiler/typeVariableConstraintedToAliasNotAssignableToUnion.ts"
@@ -1720,6 +1725,7 @@ Expect Syntax Error: "compiler/unionSubtypeReductionErrors.ts"
 Expect Syntax Error: "compiler/unionTypeErrorMessageTypeRefs01.ts"
 Expect Syntax Error: "compiler/unionTypeWithRecursiveSubtypeReduction2.ts"
 Expect Syntax Error: "compiler/unionTypeWithRecursiveSubtypeReduction3.ts"
+Expect Syntax Error: "compiler/uniqueSymbolAllowsIndexInObjectWithIndexSignature.ts"
 Expect Syntax Error: "compiler/uniqueSymbolJs.ts"
 Expect Syntax Error: "compiler/unknownSymbolInGenericReturnType.ts"
 Expect Syntax Error: "compiler/unknownSymbolOffContextualType1.ts"
@@ -2923,6 +2929,7 @@ Expect Syntax Error: "conformance/jsx/tsxElementResolution9.tsx"
 Expect Syntax Error: "conformance/jsx/tsxEmit3.tsx"
 Expect Syntax Error: "conformance/jsx/tsxGenericArrowFunctionParsing.tsx"
 Expect Syntax Error: "conformance/jsx/tsxIntrinsicAttributeErrors.tsx"
+Expect Syntax Error: "conformance/jsx/tsxLibraryManagedAttributes.tsx"
 Expect Syntax Error: "conformance/jsx/tsxNamespacedTagName2.tsx"
 Expect Syntax Error: "conformance/jsx/tsxReactComponentWithDefaultTypeParameter3.tsx"
 Expect Syntax Error: "conformance/jsx/tsxReactEmit4.tsx"
@@ -3270,6 +3277,7 @@ Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatem
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement5.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/Iterators/parserForOfStatement9.ts"
+Expect Syntax Error: "conformance/pedantic/noUncheckedIndexedAccess.ts"
 Expect Syntax Error: "conformance/pedantic/noUncheckedIndexedAccessDestructuring.ts"
 Expect Syntax Error: "conformance/salsa/checkSpecialPropertyAssignments.ts"
 Expect Syntax Error: "conformance/salsa/constructorFunctions.ts"
@@ -3718,6 +3726,7 @@ Expect Syntax Error: "conformance/types/typeRelationships/typeInference/genericC
 Expect Syntax Error: "conformance/types/typeRelationships/typeInference/indexSignatureTypeInference.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/typeInference/intraExpressionInferences.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/typeInference/noInfer.ts"
+Expect Syntax Error: "conformance/types/typeRelationships/typeInference/unionTypeInference.ts"
 Expect Syntax Error: "conformance/types/union/contextualTypeWithUnionTypeObjectLiteral.ts"
 Expect Syntax Error: "conformance/types/union/discriminatedUnionTypes1.ts"
 Expect Syntax Error: "conformance/types/union/discriminatedUnionTypes2.ts"
@@ -3732,6 +3741,7 @@ Expect Syntax Error: "conformance/types/union/unionTypeMembers.ts"
 Expect Syntax Error: "conformance/types/union/unionTypePropertyAccessibility.ts"
 Expect Syntax Error: "conformance/types/union/unionTypeReadonly.ts"
 Expect Syntax Error: "conformance/types/union/unionTypeReduction2.ts"
+Expect Syntax Error: "conformance/types/union/unionTypeWithIndexSignature.ts"
 Expect Syntax Error: "conformance/types/uniqueSymbol/uniqueSymbolsDeclarationsInJsErrors.ts"
 Expect Syntax Error: "conformance/types/uniqueSymbol/uniqueSymbolsErrors.ts"
 Expect Syntax Error: "conformance/types/uniqueSymbol/uniqueSymbolsPropertyNames.ts"
@@ -4353,16 +4363,6 @@ Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
     · ────
  24 │     const enum H {}
     ╰────
-Expect to Parse: "compiler/expandoFunctionExpressionsWithDynamicNames2.ts"
-
-  × 'mySymbol' refers to a value, but is being used as a type here.
-   ╭─[compiler/expandoFunctionExpressionsWithDynamicNames2.ts:4:4]
- 3 │   (): void;
- 4 │   [mySymbol]: true;
-   ·    ────────
- 5 │ }
-   ╰────
-  help: Did you mean 'typeof mySymbol'?
 Expect to Parse: "compiler/fatArrowSelf.ts"
 
   × 'Events' refers to a value, but is being used as a type here.
@@ -4373,52 +4373,6 @@ Expect to Parse: "compiler/fatArrowSelf.ts"
  14 │ 
     ╰────
   help: Did you mean 'typeof Events'?
-Expect to Parse: "compiler/forwardRefInTypeDeclaration.ts"
-
-  × 's4' refers to a value, but is being used as a type here.
-    ╭─[compiler/forwardRefInTypeDeclaration.ts:14:24]
- 13 │ // or in a type literal
- 14 │ declare const foo4: { [s4]: number; }
-    ·                        ──
- 15 │ const s4 = "x";
-    ╰────
-  help: Did you mean 'typeof s4'?
-
-  × 'obj2' refers to a value, but is being used as a type here.
-    ╭─[compiler/forwardRefInTypeDeclaration.ts:22:73]
- 21 │ // or with qualified names
- 22 │ interface Foo6 { [Cls1.a]: number; [Cls2.b]: number; [obj1.c]: number; [obj2.d]: number }
-    ·                                                                         ────
- 23 │ declare class Cls1 { static a: "a"; }
-    ╰────
-  help: Did you mean 'typeof obj2'?
-
-  × 's2' refers to a value, but is being used as a type here.
-   ╭─[compiler/forwardRefInTypeDeclaration.ts:6:19]
- 5 │ // ignored anywhere in an interface (#35947)
- 6 │ interface Foo2 { [s2]: number; }
-   ·                   ──
- 7 │ const s2 = "x";
-   ╰────
-  help: Did you mean 'typeof s2'?
-
-  × 'obj1' refers to a value, but is being used as a type here.
-    ╭─[compiler/forwardRefInTypeDeclaration.ts:22:55]
- 21 │ // or with qualified names
- 22 │ interface Foo6 { [Cls1.a]: number; [Cls2.b]: number; [obj1.c]: number; [obj2.d]: number }
-    ·                                                       ────
- 23 │ declare class Cls1 { static a: "a"; }
-    ╰────
-  help: Did you mean 'typeof obj1'?
-
-  × 's3' refers to a value, but is being used as a type here.
-    ╭─[compiler/forwardRefInTypeDeclaration.ts:10:16]
-  9 │ // or in a type definition
- 10 │ type Foo3 = { [s3]: number; }
-    ·                ──
- 11 │ const s3 = "x";
-    ╰────
-  help: Did you mean 'typeof s3'?
 Expect to Parse: "compiler/functionCall5.ts"
 
   × 'm1' refers to a value, but is being used as a type here.
@@ -4588,34 +4542,6 @@ Expect to Parse: "compiler/intersectionTypeNormalization.ts"
  97 │ };
     ╰────
   help: Did you mean 'typeof enums'?
-Expect to Parse: "compiler/keyRemappingKeyofResult.ts"
-
-  × 'sym' refers to a value, but is being used as a type here.
-   ╭─[compiler/keyRemappingKeyofResult.ts:2:44]
- 1 │ const sym = Symbol("")
- 2 │ type Orig = { [k: string]: any, str: any, [sym]: any }
-   ·                                            ───
- 3 │ 
-   ╰────
-  help: Did you mean 'typeof sym'?
-
-  × 'sym' refers to a value, but is being used as a type here.
-    ╭─[compiler/keyRemappingKeyofResult.ts:22:48]
- 21 │ function f<T>() {
- 22 │     type Orig = { [k: string]: any, str: any, [sym]: any } & T;
-    ·                                                ───
- 23 │     
-    ╰────
-  help: Did you mean 'typeof sym'?
-
-  × 'sym' refers to a value, but is being used as a type here.
-    ╭─[compiler/keyRemappingKeyofResult.ts:46:48]
- 45 │ function g<T>() {
- 46 │     type Orig = { [k: string]: any, str: any, [sym]: any } & T;
-    ·                                                ───
- 47 │     
-    ╰────
-  help: Did you mean 'typeof sym'?
 Expect to Parse: "compiler/moduleVisibilityTest1.ts"
 
   × 'M' refers to a value, but is being used as a type here.
@@ -4787,16 +4713,6 @@ Expect to Parse: "compiler/typeResolution.ts"
  68 │                     
     ╰────
   help: Did you mean 'typeof TopLevelModule1'?
-Expect to Parse: "compiler/uniqueSymbolAssignmentOnGlobalAugmentationSuceeds.ts"
-
-  × 'FOO_SYMBOL' refers to a value, but is being used as a type here.
-   ╭─[compiler/uniqueSymbolAssignmentOnGlobalAugmentationSuceeds.ts:5:10]
- 4 │     interface Promise<T> {
- 5 │         [FOO_SYMBOL]?: number;
-   ·          ──────────
- 6 │     }
-   ╰────
-  help: Did you mean 'typeof FOO_SYMBOL'?
 Expect to Parse: "compiler/withStatementInternalComments.ts"
 
   × 'with' statements are not allowed
@@ -4864,44 +4780,6 @@ Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyN
      ·                ─────────
  291 │         prototype() {} // ok
      ╰────
-Expect to Parse: "conformance/controlFlow/controlFlowForInStatement2.ts"
-
-  × 'keywordA' refers to a value, but is being used as a type here.
-   ╭─[conformance/controlFlow/controlFlowForInStatement2.ts:4:13]
- 3 │ 
- 4 │ type A = { [keywordA]: number };
-   ·             ────────
- 5 │ type B = { [keywordB]: string };
-   ╰────
-  help: Did you mean 'typeof keywordA'?
-
-  × 'keywordB' refers to a value, but is being used as a type here.
-   ╭─[conformance/controlFlow/controlFlowForInStatement2.ts:5:13]
- 4 │ type A = { [keywordA]: number };
- 5 │ type B = { [keywordB]: string };
-   ·             ────────
- 6 │ 
-   ╰────
-  help: Did you mean 'typeof keywordB'?
-Expect to Parse: "conformance/controlFlow/controlFlowInOperator.ts"
-
-  × 'a' refers to a value, but is being used as a type here.
-   ╭─[conformance/controlFlow/controlFlowInOperator.ts:5:13]
- 4 │ 
- 5 │ type A = { [a]: number; };
-   ·             ─
- 6 │ type B = { [b]: string; };
-   ╰────
-  help: Did you mean 'typeof a'?
-
-  × 'b' refers to a value, but is being used as a type here.
-   ╭─[conformance/controlFlow/controlFlowInOperator.ts:6:13]
- 5 │ type A = { [a]: number; };
- 6 │ type B = { [b]: string; };
-   ·             ─
- 7 │ 
-   ╰────
-  help: Did you mean 'typeof b'?
 Expect to Parse: "conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts"
 
   × Expected `,` but found `string`
@@ -4912,25 +4790,6 @@ Expect to Parse: "conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitra
     ·                 ╰── `,` expected
  20 │ const importTest: typeA = "expect error about someType";
     ╰────
-Expect to Parse: "conformance/es6/Symbols/symbolProperty60.ts"
-
-  × 'mySymbol' refers to a value, but is being used as a type here.
-    ╭─[conformance/es6/Symbols/symbolProperty60.ts:15:6]
- 14 │ interface I3 {
- 15 │     [mySymbol]: string;
-    ·      ────────
- 16 │     [key: string]: number;
-    ╰────
-  help: Did you mean 'typeof mySymbol'?
-
-  × 'mySymbol' refers to a value, but is being used as a type here.
-    ╭─[conformance/es6/Symbols/symbolProperty60.ts:20:6]
- 19 │ interface I4 {
- 20 │     [mySymbol]: string;
-    ·      ────────
- 21 │     [key: number]: boolean;
-    ╰────
-  help: Did you mean 'typeof mySymbol'?
 Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJS.ts"
 
   × 'with' statements are not allowed
@@ -5239,35 +5098,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  46 │ for(var aFunctionInModule: typeof M.F2 = (x) => 'this is a string';;){}
     ╰────
   help: Did you mean 'typeof M'?
-Expect to Parse: "conformance/types/rest/genericObjectRest.ts"
-
-  × 'sa' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/rest/genericObjectRest.ts:15:26]
- 14 │ 
- 15 │ function f2<T extends { [sa]: string, [sb]: number }>(obj: T) {
-    ·                          ──
- 16 │     let { [sa]: a1, [sb]: b1, ...r1 } = obj;
-    ╰────
-  help: Did you mean 'typeof sa'?
-
-  × 'sb' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/rest/genericObjectRest.ts:15:40]
- 14 │ 
- 15 │ function f2<T extends { [sa]: string, [sb]: number }>(obj: T) {
-    ·                                        ──
- 16 │     let { [sa]: a1, [sb]: b1, ...r1 } = obj;
-    ╰────
-  help: Did you mean 'typeof sb'?
-Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
-
-  × 's' refers to a value, but is being used as a type here.
-     ╭─[conformance/types/uniqueSymbol/uniqueSymbols.ts:122:21]
- 121 │ declare namespace N { const s: unique symbol; }
- 122 │ declare const o: { [s]: "a", [N.s]: "b" };
-     ·                     ─
- 123 │ declare function f<T>(x: T): T;
-     ╰────
-  help: Did you mean 'typeof s'?
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[compiler/ArrowFunctionExpression1.ts:1:10]
@@ -6095,15 +5925,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
     · ╰──── class does not have `extends`
     ╰────
   help: either remove this super, or extend the class
-
-  × 'nominalTypeHack' refers to a value, but is being used as a type here.
-    ╭─[compiler/circularlyConstrainedMappedTypeContainingConditionalNoInfiniteInstantiationDepth.ts:22:6]
- 21 │     (props: object, propName: string, componentName: string, location: string, propFullName: string): Error | null;
- 22 │     [nominalTypeHack]?: T;
-    ·      ───────────────
- 23 │ }
-    ╰────
-  help: Did you mean 'typeof nominalTypeHack'?
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/class2.ts:1:35]
@@ -7235,24 +7056,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
    ╰────
 
   × 'Readonly' refers to a value, but is being used as a type here.
-    ╭─[compiler/deeplyNestedMappedTypes.ts:91:6]
- 90 │ export interface TSchema extends TKind {
- 91 │     [Readonly]?: string
-    ·      ────────
- 92 │     [Optional]?: string
-    ╰────
-  help: Did you mean 'typeof Readonly'?
-
-  × 'Readonly' refers to a value, but is being used as a type here.
-     ╭─[compiler/deeplyNestedMappedTypes.ts:99:51]
-  98 │ export type TReadonlyOptional<T extends TSchema> = TOptional<T> & TReadonly<T>
-  99 │ export type TReadonly<T extends TSchema> = T & { [Readonly]: 'Readonly' }
-     ·                                                   ────────
- 100 │ export type TOptional<T extends TSchema> = T & { [Optional]: 'Optional' }
-     ╰────
-  help: Did you mean 'typeof Readonly'?
-
-  × 'Readonly' refers to a value, but is being used as a type here.
      ╭─[compiler/deeplyNestedMappedTypes.ts:113:5]
  112 │ export type PropertiesReducer<T extends TProperties, R extends Record<keyof any, unknown>> = Evaluate<(
  113 │     Readonly<Partial<Pick<R, ReadonlyOptionalPropertyKeys<T>>>> &
@@ -7269,60 +7072,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
  115 │     Partial<Pick<R, OptionalPropertyKeys<T>>> &
      ╰────
   help: Did you mean 'typeof Readonly'?
-
-  × 'Optional' refers to a value, but is being used as a type here.
-    ╭─[compiler/deeplyNestedMappedTypes.ts:92:6]
- 91 │     [Readonly]?: string
- 92 │     [Optional]?: string
-    ·      ────────
- 93 │     [Hint]?: string
-    ╰────
-  help: Did you mean 'typeof Optional'?
-
-  × 'Optional' refers to a value, but is being used as a type here.
-     ╭─[compiler/deeplyNestedMappedTypes.ts:100:51]
-  99 │ export type TReadonly<T extends TSchema> = T & { [Readonly]: 'Readonly' }
- 100 │ export type TOptional<T extends TSchema> = T & { [Optional]: 'Optional' }
-     ·                                                   ────────
- 101 │ 
-     ╰────
-  help: Did you mean 'typeof Optional'?
-
-  × 'Hint' refers to a value, but is being used as a type here.
-    ╭─[compiler/deeplyNestedMappedTypes.ts:93:6]
- 92 │     [Optional]?: string
- 93 │     [Hint]?: string
-    ·      ────
- 94 │     params: unknown[]
-    ╰────
-  help: Did you mean 'typeof Hint'?
-
-  × 'Kind' refers to a value, but is being used as a type here.
-    ╭─[compiler/deeplyNestedMappedTypes.ts:88:6]
- 87 │ export interface TKind {
- 88 │     [Kind]: string
-    ·      ────
- 89 │ }
-    ╰────
-  help: Did you mean 'typeof Kind'?
-
-  × 'Kind' refers to a value, but is being used as a type here.
-     ╭─[compiler/deeplyNestedMappedTypes.ts:103:6]
- 102 │ export interface TString extends TSchema {
- 103 │     [Kind]: 'String';
-     ·      ────
- 104 │     static: string;
-     ╰────
-  help: Did you mean 'typeof Kind'?
-
-  × 'Kind' refers to a value, but is being used as a type here.
-     ╭─[compiler/deeplyNestedMappedTypes.ts:124:6]
- 123 │ export interface TObject<T extends TProperties = TProperties> extends TSchema {
- 124 │     [Kind]: 'Object'
-     ·      ────
- 125 │     static: PropertiesReduce<T, this['params']>
-     ╰────
-  help: Did you mean 'typeof Kind'?
 
   × Unexpected token
    ╭─[compiler/defaultKeywordWithoutExport1.ts:4:1]
@@ -8361,15 +8110,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × 's' refers to a value, but is being used as a type here.
-    ╭─[compiler/extractInferenceImprovement.ts:14:6]
- 13 │     second: number;
- 14 │     [s]: string;
-    ·      ─
- 15 │ }
-    ╰────
-  help: Did you mean 'typeof s'?
-
   × Expected `,` but found `=>`
    ╭─[compiler/fatarrowfunctionsErrors.ts:2:8]
  1 │ foo((...Far:any[])=>{return 0;})
@@ -9034,24 +8774,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
     ·                                ─
  10 │ var tooManySeparators2 = <a:ele:ment></a:ele:ment>;
     ╰────
-
-  × 'barProp' refers to a value, but is being used as a type here.
-   ╭─[compiler/lateBoundConstraintTypeChecksCorrectly.ts:8:4]
- 7 │   [fooProp]: T;
- 8 │   [barProp]: string;
-   ·    ───────
- 9 │ }
-   ╰────
-  help: Did you mean 'typeof barProp'?
-
-  × 'fooProp' refers to a value, but is being used as a type here.
-   ╭─[compiler/lateBoundConstraintTypeChecksCorrectly.ts:7:4]
- 6 │ export interface Foo<T> {
- 7 │   [fooProp]: T;
-   ·    ───────
- 8 │   [barProp]: string;
-   ╰────
-  help: Did you mean 'typeof fooProp'?
 
   × Identifier `e0` has already been declared
    ╭─[compiler/letAndVarRedeclaration.ts:1:5]
@@ -10837,15 +10559,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
     ╰────
   help: Did you mean 'typeof T'?
 
-  × 'nominalTypeHack' refers to a value, but is being used as a type here.
-    ╭─[compiler/reactReduxLikeDeferredInferenceAllowsAssignment.ts:28:4]
- 27 │   ): Error | null;
- 28 │   [nominalTypeHack]?: T;
-    ·    ───────────────
- 29 │ }
-    ╰────
-  help: Did you mean 'typeof nominalTypeHack'?
-
   × Identifier `bar` has already been declared
    ╭─[compiler/reassignStaticProp.ts:3:12]
  2 │  
@@ -12509,15 +12222,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
     ╰────
   help: Did you mean 'typeof ns'?
 
-  × 'K1' refers to a value, but is being used as a type here.
-   ╭─[compiler/typeUsedAsTypeLiteralIndex.ts:8:6]
- 7 │ type T1 = {
- 8 │     [K1]: number;
-   ·      ──
- 9 │ }
-   ╰────
-  help: Did you mean 'typeof K1'?
-
   × 'someType' refers to a type, but is being used as a value here.
     ╭─[compiler/typeUsedAsValueError.ts:21:11]
  20 │ let five = new TypeAliasForSomeClassNotFound();
@@ -12675,15 +12379,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
    ·      ▲
    ╰────
   help: Try insert a semicolon here
-
-  × 'SYM' refers to a value, but is being used as a type here.
-   ╭─[compiler/uniqueSymbolAllowsIndexInObjectWithIndexSignature.ts:5:4]
- 4 │ export interface I {
- 5 │   [SYM]: 'sym';
-   ·    ───
- 6 │   [x: string]: 'str';
-   ╰────
-  help: Did you mean 'typeof SYM'?
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/unparenthesizedConstructorTypeInUnionOrIntersection.ts:1:23]
@@ -18969,15 +18664,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
  10 │ 
     ╰────
 
-  × 'checkedType' refers to a value, but is being used as a type here.
-    ╭─[conformance/jsx/tsxLibraryManagedAttributes.tsx:12:6]
- 11 │     isRequired: PropTypeChecker<U, true>;
- 12 │     [checkedType]: TRequired extends true ? U : U | null | undefined;
-    ·      ───────────
- 13 │ }
-    ╰────
-  help: Did you mean 'typeof checkedType'?
-
   × Expected `,` but found `;`
     ╭─[conformance/jsx/tsxStatelessFunctionComponents1.tsx:41:16]
  40 │ let o = {
@@ -21898,15 +21584,6 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
  3 │ }
    ╰────
 
-  × 's' refers to a value, but is being used as a type here.
-    ╭─[conformance/pedantic/noUncheckedIndexedAccess.ts:83:29]
- 82 │ declare const s: unique symbol;
- 83 │ declare const symbolMap: { [s]: string };
-    ·                             ─
- 84 │ const e15: string = symbolMap[s]; // Should OK
-    ╰────
-  help: Did you mean 'typeof s'?
-
   × Constructor can't have get/set modifier
    ╭─[conformance/salsa/constructorNameInAccessor.ts:2:9]
  1 │ class C1 {
@@ -24048,21 +23725,3 @@ Expect to Parse: "conformance/types/uniqueSymbol/uniqueSymbols.ts"
    ·            ──
  2 │ type T2<out out> = T2 // Error: circularly references 
    ╰────
-
-  × 'containsPromises' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/typeRelationships/typeInference/unionTypeInference.ts:58:8]
- 57 │ type DeepPromised<T> =
- 58 │     { [containsPromises]?: true } &
-    ·        ────────────────
- 59 │     { [TKey in keyof T]: T[TKey] | DeepPromised<T[TKey]> | Promise<DeepPromised<T[TKey]>> };
-    ╰────
-  help: Did you mean 'typeof containsPromises'?
-
-  × 'sym' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/union/unionTypeWithIndexSignature.ts:20:40]
- 19 │ const sym = Symbol()
- 20 │ type Both = { s: number, '0': number, [sym]: boolean } | { [n: number]: number, [s: string]: string | number }
-    ·                                        ───
- 21 │ declare var both: Both
-    ╰────
-  help: Did you mean 'typeof sym'?
