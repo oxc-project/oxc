@@ -4,7 +4,7 @@ use oxc_ast::{
     AstBuilder,
 };
 use oxc_semantic::{ScopeTree, SymbolTable};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -106,7 +106,7 @@ pub use scoping::TraverseScoping;
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
     pub ancestry: TraverseAncestry<'a>,
-    pub scoping: TraverseScoping<'a>,
+    pub scoping: TraverseScoping,
     pub ast: AstBuilder<'a>,
 }
 
@@ -120,11 +120,7 @@ pub enum FinderRet<T> {
 // Public methods
 impl<'a> TraverseCtx<'a> {
     /// Create new traversal context.
-    pub(crate) fn new(
-        scopes: ScopeTree<'a>,
-        symbols: SymbolTable<'a>,
-        allocator: &'a Allocator,
-    ) -> Self {
+    pub(crate) fn new(scopes: ScopeTree, symbols: SymbolTable, allocator: &'a Allocator) -> Self {
         let ancestry = TraverseAncestry::new();
         let scoping = TraverseScoping::new(scopes, symbols);
         let ast = AstBuilder::new(allocator);
@@ -228,7 +224,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.scoping.scopes`.
     #[inline]
-    pub fn scopes(&self) -> &ScopeTree<'a> {
+    pub fn scopes(&self) -> &ScopeTree {
         self.scoping.scopes()
     }
 
@@ -236,7 +232,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.scoping.scopes_mut`.
     #[inline]
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree<'a> {
+    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
         self.scoping.scopes_mut()
     }
 
@@ -244,7 +240,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.scoping.symbols`.
     #[inline]
-    pub fn symbols(&self) -> &SymbolTable<'a> {
+    pub fn symbols(&self) -> &SymbolTable {
         self.scoping.symbols()
     }
 
@@ -252,7 +248,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.scoping.symbols_mut`.
     #[inline]
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable<'a> {
+    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
         self.scoping.symbols_mut()
     }
 
@@ -355,7 +351,7 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
     pub fn create_bound_reference(
         &mut self,
-        name: Atom<'a>,
+        name: CompactStr,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> ReferenceId {
@@ -378,7 +374,11 @@ impl<'a> TraverseCtx<'a> {
     /// Create an unbound reference.
     ///
     /// This is a shortcut for `ctx.scoping.create_unbound_reference`.
-    pub fn create_unbound_reference(&mut self, name: Atom<'a>, flag: ReferenceFlag) -> ReferenceId {
+    pub fn create_unbound_reference(
+        &mut self,
+        name: CompactStr,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
         self.scoping.create_unbound_reference(name, flag)
     }
 
@@ -402,7 +402,7 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.create_reference`.
     pub fn create_reference(
         &mut self,
-        name: Atom<'a>,
+        name: CompactStr,
         symbol_id: Option<SymbolId>,
         flag: ReferenceFlag,
     ) -> ReferenceId {
@@ -430,7 +430,7 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.create_reference_in_current_scope`.
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: Atom<'a>,
+        name: CompactStr,
         flag: ReferenceFlag,
     ) -> ReferenceId {
         self.scoping.create_reference_in_current_scope(name, flag)

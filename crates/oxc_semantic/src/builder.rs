@@ -9,7 +9,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
 use crate::{
@@ -63,8 +63,8 @@ pub struct SemanticBuilder<'a> {
 
     // builders
     pub nodes: AstNodes<'a>,
-    pub scope: ScopeTree<'a>,
-    pub symbols: SymbolTable<'a>,
+    pub scope: ScopeTree,
+    pub symbols: SymbolTable,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -315,7 +315,7 @@ impl<'a> SemanticBuilder<'a> {
 
     pub fn declare_reference(
         &mut self,
-        reference: Reference<'a>,
+        reference: Reference,
         add_unresolved_reference: bool,
     ) -> ReferenceId {
         let reference_name = reference.name().clone();
@@ -327,7 +327,7 @@ impl<'a> SemanticBuilder<'a> {
                 reference_id,
             );
         } else {
-            self.resolve_reference_ids(reference_name, vec![reference_id]);
+            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
         }
         reference_id
     }
@@ -361,7 +361,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn resolve_reference_ids(&mut self, name: Atom<'a>, reference_ids: Vec<ReferenceId>) {
+    fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
         let parent_scope_id =
             self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
 
@@ -1884,9 +1884,9 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
+    fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
-        let name = ident.name.clone();
+        let name = ident.name.to_compact_str();
         let reference = Reference::new(ident.span, name, self.current_node_id, flag);
         // `function foo({bar: identifier_reference}) {}`
         //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
@@ -1905,7 +1905,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier<'a>) {
+    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier) {
         match self.nodes.parent_kind(self.current_node_id) {
             Some(AstKind::JSXElementName(_)) => {
                 if !ident.name.chars().next().is_some_and(char::is_uppercase) {
@@ -1917,7 +1917,7 @@ impl<'a> SemanticBuilder<'a> {
         }
         let reference = Reference::new(
             ident.span,
-            ident.name.clone(),
+            ident.name.to_compact_str(),
             self.current_node_id,
             ReferenceFlag::read(),
         );

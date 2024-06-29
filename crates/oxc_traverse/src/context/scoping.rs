@@ -22,14 +22,14 @@ use super::FinderRet;
 ///
 /// `current_scope_id` is the ID of current scope during traversal.
 /// `walk_*` functions update this field when entering/exiting a scope.
-pub struct TraverseScoping<'a> {
-    scopes: ScopeTree<'a>,
-    symbols: SymbolTable<'a>,
+pub struct TraverseScoping {
+    scopes: ScopeTree,
+    symbols: SymbolTable,
     current_scope_id: ScopeId,
 }
 
 // Public methods
-impl<'a> TraverseScoping<'a> {
+impl TraverseScoping {
     /// Get current scope ID
     #[inline]
     pub fn current_scope_id(&self) -> ScopeId {
@@ -44,25 +44,25 @@ impl<'a> TraverseScoping<'a> {
 
     /// Get scopes tree
     #[inline]
-    pub fn scopes(&self) -> &ScopeTree<'a> {
+    pub fn scopes(&self) -> &ScopeTree {
         &self.scopes
     }
 
     /// Get mutable scopes tree
     #[inline]
-    pub fn scopes_mut(&mut self) -> &mut ScopeTree<'a> {
+    pub fn scopes_mut(&mut self) -> &mut ScopeTree {
         &mut self.scopes
     }
 
     /// Get symbols table
     #[inline]
-    pub fn symbols(&self) -> &SymbolTable<'a> {
+    pub fn symbols(&self) -> &SymbolTable {
         &self.symbols
     }
 
     /// Get mutable symbols table
     #[inline]
-    pub fn symbols_mut(&mut self) -> &mut SymbolTable<'a> {
+    pub fn symbols_mut(&mut self) -> &mut SymbolTable {
         &mut self.symbols
     }
 
@@ -259,7 +259,7 @@ impl<'a> TraverseScoping<'a> {
     /// Create a reference bound to a `SymbolId`
     pub fn create_bound_reference(
         &mut self,
-        name: Atom<'a>,
+        name: CompactStr,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> ReferenceId {
@@ -271,14 +271,14 @@ impl<'a> TraverseScoping<'a> {
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`
-    pub fn create_bound_reference_id(
+    pub fn create_bound_reference_id<'a>(
         &mut self,
         span: Span,
         name: Atom<'a>,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_bound_reference(name.clone(), symbol_id, flag);
+        let reference_id = self.create_bound_reference(name.to_compact_str(), symbol_id, flag);
         IdentifierReference {
             span,
             name,
@@ -288,7 +288,11 @@ impl<'a> TraverseScoping<'a> {
     }
 
     /// Create an unbound reference
-    pub fn create_unbound_reference(&mut self, name: Atom<'a>, flag: ReferenceFlag) -> ReferenceId {
+    pub fn create_unbound_reference(
+        &mut self,
+        name: CompactStr,
+        flag: ReferenceFlag,
+    ) -> ReferenceId {
         let reference = Reference::new(SPAN, name.clone(), AstNodeId::dummy(), flag);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, reference_id);
@@ -296,13 +300,13 @@ impl<'a> TraverseScoping<'a> {
     }
 
     /// Create an unbound `IdentifierReference`
-    pub fn create_unbound_reference_id(
+    pub fn create_unbound_reference_id<'a>(
         &mut self,
         span: Span,
         name: Atom<'a>,
         flag: ReferenceFlag,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_unbound_reference(name.clone(), flag);
+        let reference_id = self.create_unbound_reference(name.to_compact_str(), flag);
         IdentifierReference {
             span,
             name,
@@ -317,12 +321,12 @@ impl<'a> TraverseScoping<'a> {
     /// or `TraverseCtx::create_unbound_reference`.
     pub fn create_reference(
         &mut self,
-        name: Atom<'a>,
+        name: CompactStr,
         symbol_id: Option<SymbolId>,
         flag: ReferenceFlag,
     ) -> ReferenceId {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference(name.clone(), symbol_id, flag)
+            self.create_bound_reference(name, symbol_id, flag)
         } else {
             self.create_unbound_reference(name, flag)
         }
@@ -332,7 +336,7 @@ impl<'a> TraverseScoping<'a> {
     ///
     /// If you know if there's a `SymbolId` or not, prefer `TraverseCtx::create_bound_reference_id`
     /// or `TraverseCtx::create_unbound_reference_id`.
-    pub fn create_reference_id(
+    pub fn create_reference_id<'a>(
         &mut self,
         span: Span,
         name: Atom<'a>,
@@ -349,7 +353,7 @@ impl<'a> TraverseScoping<'a> {
     /// Create reference in current scope, looking up binding for `name`
     pub fn create_reference_in_current_scope(
         &mut self,
-        name: Atom<'a>,
+        name: CompactStr,
         flag: ReferenceFlag,
     ) -> ReferenceId {
         let symbol_id = self.scopes.find_binding(self.current_scope_id, name.as_str());
@@ -358,9 +362,9 @@ impl<'a> TraverseScoping<'a> {
 }
 
 // Methods used internally within crate
-impl<'a> TraverseScoping<'a> {
+impl TraverseScoping {
     /// Create new `TraverseScoping`
-    pub(super) fn new(scopes: ScopeTree<'a>, symbols: SymbolTable<'a>) -> Self {
+    pub(super) fn new(scopes: ScopeTree, symbols: SymbolTable) -> Self {
         Self {
             scopes,
             symbols,

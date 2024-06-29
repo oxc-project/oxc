@@ -28,7 +28,7 @@ export type IndexVec<I, T> = Array<T>;
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
-pub struct SymbolTable<'a> {
+pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
     pub names: IndexVec<SymbolId, CompactStr>,
     pub flags: IndexVec<SymbolId, SymbolFlags>,
@@ -36,11 +36,11 @@ pub struct SymbolTable<'a> {
     /// Pointer to the AST Node where this symbol is declared
     pub declarations: IndexVec<SymbolId, AstNodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
-    pub references: IndexVec<ReferenceId, Reference<'a>>,
+    pub references: IndexVec<ReferenceId, Reference>,
     pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
 }
 
-impl<'a> SymbolTable<'a> {
+impl SymbolTable {
     pub fn len(&self) -> usize {
         self.spans.len()
     }
@@ -136,15 +136,15 @@ impl<'a> SymbolTable<'a> {
         self.redeclare_variables[symbol_id].push(span);
     }
 
-    pub fn create_reference(&mut self, reference: Reference<'a>) -> ReferenceId {
+    pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
         self.references.push(reference)
     }
 
-    pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference<'a> {
+    pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
         &self.references[reference_id]
     }
 
-    pub fn get_reference_mut(&mut self, reference_id: ReferenceId) -> &mut Reference<'a> {
+    pub fn get_reference_mut(&mut self, reference_id: ReferenceId) -> &mut Reference {
         &mut self.references[reference_id]
     }
 
