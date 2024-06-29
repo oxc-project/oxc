@@ -2,8 +2,8 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5280/5283 (99.94%)
-Positive Passed: 5233/5283 (99.05%)
-Negative Passed: 1130/4875 (23.18%)
+Positive Passed: 5267/5283 (99.70%)
+Negative Passed: 1101/4875 (22.58%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -39,6 +39,7 @@ Expect Syntax Error: "compiler/accessorWithoutBody2.ts"
 Expect Syntax Error: "compiler/accessorsInAmbientContext.ts"
 Expect Syntax Error: "compiler/accessors_spec_section-4.5_error-cases.ts"
 Expect Syntax Error: "compiler/addMoreOverloadsToBaseSignature.ts"
+Expect Syntax Error: "compiler/aliasBug.ts"
 Expect Syntax Error: "compiler/aliasInstantiationExpressionGenericIntersectionNoCrash1.ts"
 Expect Syntax Error: "compiler/aliasInstantiationExpressionGenericIntersectionNoCrash2.ts"
 Expect Syntax Error: "compiler/aliasesInSystemModule1.ts"
@@ -460,6 +461,7 @@ Expect Syntax Error: "compiler/declarationEmitTypeAliasTypeParameterExtendingUnk
 Expect Syntax Error: "compiler/declarationEmitUnknownImport.ts"
 Expect Syntax Error: "compiler/declarationEmitVarInElidedBlock.ts"
 Expect Syntax Error: "compiler/declarationFileNoCrashOnExtraExportModifier.ts"
+Expect Syntax Error: "compiler/declarationMapsWithoutDeclaration.ts"
 Expect Syntax Error: "compiler/declareAlreadySeen.ts"
 Expect Syntax Error: "compiler/declareClassInterfaceImplementation.ts"
 Expect Syntax Error: "compiler/declareModifierOnImport1.ts"
@@ -506,6 +508,7 @@ Expect Syntax Error: "compiler/detachedCommentAtStartOfFunctionBody2.ts"
 Expect Syntax Error: "compiler/didYouMeanElaborationsForExpressionsWhichCouldBeCalled.ts"
 Expect Syntax Error: "compiler/didYouMeanStringLiteral.ts"
 Expect Syntax Error: "compiler/didYouMeanSuggestionErrors.ts"
+Expect Syntax Error: "compiler/differentTypesWithSameName.ts"
 Expect Syntax Error: "compiler/discriminateWithMissingProperty.ts"
 Expect Syntax Error: "compiler/discriminatedUnionErrorMessage.ts"
 Expect Syntax Error: "compiler/dissallowSymbolAsWeakType.ts"
@@ -565,11 +568,14 @@ Expect Syntax Error: "compiler/emptyTypeArgumentList.ts"
 Expect Syntax Error: "compiler/emptyTypeArgumentListWithNew.ts"
 Expect Syntax Error: "compiler/enumAssignmentCompat.ts"
 Expect Syntax Error: "compiler/enumAssignmentCompat2.ts"
+Expect Syntax Error: "compiler/enumAssignmentCompat3.ts"
 Expect Syntax Error: "compiler/enumAssignmentCompat5.ts"
+Expect Syntax Error: "compiler/enumAssignmentCompat7.ts"
 Expect Syntax Error: "compiler/enumBasics1.ts"
 Expect Syntax Error: "compiler/enumBasics2.ts"
 Expect Syntax Error: "compiler/enumBasics3.ts"
 Expect Syntax Error: "compiler/enumIdentifierLiterals.ts"
+Expect Syntax Error: "compiler/enumLiteralAssignableToEnumInsideUnion.ts"
 Expect Syntax Error: "compiler/enumPropertyAccess.ts"
 Expect Syntax Error: "compiler/enumPropertyAccessBeforeInitalisation.ts"
 Expect Syntax Error: "compiler/enumUsedBeforeDeclaration.ts"
@@ -634,6 +640,7 @@ Expect Syntax Error: "compiler/excessPropertyCheckWithUnions.ts"
 Expect Syntax Error: "compiler/excessPropertyChecksWithNestedIntersections.ts"
 Expect Syntax Error: "compiler/excessPropertyErrorForFunctionTypes.ts"
 Expect Syntax Error: "compiler/excessPropertyErrorsSuppressed.ts"
+Expect Syntax Error: "compiler/excessiveStackDepthFlatArray.ts"
 Expect Syntax Error: "compiler/excessivelyLargeTupleSpread.ts"
 Expect Syntax Error: "compiler/exhaustiveSwitchCheckCircularity.ts"
 Expect Syntax Error: "compiler/exhaustiveSwitchImplicitReturn.ts"
@@ -707,6 +714,7 @@ Expect Syntax Error: "compiler/functionCall16.ts"
 Expect Syntax Error: "compiler/functionCall17.ts"
 Expect Syntax Error: "compiler/functionCall18.ts"
 Expect Syntax Error: "compiler/functionCall6.ts"
+Expect Syntax Error: "compiler/functionCall7.ts"
 Expect Syntax Error: "compiler/functionCall8.ts"
 Expect Syntax Error: "compiler/functionCall9.ts"
 Expect Syntax Error: "compiler/functionCallOnConstrainedTypeVariable.ts"
@@ -759,6 +767,7 @@ Expect Syntax Error: "compiler/genericChainedCalls.ts"
 Expect Syntax Error: "compiler/genericClassInheritsConstructorFromNonGenericClass.ts"
 Expect Syntax Error: "compiler/genericClassWithStaticsUsingTypeArguments.ts"
 Expect Syntax Error: "compiler/genericClassesRedeclaration.ts"
+Expect Syntax Error: "compiler/genericCloduleInModule2.ts"
 Expect Syntax Error: "compiler/genericCloneReturnTypes.ts"
 Expect Syntax Error: "compiler/genericCloneReturnTypes2.ts"
 Expect Syntax Error: "compiler/genericCombinators2.ts"
@@ -775,6 +784,8 @@ Expect Syntax Error: "compiler/genericFunctionCallSignatureReturnTypeMismatch.ts
 Expect Syntax Error: "compiler/genericFunctionInference1.ts"
 Expect Syntax Error: "compiler/genericFunctionTypedArgumentsAreFixed.ts"
 Expect Syntax Error: "compiler/genericFunctionsWithOptionalParameters2.ts"
+Expect Syntax Error: "compiler/genericFunduleInModule.ts"
+Expect Syntax Error: "compiler/genericFunduleInModule2.ts"
 Expect Syntax Error: "compiler/genericGetter.ts"
 Expect Syntax Error: "compiler/genericGetter2.ts"
 Expect Syntax Error: "compiler/genericGetter3.ts"
@@ -945,6 +956,7 @@ Expect Syntax Error: "compiler/inheritedStringIndexersFromDifferentBaseTypes2.ts
 Expect Syntax Error: "compiler/initializedDestructuringAssignmentTypes.ts"
 Expect Syntax Error: "compiler/initializerWithThisPropertyAccess.ts"
 Expect Syntax Error: "compiler/inlineSourceMap2.ts"
+Expect Syntax Error: "compiler/innerAliases.ts"
 Expect Syntax Error: "compiler/innerTypeCheckOfLambdaArgument.ts"
 Expect Syntax Error: "compiler/instanceSubtypeCheck2.ts"
 Expect Syntax Error: "compiler/instanceofOnInstantiationExpression.ts"
@@ -977,6 +989,8 @@ Expect Syntax Error: "compiler/internalAliasClassInsideLocalModuleWithoutExportA
 Expect Syntax Error: "compiler/internalAliasEnumInsideLocalModuleWithoutExportAccessError.ts"
 Expect Syntax Error: "compiler/internalAliasFunctionInsideLocalModuleWithoutExportAccessError.ts"
 Expect Syntax Error: "compiler/internalAliasInitializedModuleInsideLocalModuleWithoutExportAccessError.ts"
+Expect Syntax Error: "compiler/internalAliasInterfaceInsideLocalModuleWithoutExportAccessError.ts"
+Expect Syntax Error: "compiler/internalAliasUninitializedModuleInsideLocalModuleWithoutExportAccessError.ts"
 Expect Syntax Error: "compiler/internalAliasVarInsideLocalModuleWithoutExportAccessError.ts"
 Expect Syntax Error: "compiler/internalImportInstantiatedModuleMergedWithClassNotReferencingInstance.ts"
 Expect Syntax Error: "compiler/internalImportInstantiatedModuleNotReferencingInstance.ts"
@@ -1155,13 +1169,16 @@ Expect Syntax Error: "compiler/moduleAugmentationGlobal7.ts"
 Expect Syntax Error: "compiler/moduleAugmentationGlobal7_1.ts"
 Expect Syntax Error: "compiler/moduleAugmentationGlobal8.ts"
 Expect Syntax Error: "compiler/moduleAugmentationGlobal8_1.ts"
+Expect Syntax Error: "compiler/moduleClassArrayCodeGenTest.ts"
 Expect Syntax Error: "compiler/moduleExports1.ts"
 Expect Syntax Error: "compiler/moduleImport.ts"
+Expect Syntax Error: "compiler/moduleNewExportBug.ts"
 Expect Syntax Error: "compiler/moduleNoneErrors.ts"
 Expect Syntax Error: "compiler/moduleProperty2.ts"
 Expect Syntax Error: "compiler/moduleSharesNameWithImportDeclarationInsideIt3.ts"
 Expect Syntax Error: "compiler/moduleSharesNameWithImportDeclarationInsideIt5.ts"
 Expect Syntax Error: "compiler/moduleVariableArrayIndexer.ts"
+Expect Syntax Error: "compiler/moduleVisibilityTest2.ts"
 Expect Syntax Error: "compiler/moduleVisibilityTest3.ts"
 Expect Syntax Error: "compiler/moduleVisibilityTest4.ts"
 Expect Syntax Error: "compiler/moduleWithNoValuesAsType.ts"
@@ -1327,6 +1344,7 @@ Expect Syntax Error: "compiler/optionsStrictPropertyInitializationStrictNullChec
 Expect Syntax Error: "compiler/optionsTsBuildInfoFileWithoutIncrementalAndComposite.ts"
 Expect Syntax Error: "compiler/orderMattersForSignatureGroupIdentity.ts"
 Expect Syntax Error: "compiler/overEagerReturnTypeSpecialization.ts"
+Expect Syntax Error: "compiler/overload1.ts"
 Expect Syntax Error: "compiler/overloadAssignmentCompat.ts"
 Expect Syntax Error: "compiler/overloadErrorMatchesImplementationElaboaration.ts"
 Expect Syntax Error: "compiler/overloadModifiersMustAgree.ts"
@@ -1415,6 +1433,7 @@ Expect Syntax Error: "compiler/publicMemberImplementedAsPrivateInDerivedClass.ts
 Expect Syntax Error: "compiler/pushTypeGetTypeOfAlias.ts"
 Expect Syntax Error: "compiler/qualifiedModuleLocals.ts"
 Expect Syntax Error: "compiler/qualifiedName_entity-name-resolution-does-not-affect-class-heritage.ts"
+Expect Syntax Error: "compiler/qualify.ts"
 Expect Syntax Error: "compiler/quickIntersectionCheckCorrectlyCachesErrors.ts"
 Expect Syntax Error: "compiler/quickinfoTypeAtReturnPositionsInaccurate.ts"
 Expect Syntax Error: "compiler/quotedModuleNameMustBeAmbient.ts"
@@ -1517,6 +1536,7 @@ Expect Syntax Error: "compiler/signatureLengthMismatchInOverload.ts"
 Expect Syntax Error: "compiler/signatureLengthMismatchWithOptionalParameters.ts"
 Expect Syntax Error: "compiler/simpleRecursionWithBaseCase1.ts"
 Expect Syntax Error: "compiler/slightlyIndirectedDeepObjectLiteralElaborations.ts"
+Expect Syntax Error: "compiler/sourceMapSample.ts"
 Expect Syntax Error: "compiler/sourceMapValidationFor.ts"
 Expect Syntax Error: "compiler/specialIntersectionsInMappedTypes.ts"
 Expect Syntax Error: "compiler/specializedSignatureAsCallbackParameter1.ts"
@@ -1658,6 +1678,8 @@ Expect Syntax Error: "compiler/typeInferenceConflictingCandidates.ts"
 Expect Syntax Error: "compiler/typeMatch1.ts"
 Expect Syntax Error: "compiler/typeMatch2.ts"
 Expect Syntax Error: "compiler/typeName1.ts"
+Expect Syntax Error: "compiler/typeNamedUndefined1.ts"
+Expect Syntax Error: "compiler/typeNamedUndefined2.ts"
 Expect Syntax Error: "compiler/typeOfEnumAndVarRedeclarations.ts"
 Expect Syntax Error: "compiler/typeOfOnTypeArg.ts"
 Expect Syntax Error: "compiler/typeOfOperator1.ts"
@@ -1708,6 +1730,7 @@ Expect Syntax Error: "compiler/unaryOperators1.ts"
 Expect Syntax Error: "compiler/uncalledFunctionChecksInConditional.ts"
 Expect Syntax Error: "compiler/uncalledFunctionChecksInConditional2.ts"
 Expect Syntax Error: "compiler/undeclaredBase.ts"
+Expect Syntax Error: "compiler/undeclaredMethod.ts"
 Expect Syntax Error: "compiler/undeclaredModuleError.ts"
 Expect Syntax Error: "compiler/undeclaredVarEmit.ts"
 Expect Syntax Error: "compiler/undefinedAssignableToGenericMappedIntersection.ts"
@@ -1861,6 +1884,7 @@ Expect Syntax Error: "compiler/varArgConstructorMemberParameter.ts"
 Expect Syntax Error: "compiler/varBlock.ts"
 Expect Syntax Error: "compiler/varNameConflictsWithImportInDifferentPartOfModule.ts"
 Expect Syntax Error: "compiler/vararg.ts"
+Expect Syntax Error: "compiler/variableDeclaratorResolvedDuringContextualTyping.ts"
 Expect Syntax Error: "compiler/varianceAnnotationValidation.ts"
 Expect Syntax Error: "compiler/varianceMeasurement.ts"
 Expect Syntax Error: "compiler/varianceReferences.ts"
@@ -1905,6 +1929,7 @@ Expect Syntax Error: "conformance/async/es6/asyncArrowFunction/asyncArrowFunctio
 Expect Syntax Error: "conformance/async/es6/asyncArrowFunction/asyncArrowFunction3_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncAwaitIsolatedModules_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncDeclare_es6.ts"
+Expect Syntax Error: "conformance/async/es6/asyncQualifiedReturnType_es6.ts"
 Expect Syntax Error: "conformance/async/es6/await_unaryExpression_es6_1.ts"
 Expect Syntax Error: "conformance/async/es6/await_unaryExpression_es6_2.ts"
 Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDeclaration13_es6.ts"
@@ -2784,7 +2809,9 @@ Expect Syntax Error: "conformance/internalModules/DeclarationMerging/ClassAndMod
 Expect Syntax Error: "conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedClassesOfTheSameName.ts"
 Expect Syntax Error: "conformance/internalModules/codeGeneration/importStatementsInterfaces.ts"
 Expect Syntax Error: "conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedClasses.ts"
+Expect Syntax Error: "conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedEnums.ts"
 Expect Syntax Error: "conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedFunctions.ts"
+Expect Syntax Error: "conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedImportAlias.ts"
 Expect Syntax Error: "conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedVariables.ts"
 Expect Syntax Error: "conformance/internalModules/importDeclarations/circularImportAlias.ts"
 Expect Syntax Error: "conformance/internalModules/importDeclarations/shadowedInternalModule.ts"
@@ -3221,6 +3248,7 @@ Expect Syntax Error: "conformance/parser/ecmascript5/parserObjectCreationArrayLi
 Expect Syntax Error: "conformance/parser/ecmascript5/parserRealSource1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/parserRealSource12.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/parserRealSource13.ts"
+Expect Syntax Error: "conformance/parser/ecmascript5/parserRealSource14.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/parserRealSource2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/parserRealSource3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/parserRealSource5.ts"
@@ -3319,6 +3347,7 @@ Expect Syntax Error: "conformance/scanner/ecmascript5/scannerS7.2_A1.5_T2.ts"
 Expect Syntax Error: "conformance/scanner/ecmascript5/scannerS7.3_A1.1_T2.ts"
 Expect Syntax Error: "conformance/scanner/ecmascript5/scannerS7.6_A4.2_T1.ts"
 Expect Syntax Error: "conformance/scanner/ecmascript5/scannertest1.ts"
+Expect Syntax Error: "conformance/statements/VariableStatements/everyTypeWithAnnotationAndInvalidInitializer.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/invalidMultipleVariableDeclarations.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.1.ts"
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.10.ts"
@@ -3756,604 +3785,6 @@ Expect to Parse: "compiler/bom-utf16be.ts"
  1 │ ￾瘀愀爀 砀㴀㄀　㬀ഀ਀
    · ─
    ╰────
-Expect to Parse: "compiler/cloduleAcrossModuleDefinitions.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/cloduleAcrossModuleDefinitions.ts:14:8]
- 13 │ 
- 14 │ var b: A.B; // ok
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "compiler/complexNarrowingWithAny.ts"
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:136:29]
- 135 │   _ControlContainer_1_4:any;
- 136 │   _NgControlStatusGroup_1_5:import45.NgControlStatusGroup;
-     ·                             ────────
- 137 │   _text_2:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:143:24]
- 142 │   _NgControl_3_6:any;
- 143 │   _NgControlStatus_3_7:import45.NgControlStatus;
-     ·                        ────────
- 144 │   _el_4:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:151:24]
- 150 │   _NgControl_6_6:any;
- 151 │   _NgControlStatus_6_7:import45.NgControlStatus;
-     ·                        ────────
- 152 │   _el_7:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:159:24]
- 158 │   _NgControl_9_6:any;
- 159 │   _NgControlStatus_9_7:import45.NgControlStatus;
-     ·                        ────────
- 160 │   _el_10:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:167:25]
- 166 │   _NgControl_12_6:any;
- 167 │   _NgControlStatus_12_7:import45.NgControlStatus;
-     ·                         ────────
- 168 │   _el_13:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:175:25]
- 174 │   _NgControl_15_6:any;
- 175 │   _NgControlStatus_15_7:import45.NgControlStatus;
-     ·                         ────────
- 176 │   _el_16:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:183:25]
- 182 │   _NgControl_18_6:any;
- 183 │   _NgControlStatus_18_7:import45.NgControlStatus;
-     ·                         ────────
- 184 │   _el_19:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:191:25]
- 190 │   _NgControl_21_6:any;
- 191 │   _NgControlStatus_21_7:import45.NgControlStatus;
-     ·                         ────────
- 192 │   _el_22:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:199:25]
- 198 │   _NgControl_24_6:any;
- 199 │   _NgControlStatus_24_7:import45.NgControlStatus;
-     ·                         ────────
- 200 │   _el_25:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:207:25]
- 206 │   _NgControl_27_6:any;
- 207 │   _NgControlStatus_27_7:import45.NgControlStatus;
-     ·                         ────────
- 208 │   _el_28:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:215:25]
- 214 │   _NgControl_30_6:any;
- 215 │   _NgControlStatus_30_7:import45.NgControlStatus;
-     ·                         ────────
- 216 │   _el_31:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:223:25]
- 222 │   _NgControl_33_6:any;
- 223 │   _NgControlStatus_33_7:import45.NgControlStatus;
-     ·                         ────────
- 224 │   _el_34:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:231:25]
- 230 │   _NgControl_36_6:any;
- 231 │   _NgControlStatus_36_7:import45.NgControlStatus;
-     ·                         ────────
- 232 │   _el_37:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:239:25]
- 238 │   _NgControl_39_6:any;
- 239 │   _NgControlStatus_39_7:import45.NgControlStatus;
-     ·                         ────────
- 240 │   _el_40:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:247:25]
- 246 │   _NgControl_42_6:any;
- 247 │   _NgControlStatus_42_7:import45.NgControlStatus;
-     ·                         ────────
- 248 │   _el_43:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:255:25]
- 254 │   _NgControl_45_6:any;
- 255 │   _NgControlStatus_45_7:import45.NgControlStatus;
-     ·                         ────────
- 256 │   _el_46:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:263:25]
- 262 │   _NgControl_48_6:any;
- 263 │   _NgControlStatus_48_7:import45.NgControlStatus;
-     ·                         ────────
- 264 │   _el_49:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:271:25]
- 270 │   _NgControl_51_6:any;
- 271 │   _NgControlStatus_51_7:import45.NgControlStatus;
-     ·                         ────────
- 272 │   _el_52:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:279:25]
- 278 │   _NgControl_54_6:any;
- 279 │   _NgControlStatus_54_7:import45.NgControlStatus;
-     ·                         ────────
- 280 │   _el_55:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:287:25]
- 286 │   _NgControl_57_6:any;
- 287 │   _NgControlStatus_57_7:import45.NgControlStatus;
-     ·                         ────────
- 288 │   _el_58:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import45' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:295:25]
- 294 │   _NgControl_60_6:any;
- 295 │   _NgControlStatus_60_7:import45.NgControlStatus;
-     ·                         ────────
- 296 │   _el_61:any;
-     ╰────
-  help: Did you mean 'typeof import45'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:139:29]
- 138 │   _el_3:any;
- 139 │   _DefaultValueAccessor_3_3:import46.DefaultValueAccessor;
-     ·                             ────────
- 140 │   _NG_VALUE_ACCESSOR_3_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:147:29]
- 146 │   _el_6:any;
- 147 │   _DefaultValueAccessor_6_3:import46.DefaultValueAccessor;
-     ·                             ────────
- 148 │   _NG_VALUE_ACCESSOR_6_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:155:29]
- 154 │   _el_9:any;
- 155 │   _DefaultValueAccessor_9_3:import46.DefaultValueAccessor;
-     ·                             ────────
- 156 │   _NG_VALUE_ACCESSOR_9_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:163:30]
- 162 │   _el_12:any;
- 163 │   _DefaultValueAccessor_12_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 164 │   _NG_VALUE_ACCESSOR_12_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:171:30]
- 170 │   _el_15:any;
- 171 │   _DefaultValueAccessor_15_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 172 │   _NG_VALUE_ACCESSOR_15_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:179:30]
- 178 │   _el_18:any;
- 179 │   _DefaultValueAccessor_18_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 180 │   _NG_VALUE_ACCESSOR_18_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:187:30]
- 186 │   _el_21:any;
- 187 │   _DefaultValueAccessor_21_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 188 │   _NG_VALUE_ACCESSOR_21_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:195:30]
- 194 │   _el_24:any;
- 195 │   _DefaultValueAccessor_24_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 196 │   _NG_VALUE_ACCESSOR_24_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:203:30]
- 202 │   _el_27:any;
- 203 │   _DefaultValueAccessor_27_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 204 │   _NG_VALUE_ACCESSOR_27_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:211:30]
- 210 │   _el_30:any;
- 211 │   _DefaultValueAccessor_30_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 212 │   _NG_VALUE_ACCESSOR_30_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:219:30]
- 218 │   _el_33:any;
- 219 │   _DefaultValueAccessor_33_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 220 │   _NG_VALUE_ACCESSOR_33_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:227:30]
- 226 │   _el_36:any;
- 227 │   _DefaultValueAccessor_36_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 228 │   _NG_VALUE_ACCESSOR_36_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:235:30]
- 234 │   _el_39:any;
- 235 │   _DefaultValueAccessor_39_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 236 │   _NG_VALUE_ACCESSOR_39_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:243:30]
- 242 │   _el_42:any;
- 243 │   _DefaultValueAccessor_42_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 244 │   _NG_VALUE_ACCESSOR_42_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:251:30]
- 250 │   _el_45:any;
- 251 │   _DefaultValueAccessor_45_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 252 │   _NG_VALUE_ACCESSOR_45_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:259:30]
- 258 │   _el_48:any;
- 259 │   _DefaultValueAccessor_48_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 260 │   _NG_VALUE_ACCESSOR_48_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:267:30]
- 266 │   _el_51:any;
- 267 │   _DefaultValueAccessor_51_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 268 │   _NG_VALUE_ACCESSOR_51_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:275:30]
- 274 │   _el_54:any;
- 275 │   _DefaultValueAccessor_54_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 276 │   _NG_VALUE_ACCESSOR_54_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:283:30]
- 282 │   _el_57:any;
- 283 │   _DefaultValueAccessor_57_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 284 │   _NG_VALUE_ACCESSOR_57_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import46' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:291:30]
- 290 │   _el_60:any;
- 291 │   _DefaultValueAccessor_60_3:import46.DefaultValueAccessor;
-     ·                              ────────
- 292 │   _NG_VALUE_ACCESSOR_60_4:any[];
-     ╰────
-  help: Did you mean 'typeof import46'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:141:24]
- 140 │   _NG_VALUE_ACCESSOR_3_4:any[];
- 141 │   _FormControlName_3_5:import47.FormControlName;
-     ·                        ────────
- 142 │   _NgControl_3_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:149:24]
- 148 │   _NG_VALUE_ACCESSOR_6_4:any[];
- 149 │   _FormControlName_6_5:import47.FormControlName;
-     ·                        ────────
- 150 │   _NgControl_6_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:157:24]
- 156 │   _NG_VALUE_ACCESSOR_9_4:any[];
- 157 │   _FormControlName_9_5:import47.FormControlName;
-     ·                        ────────
- 158 │   _NgControl_9_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:165:25]
- 164 │   _NG_VALUE_ACCESSOR_12_4:any[];
- 165 │   _FormControlName_12_5:import47.FormControlName;
-     ·                         ────────
- 166 │   _NgControl_12_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:173:25]
- 172 │   _NG_VALUE_ACCESSOR_15_4:any[];
- 173 │   _FormControlName_15_5:import47.FormControlName;
-     ·                         ────────
- 174 │   _NgControl_15_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:181:25]
- 180 │   _NG_VALUE_ACCESSOR_18_4:any[];
- 181 │   _FormControlName_18_5:import47.FormControlName;
-     ·                         ────────
- 182 │   _NgControl_18_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:189:25]
- 188 │   _NG_VALUE_ACCESSOR_21_4:any[];
- 189 │   _FormControlName_21_5:import47.FormControlName;
-     ·                         ────────
- 190 │   _NgControl_21_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:197:25]
- 196 │   _NG_VALUE_ACCESSOR_24_4:any[];
- 197 │   _FormControlName_24_5:import47.FormControlName;
-     ·                         ────────
- 198 │   _NgControl_24_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:205:25]
- 204 │   _NG_VALUE_ACCESSOR_27_4:any[];
- 205 │   _FormControlName_27_5:import47.FormControlName;
-     ·                         ────────
- 206 │   _NgControl_27_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:213:25]
- 212 │   _NG_VALUE_ACCESSOR_30_4:any[];
- 213 │   _FormControlName_30_5:import47.FormControlName;
-     ·                         ────────
- 214 │   _NgControl_30_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:221:25]
- 220 │   _NG_VALUE_ACCESSOR_33_4:any[];
- 221 │   _FormControlName_33_5:import47.FormControlName;
-     ·                         ────────
- 222 │   _NgControl_33_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:229:25]
- 228 │   _NG_VALUE_ACCESSOR_36_4:any[];
- 229 │   _FormControlName_36_5:import47.FormControlName;
-     ·                         ────────
- 230 │   _NgControl_36_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:237:25]
- 236 │   _NG_VALUE_ACCESSOR_39_4:any[];
- 237 │   _FormControlName_39_5:import47.FormControlName;
-     ·                         ────────
- 238 │   _NgControl_39_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:245:25]
- 244 │   _NG_VALUE_ACCESSOR_42_4:any[];
- 245 │   _FormControlName_42_5:import47.FormControlName;
-     ·                         ────────
- 246 │   _NgControl_42_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:253:25]
- 252 │   _NG_VALUE_ACCESSOR_45_4:any[];
- 253 │   _FormControlName_45_5:import47.FormControlName;
-     ·                         ────────
- 254 │   _NgControl_45_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:261:25]
- 260 │   _NG_VALUE_ACCESSOR_48_4:any[];
- 261 │   _FormControlName_48_5:import47.FormControlName;
-     ·                         ────────
- 262 │   _NgControl_48_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:269:25]
- 268 │   _NG_VALUE_ACCESSOR_51_4:any[];
- 269 │   _FormControlName_51_5:import47.FormControlName;
-     ·                         ────────
- 270 │   _NgControl_51_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:277:25]
- 276 │   _NG_VALUE_ACCESSOR_54_4:any[];
- 277 │   _FormControlName_54_5:import47.FormControlName;
-     ·                         ────────
- 278 │   _NgControl_54_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:285:25]
- 284 │   _NG_VALUE_ACCESSOR_57_4:any[];
- 285 │   _FormControlName_57_5:import47.FormControlName;
-     ·                         ────────
- 286 │   _NgControl_57_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import47' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:293:25]
- 292 │   _NG_VALUE_ACCESSOR_60_4:any[];
- 293 │   _FormControlName_60_5:import47.FormControlName;
-     ·                         ────────
- 294 │   _NgControl_60_6:any;
-     ╰────
-  help: Did you mean 'typeof import47'?
-
-  × 'import44' refers to a value, but is being used as a type here.
-     ╭─[compiler/complexNarrowingWithAny.ts:134:27]
- 133 │   _el_1:any;
- 134 │   _FormGroupDirective_1_3:import44.FormGroupDirective;
-     ·                           ────────
- 135 │   _ControlContainer_1_4:any;
-     ╰────
-  help: Did you mean 'typeof import44'?
-Expect to Parse: "compiler/constEnums.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-     ╭─[compiler/constEnums.ts:158:17]
- 157 │ 
- 158 │ function bar(e: A.B.C.E): number {
-     ·                 ─
- 159 │     switch (e) {
-     ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "compiler/constructorArgWithGenericCallSignature.ts"
-
-  × 'Test' refers to a value, but is being used as a type here.
-    ╭─[compiler/constructorArgWithGenericCallSignature.ts:11:11]
- 10 │ }
- 11 │ var func: Test.MyFunc;
-    ·           ────
- 12 │ Test.F(func); // OK
-    ╰────
-  help: Did you mean 'typeof Test'?
-Expect to Parse: "compiler/contextuallyTypedJsxChildren.tsx"
-
-  × 'DropdownMenu' refers to a value, but is being used as a type here.
-    ╭─[compiler/contextuallyTypedJsxChildren.tsx:24:49]
- 23 │ }
- 24 │ declare const DropdownMenu: React.ComponentType<DropdownMenu.Props>;
-    ·                                                 ────────────
- 25 │ 
-    ╰────
-  help: Did you mean 'typeof DropdownMenu'?
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 
   × 'with' statements are not allowed
@@ -4363,26 +3794,6 @@ Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
     · ────
  24 │     const enum H {}
     ╰────
-Expect to Parse: "compiler/fatArrowSelf.ts"
-
-  × 'Events' refers to a value, but is being used as a type here.
-    ╭─[compiler/fatArrowSelf.ts:13:39]
- 12 │     class EventEmitterConsummer {
- 13 │         constructor (private emitter: Events.EventEmitter) { }
-    ·                                       ──────
- 14 │ 
-    ╰────
-  help: Did you mean 'typeof Events'?
-Expect to Parse: "compiler/functionCall5.ts"
-
-  × 'm1' refers to a value, but is being used as a type here.
-   ╭─[compiler/functionCall5.ts:2:16]
- 1 │ module m1 { export class c1 { public a; }} 
- 2 │ function foo():m1.c1{return new m1.c1();}; 
-   ·                ──
- 3 │ var x = foo();
-   ╰────
-  help: Did you mean 'typeof m1'?
 Expect to Parse: "compiler/functionDeclarationWithResolutionOfTypeNamedArguments01.ts"
 
   × 'arguments' refers to a type, but is being used as a value here.
@@ -4410,44 +3821,6 @@ Expect to Parse: "compiler/functionExpressionWithResolutionOfTypeOfSameName01.ts
    ·        ─
  6 │ }
    ╰────
-Expect to Parse: "compiler/genericClassPropertyInheritanceSpecialization.ts"
-
-  × 'PortalFx' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericClassPropertyInheritanceSpecialization.ts:66:41]
- 65 │ 
- 66 │     validators: KnockoutObservableArray<PortalFx.ViewModels.Controls.Validators.Validator<TValue>>;
-    ·                                         ────────
- 67 │ }
-    ╰────
-  help: Did you mean 'typeof PortalFx'?
-
-  × 'PortalFx' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericClassPropertyInheritanceSpecialization.ts:72:128]
- 71 │ 
- 72 │     public validators: KnockoutObservableArray<PortalFx.ViewModels.Controls.Validators.Validator<TValue>> = ko.observableArray<PortalFx.ViewModels.Controls.Validators.Validator<TValue>>();
-    ·                                                                                                                                ────────
- 73 │ }
-    ╰────
-  help: Did you mean 'typeof PortalFx'?
-
-  × 'PortalFx' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericClassPropertyInheritanceSpecialization.ts:72:48]
- 71 │ 
- 72 │     public validators: KnockoutObservableArray<PortalFx.ViewModels.Controls.Validators.Validator<TValue>> = ko.observableArray<PortalFx.ViewModels.Controls.Validators.Validator<TValue>>();
-    ·                                                ────────
- 73 │ }
-    ╰────
-  help: Did you mean 'typeof PortalFx'?
-Expect to Parse: "compiler/genericCloduleInModule.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericCloduleInModule.ts:11:8]
- 10 │ 
- 11 │ var b: A.B<number>;
-    ·        ─
- 12 │ b.foo();
-    ╰────
-  help: Did you mean 'typeof A'?
 Expect to Parse: "compiler/genericConstraintOnExtendedBuiltinTypes2.ts"
 
   × 'EndGate' refers to a value, but is being used as a type here.
@@ -4458,135 +3831,6 @@ Expect to Parse: "compiler/genericConstraintOnExtendedBuiltinTypes2.ts"
  8 │ 
    ╰────
   help: Did you mean 'typeof EndGate'?
-Expect to Parse: "compiler/genericOfACloduleType1.ts"
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericOfACloduleType1.ts:12:16]
- 11 │ }
- 12 │ var g2 = new G<M.C>() // was: error Type reference cannot refer to container 'M.C'.
-    ·                ─
-    ╰────
-  help: Did you mean 'typeof M'?
-Expect to Parse: "compiler/genericOfACloduleType2.ts"
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericOfACloduleType2.ts:14:20]
- 13 │ module N {
- 14 │     var g2 = new G<M.C>()
-    ·                    ─
- 15 │ }
-    ╰────
-  help: Did you mean 'typeof M'?
-Expect to Parse: "compiler/innerBoundLambdaEmit.ts"
-
-  × 'M' refers to a value, but is being used as a type here.
-   ╭─[compiler/innerBoundLambdaEmit.ts:7:14]
- 6 │ interface Array<T> {
- 7 │     toFoo(): M.Foo
-   ·              ─
- 8 │ }
-   ╰────
-  help: Did you mean 'typeof M'?
-Expect to Parse: "compiler/interMixingModulesInterfaces0.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/interMixingModulesInterfaces0.ts:15:8]
- 14 │ 
- 15 │ var x: A.B = A.B.createB();
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "compiler/interMixingModulesInterfaces1.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/interMixingModulesInterfaces1.ts:15:8]
- 14 │ 
- 15 │ var x: A.B = A.B.createB();
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "compiler/interMixingModulesInterfaces2.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/interMixingModulesInterfaces2.ts:15:8]
- 14 │ 
- 15 │ var x: A.B = null;
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "compiler/interMixingModulesInterfaces3.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/interMixingModulesInterfaces3.ts:15:8]
- 14 │ 
- 15 │ var x: A.B = null;
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "compiler/intersectionTypeNormalization.ts"
-
-  × 'enums' refers to a value, but is being used as a type here.
-    ╭─[compiler/intersectionTypeNormalization.ts:92:14]
- 91 │ type Foo = {
- 92 │     genreId: enums.Genre;
-    ·              ─────
- 93 │ };
-    ╰────
-  help: Did you mean 'typeof enums'?
-
-  × 'enums' refers to a value, but is being used as a type here.
-    ╭─[compiler/intersectionTypeNormalization.ts:96:14]
- 95 │ type Bar = {
- 96 │     genreId: enums.Genre;
-    ·              ─────
- 97 │ };
-    ╰────
-  help: Did you mean 'typeof enums'?
-Expect to Parse: "compiler/moduleVisibilityTest1.ts"
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/moduleVisibilityTest1.ts:58:14]
- 57 │ 
- 58 │ var cprime : M.I = <M.I>null;
-    ·              ─
- 59 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/moduleVisibilityTest1.ts:58:21]
- 57 │ 
- 58 │ var cprime : M.I = <M.I>null;
-    ·                     ─
- 59 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
-Expect to Parse: "compiler/module_augmentUninstantiatedModule2.ts"
-
-  × 'ng' refers to a value, but is being used as a type here.
-   ╭─[compiler/module_augmentUninstantiatedModule2.ts:1:17]
- 0 │ declare var ng: ng.IAngularStatic;
-   ·                 ──
-   ╰────
-  help: Did you mean 'typeof ng'?
-Expect to Parse: "compiler/namespaces2.ts"
-
-  × 'A' refers to a value, but is being used as a type here.
-   ╭─[compiler/namespaces2.ts:7:8]
- 6 │ 
- 7 │ var c: A.B.C = new A.B.C();
-   ·        ─
-   ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "compiler/resolveModuleNameWithSameLetDeclarationName1.ts"
-
-  × 'foo' refers to a value, but is being used as a type here.
-   ╭─[compiler/resolveModuleNameWithSameLetDeclarationName1.ts:8:10]
- 7 │ 
- 8 │ let foo: foo.Bar; 
-   ·          ───
-   ╰────
-  help: Did you mean 'typeof foo'?
 Expect to Parse: "compiler/staticAnonymousTypeNotReferencingTypeParameter.ts"
 
   × 'Array' refers to a type, but is being used as a value here.
@@ -4604,115 +3848,6 @@ Expect to Parse: "compiler/staticAnonymousTypeNotReferencingTypeParameter.ts"
     ·                                                                                        ─────
  45 │   static clone<T>(dit: typeof ListWrapper, array: T[]): T[] { return array.slice(0); }
     ╰────
-Expect to Parse: "compiler/typeAliasDoesntMakeModuleInstantiated.ts"
-
-  × 'm' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeAliasDoesntMakeModuleInstantiated.ts:10:16]
-  9 │ }
- 10 │ declare var m: m.IStatic; // Should be ok to have var 'm' as module is non instantiated
-    ·                ─
-    ╰────
-  help: Did you mean 'typeof m'?
-Expect to Parse: "compiler/typeResolution.ts"
-
-  × 'TopLevelModule2' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:40:29]
- 39 │                     var c1: TopLevelModule1.SubModule2.SubSubModule2.ClassA; c1.AisIn1_2_2();
- 40 │                     var c2: TopLevelModule2.SubModule3.ClassA; c2.AisIn2_3();
-    ·                             ───────────────
- 41 │                     
-    ╰────
-  help: Did you mean 'typeof TopLevelModule2'?
-
-  × 'TopLevelModule2' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:55:33]
- 54 │                         var d1: InterfaceX; d1.XisIn1_1_1();
- 55 │                         var c2: TopLevelModule2.SubModule3.ClassA; c2.AisIn2_3();
-    ·                                 ───────────────
- 56 │                     }
-    ╰────
-  help: Did you mean 'typeof TopLevelModule2'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:10:29]
-  9 │                     var a3: SubModule1.SubSubModule1.ClassA; a3.AisIn1_1_1();
- 10 │                     var a4: TopLevelModule1.SubModule1.SubSubModule1.ClassA; a4.AisIn1_1_1();
-    ·                             ───────────────
- 11 │                     
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:14:29]
- 13 │                     var b1: ClassB; b1.BisIn1_1_1();
- 14 │                     var b2: TopLevelModule1.SubModule1.SubSubModule1.ClassB; b2.BisIn1_1_1();
-    ·                             ───────────────
- 15 │                     
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:17:29]
- 16 │                     // Type only accessible from the root
- 17 │                     var c1: TopLevelModule1.SubModule2.SubSubModule2.ClassA; c1.AisIn1_2_2();
-    ·                             ───────────────
- 18 │                     
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:32:29]
- 31 │                     var a3: SubModule1.SubSubModule1.ClassA; a3.AisIn1_1_1();
- 32 │                     var a4: TopLevelModule1.SubModule1.SubSubModule1.ClassA; a4.AisIn1_1_1();
-    ·                             ───────────────
- 33 │                     
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:36:29]
- 35 │                     var b1: ClassB; b1.BisIn1_1_1();
- 36 │                     var b2: TopLevelModule1.SubModule1.SubSubModule1.ClassB; b2.BisIn1_1_1();
-    ·                             ───────────────
- 37 │                     
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:39:29]
- 38 │                     // Type only accessible from the root
- 39 │                     var c1: TopLevelModule1.SubModule2.SubSubModule2.ClassA; c1.AisIn1_2_2();
-    ·                             ───────────────
- 40 │                     var c2: TopLevelModule2.SubModule3.ClassA; c2.AisIn2_3();
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:52:33]
- 51 │                         /* Sampling of stuff from AisIn1_1_1 */
- 52 │                         var a4: TopLevelModule1.SubModule1.SubSubModule1.ClassA; a4.AisIn1_1_1();
-    ·                                 ───────────────
- 53 │                         var c1: TopLevelModule1.SubModule2.SubSubModule2.ClassA; c1.AisIn1_2_2();
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:53:33]
- 52 │                         var a4: TopLevelModule1.SubModule1.SubSubModule1.ClassA; a4.AisIn1_1_1();
- 53 │                         var c1: TopLevelModule1.SubModule2.SubSubModule2.ClassA; c1.AisIn1_2_2();
-    ·                                 ───────────────
- 54 │                         var d1: InterfaceX; d1.XisIn1_1_1();
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
-
-  × 'TopLevelModule1' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeResolution.ts:67:29]
- 66 │                     var a3: SubModule1.SubSubModule1.ClassA; a3.AisIn1_1_1();
- 67 │                     var a4: TopLevelModule1.SubModule1.SubSubModule1.ClassA; a4.AisIn1_1_1();
-    ·                             ───────────────
- 68 │                     
-    ╰────
-  help: Did you mean 'typeof TopLevelModule1'?
 Expect to Parse: "compiler/withStatementInternalComments.ts"
 
   × 'with' statements are not allowed
@@ -4721,16 +3856,6 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
  2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
    ·       ────
    ╰────
-Expect to Parse: "conformance/async/es5/asyncQualifiedReturnType_es5.ts"
-
-  × 'X' refers to a value, but is being used as a type here.
-   ╭─[conformance/async/es5/asyncQualifiedReturnType_es5.ts:6:21]
- 5 │ 
- 6 │ async function f(): X.MyPromise<void> {
-   ·                     ─
- 7 │ }
-   ╰────
-  help: Did you mean 'typeof X'?
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
 
   × Classes may not have a static property named prototype
@@ -4928,144 +4053,6 @@ Expect to Parse: "conformance/interfaces/interfaceDeclarations/interfaceExtendsO
  53 │ class C23 extends Constructor<Identifiable<T1 & { b: number}>>() { x: string }
     ·                   ───────────
     ╰────
-Expect to Parse: "conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedClassesOfTheSameName.ts"
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedClassesOfTheSameName.ts:38:8]
- 37 │ var l: { length: number; }
- 38 │ var l: X.Y.Z.Line;
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof X'?
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedClassesOfTheSameName.ts:10:27]
-  9 │     class Point {
- 10 │         fromCarthesian(p: A.Point) {
-    ·                           ─
- 11 │             return { x: p.x, y: p.y };
-    ╰────
-  help: Did you mean 'typeof A'?
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedClassesOfTheSameName.ts:18:8]
- 17 │ var p: { x: number; y: number; };
- 18 │ var p: A.Point;
-    ·        ─
- 19 │ 
-    ╰────
-  help: Did you mean 'typeof A'?
-Expect to Parse: "conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedInterfacesOfTheSameName.ts"
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedAndNonExportedInterfacesOfTheSameName.ts:36:8]
- 35 │ var l: { new (s: A.Point, e: A.Point); }
- 36 │ var l: X.Y.Z.Line;
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof X'?
-Expect to Parse: "conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedInterfacesOfTheSameName.ts"
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedInterfacesOfTheSameName.ts:36:8]
- 35 │ var l: { start: A.Point; end: A.Point; new (s: A.Point, e: A.Point); }
- 36 │ var l: X.Y.Z.Line;
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof X'?
-Expect to Parse: "conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedModulesOfTheSameName.ts"
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/DeclarationMerging/TwoInternalModulesThatMergeEachWithExportedModulesOfTheSameName.ts:33:8]
- 32 │ var l: { length: number };
- 33 │ var l: X.Y.Z.Line;
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof X'?
-Expect to Parse: "conformance/internalModules/importDeclarations/importAliasIdentifiers.ts"
-
-  × 'moduleA' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/importDeclarations/importAliasIdentifiers.ts:10:8]
-  9 │ var p: alias.Point;
- 10 │ var p: moduleA.Point;
-    ·        ───────
- 11 │ var p: { x: number; y: number; };
-    ╰────
-  help: Did you mean 'typeof moduleA'?
-
-  × 'fundule' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/importDeclarations/importAliasIdentifiers.ts:45:8]
- 44 │ var p: funlias.Point;
- 45 │ var p: fundule.Point;
-    ·        ───────
- 46 │ var p: { x: number; y: number; };
-    ╰────
-  help: Did you mean 'typeof fundule'?
-Expect to Parse: "conformance/internalModules/moduleDeclarations/instantiatedModule.ts"
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/moduleDeclarations/instantiatedModule.ts:17:9]
- 16 │ var p1: { x: number; y: number; }
- 17 │ var p1: M.Point;
-    ·         ─
- 18 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M3' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/moduleDeclarations/instantiatedModule.ts:55:11]
- 54 │ var a3 = M3.Color;
- 55 │ var blue: M3.Color = a3.Blue;
-    ·           ──
- 56 │ 
-    ╰────
-  help: Did you mean 'typeof M3'?
-
-  × 'M3' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/moduleDeclarations/instantiatedModule.ts:57:9]
- 56 │ 
- 57 │ var p3: M3.Color;
-    ·         ──
- 58 │ var p3 = M3.Color.Red;
-    ╰────
-  help: Did you mean 'typeof M3'?
-
-  × 'M2' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/moduleDeclarations/instantiatedModule.ts:38:8]
- 37 │ var a2 = M2.Point;
- 38 │ var o: M2.Point = a2.Origin();
-    ·        ──
- 39 │ 
-    ╰────
-  help: Did you mean 'typeof M2'?
-
-  × 'M2' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/moduleDeclarations/instantiatedModule.ts:41:9]
- 40 │ var p2: { x: number; y: number }
- 41 │ var p2: M2.Point;
-    ·         ──
- 42 │ var p2 = new m2.Point();
-    ╰────
-  help: Did you mean 'typeof M2'?
-Expect to Parse: "conformance/internalModules/moduleDeclarations/nestedModules.ts"
-
-  × 'M2' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/moduleDeclarations/nestedModules.ts:31:8]
- 30 │ var p: { x: number; y: number; }
- 31 │ var p: M2.X.Point;
-    ·        ──
-    ╰────
-  help: Did you mean 'typeof M2'?
-Expect to Parse: "conformance/internalModules/moduleDeclarations/nonInstantiatedModule.ts"
-
-  × 'M2' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/moduleDeclarations/nonInstantiatedModule.ts:30:8]
- 29 │ var p: { x: number; y: number; };
- 30 │ var p: M2.Point;
-    ·        ──
- 31 │ 
-    ╰────
-  help: Did you mean 'typeof M2'?
 Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
 
   × Identifier `orbitol` has already been declared
@@ -5078,26 +4065,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·        ╰── It can not be redeclared here
  3 │ orbitol.toExponential()
    ╰────
-Expect to Parse: "conformance/statements/VariableStatements/everyTypeWithAnnotationAndInitializer.ts"
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/statements/VariableStatements/everyTypeWithAnnotationAndInitializer.ts:45:21]
- 44 │ var aModule: typeof M = M;
- 45 │ var aClassInModule: M.A = new M.A();
-    ·                     ─
- 46 │ var aFunctionInModule: typeof M.F2 = (x) => 'this is a string';
-    ╰────
-  help: Did you mean 'typeof M'?
-Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/statements/forStatements/forStatements.ts:45:25]
- 44 │ for(var aModule: typeof M = M;;){}
- 45 │ for(var aClassInModule: M.A = new M.A();;){}
-    ·                         ─
- 46 │ for(var aFunctionInModule: typeof M.F2 = (x) => 'this is a string';;){}
-    ╰────
-  help: Did you mean 'typeof M'?
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[compiler/ArrowFunctionExpression1.ts:1:10]
@@ -5213,15 +4180,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    ·                  ─────
  4 │ }
    ╰────
-
-  × 'foo' refers to a value, but is being used as a type here.
-    ╭─[compiler/aliasBug.ts:15:11]
- 14 │   var p1: provide.Provide; // error here, but should be okay
- 15 │   var p2: foo.Provide;
-    ·           ───
- 16 │   var p3:booz.bar;
-    ╰────
-  help: Did you mean 'typeof foo'?
 
   × Unexpected token
     ╭─[compiler/aliasErrors.ts:13:12]
@@ -7020,33 +5978,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  2 │ export default Foo
    ╰────
 
-  × 'm2' refers to a value, but is being used as a type here.
-    ╭─[compiler/declarationMapsWithoutDeclaration.ts:13:9]
- 12 │ var m2: {
- 13 │     (): m2.connectExport;
-    ·         ──
- 14 │     test1: m2.connectModule;
-    ╰────
-  help: Did you mean 'typeof m2'?
-
-  × 'm2' refers to a value, but is being used as a type here.
-    ╭─[compiler/declarationMapsWithoutDeclaration.ts:14:12]
- 13 │     (): m2.connectExport;
- 14 │     test1: m2.connectModule;
-    ·            ──
- 15 │     test2(): m2.connectModule;
-    ╰────
-  help: Did you mean 'typeof m2'?
-
-  × 'm2' refers to a value, but is being used as a type here.
-    ╭─[compiler/declarationMapsWithoutDeclaration.ts:15:14]
- 14 │     test1: m2.connectModule;
- 15 │     test2(): m2.connectModule;
-    ·              ──
- 16 │ };
-    ╰────
-  help: Did you mean 'typeof m2'?
-
   × Cannot assign to this expression
    ╭─[compiler/decrementAndIncrementOperators.ts:4:1]
  3 │ // errors
@@ -7110,15 +6041,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
     ·                            ╰── `=>` expected
  12 │ 
     ╰────
-
-  × 'm' refers to a value, but is being used as a type here.
-   ╭─[compiler/differentTypesWithSameName.ts:5:34]
- 4 │   }
- 5 │   export function doSomething(v: m.variable) {
-   ·                                  ─
- 6 │     
-   ╰────
-  help: Did you mean 'typeof m'?
 
   × Unexpected token
    ╭─[compiler/dontShowCompilerGeneratedMembers.ts:3:6]
@@ -7567,132 +6489,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  4 │ 
    ╰────
 
-  × 'Abc' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:58:16]
- 57 │ var abc: First.E;
- 58 │ var secondAbc: Abc.E;
-    ·                ───
- 59 │ var secondAbcd: Abcd.E;
-    ╰────
-  help: Did you mean 'typeof Abc'?
-
-  × 'Abc' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:62:11]
- 61 │ var secondCd: Cd.E;
- 62 │ var nope: Abc.Nope;
-    ·           ───
- 63 │ var k: Const.E;
-    ╰────
-  help: Did you mean 'typeof Abc'?
-
-  × 'First' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:57:10]
- 56 │ 
- 57 │ var abc: First.E;
-    ·          ─────
- 58 │ var secondAbc: Abc.E;
-    ╰────
-  help: Did you mean 'typeof First'?
-
-  × 'Ab' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:60:15]
- 59 │ var secondAbcd: Abcd.E;
- 60 │ var secondAb: Ab.E;
-    ·               ──
- 61 │ var secondCd: Cd.E;
-    ╰────
-  help: Did you mean 'typeof Ab'?
-
-  × 'Merged' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:65:13]
- 64 │ var decl: Decl.E;
- 65 │ var merged: Merged.E;
-    ·             ──────
- 66 │ var merged2: Merged2.E;
-    ╰────
-  help: Did you mean 'typeof Merged'?
-
-  × 'Decl' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:64:11]
- 63 │ var k: Const.E;
- 64 │ var decl: Decl.E;
-    ·           ────
- 65 │ var merged: Merged.E;
-    ╰────
-  help: Did you mean 'typeof Decl'?
-
-  × 'Cd' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:61:15]
- 60 │ var secondAb: Ab.E;
- 61 │ var secondCd: Cd.E;
-    ·               ──
- 62 │ var nope: Abc.Nope;
-    ╰────
-  help: Did you mean 'typeof Cd'?
-
-  × 'Merged2' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:66:14]
- 65 │ var merged: Merged.E;
- 66 │ var merged2: Merged2.E;
-    ·              ───────
- 67 │ abc = secondAbc; // ok
-    ╰────
-  help: Did you mean 'typeof Merged2'?
-
-  × 'Const' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:63:8]
- 62 │ var nope: Abc.Nope;
- 63 │ var k: Const.E;
-    ·        ─────
- 64 │ var decl: Decl.E;
-    ╰────
-  help: Did you mean 'typeof Const'?
-
-  × 'Abcd' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat3.ts:59:17]
- 58 │ var secondAbc: Abc.E;
- 59 │ var secondAbcd: Abcd.E;
-    ·                 ────
- 60 │ var secondAb: Ab.E;
-    ╰────
-  help: Did you mean 'typeof Abcd'?
-
-  × 'first' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat7.ts:10:19]
-  9 │ class Base {
- 10 │     method(param: first.E) {
-    ·                   ─────
- 11 │ 
-    ╰────
-  help: Did you mean 'typeof first'?
-
-  × 'first' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat7.ts:20:33]
- 19 │ 
- 20 │ function overloadingFunction(): first.E
-    ·                                 ─────
- 21 │ function overloadingFunction(): second.E {
-    ╰────
-  help: Did you mean 'typeof first'?
-
-  × 'second' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat7.ts:16:28]
- 15 │ class Derived extends Base {
- 16 │     override method(param: second.E) {
-    ·                            ──────
- 17 │     }
-    ╰────
-  help: Did you mean 'typeof second'?
-
-  × 'second' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumAssignmentCompat7.ts:21:33]
- 20 │ function overloadingFunction(): first.E
- 21 │ function overloadingFunction(): second.E {
-    ·                                 ──────
- 22 │     return second.E.B
-    ╰────
-  help: Did you mean 'typeof second'?
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/enumConflictsWithGlobalIdentifier.ts:5:4]
  4 │ var x = IgnoreRulesSpecific.
@@ -7710,68 +6506,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    ·      ┬
    ·      ╰── It can not be redeclared here
    ╰────
-
-  × 'Ka' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumLiteralAssignableToEnumInsideUnion.ts:28:11]
- 27 │ const e4: X.Foo.A | boolean = Z.Foo.A; // not legal either because Z.Foo is computed and Z.Foo.A is not necessarily assignable to X.Foo.A
- 28 │ const e5: Ka.Foo | boolean = Z.Foo.A; // ok
-    ·           ──
-    ╰────
-  help: Did you mean 'typeof Ka'?
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumLiteralAssignableToEnumInsideUnion.ts:23:11]
- 22 │ }
- 23 │ const e0: X.Foo | boolean = Y.Foo.A; // ok
-    ·           ─
- 24 │ const e1: X.Foo | boolean = Z.Foo.A; // not legal, Z is computed
-    ╰────
-  help: Did you mean 'typeof X'?
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumLiteralAssignableToEnumInsideUnion.ts:24:11]
- 23 │ const e0: X.Foo | boolean = Y.Foo.A; // ok
- 24 │ const e1: X.Foo | boolean = Z.Foo.A; // not legal, Z is computed
-    ·           ─
- 25 │ const e2: X.Foo.A | X.Foo.B | boolean = Z.Foo.A; // still not legal
-    ╰────
-  help: Did you mean 'typeof X'?
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumLiteralAssignableToEnumInsideUnion.ts:25:11]
- 24 │ const e1: X.Foo | boolean = Z.Foo.A; // not legal, Z is computed
- 25 │ const e2: X.Foo.A | X.Foo.B | boolean = Z.Foo.A; // still not legal
-    ·           ─
- 26 │ const e3: X.Foo.B | boolean = Z.Foo.A; // not legal
-    ╰────
-  help: Did you mean 'typeof X'?
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumLiteralAssignableToEnumInsideUnion.ts:25:21]
- 24 │ const e1: X.Foo | boolean = Z.Foo.A; // not legal, Z is computed
- 25 │ const e2: X.Foo.A | X.Foo.B | boolean = Z.Foo.A; // still not legal
-    ·                     ─
- 26 │ const e3: X.Foo.B | boolean = Z.Foo.A; // not legal
-    ╰────
-  help: Did you mean 'typeof X'?
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumLiteralAssignableToEnumInsideUnion.ts:26:11]
- 25 │ const e2: X.Foo.A | X.Foo.B | boolean = Z.Foo.A; // still not legal
- 26 │ const e3: X.Foo.B | boolean = Z.Foo.A; // not legal
-    ·           ─
- 27 │ const e4: X.Foo.A | boolean = Z.Foo.A; // not legal either because Z.Foo is computed and Z.Foo.A is not necessarily assignable to X.Foo.A
-    ╰────
-  help: Did you mean 'typeof X'?
-
-  × 'X' refers to a value, but is being used as a type here.
-    ╭─[compiler/enumLiteralAssignableToEnumInsideUnion.ts:27:11]
- 26 │ const e3: X.Foo.B | boolean = Z.Foo.A; // not legal
- 27 │ const e4: X.Foo.A | boolean = Z.Foo.A; // not legal either because Z.Foo is computed and Z.Foo.A is not necessarily assignable to X.Foo.A
-    ·           ─
- 28 │ const e5: Ka.Foo | boolean = Z.Foo.A; // ok
-    ╰────
-  help: Did you mean 'typeof X'?
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/enumMemberResolution.ts:5:4]
@@ -7898,42 +6632,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    ·        ─┬
    ·         ╰── `from` expected
    ╰────
-
-  × 'React' refers to a value, but is being used as a type here.
-    ╭─[compiler/excessiveStackDepthFlatArray.ts:22:9]
- 21 │   interface IntrinsicElements {
- 22 │     ul: React.DetailedHTMLProps<React.HTMLAttributes<HTMLUListElement>, HTMLUListElement>;
-    ·         ─────
- 23 │     li: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>;
-    ╰────
-  help: Did you mean 'typeof React'?
-
-  × 'React' refers to a value, but is being used as a type here.
-    ╭─[compiler/excessiveStackDepthFlatArray.ts:22:33]
- 21 │   interface IntrinsicElements {
- 22 │     ul: React.DetailedHTMLProps<React.HTMLAttributes<HTMLUListElement>, HTMLUListElement>;
-    ·                                 ─────
- 23 │     li: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>;
-    ╰────
-  help: Did you mean 'typeof React'?
-
-  × 'React' refers to a value, but is being used as a type here.
-    ╭─[compiler/excessiveStackDepthFlatArray.ts:23:9]
- 22 │     ul: React.DetailedHTMLProps<React.HTMLAttributes<HTMLUListElement>, HTMLUListElement>;
- 23 │     li: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>;
-    ·         ─────
- 24 │   }
-    ╰────
-  help: Did you mean 'typeof React'?
-
-  × 'React' refers to a value, but is being used as a type here.
-    ╭─[compiler/excessiveStackDepthFlatArray.ts:23:33]
- 22 │     ul: React.DetailedHTMLProps<React.HTMLAttributes<HTMLUListElement>, HTMLUListElement>;
- 23 │     li: React.DetailedHTMLProps<React.HTMLAttributes<HTMLLIElement>, HTMLLIElement>;
-    ·                                 ─────
- 24 │   }
-    ╰────
-  help: Did you mean 'typeof React'?
 
   × 'export' modifier cannot be used here.
    ╭─[compiler/exportAlreadySeen.ts:2:12]
@@ -8283,15 +6981,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    ·                             ╰── `b` has already been declared here
    ╰────
 
-  × 'm1' refers to a value, but is being used as a type here.
-   ╭─[compiler/functionCall7.ts:2:16]
- 1 │ module m1 { export class c1 { public a; }}
- 2 │ function foo(a:m1.c1){ a.a = 1; }; 
-   ·                ──
- 3 │ var myC = new m1.c1(); 
-   ╰────
-  help: Did you mean 'typeof m1'?
-
   × 'with' statements are not allowed
    ╭─[compiler/functionExpressionInWithBlock.ts:2:2]
  1 │ function x() {
@@ -8343,39 +7032,12 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  4 │ f<number,string>.
    ╰────
 
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericCloduleInModule2.ts:14:8]
- 13 │ 
- 14 │ var b: A.B;
-    ·        ─
- 15 │ b.foo();
-    ╰────
-  help: Did you mean 'typeof A'?
-
   × 'Foo' refers to a type, but is being used as a value here.
    ╭─[compiler/genericConstructInvocationWithNoTypeArg.ts:4:27]
  3 │ }
  4 │ var f2: Foo<number> = new Foo(3);
    ·                           ───
    ╰────
-
-  × 'A' refers to a value, but is being used as a type here.
-   ╭─[compiler/genericFunduleInModule.ts:8:8]
- 7 │ 
- 8 │ var b: A.B;
-   ·        ─
- 9 │ A.B(1);
-   ╰────
-  help: Did you mean 'typeof A'?
-
-  × 'A' refers to a value, but is being used as a type here.
-    ╭─[compiler/genericFunduleInModule2.ts:11:8]
- 10 │ 
- 11 │ var b: A.B;
-    ·        ─
- 12 │ A.B(1);
-    ╰────
-  help: Did you mean 'typeof A'?
 
   × A 'get' accessor must not have any formal parameters.
    ╭─[compiler/gettersAndSettersErrors.ts:6:19]
@@ -8555,15 +7217,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  3 │ }
    ╰────
 
-  × 'D' refers to a value, but is being used as a type here.
-    ╭─[compiler/innerAliases.ts:19:8]
- 18 │ 
- 19 │ var c: D.inner.Class1;
-    ·        ─
- 20 │ 
-    ╰────
-  help: Did you mean 'typeof D'?
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/innerModExport1.ts:5:11]
  4 │     var non_export_var: number;
@@ -8613,22 +7266,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  2 │ interface interface{ }
    ╰────
   help: Try insert a semicolon here
-
-  × 'c' refers to a value, but is being used as a type here.
-    ╭─[compiler/internalAliasInterfaceInsideLocalModuleWithoutExportAccessError.ts:11:8]
- 10 │ 
- 11 │ var x: c.b;
-    ·        ─
-    ╰────
-  help: Did you mean 'typeof c'?
-
-  × 'c' refers to a value, but is being used as a type here.
-    ╭─[compiler/internalAliasUninitializedModuleInsideLocalModuleWithoutExportAccessError.ts:16:15]
- 15 │ 
- 16 │ export var z: c.b.I;
-    ·               ─
-    ╰────
-  help: Did you mean 'typeof c'?
 
   × Illegal continue statement: no surrounding iteration statement
    ╭─[compiler/invalidContinueInDownlevelAsync.ts:3:9]
@@ -9448,23 +8085,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
     ╰────
   help: Did you mean 'typeof B'?
 
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/moduleClassArrayCodeGenTest.ts:9:8]
-  8 │ 
-  9 │ var t: M.A[] = [];
-    ·        ─
- 10 │ var t2: M.B[] = [];
-    ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/moduleClassArrayCodeGenTest.ts:10:9]
-  9 │ var t: M.A[] = [];
- 10 │ var t2: M.B[] = [];
-    ·         ─
-    ╰────
-  help: Did you mean 'typeof M'?
-
   × '_modes' refers to a value, but is being used as a type here.
     ╭─[compiler/moduleCrashBug1.ts:18:9]
  17 │ 
@@ -9633,15 +8253,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × 'mod1' refers to a value, but is being used as a type here.
-    ╭─[compiler/moduleNewExportBug.ts:10:9]
-  9 │ 
- 10 │ var c : mod1.C; // ERROR: C should not be visible
-    ·         ────
- 11 │ 
-    ╰────
-  help: Did you mean 'typeof mod1'?
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[compiler/moduleProperty1.ts:9:12]
   8 │     var x = 10;  // variable local to this module body
@@ -9650,24 +8261,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  10 │     export var z = y;  // property visible to any code
     ╰────
   help: Try insert a semicolon here
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/moduleVisibilityTest2.ts:59:14]
- 58 │ 
- 59 │ var cprime : M.I = <M.I>null;
-    ·              ─
- 60 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[compiler/moduleVisibilityTest2.ts:59:21]
- 58 │ 
- 59 │ var cprime : M.I = <M.I>null;
-    ·                     ─
- 60 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
 
   × 'A' refers to a value, but is being used as a type here.
    ╭─[compiler/moduleWithValuesAsType.ts:5:8]
@@ -10230,15 +8823,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  12 │     ?(): any; //err
     ╰────
 
-  × 'O' refers to a value, but is being used as a type here.
-    ╭─[compiler/overload1.ts:25:15]
- 24 │ 
- 25 │ declare var x:O.I;
-    ·               ─
- 26 │ 
-    ╰────
-  help: Did you mean 'typeof O'?
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/overloadConsecutiveness.ts:3:14]
  2 │ 
@@ -10492,15 +9076,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
   help: Did you mean 'typeof m'?
 
   × 'M' refers to a value, but is being used as a type here.
-   ╭─[compiler/primaryExpressionMods.ts:6:8]
- 5 │ }
- 6 │ var p: M.P;             // Used as ModuleName
-   ·        ─
- 7 │ var m: M = M;           // Used as TypeName and PrimaryExpression (error on TypeName)
-   ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M' refers to a value, but is being used as a type here.
    ╭─[compiler/primaryExpressionMods.ts:7:8]
  6 │ var p: M.P;             // Used as ModuleName
  7 │ var m: M = M;           // Used as TypeName and PrimaryExpression (error on TypeName)
@@ -10541,23 +9116,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    · ──────
  8 │ 
    ╰────
-
-  × 'T' refers to a value, but is being used as a type here.
-    ╭─[compiler/qualify.ts:30:15]
- 29 │     export module U2 {
- 30 │         var z:T.U.I2=3;
-    ·               ─
- 31 │     }
-    ╰────
-  help: Did you mean 'typeof T'?
-
-  × 'T' refers to a value, but is being used as a type here.
-    ╭─[compiler/qualify.ts:58:7]
- 57 │ var y:I;
- 58 │ var x:T.I=y;
-    ·       ─
-    ╰────
-  help: Did you mean 'typeof T'?
 
   × Identifier `bar` has already been declared
    ╭─[compiler/reassignStaticProp.ts:3:12]
@@ -10991,15 +9549,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  1 │ \ declare var v;
    · ─────────
    ╰────
-
-  × 'Foo' refers to a value, but is being used as a type here.
-    ╭─[compiler/sourceMapSample.ts:14:37]
- 13 │ 
- 14 │     function foo(greeting: string): Foo.Bar.Greeter {
-    ·                                     ───
- 15 │         return new Greeter(greeting);
-    ╰────
-  help: Did you mean 'typeof Foo'?
 
   × Identifier `x` has already been declared
    ╭─[compiler/sourceMapValidationEnums.ts:2:5]
@@ -12204,24 +10753,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × 'ns' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeNamedUndefined1.ts:9:22]
-  8 │ 
-  9 │ export function x(p: ns.undefined) { // undefined from the namespace
-    ·                      ──
- 10 │     return p;
-    ╰────
-  help: Did you mean 'typeof ns'?
-
-  × 'ns' refers to a value, but is being used as a type here.
-    ╭─[compiler/typeNamedUndefined2.ts:11:22]
- 10 │ 
- 11 │ export function x(p: ns.undefined.undefined) {
-    ·                      ──
- 12 │     return p;
-    ╰────
-  help: Did you mean 'typeof ns'?
-
   × 'someType' refers to a type, but is being used as a value here.
     ╭─[compiler/typeUsedAsValueError.ts:21:11]
  20 │ let five = new TypeAliasForSomeClassNotFound();
@@ -12350,15 +10881,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  3 │ }
    ╰────
 
-  × 'M' refers to a value, but is being used as a type here.
-   ╭─[compiler/undeclaredMethod.ts:7:7]
- 6 │ 
- 7 │ var c:M.C = new M.C();
-   ·       ─
- 8 │ 
-   ╰────
-  help: Did you mean 'typeof M'?
-
   × Unexpected token
    ╭─[compiler/unexpectedStatementBlockTerminator.ts:4:1]
  3 │ class Bar {}
@@ -12442,33 +10964,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  2 │ var eval;
    ·     ────
    ╰────
-
-  × 'WinJS' refers to a value, but is being used as a type here.
-    ╭─[compiler/variableDeclaratorResolvedDuringContextualTyping.ts:80:30]
- 79 │          */
- 80 │         makeRequest(options: WinJS.IXHROptions): WinJS.Promise;
-    ·                              ─────
- 81 │     }
-    ╰────
-  help: Did you mean 'typeof WinJS'?
-
-  × 'WinJS' refers to a value, but is being used as a type here.
-    ╭─[compiler/variableDeclaratorResolvedDuringContextualTyping.ts:80:50]
- 79 │          */
- 80 │         makeRequest(options: WinJS.IXHROptions): WinJS.Promise;
-    ·                                                  ─────
- 81 │     }
-    ╰────
-  help: Did you mean 'typeof WinJS'?
-
-  × 'WinJS' refers to a value, but is being used as a type here.
-     ╭─[compiler/variableDeclaratorResolvedDuringContextualTyping.ts:107:26]
- 106 │     private requestService: Services.IRequestService;
- 107 │     public uploadData(): WinJS.TPromise<Files.IUploadResult> {
-     ·                          ─────
- 108 │         var path = "";
-     ╰────
-  help: Did you mean 'typeof WinJS'?
 
   × 'with' statements are not allowed
    ╭─[compiler/withStatement.ts:3:1]
@@ -12840,15 +11335,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    · ─────
  2 │ }
    ╰────
-
-  × 'X' refers to a value, but is being used as a type here.
-   ╭─[conformance/async/es6/asyncQualifiedReturnType_es6.ts:6:21]
- 5 │ 
- 6 │ async function f(): X.MyPromise<void> {
-   ·                     ─
- 7 │ }
-   ╰────
-  help: Did you mean 'typeof X'?
 
   × Expected `(` but found `Identifier`
    ╭─[conformance/async/es6/asyncSetter_es6.ts:2:13]
@@ -18277,24 +16763,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  15 │     }
     ╰────
 
-  × 'A' refers to a value, but is being used as a type here.
-   ╭─[conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedEnums.ts:7:8]
- 6 │ // not an error since exported
- 7 │ var a: A.Color = A.Color.Red;
-   ·        ─
- 8 │ 
-   ╰────
-  help: Did you mean 'typeof A'?
-
-  × 'Geometry' refers to a value, but is being used as a type here.
-    ╭─[conformance/internalModules/exportDeclarations/ModuleWithExportedAndNonExportedImportAlias.ts:30:8]
- 29 │ var p: { x: number; y: number };
- 30 │ var p: Geometry.Points.Point;
-    ·        ────────
- 31 │ var p = Geometry.Origin;
-    ╰────
-  help: Did you mean 'typeof Geometry'?
-
   × Unexpected token
    ╭─[conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:2:8]
  1 │ module Inner {
@@ -20706,672 +19174,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  194 │ 
      ╰────
 
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:24:22]
- 23 │     export class AstPath {
- 24 │         public asts: TypeScript.AST[] = [];
-    ·                      ──────────
- 25 │         public top: number = -1;
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:38:23]
- 37 │ 
- 38 │         public pop(): TypeScript.AST {
-    ·                       ──────────
- 39 │             var head = this.ast();
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:48:26]
- 47 │ 
- 48 │         public push(ast: TypeScript.AST) {
-    ·                          ──────────
- 49 │             while (this.asts.length > this.count()) {
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:68:28]
- 67 │ 
- 68 │         public nodeType(): TypeScript.NodeType {
-    ·                            ──────────
- 69 │             if (this.ast() == null)
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:75:21]
- 74 │         public ast() {
- 75 │             return <TypeScript.AST>AstPath.reverseIndexOf(this.asts, this.asts.length - (this.top + 1));
-    ·                     ──────────
- 76 │         }
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:79:21]
- 78 │         public parent() {
- 79 │             return <TypeScript.AST>AstPath.reverseIndexOf(this.asts, this.asts.length - this.top);
-    ·                     ──────────
- 80 │         }
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:86:36]
- 85 │ 
- 86 │         public get(index: number): TypeScript.AST {
-    ·                                    ──────────
- 87 │             return this.asts[index];
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-    ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:96:20]
- 95 │                 (this.parent().nodeType === TypeScript.NodeType.ClassDeclaration) &&
- 96 │                 ((<TypeScript.InterfaceDeclaration>this.parent()).name === this.ast());
-    ·                    ──────────
- 97 │         }
-    ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:105:20]
- 104 │                 (this.parent().nodeType === TypeScript.NodeType.InterfaceDeclaration) &&
- 105 │                 ((<TypeScript.InterfaceDeclaration>this.parent()).name === this.ast());
-     ·                    ──────────
- 106 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:114:20]
- 113 │                 (this.parent().nodeType === TypeScript.NodeType.ArgDecl) &&
- 114 │                 ((<TypeScript.ArgDecl>this.parent()).id === this.ast());
-     ·                    ──────────
- 115 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:123:20]
- 122 │                 (this.parent().nodeType === TypeScript.NodeType.VarDecl) &&
- 123 │                 ((<TypeScript.VarDecl>this.parent()).id === this.ast());
-     ·                    ──────────
- 124 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:132:20]
- 131 │                 (this.parent().nodeType === TypeScript.NodeType.ModuleDeclaration) &&
- 132 │                 ((<TypeScript.ModuleDeclaration>this.parent()).name === this.ast());
-     ·                    ──────────
- 133 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:141:20]
- 140 │                 (this.parent().nodeType === TypeScript.NodeType.FuncDecl) &&
- 141 │                 ((<TypeScript.FuncDecl>this.parent()).name === this.ast());
-     ·                    ──────────
- 142 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:176:20]
- 175 │                 this.asts[this.top - 4].nodeType === TypeScript.NodeType.ClassDeclaration &&
- 176 │                 ((<TypeScript.FuncDecl>this.asts[this.top - 2]).isConstructor) &&
-     ·                    ──────────
- 177 │                 ((<TypeScript.FuncDecl>this.asts[this.top - 2]).arguments === this.asts[this.top - 1]) &&
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:177:20]
- 176 │                 ((<TypeScript.FuncDecl>this.asts[this.top - 2]).isConstructor) &&
- 177 │                 ((<TypeScript.FuncDecl>this.asts[this.top - 2]).arguments === this.asts[this.top - 1]) &&
-     ·                    ──────────
- 178 │                 ((<TypeScript.ClassDeclaration>this.asts[this.top - 4]).constructorDecl === this.asts[this.top - 2]);
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:178:20]
- 177 │                 ((<TypeScript.FuncDecl>this.asts[this.top - 2]).arguments === this.asts[this.top - 1]) &&
- 178 │                 ((<TypeScript.ClassDeclaration>this.asts[this.top - 4]).constructorDecl === this.asts[this.top - 2]);
-     ·                    ──────────
- 179 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:192:38]
- 191 │                 this.asts[this.top].nodeType === TypeScript.NodeType.ModuleDeclaration &&
- 192 │                 TypeScript.hasFlag((<TypeScript.ModuleDeclaration>this.asts[this.top]).modFlags, TypeScript.ModuleFlags.IsWholeFile);
-     ·                                      ──────────
- 193 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:199:20]
- 198 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.ModuleDeclaration &&
- 199 │                  (<TypeScript.ModuleDeclaration>this.asts[this.top - 1]).members == this.asts[this.top - 0] &&
-     ·                    ──────────
- 200 │                 TypeScript.hasFlag((<TypeScript.ModuleDeclaration>this.asts[this.top - 1]).modFlags, TypeScript.ModuleFlags.IsWholeFile);
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:200:38]
- 199 │                  (<TypeScript.ModuleDeclaration>this.asts[this.top - 1]).members == this.asts[this.top - 0] &&
- 200 │                 TypeScript.hasFlag((<TypeScript.ModuleDeclaration>this.asts[this.top - 1]).modFlags, TypeScript.ModuleFlags.IsWholeFile);
-     ·                                      ──────────
- 201 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:206:20]
- 205 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Script &&
- 206 │                  (<TypeScript.Script>this.asts[this.top - 1]).bod == this.asts[this.top - 0];
-     ·                    ──────────
- 207 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:212:20]
- 211 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Switch &&
- 212 │                  (<TypeScript.SwitchStatement>this.asts[this.top - 1]).caseList == this.asts[this.top - 0];
-     ·                    ──────────
- 213 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:218:20]
- 217 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.ModuleDeclaration &&
- 218 │                  (<TypeScript.ModuleDeclaration>this.asts[this.top - 1]).members == this.asts[this.top - 0];
-     ·                    ──────────
- 219 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:224:20]
- 223 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.ClassDeclaration &&
- 224 │                  (<TypeScript.ClassDeclaration>this.asts[this.top - 1]).members == this.asts[this.top - 0];
-     ·                    ──────────
- 225 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:230:20]
- 229 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.FuncDecl &&
- 230 │                  (<TypeScript.FuncDecl>this.asts[this.top - 1]).bod == this.asts[this.top - 0];
-     ·                    ──────────
- 231 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:236:20]
- 235 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.InterfaceDeclaration &&
- 236 │                  (<TypeScript.InterfaceDeclaration>this.asts[this.top - 1]).members == this.asts[this.top - 0];
-     ·                    ──────────
- 237 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:242:19]
- 241 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Block &&
- 242 │                 (<TypeScript.Block>this.asts[this.top - 1]).statements == this.asts[this.top - 0];
-     ·                   ──────────
- 243 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:248:19]
- 247 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.For &&
- 248 │                 (<TypeScript.ForStatement>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 249 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:254:19]
- 253 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Case &&
- 254 │                 (<TypeScript.CaseStatement>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 255 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:260:19]
- 259 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Try &&
- 260 │                 (<TypeScript.Try>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 261 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:266:19]
- 265 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Catch &&
- 266 │                 (<TypeScript.Catch>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 267 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:272:19]
- 271 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.DoWhile &&
- 272 │                 (<TypeScript.DoWhileStatement>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 273 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:278:19]
- 277 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.While &&
- 278 │                 (<TypeScript.WhileStatement>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 279 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:284:19]
- 283 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.ForIn &&
- 284 │                 (<TypeScript.ForInStatement>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 285 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:290:19]
- 289 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.With &&
- 290 │                 (<TypeScript.WithStatement>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 291 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:296:19]
- 295 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Finally &&
- 296 │                 (<TypeScript.Finally>this.asts[this.top - 1]).body == this.asts[this.top - 0];
-     ·                   ──────────
- 297 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:303:19]
- 302 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.List &&
- 303 │                 (<TypeScript.SwitchStatement>this.asts[this.top - 2]).caseList == this.asts[this.top - 1];
-     ·                   ──────────
- 304 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:310:19]
- 309 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.List &&
- 310 │                 (<TypeScript.SwitchStatement>this.asts[this.top - 2]).caseList == this.asts[this.top - 1] &&
-     ·                   ──────────
- 311 │                 (<TypeScript.SwitchStatement>this.asts[this.top - 2]).defaultCase == this.asts[this.top - 0];
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:311:19]
- 310 │                 (<TypeScript.SwitchStatement>this.asts[this.top - 2]).caseList == this.asts[this.top - 1] &&
- 311 │                 (<TypeScript.SwitchStatement>this.asts[this.top - 2]).defaultCase == this.asts[this.top - 0];
-     ·                   ──────────
- 312 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:318:19]
- 317 │                 this.asts[this.top - 0].nodeType === TypeScript.NodeType.List &&
- 318 │                 (<TypeScript.UnaryExpression>this.asts[this.top - 1]).operand == this.asts[this.top - 0];
-     ·                   ──────────
- 319 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:329:19]
- 328 │                 this.asts[this.top - 0].nodeType === TypeScript.NodeType.List &&
- 329 │                 (<TypeScript.UnaryExpression>this.asts[this.top - 1]).operand == this.asts[this.top - 0] &&
-     ·                   ──────────
- 330 │                 (<TypeScript.ASTList>this.asts[this.top - 0]).members.length == 0;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:330:19]
- 329 │                 (<TypeScript.UnaryExpression>this.asts[this.top - 1]).operand == this.asts[this.top - 0] &&
- 330 │                 (<TypeScript.ASTList>this.asts[this.top - 0]).members.length == 0;
-     ·                   ──────────
- 331 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:338:19]
- 337 │                 this.asts[this.top - 0].nodeType === TypeScript.NodeType.Member &&
- 338 │                 (<TypeScript.UnaryExpression>this.asts[this.top - 2]).operand == this.asts[this.top - 1];
-     ·                   ──────────
- 339 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:347:19]
- 346 │                 this.asts[this.top - 0].nodeType === TypeScript.NodeType.Name &&
- 347 │                 (<TypeScript.UnaryExpression>this.asts[this.top - 3]).operand == this.asts[this.top - 2];
-     ·                   ──────────
- 348 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:354:19]
- 353 │                 this.asts[this.top - 0].nodeType === TypeScript.NodeType.List &&
- 354 │                 (<TypeScript.UnaryExpression>this.asts[this.top - 1]).operand == this.asts[this.top - 0];
-     ·                   ──────────
- 355 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:360:19]
- 359 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Member &&
- 360 │                 (<TypeScript.BinaryExpression>this.asts[this.top - 1]).operand1 === this.asts[this.top - 0];
-     ·                   ──────────
- 361 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:366:19]
- 365 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Member &&
- 366 │                 (<TypeScript.BinaryExpression>this.asts[this.top - 1]).operand2 === this.asts[this.top - 0];
-     ·                   ──────────
- 367 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:378:19]
- 377 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.If &&
- 378 │                 (<TypeScript.IfStatement>this.asts[this.top - 1]).thenBod == this.asts[this.top - 0];
-     ·                   ──────────
- 379 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:384:19]
- 383 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.If &&
- 384 │                 (<TypeScript.IfStatement>this.asts[this.top - 1]).elseBod == this.asts[this.top - 0];
-     ·                   ──────────
- 385 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:394:19]
- 393 │                 this.asts[this.top].nodeType === TypeScript.NodeType.List &&
- 394 │                 (<TypeScript.ASTList>this.asts[this.top]).members.length === 1;
-     ·                   ──────────
- 395 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:401:19]
- 400 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.FuncDecl &&
- 401 │                 (<TypeScript.FuncDecl>this.asts[this.top - 1]).arguments === this.asts[this.top - 0];
-     ·                   ──────────
- 402 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:408:19]
- 407 │                 this.asts[this.top - 2].nodeType === TypeScript.NodeType.FuncDecl &&
- 408 │                 (<TypeScript.FuncDecl>this.asts[this.top - 2]).arguments === this.asts[this.top - 1];
-     ·                   ──────────
- 409 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:415:19]
- 414 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.Call &&
- 415 │                 (<TypeScript.CallExpression>this.asts[this.top - 1]).arguments === this.asts[this.top - 0];
-     ·                   ──────────
- 416 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:422:19]
- 421 │                 this.asts[this.top - 1].nodeType === TypeScript.NodeType.New &&
- 422 │                 (<TypeScript.CallExpression>this.asts[this.top - 1]).arguments === this.asts[this.top - 0];
-     ·                   ──────────
- 423 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:428:19]
- 427 │                 this.asts[this.top - 0].nodeType === TypeScript.NodeType.Block &&
- 428 │                 (<TypeScript.Block>this.asts[this.top - 0]).isStatementBlock === false;
-     ·                   ──────────
- 429 │         }
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:432:41]
- 431 │ 
- 432 │     export function isValidAstNode(ast: TypeScript.ASTSpan): boolean {
-     ·                                         ──────────
- 433 │         if (ast === null)
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:462:50]
- 461 │     ///
- 462 │     export function getAstPathToPosition(script: TypeScript.AST, pos: number, options = GetAstPathOptions.Default): TypeScript.AstPath {
-     ·                                                  ──────────
- 463 │         var lookInComments = (comments: TypeScript.Comment[]) => {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:463:41]
- 462 │     export function getAstPathToPosition(script: TypeScript.AST, pos: number, options = GetAstPathOptions.Default): TypeScript.AstPath {
- 463 │         var lookInComments = (comments: TypeScript.Comment[]) => {
-     ·                                         ──────────
- 464 │             if (comments && comments.length > 0) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:478:34]
- 477 │ 
- 478 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: IAstWalker) {
-     ·                                  ──────────
- 479 │             if (isValidAstNode(cur)) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:478:58]
- 477 │ 
- 478 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: IAstWalker) {
-     ·                                                          ──────────
- 479 │             if (isValidAstNode(cur)) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:462:117]
- 461 │     ///
- 462 │     export function getAstPathToPosition(script: TypeScript.AST, pos: number, options = GetAstPathOptions.Default): TypeScript.AstPath {
-     ·                                                                                                                     ──────────
- 463 │         var lookInComments = (comments: TypeScript.Comment[]) => {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:533:51]
- 532 │     //
- 533 │     export function getTokenizationOffset(script: TypeScript.Script, position: number): number {
-     ·                                                   ──────────
- 534 │         var bestOffset = 0;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:535:25]
- 534 │         var bestOffset = 0;
- 535 │         var pre = (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker): TypeScript.AST => {
-     ·                         ──────────
- 536 │             if (TypeScript.isValidAstNode(cur)) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:535:49]
- 534 │         var bestOffset = 0;
- 535 │         var pre = (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker): TypeScript.AST => {
-     ·                                                 ──────────
- 536 │             if (TypeScript.isValidAstNode(cur)) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:535:73]
- 534 │         var bestOffset = 0;
- 535 │         var pre = (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker): TypeScript.AST => {
-     ·                                                                         ──────────
- 536 │             if (TypeScript.isValidAstNode(cur)) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:558:34]
- 557 │     ///
- 558 │     export function walkAST(ast: TypeScript.AST, callback: (path: AstPath, walker: TypeScript.IAstWalker) => void ): void {
-     ·                                  ──────────
- 559 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:558:84]
- 557 │     ///
- 558 │     export function walkAST(ast: TypeScript.AST, callback: (path: AstPath, walker: TypeScript.IAstWalker) => void ): void {
-     ·                                                                                    ──────────
- 559 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:559:34]
- 558 │     export function walkAST(ast: TypeScript.AST, callback: (path: AstPath, walker: TypeScript.IAstWalker) => void ): void {
- 559 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ·                                  ──────────
- 560 │             var path: TypeScript.AstPath = walker.state;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:559:58]
- 558 │     export function walkAST(ast: TypeScript.AST, callback: (path: AstPath, walker: TypeScript.IAstWalker) => void ): void {
- 559 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ·                                                          ──────────
- 560 │             var path: TypeScript.AstPath = walker.state;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:559:82]
- 558 │     export function walkAST(ast: TypeScript.AST, callback: (path: AstPath, walker: TypeScript.IAstWalker) => void ): void {
- 559 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ·                                                                                  ──────────
- 560 │             var path: TypeScript.AstPath = walker.state;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:560:23]
- 559 │         var pre = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
- 560 │             var path: TypeScript.AstPath = walker.state;
-     ·                       ──────────
- 561 │             path.push(cur);
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:565:35]
- 564 │         }
- 565 │         var post = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ·                                   ──────────
- 566 │             var path: TypeScript.AstPath = walker.state;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:565:59]
- 564 │         }
- 565 │         var post = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ·                                                           ──────────
- 566 │             var path: TypeScript.AstPath = walker.state;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:565:83]
- 564 │         }
- 565 │         var post = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
-     ·                                                                                   ──────────
- 566 │             var path: TypeScript.AstPath = walker.state;
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
-  × 'TypeScript' refers to a value, but is being used as a type here.
-     ╭─[conformance/parser/ecmascript5/parserRealSource14.ts:566:23]
- 565 │         var post = function (cur: TypeScript.AST, parent: TypeScript.AST, walker: TypeScript.IAstWalker) {
- 566 │             var path: TypeScript.AstPath = walker.state;
-     ·                       ──────────
- 567 │             path.pop();
-     ╰────
-  help: Did you mean 'typeof TypeScript'?
-
   × Unexpected token
      ╭─[conformance/parser/ecmascript5/parserRealSource4.ts:195:38]
  194 │         public itemCount: number = 0;
@@ -21867,15 +19669,6 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
  1 │ \u0076ar x = "hello";
    · ────────
    ╰────
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/statements/VariableStatements/everyTypeWithAnnotationAndInvalidInitializer.ts:51:21]
- 50 │ var aModule: typeof M = N;
- 51 │ var aClassInModule: M.A = new N.A();
-    ·                     ─
- 52 │ var aFunctionInModule: typeof M.F2 = F2;
-    ╰────
-  help: Did you mean 'typeof M'?
 
   × Unexpected token
    ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.11.ts:1:8]
@@ -23589,37 +21382,11 @@ Expect to Parse: "conformance/statements/forStatements/forStatements.ts"
    ╰────
 
   × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument.ts:30:20]
- 29 │ class D2 extends M.E { }
- 30 │ class D3<T extends M.E> { }
-    ·                    ─
- 31 │ interface I2 extends M.E { }
-    ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M' refers to a value, but is being used as a type here.
     ╭─[conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument.ts:31:22]
  30 │ class D3<T extends M.E> { }
  31 │ interface I2 extends M.E { }
     ·                      ─
  32 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument.ts:34:22]
- 33 │ function h<T extends C>(x: T) { }
- 34 │ function i<T extends M.E>(x: T) { }
-    ·                      ─
- 35 │ 
-    ╰────
-  help: Did you mean 'typeof M'?
-
-  × 'M' refers to a value, but is being used as a type here.
-    ╭─[conformance/types/specifyingTypes/typeReferences/genericTypeReferenceWithoutTypeArgument.ts:37:10]
- 36 │ var j = <C>null;
- 37 │ var k = <M.E>null;
-    ·          ─
     ╰────
   help: Did you mean 'typeof M'?
 

@@ -1815,11 +1815,18 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSPropertySignature(sig) => {
                 debug_assert!(self.current_meaning().is_type());
+                // Constants and symbols can be used as types in property index
+                // signatures. We can't handle symbols b/c we don't a checker
+                // and can't perform type inference.
                 if sig.computed {
                     self.meaning_stack.push(MEANING_TYPELIKE.union(SymbolFlags::ConstVariable));
                 } else {
                     self.meaning_stack.push(MEANING_TYPELIKE);
                 }
+            }
+            AstKind::TSQualifiedName(_) => {
+                // allow `const x: A.B`, where A is a module
+                self.meaning_stack.push(self.current_meaning().union(SymbolFlags::NameSpaceModule));
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -1933,6 +1940,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.meaning_stack.pop();
             }
             AstKind::TSPropertySignature(_) => {
+                self.meaning_stack.pop();
+            }
+            AstKind::TSQualifiedName(_) => {
                 self.meaning_stack.pop();
             }
             AstKind::UpdateExpression(_) => {
