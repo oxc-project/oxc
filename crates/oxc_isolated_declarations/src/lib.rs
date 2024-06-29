@@ -142,6 +142,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             );
                             variable_transformed_indexes.push_back(Vec::default());
                         }
+                        Declaration::TSModuleDeclaration(decl) => {
+                            if decl.kind.is_global() {
+                                transformed_indexes.push(new_stmts.len());
+                            }
+                        }
                         _ => {}
                     }
                     new_stmts.push(stmt);

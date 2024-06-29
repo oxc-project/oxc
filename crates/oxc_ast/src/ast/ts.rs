@@ -824,6 +824,12 @@ pub enum TSModuleDeclarationKind {
     Namespace,
 }
 
+impl TSModuleDeclarationKind {
+    pub fn is_global(self) -> bool {
+        matches!(self, TSModuleDeclarationKind::Global)
+    }
+}
+
 #[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
