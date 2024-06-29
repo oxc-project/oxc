@@ -355,6 +355,9 @@ fn unicode_escape() {
 
 #[test]
 fn ts_misc() {
-    test_ts("type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }", "type A<T> = { [K in keyof T as K extends (string) ? B<K> : K] : T[K]};\n", false);
+    test_ts(
+        "type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }",
+        "type A<T> = { [K in keyof T as K extends (string) ? B<K> : K] : T[K]};\n",
+        false,
+    );
 }
-

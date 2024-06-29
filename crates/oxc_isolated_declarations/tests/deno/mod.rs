@@ -389,12 +389,18 @@ export function foo(a: any): number {
 
     #[test]
     fn dts_class_type_param() {
-        transform_dts_test("export class A<T> extends B<T> implements C<T>{};", "export declare class A<T> extends B<T> implements C<T> {}");
+        transform_dts_test(
+            "export class A<T> extends B<T> implements C<T>{};",
+            "export declare class A<T> extends B<T> implements C<T> {}",
+        );
     }
 
     #[test]
     fn dts_fn_type_param() {
-        transform_dts_test("export default function<T>(arg1: T) {}", "export default function<T>(arg1: T);");
+        transform_dts_test(
+            "export default function<T>(arg1: T) {}",
+            "export default function<T>(arg1: T);",
+        );
     }
 
     #[test]
@@ -404,6 +410,9 @@ export function foo(a: any): number {
 
     #[test]
     fn dts_tuple_optional_item() {
-        transform_dts_test("export const a: [x?: number | null] = [null]", "export declare const a: [x?: ((number) | (null))];\n");
+        transform_dts_test(
+            "export const a: [x?: number | null] = [null]",
+            "export declare const a: [x?: ((number) | (null))];\n",
+        );
     }
 }
