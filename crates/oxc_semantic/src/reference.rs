@@ -1,7 +1,7 @@
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 
-use oxc_span::{CompactStr, Span};
+use oxc_span::{Atom, Span};
 pub use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -13,10 +13,10 @@ use crate::{symbol::SymbolId, AstNodeId};
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
-pub struct Reference {
+pub struct Reference<'a> {
     span: Span,
     /// The name of the identifier that was referred to
-    name: CompactStr,
+    name: Atom<'a>,
     node_id: AstNodeId,
     symbol_id: Option<SymbolId>,
     /// Describes how this referenced is used by other AST nodes. References can
@@ -24,14 +24,14 @@ pub struct Reference {
     flag: ReferenceFlag,
 }
 
-impl Reference {
-    pub fn new(span: Span, name: CompactStr, node_id: AstNodeId, flag: ReferenceFlag) -> Self {
+impl<'a> Reference<'a> {
+    pub fn new(span: Span, name: Atom<'a>, node_id: AstNodeId, flag: ReferenceFlag) -> Self {
         Self { span, name, node_id, symbol_id: None, flag }
     }
 
     pub fn new_with_symbol_id(
         span: Span,
-        name: CompactStr,
+        name: Atom<'a>,
         node_id: AstNodeId,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
@@ -43,7 +43,7 @@ impl Reference {
         self.span
     }
 
-    pub fn name(&self) -> &CompactStr {
+    pub fn name(&self) -> &Atom<'a> {
         &self.name
     }
 

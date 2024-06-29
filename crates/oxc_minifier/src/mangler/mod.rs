@@ -7,11 +7,11 @@ use oxc_span::CompactStr;
 type Slot = usize;
 
 #[derive(Debug)]
-pub struct Mangler {
-    symbol_table: SymbolTable,
+pub struct Mangler<'a> {
+    symbol_table: SymbolTable<'a>,
 }
 
-impl Mangler {
+impl<'a> Mangler<'a> {
     pub fn get_symbol_name(&self, symbol_id: SymbolId) -> &str {
         self.symbol_table.get_name(symbol_id)
     }

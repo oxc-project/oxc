@@ -986,8 +986,7 @@ fn get_read_identifier_reference<'a>(
     name: Atom<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) -> IdentifierReference<'a> {
-    let reference_id =
-        ctx.create_reference_in_current_scope(name.to_compact_str(), ReferenceFlag::Read);
+    let reference_id = ctx.create_reference_in_current_scope(name.clone(), ReferenceFlag::Read);
     IdentifierReference::new_read(span, name, Some(reference_id))
 }
 

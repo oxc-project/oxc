@@ -66,7 +66,9 @@ impl Rule for NoGlobalAssign {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write() {
                     let name = reference.name();
-                    if !self.excludes.contains(name) && ctx.env_contains_var(name) {
+                    // Vec::contains isn't working here, but this has the same
+                    // effect and time complexity.
+                    if !self.excludes.iter().any(|e| e == name) && ctx.env_contains_var(name) {
                         ctx.diagnostic(no_global_assign_diagnostic(name, reference.span()));
                     }
                 }
