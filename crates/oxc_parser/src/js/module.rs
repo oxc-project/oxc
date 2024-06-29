@@ -289,7 +289,7 @@ impl<'a> ParserImpl<'a> {
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
         let modifiers = if self.ts_enabled() {
-            self.eat_modifiers_before_declaration().1
+            self.eat_modifiers_before_declaration()?
         } else {
             Modifiers::empty()
         };
@@ -324,7 +324,7 @@ impl<'a> ParserImpl<'a> {
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
             _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
                 // eat the abstract modifier
-                let (_, modifiers) = self.eat_modifiers_before_declaration();
+                let modifiers = self.eat_modifiers_before_declaration()?;
                 self.parse_class_declaration(decl_span, &modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }

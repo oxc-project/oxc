@@ -10,7 +10,7 @@ use crate::{
     diagnostics,
     lexer::Kind,
     list::SeparatedList,
-    modifiers::{ModifierKind, Modifiers},
+    modifiers::{ModifierFlags, ModifierKind, Modifiers},
     Context, ParserImpl, StatementContext,
 };
 
@@ -109,14 +109,11 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
-        for modifier in modifiers.iter() {
-            if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Async) {
-                self.error(diagnostics::modifier_cannot_be_used_here(
-                    modifier.span,
-                    modifier.kind.as_str(),
-                ));
-            }
-        }
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            diagnostics::modifier_cannot_be_used_here,
+        );
 
         Ok(self.ast.function(
             function_type,
@@ -124,7 +121,7 @@ impl<'a> ParserImpl<'a> {
             id,
             generator,
             r#async,
-            modifiers.is_contains_declare(),
+            modifiers.contains_declare(),
             this_param,
             params,
             body,
