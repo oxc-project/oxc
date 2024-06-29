@@ -164,7 +164,7 @@ impl<'a> ParserImpl<'a> {
             return self.parse_function_expression(span, r#async);
         }
 
-        match &self.cur_kind() {
+        match self.cur_kind() {
             Kind::Ident => self.parse_identifier_expression(), // fast path, keywords are checked at the end
             // Literal, RegularExpressionLiteral
             kind if kind.is_literal() => self.parse_literal_expression(),
@@ -414,7 +414,10 @@ impl<'a> ParserImpl<'a> {
         Ok(TemplateLiteral { span: self.end_span(span), quasis, expressions })
     }
 
-    fn parse_template_literal_expression(&mut self, tagged: bool) -> Result<Expression<'a>> {
+    pub(crate) fn parse_template_literal_expression(
+        &mut self,
+        tagged: bool,
+    ) -> Result<Expression<'a>> {
         self.parse_template_literal(tagged)
             .map(|template_literal| self.ast.template_literal_expression(template_literal))
     }
@@ -527,8 +530,8 @@ impl<'a> ParserImpl<'a> {
         in_optional_chain: &mut bool,
     ) -> Result<Expression<'a>> {
         let span = self.start_span();
-        self.parse_primary_expression()
-            .and_then(|lhs| self.parse_member_expression_rest(span, lhs, in_optional_chain))
+        let lhs = self.parse_primary_expression()?;
+        self.parse_member_expression_rest(span, lhs, in_optional_chain)
     }
 
     /// Section 13.3 Super Call
@@ -598,8 +601,8 @@ impl<'a> ParserImpl<'a> {
                     self.parse_tagged_template(lhs_span, expr, *in_optional_chain, type_parameters)?
                 }
                 Kind::LAngle | Kind::ShiftLeft => {
-                    if let Ok(Some(arguments)) =
-                        self.try_parse(Self::parse_ts_type_arguments_in_expression)
+                    if let Some(Some(arguments)) =
+                        self.try_parse(Self::parse_type_arguments_in_expression)
                     {
                         lhs = self.ast.ts_instantiation_expression(
                             self.end_span(lhs_span),
@@ -710,8 +713,7 @@ impl<'a> ParserImpl<'a> {
             *in_optional_chain = if optional_call { true } else { *in_optional_chain };
 
             if optional_call {
-                if let Ok(Some(args)) = self.try_parse(Self::parse_ts_type_arguments_in_expression)
-                {
+                if let Some(Some(args)) = self.try_parse(Self::parse_type_arguments_in_expression) {
                     type_arguments = Some(args);
                 }
                 if self.cur_kind().is_template_start_of_tagged_template() {

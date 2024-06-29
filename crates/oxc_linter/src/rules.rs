@@ -137,6 +137,7 @@ mod typescript {
     pub mod no_import_type_side_effects;
     pub mod no_misused_new;
     pub mod no_namespace;
+    pub mod no_non_null_asserted_nullish_coalescing;
     pub mod no_non_null_asserted_optional_chain;
     pub mod no_non_null_assertion;
     pub mod no_this_alias;
@@ -184,6 +185,7 @@ mod jest {
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
     pub mod prefer_hooks_on_top;
+    pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;
     pub mod prefer_spy_on;
@@ -218,6 +220,7 @@ mod react {
     pub mod no_string_refs;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
+    pub mod prefer_es6_class;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -543,6 +546,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_literal_enum_member,
     typescript::explicit_function_return_type,
     typescript::no_non_null_assertion,
+    typescript::no_non_null_asserted_nullish_coalescing,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,
@@ -573,6 +577,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_equality_matcher,
     jest::prefer_expect_resolves,
     jest::prefer_hooks_on_top,
+    jest::prefer_jest_mocked,
     jest::prefer_lowercase_title,
     jest::prefer_mock_promise_shorthand,
     jest::prefer_spy_on,
@@ -686,6 +691,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_unescaped_entities,
     react::no_is_mounted,
     react::no_unknown_property,
+    react::prefer_es6_class,
     react::require_render_return,
     react::rules_of_hooks,
     react::void_dom_elements_no_children,

@@ -2406,6 +2406,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_js_doc_non_nullable_type(
+        &mut self,
+        node: &mut JSDocNonNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_js_doc_non_nullable_type(
+        &mut self,
+        node: &mut JSDocNonNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_js_doc_unknown_type(
         &mut self,
         node: &mut JSDocUnknownType,

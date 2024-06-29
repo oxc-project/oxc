@@ -2816,7 +2816,9 @@ pub mod walk {
             TSType::TSTypeReference(ty) => visitor.visit_ts_type_reference(ty),
             TSType::TSUnionType(ty) => visitor.visit_ts_union_type(ty),
             // JSDoc
-            TSType::JSDocNullableType(_) | TSType::JSDocUnknownType(_) => { /* TODO */ }
+            TSType::JSDocNullableType(_)
+            | TSType::JSDocNonNullableType(_)
+            | TSType::JSDocUnknownType(_) => { /* TODO */ }
         }
     }
 
@@ -3124,7 +3126,7 @@ pub mod walk {
     pub fn walk_ts_import_type<'a, V: Visit<'a>>(visitor: &mut V, ty: &TSImportType<'a>) {
         let kind = AstKind::TSImportType(visitor.alloc(ty));
         visitor.enter_node(kind);
-        visitor.visit_ts_type(&ty.argument);
+        visitor.visit_ts_type(&ty.parameter);
         if let Some(name) = &ty.qualifier {
             visitor.visit_ts_type_name(name);
         }
@@ -3244,7 +3246,7 @@ pub mod walk {
         let kind = AstKind::TSNamedTupleMember(visitor.alloc(ty));
         visitor.enter_node(kind);
         visitor.visit_identifier_name(&ty.label);
-        visitor.visit_ts_type(&ty.element_type);
+        visitor.visit_ts_tuple_element(&ty.element_type);
         visitor.leave_node(kind);
     }
 

@@ -183,22 +183,6 @@ impl<'a> SemanticBuilder<'a> {
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
 
-    pub fn build2(self) -> Semantic<'a> {
-        Semantic {
-            source_text: self.source_text,
-            source_type: self.source_type,
-            trivias: self.trivias,
-            nodes: self.nodes,
-            scopes: self.scope,
-            symbols: self.symbols,
-            classes: self.class_table_builder.build(),
-            module_record: Arc::new(ModuleRecord::default()),
-            jsdoc: self.jsdoc.build(),
-            unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg.map(ControlFlowGraphBuilder::build),
-        }
-    }
-
     /// Push a Syntax Error
     pub fn error(&self, error: OxcDiagnostic) {
         self.errors.borrow_mut().push(error);
@@ -427,27 +411,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
 
         let mut flags = flags;
-        // Inherit strict mode for functions
-        // https://tc39.es/ecma262/#sec-strict-mode-code
         if let Some(parent_scope_id) = parent_scope_id {
-            let mut strict_mode = self.scope.root_flags().is_strict_mode();
-            let parent_scope_flags = self.scope.get_flags(parent_scope_id);
-
-            if !strict_mode
-                && (parent_scope_flags.is_function() || parent_scope_flags.is_ts_module_block())
-                && parent_scope_flags.is_strict_mode()
-            {
-                strict_mode = true;
-            }
-
-            // inherit flags for non-function scopes
-            if !flags.contains(ScopeFlags::Function) {
-                flags |= parent_scope_flags & ScopeFlags::Modifiers;
-            };
-
-            if strict_mode {
-                flags |= ScopeFlags::StrictMode;
-            }
+            flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
         }
 
         self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);

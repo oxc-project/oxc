@@ -6,12 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn no_import_type_side_effects_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(no-import-type-side-effects): TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.")
         .with_help("Convert this to a top-level type qualifier to properly remove the entire import.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -83,45 +83,29 @@ impl Rule for NoImportTypeSideEffects {
         // `import { type A, type B } from 'foo.js'`
         ctx.diagnostic_with_fix(
             no_import_type_side_effects_diagnostic(import_decl.span),
-            |fixer| {
-                let mut delete_ranges = vec![];
+            |_fixer| {
+                let raw = ctx.source_range(import_decl.span);
+                let mut fixes = vec![];
+
+                // import type A from 'foo.js'
+                //        ^^^^ add
+                if raw.starts_with("import") {
+                    fixes.push(Fix::new(
+                        "import type",
+                        Span::new(import_decl.span.start, import_decl.span.start + 6),
+                    ));
+                }
 
                 for specifier in type_specifiers {
                     // import { type    A } from 'foo.js'
                     //          ^^^^^^^^
-                    delete_ranges
-                        .push(Span::new(specifier.span.start, specifier.imported.span().start));
+                    fixes.push(Fix::delete(Span::new(
+                        specifier.span.start,
+                        specifier.imported.span().start,
+                    )));
                 }
 
-                let mut output = String::new();
-                let mut last_pos = import_decl.span.start;
-                for range in delete_ranges {
-                    // import      { type A } from 'foo.js'
-                    // ^^^^^^^^^^^^^^^
-                    // |             |
-                    // [last_pos      range.start)
-                    output.push_str(ctx.source_range(Span::new(last_pos, range.start)));
-                    // import      { type A } from 'foo.js'
-                    //                    ^
-                    //                    |
-                    //                    last_pos
-                    last_pos = range.end;
-                }
-
-                // import      { type A } from 'foo.js'
-                //                    ^^^^^^^^^^^^^^^^^^
-                //                    ^                ^
-                //                    |                |
-                //                    [last_pos        import_decl_span.end)
-                output.push_str(ctx.source_range(Span::new(last_pos, import_decl.span.end)));
-
-                if let Some(output) = output.strip_prefix("import ") {
-                    let output = format!("import type {output}");
-                    fixer.replace(import_decl.span, output)
-                } else {
-                    // Do not do anything, this should never happen
-                    fixer.replace(import_decl.span, ctx.source_range(import_decl.span))
-                }
+                fixes
             },
         );
     }

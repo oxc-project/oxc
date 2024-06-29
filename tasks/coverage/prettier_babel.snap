@@ -2,7 +2,7 @@ commit: 12619ffe
 
 prettier_babel Summary:
 AST Parsed     : 2101/2101 (100.00%)
-Positive Passed: 1893/2101 (90.10%)
+Positive Passed: 1895/2101 (90.20%)
 Expect to Parse: "comments/attachComment-false/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/array-expression-trailing-comma/input.js"
 Expect to Parse: "comments/basic/object-expression-trailing-comma/input.js"
@@ -149,9 +149,7 @@ Expect to Parse: "typescript/type-alias/generic-complex-tokens-true-babel-7/inpu
 Expect to Parse: "typescript/type-arguments/tsx/input.ts"
 Expect to Parse: "typescript/type-arguments/whitespace/input.ts"
 Expect to Parse: "typescript/type-arguments/whitespace-babel-7/input.ts"
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx"
 Expect to Parse: "typescript/type-arguments-bit-shift-left-like/type-arguments-like/input.ts"
-Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx"
 Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/type-arguments-like/input.ts"
 Expect to Parse: "typescript/types/conditional/input.ts"
 Expect to Parse: "typescript/types/conditional-infer/input.ts"

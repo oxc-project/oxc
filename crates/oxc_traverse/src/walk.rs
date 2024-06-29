@@ -3899,6 +3899,9 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::JSDocNullableType(node) => {
             walk_js_doc_nullable_type(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSType::JSDocNonNullableType(node) => {
+            walk_js_doc_non_nullable_type(traverser, (&mut **node) as *mut _, ctx)
+        }
         TSType::JSDocUnknownType(node) => {
             walk_js_doc_unknown_type(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -4063,9 +4066,10 @@ pub(crate) unsafe fn walk_ts_named_tuple_member<'a, Tr: Traverse<'a>>(
     ctx.push_stack(Ancestor::TSNamedTupleMemberElementType(
         ancestor::TSNamedTupleMemberWithoutElementType(node),
     ));
-    walk_ts_type(
+    walk_ts_tuple_element(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_NAMED_TUPLE_MEMBER_ELEMENT_TYPE)
+            as *mut TSTupleElement,
         ctx,
     );
     ctx.retag_stack(AncestorType::TSNamedTupleMemberLabel);
@@ -4162,6 +4166,7 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSTypeReference(_)
         | TSTupleElement::TSUnionType(_)
         | TSTupleElement::JSDocNullableType(_)
+        | TSTupleElement::JSDocNonNullableType(_)
         | TSTupleElement::JSDocUnknownType(_) => walk_ts_type(traverser, node as *mut _, ctx),
     }
     traverser.exit_ts_tuple_element(&mut *node, ctx);
@@ -5004,10 +5009,10 @@ pub(crate) unsafe fn walk_ts_import_type<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_ts_import_type(&mut *node, ctx);
-    ctx.push_stack(Ancestor::TSImportTypeArgument(ancestor::TSImportTypeWithoutArgument(node)));
+    ctx.push_stack(Ancestor::TSImportTypeParameter(ancestor::TSImportTypeWithoutParameter(node)));
     walk_ts_type(
         traverser,
-        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_ARGUMENT) as *mut TSType,
+        (node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_PARAMETER) as *mut TSType,
         ctx,
     );
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_TS_IMPORT_TYPE_QUALIFIER)
@@ -5472,6 +5477,25 @@ pub(crate) unsafe fn walk_js_doc_nullable_type<'a, Tr: Traverse<'a>>(
     );
     ctx.pop_stack();
     traverser.exit_js_doc_nullable_type(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_js_doc_non_nullable_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut JSDocNonNullableType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_js_doc_non_nullable_type(&mut *node, ctx);
+    ctx.push_stack(Ancestor::JSDocNonNullableTypeTypeAnnotation(
+        ancestor::JSDocNonNullableTypeWithoutTypeAnnotation(node),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_JS_DOC_NON_NULLABLE_TYPE_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack();
+    traverser.exit_js_doc_non_nullable_type(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_js_doc_unknown_type<'a, Tr: Traverse<'a>>(

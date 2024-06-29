@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::{
     ArrowFunctionExpression, BindingPatternKind, Expression, FormalParameter, Function, Statement,
-    TSType, TSTypeAnnotation,
+    TSType, TSTypeAnnotation, UnaryExpression,
 };
 use oxc_span::{GetSpan, SPAN};
 
@@ -14,6 +14,10 @@ use crate::{
 };
 
 impl<'a> IsolatedDeclarations<'a> {
+    pub fn can_infer_unary_expression(expr: &UnaryExpression<'a>) -> bool {
+        expr.operator.is_arithmetic() && expr.argument.is_number_literal()
+    }
+
     pub fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
             Expression::BooleanLiteral(_) => Some(self.ast.ts_boolean_keyword(SPAN)),
@@ -66,6 +70,13 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.infer_type_from_expression(&expr.expression)
             }
             Expression::TSTypeAssertion(expr) => Some(self.ast.copy(&expr.type_annotation)),
+            Expression::UnaryExpression(expr) => {
+                if Self::can_infer_unary_expression(expr) {
+                    self.infer_type_from_expression(&expr.argument)
+                } else {
+                    None
+                }
+            }
             _ => None,
         }
     }
@@ -136,12 +147,13 @@ impl<'a> IsolatedDeclarations<'a> {
             .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
     }
 
-    pub fn is_need_to_infer_type_from_expression(expr: &Expression) -> bool {
+    pub fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {
         match expr {
             Expression::NumericLiteral(_)
             | Expression::BigIntLiteral(_)
             | Expression::StringLiteral(_) => false,
             Expression::TemplateLiteral(lit) => !lit.expressions.is_empty(),
+            Expression::UnaryExpression(expr) => !Self::can_infer_unary_expression(expr),
             _ => true,
         }
     }

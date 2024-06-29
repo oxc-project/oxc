@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn inline_script_id_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.")
         .with_help("See https://nextjs.org/docs/messages/inline-script-id")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

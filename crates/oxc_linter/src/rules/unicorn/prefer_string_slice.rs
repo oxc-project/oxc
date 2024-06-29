@@ -9,7 +9,7 @@ fn prefer_string_slice_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#{x1}()"
     ))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

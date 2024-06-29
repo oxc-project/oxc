@@ -167,24 +167,40 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements_on_exit(stmts, ctx);
     }
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.r#enum.transform_statement(stmt, ctx);
     }
 
-    pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
-        self.annotations.transform_if_statement(stmt);
+    pub fn transform_if_statement(
+        &mut self,
+        stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_if_statement(stmt, ctx);
     }
 
-    pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
-        self.annotations.transform_while_statement(stmt);
+    pub fn transform_while_statement(
+        &mut self,
+        stmt: &mut WhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_while_statement(stmt, ctx);
     }
 
-    pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
-        self.annotations.transform_do_while_statement(stmt);
+    pub fn transform_do_while_statement(
+        &mut self,
+        stmt: &mut DoWhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_do_while_statement(stmt, ctx);
     }
 
-    pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
-        self.annotations.transform_for_statement(stmt);
+    pub fn transform_for_statement(
+        &mut self,
+        stmt: &mut ForStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_statement(stmt, ctx);
     }
 
     pub fn transform_tagged_template_expression(

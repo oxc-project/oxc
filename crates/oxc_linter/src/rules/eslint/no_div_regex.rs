@@ -10,7 +10,7 @@ fn no_div_regex_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint(no-div-regex): A regular expression literal can be confused with '/='.",
     )
     .with_help("Rewrite `/=` into `/[=]`")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

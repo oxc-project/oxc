@@ -1915,7 +1915,7 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn ts_this_keyword(self, span: Span) -> TSType<'a> {
+    pub fn ts_this_type(self, span: Span) -> TSType<'a> {
         TSType::TSThisType(self.alloc(TSThisType { span }))
     }
 
@@ -2041,14 +2041,16 @@ impl<'a> AstBuilder<'a> {
     pub fn ts_import_type(
         self,
         span: Span,
-        argument: TSType<'a>,
+        is_type_of: bool,
+        parameter: TSType<'a>,
         qualifier: Option<TSTypeName<'a>>,
         attributes: Option<TSImportAttributes<'a>>,
         type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     ) -> TSType<'a> {
         TSType::TSImportType(self.alloc(TSImportType {
             span,
-            argument,
+            is_type_of,
+            parameter,
             qualifier,
             attributes,
             type_parameters,
@@ -2193,6 +2195,20 @@ impl<'a> AstBuilder<'a> {
         postfix: bool,
     ) -> TSType<'a> {
         TSType::JSDocNullableType(self.alloc(JSDocNullableType { span, type_annotation, postfix }))
+    }
+
+    #[inline]
+    pub fn js_doc_non_nullable_type(
+        self,
+        span: Span,
+        type_annotation: TSType<'a>,
+        postfix: bool,
+    ) -> TSType<'a> {
+        TSType::JSDocNonNullableType(self.alloc(JSDocNonNullableType {
+            span,
+            type_annotation,
+            postfix,
+        }))
     }
 
     #[inline]

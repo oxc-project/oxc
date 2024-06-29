@@ -10,7 +10,7 @@ fn filename_case_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(filename-case): Filename should not be in {x1} case"
     ))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Clone)]

@@ -73,7 +73,8 @@ impl<'a> ParserImpl<'a> {
         let (this_param, params) =
             self.parse_formal_parameters(FormalParameterKind::FormalParameter)?;
 
-        let return_type = self.parse_ts_return_type_annotation()?;
+        let return_type =
+            self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true)?;
 
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()?) } else { None };
 

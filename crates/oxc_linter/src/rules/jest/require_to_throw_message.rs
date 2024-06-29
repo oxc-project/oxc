@@ -14,7 +14,7 @@ fn require_to_throw_message_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(require-to-throw-message): Require a message for {x0:?}."
     ))
     .with_help(format!("Add an error message to {x0:?}"))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

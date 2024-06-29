@@ -20,7 +20,7 @@ fn use_to_have_length(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

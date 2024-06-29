@@ -3202,7 +3202,7 @@ pub mod walk_mut {
     ) {
         let kind = AstType::TSImportType;
         visitor.enter_node(kind);
-        visitor.visit_ts_type(&mut ty.argument);
+        visitor.visit_ts_type(&mut ty.parameter);
         if let Some(name) = &mut ty.qualifier {
             visitor.visit_ts_type_name(name);
         }

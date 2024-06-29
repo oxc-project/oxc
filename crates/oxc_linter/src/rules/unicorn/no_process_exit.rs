@@ -8,7 +8,7 @@ use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode}
 fn no_process_exit_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-process-exit): Disallow `process.exit()`.")
         .with_help("Only use `process.exit()` in CLI apps. Throw an error instead.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

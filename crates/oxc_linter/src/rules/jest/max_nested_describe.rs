@@ -18,7 +18,7 @@ fn exceeded_max_depth(current: usize, max: usize, span0: Span) -> OxcDiagnostic 
         "eslint-plugin-jest(max-nested-describe): Enforces a maximum depth to nested describe calls.",
     )
     .with_help(format!("Too many nested describe calls ({current}) - maximum allowed is {max}"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Clone)]

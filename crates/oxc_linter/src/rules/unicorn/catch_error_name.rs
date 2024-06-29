@@ -13,7 +13,7 @@ fn catch_error_name_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic
     OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(catch-error-name): The catch parameter {x0:?} should be named {x1:?}"
     ))
-    .with_labels([span2.into()])
+    .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -153,7 +153,13 @@ impl<'a> SourcemapVisualizer<'a> {
 
     fn str_slice_by_token(buff: &[Vec<u16>], start: (u32, u32), end: (u32, u32)) -> String {
         if start.0 == end.0 {
-            return String::from_utf16(&buff[start.0 as usize][start.1 as usize..end.1 as usize])
+            if start.1 <= end.1 {
+                return String::from_utf16(
+                    &buff[start.0 as usize][start.1 as usize..end.1 as usize],
+                )
+                .unwrap();
+            }
+            return String::from_utf16(&buff[start.0 as usize][end.1 as usize..start.1 as usize])
                 .unwrap();
         }
 

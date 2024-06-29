@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::is_document_page, AstNode};
 
 fn no_document_import_in_page_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page").with_help("Prevent importing `next/document` outside of `pages/_document.js`.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page").with_help("Prevent importing `next/document` outside of `pages/_document.js`.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
