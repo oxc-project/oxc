@@ -1,10 +1,28 @@
+use std::num::NonZeroU32;
+
 use bitflags::bitflags;
-use oxc_index::define_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-define_index_type! {
-    pub struct ReferenceId = u32;
+use oxc_index::Idx;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct ReferenceId(NonZeroU32);
+
+impl Idx for ReferenceId {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        // SAFETY: + 1 is always non-zero.
+        #[allow(unsafe_code)]
+        unsafe {
+            Self(NonZeroU32::new_unchecked(idx as u32 + 1))
+        }
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize - 1
+    }
 }
 
 #[cfg(feature = "serialize")]
