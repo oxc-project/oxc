@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.5.1] - 2024-06-29
+
+### Features
+
+- f64ad4b semantic: Make jsdoc building optional (turned off by default) (#3955) (Boshen)
+
+### Bug Fixes
+
+- c26975a linter: Only show the filename for max-lines (#3966) (Boshen)
+- 94329e4 linter: Handle useful but empty constructors in no-useless-constructor (#3951) (DonIsaac)
+- 6498a08 linter: No-useless-spread fixer with multiple spread elements (#3950) (DonIsaac)
+
+### Refactor
+
+- 1cca2a8 eslint: Convert with_labels to with_label where applicable (#3946) (Jelle van der Waa)
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+
 ## [0.5.0] - 2024-06-27
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)
