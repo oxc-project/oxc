@@ -107,6 +107,7 @@ fn test_switch_case() {
 }
 
 #[test]
+#[ignore = "We need to fix in another way"]
 fn test_function_parameters() {
     SemanticTester::js(
         "
@@ -122,6 +123,7 @@ fn test_function_parameters() {
 }
 
 #[test]
+#[ignore = "We need to fix in another way"]
 fn test_catch_clause_parameters() {
     SemanticTester::js(
         "

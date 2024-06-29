@@ -313,22 +313,10 @@ impl<'a> SemanticBuilder<'a> {
         Some(symbol_id)
     }
 
-    pub fn declare_reference(
-        &mut self,
-        reference: Reference,
-        add_unresolved_reference: bool,
-    ) -> ReferenceId {
+    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        if add_unresolved_reference {
-            self.scope.add_unresolved_reference(
-                self.current_scope_id,
-                reference_name,
-                reference_id,
-            );
-        } else {
-            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
-        }
+        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
         reference_id
     }
 
@@ -1498,20 +1486,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         let kind = AstKind::Class(self.alloc(class));
 
-        // FIXME(don): Should we enter a scope when visiting class declarations?
         let is_class_expr = class.r#type == ClassType::ClassExpression;
         if is_class_expr {
             // Class expressions create a temporary scope with the class name as its only variable
             // E.g., `let c = class A { foo() { console.log(A) } }`
             self.enter_scope(ScopeFlags::empty());
-            class.scope_id.set(Some(self.current_scope_id));
-        }
 
-        self.enter_node(kind);
-
-        if let Some(id) = &class.id {
-            self.visit_binding_identifier(id);
+            self.enter_node(kind);
+            if let Some(id) = &class.id {
+                self.visit_binding_identifier(id);
+            }
+        } else {
+            self.enter_node(kind);
+            if let Some(id) = &class.id {
+                self.visit_binding_identifier(id);
+            }
+            self.enter_scope(ScopeFlags::empty());
         }
+        class.scope_id.set(Some(self.current_scope_id));
+
         if let Some(parameters) = &class.type_parameters {
             self.visit_ts_type_parameter_declaration(parameters);
         }
@@ -1524,10 +1517,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         self.visit_class_body(&class.body);
 
+        self.leave_scope();
         self.leave_node(kind);
-        if is_class_expr {
-            self.leave_scope();
-        }
     }
 
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
@@ -1623,19 +1614,94 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
-        let kind = AstKind::TSTypeParameter(self.alloc(ty));
-        self.enter_scope(ScopeFlags::empty());
-        ty.scope_id.set(Some(self.current_scope_id));
+    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+        let kind = AstKind::TSInterfaceDeclaration(self.alloc(decl));
         self.enter_node(kind);
-        if let Some(constraint) = &ty.constraint {
-            self.visit_ts_type(constraint);
+        self.visit_binding_identifier(&decl.id);
+        self.enter_scope(ScopeFlags::empty());
+        decl.scope_id.set(Some(self.current_scope_id));
+        if let Some(extends) = &decl.extends {
+            for extend in extends {
+                self.visit_ts_interface_heritage(extend);
+            }
         }
-
-        if let Some(default) = &ty.default {
-            self.visit_ts_type(default);
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        for signature in &decl.body.body {
+            self.visit_ts_signature(signature);
         }
         self.leave_node(kind);
+        self.leave_scope();
+    }
+
+    fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
+        let kind = AstKind::TSTypeAliasDeclaration(self.alloc(decl));
+        self.enter_node(kind);
+        self.visit_binding_identifier(&decl.id);
+        self.enter_scope(ScopeFlags::empty());
+        decl.scope_id.set(Some(self.current_scope_id));
+        if let Some(parameters) = &decl.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        self.visit_ts_type(&decl.type_annotation);
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
+        self.enter_scope(ScopeFlags::empty());
+        ty.scope_id.set(Some(self.current_scope_id));
+        self.visit_ts_type_parameter(&ty.type_parameter);
+        if let Some(name) = &ty.name_type {
+            self.visit_ts_type(name);
+        }
+        if let Some(type_annotation) = &ty.type_annotation {
+            self.visit_ts_type(type_annotation);
+        }
+        self.leave_scope();
+    }
+
+    fn visit_ts_conditional_type(&mut self, ty: &TSConditionalType<'a>) {
+        // https://github.com/Dunqing/TypeScript/blob/main/src/compiler/binder.ts#L3766-L3771
+        self.enter_scope(ScopeFlags::empty());
+        ty.scope_id.set(Some(self.current_scope_id));
+        self.visit_ts_type(&ty.check_type);
+        self.visit_ts_type(&ty.extends_type);
+        self.visit_ts_type(&ty.true_type);
+        self.visit_ts_type(&ty.false_type);
+        self.leave_scope();
+    }
+
+    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
+        let kind = AstKind::TSMethodSignature(self.alloc(signature));
+        self.enter_node(kind);
+        self.enter_scope(ScopeFlags::empty());
+        signature.scope_id.set(Some(self.current_scope_id));
+        self.visit_formal_parameters(&signature.params);
+        if let Some(parameters) = &signature.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        if let Some(annotation) = &signature.return_type {
+            self.visit_ts_type_annotation(annotation);
+        }
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_construct_signature_declaration(
+        &mut self,
+        signature: &TSConstructSignatureDeclaration<'a>,
+    ) {
+        self.enter_scope(ScopeFlags::empty());
+        signature.scope_id.set(Some(self.current_scope_id));
+        self.visit_formal_parameters(&signature.params);
+        if let Some(parameters) = &signature.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+        if let Some(annotation) = &signature.return_type {
+            self.visit_ts_type_annotation(annotation);
+        }
         self.leave_scope();
     }
 }
@@ -1888,11 +1954,7 @@ impl<'a> SemanticBuilder<'a> {
         let flag = self.resolve_reference_usages();
         let name = ident.name.to_compact_str();
         let reference = Reference::new(ident.span, name, self.current_node_id, flag);
-        // `function foo({bar: identifier_reference}) {}`
-        //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
-        //                                          to avoid binding to variables inside the scope
-        let add_unresolved_reference = !self.current_node_flags.has_parameter();
-        let reference_id = self.declare_reference(reference, add_unresolved_reference);
+        let reference_id = self.declare_reference(reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1921,7 +1983,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_node_id,
             ReferenceFlag::read(),
         );
-        self.declare_reference(reference, true);
+        self.declare_reference(reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

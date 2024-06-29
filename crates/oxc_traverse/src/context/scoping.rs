@@ -573,7 +573,30 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.scope_ids.push(decl.scope_id.get().unwrap());
     }
 
-    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
+    fn visit_ts_interface_declaration(&mut self, decl: &TSInterfaceDeclaration<'a>) {
+        self.scope_ids.push(decl.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_type_alias_declaration(&mut self, decl: &TSTypeAliasDeclaration<'a>) {
+        self.scope_ids.push(decl.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
         self.scope_ids.push(ty.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_conditional_type(&mut self, ty: &TSConditionalType<'a>) {
+        self.scope_ids.push(ty.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_method_signature(&mut self, signature: &TSMethodSignature<'a>) {
+        self.scope_ids.push(signature.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_construct_signature_declaration(
+        &mut self,
+        signature: &TSConstructSignatureDeclaration<'a>,
+    ) {
+        self.scope_ids.push(signature.scope_id.get().unwrap());
     }
 }

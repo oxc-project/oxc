@@ -2,13 +2,11 @@
 //!
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
-
 // NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
 // It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
-
 use std::{cell::Cell, hash::Hash};
 
-use oxc_allocator::Vec;
+use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom, Span};
 
 use crate::ast::*;
@@ -113,18 +111,7 @@ impl<'a> TSTypeParameter<'a> {
         out: bool,
         r#const: bool,
     ) -> Self {
-        Self { span, name, constraint, default, r#in, out, r#const, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for TSTypeParameter<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-        self.constraint.hash(state);
-        self.default.hash(state);
-        self.r#in.hash(state);
-        self.out.hash(state);
-        self.r#const.hash(state);
+        Self { span, name, constraint, default, r#in, out, r#const }
     }
 }
 
@@ -214,5 +201,167 @@ impl ImportOrExportKind {
 
     pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
+    }
+}
+
+impl<'a> Hash for TSMappedType<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.type_parameter.hash(state);
+        self.name_type.hash(state);
+        self.type_annotation.hash(state);
+        self.optional.hash(state);
+        self.readonly.hash(state);
+    }
+}
+
+impl<'a> TSMappedType<'a> {
+    pub fn new(
+        span: Span,
+        type_parameter: Box<'a, TSTypeParameter<'a>>,
+        name_type: Option<TSType<'a>>,
+        type_annotation: Option<TSType<'a>>,
+        optional: TSMappedTypeModifierOperator,
+        readonly: TSMappedTypeModifierOperator,
+    ) -> Self {
+        Self {
+            span,
+            type_parameter,
+            name_type,
+            type_annotation,
+            optional,
+            readonly,
+            scope_id: Cell::new(None),
+        }
+    }
+}
+
+impl<'a> Hash for TSConditionalType<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.check_type.hash(state);
+        self.extends_type.hash(state);
+        self.true_type.hash(state);
+        self.false_type.hash(state);
+    }
+}
+
+impl<'a> TSConditionalType<'a> {
+    pub fn new(
+        span: Span,
+        check_type: TSType<'a>,
+        extends_type: TSType<'a>,
+        true_type: TSType<'a>,
+        false_type: TSType<'a>,
+    ) -> Self {
+        Self { span, check_type, extends_type, true_type, false_type, scope_id: Cell::new(None) }
+    }
+}
+
+impl<'a> Hash for TSInterfaceDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.id.hash(state);
+        self.type_parameters.hash(state);
+        self.extends.hash(state);
+        self.body.hash(state);
+        self.declare.hash(state);
+    }
+}
+
+impl<'a> TSInterfaceDeclaration<'a> {
+    pub fn new(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+        body: Box<'a, TSInterfaceBody<'a>>,
+        declare: bool,
+    ) -> Self {
+        Self { span, id, type_parameters, extends, body, declare, scope_id: Cell::new(None) }
+    }
+}
+
+impl<'a> Hash for TSTypeAliasDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.id.hash(state);
+        self.type_parameters.hash(state);
+        self.type_annotation.hash(state);
+        self.declare.hash(state);
+    }
+}
+
+impl<'a> TSTypeAliasDeclaration<'a> {
+    pub fn new(
+        span: Span,
+        id: BindingIdentifier<'a>,
+        type_annotation: TSType<'a>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+        declare: bool,
+    ) -> Self {
+        Self { span, id, type_parameters, type_annotation, declare, scope_id: Cell::new(None) }
+    }
+}
+
+impl<'a> Hash for TSMethodSignature<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.key.hash(state);
+        self.computed.hash(state);
+        self.optional.hash(state);
+        self.kind.hash(state);
+        self.this_param.hash(state);
+        self.params.hash(state);
+        self.return_type.hash(state);
+        self.type_parameters.hash(state);
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+impl<'a> TSMethodSignature<'a> {
+    pub fn new(
+        span: Span,
+        key: PropertyKey<'a>,
+        computed: bool,
+        optional: bool,
+        kind: TSMethodSignatureKind,
+        this_param: Option<TSThisParameter<'a>>,
+        params: Box<'a, FormalParameters<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    ) -> Self {
+        Self {
+            span,
+            key,
+            computed,
+            optional,
+            kind,
+            this_param,
+            params,
+            return_type,
+            type_parameters,
+            scope_id: Cell::new(None),
+        }
+    }
+}
+
+impl<'a> TSConstructSignatureDeclaration<'a> {
+    pub fn new(
+        span: Span,
+        params: Box<'a, FormalParameters<'a>>,
+        return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+        type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    ) -> Self {
+        Self { span, params, return_type, type_parameters, scope_id: Cell::new(None) }
+    }
+}
+
+impl<'a> Hash for TSConstructSignatureDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.params.hash(state);
+        self.return_type.hash(state);
+        self.type_parameters.hash(state);
     }
 }
