@@ -435,4 +435,12 @@ export function foo(a: any): number {
             "export declare class A {\n\ttype: string;\n}\n",
         );
     }
+
+    #[test]
+    fn dts_global_declare_refs() {
+        transform_dts_test(
+            "import A from ''; declare global {a: A}",
+            "import A from '';\ndeclare global {\n\ta: A;\n}\n",
+        );
+    }
 }
