@@ -2447,6 +2447,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
         if self.r#static {
             p.print_str(b"static ");
         }
+        if self.readonly {
+            p.print_str(b"readonly ");
+        }
         if self.computed {
             p.print(b'[');
         }

@@ -360,4 +360,10 @@ fn ts_misc() {
         "type A<T> = { [K in keyof T as K extends (string) ? B<K> : K] : T[K]};\n",
         false,
     );
+
+    test_ts(
+        "class A {readonly type = 'frame'}",
+        "class A {\n\treadonly type = 'frame';\n}\n",
+        false,
+    );
 }
