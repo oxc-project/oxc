@@ -383,11 +383,9 @@ impl<'a> SemanticBuilder<'a> {
                 let reference = &mut self.symbols.references[reference_id];
                 // if dbg!(symbol_flags).intersects(dbg!(meaning)) {
                 if symbol_flags.intersects(meaning) {
-                    // println!("true");
                     reference.set_symbol_id(symbol_id);
                     self.symbols.resolved_references[symbol_id].push(reference_id);
                 } else {
-                    // println!("false");
                     unresolved.push((reference_id, meaning))
                 }
             }
@@ -1680,6 +1678,7 @@ impl<'a> SemanticBuilder<'a> {
         });
         /* cfg */
 
+        // println!("enter - {}", kind.debug_name());
         match kind {
             AstKind::ExportDefaultDeclaration(_) => {
                 self.current_symbol_flags |= SymbolFlags::Export;
@@ -1788,7 +1787,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::TSTypeName(_) => {
-                self.meaning_stack.push(SymbolFlags::Type);
+                // note: do _not_ push a Type meaning onto the stack here.
                 self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::TSTypeQuery(_) => {
@@ -1843,6 +1842,7 @@ impl<'a> SemanticBuilder<'a> {
 
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
+        // println!("leave - {}", kind.debug_name());
         match kind {
             AstKind::Program(program) => {
                 self.add_export_flag_to_export_identifiers(program);
@@ -1893,7 +1893,6 @@ impl<'a> SemanticBuilder<'a> {
                 self.meaning_stack.pop();
             }
             AstKind::TSTypeName(_) => {
-                self.meaning_stack.pop();
                 self.current_reference_flag -= ReferenceFlag::Type;
             }
             AstKind::TSTypeQuery(_) => {
@@ -1941,6 +1940,7 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
         let name = ident.name.to_compact_str();
+        // println!("declaring reference on {name} with meaning {:?}", self.current_meaning());
         let reference = Reference::new(ident.span, name, self.current_node_id, flag);
         // `function foo({bar: identifier_reference}) {}`
         //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
