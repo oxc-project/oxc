@@ -100,8 +100,8 @@ oxc_prettier     = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
 oxc_ast_codegen  = { path = "tasks/oxc_ast_codegen" }
 
-napi        = "3.0.0-alpha.1"
-napi-derive = "3.0.0-alpha.1"
+napi        = "3.0.0-alpha.3"
+napi-derive = "3.0.0-alpha.2"
 napi-build  = "2.1.3"
 
 assert-unchecked    = "0.1.2"
