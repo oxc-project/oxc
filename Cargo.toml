@@ -92,6 +92,7 @@ oxc_traverse              = { version = "0.16.1", path = "crates/oxc_traverse" }
 oxc_module_lexer          = { version = "0.16.1", path = "crates/oxc_module_lexer" }
 oxc_cfg                   = { version = "0.16.1", path = "crates/oxc_cfg" }
 oxc_isolated_declarations = { version = "0.16.1", path = "crates/oxc_isolated_declarations" }
+oxc_transform_napi        = { version = "0.0.0", path = "napi/transform" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
