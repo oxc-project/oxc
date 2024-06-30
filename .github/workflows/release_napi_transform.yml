@@ -52,113 +52,109 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
+            code-target: win32-x64-msvc
 
           - os: windows-latest
             target: aarch64-pc-windows-msvc
+            code-target: win32-arm64-msvc
 
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-musl
+            code-target: linux-x64-gnu
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
+            code-target: linux-arm64-gnu
+
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            code-target: linux-x64-musl
 
           - os: ubuntu-latest
             target: aarch64-unknown-linux-musl
+            code-target: linux-arm64-musl
 
-          - os: ubuntu-latest
-            target: armv7-unknown-linux-gnueabihf
-
-          - os: macos-latest
+          - os: macos-13
             target: x86_64-apple-darwin
+            code-target: darwin-x64
 
-          - os: macos-latest
+          - os: macos-14 # M1
             target: aarch64-apple-darwin
-
-          - os: ubuntu-latest
-            target: wasm32-wasip1-threads
+            code-target: darwin-arm64
 
     name: Package ${{ matrix.target }}
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
 
-      - uses: ./.github/actions/pnpm
-
-      - name: Add Rust Target
-        run: rustup target add ${{ matrix.target }}
+      ### install musl dependencies ###
 
       - uses: goto-bus-stop/setup-zig@v2
         if: ${{ contains(matrix.target, 'musl') }}
         with:
-          version: 0.13.0
+          version: 0.11.0
 
-      - name: Build with zig cross
+      - name: Install cargo-zigbuild
         if: ${{ contains(matrix.target, 'musl') }}
-        run: pnpm build -x --target ${{ matrix.target }}
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-zigbuild
 
-      - name: Build with napi cross
-        if: ${{ contains(matrix.target, 'gnu') }}
-        run: pnpm build --use-napi-cross --target ${{ matrix.target }}
+      ### install non-musl dependencies ###
 
-      - name: Build
-        if: ${{ !contains(matrix.target, 'gnu') && !contains(matrix.target, 'musl') }}
-        run: pnpm build --target ${{ matrix.target }}
+      - name: Install cross
+        if: ${{ !contains(matrix.target, 'musl') }}
+        uses: taiki-e/install-action@cross
+
+      ### Build
+
+      - name: Add Rust Target
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Build with cross
+        if: ${{ !contains(matrix.target, 'musl') }}
+        run: cross build --release -p oxc_transform_napi --target=${{ matrix.target }}
+
+      - name: Build with zig
+        if: ${{ contains(matrix.target, 'musl') }}
+        env:
+          RUSTFLAGS: "-C target-feature=-crt-static"
+        run: cargo zigbuild --release -p oxc_transform_napi --target=${{ matrix.target }}
+
+      ### Build Done
+
+      - name: Move file on ${{ matrix.os }}
+        run: |
+          shopt -s extglob
+          ls target/${{ matrix.target }}/release/*.@(so|dll|dylib)
+          mv target/${{ matrix.target }}/release/*.@(so|dll|dylib) napi/transform/transform.${{ matrix.code-target }}.node
+          ls napi/transform
 
       - name: Test
-        if: matrix.target == 'x86_64-pc-windows-msvc' || matrix.target == 'aarch64-apple-darwin' || matrix.target == 'wasm32-wasip1-threads'
-        run: pnpm test
-
-      - name: Output docker params
-        if: ${{ contains(matrix.target, 'linux') }}
-        id: docker
+        working-directory: napi/transform
+        if: ${{ contains(matrix.target, 'x86') && !contains(matrix.target, 'musl') }} # Need docker for aarch64
         run: |
-          node -e "
-            if ('${{ matrix.target }}'.startsWith('aarch64')) {
-              console.log('PLATFORM=linux/arm64')
-            } else if ('${{ matrix.target }}'.startsWith('armv7')) {
-              console.log('PLATFORM=linux/arm/v7')
-            } else {
-              console.log('PLATFORM=linux/amd64')
-            }
-          " >> $GITHUB_OUTPUT
-          node -e "
-            if ('${{ matrix.target }}'.endsWith('-musl')) {
-              console.log('IMAGE=node:lts-alpine')
-            } else {
-              console.log('IMAGE=node:lts-slim')
-            }
-          " >> $GITHUB_OUTPUT
-          echo "PNPM_STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+          ls
+          node test.mjs
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-        if: ${{ contains(matrix.target, 'linux') }}
-        with:
-          platforms: all
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
+        if: runner.os == 'Windows'
+        run: 7z a ${{ matrix.code-target }}.zip napi/transform/transform.${{ matrix.code-target }}.node
 
-      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-        if: ${{ contains(matrix.target, 'linux') }}
+      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binary
+        if: runner.os != 'Windows'
+        run: tar czf ${{ matrix.code-target }}.tar.gz napi/transform/transform.${{ matrix.code-target }}.node
 
-      - name: Run linux test
-        uses: addnab/docker-run-action@v3
-        if: ${{ contains(matrix.target, 'linux') }}
-        with:
-          image: ${{ steps.docker.outputs.IMAGE }}
-          options: -v ${{ steps.docker.outputs.PNPM_STORE_PATH }}:${{ steps.docker.outputs.PNPM_STORE_PATH }} -v ${{ github.workspace }}:/oxc_resolver -w /oxc_resolver --platform ${{ steps.docker.outputs.PLATFORM }}
-          run: |
-            corepack enable
-            pnpm test
-
-      - name: Upload artifacts
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bindings-${{ matrix.target }}
+          if-no-files-found: error
+          name: binaries-${{ matrix.code-target }}
           path: |
-            napi/transform/*.node
-            napi/transform/*.wasm
+            *.zip
+            *.tar.gz
 
   publish:
     name: Publish NAPI
@@ -170,32 +166,47 @@ jobs:
     steps:
       - uses: taiki-e/checkout-action@v1
 
-      - uses: ./.github/actions/pnpm
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: /npm/oxc-transform/artifacts
+          merge-multiple: true
 
+      - name: Unzip
+        uses: montudor/action-zip@v1
+        with:
+          args: unzip -qq *.zip -d .
 
-      - name: Prepare dirs and artifacts
+      - name: Untar
+        run: ls *.gz | xargs -i tar xvf {}
+
+      - name: Generate npm packages
         run: |
-          pnpm i
-          pnpm napi create-npm-dirs --cwd ../../npm/oxc-transform
-          pnpm napi artifacts --cwd ../../npm/oxc-transform
-        working-directory: /napi/transform
-
+          ls
+          ls napi/transform
+          node npm/oxc-transform/scripts/generate-packages.mjs
+          cat npm/oxc-transform/package.json
+          for package in npm/oxc-transform*
+          do
+            ls $package
+            cat $package/package.json
+            echo '----'
+          done
 
       - name: Publish npm packages as latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-        shell: bash
+        # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
-          cp index.js ../../npm/oxc-transform/index.js
-          cp index.d.ts ../../npm/oxc-transform/index.d.ts
-          cp browser.js ../../npm/oxc-transform/browser.js
-          echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-          pnpm napi pre-publish --cwd ../../npm/oxc-transform --no-gh-release -t npm
-          npm publish ../../npm/oxc-transform --tag latest --provenance --access public
-        working-directory: /napi/transform
+          # publish subpackages first
+          for package in npm/oxc-transform-*
+          do
+            npm publish $package/ --tag latest --provenance --access public
+          done
+          # publish root package last
+          npm publish npm/oxc-transform/ --provenance --access public --tag latest
