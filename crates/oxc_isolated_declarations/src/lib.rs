@@ -144,6 +144,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
                         Declaration::TSModuleDeclaration(decl) => {
                             if decl.kind.is_global() {
+                                self.scope.visit_ts_module_declaration(decl);
                                 transformed_indexes.push(new_stmts.len());
                             }
                         }
