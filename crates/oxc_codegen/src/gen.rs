@@ -2095,6 +2095,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
             if let Some(id) = &self.id {
                 p.print_hard_space();
                 id.gen(p, ctx);
+                if let Some(type_parameters) = self.type_parameters.as_ref() {
+                    type_parameters.gen(p, ctx);
+                }
             }
             if let Some(super_class) = self.super_class.as_ref() {
                 p.print_str(b" extends ");
@@ -2443,6 +2446,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
 
         if self.r#static {
             p.print_str(b"static ");
+        }
+        if self.readonly {
+            p.print_str(b"readonly ");
         }
         if self.computed {
             p.print(b'[');
@@ -2817,6 +2823,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSMappedType<'a> {
         if let Some(default) = &self.type_parameter.default {
             p.print_str(b" = ");
             default.gen(p, ctx);
+        }
+        if let Some(name_type) = &self.name_type {
+            p.print_str(b" as ");
+            name_type.gen(p, ctx);
         }
         p.print_str(b"]");
         match self.optional {
@@ -3255,6 +3265,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTupleElement<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSNamedTupleMember<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.label.gen(p, ctx);
+        if self.optional {
+            p.print_str(b"?");
+        }
         p.print_str(b":");
         p.print_soft_space();
         self.element_type.gen(p, ctx);
