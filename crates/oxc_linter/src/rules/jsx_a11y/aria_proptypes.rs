@@ -1,14 +1,11 @@
 use lazy_static::lazy_static;
 use oxc_ast::{
-    ast::{Expression, JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXExpressionContainer},
+    ast::{Expression, JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use std::collections::HashMap;
 
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -20,10 +17,9 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(aria-proptypes):")]
-#[diagnostic(severity(warning), help(""))]
-struct AriaProptypesDiagnostic(#[label] pub Span);
+fn aria_proptypes_diagnostic(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-proptypes):").with_label(span)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaProptypes;
@@ -75,10 +71,10 @@ impl Rule for AriaProptypes {
                                 }
                             };
 
-                            if valid || (definition.allow_undefined && is_undefinde(value)) {
+                            if valid || (definition.allow_undefined && is_undefined(value)) {
                                 return;
                             } else {
-                                ctx.diagnostic(AriaProptypesDiagnostic(attr.span));
+                                ctx.diagnostic(aria_proptypes_diagnostic(attr.span));
                             }
                         }
                     }
@@ -93,13 +89,10 @@ impl Rule for AriaProptypes {
 fn validate_boolean(value: &JSXAttributeValue) -> bool {
     match value {
         JSXAttributeValue::StringLiteral(s) => s.value == "true" || s.value == "false",
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer { expression, .. }) => {
-            match expression {
-                JSXExpression::Expression(exp) => match exp {
-                    Expression::BooleanLiteral(_) => true,
-                    Expression::StringLiteral(s) => s.value == "true" || s.value == "false",
-                    _ => false,
-                },
+        JSXAttributeValue::ExpressionContainer(container) => {
+            match container.expression.as_expression() {
+                Some(Expression::BooleanLiteral(_)) => true,
+                Some(Expression::StringLiteral(s)) => s.value == "true" || s.value == "false",
                 _ => false,
             }
         }
@@ -113,17 +106,14 @@ fn validate_token(value: &JSXAttributeValue, permitted_values: &[TokenValue]) ->
             TokenValue::Str(val) => s.value.eq_ignore_ascii_case(val),
             _ => false,
         }),
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer { expression, .. }) => {
-            match expression {
-                JSXExpression::Expression(exp) => match exp {
-                    Expression::StringLiteral(s) => {
-                        permitted_values.iter().any(|token| match token {
-                            TokenValue::Str(val) => s.value.eq_ignore_ascii_case(val),
-                            _ => false,
-                        })
-                    }
-                    _ => false,
-                },
+        JSXAttributeValue::ExpressionContainer(container) => {
+            match container.expression.as_expression() {
+                Some(Expression::StringLiteral(s)) => {
+                    permitted_values.iter().any(|token| match token {
+                        TokenValue::Str(val) => s.value.eq_ignore_ascii_case(val),
+                        _ => false,
+                    })
+                }
                 _ => false,
             }
         }
@@ -134,12 +124,9 @@ fn validate_token(value: &JSXAttributeValue, permitted_values: &[TokenValue]) ->
 fn validate_idlist(value: &JSXAttributeValue) -> bool {
     match value {
         JSXAttributeValue::StringLiteral(s) => !s.value.is_empty(),
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer { expression, .. }) => {
-            match expression {
-                JSXExpression::Expression(exp) => match exp {
-                    Expression::StringLiteral(s) => !s.value.is_empty(),
-                    _ => false,
-                },
+        JSXAttributeValue::ExpressionContainer(container) => {
+            match container.expression.as_expression() {
+                Some(Expression::StringLiteral(s)) => !s.value.is_empty(),
                 _ => false,
             }
         }
@@ -150,12 +137,9 @@ fn validate_idlist(value: &JSXAttributeValue) -> bool {
 fn validate_tokenlist(value: &JSXAttributeValue, permitted_values: &[TokenValue]) -> bool {
     let mut token_values = match value {
         JSXAttributeValue::StringLiteral(s) => s.value.split_whitespace(),
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer { expression, .. }) => {
-            match expression {
-                JSXExpression::Expression(exp) => match exp {
-                    Expression::StringLiteral(s) => s.value.split_whitespace(),
-                    _ => return false,
-                },
+        JSXAttributeValue::ExpressionContainer(container) => {
+            match container.expression.as_expression() {
+                Some(Expression::StringLiteral(s)) => s.value.split_whitespace(),
                 _ => return false,
             }
         }
@@ -173,12 +157,9 @@ fn validate_tokenlist(value: &JSXAttributeValue, permitted_values: &[TokenValue]
 fn get_string_value(value: &JSXAttributeValue) -> Option<String> {
     match value {
         JSXAttributeValue::StringLiteral(s) => Some(s.value.to_string()),
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer { expression, .. }) => {
-            match expression {
-                JSXExpression::Expression(exp) => match exp {
-                    Expression::StringLiteral(s) => Some(s.value.to_string()),
-                    _ => None,
-                },
+        JSXAttributeValue::ExpressionContainer(container) => {
+            match container.expression.as_expression() {
+                Some(Expression::StringLiteral(s)) => Some(s.value.to_string()),
                 _ => None,
             }
         }
@@ -186,16 +167,14 @@ fn get_string_value(value: &JSXAttributeValue) -> Option<String> {
     }
 }
 
-fn is_undefinde(value: &JSXAttributeValue) -> bool {
+fn is_undefined(value: &JSXAttributeValue) -> bool {
     match value {
         JSXAttributeValue::StringLiteral(s) => s.value == "undefined",
-        JSXAttributeValue::ExpressionContainer(JSXExpressionContainer { expression, .. }) => {
-            match expression {
-                JSXExpression::Expression(exp) => match exp {
-                    Expression::StringLiteral(s) => s.value == "undefined",
-                    _ => false,
-                },
-                _ => false,
+        JSXAttributeValue::ExpressionContainer(container) => {
+            if let Some(Expression::StringLiteral(s)) = container.expression.as_expression() {
+                s.value == "undefined"
+            } else {
+                false
             }
         }
         _ => false,
@@ -688,5 +667,5 @@ fn test() {
         r#"<div aria-relevant=\"additions removalss \" />"#,
     ];
 
-    Tester::new_without_config(AriaProptypes::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AriaProptypes::NAME, pass, fail).test_and_snapshot();
 }
