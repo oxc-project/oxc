@@ -1540,6 +1540,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn ts_parenthesized_type(self, span: Span, ty: TSType<'a>) -> TSType<'a> {
+        TSType::TSParenthesizedType(self.alloc(TSParenthesizedType { span, type_annotation: ty }))
+    }
+
+    #[inline]
     pub fn ts_intersection_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
         TSType::TSIntersectionType(self.alloc(TSIntersectionType { span, types }))
     }

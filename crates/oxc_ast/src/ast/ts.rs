@@ -172,10 +172,11 @@ pub enum TSType<'a> {
     TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 31,
     TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
     TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
+    TSParenthesizedType(Box<'a, TSParenthesizedType<'a>>) = 34,
     // JSDoc
-    JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 34,
-    JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 35,
-    JSDocUnknownType(Box<'a, JSDocUnknownType>) = 36,
+    JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 35,
+    JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 36,
+    JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
 }
 
 /// Macro for matching `TSType`'s variants.
@@ -216,6 +217,7 @@ macro_rules! match_ts_type {
             | $ty::TSTypeQuery(_)
             | $ty::TSTypeReference(_)
             | $ty::TSUnionType(_)
+            | $ty::TSParenthesizedType(_)
             | $ty::JSDocNullableType(_)
             | $ty::JSDocNonNullableType(_)
             | $ty::JSDocUnknownType(_)
@@ -263,6 +265,16 @@ pub struct TSIntersectionType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
+}
+
+#[visited_node]
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct TSParenthesizedType<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub type_annotation: TSType<'a>,
 }
 
 /// keyof unique readonly

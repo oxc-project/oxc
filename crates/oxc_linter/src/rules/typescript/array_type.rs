@@ -182,6 +182,7 @@ fn check_and_report_error_generic(
     if matches!(config, ArrayOption::Array) {
         return;
     }
+    let type_param = type_param.without_parenthesized();
     if matches!(config, ArrayOption::ArraySimple) && is_simple_type(type_param) {
         return;
     }

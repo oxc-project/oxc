@@ -299,6 +299,7 @@ impl<'a> AstKind<'a> {
             Self::TSTypeLiteral(_) => "TSTypeLiteral".into(),
             Self::TSTypeReference(_) => "TSTypeReference".into(),
             Self::TSUnionType(_) => "TSUnionType".into(),
+            Self::TSParenthesizedType(_) => "TSParenthesizedType".into(),
             Self::TSVoidKeyword(_) => "TSVoidKeyword".into(),
             Self::TSBigIntKeyword(_) => "TSBigIntKeyword".into(),
             Self::TSBooleanKeyword(_) => "TSBooleanKeyword".into(),

@@ -1384,6 +1384,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSTypeQuery(it) => it.span(),
             Self::TSTypeReference(it) => it.span(),
             Self::TSUnionType(it) => it.span(),
+            Self::TSParenthesizedType(it) => it.span(),
             Self::JSDocNullableType(it) => it.span(),
             Self::JSDocNonNullableType(it) => it.span(),
             Self::JSDocUnknownType(it) => it.span(),
@@ -1406,6 +1407,13 @@ impl<'a> GetSpan for TSUnionType<'a> {
 }
 
 impl<'a> GetSpan for TSIntersectionType<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl<'a> GetSpan for TSParenthesizedType<'a> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1500,6 +1508,7 @@ impl<'a> GetSpan for TSTupleElement<'a> {
             Self::TSTypeQuery(it) => it.span(),
             Self::TSTypeReference(it) => it.span(),
             Self::TSUnionType(it) => it.span(),
+            Self::TSParenthesizedType(it) => it.span(),
             Self::JSDocNullableType(it) => it.span(),
             Self::JSDocNonNullableType(it) => it.span(),
             Self::JSDocUnknownType(it) => it.span(),
