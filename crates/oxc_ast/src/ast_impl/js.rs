@@ -1374,18 +1374,15 @@ impl AccessorPropertyType {
 }
 
 impl<'a> ImportDeclarationSpecifier<'a> {
-    pub fn name(&self) -> CompactStr {
+    pub fn local(&self) -> &BindingIdentifier<'a> {
         match self {
-            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => &specifier.local,
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => &specifier.local,
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
+    }
+    pub fn name(&self) -> CompactStr {
+        self.local().name.to_compact_str()
     }
 }
 

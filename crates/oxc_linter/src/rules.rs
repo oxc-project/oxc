@@ -129,6 +129,7 @@ mod typescript {
     pub mod ban_types;
     pub mod consistent_indexed_object_style;
     pub mod consistent_type_definitions;
+    pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
@@ -526,6 +527,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_enum_initializers,
     typescript::ban_types,
     typescript::consistent_type_definitions,
+    typescript::consistent_type_imports,
     typescript::consistent_indexed_object_style,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
