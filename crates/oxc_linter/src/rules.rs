@@ -217,6 +217,7 @@ mod react {
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_render_return_value;
+    pub mod no_set_state;
     pub mod no_string_refs;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
@@ -687,6 +688,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_render_return_value,
+    react::no_set_state,
     react::no_string_refs,
     react::no_unescaped_entities,
     react::no_is_mounted,
