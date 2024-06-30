@@ -58,7 +58,7 @@ impl Rule for NoUndef {
                     continue;
                 }
 
-                if ctx.globals().is_enabled(name.as_str()) {
+                if ctx.globals().is_enabled(name) {
                     continue;
                 }
 

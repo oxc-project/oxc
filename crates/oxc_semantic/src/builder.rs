@@ -319,7 +319,7 @@ impl<'a> SemanticBuilder<'a> {
         reference: Reference,
         add_unresolved_reference: bool,
     ) -> ReferenceId {
-        let reference_name = reference.name().clone();
+        let reference_name = reference.name().into();
         let reference_id = self.symbols.create_reference(reference);
         if add_unresolved_reference {
             self.scope.add_unresolved_reference(
@@ -328,7 +328,7 @@ impl<'a> SemanticBuilder<'a> {
                 reference_id,
             );
         } else {
-            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
+            self.resolve_reference_ids(reference_name, vec![reference_id]);
         }
         reference_id
     }

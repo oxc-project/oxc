@@ -43,7 +43,7 @@ impl Reference {
         self.span
     }
 
-    pub fn name(&self) -> &CompactStr {
+    pub fn name(&self) -> &str {
         &self.name
     }
 

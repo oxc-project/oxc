@@ -98,7 +98,7 @@ impl<'a> Borrow<str> for Atom<'a> {
     }
 }
 
-impl<'a, T: AsRef<str>> PartialEq<T> for Atom<'a> {
+impl<'a, T: AsRef<str> + ?Sized> PartialEq<T> for Atom<'a> {
     fn eq(&self, other: &T) -> bool {
         self.as_str() == other.as_ref()
     }
@@ -107,12 +107,6 @@ impl<'a, T: AsRef<str>> PartialEq<T> for Atom<'a> {
 impl<'a> PartialEq<Atom<'a>> for &str {
     fn eq(&self, other: &Atom<'a>) -> bool {
         *self == other.as_str()
-    }
-}
-
-impl<'a> PartialEq<str> for Atom<'a> {
-    fn eq(&self, other: &str) -> bool {
-        self.as_str() == other
     }
 }
 
@@ -254,7 +248,7 @@ impl Borrow<str> for CompactStr {
     }
 }
 
-impl<T: AsRef<str>> PartialEq<T> for CompactStr {
+impl<T: AsRef<str> + ?Sized> PartialEq<T> for CompactStr {
     fn eq(&self, other: &T) -> bool {
         self.as_str() == other.as_ref()
     }

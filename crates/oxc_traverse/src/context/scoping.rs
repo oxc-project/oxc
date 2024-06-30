@@ -459,7 +459,7 @@ impl TraverseScoping {
                 // which already checked above
                 false
             } else {
-                reference.name().as_str() == name
+                reference.name() == name
             }
         })
     }
