@@ -5,6 +5,7 @@
   "keywords": [
     "transform"
   ],
+  "packageManager": "pnpm@9.4.0",
   "author": "Boshen and oxc contributors",
   "license": "MIT",
   "homepage": "https://oxc.rs",
@@ -18,8 +19,27 @@
     "url": "https://github.com/sponsors/Boshen"
   },
   "main": "index.js",
+  "types": "index.d.ts",
+  "browser": "browser.js",
   "files": [
     "index.d.ts",
-    "index.js"
-  ]
+    "index.js",
+    "browser.js"
+  ],
+  "napi": {
+    "binaryName": "transform",
+    "packageName": "@oxc-transform/binding",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-gnu",
+      "aarch64-unknown-linux-musl",
+      "armv7-unknown-linux-gnueabihf",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin",
+      "wasm32-wasip1-threads"
+    ]
+  }
 }
