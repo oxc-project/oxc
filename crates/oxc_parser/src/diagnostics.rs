@@ -1,6 +1,8 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
+use crate::modifiers::Modifier;
+
 #[cold]
 pub fn redeclaration(x0: &str, declare_span: Span, redeclare_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Identifier `{x0}` has already been declared")).with_labels([
@@ -399,7 +401,43 @@ pub fn jsx_element_no_match(span0: Span, span1: Span, name: &str) -> OxcDiagnost
         .with_labels([span0, span1])
 }
 
+// ================================= MODIFIERS =================================
+
 #[cold]
-pub fn modifier_cannot_be_used_here(span: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("'{name}' modifier cannot be used here.")).with_label(span)
+pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
+        .with_label(modifier.span)
+}
+
+/// TS(1030)
+#[cold]
+pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("TS1030: '{}' modifier already seen.", modifier.kind))
+        .with_label(modifier.span)
+        .with_help("Remove the duplicate modifier.")
+}
+
+/// TS(1273)
+#[cold]
+pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "'{}' modifier cannot be used on a type parameter.",
+        modifier.kind
+    ))
+    .with_label(modifier.span)
+}
+/// TS(1090)
+pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!(
+        "TS1090: '{}' modifier cannot appear on a parameter.",
+        modifier.kind
+    ))
+    .with_label(modifier.span)
+}
+
+/// TS(18010)
+#[cold]
+pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
+    OxcDiagnostic::error("An accessibility modifier cannot be used with a private identifier.")
+        .with_label(modifier.span)
 }
