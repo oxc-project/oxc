@@ -13,6 +13,11 @@ pub struct Token {
     /// End offset in source
     pub end: u32,
 
+    // Padding to fill to 16 bytes.
+    // This makes copying a `Token` 1 x xmmword load & store, rather than 1 x dword + 1 x qword
+    // and `Token::default()` is 1 x xmmword store, rather than 1 x dword + 1 x qword.
+    _padding: u16,
+
     /// Token Kind
     pub kind: Kind,
 
@@ -33,11 +38,6 @@ pub struct Token {
     /// standard and include [`Kind::Decimal`], [`Kind::Binary`],
     /// [`Kind::Octal`], [`Kind::Hex`], etc.
     has_separator: bool,
-
-    // Padding to fill to 16 bytes.
-    // This makes copying a `Token` 1 x xmmword load & store, rather than 1 x dword + 1 x qword
-    // and `Token::default()` is 1 x xmmword store, rather than 1 x dword + 1 x qword.
-    _padding2: u32,
 }
 
 #[cfg(all(test, target_pointer_width = "64"))]
