@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.2] - 2024-06-30
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+
+### Bug Fixes
+
+- dac617d codegen: Print some missing typescript attributes (#3980) (Boshen)
+
 ## [0.16.1] - 2024-06-29
 
 ### Bug Fixes
