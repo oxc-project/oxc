@@ -149,7 +149,7 @@ pub fn transform(
 
     let mut program = parser_ret.program;
     let transform_options = TransformOptions::from(options);
-    if let Err(e) = Transformer::new(
+    let ret = Transformer::new(
         &allocator,
         source_path,
         source_type,
@@ -157,9 +157,10 @@ pub fn transform(
         parser_ret.trivias.clone(),
         transform_options,
     )
-    .build(&mut program)
-    {
-        errors.extend(e.into_iter().map(|error| error.to_string()));
+    .build(&mut program);
+
+    if !ret.errors.is_empty() {
+        errors.extend(ret.errors.into_iter().map(|error| error.to_string()));
     }
 
     let mut codegen = CodeGenerator::new();

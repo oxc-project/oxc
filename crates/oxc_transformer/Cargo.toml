@@ -27,6 +27,7 @@ oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_syntax      = { workspace = true, features = ["to_js_string"] }
 oxc_traverse    = { workspace = true }
+oxc_semantic    = { workspace = true }
 
 dashmap          = { workspace = true }
 indexmap         = { workspace = true }
