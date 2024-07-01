@@ -417,6 +417,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "dashmap"
+version = "6.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "804c8821570c3f8b70230c2ba75ffa5c0f9a4189b9a432b6656c536712acae28"
+dependencies = [
+ "cfg-if",
+ "crossbeam-utils",
+ "hashbrown",
+ "lock_api",
+ "once_cell",
+ "parking_lot_core",
+]
+
+[[package]]
 name = "deranged"
 version = "0.3.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -919,7 +933,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c2a198fb6b0eada2a8df47933734e6d35d350665a33a3593d7164fa52c75c19"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.5",
 ]
 
 [[package]]
@@ -1464,7 +1478,7 @@ dependencies = [
 name = "oxc_language_server"
 version = "0.0.1"
 dependencies = [
- "dashmap",
+ "dashmap 6.0.1",
  "env_logger",
  "futures",
  "globset",
@@ -1488,7 +1502,7 @@ name = "oxc_linter"
 version = "0.5.1"
 dependencies = [
  "convert_case",
- "dashmap",
+ "dashmap 6.0.1",
  "insta",
  "itertools 0.13.0",
  "json-strip-comments",
@@ -1669,7 +1683,7 @@ version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2ab1983fbc16c3aa9b476be4b6da19bc6728efc9e4564313ef15210bcfa4a070"
 dependencies = [
- "dashmap",
+ "dashmap 5.5.3",
  "dunce",
  "indexmap",
  "json-strip-comments",
@@ -1731,7 +1745,7 @@ name = "oxc_syntax"
 version = "0.16.2"
 dependencies = [
  "bitflags 2.6.0",
- "dashmap",
+ "dashmap 6.0.1",
  "oxc_index",
  "oxc_span",
  "phf",
@@ -1789,7 +1803,7 @@ dependencies = [
 name = "oxc_transformer"
 version = "0.16.2"
 dependencies = [
- "dashmap",
+ "dashmap 6.0.1",
  "indexmap",
  "oxc-browserslist",
  "oxc_allocator",
@@ -2745,7 +2759,7 @@ dependencies = [
  "async-trait",
  "auto_impl",
  "bytes",
- "dashmap",
+ "dashmap 5.5.3",
  "futures",
  "httparse",
  "lsp-types",
