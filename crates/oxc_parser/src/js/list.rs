@@ -4,13 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{
-    diagnostics,
-    lexer::Kind,
-    list::{NormalList, SeparatedList},
-    modifiers::ModifierFlags,
-    ParserImpl,
-};
+use crate::{diagnostics, lexer::Kind, list::SeparatedList, modifiers::ModifierFlags, ParserImpl};
 
 /// ObjectExpression.properties
 pub struct ObjectExpressionProperties<'a> {
@@ -397,66 +391,6 @@ impl<'a> SeparatedList<'a> for ExportNamedSpecifiers<'a> {
         let exported = if p.eat(Kind::As) { p.parse_module_export_name()? } else { local.clone() };
         let element =
             ExportSpecifier { span: p.end_span(specifier_span), local, exported, export_kind };
-        self.elements.push(element);
-        Ok(())
-    }
-}
-
-pub struct ClassElements<'a> {
-    pub elements: Vec<'a, ClassElement<'a>>,
-}
-
-impl<'a> ClassElements<'a> {
-    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
-        Self { elements: p.ast.new_vec() }
-    }
-}
-
-impl<'a> NormalList<'a> for ClassElements<'a> {
-    fn open(&self) -> Kind {
-        Kind::LCurly
-    }
-
-    fn close(&self) -> Kind {
-        Kind::RCurly
-    }
-
-    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        // skip empty class element `;`
-        while p.at(Kind::Semicolon) {
-            p.bump_any();
-        }
-        if p.at(self.close()) {
-            return Ok(());
-        }
-        let element = p.parse_class_element()?;
-
-        self.elements.push(element);
-        Ok(())
-    }
-}
-
-pub struct SwitchCases<'a> {
-    pub elements: Vec<'a, SwitchCase<'a>>,
-}
-
-impl<'a> SwitchCases<'a> {
-    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
-        Self { elements: p.ast.new_vec() }
-    }
-}
-
-impl<'a> NormalList<'a> for SwitchCases<'a> {
-    fn open(&self) -> Kind {
-        Kind::LCurly
-    }
-
-    fn close(&self) -> Kind {
-        Kind::RCurly
-    }
-
-    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        let element = p.parse_switch_case()?;
         self.elements.push(element);
         Ok(())
     }

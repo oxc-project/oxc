@@ -2,26 +2,6 @@ use oxc_diagnostics::Result;
 
 use crate::{lexer::Kind, ParserImpl};
 
-pub trait NormalList<'a> {
-    /// Open element, e.g.. `{` `[` `(`
-    fn open(&self) -> Kind;
-
-    /// Close element, e.g.. `}` `]` `)`
-    fn close(&self) -> Kind;
-
-    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()>;
-
-    /// Main entry point, parse the list
-    fn parse(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        p.expect(self.open())?;
-        while !p.at(self.close()) && !p.at(Kind::Eof) {
-            self.parse_element(p)?;
-        }
-        p.expect(self.close())?;
-        Ok(())
-    }
-}
-
 pub trait SeparatedList<'a>: Sized {
     fn new(p: &ParserImpl<'a>) -> Self;
 

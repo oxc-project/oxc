@@ -3,12 +3,9 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
-use super::{
-    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
-};
+use super::{grammar::CoverGrammar, VariableDeclarationContext, VariableDeclarationParent};
 use crate::{
-    diagnostics, lexer::Kind, list::NormalList, modifiers::Modifiers, Context, ParserImpl,
-    StatementContext,
+    diagnostics, lexer::Kind, modifiers::Modifiers, Context, ParserImpl, StatementContext,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -441,15 +438,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression()?;
-        let cases = {
-            let mut switch_cases = SwitchCases::new(self);
-            switch_cases.parse(self)?;
-            switch_cases.elements
-        };
+        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_switch_case)?;
         Ok(self.ast.switch_statement(self.end_span(span), discriminant, cases))
     }
 
-    pub(crate) fn parse_switch_case(&mut self) -> Result<SwitchCase<'a>> {
+    pub(crate) fn parse_switch_case(&mut self) -> Result<Option<SwitchCase<'a>>> {
         let span = self.start_span();
         let test = match self.cur_kind() {
             Kind::Default => {
@@ -469,7 +462,7 @@ impl<'a> ParserImpl<'a> {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
             consequent.push(stmt);
         }
-        Ok(self.ast.switch_case(self.end_span(span), test, consequent))
+        Ok(Some(self.ast.switch_case(self.end_span(span), test, consequent)))
     }
 
     /// Section 14.14 Throw Statement

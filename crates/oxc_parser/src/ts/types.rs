@@ -4,13 +4,11 @@ use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
-use super::list::{
-    TSInterfaceOrObjectBodyList, TSTupleElementList, TSTypeArgumentList, TSTypeParameterList,
-};
+use super::list::{TSTupleElementList, TSTypeArgumentList, TSTypeParameterList};
 use crate::{
     diagnostics,
     lexer::Kind,
-    list::{NormalList, SeparatedList},
+    list::SeparatedList,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
     ts::list::TSImportAttributeList,
     Context, ParserImpl,
@@ -618,9 +616,9 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_type_literal(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
-        let mut member_list = TSInterfaceOrObjectBodyList::new(self);
-        member_list.parse(self)?;
-        Ok(self.ast.ts_type_literal(self.end_span(span), member_list.body))
+        let member_list =
+            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_ts_type_signature)?;
+        Ok(self.ast.ts_type_literal(self.end_span(span), member_list))
     }
 
     fn parse_type_query(&mut self) -> Result<TSType<'a>> {
