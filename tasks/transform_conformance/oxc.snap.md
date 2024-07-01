@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 5/5
+Passed: 6/6
 
 # All Passed:
 * babel-plugin-transform-typescript
