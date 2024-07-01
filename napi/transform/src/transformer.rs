@@ -12,21 +12,24 @@ use oxc_transformer::{
 
 #[napi(object)]
 pub struct TypeScriptBindingOptions {
-    pub jsx_pragma: String,
-    pub jsx_pragma_frag: String,
-    pub only_remove_type_imports: bool,
-    pub allow_namespaces: bool,
-    pub allow_declare_fields: bool,
+    pub jsx_pragma: Option<String>,
+    pub jsx_pragma_frag: Option<String>,
+    pub only_remove_type_imports: Option<bool>,
+    pub allow_namespaces: Option<bool>,
+    pub allow_declare_fields: Option<bool>,
 }
 
 impl From<TypeScriptBindingOptions> for TypeScriptOptions {
     fn from(options: TypeScriptBindingOptions) -> Self {
+        let ops = TypeScriptOptions::default();
         TypeScriptOptions {
-            jsx_pragma: options.jsx_pragma.into(),
-            jsx_pragma_frag: options.jsx_pragma_frag.into(),
-            only_remove_type_imports: options.only_remove_type_imports,
-            allow_namespaces: options.allow_namespaces,
-            allow_declare_fields: options.allow_declare_fields,
+            jsx_pragma: options.jsx_pragma.map(Into::into).unwrap_or(ops.jsx_pragma),
+            jsx_pragma_frag: options.jsx_pragma_frag.map(Into::into).unwrap_or(ops.jsx_pragma_frag),
+            only_remove_type_imports: options
+                .only_remove_type_imports
+                .unwrap_or(ops.only_remove_type_imports),
+            allow_namespaces: options.allow_namespaces.unwrap_or(ops.allow_namespaces),
+            allow_declare_fields: options.allow_declare_fields.unwrap_or(ops.allow_declare_fields),
         }
     }
 }
@@ -34,10 +37,10 @@ impl From<TypeScriptBindingOptions> for TypeScriptOptions {
 #[napi(object)]
 pub struct ReactBindingOptions {
     #[napi(ts_type = "'classic' | 'automatic'")]
-    pub runtime: String,
-    pub development: bool,
-    pub throw_if_namespace: bool,
-    pub pure: bool,
+    pub runtime: Option<String>,
+    pub development: Option<bool>,
+    pub throw_if_namespace: Option<bool>,
+    pub pure: Option<bool>,
     pub import_source: Option<String>,
     pub pragma: Option<String>,
     pub pragma_frag: Option<String>,
@@ -47,14 +50,15 @@ pub struct ReactBindingOptions {
 
 impl From<ReactBindingOptions> for ReactOptions {
     fn from(options: ReactBindingOptions) -> Self {
+        let ops = ReactOptions::default();
         ReactOptions {
-            runtime: match options.runtime.as_str() {
-                "classic" => ReactJsxRuntime::Classic,
+            runtime: match options.runtime.as_deref() {
+                Some("classic") => ReactJsxRuntime::Classic,
                 /* "automatic" */ _ => ReactJsxRuntime::Automatic,
             },
-            development: options.development,
-            throw_if_namespace: options.throw_if_namespace,
-            pure: options.pure,
+            development: options.development.unwrap_or(ops.development),
+            throw_if_namespace: options.throw_if_namespace.unwrap_or(ops.throw_if_namespace),
+            pure: options.pure.unwrap_or(ops.pure),
             import_source: options.import_source,
             pragma: options.pragma,
             pragma_frag: options.pragma_frag,
@@ -67,12 +71,12 @@ impl From<ReactBindingOptions> for ReactOptions {
 
 #[napi(object)]
 pub struct ArrowFunctionsBindingOptions {
-    pub spec: bool,
+    pub spec: Option<bool>,
 }
 
 impl From<ArrowFunctionsBindingOptions> for ArrowFunctionsOptions {
     fn from(options: ArrowFunctionsBindingOptions) -> Self {
-        ArrowFunctionsOptions { spec: options.spec }
+        ArrowFunctionsOptions { spec: options.spec.unwrap_or_default() }
     }
 }
 
@@ -89,23 +93,23 @@ impl From<ES2015BindingOptions> for ES2015Options {
 
 #[napi(object)]
 pub struct TransformBindingOptions {
-    pub typescript: TypeScriptBindingOptions,
-    pub react: ReactBindingOptions,
-    pub es2015: ES2015BindingOptions,
-    /// Enable Sourcemaps
+    pub typescript: Option<TypeScriptBindingOptions>,
+    pub react: Option<ReactBindingOptions>,
+    pub es2015: Option<ES2015BindingOptions>,
+    /// Enable Sourcemap
     ///
     /// * `true` to generate a sourcemap for the code and include it in the result object.
     ///
     /// Default: false
-    pub sourcemaps: bool,
+    pub sourcemap: Option<bool>,
 }
 
 impl From<TransformBindingOptions> for TransformOptions {
     fn from(options: TransformBindingOptions) -> Self {
         TransformOptions {
-            typescript: options.typescript.into(),
-            react: options.react.into(),
-            es2015: options.es2015.into(),
+            typescript: options.typescript.map(Into::into).unwrap_or_default(),
+            react: options.react.map(Into::into).unwrap_or_default(),
+            es2015: options.es2015.map(Into::into).unwrap_or_default(),
             ..TransformOptions::default()
         }
     }
@@ -124,7 +128,6 @@ pub struct Sourcemap {
 #[napi(object)]
 pub struct TransformResult {
     pub source_text: String,
-    /// Sourcemap
     pub map: Option<Sourcemap>,
     pub errors: Vec<String>,
 }
@@ -134,9 +137,9 @@ pub struct TransformResult {
 pub fn transform(
     filename: String,
     source_text: String,
-    options: TransformBindingOptions,
+    options: Option<TransformBindingOptions>,
 ) -> TransformResult {
-    let sourcemaps = options.sourcemaps;
+    let sourcemap = options.as_ref().is_some_and(|x| x.sourcemap.unwrap_or_default());
     let mut errors = vec![];
 
     let source_path = Path::new(&filename);
@@ -148,7 +151,7 @@ pub fn transform(
     }
 
     let mut program = parser_ret.program;
-    let transform_options = TransformOptions::from(options);
+    let transform_options = options.map(Into::into).unwrap_or_default();
     let ret = Transformer::new(
         &allocator,
         source_path,
@@ -164,7 +167,7 @@ pub fn transform(
     }
 
     let mut codegen = CodeGenerator::new();
-    if sourcemaps {
+    if sourcemap {
         codegen = codegen.enable_source_map(source_path.to_string_lossy().as_ref(), &source_text);
     }
     let ret = codegen.build(&program);
