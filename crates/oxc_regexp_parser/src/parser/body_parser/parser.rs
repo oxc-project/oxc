@@ -85,7 +85,7 @@ impl<'a> PatternParser<'a> {
             alternatives,
         };
 
-        // TODO: Implement
+        // TODO: Implement fix up for back references
         // this.onPatternLeave(start, this.index);
 
         Ok(pattern)
@@ -134,10 +134,11 @@ impl<'a> PatternParser<'a> {
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] Term[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     // ```
     // <https://tc39.es/ecma262/#prod-Alternative>
-    fn consume_alternative(&mut self, _i: usize) -> Result<ast::Alternative<'a>> {
+    fn consume_alternative(&mut self, i: usize) -> Result<ast::Alternative<'a>> {
         let start = self.reader.position();
 
         // TODO: Implement
+        let _ = i;
         // this._groupSpecifiers.enterAlternative(i);
 
         let mut elements = Vec::new_in(self.allocator);
@@ -277,18 +278,16 @@ impl<'a> PatternParser<'a> {
     fn consume_pattern_character(&mut self) -> Option<ast::Character> {
         let start = self.reader.position();
 
-        if let Some(cp) = self.reader.peek() {
-            if !unicode::is_syntax_character(cp) {
-                self.reader.advance();
-
-                return Some(ast::Character {
-                    span: self.span_factory.create(start, self.reader.position()),
-                    value: cp,
-                });
-            }
+        let cp = self.reader.peek()?;
+        if unicode::is_syntax_character(cp) {
+            return None;
         }
 
-        None
+        self.reader.advance();
+        Some(ast::Character {
+            span: self.span_factory.create(start, self.reader.position()),
+            value: cp,
+        })
     }
 }
 
@@ -307,6 +306,9 @@ mod test {
         assert_eq!(pattern.alternatives.len(), 1);
         assert_eq!(pattern.alternatives[0].elements.len(), 3);
 
+        let pattern =
+            PatternParser::new(&allocator, "a|b|", ParserOptions::default()).parse().unwrap();
+        assert_eq!(pattern.alternatives.len(), 3);
         let pattern =
             PatternParser::new(&allocator, "a|b|c", ParserOptions::default()).parse().unwrap();
         assert_eq!(pattern.alternatives.len(), 3);
