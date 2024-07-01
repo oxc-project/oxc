@@ -2,8 +2,7 @@ commit: d8086f14
 
 codegen_typescript Summary:
 AST Parsed     : 5283/5283 (100.00%)
-Positive Passed: 5279/5283 (99.92%)
-Normal failed: "compiler/genericTypeAssertions3.ts"
+Positive Passed: 5280/5283 (99.94%)
 Normal failed: "compiler/jsxMultilineAttributeStringValues.tsx"
 Normal failed: "compiler/jsxMultilineAttributeValuesReact.tsx"
 Normal failed: "conformance/jsx/tsxReactEmitEntities.tsx"
