@@ -339,7 +339,7 @@ pub struct Group<'a> {
 pub struct Quantifier<'a> {
     pub span: Span,
     pub min: usize,
-    pub max: usize,
+    pub max: Option<usize>, // `None` means `Infinity`
     pub greedy: bool,
     pub element: QuantifiableElement<'a>,
 }

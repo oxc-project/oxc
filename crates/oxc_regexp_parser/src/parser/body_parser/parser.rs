@@ -171,13 +171,13 @@ impl<'a> PatternParser<'a> {
             (Some(atom), None) => {
                 Ok(Some(ast::Element::QuantifiableElement(Box::new_in(atom, self.allocator))))
             }
-            (Some(atom), Some(quantifier)) => {
+            (Some(atom), Some(((min, max), greedy))) => {
                 return Ok(Some(ast::Element::Quantifier(Box::new_in(
                     ast::Quantifier {
                         span: self.span_factory.create(start, self.reader.position()),
-                        min: quantifier.0 .0,
-                        max: quantifier.0 .1,
-                        greedy: quantifier.1,
+                        min,
+                        max,
+                        greedy,
                         element: atom,
                     },
                     self.allocator,
@@ -244,23 +244,18 @@ impl<'a> PatternParser<'a> {
     //   { DecimalDigits , DecimalDigits }
     // ```
     // <https://tc39.es/ecma262/#prod-QuantifierPrefix>
-    fn consume_quantifier(&mut self) -> Result<Option<((usize, usize), bool)>> {
+    #[allow(clippy::type_complexity)]
+    fn consume_quantifier(&mut self) -> Result<Option<((usize, Option<usize>), bool)>> {
         let is_greedy = |reader: &mut Reader| !reader.eat('?');
 
         if self.reader.eat('*') {
-            return Ok(Some((
-                (0, usize::MAX), // TODO: POSITIVE_INFINITY?
-                is_greedy(&mut self.reader),
-            )));
+            return Ok(Some(((0, None), is_greedy(&mut self.reader))));
         }
         if self.reader.eat('+') {
-            return Ok(Some((
-                (1, usize::MAX), // TODO: POSITIVE_INFINITY?
-                is_greedy(&mut self.reader),
-            )));
+            return Ok(Some(((1, None), is_greedy(&mut self.reader))));
         }
         if self.reader.eat('?') {
-            return Ok(Some(((0, 1), is_greedy(&mut self.reader))));
+            return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
         }
 
         // TODO: Implement
