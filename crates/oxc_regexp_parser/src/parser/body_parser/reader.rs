@@ -65,6 +65,8 @@ impl<'a> Reader<'a> {
         self.peek_nth(2)
     }
 
+    // NOTE: Consider `peek(ch: char): bool` style API?
+
     pub fn eat(&mut self, ch: char) -> bool {
         if self.peek() == Some(ch as u32) {
             self.advance();
@@ -99,7 +101,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_index_basic() {
+    fn index_basic() {
         let source_text = "/RegExp✨/i";
         let unicode_reader = Reader::new(source_text, true);
         let legacy_reader = Reader::new(source_text, false);
@@ -139,7 +141,7 @@ mod test {
     }
 
     #[test]
-    fn test_index_unicode() {
+    fn index_unicode() {
         let source_text = "𠮷野家は👈🏻あっち";
 
         let mut unicode_reader = Reader::new(source_text, true);
@@ -188,7 +190,7 @@ mod test {
     }
 
     #[test]
-    fn test_position() {
+    fn span_position() {
         let source_text = "^ Catch😎 @ symbols🇺🇳 $";
 
         let unicode_reader = Reader::new(source_text, true);

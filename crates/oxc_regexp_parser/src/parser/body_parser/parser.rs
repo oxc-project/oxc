@@ -291,3 +291,50 @@ impl<'a> PatternParser<'a> {
         None
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use oxc_allocator::Allocator;
+
+    // NOTE: These may be useless when integlation tests are added
+    #[test]
+    fn should_pass() {
+        let allocator = Allocator::default();
+
+        let pattern =
+            PatternParser::new(&allocator, "abc", ParserOptions::default()).parse().unwrap();
+        assert_eq!(pattern.alternatives.len(), 1);
+        assert_eq!(pattern.alternatives[0].elements.len(), 3);
+
+        let pattern =
+            PatternParser::new(&allocator, "a|b|c", ParserOptions::default()).parse().unwrap();
+        assert_eq!(pattern.alternatives.len(), 3);
+
+        let pattern =
+            PatternParser::new(&allocator, "Emoji🥹", ParserOptions::default()).parse().unwrap();
+        assert_eq!(pattern.alternatives[0].elements.len(), 6);
+        let pattern = PatternParser::new(
+            &allocator,
+            "Emoji🥹",
+            ParserOptions::default().with_modes(false, false),
+        )
+        .parse()
+        .unwrap();
+        assert_eq!(pattern.alternatives[0].elements.len(), 7);
+    }
+
+    #[test]
+    fn should_fail() {
+        let allocator = Allocator::default();
+
+        assert!(PatternParser::new(&allocator, "", ParserOptions::default()).parse().is_err());
+        assert!(PatternParser::new(&allocator, "a)", ParserOptions::default()).parse().is_err());
+        assert!(PatternParser::new(&allocator, "b\\", ParserOptions::default()).parse().is_err());
+        assert!(PatternParser::new(&allocator, "c]", ParserOptions::default()).parse().is_err());
+        assert!(PatternParser::new(&allocator, "d}", ParserOptions::default()).parse().is_err());
+        assert!(PatternParser::new(&allocator, "e|ee|{", ParserOptions::default())
+            .parse()
+            .is_err());
+    }
+}

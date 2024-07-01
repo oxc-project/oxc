@@ -11,6 +11,7 @@ fn main() {
         ("/abc/i", ParserOptions::default()),
         ("/abcd/igv", ParserOptions::default()),
         ("/emo👈🏻ji/u", ParserOptions::default()),
+        ("/ab|c/i", ParserOptions::default()),
         ("//", ParserOptions::default()),
         ("/duplicated-flags/ii", ParserOptions::default()),
         ("/invalid-flags/x", ParserOptions::default()),

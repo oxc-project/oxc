@@ -84,6 +84,7 @@ fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
     let mut in_character_class = false;
     loop {
         match chars.peek() {
+            // Line terminators are not allowed
             Some('\u{a}' | '\u{d}' | '\u{2028}' | '\u{2029}') | None => {
                 let kind =
                     if in_character_class { "character class" } else { "regular expression" };
@@ -136,7 +137,7 @@ mod test {
             "/abc/",
             "/abcd/igsmv",
             r"/\w+/u",
-            r"/foo\/bar/i",
+            r"/foo\/bar|baz/i",
             "/[a-z]/",
             "/正規表現/u",
             "/あっち👈🏻/i",
@@ -154,7 +155,9 @@ mod test {
 
     #[test]
     fn parse_invalid_reg_exp_literal() {
-        for literal_text in ["", "foo", ":(", "a\nb", "/", "//", "///", "/*abc/", "/\\/"] {
+        for literal_text in
+            ["", "foo", ":(", "a\nb", "/", "/x", "/y\nz/", "/1[\n]/", "//", "///", "/*abc/", "/\\/"]
+        {
             assert!(parse_reg_exp_literal(literal_text).is_err());
         }
     }
