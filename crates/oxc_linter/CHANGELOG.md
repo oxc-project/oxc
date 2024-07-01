@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.5.2] - 2024-07-01
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+- b257d53 linter: Support report `@typescript-eslint/consistent-type-imports` (#3895) (mysteryven)
+- 2114475 linter: Implement @typescript-eslint/no-dynamic-delete (#3971) (kaykdm)
+- 10a3c9a linter/eslint-plugin-react: Implement no-set-state (#3975) (Jelle van der Waa)
+
+### Bug Fixes
+
+- dbbb6fc linter: Global variable check should always check builtin variables (#3973) (Boshen)
+
+### Performance
+
+- 1eac3d2 semantic: Use `Atom<'a>` for `Reference`s (#3972) (Don Isaac)
+
 ## [0.5.1] - 2024-06-29
 
 ### Features
