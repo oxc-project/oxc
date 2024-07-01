@@ -51,9 +51,9 @@ impl<'a> PatternParser<'a> {
         let start = self.reader.position();
         // TODO: Read only constants
         // this._numCapturingParens = this.countCapturingParens();
-        // TODO: Define state, used later somewhere
+        // TODO: Define state, use later somewhere
         // this._groupSpecifiers.clear();
-        // TODO: Define state, used later here
+        // TODO: Define state, use later here
         // this._backreferenceNames.clear();
 
         // TODO: Maybe useless?
@@ -80,8 +80,10 @@ impl<'a> PatternParser<'a> {
         //   }
         // }
 
-        let end = self.reader.position();
-        let pattern = ast::Pattern { span: self.span_factory.create(start, end), alternatives };
+        let pattern = ast::Pattern {
+            span: self.span_factory.create(start, self.reader.position()),
+            alternatives,
+        };
 
         // TODO: Implement
         // this.onPatternLeave(start, this.index);
@@ -104,11 +106,12 @@ impl<'a> PatternParser<'a> {
         let mut i: usize = 0;
         loop {
             alternatives.push(self.consume_alternative(i)?);
-            i += 1;
 
             if !self.reader.eat('|') {
                 break;
             }
+
+            i += 1;
         }
 
         // TODO: Implement
@@ -142,16 +145,16 @@ impl<'a> PatternParser<'a> {
             if self.reader.peek().is_none() {
                 break;
             }
-            let Some(term) = self.consume_term() else {
+            let Some(term) = self.consume_term()? else {
                 break;
             };
             elements.push(term);
         }
 
-        let end = self.reader.position();
-        let alternative = ast::Alternative { span: self.span_factory.create(start, end), elements };
-
-        Ok(alternative)
+        Ok(ast::Alternative {
+            span: self.span_factory.create(start, self.reader.position()),
+            elements,
+        })
     }
 
     // ```
@@ -161,19 +164,17 @@ impl<'a> PatternParser<'a> {
     //   Atom[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] Quantifier
     // ```
     // <https://tc39.es/ecma262/#prod-Term>
-    fn consume_term(&mut self) -> Option<ast::Element<'a>> {
-        // TODO: Implement
-        // let assertion = self.consume_assertion();
-        // if assertion.is_some() {
-        //     return assertion;
-        // }
+    fn consume_term(&mut self) -> Result<Option<ast::Element<'a>>> {
+        if let Some(assertion) = self.consume_assertion()? {
+            return Ok(Some(ast::Element::Assertion(Box::new_in(assertion, self.allocator))));
+        }
 
-        match (self.consume_atom(), self.consume_quantifier()) {
+        match (self.consume_atom()?, self.consume_quantifier()) {
             (Some(atom), None) => {
-                Some(ast::Element::QuantifiableElement(Box::new_in(atom, self.allocator)))
+                Ok(Some(ast::Element::QuantifiableElement(Box::new_in(atom, self.allocator))))
             }
             (Some(atom), Some(quantifier)) => {
-                return Some(ast::Element::Quantifier(Box::new_in(
+                return Ok(Some(ast::Element::Quantifier(Box::new_in(
                     ast::Quantifier {
                         span: self.span_factory.create(0, 0), // TODO: Merge atom.start, quantifier.end
                         min: quantifier.min,
@@ -182,20 +183,32 @@ impl<'a> PatternParser<'a> {
                         element: atom,
                     },
                     self.allocator,
-                )));
+                ))));
             }
-            _ => None,
+            _ => Ok(None),
         }
     }
 
-    // SAVEPOINT: dot or pattern character
-    fn consume_atom(&mut self) -> Option<ast::QuantifiableElement<'a>> {
-        if let Some(character) = self.consume_pattern_character() {
-            return Some(ast::QuantifiableElement::Character(Box::new_in(
-                character,
-                self.allocator,
-            )));
+    // TODO: Implement
+    fn consume_assertion(&mut self) -> Result<Option<ast::Assertion<'a>>> {
+        if self.reader.eat('👻') {
+            return Err(OxcDiagnostic::error("TODO"));
         }
+
+        Ok(None)
+    }
+
+    // ```
+    // Atom[UnicodeMode, UnicodeSetsMode, NamedCaptureGroups] ::
+    //   PatternCharacter
+    //   .
+    //   \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
+    //   CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
+    //   ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // ```
+    // <https://tc39.es/ecma262/#prod-Atom>
+    fn consume_atom(&mut self) -> Result<Option<ast::QuantifiableElement<'a>>> {
         // TODO: Implement
         // return (
         //   this.consumePatternCharacter() ||
@@ -205,13 +218,26 @@ impl<'a> PatternParser<'a> {
         //   this.consumeUncapturingGroup() ||
         //   this.consumeCapturingGroup()
         // );
-        None
+        if let Some(character) = self.consume_pattern_character() {
+            return Ok(Some(ast::QuantifiableElement::Character(Box::new_in(
+                character,
+                self.allocator,
+            ))));
+        }
+
+        // 🧊: dot, or circular
+
+        if self.reader.eat('👻') {
+            return Err(OxcDiagnostic::error("TODO"));
+        }
+
+        Ok(None)
     }
 
-    // TODO: Not a `Quantifier` itself, just a stuff for it
+    // TODO: Not a `Quantifier` itself, I want `(min, max, greedy, span)`
     fn consume_quantifier(&mut self) -> Option<ast::Quantifier<'a>> {
         // TODO: Implement
-        // const start = this.index;
+        let _start = self.reader.position();
         // let min = 0;
         // let max = 0;
         // let greedy = false;
@@ -243,7 +269,11 @@ impl<'a> PatternParser<'a> {
         None
     }
 
-    // TODO: Comment
+    // ```
+    // PatternCharacter ::
+    //   SourceCharacter but not SyntaxCharacter
+    // ```
+    // <https://tc39.es/ecma262/#prod-PatternCharacter>
     fn consume_pattern_character(&mut self) -> Option<ast::Character> {
         let start = self.reader.position();
 
