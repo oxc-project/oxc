@@ -8,7 +8,7 @@ use crate::{
     diagnostics,
     lexer::Kind,
     list::NormalList,
-    modifiers::{ModifierKind, Modifiers},
+    modifiers::{ModifierFlags, ModifierKind, Modifiers},
     Context, ParserImpl, StatementContext,
 };
 
@@ -25,7 +25,11 @@ impl<'a> ParserImpl<'a> {
         stmt_ctx: StatementContext,
         start_span: Span,
     ) -> Result<Statement<'a>> {
-        let decl = self.parse_class_declaration(start_span, &Modifiers::empty())?;
+        let modifiers = self.parse_modifiers(
+            /* allow_decorators */ true, /* permit_const_as_modifier */ false,
+            /* stop_on_start_of_class_static_block */ true,
+        );
+        let decl = self.parse_class_declaration(start_span, &modifiers)?;
 
         if stmt_ctx.is_single_statement() {
             self.error(diagnostics::class_declaration(Span::new(
@@ -86,14 +90,11 @@ impl<'a> ParserImpl<'a> {
         }
         let body = self.parse_class_body()?;
 
-        for modifier in modifiers.iter() {
-            if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Abstract) {
-                self.error(diagnostics::modifier_cannot_be_used_here(
-                    modifier.span,
-                    modifier.kind.as_str(),
-                ));
-            }
-        }
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE | ModifierFlags::ABSTRACT,
+            diagnostics::modifier_cannot_be_used_here,
+        );
 
         Ok(self.ast.class(
             r#type,
@@ -105,8 +106,8 @@ impl<'a> ParserImpl<'a> {
             super_type_parameters,
             implements,
             decorators,
-            modifiers.is_contains_abstract(),
-            modifiers.is_contains_declare(),
+            modifiers.contains_abstract(),
+            modifiers.contains_declare(),
         ))
     }
 
@@ -178,28 +179,21 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_element(&mut self) -> Result<ClassElement<'a>> {
         let span = self.start_span();
 
-        self.eat_decorators()?;
+        let modifiers = self.parse_modifiers(true, false, true);
 
         let mut kind = MethodDefinitionKind::Method;
-        let mut r#async = false;
         let mut generator = false;
 
         let mut key_name = None;
 
-        let modifier = self.parse_class_element_modifiers(false);
-
-        let accessor = {
-            let token = self.peek_token();
-            !token.is_on_new_line && token.kind.is_class_element_name_start()
-        } && self.eat(Kind::Accessor);
-
-        let accessibility = modifier.accessibility();
-
-        let declare = modifier.declare();
-        let readonly = modifier.readonly();
-        let r#override = modifier.r#override();
-        let r#abstract = modifier.r#abstract();
-        let mut r#static = modifier.r#static();
+        let accessibility = modifiers.accessibility();
+        let accessor = modifiers.contains(ModifierKind::Accessor);
+        let declare = modifiers.contains(ModifierKind::Declare);
+        let readonly = modifiers.contains(ModifierKind::Readonly);
+        let r#override = modifiers.contains(ModifierKind::Override);
+        let r#abstract = modifiers.contains(ModifierKind::Abstract);
+        let mut r#static = modifiers.contains(ModifierKind::Static);
+        let mut r#async = modifiers.contains(ModifierKind::Async);
 
         if self.at(Kind::Static) {
             // static { block }
@@ -268,6 +262,14 @@ impl<'a> ParserImpl<'a> {
         let definite = self.eat(Kind::Bang);
 
         if let PropertyKey::PrivateIdentifier(private_ident) = &key {
+            // `private #foo`, etc. is illegal
+            if self.ts_enabled() {
+                self.verify_modifiers(
+                    &modifiers,
+                    ModifierFlags::all() - ModifierFlags::ACCESSIBILITY,
+                    diagnostics::accessibility_modifier_on_private_property,
+                );
+            }
             if private_ident.name == "constructor" {
                 self.error(diagnostics::private_name_constructor(private_ident.span));
             }

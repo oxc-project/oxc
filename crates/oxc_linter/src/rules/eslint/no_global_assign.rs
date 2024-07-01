@@ -1,4 +1,4 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
@@ -8,10 +8,7 @@ fn no_global_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "eslint(no-global-assign): Read-only global '{x0}' should not be modified."
     ))
-    .with_labels([LabeledSpan::new_with_span(
-        Some(format!("Read-only global '{x0}' should not be modified.")),
-        span1,
-    )])
+    .with_label(span1.label(format!("Read-only global '{x0}' should not be modified.")))
 }
 
 #[derive(Debug, Default, Clone)]

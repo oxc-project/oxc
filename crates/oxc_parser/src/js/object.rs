@@ -5,7 +5,9 @@ use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
 use super::list::ObjectExpressionProperties;
-use crate::{lexer::Kind, list::SeparatedList, Context, ParserImpl};
+use crate::{
+    diagnostics, lexer::Kind, list::SeparatedList, modifiers::Modifier, Context, ParserImpl,
+};
 
 impl<'a> ParserImpl<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
@@ -43,6 +45,23 @@ impl<'a> ParserImpl<'a> {
             }
             // GeneratorMethod
             Kind::Star if class_element_name => self.parse_property_definition_method(),
+            // Report and handle illegal modifiers
+            // e.g. const x = { public foo() {} }
+            modifier_kind
+                if self.ts_enabled()
+                    && modifier_kind.is_modifier_kind()
+                    && peek_kind.is_identifier_or_keyword() =>
+            {
+                if let Ok(modifier) = Modifier::try_from(self.cur_token()) {
+                    self.error(diagnostics::modifier_cannot_be_used_here(&modifier));
+                } else {
+                    #[cfg(debug_assertions)]
+                    panic!("Kind::is_modifier_kind() is true but the token could not be converted to a Modifier.")
+                }
+                // re-parse
+                self.bump_any();
+                self.parse_property_definition()
+            }
             // IdentifierReference
             kind if kind.is_identifier_reference(false, false)
                 // test Kind::Dot to ignore ({ foo.bar: baz })

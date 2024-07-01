@@ -2815,6 +2815,7 @@ pub mod walk {
             TSType::TSTypeQuery(ty) => visitor.visit_ts_type_query(ty),
             TSType::TSTypeReference(ty) => visitor.visit_ts_type_reference(ty),
             TSType::TSUnionType(ty) => visitor.visit_ts_union_type(ty),
+            TSType::TSParenthesizedType(ty) => visitor.visit_ts_type(&ty.type_annotation),
             // JSDoc
             TSType::JSDocNullableType(_)
             | TSType::JSDocNonNullableType(_)

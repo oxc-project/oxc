@@ -11,7 +11,7 @@ use crate::{
     diagnostics,
     lexer::Kind,
     list::{NormalList, SeparatedList},
-    modifiers::ModifierFlags,
+    modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
     ts::list::TSImportAttributeList,
     Context, ParserImpl,
 };
@@ -164,30 +164,12 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_ts_type_parameter(&mut self) -> Result<TSTypeParameter<'a>> {
         let span = self.start_span();
 
-        let mut r#in = false;
-        let mut out = false;
-        let mut r#const = false;
-
-        match self.cur_kind() {
-            Kind::In if self.peek_kind().is_identifier_name() => {
-                self.bump_any();
-                r#in = true;
-                if self.at(Kind::Out) && self.peek_kind().is_identifier_name() {
-                    // `<in out T>`
-                    self.bump_any();
-                    out = true;
-                }
-            }
-            Kind::Out if self.peek_kind().is_identifier_name() => {
-                self.bump_any();
-                out = true;
-            }
-            Kind::Const if self.peek_kind().is_identifier_name() => {
-                self.bump_any();
-                r#const = true;
-            }
-            _ => {}
-        }
+        let modifiers = self.parse_modifiers(false, true, false);
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::IN | ModifierFlags::OUT | ModifierFlags::CONST,
+            diagnostics::cannot_appear_on_a_type_parameter,
+        );
 
         let name = self.parse_binding_identifier()?;
         let constraint = self.parse_ts_type_constraint()?;
@@ -198,9 +180,9 @@ impl<'a> ParserImpl<'a> {
             name,
             constraint,
             default,
-            r#in,
-            out,
-            r#const,
+            modifiers.contains(ModifierKind::In),
+            modifiers.contains(ModifierKind::Out),
+            modifiers.contains(ModifierKind::Const),
         ))
     }
 
@@ -907,10 +889,11 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_parenthesized_type(&mut self) -> Result<TSType<'a>> {
+        let span = self.start_span();
         self.bump_any(); // bump `(`
-        let result = self.parse_ts_type()?;
+        let ty = self.parse_ts_type()?;
         self.expect(Kind::RParen)?;
-        Ok(result)
+        Ok(self.ast.ts_parenthesized_type(self.end_span(span), ty))
     }
 
     fn parse_literal_type_node(&mut self, negative: bool) -> Result<TSType<'a>> {
@@ -1267,12 +1250,13 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_class_element_modifiers(
         &mut self,
         is_constructor_parameter: bool,
-    ) -> ModifierFlags {
-        let mut flags = ModifierFlags::empty();
-
+    ) -> Modifiers<'a> {
         if !self.ts_enabled() {
-            return flags;
+            return Modifiers::empty();
         }
+
+        let mut flags = ModifierFlags::empty();
+        let mut modifiers: Vec<Modifier> = self.ast.new_vec();
 
         loop {
             if !self.is_nth_at_modifier(0, is_constructor_parameter) {
@@ -1280,8 +1264,10 @@ impl<'a> ParserImpl<'a> {
             }
 
             #[allow(clippy::unnecessary_fallible_conversions)]
-            if let Ok(modifier_flag) = self.cur_kind().try_into() {
-                flags.set(modifier_flag, true);
+            if let Ok(kind) = ModifierKind::try_from(self.cur_kind()) {
+                let modifier = Modifier { kind, span: self.cur_token().span() };
+                flags.set(kind.into(), true);
+                modifiers.push(modifier);
             } else {
                 break;
             }
@@ -1289,7 +1275,7 @@ impl<'a> ParserImpl<'a> {
             self.bump_any();
         }
 
-        flags
+        Modifiers::new(modifiers, flags)
     }
 
     fn parse_js_doc_unknown_or_nullable_type(&mut self) -> Result<TSType<'a>> {

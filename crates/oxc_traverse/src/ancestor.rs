@@ -230,99 +230,100 @@ pub(crate) enum AncestorType {
     TSConditionalTypeFalseType = 198,
     TSUnionTypeTypes = 199,
     TSIntersectionTypeTypes = 200,
-    TSTypeOperatorTypeAnnotation = 201,
-    TSArrayTypeElementType = 202,
-    TSIndexedAccessTypeObjectType = 203,
-    TSIndexedAccessTypeIndexType = 204,
-    TSTupleTypeElementTypes = 205,
-    TSNamedTupleMemberElementType = 206,
-    TSNamedTupleMemberLabel = 207,
-    TSOptionalTypeTypeAnnotation = 208,
-    TSRestTypeTypeAnnotation = 209,
-    TSTypeReferenceTypeName = 210,
-    TSTypeReferenceTypeParameters = 211,
-    TSQualifiedNameLeft = 212,
-    TSQualifiedNameRight = 213,
-    TSTypeParameterInstantiationParams = 214,
-    TSTypeParameterName = 215,
-    TSTypeParameterConstraint = 216,
-    TSTypeParameterDefault = 217,
-    TSTypeParameterDeclarationParams = 218,
-    TSTypeAliasDeclarationId = 219,
-    TSTypeAliasDeclarationTypeAnnotation = 220,
-    TSTypeAliasDeclarationTypeParameters = 221,
-    TSClassImplementsExpression = 222,
-    TSClassImplementsTypeParameters = 223,
-    TSInterfaceDeclarationId = 224,
-    TSInterfaceDeclarationBody = 225,
-    TSInterfaceDeclarationTypeParameters = 226,
-    TSInterfaceDeclarationExtends = 227,
-    TSInterfaceBodyBody = 228,
-    TSPropertySignatureKey = 229,
-    TSPropertySignatureTypeAnnotation = 230,
-    TSIndexSignatureParameters = 231,
-    TSIndexSignatureTypeAnnotation = 232,
-    TSCallSignatureDeclarationThisParam = 233,
-    TSCallSignatureDeclarationParams = 234,
-    TSCallSignatureDeclarationReturnType = 235,
-    TSCallSignatureDeclarationTypeParameters = 236,
-    TSMethodSignatureKey = 237,
-    TSMethodSignatureThisParam = 238,
-    TSMethodSignatureParams = 239,
-    TSMethodSignatureReturnType = 240,
-    TSMethodSignatureTypeParameters = 241,
-    TSConstructSignatureDeclarationParams = 242,
-    TSConstructSignatureDeclarationReturnType = 243,
-    TSConstructSignatureDeclarationTypeParameters = 244,
-    TSIndexSignatureNameTypeAnnotation = 245,
-    TSInterfaceHeritageExpression = 246,
-    TSInterfaceHeritageTypeParameters = 247,
-    TSTypePredicateParameterName = 248,
-    TSTypePredicateTypeAnnotation = 249,
-    TSModuleDeclarationId = 250,
-    TSModuleDeclarationBody = 251,
-    TSModuleBlockDirectives = 252,
-    TSModuleBlockBody = 253,
-    TSTypeLiteralMembers = 254,
-    TSInferTypeTypeParameter = 255,
-    TSTypeQueryExprName = 256,
-    TSTypeQueryTypeParameters = 257,
-    TSImportTypeParameter = 258,
-    TSImportTypeQualifier = 259,
-    TSImportTypeAttributes = 260,
-    TSImportTypeTypeParameters = 261,
-    TSImportAttributesElements = 262,
-    TSImportAttributeName = 263,
-    TSImportAttributeValue = 264,
-    TSFunctionTypeThisParam = 265,
-    TSFunctionTypeParams = 266,
-    TSFunctionTypeReturnType = 267,
-    TSFunctionTypeTypeParameters = 268,
-    TSConstructorTypeParams = 269,
-    TSConstructorTypeReturnType = 270,
-    TSConstructorTypeTypeParameters = 271,
-    TSMappedTypeTypeParameter = 272,
-    TSMappedTypeNameType = 273,
-    TSMappedTypeTypeAnnotation = 274,
-    TSTemplateLiteralTypeQuasis = 275,
-    TSTemplateLiteralTypeTypes = 276,
-    TSAsExpressionExpression = 277,
-    TSAsExpressionTypeAnnotation = 278,
-    TSSatisfiesExpressionExpression = 279,
-    TSSatisfiesExpressionTypeAnnotation = 280,
-    TSTypeAssertionExpression = 281,
-    TSTypeAssertionTypeAnnotation = 282,
-    TSImportEqualsDeclarationId = 283,
-    TSImportEqualsDeclarationModuleReference = 284,
-    TSExternalModuleReferenceExpression = 285,
-    TSNonNullExpressionExpression = 286,
-    DecoratorExpression = 287,
-    TSExportAssignmentExpression = 288,
-    TSNamespaceExportDeclarationId = 289,
-    TSInstantiationExpressionExpression = 290,
-    TSInstantiationExpressionTypeParameters = 291,
-    JSDocNullableTypeTypeAnnotation = 292,
-    JSDocNonNullableTypeTypeAnnotation = 293,
+    TSParenthesizedTypeTypeAnnotation = 201,
+    TSTypeOperatorTypeAnnotation = 202,
+    TSArrayTypeElementType = 203,
+    TSIndexedAccessTypeObjectType = 204,
+    TSIndexedAccessTypeIndexType = 205,
+    TSTupleTypeElementTypes = 206,
+    TSNamedTupleMemberElementType = 207,
+    TSNamedTupleMemberLabel = 208,
+    TSOptionalTypeTypeAnnotation = 209,
+    TSRestTypeTypeAnnotation = 210,
+    TSTypeReferenceTypeName = 211,
+    TSTypeReferenceTypeParameters = 212,
+    TSQualifiedNameLeft = 213,
+    TSQualifiedNameRight = 214,
+    TSTypeParameterInstantiationParams = 215,
+    TSTypeParameterName = 216,
+    TSTypeParameterConstraint = 217,
+    TSTypeParameterDefault = 218,
+    TSTypeParameterDeclarationParams = 219,
+    TSTypeAliasDeclarationId = 220,
+    TSTypeAliasDeclarationTypeAnnotation = 221,
+    TSTypeAliasDeclarationTypeParameters = 222,
+    TSClassImplementsExpression = 223,
+    TSClassImplementsTypeParameters = 224,
+    TSInterfaceDeclarationId = 225,
+    TSInterfaceDeclarationBody = 226,
+    TSInterfaceDeclarationTypeParameters = 227,
+    TSInterfaceDeclarationExtends = 228,
+    TSInterfaceBodyBody = 229,
+    TSPropertySignatureKey = 230,
+    TSPropertySignatureTypeAnnotation = 231,
+    TSIndexSignatureParameters = 232,
+    TSIndexSignatureTypeAnnotation = 233,
+    TSCallSignatureDeclarationThisParam = 234,
+    TSCallSignatureDeclarationParams = 235,
+    TSCallSignatureDeclarationReturnType = 236,
+    TSCallSignatureDeclarationTypeParameters = 237,
+    TSMethodSignatureKey = 238,
+    TSMethodSignatureThisParam = 239,
+    TSMethodSignatureParams = 240,
+    TSMethodSignatureReturnType = 241,
+    TSMethodSignatureTypeParameters = 242,
+    TSConstructSignatureDeclarationParams = 243,
+    TSConstructSignatureDeclarationReturnType = 244,
+    TSConstructSignatureDeclarationTypeParameters = 245,
+    TSIndexSignatureNameTypeAnnotation = 246,
+    TSInterfaceHeritageExpression = 247,
+    TSInterfaceHeritageTypeParameters = 248,
+    TSTypePredicateParameterName = 249,
+    TSTypePredicateTypeAnnotation = 250,
+    TSModuleDeclarationId = 251,
+    TSModuleDeclarationBody = 252,
+    TSModuleBlockDirectives = 253,
+    TSModuleBlockBody = 254,
+    TSTypeLiteralMembers = 255,
+    TSInferTypeTypeParameter = 256,
+    TSTypeQueryExprName = 257,
+    TSTypeQueryTypeParameters = 258,
+    TSImportTypeParameter = 259,
+    TSImportTypeQualifier = 260,
+    TSImportTypeAttributes = 261,
+    TSImportTypeTypeParameters = 262,
+    TSImportAttributesElements = 263,
+    TSImportAttributeName = 264,
+    TSImportAttributeValue = 265,
+    TSFunctionTypeThisParam = 266,
+    TSFunctionTypeParams = 267,
+    TSFunctionTypeReturnType = 268,
+    TSFunctionTypeTypeParameters = 269,
+    TSConstructorTypeParams = 270,
+    TSConstructorTypeReturnType = 271,
+    TSConstructorTypeTypeParameters = 272,
+    TSMappedTypeTypeParameter = 273,
+    TSMappedTypeNameType = 274,
+    TSMappedTypeTypeAnnotation = 275,
+    TSTemplateLiteralTypeQuasis = 276,
+    TSTemplateLiteralTypeTypes = 277,
+    TSAsExpressionExpression = 278,
+    TSAsExpressionTypeAnnotation = 279,
+    TSSatisfiesExpressionExpression = 280,
+    TSSatisfiesExpressionTypeAnnotation = 281,
+    TSTypeAssertionExpression = 282,
+    TSTypeAssertionTypeAnnotation = 283,
+    TSImportEqualsDeclarationId = 284,
+    TSImportEqualsDeclarationModuleReference = 285,
+    TSExternalModuleReferenceExpression = 286,
+    TSNonNullExpressionExpression = 287,
+    DecoratorExpression = 288,
+    TSExportAssignmentExpression = 289,
+    TSNamespaceExportDeclarationId = 290,
+    TSInstantiationExpressionExpression = 291,
+    TSInstantiationExpressionTypeParameters = 292,
+    JSDocNullableTypeTypeAnnotation = 293,
+    JSDocNonNullableTypeTypeAnnotation = 294,
 }
 
 /// Ancestor type used in AST traversal.
@@ -683,6 +684,8 @@ pub enum Ancestor<'a> {
     TSUnionTypeTypes(TSUnionTypeWithoutTypes<'a>) = AncestorType::TSUnionTypeTypes as u16,
     TSIntersectionTypeTypes(TSIntersectionTypeWithoutTypes<'a>) =
         AncestorType::TSIntersectionTypeTypes as u16,
+    TSParenthesizedTypeTypeAnnotation(TSParenthesizedTypeWithoutTypeAnnotation<'a>) =
+        AncestorType::TSParenthesizedTypeTypeAnnotation as u16,
     TSTypeOperatorTypeAnnotation(TSTypeOperatorWithoutTypeAnnotation<'a>) =
         AncestorType::TSTypeOperatorTypeAnnotation as u16,
     TSArrayTypeElementType(TSArrayTypeWithoutElementType<'a>) =
@@ -1512,6 +1515,11 @@ impl<'a> Ancestor<'a> {
     }
 
     #[inline]
+    pub fn is_ts_parenthesized_type(&self) -> bool {
+        matches!(self, Self::TSParenthesizedTypeTypeAnnotation(_))
+    }
+
+    #[inline]
     pub fn is_ts_type_operator(&self) -> bool {
         matches!(self, Self::TSTypeOperatorTypeAnnotation(_))
     }
@@ -2088,6 +2096,7 @@ impl<'a> Ancestor<'a> {
                 | Self::TSConditionalTypeFalseType(_)
                 | Self::TSUnionTypeTypes(_)
                 | Self::TSIntersectionTypeTypes(_)
+                | Self::TSParenthesizedTypeTypeAnnotation(_)
                 | Self::TSTypeOperatorTypeAnnotation(_)
                 | Self::TSArrayTypeElementType(_)
                 | Self::TSIndexedAccessTypeObjectType(_)
@@ -8993,6 +9002,21 @@ impl<'a> TSIntersectionTypeWithoutTypes<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_INTERSECTION_TYPE_SPAN) as *const Span) }
+    }
+}
+
+pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_SPAN: usize = offset_of!(TSParenthesizedType, span);
+pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(TSParenthesizedType, type_annotation);
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct TSParenthesizedTypeWithoutTypeAnnotation<'a>(pub(crate) *const TSParenthesizedType<'a>);
+
+impl<'a> TSParenthesizedTypeWithoutTypeAnnotation<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PARENTHESIZED_TYPE_SPAN) as *const Span) }
     }
 }
 

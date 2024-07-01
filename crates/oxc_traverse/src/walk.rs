@@ -3840,7 +3840,6 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSSymbolKeyword(node) => {
             walk_ts_symbol_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
-        TSType::TSThisType(node) => walk_ts_this_type(traverser, (&mut **node) as *mut _, ctx),
         TSType::TSUndefinedKeyword(node) => {
             walk_ts_undefined_keyword(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -3881,6 +3880,7 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
         TSType::TSTemplateLiteralType(node) => {
             walk_ts_template_literal_type(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSType::TSThisType(node) => walk_ts_this_type(traverser, (&mut **node) as *mut _, ctx),
         TSType::TSTupleType(node) => walk_ts_tuple_type(traverser, (&mut **node) as *mut _, ctx),
         TSType::TSTypeLiteral(node) => {
             walk_ts_type_literal(traverser, (&mut **node) as *mut _, ctx)
@@ -3896,6 +3896,9 @@ pub(crate) unsafe fn walk_ts_type<'a, Tr: Traverse<'a>>(
             walk_ts_type_reference(traverser, (&mut **node) as *mut _, ctx)
         }
         TSType::TSUnionType(node) => walk_ts_union_type(traverser, (&mut **node) as *mut _, ctx),
+        TSType::TSParenthesizedType(node) => {
+            walk_ts_parenthesized_type(traverser, (&mut **node) as *mut _, ctx)
+        }
         TSType::JSDocNullableType(node) => {
             walk_js_doc_nullable_type(traverser, (&mut **node) as *mut _, ctx)
         }
@@ -3978,6 +3981,25 @@ pub(crate) unsafe fn walk_ts_intersection_type<'a, Tr: Traverse<'a>>(
     }
     ctx.pop_stack();
     traverser.exit_ts_intersection_type(&mut *node, ctx);
+}
+
+pub(crate) unsafe fn walk_ts_parenthesized_type<'a, Tr: Traverse<'a>>(
+    traverser: &mut Tr,
+    node: *mut TSParenthesizedType<'a>,
+    ctx: &mut TraverseCtx<'a>,
+) {
+    traverser.enter_ts_parenthesized_type(&mut *node, ctx);
+    ctx.push_stack(Ancestor::TSParenthesizedTypeTypeAnnotation(
+        ancestor::TSParenthesizedTypeWithoutTypeAnnotation(node),
+    ));
+    walk_ts_type(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION)
+            as *mut TSType,
+        ctx,
+    );
+    ctx.pop_stack();
+    traverser.exit_ts_parenthesized_type(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_type_operator<'a, Tr: Traverse<'a>>(
@@ -4141,7 +4163,6 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSObjectKeyword(_)
         | TSTupleElement::TSStringKeyword(_)
         | TSTupleElement::TSSymbolKeyword(_)
-        | TSTupleElement::TSThisType(_)
         | TSTupleElement::TSUndefinedKeyword(_)
         | TSTupleElement::TSUnknownKeyword(_)
         | TSTupleElement::TSVoidKeyword(_)
@@ -4158,6 +4179,7 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSNamedTupleMember(_)
         | TSTupleElement::TSQualifiedName(_)
         | TSTupleElement::TSTemplateLiteralType(_)
+        | TSTupleElement::TSThisType(_)
         | TSTupleElement::TSTupleType(_)
         | TSTupleElement::TSTypeLiteral(_)
         | TSTupleElement::TSTypeOperatorType(_)
@@ -4165,6 +4187,7 @@ pub(crate) unsafe fn walk_ts_tuple_element<'a, Tr: Traverse<'a>>(
         | TSTupleElement::TSTypeQuery(_)
         | TSTupleElement::TSTypeReference(_)
         | TSTupleElement::TSUnionType(_)
+        | TSTupleElement::TSParenthesizedType(_)
         | TSTupleElement::JSDocNullableType(_)
         | TSTupleElement::JSDocNonNullableType(_)
         | TSTupleElement::JSDocUnknownType(_) => walk_ts_type(traverser, node as *mut _, ctx),

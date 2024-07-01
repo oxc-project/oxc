@@ -616,14 +616,16 @@ macro_rules! inherit_variants {
                 TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
                 /// Inherited from [`TSType`]
                 TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
+                /// Inherited from [`TSType`]
+                TSParenthesizedType(Box<'a, TSParenthesizedType<'a>>) = 34,
 
                 // JSDoc
                 /// Inherited from [`TSType`]
-                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 34,
+                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 35,
                 /// Inherited from [`TSType`]
-                JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 35,
+                JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 36,
                 /// Inherited from [`TSType`]
-                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 36,
+                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
 
                 $($rest)*
             }
@@ -672,6 +674,7 @@ macro_rules! inherit_variants {
                 TSTypeQuery,
                 TSTypeReference,
                 TSUnionType,
+                TSParenthesizedType,
                 JSDocNullableType,
                 JSDocNonNullableType,
                 JSDocUnknownType,

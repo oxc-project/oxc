@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.2] - 2024-06-30
+
+### Performance
+
+- b234ddd semantic: Only check for jsdoc if jsdoc building is enabled (Boshen)
+- 1eac3d2 semantic: Use `Atom<'a>` for `Reference`s (#3972) (Don Isaac)
+
+## [0.16.1] - 2024-06-29
+
+### Features
+
+- f64ad4b semantic: Make jsdoc building optional (turned off by default) (#3955) (Boshen)
+
+### Refactor
+
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+- 15ec254 semantic: Remove the unused `Semantic::build2` function (Boshen)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

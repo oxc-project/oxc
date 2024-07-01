@@ -10,7 +10,7 @@ fn no_self_compare_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
         "eslint(no-self-compare): Disallow comparisons where both sides are exactly the same",
     )
     .with_help("If you are testing for NaN, you can use Number.isNaN function.")
-    .with_labels([span0.into(), span1.into()])
+    .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]

@@ -30,6 +30,3 @@ serde = { workspace = true, features = ["derive"] }
 regex = { workspace = true }
 prettyplease = { workspace = true }
 lazy_static = { workspace = true }
-
-[package.metadata.cargo-shear]
-ignored = ["prettyplease"]

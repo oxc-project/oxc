@@ -147,7 +147,7 @@ fn typescript() {
 
     test_ts(
         "let x: string[] = ['abc', 'def', 'ghi'];",
-        "let x: (string)[] = ['abc', 'def', 'ghi'];\n",
+        "let x: string[] = ['abc', 'def', 'ghi'];\n",
         false,
     );
     test_ts(
@@ -160,8 +160,8 @@ fn typescript() {
         "let x: [string, number] = ['abc', 123];\n",
         false,
     );
-    test_ts("let x: string | number = 'abc';", "let x: ((string) | (number)) = 'abc';\n", false);
-    test_ts("let x: string & number = 'abc';", "let x: ((string) & (number)) = 'abc';\n", false);
+    test_ts("let x: string | number = 'abc';", "let x: string | number = 'abc';\n", false);
+    test_ts("let x: string & number = 'abc';", "let x: string & number = 'abc';\n", false);
     test_ts("let x: typeof String = 'string';", "let x: typeof String = 'string';\n", false);
     test_ts("let x: keyof string = 'length';", "let x: keyof string = 'length';\n", false);
     test_ts(
@@ -187,6 +187,16 @@ fn typescript() {
     test_ts(
         "export { Foo, type Bar } from 'foo';",
         "export { Foo, type Bar } from 'foo';\n",
+        false,
+    );
+    test_ts(
+        "type A<T> = { [K in keyof T as K extends string ? B<K> : K ]: T[K] }",
+        "type A<T> = { [K in keyof T as K extends string ? B<K> : K] : T[K]};\n",
+        false,
+    );
+    test_ts(
+        "class A {readonly type = 'frame'}",
+        "class A {\n\treadonly type = 'frame';\n}\n",
         false,
     );
 }

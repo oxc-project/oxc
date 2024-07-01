@@ -1,4 +1,4 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ModuleRecord;
 use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
@@ -89,10 +89,7 @@ impl Rule for NoBarrelFile {
             if let Some(remote_module) = module_record.loaded_modules.get(module_request.name()) {
                 if let Some(count) = count_loaded_modules(remote_module.value()) {
                     total += count;
-                    labels.push(LabeledSpan::new_with_span(
-                        Some(format!("{count} modules")),
-                        module_request.span(),
-                    ));
+                    labels.push(module_request.span().label(format!("{count} modules")));
                 }
             };
         }

@@ -1360,7 +1360,6 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSObjectKeyword(it) => it.span(),
             Self::TSStringKeyword(it) => it.span(),
             Self::TSSymbolKeyword(it) => it.span(),
-            Self::TSThisType(it) => it.span(),
             Self::TSUndefinedKeyword(it) => it.span(),
             Self::TSUnknownKeyword(it) => it.span(),
             Self::TSVoidKeyword(it) => it.span(),
@@ -1377,6 +1376,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSNamedTupleMember(it) => it.span(),
             Self::TSQualifiedName(it) => it.span(),
             Self::TSTemplateLiteralType(it) => it.span(),
+            Self::TSThisType(it) => it.span(),
             Self::TSTupleType(it) => it.span(),
             Self::TSTypeLiteral(it) => it.span(),
             Self::TSTypeOperatorType(it) => it.span(),
@@ -1384,6 +1384,7 @@ impl<'a> GetSpan for TSType<'a> {
             Self::TSTypeQuery(it) => it.span(),
             Self::TSTypeReference(it) => it.span(),
             Self::TSUnionType(it) => it.span(),
+            Self::TSParenthesizedType(it) => it.span(),
             Self::JSDocNullableType(it) => it.span(),
             Self::JSDocNonNullableType(it) => it.span(),
             Self::JSDocUnknownType(it) => it.span(),
@@ -1406,6 +1407,13 @@ impl<'a> GetSpan for TSUnionType<'a> {
 }
 
 impl<'a> GetSpan for TSIntersectionType<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.span
+    }
+}
+
+impl<'a> GetSpan for TSParenthesizedType<'a> {
     #[inline]
     fn span(&self) -> Span {
         self.span
@@ -1476,7 +1484,6 @@ impl<'a> GetSpan for TSTupleElement<'a> {
             Self::TSObjectKeyword(it) => it.span(),
             Self::TSStringKeyword(it) => it.span(),
             Self::TSSymbolKeyword(it) => it.span(),
-            Self::TSThisType(it) => it.span(),
             Self::TSUndefinedKeyword(it) => it.span(),
             Self::TSUnknownKeyword(it) => it.span(),
             Self::TSVoidKeyword(it) => it.span(),
@@ -1493,6 +1500,7 @@ impl<'a> GetSpan for TSTupleElement<'a> {
             Self::TSNamedTupleMember(it) => it.span(),
             Self::TSQualifiedName(it) => it.span(),
             Self::TSTemplateLiteralType(it) => it.span(),
+            Self::TSThisType(it) => it.span(),
             Self::TSTupleType(it) => it.span(),
             Self::TSTypeLiteral(it) => it.span(),
             Self::TSTypeOperatorType(it) => it.span(),
@@ -1500,6 +1508,7 @@ impl<'a> GetSpan for TSTupleElement<'a> {
             Self::TSTypeQuery(it) => it.span(),
             Self::TSTypeReference(it) => it.span(),
             Self::TSUnionType(it) => it.span(),
+            Self::TSParenthesizedType(it) => it.span(),
             Self::JSDocNullableType(it) => it.span(),
             Self::JSDocNonNullableType(it) => it.span(),
             Self::JSDocUnknownType(it) => it.span(),
