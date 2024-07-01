@@ -313,15 +313,15 @@ mod test {
 
         let pattern =
             PatternParser::new(&allocator, "Emoji🥹", ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 6);
+        assert_eq!(pattern.alternatives[0].elements.len(), 7);
         let pattern = PatternParser::new(
             &allocator,
             "Emoji🥹",
-            ParserOptions::default().with_modes(false, false),
+            ParserOptions::default().with_modes(true, false),
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 7);
+        assert_eq!(pattern.alternatives[0].elements.len(), 6);
     }
 
     #[test]
