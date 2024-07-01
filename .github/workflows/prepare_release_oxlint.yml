@@ -58,3 +58,11 @@ jobs:
           token: ${{ secrets.PAT }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "version": "${{ needs.prepare.outputs.version }}" }'
+
+      - uses: benc-uk/workflow-dispatch@v1
+        with:
+          repo: oxc-project/eslint-plugin-oxlint
+          workflow: bump_oxlint.yml
+          token: ${{ secrets.PAT }}
+          ref: main
+          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "version": "${{ needs.prepare.outputs.version }}" }'
