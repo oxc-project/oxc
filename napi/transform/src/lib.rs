@@ -1,4 +1,4 @@
-mod transformer;
+pub mod transformer;
 
 use napi_derive::napi;
 
