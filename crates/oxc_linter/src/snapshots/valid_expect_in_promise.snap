@@ -1,0 +1,6 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 157
+expression: valid_expect_in_promise
+---
+
