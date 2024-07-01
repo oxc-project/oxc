@@ -57,17 +57,3 @@ jobs:
           token: ${{ secrets.PAT }}
           ref: main
           inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "version": "${{ needs.prepare.outputs.version }}" }'
-
-  eslint-plugin-oxlint:
-    needs: prepare
-    name: Update eslint-plugin-oxlint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: taiki-e/checkout-action@v1
-      - uses: benc-uk/workflow-dispatch@v1
-        with:
-          repo: oxc-project/eslint-plugin-oxlint
-          workflow: bump_oxlint.yml
-          token: ${{ secrets.PAT }}
-          ref: main
-          inputs: '{ "issue-number": "${{ needs.prepare.outputs.pull-request-number }}", "version": "${{ needs.prepare.outputs.version }}" }'
