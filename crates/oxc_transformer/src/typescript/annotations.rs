@@ -239,7 +239,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
-                if param.is_public() {
+                if param.accessibility.is_some() {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,
