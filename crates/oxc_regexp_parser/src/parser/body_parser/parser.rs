@@ -114,10 +114,6 @@ impl<'a> PatternParser<'a> {
             i += 1;
         }
 
-        // TODO: Implement
-        // if (this.consumeQuantifier(true)) {
-        //   this.raise("Nothing to repeat");
-        // }
         if self.reader.eat('{') {
             return Err(OxcDiagnostic::error("Lone quantifier brackets"));
         }
@@ -170,23 +166,25 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Element::Assertion(Box::new_in(assertion, self.allocator))));
         }
 
-        match (self.consume_atom()?, self.consume_quantifier()) {
+        let start = self.reader.position();
+        match (self.consume_atom()?, self.consume_quantifier()?) {
             (Some(atom), None) => {
                 Ok(Some(ast::Element::QuantifiableElement(Box::new_in(atom, self.allocator))))
             }
             (Some(atom), Some(quantifier)) => {
                 return Ok(Some(ast::Element::Quantifier(Box::new_in(
                     ast::Quantifier {
-                        span: self.span_factory.create(0, 0), // TODO: Merge atom.start, quantifier.end
-                        min: quantifier.min,
-                        max: quantifier.max,
-                        greedy: quantifier.greedy,
+                        span: self.span_factory.create(start, self.reader.position()),
+                        min: quantifier.0 .0,
+                        max: quantifier.0 .1,
+                        greedy: quantifier.1,
                         element: atom,
                     },
                     self.allocator,
                 ))));
             }
-            _ => Ok(None),
+            (None, Some(_)) => Err(OxcDiagnostic::error("Nothing to repeat")),
+            (None, None) => Ok(None),
         }
     }
 
@@ -210,15 +208,6 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Atom>
     fn consume_atom(&mut self) -> Result<Option<ast::QuantifiableElement<'a>>> {
-        // TODO: Implement
-        // return (
-        //   this.consumePatternCharacter() ||
-        //   this.consumeDot() ||
-        //   this.consumeReverseSolidusAtomEscape() ||
-        //   Boolean(this.consumeCharacterClass()) ||
-        //   this.consumeUncapturingGroup() ||
-        //   this.consumeCapturingGroup()
-        // );
         if let Some(character) = self.consume_pattern_character() {
             return Ok(Some(ast::QuantifiableElement::Character(Box::new_in(
                 character,
@@ -226,48 +215,77 @@ impl<'a> PatternParser<'a> {
             ))));
         }
 
-        // 🧊: dot, or circular
-
+        // TODO: Implement
         if self.reader.eat('👻') {
             return Err(OxcDiagnostic::error("TODO"));
         }
+        // if self.consume_dot() {}
+        // if self.consume_reverse_solidus_atom_escape() {}
+        // if self.consume_character_class() {}
+        // if self.consume_uncapturing_group() {}
+        // if self.consume_capturing_group() {}
 
         Ok(None)
     }
 
-    // TODO: Not a `Quantifier` itself, I want `(min, max, greedy, span)`
-    fn consume_quantifier(&mut self) -> Option<ast::Quantifier<'a>> {
+    // ```
+    // Quantifier ::
+    //   QuantifierPrefix
+    //   QuantifierPrefix ?
+    // ```
+    // <https://tc39.es/ecma262/#prod-Quantifier>
+    // ```
+    // QuantifierPrefix ::
+    //   *
+    //   +
+    //   ?
+    //   { DecimalDigits }
+    //   { DecimalDigits ,}
+    //   { DecimalDigits , DecimalDigits }
+    // ```
+    // <https://tc39.es/ecma262/#prod-QuantifierPrefix>
+    fn consume_quantifier(&mut self) -> Result<Option<((usize, usize), bool)>> {
+        let is_greedy = |reader: &mut Reader| !reader.eat('?');
+
+        if self.reader.eat('*') {
+            return Ok(Some((
+                (0, usize::MAX), // TODO: POSITIVE_INFINITY?
+                is_greedy(&mut self.reader),
+            )));
+        }
+        if self.reader.eat('+') {
+            return Ok(Some((
+                (1, usize::MAX), // TODO: POSITIVE_INFINITY?
+                is_greedy(&mut self.reader),
+            )));
+        }
+        if self.reader.eat('?') {
+            return Ok(Some(((0, 1), is_greedy(&mut self.reader))));
+        }
+
         // TODO: Implement
-        let _start = self.reader.position();
-        // let min = 0;
-        // let max = 0;
-        // let greedy = false;
+        if self.reader.eat('{') {
+            // if (this.eatDecimalDigits()) {
+            //   const min = this._lastIntValue;
+            //   let max = min;
+            //   if (this.eat(COMMA)) {
+            //     max = this.eatDecimalDigits()
+            //       ? this._lastIntValue
+            //       : Number.POSITIVE_INFINITY;
+            //   }
+            //   if (this.eat(RIGHT_CURLY_BRACKET)) {
+            //     if (!noError && max < min) {
+            //       this.raise("numbers out of order in {} quantifier");
+            //     }
+            //     return { min, max } + greedy;
+            //     return true;
+            //   }
+            // }
 
-        // // QuantifierPrefix
-        // if (this.eat(ASTERISK)) {
-        //   min = 0;
-        //   max = Number.POSITIVE_INFINITY;
-        // } else if (this.eat(PLUS_SIGN)) {
-        //   min = 1;
-        //   max = Number.POSITIVE_INFINITY;
-        // } else if (this.eat(QUESTION_MARK)) {
-        //   min = 0;
-        //   max = 1;
-        // } else if (this.eatBracedQuantifier(noConsume)) {
-        //   ({ min, max } = this._lastRange);
-        // } else {
-        //   return false;
-        // }
+            return Err(OxcDiagnostic::error("Incomplete quantifier"));
+        }
 
-        // // `?`
-        // greedy = !this.eat(QUESTION_MARK);
-
-        // if (!noConsume) {
-        //   this.onQuantifier(start, this.index, min, max, greedy);
-        // }
-        // return true;
-
-        None
+        Ok(None)
     }
 
     // ```
@@ -275,6 +293,11 @@ impl<'a> PatternParser<'a> {
     //   SourceCharacter but not SyntaxCharacter
     // ```
     // <https://tc39.es/ecma262/#prod-PatternCharacter>
+    // ```
+    // SyntaxCharacter :: one of
+    //   ^ $ \ . * + ? ( ) [ ] { } |
+    // ```
+    // <https://tc39.es/ecma262/#prod-SyntaxCharacter>
     fn consume_pattern_character(&mut self) -> Option<ast::Character> {
         let start = self.reader.position();
 
@@ -310,7 +333,7 @@ mod test {
             PatternParser::new(&allocator, "a|b|", ParserOptions::default()).parse().unwrap();
         assert_eq!(pattern.alternatives.len(), 3);
         let pattern =
-            PatternParser::new(&allocator, "a|b|c", ParserOptions::default()).parse().unwrap();
+            PatternParser::new(&allocator, "a|b+?|c", ParserOptions::default()).parse().unwrap();
         assert_eq!(pattern.alternatives.len(), 3);
 
         let pattern =
@@ -335,8 +358,7 @@ mod test {
         assert!(PatternParser::new(&allocator, "b\\", ParserOptions::default()).parse().is_err());
         assert!(PatternParser::new(&allocator, "c]", ParserOptions::default()).parse().is_err());
         assert!(PatternParser::new(&allocator, "d}", ParserOptions::default()).parse().is_err());
-        assert!(PatternParser::new(&allocator, "e|ee|{", ParserOptions::default())
-            .parse()
-            .is_err());
+        assert!(PatternParser::new(&allocator, "e|+", ParserOptions::default()).parse().is_err());
+        assert!(PatternParser::new(&allocator, "e|{", ParserOptions::default()).parse().is_err());
     }
 }
