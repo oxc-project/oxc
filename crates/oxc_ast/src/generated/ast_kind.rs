@@ -71,6 +71,7 @@ pub enum AstType {
     LabeledStatement,
     ThrowStatement,
     TryStatement,
+    FinallyClause,
     CatchClause,
     CatchParameter,
     DebuggerStatement,
@@ -85,6 +86,7 @@ pub enum AstType {
     ArrowFunctionExpression,
     YieldExpression,
     Class,
+    ClassHeritage,
     ClassBody,
     MethodDefinition,
     PropertyDefinition,
@@ -164,8 +166,6 @@ pub enum AstType {
     JSXSpreadAttribute,
     JSXIdentifier,
     JSXText,
-    FinallyClause,
-    ClassHeritage,
     ExpressionArrayElement,
 }
 
@@ -237,6 +237,7 @@ pub enum AstKind<'a> {
     LabeledStatement(&'a LabeledStatement<'a>),
     ThrowStatement(&'a ThrowStatement<'a>),
     TryStatement(&'a TryStatement<'a>),
+    FinallyClause(&'a BlockStatement<'a>),
     CatchClause(&'a CatchClause<'a>),
     CatchParameter(&'a CatchParameter<'a>),
     DebuggerStatement(&'a DebuggerStatement),
@@ -251,6 +252,7 @@ pub enum AstKind<'a> {
     ArrowFunctionExpression(&'a ArrowFunctionExpression<'a>),
     YieldExpression(&'a YieldExpression<'a>),
     Class(&'a Class<'a>),
+    ClassHeritage(&'a Expression<'a>),
     ClassBody(&'a ClassBody<'a>),
     MethodDefinition(&'a MethodDefinition<'a>),
     PropertyDefinition(&'a PropertyDefinition<'a>),
@@ -330,8 +332,6 @@ pub enum AstKind<'a> {
     JSXSpreadAttribute(&'a JSXSpreadAttribute<'a>),
     JSXIdentifier(&'a JSXIdentifier<'a>),
     JSXText(&'a JSXText<'a>),
-    FinallyClause(&'a BlockStatement<'a>),
-    ClassHeritage(&'a Expression<'a>),
     ExpressionArrayElement(&'a Expression<'a>),
 }
 
@@ -404,6 +404,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::LabeledStatement(it) => it.span(),
             Self::ThrowStatement(it) => it.span(),
             Self::TryStatement(it) => it.span(),
+            Self::FinallyClause(it) => it.span(),
             Self::CatchClause(it) => it.span(),
             Self::CatchParameter(it) => it.span(),
             Self::DebuggerStatement(it) => it.span(),
@@ -418,6 +419,7 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::ArrowFunctionExpression(it) => it.span(),
             Self::YieldExpression(it) => it.span(),
             Self::Class(it) => it.span(),
+            Self::ClassHeritage(it) => it.span(),
             Self::ClassBody(it) => it.span(),
             Self::MethodDefinition(it) => it.span(),
             Self::PropertyDefinition(it) => it.span(),
@@ -497,8 +499,6 @@ impl<'a> GetSpan for AstKind<'a> {
             Self::JSXSpreadAttribute(it) => it.span(),
             Self::JSXIdentifier(it) => it.span(),
             Self::JSXText(it) => it.span(),
-            Self::FinallyClause(it) => it.span(),
-            Self::ClassHeritage(it) => it.span(),
             Self::ExpressionArrayElement(it) => it.span(),
         }
     }
