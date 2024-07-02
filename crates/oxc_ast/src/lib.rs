@@ -1,4 +1,7 @@
 #![allow(clippy::wildcard_imports)]
+// TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
+// module and the generated one.
+#![allow(clippy::self_named_module_files)]
 
 //! # Oxc AST
 //!
@@ -19,11 +22,18 @@ mod ast_kind_impl;
 pub mod precedence;
 pub mod syntax_directed_operations;
 mod trivia;
-pub mod visit;
 
 mod generated {
     pub mod ast_kind;
     pub mod span;
+    pub mod visit;
+}
+
+pub mod visit {
+    mod visit_mut;
+
+    pub use crate::generated::visit::*;
+    pub use visit_mut::*;
 }
 
 pub use generated::ast_kind;
