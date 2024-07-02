@@ -238,7 +238,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> oxc_allocator::Vec<'a, ClassElement<'a>> {
         let mut elements = self.ast.new_vec();
         for (index, param) in function.params.items.iter().enumerate() {
-            if param.accessibility.is_some() {
+            if param.accessibility.is_some() || param.readonly {
                 // transformed params will definitely have type annotation
                 let type_annotation = self.ast.copy(&params.items[index].pattern.type_annotation);
                 if let Some(new_element) =
