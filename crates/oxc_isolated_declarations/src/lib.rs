@@ -317,7 +317,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        if last_transformed_len == transformed_indexes.len() {
+        if !transformed_indexes.is_empty() && last_transformed_len == transformed_indexes.len() {
             need_empty_export_marker = false;
         }
 
