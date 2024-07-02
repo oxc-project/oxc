@@ -1,6 +1,6 @@
 {
   "name": "oxc-transform",
-  "version": "0.16.2",
+  "version": "0.16.3",
   "description": "Oxc transform Node API",
   "keywords": [
     "transform"
