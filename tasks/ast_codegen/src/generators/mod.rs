@@ -1,5 +1,7 @@
 mod ast;
+mod ast_builder;
 mod ast_kind;
+mod from_box_ast;
 mod impl_get_span;
 mod visit;
 
@@ -40,6 +42,8 @@ pub(crate) use generated_header;
 pub(crate) use insert;
 
 pub use ast::AstGenerator;
+pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
+pub use from_box_ast::FromBoxAstGenerator;
 pub use impl_get_span::ImplGetSpanGenerator;
 pub use visit::VisitGenerator;
