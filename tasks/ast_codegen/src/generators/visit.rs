@@ -98,6 +98,7 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
 
             endl!();
 
+            #[inline]
             fn alloc<T>(&self, t: &T) -> &'a T {
                 insert!("// SAFETY:");
                 insert!("// This should be safe as long as `src` is an reference from the allocator.");
@@ -319,14 +320,17 @@ impl<'a> VisitBuilder<'a> {
         let this_walker = self.walks.len();
         self.walks.push(TokenStream::default());
 
-        let walk_body = if collection {
+        let (walk_body, may_inline) = if collection {
             let singular_visit = self.get_visitor(ty, false, None);
             let iter = self.get_iter();
-            quote! {
-                for el in it.#iter() {
-                    visitor.#singular_visit(el);
-                }
-            }
+            (
+                quote! {
+                    for el in it.#iter() {
+                        visitor.#singular_visit(el);
+                    }
+                },
+                true,
+            )
         } else {
             match &*ty.borrow() {
                 RType::Enum(enum_) => self.generate_enum_walk(enum_, visit_as),
@@ -335,10 +339,13 @@ impl<'a> VisitBuilder<'a> {
             }
         };
 
-        // replace the placeholder walker with the actual one!
         let visit_trait = if self.is_mut { quote!(VisitMut) } else { quote!(Visit) };
+        let may_inline = if may_inline { Some(quote!(#[inline])) } else { None };
+
+        // replace the placeholder walker with the actual one!
         self.walks[this_walker] = quote! {
             endl!();
+            #may_inline
             pub fn #walk_name <'a, V: #visit_trait<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
                 #walk_body
             }
@@ -347,7 +354,11 @@ impl<'a> VisitBuilder<'a> {
         visit_name
     }
 
-    fn generate_enum_walk(&mut self, enum_: &REnum, visit_as: Option<&Ident>) -> TokenStream {
+    fn generate_enum_walk(
+        &mut self,
+        enum_: &REnum,
+        visit_as: Option<&Ident>,
+    ) -> (TokenStream, /* inline */ bool) {
         let ident = enum_.ident();
         let mut non_exhaustive = false;
         let variants_matches = enum_
@@ -459,10 +470,18 @@ impl<'a> VisitBuilder<'a> {
             }
         };
         let non_exhaustive = if non_exhaustive { Some(quote!(,_ => {})) } else { None };
-        with_node_events(quote!(match it { #(#matches),* #non_exhaustive }))
+        (
+            with_node_events(quote!(match it { #(#matches),* #non_exhaustive })),
+            // inline if there are 5 or less match cases
+            matches.len() <= 5,
+        )
     }
 
-    fn generate_struct_walk(&mut self, struct_: &RStruct, visit_as: Option<&Ident>) -> TokenStream {
+    fn generate_struct_walk(
+        &mut self,
+        struct_: &RStruct,
+        visit_as: Option<&Ident>,
+    ) -> (TokenStream, /* inline */ bool) {
         let ident = visit_as.unwrap_or_else(|| struct_.ident());
         let scope_attr = struct_.item.attrs.iter().find(|it| it.path().is_ident("scope"));
         let (scope_enter, scope_leave) = scope_attr
@@ -601,7 +620,7 @@ impl<'a> VisitBuilder<'a> {
             }
         };
 
-        match (scope_enter, scope_leave, entered_scope) {
+        let result = match (scope_enter, scope_leave, entered_scope) {
             (_, Some(leave), true) => quote! {
                 #body
                 #leave
@@ -612,7 +631,10 @@ impl<'a> VisitBuilder<'a> {
                 #leave
             },
             _ => body,
-        }
+        };
+
+        // inline if there are 5 or less fields.
+        (result, fields_visits.len() <= 5)
     }
 
     fn analyze_type(&self, ty: &Type) -> Option<(TypeRef, TypeWrapper)> {

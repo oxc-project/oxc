@@ -1340,6 +1340,7 @@ pub trait VisitMut<'a>: Sized {
 pub mod walk_mut {
     use super::*;
 
+    #[inline]
     pub fn walk_program<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Program<'a>) {
         visitor.enter_scope({
             let mut flags = ScopeFlags::Top;
@@ -1359,12 +1360,14 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_directives<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Directive<'a>>) {
         for el in it.iter_mut() {
             visitor.visit_directive(el);
         }
     }
 
+    #[inline]
     pub fn walk_directive<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Directive<'a>) {
         let kind = AstType::Directive;
         visitor.enter_node(kind);
@@ -1372,18 +1375,21 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_string_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut StringLiteral<'a>) {
         let kind = AstType::StringLiteral;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_hashbang<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Hashbang<'a>) {
         let kind = AstType::Hashbang;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_statements<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Statement<'a>>) {
         for el in it.iter_mut() {
             visitor.visit_statement(el);
@@ -1417,6 +1423,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_block_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BlockStatement<'a>) {
         visitor.enter_scope(ScopeFlags::empty());
         let kind = AstType::BlockStatement;
@@ -1426,6 +1433,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_break_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BreakStatement<'a>) {
         let kind = AstType::BreakStatement;
         visitor.enter_node(kind);
@@ -1435,6 +1443,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_label_identifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut LabelIdentifier<'a>,
@@ -1444,6 +1453,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_continue_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ContinueStatement<'a>,
@@ -1456,6 +1466,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_debugger_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut DebuggerStatement,
@@ -1465,6 +1476,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_do_while_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut DoWhileStatement<'a>,
@@ -1530,36 +1542,42 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_boolean_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BooleanLiteral) {
         let kind = AstType::BooleanLiteral;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_null_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut NullLiteral) {
         let kind = AstType::NullLiteral;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_numeric_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut NumericLiteral<'a>) {
         let kind = AstType::NumericLiteral;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_big_int_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BigIntLiteral<'a>) {
         let kind = AstType::BigIntLiteral;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_reg_exp_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut RegExpLiteral<'a>) {
         let kind = AstType::RegExpLiteral;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_template_literal<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TemplateLiteral<'a>,
@@ -1571,6 +1589,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_template_elements<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TemplateElement<'a>>,
@@ -1580,6 +1599,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_template_element<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TemplateElement<'a>,
@@ -1587,6 +1607,7 @@ pub mod walk_mut {
         // NOTE: AstType doesn't exists!
     }
 
+    #[inline]
     pub fn walk_expressions<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, Expression<'a>>,
@@ -1596,6 +1617,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_identifier_reference<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut IdentifierReference<'a>,
@@ -1605,6 +1627,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_meta_property<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut MetaProperty<'a>) {
         let kind = AstType::MetaProperty;
         visitor.enter_node(kind);
@@ -1613,18 +1636,21 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_identifier_name<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut IdentifierName<'a>) {
         let kind = AstType::IdentifierName;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_super<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Super) {
         let kind = AstType::Super;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_array_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ArrayExpression<'a>,
@@ -1635,6 +1661,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_array_expression_elements<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, ArrayExpressionElement<'a>>,
@@ -1644,6 +1671,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_array_expression_element<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ArrayExpressionElement<'a>,
@@ -1660,6 +1688,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_spread_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut SpreadElement<'a>) {
         let kind = AstType::SpreadElement;
         visitor.enter_node(kind);
@@ -1667,6 +1696,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_elision<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Elision) {
         let kind = AstType::Elision;
         visitor.enter_node(kind);
@@ -1733,6 +1763,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_arrow_function_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ArrowFunctionExpression<'a>,
@@ -1758,6 +1789,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_formal_parameters<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut FormalParameters<'a>,
@@ -1771,6 +1803,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_formal_parameter_list<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, FormalParameter<'a>>,
@@ -1780,6 +1813,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_formal_parameter<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut FormalParameter<'a>,
@@ -1791,6 +1825,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_binding_pattern<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BindingPattern<'a>) {
         // NOTE: AstType doesn't exists!
         visitor.visit_binding_pattern_kind(&mut it.kind);
@@ -1799,6 +1834,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_binding_pattern_kind<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut BindingPatternKind<'a>,
@@ -1811,6 +1847,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_binding_identifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut BindingIdentifier<'a>,
@@ -1820,6 +1857,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_object_pattern<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ObjectPattern<'a>) {
         let kind = AstType::ObjectPattern;
         visitor.enter_node(kind);
@@ -1830,6 +1868,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_binding_properties<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, BindingProperty<'a>>,
@@ -1839,6 +1878,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_binding_property<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut BindingProperty<'a>,
@@ -1848,6 +1888,7 @@ pub mod walk_mut {
         visitor.visit_binding_pattern(&mut it.value);
     }
 
+    #[inline]
     pub fn walk_property_key<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut PropertyKey<'a>) {
         let kind = AstType::PropertyKey;
         visitor.enter_node(kind);
@@ -1859,6 +1900,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_private_identifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut PrivateIdentifier<'a>,
@@ -1868,6 +1910,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_binding_rest_element<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut BindingRestElement<'a>,
@@ -1878,6 +1921,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_array_pattern<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ArrayPattern<'a>) {
         let kind = AstType::ArrayPattern;
         visitor.enter_node(kind);
@@ -1890,6 +1934,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_assignment_pattern<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentPattern<'a>,
@@ -1901,6 +1946,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_type_annotation<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeAnnotation<'a>,
@@ -1954,18 +2000,21 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_any_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSAnyKeyword) {
         let kind = AstType::TSAnyKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_big_int_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSBigIntKeyword) {
         let kind = AstType::TSBigIntKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_boolean_keyword<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSBooleanKeyword,
@@ -1975,6 +2024,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_intrinsic_keyword<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSIntrinsicKeyword,
@@ -1984,42 +2034,49 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_never_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSNeverKeyword) {
         let kind = AstType::TSNeverKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_null_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSNullKeyword) {
         let kind = AstType::TSNullKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_number_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSNumberKeyword) {
         let kind = AstType::TSNumberKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_object_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSObjectKeyword) {
         let kind = AstType::TSObjectKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_string_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSStringKeyword) {
         let kind = AstType::TSStringKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_symbol_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSSymbolKeyword) {
         let kind = AstType::TSSymbolKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_undefined_keyword<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSUndefinedKeyword,
@@ -2029,6 +2086,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_unknown_keyword<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSUnknownKeyword,
@@ -2038,17 +2096,20 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_void_keyword<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSVoidKeyword) {
         let kind = AstType::TSVoidKeyword;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_array_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSArrayType<'a>) {
         // NOTE: AstType doesn't exists!
         visitor.visit_ts_type(&mut it.element_type);
     }
 
+    #[inline]
     pub fn walk_ts_conditional_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSConditionalType<'a>,
@@ -2060,6 +2121,7 @@ pub mod walk_mut {
         visitor.visit_ts_type(&mut it.false_type);
     }
 
+    #[inline]
     pub fn walk_ts_constructor_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSConstructorType<'a>,
@@ -2072,6 +2134,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_parameter_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeParameterDeclaration<'a>,
@@ -2082,6 +2145,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_type_parameters<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSTypeParameter<'a>>,
@@ -2091,6 +2155,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_parameter<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeParameter<'a>,
@@ -2109,6 +2174,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_ts_function_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSFunctionType<'a>,
@@ -2124,6 +2190,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_this_parameter<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSThisParameter<'a>,
@@ -2137,6 +2204,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_import_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSImportType<'a>) {
         let kind = AstType::TSImportType;
         visitor.enter_node(kind);
@@ -2153,6 +2221,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_type_name<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTypeName<'a>) {
         let kind = AstType::TSTypeName;
         visitor.enter_node(kind);
@@ -2163,6 +2232,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_qualified_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSQualifiedName<'a>,
@@ -2174,6 +2244,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_import_attributes<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSImportAttributes<'a>,
@@ -2182,6 +2253,7 @@ pub mod walk_mut {
         visitor.visit_ts_import_attribute_list(&mut it.elements);
     }
 
+    #[inline]
     pub fn walk_ts_import_attribute_list<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSImportAttribute<'a>>,
@@ -2191,6 +2263,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_import_attribute<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSImportAttribute<'a>,
@@ -2200,6 +2273,7 @@ pub mod walk_mut {
         visitor.visit_expression(&mut it.value);
     }
 
+    #[inline]
     pub fn walk_ts_import_attribute_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSImportAttributeName<'a>,
@@ -2210,6 +2284,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_parameter_instantiation<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeParameterInstantiation<'a>,
@@ -2220,12 +2295,14 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_types<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, TSType<'a>>) {
         for el in it.iter_mut() {
             visitor.visit_ts_type(el);
         }
     }
 
+    #[inline]
     pub fn walk_ts_indexed_access_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSIndexedAccessType<'a>,
@@ -2237,6 +2314,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_infer_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSInferType<'a>) {
         let kind = AstType::TSInferType;
         visitor.enter_node(kind);
@@ -2244,6 +2322,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_intersection_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSIntersectionType<'a>,
@@ -2254,6 +2333,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_literal_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSLiteralType<'a>) {
         let kind = AstType::TSLiteralType;
         visitor.enter_node(kind);
@@ -2274,6 +2354,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_unary_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut UnaryExpression<'a>,
@@ -2284,6 +2365,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_mapped_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSMappedType<'a>) {
         // NOTE: AstType doesn't exists!
         visitor.visit_ts_type_parameter(&mut it.type_parameter);
@@ -2295,6 +2377,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_named_tuple_member<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSNamedTupleMember<'a>,
@@ -2306,6 +2389,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_tuple_element<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTupleElement<'a>,
@@ -2317,6 +2401,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_optional_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSOptionalType<'a>,
@@ -2325,11 +2410,13 @@ pub mod walk_mut {
         visitor.visit_ts_type(&mut it.type_annotation);
     }
 
+    #[inline]
     pub fn walk_ts_rest_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSRestType<'a>) {
         // NOTE: AstType doesn't exists!
         visitor.visit_ts_type(&mut it.type_annotation);
     }
 
+    #[inline]
     pub fn walk_ts_template_literal_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTemplateLiteralType<'a>,
@@ -2341,17 +2428,20 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_this_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSThisType) {
         let kind = AstType::TSThisType;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_tuple_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTupleType<'a>) {
         // NOTE: AstType doesn't exists!
         visitor.visit_ts_tuple_elements(&mut it.element_types);
     }
 
+    #[inline]
     pub fn walk_ts_tuple_elements<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSTupleElement<'a>>,
@@ -2361,6 +2451,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_literal<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTypeLiteral<'a>) {
         let kind = AstType::TSTypeLiteral;
         visitor.enter_node(kind);
@@ -2368,6 +2459,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_signatures<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSSignature<'a>>,
@@ -2377,6 +2469,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_signature<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSSignature<'a>) {
         match it {
             TSSignature::TSIndexSignature(it) => visitor.visit_ts_index_signature(it),
@@ -2391,6 +2484,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_index_signature<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSIndexSignature<'a>,
@@ -2400,6 +2494,7 @@ pub mod walk_mut {
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
     }
 
+    #[inline]
     pub fn walk_ts_index_signature_names<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSIndexSignatureName<'a>>,
@@ -2409,6 +2504,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_index_signature_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSIndexSignatureName<'a>,
@@ -2417,6 +2513,7 @@ pub mod walk_mut {
         visitor.visit_ts_type_annotation(&mut it.type_annotation);
     }
 
+    #[inline]
     pub fn walk_ts_property_signature<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSPropertySignature<'a>,
@@ -2430,6 +2527,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_call_signature_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSCallSignatureDeclaration<'a>,
@@ -2447,6 +2545,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_construct_signature_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSConstructSignatureDeclaration<'a>,
@@ -2461,6 +2560,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_method_signature<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSMethodSignature<'a>,
@@ -2481,6 +2581,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_type_operator<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeOperator<'a>,
@@ -2489,6 +2590,7 @@ pub mod walk_mut {
         visitor.visit_ts_type(&mut it.type_annotation);
     }
 
+    #[inline]
     pub fn walk_ts_type_predicate<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypePredicate<'a>,
@@ -2500,6 +2602,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_predicate_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypePredicateName<'a>,
@@ -2510,6 +2613,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_query<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSTypeQuery<'a>) {
         let kind = AstType::TSTypeQuery;
         visitor.enter_node(kind);
@@ -2520,6 +2624,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_type_query_expr_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeQueryExprName<'a>,
@@ -2532,6 +2637,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_reference<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeReference<'a>,
@@ -2545,6 +2651,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_union_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSUnionType<'a>) {
         let kind = AstType::TSUnionType;
         visitor.enter_node(kind);
@@ -2552,6 +2659,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_parenthesized_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSParenthesizedType<'a>,
@@ -2562,6 +2670,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_js_doc_nullable_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSDocNullableType<'a>,
@@ -2570,6 +2679,7 @@ pub mod walk_mut {
         visitor.visit_ts_type(&mut it.type_annotation);
     }
 
+    #[inline]
     pub fn walk_js_doc_non_nullable_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSDocNonNullableType<'a>,
@@ -2578,6 +2688,7 @@ pub mod walk_mut {
         visitor.visit_ts_type(&mut it.type_annotation);
     }
 
+    #[inline]
     pub fn walk_js_doc_unknown_type<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSDocUnknownType,
@@ -2585,12 +2696,14 @@ pub mod walk_mut {
         // NOTE: AstType doesn't exists!
     }
 
+    #[inline]
     pub fn walk_decorators<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Decorator<'a>>) {
         for el in it.iter_mut() {
             visitor.visit_decorator(el);
         }
     }
 
+    #[inline]
     pub fn walk_decorator<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Decorator<'a>) {
         let kind = AstType::Decorator;
         visitor.enter_node(kind);
@@ -2598,6 +2711,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_function_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut FunctionBody<'a>) {
         let kind = AstType::FunctionBody;
         visitor.enter_node(kind);
@@ -2606,6 +2720,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_assignment_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentExpression<'a>,
@@ -2617,6 +2732,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_assignment_target<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTarget<'a>,
@@ -2662,6 +2778,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_as_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSAsExpression<'a>,
@@ -2673,6 +2790,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_satisfies_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSSatisfiesExpression<'a>,
@@ -2684,6 +2802,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_non_null_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSNonNullExpression<'a>,
@@ -2694,6 +2813,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_type_assertion<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeAssertion<'a>,
@@ -2705,6 +2825,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_instantiation_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSInstantiationExpression<'a>,
@@ -2716,6 +2837,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_member_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut MemberExpression<'a>,
@@ -2736,6 +2858,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_computed_member_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ComputedMemberExpression<'a>,
@@ -2745,6 +2868,7 @@ pub mod walk_mut {
         visitor.visit_expression(&mut it.expression);
     }
 
+    #[inline]
     pub fn walk_static_member_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut StaticMemberExpression<'a>,
@@ -2754,6 +2878,7 @@ pub mod walk_mut {
         visitor.visit_identifier_name(&mut it.property);
     }
 
+    #[inline]
     pub fn walk_private_field_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut PrivateFieldExpression<'a>,
@@ -2763,6 +2888,7 @@ pub mod walk_mut {
         visitor.visit_private_identifier(&mut it.field);
     }
 
+    #[inline]
     pub fn walk_assignment_target_pattern<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTargetPattern<'a>,
@@ -2777,6 +2903,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_array_assignment_target<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ArrayAssignmentTarget<'a>,
@@ -2790,6 +2917,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_assignment_target_maybe_default<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTargetMaybeDefault<'a>,
@@ -2804,6 +2932,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_assignment_target_with_default<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTargetWithDefault<'a>,
@@ -2815,6 +2944,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_assignment_target_rest<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTargetRest<'a>,
@@ -2823,6 +2953,7 @@ pub mod walk_mut {
         visitor.visit_assignment_target(&mut it.target);
     }
 
+    #[inline]
     pub fn walk_object_assignment_target<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ObjectAssignmentTarget<'a>,
@@ -2834,6 +2965,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_assignment_target_properties<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, AssignmentTargetProperty<'a>>,
@@ -2843,6 +2975,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_assignment_target_property<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTargetProperty<'a>,
@@ -2857,6 +2990,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_assignment_target_property_identifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyIdentifier<'a>,
@@ -2868,6 +3002,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_assignment_target_property_property<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AssignmentTargetPropertyProperty<'a>,
@@ -2877,6 +3012,7 @@ pub mod walk_mut {
         visitor.visit_assignment_target_maybe_default(&mut it.binding);
     }
 
+    #[inline]
     pub fn walk_await_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AwaitExpression<'a>,
@@ -2887,6 +3023,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_binary_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut BinaryExpression<'a>,
@@ -2898,6 +3035,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_call_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CallExpression<'a>) {
         let kind = AstType::CallExpression;
         visitor.enter_node(kind);
@@ -2909,12 +3047,14 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_arguments<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Argument<'a>>) {
         for el in it.iter_mut() {
             visitor.visit_argument(el);
         }
     }
 
+    #[inline]
     pub fn walk_argument<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Argument<'a>) {
         let kind = AstType::Argument;
         visitor.enter_node(kind);
@@ -2925,6 +3065,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_chain_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ChainExpression<'a>,
@@ -2935,6 +3076,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_chain_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ChainElement<'a>) {
         match it {
             ChainElement::CallExpression(it) => visitor.visit_call_expression(it),
@@ -3026,6 +3168,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_conditional_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ConditionalExpression<'a>,
@@ -3072,6 +3215,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_import_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportExpression<'a>,
@@ -3083,6 +3227,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_logical_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut LogicalExpression<'a>,
@@ -3094,6 +3239,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_new_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut NewExpression<'a>) {
         let kind = AstType::NewExpression;
         visitor.enter_node(kind);
@@ -3105,6 +3251,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_object_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ObjectExpression<'a>,
@@ -3115,6 +3262,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_object_property_kinds<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, ObjectPropertyKind<'a>>,
@@ -3124,6 +3272,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_object_property_kind<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ObjectPropertyKind<'a>,
@@ -3134,6 +3283,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_object_property<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ObjectProperty<'a>) {
         let kind = AstType::ObjectProperty;
         visitor.enter_node(kind);
@@ -3145,6 +3295,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_parenthesized_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ParenthesizedExpression<'a>,
@@ -3155,6 +3306,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_sequence_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut SequenceExpression<'a>,
@@ -3165,6 +3317,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_tagged_template_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TaggedTemplateExpression<'a>,
@@ -3179,12 +3332,14 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_this_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ThisExpression) {
         let kind = AstType::ThisExpression;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_update_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut UpdateExpression<'a>,
@@ -3195,6 +3350,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_yield_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut YieldExpression<'a>,
@@ -3207,6 +3363,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_private_in_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut PrivateInExpression<'a>,
@@ -3218,6 +3375,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXElement<'a>) {
         let kind = AstType::JSXElement;
         visitor.enter_node(kind);
@@ -3229,6 +3387,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_opening_element<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXOpeningElement<'a>,
@@ -3243,6 +3402,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_element_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXElementName<'a>,
@@ -3257,12 +3417,14 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_identifier<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXIdentifier<'a>) {
         let kind = AstType::JSXIdentifier;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_namespaced_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXNamespacedName<'a>,
@@ -3274,6 +3436,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_member_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXMemberExpression<'a>,
@@ -3285,6 +3448,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_member_expression_object<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXMemberExpressionObject<'a>,
@@ -3300,6 +3464,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_attribute_items<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, JSXAttributeItem<'a>>,
@@ -3309,6 +3474,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_jsx_attribute_item<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXAttributeItem<'a>,
@@ -3322,6 +3488,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_attribute<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXAttribute<'a>) {
         // NOTE: AstType doesn't exists!
         visitor.visit_jsx_attribute_name(&mut it.name);
@@ -3330,6 +3497,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_jsx_attribute_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXAttributeName<'a>,
@@ -3340,6 +3508,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_jsx_attribute_value<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXAttributeValue<'a>,
@@ -3354,6 +3523,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_jsx_expression_container<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXExpressionContainer<'a>,
@@ -3364,6 +3534,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_expression<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXExpression<'a>) {
         match it {
             JSXExpression::EmptyExpression(it) => visitor.visit_jsx_empty_expression(it),
@@ -3371,6 +3542,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_jsx_empty_expression<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXEmptyExpression,
@@ -3378,6 +3550,7 @@ pub mod walk_mut {
         // NOTE: AstType doesn't exists!
     }
 
+    #[inline]
     pub fn walk_jsx_fragment<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXFragment<'a>) {
         let kind = AstType::JSXFragment;
         visitor.enter_node(kind);
@@ -3385,12 +3558,14 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_children<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, JSXChild<'a>>) {
         for el in it.iter_mut() {
             visitor.visit_jsx_child(el);
         }
     }
 
+    #[inline]
     pub fn walk_jsx_child<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXChild<'a>) {
         match it {
             JSXChild::Text(it) => visitor.visit_jsx_text(it),
@@ -3401,12 +3576,14 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_jsx_text<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXText<'a>) {
         let kind = AstType::JSXText;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_spread_child<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXSpreadChild<'a>,
@@ -3415,6 +3592,7 @@ pub mod walk_mut {
         visitor.visit_expression(&mut it.expression);
     }
 
+    #[inline]
     pub fn walk_jsx_spread_attribute<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXSpreadAttribute<'a>,
@@ -3425,6 +3603,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_jsx_closing_element<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut JSXClosingElement<'a>,
@@ -3435,6 +3614,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_class_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassBody<'a>) {
         let kind = AstType::ClassBody;
         visitor.enter_node(kind);
@@ -3442,6 +3622,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_class_elements<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, ClassElement<'a>>,
@@ -3451,6 +3632,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_class_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassElement<'a>) {
         match it {
             ClassElement::StaticBlock(it) => visitor.visit_static_block(it),
@@ -3461,6 +3643,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_static_block<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut StaticBlock<'a>) {
         visitor.enter_scope(ScopeFlags::ClassStaticBlock);
         let kind = AstType::StaticBlock;
@@ -3470,6 +3653,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_method_definition<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut MethodDefinition<'a>,
@@ -3490,6 +3674,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_property_definition<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut PropertyDefinition<'a>,
@@ -3507,6 +3692,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_accessor_property<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut AccessorProperty<'a>,
@@ -3519,6 +3705,7 @@ pub mod walk_mut {
         visitor.visit_decorators(&mut it.decorators);
     }
 
+    #[inline]
     pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSClassImplements<'a>>,
@@ -3528,6 +3715,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_class_implements<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSClassImplements<'a>,
@@ -3541,12 +3729,14 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_empty_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut EmptyStatement) {
         let kind = AstType::EmptyStatement;
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_expression_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ExpressionStatement<'a>,
@@ -3557,6 +3747,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_for_in_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ForInStatement<'a>,
@@ -3576,6 +3767,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_for_statement_left<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ForStatementLeft<'a>,
@@ -3589,6 +3781,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_variable_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut VariableDeclaration<'a>,
@@ -3599,6 +3792,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_variable_declarators<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, VariableDeclarator<'a>>,
@@ -3608,6 +3802,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_variable_declarator<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut VariableDeclarator<'a>,
@@ -3621,6 +3816,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_using_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut UsingDeclaration<'a>,
@@ -3631,6 +3827,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_for_of_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ForOfStatement<'a>,
@@ -3650,6 +3847,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_for_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ForStatement<'a>) {
         let scope_events_cond =
             it.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
@@ -3674,6 +3872,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_for_statement_init<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ForStatementInit<'a>,
@@ -3688,6 +3887,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_if_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut IfStatement<'a>) {
         let kind = AstType::IfStatement;
         visitor.enter_node(kind);
@@ -3699,6 +3899,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_labeled_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut LabeledStatement<'a>,
@@ -3710,6 +3911,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_return_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ReturnStatement<'a>,
@@ -3722,6 +3924,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_switch_statement<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut SwitchStatement<'a>,
@@ -3735,6 +3938,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_switch_cases<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, SwitchCase<'a>>,
@@ -3744,6 +3948,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_switch_case<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut SwitchCase<'a>) {
         let kind = AstType::SwitchCase;
         visitor.enter_node(kind);
@@ -3754,6 +3959,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_throw_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ThrowStatement<'a>) {
         let kind = AstType::ThrowStatement;
         visitor.enter_node(kind);
@@ -3761,6 +3967,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_try_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TryStatement<'a>) {
         let kind = AstType::TryStatement;
         visitor.enter_node(kind);
@@ -3774,6 +3981,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_catch_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CatchClause<'a>) {
         let scope_events_cond = it.param.is_some();
         if scope_events_cond {
@@ -3791,6 +3999,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_catch_parameter<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CatchParameter<'a>) {
         let kind = AstType::CatchParameter;
         visitor.enter_node(kind);
@@ -3798,6 +4007,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_finally_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut BlockStatement<'a>) {
         visitor.enter_scope(ScopeFlags::empty());
         let kind = AstType::FinallyClause;
@@ -3807,6 +4017,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_while_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut WhileStatement<'a>) {
         let kind = AstType::WhileStatement;
         visitor.enter_node(kind);
@@ -3815,6 +4026,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_with_statement<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut WithStatement<'a>) {
         let kind = AstType::WithStatement;
         visitor.enter_node(kind);
@@ -3842,6 +4054,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_type_alias_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSTypeAliasDeclaration<'a>,
@@ -3856,6 +4069,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_interface_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSInterfaceDeclaration<'a>,
@@ -3873,6 +4087,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_interface_heritages<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSInterfaceHeritage<'a>>,
@@ -3882,6 +4097,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_interface_heritage<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSInterfaceHeritage<'a>,
@@ -3895,6 +4111,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_interface_body<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSInterfaceBody<'a>,
@@ -3903,6 +4120,7 @@ pub mod walk_mut {
         visitor.visit_ts_signatures(&mut it.body);
     }
 
+    #[inline]
     pub fn walk_ts_enum_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSEnumDeclaration<'a>,
@@ -3916,6 +4134,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_ts_enum_members<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, TSEnumMember<'a>>,
@@ -3925,6 +4144,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_enum_member<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSEnumMember<'a>) {
         let kind = AstType::TSEnumMember;
         visitor.enter_node(kind);
@@ -3935,6 +4155,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_enum_member_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSEnumMemberName<'a>,
@@ -3947,6 +4168,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_module_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSModuleDeclaration<'a>,
@@ -3968,6 +4190,7 @@ pub mod walk_mut {
         visitor.leave_scope();
     }
 
+    #[inline]
     pub fn walk_ts_module_declaration_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSModuleDeclarationName<'a>,
@@ -3978,6 +4201,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_module_declaration_body<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSModuleDeclarationBody<'a>,
@@ -3990,6 +4214,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_module_block<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSModuleBlock<'a>) {
         let kind = AstType::TSModuleBlock;
         visitor.enter_node(kind);
@@ -3998,6 +4223,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_import_equals_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSImportEqualsDeclaration<'a>,
@@ -4009,6 +4235,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_module_reference<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSModuleReference<'a>,
@@ -4023,6 +4250,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_ts_external_module_reference<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSExternalModuleReference<'a>,
@@ -4056,6 +4284,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_import_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportDeclaration<'a>,
@@ -4072,6 +4301,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_import_declaration_specifiers<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, ImportDeclarationSpecifier<'a>>,
@@ -4081,6 +4311,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_import_declaration_specifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportDeclarationSpecifier<'a>,
@@ -4096,6 +4327,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_import_specifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportSpecifier<'a>,
@@ -4107,6 +4339,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_module_export_name<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ModuleExportName<'a>,
@@ -4118,6 +4351,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_import_default_specifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportDefaultSpecifier<'a>,
@@ -4128,6 +4362,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_import_namespace_specifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportNamespaceSpecifier<'a>,
@@ -4138,12 +4373,14 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_with_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut WithClause<'a>) {
         // NOTE: AstType doesn't exists!
         visitor.visit_identifier_name(&mut it.attributes_keyword);
         visitor.visit_import_attributes(&mut it.with_entries);
     }
 
+    #[inline]
     pub fn walk_import_attributes<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, ImportAttribute<'a>>,
@@ -4153,6 +4390,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_import_attribute<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportAttribute<'a>,
@@ -4162,6 +4400,7 @@ pub mod walk_mut {
         visitor.visit_string_literal(&mut it.value);
     }
 
+    #[inline]
     pub fn walk_import_attribute_key<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ImportAttributeKey<'a>,
@@ -4172,6 +4411,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_export_all_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ExportAllDeclaration<'a>,
@@ -4188,6 +4428,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_export_default_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ExportDefaultDeclaration<'a>,
@@ -4199,6 +4440,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_export_default_declaration_kind<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ExportDefaultDeclarationKind<'a>,
@@ -4216,6 +4458,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_export_named_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ExportNamedDeclaration<'a>,
@@ -4235,6 +4478,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_export_specifiers<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut Vec<'a, ExportSpecifier<'a>>,
@@ -4244,6 +4488,7 @@ pub mod walk_mut {
         }
     }
 
+    #[inline]
     pub fn walk_export_specifier<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut ExportSpecifier<'a>,
@@ -4255,6 +4500,7 @@ pub mod walk_mut {
         visitor.leave_node(kind);
     }
 
+    #[inline]
     pub fn walk_ts_export_assignment<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSExportAssignment<'a>,
@@ -4263,6 +4509,7 @@ pub mod walk_mut {
         visitor.visit_expression(&mut it.expression);
     }
 
+    #[inline]
     pub fn walk_ts_namespace_export_declaration<'a, V: VisitMut<'a>>(
         visitor: &mut V,
         it: &mut TSNamespaceExportDeclaration<'a>,
