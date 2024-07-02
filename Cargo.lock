@@ -1669,6 +1669,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_regexp_parser"
+version = "0.0.0"
+dependencies = [
+ "oxc_allocator",
+ "oxc_diagnostics",
+ "oxc_span",
+ "rustc-hash",
+]
+
+[[package]]
 name = "oxc_resolver"
 version = "1.9.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
