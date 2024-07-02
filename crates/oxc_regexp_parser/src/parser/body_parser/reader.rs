@@ -36,6 +36,9 @@ impl<'a> Reader<'a> {
         }
     }
 
+    pub fn checkpoint(&self) -> usize {
+        self.index
+    }
     pub fn rewind(&mut self, index: usize) {
         self.index = index;
     }

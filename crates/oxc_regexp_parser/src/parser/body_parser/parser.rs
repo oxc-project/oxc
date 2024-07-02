@@ -188,10 +188,109 @@ impl<'a> PatternParser<'a> {
         }
     }
 
-    // TODO: Implement
+    // Assertion[UnicodeMode, UnicodeSetsMode, NamedCaptureGroups] ::
+    //   ^
+    //   $
+    //   \b
+    //   \B
+    //   (?= Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (?! Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (?<= Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   (?<! Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // <https://tc39.es/ecma262/#prod-Assertion>
     fn consume_assertion(&mut self) -> Result<Option<ast::Assertion<'a>>> {
-        if self.reader.eat('👻') {
-            return Err(OxcDiagnostic::error("TODO"));
+        let start = self.reader.span_position();
+
+        if self.reader.eat('^') {
+            return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
+                ast::BoundaryAssertion::EdgeAssertion(Box::new_in(
+                    ast::EdgeAssertion {
+                        span: self.span_factory.create(start, self.reader.span_position()),
+                        kind: ast::EdgeAssertionKind::Start,
+                    },
+                    self.allocator,
+                )),
+                self.allocator,
+            ))));
+        }
+        if self.reader.eat('$') {
+            return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
+                ast::BoundaryAssertion::EdgeAssertion(Box::new_in(
+                    ast::EdgeAssertion {
+                        span: self.span_factory.create(start, self.reader.span_position()),
+                        kind: ast::EdgeAssertionKind::End,
+                    },
+                    self.allocator,
+                )),
+                self.allocator,
+            ))));
+        }
+        if self.reader.eat2('\\', 'B') {
+            return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
+                ast::BoundaryAssertion::WordBoundaryAssertion(Box::new_in(
+                    ast::WordBoundaryAssertion {
+                        span: self.span_factory.create(start, self.reader.span_position()),
+                        negate: false,
+                    },
+                    self.allocator,
+                )),
+                self.allocator,
+            ))));
+        }
+        if self.reader.eat2('\\', 'b') {
+            return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
+                ast::BoundaryAssertion::WordBoundaryAssertion(Box::new_in(
+                    ast::WordBoundaryAssertion {
+                        span: self.span_factory.create(start, self.reader.span_position()),
+                        negate: true,
+                    },
+                    self.allocator,
+                )),
+                self.allocator,
+            ))));
+        }
+
+        // Lookaround
+        let rewind_start = self.reader.checkpoint();
+        if self.reader.eat2('(', '?') {
+            let lookaround = {
+                let is_lookbehind = self.reader.eat('<');
+
+                if self.reader.eat('=') {
+                    Some((false, is_lookbehind))
+                } else if self.reader.eat('!') {
+                    Some((true, is_lookbehind))
+                } else {
+                    None
+                }
+            };
+
+            if let Some((negate, is_lookbehind)) = lookaround {
+                let alternatives = self.consume_disjunction()?;
+                if !self.reader.eat(')') {
+                    return Err(OxcDiagnostic::error("Unterminated group"));
+                }
+
+                let span = self.span_factory.create(start, self.reader.span_position());
+                let lookaround_assertion = if is_lookbehind {
+                    ast::LookaroundAssertion::LookbehindAssertion(Box::new_in(
+                        ast::LookbehindAssertion { span, negate, alternatives },
+                        self.allocator,
+                    ))
+                } else {
+                    ast::LookaroundAssertion::LookaheadAssertion(Box::new_in(
+                        ast::LookaheadAssertion { span, negate, alternatives },
+                        self.allocator,
+                    ))
+                };
+
+                return Ok(Some(ast::Assertion::LookaroundAssertion(Box::new_in(
+                    lookaround_assertion,
+                    self.allocator,
+                ))));
+            }
+
+            self.reader.rewind(rewind_start);
         }
 
         Ok(None)
@@ -273,7 +372,7 @@ impl<'a> PatternParser<'a> {
                         if self.reader.eat('}') {
                             if max < min {
                                 return Err(OxcDiagnostic::error(
-                                    "Numbers out of order in {} quantifier",
+                                    "Numbers out of order in braced quantifier",
                                 ));
                             }
 
@@ -341,6 +440,51 @@ mod test {
     use super::*;
     use oxc_allocator::Allocator;
 
+    // NOTE: These may be useless when integlation tests are added
+    #[test]
+    fn should_pass() {
+        let allocator = Allocator::default();
+
+        for source_text in &[
+            "a",
+            "a+",
+            "a*",
+            "a?",
+            "a{1}",
+            "a{1,}",
+            "a{1,2}",
+            "a|b",
+            "a|b|c",
+            "a|b+?|c",
+            "a+b*?c{1}d{2,}e{3,4}?",
+            r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$",
+        ] {
+            assert!(
+                PatternParser::new(&allocator, source_text, ParserOptions::default())
+                    .parse()
+                    .is_ok(),
+                "{source_text} should be parsed!"
+            );
+        }
+    }
+
+    #[test]
+    fn should_fail() {
+        let allocator = Allocator::default();
+
+        for source_text in &[
+            "", "a)", r"b\", "c]", "d}", "e|+", "f|{", "g{", "g{1", "g{1,", "g{,", "g{2,1}",
+            "(?=h", "(?<!h",
+        ] {
+            assert!(
+                PatternParser::new(&allocator, source_text, ParserOptions::default())
+                    .parse()
+                    .is_err(),
+                "{source_text} should fail to parse!"
+            );
+        }
+    }
+
     #[test]
     fn should_handle_unicode() {
         let allocator = Allocator::default();
@@ -368,45 +512,4 @@ mod test {
         assert_eq!(pattern.alternatives[0].elements.len(), 6);
     }
 
-    // NOTE: These may be useless when integlation tests are added
-    #[test]
-    fn should_pass() {
-        let allocator = Allocator::default();
-
-        for source_text in &[
-            "a",
-            "a+",
-            "a*",
-            "a?",
-            "a{1}",
-            "a{1,}",
-            "a{1,2}",
-            "a|b",
-            "a|b|c",
-            "a|b+?|c",
-            "a+b*?c{1}d{2,}e{3,4}",
-        ] {
-            assert!(
-                PatternParser::new(&allocator, source_text, ParserOptions::default())
-                    .parse()
-                    .is_ok(),
-                "{source_text} should be parsed!"
-            );
-        }
-    }
-
-    #[test]
-    fn should_fail() {
-        let allocator = Allocator::default();
-
-        for source_text in &["", "a)", "b\\", "c]", "d}", "e|+", "f|{", "g{", "g{1", "g{1,", "g{,"]
-        {
-            assert!(
-                PatternParser::new(&allocator, source_text, ParserOptions::default())
-                    .parse()
-                    .is_err(),
-                "{source_text} should fail to parse!"
-            );
-        }
-    }
 }
