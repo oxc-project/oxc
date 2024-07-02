@@ -598,7 +598,7 @@ impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
         if let Some(new_expr) = new_expr {
             *expr = new_expr;
         } else {
-            walk_mut::walk_expression_mut(self, expr);
+            walk_mut::walk_expression(self, expr);
         }
     }
 }

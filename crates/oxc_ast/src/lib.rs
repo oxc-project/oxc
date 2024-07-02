@@ -27,13 +27,12 @@ mod generated {
     pub mod ast_kind;
     pub mod span;
     pub mod visit;
+    pub mod visit_mut;
 }
 
 pub mod visit {
-    mod visit_mut;
-
     pub use crate::generated::visit::*;
-    pub use visit_mut::*;
+    pub use crate::generated::visit_mut::*;
 }
 
 pub use generated::ast_kind;

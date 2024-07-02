@@ -99,6 +99,6 @@ impl<'a> ReplaceGlobalDefines<'a> {
 impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.replace_identifier_defines(expr);
-        walk_mut::walk_expression_mut(self, expr);
+        walk_mut::walk_expression(self, expr);
     }
 }
