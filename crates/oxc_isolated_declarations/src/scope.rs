@@ -209,8 +209,8 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        walk_arrow_expression(self, expr);
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+        walk_arrow_function_expression(self, expr);
         if expr.type_parameters.is_some() {
             self.leave_scope();
         }

@@ -1529,7 +1529,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
         expr.scope_id.set(Some(self.current_scope_id));

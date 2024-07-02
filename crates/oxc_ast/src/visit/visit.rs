@@ -253,8 +253,8 @@ pub trait Visit<'a>: Sized {
         walk_assignment_expression(self, expr);
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        walk_arrow_expression(self, expr);
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+        walk_arrow_function_expression(self, expr);
     }
 
     fn visit_await_expression(&mut self, expr: &AwaitExpression<'a>) {
@@ -1483,7 +1483,9 @@ pub mod walk {
             Expression::MetaProperty(meta) => visitor.visit_meta_property(meta),
 
             Expression::ArrayExpression(expr) => visitor.visit_array_expression(expr),
-            Expression::ArrowFunctionExpression(expr) => visitor.visit_arrow_expression(expr),
+            Expression::ArrowFunctionExpression(expr) => {
+                visitor.visit_arrow_function_expression(expr);
+            }
             Expression::AssignmentExpression(expr) => visitor.visit_assignment_expression(expr),
             Expression::AwaitExpression(expr) => visitor.visit_await_expression(expr),
             Expression::BinaryExpression(expr) => visitor.visit_binary_expression(expr),
@@ -1600,7 +1602,7 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_arrow_expression<'a, V: Visit<'a>>(
+    pub fn walk_arrow_function_expression<'a, V: Visit<'a>>(
         visitor: &mut V,
         expr: &ArrowFunctionExpression<'a>,
     ) {

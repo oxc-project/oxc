@@ -565,7 +565,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.scope_ids.push(block.scope_id.get().unwrap());
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         self.scope_ids.push(expr.scope_id.get().unwrap());
     }
 
