@@ -234,9 +234,14 @@ pub enum UnicodeSetsCharacterClassElement<'a> {
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
 pub enum CharacterSet<'a> {
-    AnyCharacterSet,
+    AnyCharacterSet(Box<'a, AnyCharacterSet>),
     EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
     UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
+}
+
+#[derive(Debug)]
+pub struct AnyCharacterSet {
+    pub span: Span,
 }
 
 /// The character class escape.

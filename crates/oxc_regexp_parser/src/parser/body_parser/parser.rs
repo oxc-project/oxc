@@ -35,9 +35,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // TODO: Remove later, just for clippy unused
-        self.reader.eat2('a', 'b');
         self.reader.eat3('a', 'b', 'c');
-        self.reader.rewind(0);
 
         self.consume_pattern()
     }
@@ -313,16 +311,22 @@ impl<'a> PatternParser<'a> {
                 self.allocator,
             ))));
         }
+        if let Some(any_character_set) = self.consume_dot() {
+            return Ok(Some(ast::QuantifiableElement::CharacterSet(Box::new_in(
+                ast::CharacterSet::AnyCharacterSet(Box::new_in(any_character_set, self.allocator)),
+                self.allocator,
+            ))));
+        }
 
         // TODO: Implement
         if self.reader.eat('👻') {
             return Err(OxcDiagnostic::error("TODO"));
         }
-        // if self.consume_dot() {}
+
         // if self.consume_reverse_solidus_atom_escape() {}
         // if self.consume_character_class() {}
-        // if self.consume_uncapturing_group() {}
         // if self.consume_capturing_group() {}
+        // if self.consume_uncapturing_group() {}
 
         Ok(None)
     }
@@ -413,6 +417,18 @@ impl<'a> PatternParser<'a> {
         })
     }
 
+    fn consume_dot(&mut self) -> Option<ast::AnyCharacterSet> {
+        let start = self.reader.span_position();
+
+        if !self.reader.eat('.') {
+            return None;
+        }
+
+        Some(ast::AnyCharacterSet {
+            span: self.span_factory.create(start, self.reader.span_position()),
+        })
+    }
+
     fn consume_decimal_digits(&mut self) -> Option<usize> {
         let start = self.reader.span_position();
 
@@ -458,6 +474,7 @@ mod test {
             "a|b+?|c",
             "a+b*?c{1}d{2,}e{3,4}?",
             r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$",
+            "a.b.."
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, ParserOptions::default())
