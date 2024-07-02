@@ -1298,6 +1298,12 @@ impl MethodDefinitionKind {
     }
 }
 
+impl MethodDefinitionType {
+    pub fn is_abstract(&self) -> bool {
+        matches!(self, Self::TSAbstractMethodDefinition)
+    }
+}
+
 impl<'a> PrivateIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name }

@@ -13,3 +13,8 @@ export declare class Bar {
 export declare class Zoo {
 	foo<F>(f: F): F;
 }
+export declare abstract class Qux {
+	abstract foo(): void;
+	bar(): void;
+	baz(): void;
+}
