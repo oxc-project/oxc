@@ -15592,11 +15592,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  8 │         this += value;
    ╰────
 
-  × Unexpected token
-    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:7]
+  × Expected `)` but found `,`
+    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:5]
   8 │ // Missing the second operand
   9 │ (ANY, );
-    ·       ─
+    ·     ┬
+    ·     ╰── `)` expected
  10 │ (BOOLEAN, );
     ╰────
 
@@ -16114,11 +16115,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                      ─
    ╰────
 
-  × Unexpected token
-   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:4:10]
+  × Expected `)` but found `,`
+   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:4:9]
  3 │ // reparse call as invalid await should error
  4 │ await (1,);
-   ·          ─
+   ·         ┬
+   ·         ╰── `)` expected
  5 │ await <number, string>(1);
    ╰────
 
