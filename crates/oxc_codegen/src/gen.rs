@@ -2994,6 +2994,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameter<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.r#const {
+            p.print_str(b"const ");
+        }
         self.name.gen(p, ctx);
         if let Some(constraint) = &self.constraint {
             p.print_str(b" extends ");
