@@ -24,7 +24,7 @@ impl<'a> PatternParser<'a> {
             allocator,
             source_text,
             span_factory: SpanFactory::new(options.span_offset),
-            reader: Reader::new(source_text, options.unicode_mode),
+            reader: Reader::new(source_text, options.is_unicode_mode()),
             _state: ParserState,
         }
     }
@@ -258,24 +258,30 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
         }
 
-        // TODO: Implement
         if self.reader.eat('{') {
-            // if (this.eatDecimalDigits()) {
-            //   const min = this._lastIntValue;
-            //   let max = min;
-            //   if (this.eat(COMMA)) {
-            //     max = this.eatDecimalDigits()
-            //       ? this._lastIntValue
-            //       : Number.POSITIVE_INFINITY;
-            //   }
-            //   if (this.eat(RIGHT_CURLY_BRACKET)) {
-            //     if (!noError && max < min) {
-            //       this.raise("numbers out of order in {} quantifier");
-            //     }
-            //     return { min, max } + greedy;
-            //     return true;
-            //   }
-            // }
+            if let Some(min) = self.consume_decimal_digits() {
+                if self.reader.eat('}') {
+                    return Ok(Some(((min, Some(min)), is_greedy(&mut self.reader))));
+                }
+
+                if self.reader.eat(',') {
+                    if self.reader.eat('}') {
+                        return Ok(Some(((min, None), is_greedy(&mut self.reader))));
+                    }
+
+                    if let Some(max) = self.consume_decimal_digits() {
+                        if self.reader.eat('}') {
+                            if max < min {
+                                return Err(OxcDiagnostic::error(
+                                    "Numbers out of order in {} quantifier",
+                                ));
+                            }
+
+                            return Ok(Some(((min, Some(max)), is_greedy(&mut self.reader))));
+                        }
+                    }
+                }
+            }
 
             return Err(OxcDiagnostic::error("Incomplete quantifier"));
         }
@@ -307,6 +313,27 @@ impl<'a> PatternParser<'a> {
             value: cp,
         })
     }
+
+    fn consume_decimal_digits(&mut self) -> Option<usize> {
+        let start = self.reader.position();
+
+        let mut value = 0;
+        while let Some(cp) = self.reader.peek() {
+            if !unicode::is_decimal_digits(cp) {
+                break;
+            }
+
+            // `- '0' as u32`: convert code point to digit
+            value = (10 * value) + (cp - '0' as u32) as usize;
+            self.reader.advance();
+        }
+
+        if self.reader.position() != start {
+            return Some(value);
+        }
+
+        None
+    }
 }
 
 #[cfg(test)]
@@ -314,46 +341,72 @@ mod test {
     use super::*;
     use oxc_allocator::Allocator;
 
-    // NOTE: These may be useless when integlation tests are added
     #[test]
-    fn should_pass() {
+    fn should_handle_unicode() {
         let allocator = Allocator::default();
+        let source_text = "Emoji🥹";
 
         let pattern =
-            PatternParser::new(&allocator, "abc", ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives.len(), 1);
-        assert_eq!(pattern.alternatives[0].elements.len(), 3);
-
-        let pattern =
-            PatternParser::new(&allocator, "a|b|", ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives.len(), 3);
-        let pattern =
-            PatternParser::new(&allocator, "a|b+?|c", ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives.len(), 3);
-
-        let pattern =
-            PatternParser::new(&allocator, "Emoji🥹", ParserOptions::default()).parse().unwrap();
+            PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
         assert_eq!(pattern.alternatives[0].elements.len(), 7);
+
         let pattern = PatternParser::new(
             &allocator,
-            "Emoji🥹",
+            source_text,
             ParserOptions::default().with_modes(true, false),
+        )
+        .parse()
+        .unwrap();
+        assert_eq!(pattern.alternatives[0].elements.len(), 6);
+        let pattern = PatternParser::new(
+            &allocator,
+            source_text,
+            ParserOptions::default().with_modes(false, true),
         )
         .parse()
         .unwrap();
         assert_eq!(pattern.alternatives[0].elements.len(), 6);
     }
 
+    // NOTE: These may be useless when integlation tests are added
+    #[test]
+    fn should_pass() {
+        let allocator = Allocator::default();
+
+        for source_text in &[
+            "a",
+            "a+",
+            "a*",
+            "a?",
+            "a{1}",
+            "a{1,}",
+            "a{1,2}",
+            "a|b",
+            "a|b|c",
+            "a|b+?|c",
+            "a+b*?c{1}d{2,}e{3,4}",
+        ] {
+            assert!(
+                PatternParser::new(&allocator, source_text, ParserOptions::default())
+                    .parse()
+                    .is_ok(),
+                "{source_text} should be parsed!"
+            );
+        }
+    }
+
     #[test]
     fn should_fail() {
         let allocator = Allocator::default();
 
-        assert!(PatternParser::new(&allocator, "", ParserOptions::default()).parse().is_err());
-        assert!(PatternParser::new(&allocator, "a)", ParserOptions::default()).parse().is_err());
-        assert!(PatternParser::new(&allocator, "b\\", ParserOptions::default()).parse().is_err());
-        assert!(PatternParser::new(&allocator, "c]", ParserOptions::default()).parse().is_err());
-        assert!(PatternParser::new(&allocator, "d}", ParserOptions::default()).parse().is_err());
-        assert!(PatternParser::new(&allocator, "e|+", ParserOptions::default()).parse().is_err());
-        assert!(PatternParser::new(&allocator, "e|{", ParserOptions::default()).parse().is_err());
+        for source_text in &["", "a)", "b\\", "c]", "d}", "e|+", "f|{", "g{", "g{1", "g{1,", "g{,"]
+        {
+            assert!(
+                PatternParser::new(&allocator, source_text, ParserOptions::default())
+                    .parse()
+                    .is_err(),
+                "{source_text} should fail to parse!"
+            );
+        }
     }
 }
