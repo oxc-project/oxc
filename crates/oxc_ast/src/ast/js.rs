@@ -1344,6 +1344,7 @@ pub struct BindingPattern<'a> {
         feature = "serialize",
         tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")
     )]
+    #[span]
     pub kind: BindingPatternKind<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: bool,

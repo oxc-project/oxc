@@ -925,6 +925,13 @@ impl GetSpan for DebuggerStatement {
     }
 }
 
+impl<'a> GetSpan for BindingPattern<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        self.kind.span()
+    }
+}
+
 impl<'a> GetSpan for BindingPatternKind<'a> {
     fn span(&self) -> Span {
         match self {
@@ -2183,11 +2190,5 @@ impl<'a> GetSpan for JSXText<'a> {
     #[inline]
     fn span(&self) -> Span {
         self.span
-    }
-}
-
-impl<'a> GetSpan for BindingPattern<'a> {
-    fn span(&self) -> Span {
-        self.kind.span()
     }
 }
