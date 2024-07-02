@@ -14,6 +14,7 @@ export class Zoo {
 
 export abstract class Qux {
   abstract foo(): void;
+  protected foo2?(): void;
   bar(): void {}
   baz(): void {}
 }
