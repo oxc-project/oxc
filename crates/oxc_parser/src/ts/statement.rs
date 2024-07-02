@@ -3,12 +3,10 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use super::list::TSEnumMemberList;
 use crate::{
     diagnostics,
     js::{FunctionKind, VariableDeclarationContext, VariableDeclarationParent},
     lexer::Kind,
-    list::SeparatedList,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
     ParserImpl,
 };
@@ -27,17 +25,21 @@ impl<'a> ParserImpl<'a> {
         modifiers: &Modifiers<'a>,
     ) -> Result<Declaration<'a>> {
         self.bump_any(); // bump `enum`
-
         let id = self.parse_binding_identifier()?;
-        let members = TSEnumMemberList::parse(self)?.members;
+        self.expect(Kind::LCurly)?;
+        let members = self.parse_delimited_list(
+            Kind::RCurly,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_ts_enum_member,
+        )?;
+        self.expect(Kind::RCurly)?;
         let span = self.end_span(span);
-
         self.verify_modifiers(
             modifiers,
             ModifierFlags::DECLARE | ModifierFlags::CONST,
             diagnostics::modifier_cannot_be_used_here,
         );
-
         Ok(self.ast.ts_enum_declaration(
             span,
             id,

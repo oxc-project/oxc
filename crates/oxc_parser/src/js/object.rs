@@ -4,10 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
-use super::list::ObjectExpressionProperties;
-use crate::{
-    diagnostics, lexer::Kind, list::SeparatedList, modifiers::Modifier, Context, ParserImpl,
-};
+use crate::{diagnostics, lexer::Kind, modifiers::Modifier, Context, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
@@ -17,13 +14,33 @@ impl<'a> ParserImpl<'a> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-        let object_expression_properties =
-            self.context(Context::In, Context::empty(), ObjectExpressionProperties::parse)?;
+        self.expect(Kind::LCurly)?;
+        let object_expression_properties = self.context(Context::In, Context::empty(), |p| {
+            p.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                /* trailing_separator */ false,
+                Self::parse_object_expression_property,
+            )
+        })?;
+        let trailing_comma = self.at(Kind::Comma).then(|| {
+            let span = self.start_span();
+            self.bump_any();
+            self.end_span(span)
+        });
+        self.expect(Kind::RCurly)?;
         Ok(self.ast.object_expression(
             self.end_span(span),
-            object_expression_properties.elements,
-            object_expression_properties.trailing_comma,
+            object_expression_properties,
+            trailing_comma,
         ))
+    }
+
+    fn parse_object_expression_property(&mut self) -> Result<ObjectPropertyKind<'a>> {
+        match self.cur_kind() {
+            Kind::Dot3 => self.parse_spread_element().map(ObjectPropertyKind::SpreadProperty),
+            _ => self.parse_property_definition().map(ObjectPropertyKind::ObjectProperty),
+        }
     }
 
     /// `PropertyDefinition`[Yield, Await]

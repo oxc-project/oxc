@@ -5209,10 +5209,11 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·              ─
    ╰────
 
-  × Unexpected token
-   ╭─[es2017/trailing-function-commas/7/input.js:1:8]
+  × Expected `)` but found `,`
+   ╭─[es2017/trailing-function-commas/7/input.js:1:7]
  1 │ ('foo',)
-   ·        ─
+   ·       ┬
+   ·       ╰── `)` expected
    ╰────
 
   × Expected `(` but found `await`
