@@ -474,7 +474,7 @@ mod test {
             "a|b+?|c",
             "a+b*?c{1}d{2,}e{3,4}?",
             r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$",
-            "a.b.."
+            "a.b..",
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, ParserOptions::default())
