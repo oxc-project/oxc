@@ -1,9 +1,9 @@
 commit: d8086f14
 
 parser_typescript Summary:
-AST Parsed     : 5280/5283 (99.94%)
-Positive Passed: 5273/5283 (99.81%)
-Negative Passed: 1077/4875 (22.09%)
+AST Parsed     : 5279/5283 (99.92%)
+Positive Passed: 5272/5283 (99.79%)
+Negative Passed: 1082/4875 (22.19%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -1510,7 +1510,6 @@ Expect Syntax Error: "compiler/reservedNameOnModuleImportWithInterface.ts"
 Expect Syntax Error: "compiler/resolvingClassDeclarationWhenInBaseTypeResolution.ts"
 Expect Syntax Error: "compiler/restArgAssignmentCompat.ts"
 Expect Syntax Error: "compiler/restInvalidArgumentType.ts"
-Expect Syntax Error: "compiler/restParamModifier2.ts"
 Expect Syntax Error: "compiler/restParamsWithNonRestParams.ts"
 Expect Syntax Error: "compiler/restUnion3.ts"
 Expect Syntax Error: "compiler/returnInConstructor1.ts"
@@ -1899,7 +1898,6 @@ Expect Syntax Error: "compiler/useBeforeDeclaration_propertyAssignment.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_superClass.ts"
 Expect Syntax Error: "compiler/useUnknownInCatchVariables01.ts"
 Expect Syntax Error: "compiler/varAndFunctionShareName.ts"
-Expect Syntax Error: "compiler/varArgConstructorMemberParameter.ts"
 Expect Syntax Error: "compiler/varBlock.ts"
 Expect Syntax Error: "compiler/varNameConflictsWithImportInDifferentPartOfModule.ts"
 Expect Syntax Error: "compiler/vararg.ts"
@@ -2188,7 +2186,6 @@ Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod6.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod8.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethodOverload1.ts"
-Expect Syntax Error: "conformance/decorators/class/method/parameter/decoratorOnClassMethodThisParameter.ts"
 Expect Syntax Error: "conformance/decorators/class/property/decoratorOnClassProperty11.ts"
 Expect Syntax Error: "conformance/decorators/class/property/decoratorOnClassProperty6.ts"
 Expect Syntax Error: "conformance/decorators/class/property/decoratorOnClassProperty7.ts"
@@ -2196,7 +2193,6 @@ Expect Syntax Error: "conformance/decorators/decoratorCallGeneric.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnEnum.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnFunctionDeclaration.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnFunctionExpression.ts"
-Expect Syntax Error: "conformance/decorators/invalid/decoratorOnFunctionParameter.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnImportEquals1.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnInterface.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnInternalModule.ts"
@@ -3175,7 +3171,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RealWorld/parserindenter.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509534.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509618.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509668.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509693.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509698.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser536727.ts"
@@ -3817,6 +3812,15 @@ Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
  23 │ with (window)
     · ────
  24 │     const enum H {}
+    ╰────
+Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
+
+  × Unexpected token
+    ╭─[compiler/sourceMapValidationDecorators.ts:18:7]
+ 17 │       @ParameterDecorator2(30) 
+ 18 │       ...b: string[]) {
+    ·       ───
+ 19 │     }
     ╰────
 Expect to Parse: "compiler/withStatementInternalComments.ts"
 
@@ -8995,7 +8999,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × Unexpected token
+   ╭─[compiler/restParamModifier2.ts:2:24]
+ 1 │ class C {
+ 2 │     constructor(public ...rest: string[]) {}
+   ·                        ───
+ 3 │ }
+   ╰────
+
+  × A rest parameter must be last in a parameter list
    ╭─[compiler/restParameterNotLast.ts:1:12]
  1 │ function f(...x, y) { }
    ·            ────
@@ -10529,6 +10541,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ var x1 = /[a-z/]$/i;
    ╰────
   help: Try insert a semicolon here
+
+  × Unexpected token
+    ╭─[compiler/varArgConstructorMemberParameter.ts:10:25]
+  9 │ class Foo3 {
+ 10 │     constructor (public ...args: string[]) { }
+    ·                         ───
+ 11 │ }
+    ╰────
 
   × Unexpected token
    ╭─[compiler/varArgWithNoParamName.ts:1:16]
@@ -12553,6 +12573,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │   }
    ╰────
 
+  × Unexpected token
+   ╭─[conformance/decorators/class/method/parameter/decoratorOnClassMethodThisParameter.ts:4:17]
+ 3 │ class C {
+ 4 │     method(@dec this: C) {}
+   ·                 ────
+ 5 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/decorators/class/property/decoratorOnClassProperty3.ts:4:11]
  3 │ class C {
@@ -12584,6 +12612,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │     @dec A
    ·     ─
  5 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[conformance/decorators/invalid/decoratorOnFunctionParameter.ts:5:22]
+ 4 │ 
+ 5 │ function direct(@dec this: C) { return this.n; }
+   ·                      ────
+ 6 │ function called(@dec() this: C) { return this.n; }
    ╰────
 
   × Unexpected token
@@ -13004,12 +13040,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
     ╰────
 
-  × A rest parameter cannot have an initializer
-    ╭─[conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
- 14 │ function a3(...b?) { }            // Error, can't be optional
- 15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
-    ·                ───────────
- 16 │ function a5([a, b, [[c]]]) { }
+  × Unexpected token
+    ╭─[conformance/es6/destructuring/destructuringParameterDeclaration4.ts:29:24]
+ 28 │ class C {
+ 29 │     constructor(public ...temp) { }  // Error, rest parameter can't have properties
+    ·                        ───
+ 30 │ }
     ╰────
 
   × Expected `:` but found `}`
@@ -15529,6 +15565,21 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest element must be last in a destructuring pattern
+   ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:1:8]
+ 1 │ const [...a,] = [];
+   ·        ────
+ 2 │ const {...b,} = {};
+   ╰────
+
+  × Unexpected trailing comma after rest element
+   ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:2:12]
+ 1 │ const [...a,] = [];
+ 2 │ const {...b,} = {};
+   ·            ─
+ 3 │ let c, d;
+   ╰────
+
+  × A rest element must be last in a destructuring pattern
    ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:2:8]
  1 │ const [...a,] = [];
  2 │ const {...b,} = {};
@@ -15544,7 +15595,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  5 │ ({...d,} = {});
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[conformance/es7/trailingCommasInFunctionParametersAndArguments.ts:5:13]
  4 │ 
  5 │ function f2(...args,) {}
@@ -16214,7 +16265,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  12 │ }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
   8 │ //Function overload signature with rest param followed by non-optional parameter
   9 │ function fn5(x: string, ...y: any[], z: string);
@@ -17888,7 +17939,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ };
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList1.ts:2:6]
  1 │ class C {
  2 │    F(...A, B) { }
@@ -17993,6 +18044,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │    }
    ·    ─
  5 │ 
+   ╰────
+
+  × Unexpected token
+   ╭─[conformance/parser/ecmascript5/RegressionTests/parser509668.ts:3:23]
+ 2 │   // Doesn't work, but should
+ 3 │   constructor (public ...args: string[]) { }
+   ·                       ───
+ 4 │ }
    ╰────
 
   × Empty parenthesized expression
@@ -20586,14 +20645,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  36 │ }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:5:11]
- 4 │ var f = function foo(...x) { }
- 5 │ var f2 = (...x, ...y) => { }
-   ·           ────
- 6 │ 
-   ╰────
-
   × A rest parameter must be last in a parameter list
    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:5:11]
  4 │ var f = function foo(...x) { }
@@ -20603,12 +20654,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
- 12 │     (...x);
- 13 │     foo(...x, ...y);
-    ·         ────
- 14 │ }
-    ╰────
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:5:11]
+ 4 │ var f = function foo(...x) { }
+ 5 │ var f2 = (...x, ...y) => { }
+   ·           ────
+ 6 │ 
+   ╰────
 
   × A rest parameter must be last in a parameter list
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
@@ -20619,11 +20670,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:23:21]
- 22 │     foo(...x) { },
- 23 │     a: function foo(...x, ...y) { },
-    ·                     ────
- 24 │     b: (...x) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
+ 12 │     (...x);
+ 13 │     foo(...x, ...y);
+    ·         ────
+ 14 │ }
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20635,12 +20686,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
- 4 │ var f = function foo(...x: number) { }
- 5 │ var f2 = (...x: Date, ...y: boolean) => { }
-   ·           ──────────
- 6 │ 
-   ╰────
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:23:21]
+ 22 │     foo(...x) { },
+ 23 │     a: function foo(...x, ...y) { },
+    ·                     ────
+ 24 │     b: (...x) => { }
+    ╰────
 
   × A rest parameter must be last in a parameter list
    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
@@ -20651,6 +20702,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest element must be last in a destructuring pattern
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
+ 4 │ var f = function foo(...x: number) { }
+ 5 │ var f2 = (...x: Date, ...y: boolean) => { }
+   ·           ──────────
+ 6 │ 
+   ╰────
+
+  × A rest parameter must be last in a parameter list
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
+ 12 │     (...x: string);
+ 13 │     foo(...x: number, ...y: number);
+    ·         ────────────
+ 14 │ }
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
  12 │     (...x: string);
  13 │     foo(...x: number, ...y: number);
@@ -20659,11 +20726,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
- 12 │     (...x: string);
- 13 │     foo(...x: number, ...y: number);
-    ·         ────────────
- 14 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
+ 22 │     foo(...x: string) { },
+ 23 │     a: function foo(...x: number, ...y: Date) { },
+    ·                     ────────────
+ 24 │     b: (...x: string) => { }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20675,11 +20742,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
- 22 │     foo(...x: string) { },
- 23 │     a: function foo(...x: number, ...y: Date) { },
-    ·                     ────────────
- 24 │     b: (...x: string) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:9:11]
+  8 │ var f = function foo(...x: MyThing) { }
+  9 │ var f2 = (...x: MyThing, ...y: MyThing) => { }
+    ·           ─────────────
+ 10 │ 
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20691,11 +20758,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:9:11]
-  8 │ var f = function foo(...x: MyThing) { }
-  9 │ var f2 = (...x: MyThing, ...y: MyThing) => { }
-    ·           ─────────────
- 10 │ 
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
+ 16 │     (...x: MyThing);
+ 17 │     foo(...x: MyThing, ...y: MyThing);
+    ·         ─────────────
+ 18 │ }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20707,11 +20774,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
- 16 │     (...x: MyThing);
- 17 │     foo(...x: MyThing, ...y: MyThing);
-    ·         ─────────────
- 18 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:27:21]
+ 26 │     foo(...x: MyThing) { },
+ 27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
+    ·                     ─────────────
+ 28 │     b: (...x: MyThing) => { }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20723,11 +20790,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:27:21]
- 26 │     foo(...x: MyThing) { },
- 27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
-    ·                     ─────────────
- 28 │     b: (...x: MyThing) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
+ 35 │ var f3 = function foo(...x: MyThing2<string>) { }
+ 36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
+    ·           ──────────────────────
+ 37 │ 
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20739,11 +20806,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
- 35 │ var f3 = function foo(...x: MyThing2<string>) { }
- 36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
-    ·           ──────────────────────
- 37 │ 
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:44:9]
+ 43 │     (...x: MyThing2<string>);
+ 44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
+    ·         ──────────────────────
+ 45 │ }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20755,11 +20822,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:44:9]
- 43 │     (...x: MyThing2<string>);
- 44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
-    ·         ──────────────────────
- 45 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
+ 53 │     foo(...x: MyThing2<string>) { },
+ 54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
+    ·                     ──────────────────────
+ 55 │     b: (...x: MyThing2<string>) => { }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20771,12 +20838,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
- 53 │     foo(...x: MyThing2<string>) { },
- 54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
-    ·                     ──────────────────────
- 55 │     b: (...x: MyThing2<string>) => { }
-    ╰────
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
+ 4 │ var f = function foo(...x: number[]) { }
+ 5 │ var f2 = (...x: number[], ...y: number[]) => { }
+   ·           ──────────────
+ 6 │ 
+   ╰────
 
   × A rest element must be last in a destructuring pattern
    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
@@ -20787,22 +20854,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest parameter must be last in a parameter list
-   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
- 4 │ var f = function foo(...x: number[]) { }
- 5 │ var f2 = (...x: number[], ...y: number[]) => { }
-   ·           ──────────────
- 6 │ 
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
- 12 │     (...x: number[]);
- 13 │     foo(...x: number[], ...y: number[]);
-    ·         ──────────────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
  12 │     (...x: number[]);
  13 │     foo(...x: number[], ...y: number[]);
@@ -20811,11 +20862,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:23:21]
- 22 │     foo(...x: number[]) { },
- 23 │     a: function foo(...x: number[], ...y: number[]) { },
-    ·                     ──────────────
- 24 │     b: (...x: number[]) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
+ 12 │     (...x: number[]);
+ 13 │     foo(...x: number[], ...y: number[]);
+    ·         ──────────────
+ 14 │ }
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20827,11 +20878,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
- 31 │ var f3 = function foo(...x: Array<string>) { }
- 32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
-    ·           ───────────────────
- 33 │ 
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:23:21]
+ 22 │     foo(...x: number[]) { },
+ 23 │     a: function foo(...x: number[], ...y: number[]) { },
+    ·                     ──────────────
+ 24 │     b: (...x: number[]) => { }
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20843,11 +20894,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:40:9]
- 39 │     (...x: Array<string>);
- 40 │     foo(...x: Array<string>, ...y: Array<string>);
-    ·         ───────────────────
- 41 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
+ 31 │ var f3 = function foo(...x: Array<string>) { }
+ 32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
+    ·           ───────────────────
+ 33 │ 
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20859,6 +20910,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:40:9]
+ 39 │     (...x: Array<string>);
+ 40 │     foo(...x: Array<string>, ...y: Array<string>);
+    ·         ───────────────────
+ 41 │ }
+    ╰────
+
+  × A rest parameter must be last in a parameter list
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
  49 │     foo(...x: Array<string>) { },
  50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
@@ -20866,7 +20925,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  51 │     b: (...x: Array<string>) => { }
     ╰────
 
-  × A rest parameter must be last in a parameter list
+  × A rest element must be last in a destructuring pattern
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
  49 │     foo(...x: Array<string>) { },
  50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
@@ -21020,13 +21079,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  165 │ function notFirst(a: number, this: C): number { return this.n; }
      ╰────
 
-  × Expected `,` but found `this`
-     ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:168:26]
- 167 │ ///// parse errors /////
- 168 │ function modifiers(async this: C): number { return this.n; }
-     ·                          ──┬─
-     ·                            ╰── `,` expected
- 169 │ function restParam(...this: C): number { return this.n; }
+  × Unexpected token
+     ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:165:30]
+ 164 │ var thisConstructorType: new (this: number) => number;
+ 165 │ function notFirst(a: number, this: C): number { return this.n; }
+     ·                              ────
+ 166 │ 
      ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
