@@ -261,7 +261,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
-    /// `type D = { [K in keyof T]: K };`
+    /// `type D = { [key in keyof T]: K };`
     ///             ^^^^^^^^^^^^^^^^^^^^
     /// We need to add both `T` and `K` to the scope
     fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
