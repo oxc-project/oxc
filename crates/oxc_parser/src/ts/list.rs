@@ -2,11 +2,7 @@ use oxc_allocator::Vec;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 
-use crate::{
-    lexer::Kind,
-    list::{NormalList, SeparatedList},
-    ParserImpl,
-};
+use crate::{lexer::Kind, list::SeparatedList, ParserImpl};
 
 pub struct TSEnumMemberList<'a> {
     pub members: Vec<'a, TSEnumMember<'a>>,
@@ -76,32 +72,6 @@ impl<'a> SeparatedList<'a> for TSTypeParameterList<'a> {
     fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
         let param = p.parse_ts_type_parameter()?;
         self.params.push(param);
-        Ok(())
-    }
-}
-
-pub struct TSInterfaceOrObjectBodyList<'a> {
-    pub body: Vec<'a, TSSignature<'a>>,
-}
-
-impl<'a> TSInterfaceOrObjectBodyList<'a> {
-    pub(crate) fn new(p: &ParserImpl<'a>) -> Self {
-        Self { body: p.ast.new_vec() }
-    }
-}
-
-impl<'a> NormalList<'a> for TSInterfaceOrObjectBodyList<'a> {
-    fn open(&self) -> Kind {
-        Kind::LCurly
-    }
-
-    fn close(&self) -> Kind {
-        Kind::RCurly
-    }
-
-    fn parse_element(&mut self, p: &mut ParserImpl<'a>) -> Result<()> {
-        let property = p.parse_ts_type_signature()?;
-        self.body.push(property);
         Ok(())
     }
 }

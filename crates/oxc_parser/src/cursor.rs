@@ -334,4 +334,30 @@ impl<'a> ParserImpl<'a> {
         let decorators = std::mem::take(&mut self.state.decorators);
         self.ast.new_vec_from_iter(decorators)
     }
+
+    pub(crate) fn parse_normal_list<F, T>(
+        &mut self,
+        open: Kind,
+        close: Kind,
+        f: F,
+    ) -> Result<oxc_allocator::Vec<'a, T>>
+    where
+        F: Fn(&mut Self) -> Result<Option<T>>,
+    {
+        let mut list = self.ast.new_vec();
+        self.expect(open)?;
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if let Some(e) = f(self)? {
+                list.push(e);
+            } else {
+                break;
+            }
+        }
+        self.expect(close)?;
+        Ok(list)
+    }
 }

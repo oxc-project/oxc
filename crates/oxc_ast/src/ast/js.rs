@@ -453,10 +453,10 @@ pub struct PrivateFieldExpression<'a> {
 pub struct CallExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
-    pub optional: bool, // for optional chaining
+    pub callee: Expression<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub optional: bool, // for optional chaining
 }
 
 /// New Expression
@@ -1659,6 +1659,7 @@ pub struct PropertyDefinition<'a> {
     pub r#type: PropertyDefinitionType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
     pub computed: bool,
@@ -1670,7 +1671,6 @@ pub struct PropertyDefinition<'a> {
     pub readonly: bool,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub accessibility: Option<TSAccessibility>,
-    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

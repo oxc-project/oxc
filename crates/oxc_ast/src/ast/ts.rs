@@ -612,8 +612,8 @@ pub struct TSTypeAliasDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    pub type_annotation: TSType<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub type_annotation: TSType<'a>,
     pub declare: bool,
 }
 
@@ -648,9 +648,9 @@ pub struct TSInterfaceDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    pub body: Box<'a, TSInterfaceBody<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub body: Box<'a, TSInterfaceBody<'a>>,
     pub declare: bool,
 }
 

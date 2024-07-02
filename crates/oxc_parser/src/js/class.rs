@@ -3,11 +3,9 @@ use oxc_ast::{ast::*, syntax_directed_operations::PropName};
 use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
-use super::list::ClassElements;
 use crate::{
     diagnostics,
     lexer::Kind,
-    list::NormalList,
     modifiers::{ModifierFlags, ModifierKind, Modifiers},
     Context, ParserImpl, StatementContext,
 };
@@ -170,13 +168,20 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_class_body(&mut self) -> Result<Box<'a, ClassBody<'a>>> {
         let span = self.start_span();
-        let mut class_elements = ClassElements::new(self);
-        class_elements.parse(self)?;
-        let body = class_elements.elements;
-        Ok(self.ast.class_body(self.end_span(span), body))
+        let class_elements =
+            self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_class_element)?;
+        Ok(self.ast.class_body(self.end_span(span), class_elements))
     }
 
-    pub(crate) fn parse_class_element(&mut self) -> Result<ClassElement<'a>> {
+    pub(crate) fn parse_class_element(&mut self) -> Result<Option<ClassElement<'a>>> {
+        // skip empty class element `;`
+        while self.at(Kind::Semicolon) {
+            self.bump_any();
+        }
+        if self.at(Kind::RCurly) {
+            return Ok(None);
+        }
+
         let span = self.start_span();
 
         let modifiers = self.parse_modifiers(true, false, true);
@@ -199,7 +204,7 @@ impl<'a> ParserImpl<'a> {
             // static { block }
             if self.peek_at(Kind::LCurly) {
                 self.bump(Kind::Static);
-                return self.parse_class_static_block(span);
+                return self.parse_class_static_block(span).map(Some);
             }
 
             // static ...
@@ -225,7 +230,7 @@ impl<'a> ParserImpl<'a> {
 
         if self.is_at_ts_index_signature_member() {
             if let TSSignature::TSIndexSignature(sig) = self.parse_ts_index_signature_member()? {
-                return Ok(ClassElement::TSIndexSignature(sig));
+                return Ok(Some(ClassElement::TSIndexSignature(sig)));
             }
         }
 
@@ -277,13 +282,10 @@ impl<'a> ParserImpl<'a> {
 
         if accessor {
             self.parse_ts_type_annotation()?;
-
-            return self.parse_class_accessor_property(span, key, computed, r#static, r#abstract);
-        }
-
-        // LAngle for start of type parameters `foo<T>`
-        //                                         ^
-        if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
+            self.parse_class_accessor_property(span, key, computed, r#static, r#abstract).map(Some)
+        } else if self.at(Kind::LParen) || self.at(Kind::LAngle) || r#async || generator {
+            // LAngle for start of type parameters `foo<T>`
+            //                                         ^
             let definition = self.parse_class_method_definition(
                 span,
                 kind,
@@ -313,7 +315,7 @@ impl<'a> ParserImpl<'a> {
                     }
                 }
             }
-            Ok(definition)
+            Ok(Some(definition))
         } else {
             // getter and setter has no ts type annotation
             if !kind.is_method() {
@@ -340,7 +342,7 @@ impl<'a> ParserImpl<'a> {
                     self.error(diagnostics::static_prototype(span));
                 }
             }
-            Ok(definition)
+            Ok(Some(definition))
         }
     }
 

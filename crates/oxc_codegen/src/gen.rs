@@ -3488,6 +3488,11 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > self.precedence(), |p| {
             p.print_str(b"<");
+            // var r = < <T>(x: T) => T > ((x) => { return null; });
+            //          ^ make sure space is printed here.
+            if matches!(self.type_annotation, TSType::TSFunctionType(_)) {
+                p.print_hard_space();
+            }
             self.type_annotation.gen(p, ctx);
             p.print_str(b">");
             self.expression.gen_expr(p, Precedence::Grouping, ctx);
