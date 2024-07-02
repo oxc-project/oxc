@@ -625,7 +625,7 @@ pub trait Visit<'a>: Sized {
         walk_module_export_name(self, name);
     }
 
-    fn visit_enum_member(&mut self, member: &TSEnumMember<'a>) {
+    fn visit_ts_enum_member(&mut self, member: &TSEnumMember<'a>) {
         walk_enum_member(self, member);
     }
 
@@ -2556,7 +2556,7 @@ pub mod walk {
         visitor.visit_binding_identifier(&decl.id);
         visitor.enter_scope(ScopeFlags::empty());
         for member in &decl.members {
-            visitor.visit_enum_member(member);
+            visitor.visit_ts_enum_member(member);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);

@@ -1584,7 +1584,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_scope(ScopeFlags::empty());
         decl.scope_id.set(Some(self.current_scope_id));
         for member in &decl.members {
-            self.visit_enum_member(member);
+            self.visit_ts_enum_member(member);
         }
         self.leave_scope();
         self.leave_node(kind);
