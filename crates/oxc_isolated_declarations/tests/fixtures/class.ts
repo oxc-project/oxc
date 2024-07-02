@@ -26,6 +26,7 @@ export class Baz {
 export class Boo {
   constructor(
     public readonly prop: number = 0,
-    readonly prop2: number = 1
+    private readonly prop2: number = 1,
+    readonly prop3: number = 1,
   ) {}
 }
