@@ -1,12 +1,24 @@
 use std::ops::Deref;
 
-use oxc_ast::{ast::ImportDeclarationSpecifier, AstKind};
+use itertools::Itertools;
+use oxc_ast::{
+    ast::{
+        ImportDeclaration, ImportDeclarationSpecifier, ImportDefaultSpecifier,
+        ImportNamespaceSpecifier, ImportSpecifier,
+    },
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{CompactStr, Span};
+use oxc_span::{CompactStr, GetSpan, Span, SPAN};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::LintContext,
+    fixer::{Fix, RuleFixer},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
@@ -49,8 +61,6 @@ impl Deref for ConsistentTypeImports {
 #[derive(Default, Debug, Clone)]
 pub struct ConsistentTypeImportsConfig {
     disallow_type_annotations: DisallowTypeAnnotations,
-    // TODO: Remove
-    #[allow(unused)]
     fix_style: FixStyle,
     prefer: Prefer,
 }
@@ -71,7 +81,7 @@ impl Default for DisallowTypeAnnotations {
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Copy)]
 enum FixStyle {
     #[default]
     SeparateTypeImports,
@@ -213,15 +223,29 @@ impl Rule for ConsistentTypeImports {
                 return;
             }
 
-            let names = type_references_without_type_qualifier
+            let type_names = type_references_without_type_qualifier
                 .iter()
                 .map(|specifier| specifier.name())
                 .collect::<Vec<_>>();
 
             // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
-            let type_imports = format_word_list(&names);
+            let type_imports = format_word_list(&type_names);
 
-            ctx.diagnostic(some_imports_are_only_types_diagnostic(import_decl.span, &type_imports));
+            ctx.diagnostic_with_fix(
+                some_imports_are_only_types_diagnostic(import_decl.span, &type_imports),
+                |fixer| {
+                    let type_names = type_names.iter().map(CompactStr::as_str).collect::<Vec<_>>();
+                    let fix_options = FixOptions {
+                        fixer,
+                        import_decl,
+                        type_names: &type_names,
+                        fix_style: self.fix_style,
+                        ctx,
+                    };
+
+                    fix_to_type_import_declaration(&fix_options)
+                },
+            );
         }
     }
 }
@@ -258,6 +282,525 @@ fn is_only_has_type_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
         return false;
     }
     peekable_iter.all(oxc_semantic::Reference::is_type)
+}
+
+struct FixOptions<'a, 'b> {
+    fixer: RuleFixer<'b, 'a>,
+    import_decl: &'b ImportDeclaration<'a>,
+    type_names: &'b [&'b str],
+    fix_style: FixStyle,
+    ctx: &'b LintContext<'a>,
+}
+
+// import { Foo, Bar } from 'foo' => import type { Foo, Bar } from 'foo'
+#[allow(clippy::unnecessary_cast, clippy::cast_possible_truncation)]
+fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> Vec<Fix<'a>> {
+    let FixOptions { fixer, import_decl, type_names, fix_style, ctx } = options;
+
+    let GroupedSpecifiers { namespace_specifier, named_specifiers, default_specifier } =
+        classify_specifier(import_decl);
+
+    // import * as type from 'foo'
+    if namespace_specifier.is_some()
+        && default_specifier.is_none()
+        // checks for presence of import assertions
+        && import_decl.with_clause.is_none()
+    {
+        return fix_insert_type_specifier_for_import_declaration(
+            options, /* is_default_import */ false,
+        );
+    } else if let Some(default_specifier) = default_specifier {
+        // import Type from 'foo'
+        if type_names.iter().contains(&default_specifier.local.name.as_str())
+            && named_specifiers.is_empty()
+            && namespace_specifier.is_none()
+        {
+            return fix_insert_type_specifier_for_import_declaration(
+                options, /* is_default_import */ true,
+            );
+        } else if matches!(fix_style, FixStyle::InlineTypeImports)
+            && !type_names.iter().contains(&default_specifier.local.name.as_str())
+            && !named_specifiers.is_empty()
+            && namespace_specifier.is_some()
+        {
+            // if there is a default specifier but it isn't a type specifier, then just add the inline type modifier to the named specifiers
+            // import AValue, {BValue, Type1, Type2} from 'foo'
+            return fix_inline_type_import_declaration(options);
+        } else if named_specifiers
+            .iter()
+            .all(|specifier| type_names.iter().contains(&specifier.local.name.as_str()))
+        {
+            // import { Type1, Type2 } from 'foo'
+            return fix_insert_type_specifier_for_import_declaration(
+                options, /* is_default_import */ false,
+            );
+        }
+    }
+
+    let type_names_specifiers = named_specifiers
+        .iter()
+        .filter(|specifier| type_names.iter().contains(&specifier.local.name.as_str()))
+        .copied()
+        .collect::<Vec<_>>();
+
+    let fixes_named_specifiers = get_fixes_named_specifiers(options, &type_names_specifiers);
+    let mut fixes = vec![];
+
+    if type_names_specifiers.is_empty() {
+        // The import is both default and named.  Insert named on new line because can't mix default type import and named type imports
+        if matches!(fix_style, FixStyle::InlineTypeImports) {
+            let text = format!(
+                "import {} from {}",
+                type_names_specifiers
+                    .iter()
+                    .map(|spec| {
+                        let insert_text = ctx.source_range(spec.span());
+                        format!("type {insert_text}")
+                    })
+                    .join(", "),
+                import_decl.source.value,
+            );
+            fixes.push(fixer.insert_text_before(*import_decl, text));
+        } else {
+            fixes.push(fixer.insert_text_before(
+                *import_decl,
+                format!(
+                    "import type {{ {} }} from {}",
+                    fixes_named_specifiers.type_named_specifiers_text, import_decl.source.value,
+                ),
+            ));
+        }
+    } else {
+        // `type_names` is all type references, if `type_names_specifiers.len() ==
+        // type_names.len()`, it means all type references are name specifiers.
+        let type_only_named_import = type_names_specifiers.len() == type_names.len();
+        if type_only_named_import {
+            fixes.push(fix_insert_named_specifiers_in_named_specifier_list(
+                options,
+                &fixes_named_specifiers.type_named_specifiers_text,
+            ));
+        }
+    }
+
+    let mut fixes_remove_type_namespace_specifier = vec![];
+
+    if let Some(namespace_specifier) = namespace_specifier {
+        if type_names.iter().contains(&namespace_specifier.local.name.as_str()) {
+            // import Foo, * as Type from 'foo'
+            // import DefType, * as Type from 'foo'
+            // import DefType, * as Type from 'foo'
+            let comma = find_char_with_null_assert(ctx.source_range(import_decl.span), ',');
+
+            // import Def, * as Ns from 'foo'
+            //           ^^^^^^^^^ remove
+            fixes_remove_type_namespace_specifier.push(fixer.delete(&Span::new(
+                import_decl.span.start + comma,
+                namespace_specifier.span().end,
+            )));
+
+            // import type * as Ns from 'foo'
+            // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ insert
+            fixes.push(fixer.insert_text_before(
+                *import_decl,
+                format!(
+                    "import type {} from {}",
+                    ctx.source_range(namespace_specifier.span()),
+                    import_decl.source.value
+                ),
+            ));
+        }
+    }
+
+    if let Some(default_specifier) = default_specifier {
+        if type_names.iter().contains(&default_specifier.local.name.as_str()) {
+            if type_names.len() == import_decl.specifiers.as_ref().map_or(0, |s| s.len()) {
+                // import type Type from 'foo'
+                //        ^^^^^ insert
+                fixes.push(fixer.insert_text_after(
+                    &Span::new(import_decl.span().start, import_decl.span().start + 6),
+                    " type",
+                ));
+            } else {
+
+                // import Type, { Foo } from 'foo'
+            }
+        } else {
+            let import_text = ctx.source_range(import_decl.span);
+            let comma = find_char_with_null_assert(import_text, ',');
+            // import Type , { ... } from 'foo'
+            //        ^^^^^ pick
+            let default_text = ctx.source_range(default_specifier.span);
+            fixes.push(fixer.insert_text_before(
+                *import_decl,
+                format!("import type {default_text} from {}\n", import_decl.source.value),
+            ));
+            // find the first non-whitespace character after the comma
+            let mut after_token = comma + 1;
+            for ch in import_text[(comma + 1) as usize..].chars() {
+                if !ch.is_whitespace() {
+                    break;
+                }
+                after_token += ch.len_utf8() as u32;
+            }
+            fixes.push(
+                fixer.delete_range(Span::new(default_specifier.span.start, after_token as u32)),
+            );
+        }
+
+        fixes.extend(fixes_named_specifiers.reomve_type_name_specifiers);
+        fixes.extend(fixes_remove_type_namespace_specifier);
+    }
+
+    fixes
+}
+
+fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
+    options: &FixOptions<'a, '_>,
+    insert_text: &str,
+) -> Fix<'a> {
+    let FixOptions { fixer, import_decl, ctx, .. } = options;
+    let import_text = ctx.source_range(import_decl.span);
+    let close_brace = find_char_with_null_assert(import_text, '}');
+
+    let first_non_whitespace_before_close_brace =
+        import_text[..close_brace as usize].chars().rev().find(|c| c.is_whitespace());
+
+    let span =
+        Span::new(import_decl.span().start + close_brace, import_decl.span().start + close_brace);
+    if first_non_whitespace_before_close_brace.is_some_and(|ch| matches!(ch, ',' | '{')) {
+        fixer.insert_text_before(&span, format!(",{insert_text}"))
+    } else {
+        fixer.insert_text_before(&span, insert_text.to_string())
+    }
+}
+
+// Returns information for fixing named specifiers, type or value
+#[derive(Default)]
+struct FixNamedSpecifiers<'a> {
+    type_named_specifiers_text: String,
+    reomve_type_name_specifiers: Vec<Fix<'a>>,
+}
+fn get_fixes_named_specifiers<'a>(
+    options: &FixOptions<'a, '_>,
+    subset_named_specifiers: &[&ImportSpecifier<'a>],
+) -> FixNamedSpecifiers<'a> {
+    let FixOptions { fixer, import_decl, ctx, .. } = options;
+
+    let Some(specifiers) = &import_decl.specifiers else {
+        return FixNamedSpecifiers::default();
+    };
+
+    let mut type_named_specifiers_text: Vec<&str> = vec![];
+    let mut remove_type_named_specifiers: Vec<Fix> = vec![];
+
+    if subset_named_specifiers.len() == specifiers.len() {
+        // import Foo, {Type1, Type2} from 'foo'
+        // import DefType, {Type1, Type2} from 'foo'
+        let import_text = ctx.source_range(import_decl.span);
+        let Some(open_brace_token) = import_text.find('{') else {
+            debug_assert!(false, "Missing open brace token in import declaration: {import_text}");
+            return FixNamedSpecifiers::default();
+        };
+        let Some(comma_token) = import_text[..open_brace_token].rfind(',') else {
+            debug_assert!(false, "Missing comma token in import declaration: {import_text}");
+            return FixNamedSpecifiers::default();
+        };
+        let Some(close_brace_token) = import_text.find('}') else {
+            debug_assert!(false, "Missing close brace token in import declaration: {import_text}");
+            return FixNamedSpecifiers::default();
+        };
+        let open_brace_token_end = open_brace_token + 1;
+        let close_brace_token_end = close_brace_token + 1;
+
+        // import DefType, {...} from 'foo'
+        //                ^^^^^^ remove
+        remove_type_named_specifiers.push(fixer.delete(&Span::new(
+            import_decl.span.start + u32::try_from(comma_token).unwrap_or_default(),
+            import_decl.span.start + u32::try_from(close_brace_token_end).unwrap_or_default(),
+        )));
+
+        type_named_specifiers_text.push(&import_text[open_brace_token_end..close_brace_token]);
+    } else {
+        let mut named_specifier_groups = vec![];
+        let mut group = vec![];
+
+        for specifier in specifiers {
+            let name = specifier.name();
+            if subset_named_specifiers.iter().any(|s| s.local.name == name) {
+                group.push(specifier);
+            } else if !group.is_empty() {
+                named_specifier_groups.push(group);
+                group = vec![];
+            }
+        }
+
+        if !group.is_empty() {
+            named_specifier_groups.push(group);
+        }
+
+        for named_specifiers in named_specifier_groups {
+            let (remove_range, text_range) =
+                get_named_specifier_ranges(&named_specifiers, specifiers, options);
+
+            remove_type_named_specifiers.push(fixer.delete(&remove_range));
+            type_named_specifiers_text.push(ctx.source_range(text_range));
+        }
+    }
+
+    FixNamedSpecifiers {
+        type_named_specifiers_text: type_named_specifiers_text.join(","),
+        reomve_type_name_specifiers: remove_type_named_specifiers,
+    }
+}
+
+fn get_named_specifier_ranges(
+    named_specifier_group: &[&ImportDeclarationSpecifier],
+    all_specifiers: &[ImportDeclarationSpecifier],
+    options: &FixOptions<'_, '_>,
+) -> (/* remove_range */ Span, /* text_range*/ Span) {
+    let FixOptions { ctx, import_decl, .. } = options;
+
+    // It will never empty, in `get_fixes_named_specifiers`, we have already checked every group is
+    // not empty.
+    //
+    if named_specifier_group.is_empty() {
+        return (SPAN, SPAN);
+    }
+    let first = named_specifier_group[0];
+    let last = named_specifier_group[named_specifier_group.len() - 1];
+
+    let mut remove_range = Span::new(first.span().start, last.span().end);
+    let mut text_range = Span::new(first.span().start, last.span().end);
+
+    let import_text = ctx.source_range(import_decl.span);
+    // This never fails as we are looking name specifers.
+    let Some(open_brace_token_start) = import_text.find('{') else {
+        debug_assert!(false, "Missing open brace token in import declaration: {import_text}");
+        return (SPAN, SPAN);
+    };
+    if let Some(comma) = import_text[open_brace_token_start..first.span().start as usize].rfind(',')
+    {
+        // It's not the first specifier.
+        // import { Foo, Bar, Baz } from 'foo'
+        //             ^ start
+        remove_range.start = import_decl.span().start
+            + u32::try_from(comma + open_brace_token_start).unwrap_or_default();
+
+        // Skip the comma
+        text_range.start = remove_range.start + 1;
+    } else {
+        // It's the first specifier.
+        // import { Foo, Bar, Baz } from 'foo'
+        //         ^ start
+        remove_range.start =
+            first.span().start + u32::try_from(open_brace_token_start + 1).unwrap_or_default();
+        text_range.start = remove_range.start;
+    }
+
+    let is_last =
+        all_specifiers.last().is_some_and(|last_specifier| last_specifier.span() == last.span());
+
+    if is_last {
+        let after = find_char_with_null_assert(import_text, '}');
+        // import { Foo, Bar, Baz } from 'foo'
+        //                        ^ end
+        text_range.end = import_decl.span().start + after;
+    } else {
+        let after = find_char_with_null_assert(&import_text[last.span().end as usize..], ',');
+        // import { Foo, Bar, Baz } from 'foo'
+        //                  ^ end
+        text_range.end = import_decl.span().start + last.span().end + after;
+        // import { Foo, Bar, Baz } from 'foo'
+        //                   ^ end
+        remove_range.end = text_range.end + 1;
+    }
+
+    (remove_range, text_range)
+}
+
+// Find the index of the first occurrence of a character in a string.
+// When call this method, **make sure the `c` is in the text.**
+// e.g. I know "{" is in the text when call this in ImportDeclaration which contains named
+// specifiers.
+fn find_char_with_null_assert(text: &str, c: char) -> u32 {
+    let index = text.find(c);
+    if let Some(index) = index {
+        u32::try_from(index).unwrap_or_default()
+    } else {
+        debug_assert!(false, "Missing char: {c} in {text}");
+        0
+    }
+}
+
+fn fix_inline_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> Vec<Fix<'a>> {
+    let FixOptions { fixer, import_decl, type_names, ctx, .. } = options;
+
+    let mut fixes = vec![];
+
+    let Some(specifiers) = &import_decl.specifiers else {
+        return fixes;
+    };
+
+    for specifier in specifiers {
+        if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier {
+            if type_names.iter().contains(&specifier.local.name.as_str()) {
+                fixes.push(
+                    fixer.replace(
+                        specifier.span,
+                        format!("type {}", ctx.source_range(specifier.span)),
+                    ),
+                );
+            }
+        }
+    }
+
+    fixes
+}
+
+fn fix_insert_type_specifier_for_import_declaration<'a>(
+    options: &FixOptions<'a, '_>,
+    is_default_import: bool,
+) -> Vec<Fix<'a>> {
+    let FixOptions { fixer, import_decl, ctx, .. } = options;
+    let import_source = ctx.source_range(import_decl.span);
+    let mut fixes = vec![];
+
+    // "import { Foo, Bar } from 'foo'" => "import type { Foo, Bar } from 'foo'"
+    //                                             ^^^^ add
+    fixes.push(
+        fixer.replace(Span::new(import_decl.span.start, import_decl.span.start + 5), "import type"),
+    );
+
+    if is_default_import {
+        if let Some(_opening_brace_token) = import_source.find('{') {
+            // `import foo, {} from 'foo'`
+            // `import foo, { bar } from 'foo'`
+            let Some(comma_token) = import_source.find(',') else {
+                debug_assert!(false, "Missing comma token in import declaration");
+                return vec![];
+            };
+            let Some(closing_brace_token) = import_source.find('}') else {
+                debug_assert!(false, "Missing closing brace token in import declaration");
+                return vec![];
+            };
+            let base = import_decl.span.start;
+            // import foo, {} from 'foo'
+            //           ^^^^ delete
+            fixes.push(fixer.delete(&Span::new(
+                base + u32::try_from(comma_token).unwrap_or_default(),
+                base + u32::try_from(closing_brace_token + 1).unwrap_or_default(),
+            )));
+            if import_decl.specifiers.as_ref().is_some_and(|specifiers| !specifiers.is_empty()) {
+                let Some(specifiers_text) =
+                    import_source.get((comma_token + 1)..closing_brace_token)
+                else {
+                    debug_assert!(
+                        false,
+                        "Invalid slice for {}[{}..{}]",
+                        import_source,
+                        comma_token + 1,
+                        closing_brace_token
+                    );
+                    return vec![];
+                };
+
+                fixes.push(fixer.insert_text_after(
+                    *import_decl,
+                    format!("\nimport type {} from {}", specifiers_text, import_decl.source.value),
+                ));
+            }
+        }
+    }
+
+    if let Some(specifiers) = &import_decl.specifiers {
+        for specifier in specifiers {
+            if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier {
+                if specifier.import_kind.is_type() {
+                    // import { type    A } from 'foo.js'
+                    //          ^^^^^^^^ delete
+                    fixes.push(
+                        fixer.delete(&Span::new(
+                            specifier.span.start,
+                            specifier.imported.span().start,
+                        )),
+                    );
+                }
+            }
+        }
+    }
+
+    fixes
+}
+
+struct GroupedSpecifiers<'a, 'b> {
+    namespace_specifier: Option<&'b ImportNamespaceSpecifier<'a>>,
+    named_specifiers: Vec<&'b ImportSpecifier<'a>>,
+    default_specifier: Option<&'b ImportDefaultSpecifier<'a>>,
+}
+
+fn classify_specifier<'a, 'b>(import_decl: &'b ImportDeclaration<'a>) -> GroupedSpecifiers<'a, 'b> {
+    let mut namespace_specifier = None;
+    let mut named_specifiers = vec![];
+    let mut default_specifier = None;
+
+    let Some(specifiers) = &import_decl.specifiers else {
+        return GroupedSpecifiers { namespace_specifier, named_specifiers, default_specifier };
+    };
+
+    for specifier in specifiers {
+        match specifier {
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(namespace) => {
+                namespace_specifier = Some(namespace);
+            }
+            ImportDeclarationSpecifier::ImportSpecifier(named) => {
+                named_specifiers.push(named);
+            }
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(default) => {
+                default_specifier = Some(default);
+            }
+        }
+    }
+
+    GroupedSpecifiers { namespace_specifier, named_specifiers, default_specifier }
+}
+
+// import type Foo from 'foo'
+//        ^^^^ remove
+fn fix_remove_type_specifier_from_import_declaration<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    import_decl_span: Span,
+    ctx: &LintContext<'a>,
+) -> Fix<'a> {
+    let import_source = ctx.source_range(import_decl_span);
+    let new_import_source = import_source
+        // `    type Foo from 'foo'`
+        .strip_prefix("import")
+        // `type Foo from 'foo'`
+        .map(str::trim_start)
+        // `type Foo from 'foo'`
+        .and_then(|import_text| import_text.strip_prefix("type"))
+        // `import Foo from 'foo'`
+        .map(|import_text| format!("import {import_text}"));
+
+    if let Some(new_import_source) = new_import_source {
+        fixer.replace(import_decl_span, new_import_source)
+    } else {
+        // when encountering an unexpected import declaration, do nothing.
+        fixer.replace(import_decl_span, import_source)
+    }
+}
+
+// import { type Foo } from 'foo'
+//          ^^^^ remove
+fn fix_remove_type_specifier_from_import_specifier<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    specifier_span: Span,
+    ctx: &LintContext<'a>,
+) -> Fix<'a> {
+    let specifier_source = ctx.source_range(specifier_span);
+    let new_specifier_source = specifier_source.strip_prefix("type");
+
+    fixer.replace(specifier_span, new_specifier_source.unwrap_or(specifier_source))
 }
 
 #[test]

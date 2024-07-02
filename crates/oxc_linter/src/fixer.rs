@@ -148,6 +148,40 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         Fix::new(replacement, target)
     }
 
+    /// Creates a fix command that inserts text before the given node.
+    pub fn insert_text_before<T: GetSpan, S: Into<Cow<'a, str>>>(
+        self,
+        target: &T,
+        text: S,
+    ) -> Fix<'a> {
+        self.insert_text_before_range(target.span(), text)
+    }
+
+    /// Creates a fix command that inserts text before the specified range in the source text.
+    pub fn insert_text_before_range<S: Into<Cow<'a, str>>>(self, span: Span, text: S) -> Fix<'a> {
+        self.insert_text_at(span.start, text)
+    }
+
+    /// Creates a fix command that inserts text after the given node.
+    pub fn insert_text_after<T: GetSpan, S: Into<Cow<'a, str>>>(
+        self,
+        target: &T,
+        text: S,
+    ) -> Fix<'a> {
+        self.insert_text_after_range(target.span(), text)
+    }
+
+    /// Creates a fix command that inserts text after the specified range in the source text.
+    pub fn insert_text_after_range<S: Into<Cow<'a, str>>>(self, span: Span, text: S) -> Fix<'a> {
+        self.insert_text_at(span.end, text)
+    }
+
+    /// Creates a fix command that inserts text at the specified index in the source text.
+    #[allow(clippy::unused_self)]
+    fn insert_text_at<S: Into<Cow<'a, str>>>(self, index: u32, text: S) -> Fix<'a> {
+        Fix::new(text, Span::new(index, index))
+    }
+
     #[allow(clippy::unused_self)]
     pub fn codegen(self) -> Codegen<'a, false> {
         Codegen::<false>::new()
