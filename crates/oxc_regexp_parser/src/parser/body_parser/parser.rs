@@ -511,5 +511,4 @@ mod test {
         .unwrap();
         assert_eq!(pattern.alternatives[0].elements.len(), 6);
     }
-
 }
