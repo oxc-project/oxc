@@ -15,5 +15,3 @@ impl Generator for FromBoxAstGenerator {
         GeneratorOutput::Many(output)
     }
 }
-
-
