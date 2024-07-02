@@ -3073,6 +3073,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                 }
             }
             Self::TSCallSignatureDeclaration(signature) => {
+                if let Some(type_parameters) = signature.type_parameters.as_ref() {
+                    type_parameters.gen(p, ctx);
+                }
                 p.print_str(b"(");
                 if let Some(this_param) = &signature.this_param {
                     this_param.gen(p, ctx);
