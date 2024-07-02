@@ -1,5 +1,7 @@
 use std::collections::VecDeque;
 
+use syn::parse_quote;
+
 use super::{CodegenCtx, Cow, Inherit, Itertools, RType, Result};
 
 pub trait Linker<'a> {
@@ -75,19 +77,27 @@ pub fn linker(ty: &mut RType, ctx: &CodegenCtx) -> Result<bool> {
         .map(|it| match it {
             Inherit::Unlinked(ref sup) => {
                 let linkee = ctx.find(&Cow::Owned(sup.to_string())).unwrap();
-                let variants = match &*linkee.borrow() {
+                let linkee = linkee.borrow();
+                let inherit_value = format!(r#""{}""#, linkee.ident().unwrap());
+                let variants = match &*linkee {
                     RType::Enum(enum_) => {
                         if enum_.meta.inherits.unresolved() {
                             return Err(it);
                         }
-                        enum_.item.variants.clone()
+                        enum_.item.variants.clone().into_iter().map(|mut v| {
+                            v.attrs = vec![parse_quote!(#[inherit = #inherit_value])];
+                            v
+                        })
                     }
                     _ => {
                         panic!("invalid inheritance, you can only inherit from enums and in enums.")
                     }
                 };
                 ty.item.variants.extend(variants.clone());
-                Ok(Inherit::Linked { super_: sup.clone(), variants })
+                Ok(Inherit::Linked {
+                    super_: linkee.as_type().unwrap(),
+                    variants: variants.collect(),
+                })
             }
             Inherit::Linked { .. } => Ok(it),
         })

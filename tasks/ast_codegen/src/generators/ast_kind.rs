@@ -8,7 +8,7 @@ use super::generated_header;
 
 pub struct AstKindGenerator;
 
-const BLACK_LIST: [&str; 69] = [
+pub const BLACK_LIST: [&str; 69] = [
     "Expression",
     "ObjectPropertyKind",
     "TemplateElement",
@@ -102,6 +102,7 @@ impl Generator for AstKindGenerator {
         let have_kinds: Vec<(Ident, Type)> = ctx
             .ty_table
             .iter()
+            .filter(|it| it.borrow().visitable())
             .filter_map(|maybe_kind| match &*maybe_kind.borrow() {
                 kind @ (RType::Enum(_) | RType::Struct(_)) if kind.visitable() => {
                     let ident = kind.ident().unwrap().clone();

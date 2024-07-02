@@ -1,6 +1,7 @@
 mod ast;
 mod ast_kind;
 mod impl_get_span;
+mod visit;
 
 /// Inserts a newline in the `TokenStream`.
 #[allow(unused)]
@@ -42,3 +43,4 @@ pub(crate) use insert;
 pub use ast::AstGenerator;
 pub use ast_kind::AstKindGenerator;
 pub use impl_get_span::ImplGetSpanGenerator;
+pub use visit::VisitGenerator;

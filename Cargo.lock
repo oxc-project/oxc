@@ -1337,6 +1337,7 @@ dependencies = [
 name = "oxc_ast_codegen"
 version = "0.0.0"
 dependencies = [
+ "convert_case",
  "itertools 0.13.0",
  "lazy_static",
  "prettyplease",

@@ -27,7 +27,7 @@ pub struct Definitions {
 #[derive(Debug, Clone)]
 pub enum Inherit {
     Unlinked(String),
-    Linked { super_: String, variants: Punctuated<Variant, Token![,]> },
+    Linked { super_: Type, variants: Punctuated<Variant, Token![,]> },
 }
 
 impl From<Ident> for Inherit {
