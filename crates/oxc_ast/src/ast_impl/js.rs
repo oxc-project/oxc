@@ -1048,6 +1048,9 @@ impl<'a> FormalParameters<'a> {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
+    pub fn has_parameter(&self) -> bool {
+        !self.is_empty() || self.rest.is_some()
+    }
 }
 
 impl<'a> FunctionBody<'a> {
