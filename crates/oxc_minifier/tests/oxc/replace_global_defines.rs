@@ -21,3 +21,20 @@ fn replace_global_definitions() {
     let config = ReplaceGlobalDefinesConfig::new(&[("id", "text"), ("str", "'text'")]).unwrap();
     test("id, str", "text,'text'", config);
 }
+
+#[test]
+fn replace_global_definitions_dot() {
+    {
+        let config =
+            ReplaceGlobalDefinesConfig::new(&[("process.env.NODE_ENV", "production")]).unwrap();
+        test("process.env.NODE_ENV", "production", config.clone());
+        test("process.env", "process.env", config.clone());
+        test("process.env.foo.bar", "process.env.foo.bar", config.clone());
+        test("process", "process", config);
+    }
+
+    {
+        let config = ReplaceGlobalDefinesConfig::new(&[("process", "production")]).unwrap();
+        test("foo.process.NODE_ENV", "foo.process.NODE_ENV", config);
+    }
+}
