@@ -344,8 +344,8 @@ impl<'a> ParserImpl<'a> {
     where
         F: Fn(&mut Self) -> Result<Option<T>>,
     {
-        let mut list = self.ast.new_vec();
         self.expect(open)?;
+        let mut list = self.ast.new_vec();
         loop {
             let kind = self.cur_kind();
             if kind == close || kind == Kind::Eof {
@@ -358,6 +358,39 @@ impl<'a> ParserImpl<'a> {
             }
         }
         self.expect(close)?;
+        Ok(list)
+    }
+
+    pub(crate) fn parse_delimited_list<F, T>(
+        &mut self,
+        close: Kind,
+        separator: Kind,
+        trailing_separator: bool,
+        f: F,
+    ) -> Result<oxc_allocator::Vec<'a, T>>
+    where
+        F: Fn(&mut Self) -> Result<T>,
+    {
+        let mut list = self.ast.new_vec();
+        let mut first = true;
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if first {
+                first = false;
+            } else {
+                if !trailing_separator && self.at(separator) && self.peek_at(close) {
+                    break;
+                }
+                self.expect(separator)?;
+                if self.at(close) {
+                    break;
+                }
+            }
+            list.push(f(self)?);
+        }
         Ok(list)
     }
 }

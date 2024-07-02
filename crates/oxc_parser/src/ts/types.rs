@@ -4,13 +4,10 @@ use oxc_diagnostics::Result;
 use oxc_span::GetSpan;
 use oxc_syntax::operator::UnaryOperator;
 
-use super::list::{TSTupleElementList, TSTypeArgumentList, TSTypeParameterList};
 use crate::{
     diagnostics,
     lexer::Kind,
-    list::SeparatedList,
     modifiers::{Modifier, ModifierFlags, ModifierKind, Modifiers},
-    ts::list::TSImportAttributeList,
     Context, ParserImpl,
 };
 
@@ -142,7 +139,14 @@ impl<'a> ParserImpl<'a> {
             return Ok(None);
         }
         let span = self.start_span();
-        let params = TSTypeParameterList::parse(self)?.params;
+        self.expect(Kind::LAngle)?;
+        let params = self.parse_delimited_list(
+            Kind::RAngle,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_ts_type_parameter,
+        )?;
+        self.expect(Kind::RAngle)?;
         Ok(Some(self.ast.ts_type_parameters(self.end_span(span), params)))
     }
 
@@ -756,7 +760,14 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Option<Box<'a, TSTypeParameterInstantiation<'a>>>> {
         if self.at(Kind::LAngle) {
             let span = self.start_span();
-            let params = TSTypeArgumentList::parse(self, false)?.params;
+            self.expect(Kind::LAngle)?;
+            let params = self.parse_delimited_list(
+                Kind::RAngle,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_ts_type,
+            )?;
+            self.expect(Kind::RAngle)?;
             return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
         }
         Ok(None)
@@ -768,7 +779,14 @@ impl<'a> ParserImpl<'a> {
         self.re_lex_l_angle();
         if !self.cur_token().is_on_new_line && self.re_lex_l_angle() == Kind::LAngle {
             let span = self.start_span();
-            let params = TSTypeArgumentList::parse(self, false)?.params;
+            self.expect(Kind::LAngle)?;
+            let params = self.parse_delimited_list(
+                Kind::RAngle,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_ts_type,
+            )?;
+            self.expect(Kind::RAngle)?;
             return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
         }
         Ok(None)
@@ -784,7 +802,19 @@ impl<'a> ParserImpl<'a> {
         if self.re_lex_l_angle() != Kind::LAngle {
             return Ok(None);
         }
-        let params = TSTypeArgumentList::parse(self, /* in_expression */ true)?.params;
+        self.expect(Kind::LAngle)?;
+        let params = self.parse_delimited_list(
+            Kind::RAngle,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_ts_type,
+        )?;
+        // `a < b> = c`` is valid but `a < b >= c` is BinaryExpression
+        if matches!(self.re_lex_right_angle(), Kind::GtEq) {
+            return Err(self.unexpected());
+        }
+        self.re_lex_ts_r_angle();
+        self.expect(Kind::RAngle)?;
         if self.can_follow_type_arguments_in_expr() {
             return Ok(Some(self.ast.ts_type_arguments(self.end_span(span), params)));
         }
@@ -805,7 +835,14 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_tuple_type(&mut self) -> Result<TSType<'a>> {
         let span = self.start_span();
-        let elements = TSTupleElementList::parse(self)?.elements;
+        self.expect(Kind::LBrack)?;
+        let elements = self.parse_delimited_list(
+            Kind::RBrack,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_tuple_element_name_or_tuple_element_type,
+        )?;
+        self.expect(Kind::RBrack)?;
         Ok(self.ast.ts_tuple_type(self.end_span(span), elements))
     }
 
@@ -955,9 +992,28 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LCurly)?;
         self.expect(Kind::With)?;
         self.expect(Kind::Colon)?;
-        let elements = TSImportAttributeList::parse(self)?.elements;
+        self.expect(Kind::LCurly)?;
+        let elements = self.parse_delimited_list(
+            Kind::RCurly,
+            Kind::Comma,
+            /* trailing_separator */ true,
+            Self::parse_ts_import_attribute,
+        )?;
+        self.expect(Kind::RCurly)?;
         self.expect(Kind::RCurly)?;
         Ok(TSImportAttributes { span, elements })
+    }
+
+    fn parse_ts_import_attribute(&mut self) -> Result<TSImportAttribute<'a>> {
+        let span = self.start_span();
+        let name = match self.cur_kind() {
+            Kind::Str => TSImportAttributeName::StringLiteral(self.parse_literal_string()?),
+            _ => TSImportAttributeName::Identifier(self.parse_identifier_name()?),
+        };
+
+        self.expect(Kind::Colon)?;
+        let value = self.parse_expr()?;
+        Ok(TSImportAttribute { span: self.end_span(span), name, value })
     }
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Result<Option<TSType<'a>>> {
