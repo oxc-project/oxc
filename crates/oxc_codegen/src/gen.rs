@@ -2413,6 +2413,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
         if self.computed {
             p.print(b']');
         }
+        if self.optional {
+            p.print(b'?');
+        }
         if let Some(type_parameters) = self.value.type_parameters.as_ref() {
             type_parameters.gen(p, ctx);
         }
