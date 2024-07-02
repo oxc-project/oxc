@@ -119,7 +119,7 @@
     "@types/vscode": "1.80.0",
     "@vscode/vsce": "^2.27.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.23.0",
     "ovsx": "^0.9.1",
     "prettier": "^3.3.1",
     "typescript": "^5.4.5"
