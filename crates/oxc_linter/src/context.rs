@@ -3,7 +3,7 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
-use oxc_span::{SourceType, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
@@ -157,7 +157,7 @@ impl<'a> LintContext<'a> {
     }
 
     fn add_diagnostic(&self, message: Message<'a>) {
-        if !self.disable_directives.contains(self.current_rule_name, message.start()) {
+        if !self.disable_directives.contains(self.current_rule_name, message.span()) {
             let mut message = message;
             if message.error.severity != self.severity {
                 message.error = message.error.with_severity(self.severity);
