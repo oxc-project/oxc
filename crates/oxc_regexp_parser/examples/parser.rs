@@ -12,9 +12,9 @@ fn main() {
         ("/abcd/igv", ParserOptions::default()),
         ("/emo👈🏻ji/u", ParserOptions::default()),
         ("/ab|c/i", ParserOptions::default()),
-        ("//", ParserOptions::default()),
-        ("/duplicated-flags/ii", ParserOptions::default()),
-        ("/invalid-flags/x", ParserOptions::default()),
+        ("/a|b+|c/i", ParserOptions::default()),
+        ("/a{0}|b{1,2}|c{3,}/i", ParserOptions::default()),
+        ("/(?=a)|(?<=b)|(?!c)|(?<!d)/i", ParserOptions::default()),
     ] {
         println!("Test: {pat} + {options:?}");
         let parser = Parser::new(&allocator, pat, options);
