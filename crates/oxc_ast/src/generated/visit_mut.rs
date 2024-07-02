@@ -1585,7 +1585,6 @@ pub mod walk_mut {
         it: &mut TemplateElement<'a>,
     ) {
         // NOTE: AstType doesn't exists!
-        let _ = (visitor, it);
     }
 
     pub fn walk_expressions<'a, V: VisitMut<'a>>(
@@ -2584,7 +2583,6 @@ pub mod walk_mut {
         it: &mut JSDocUnknownType,
     ) {
         // NOTE: AstType doesn't exists!
-        let _ = (visitor, it);
     }
 
     pub fn walk_decorators<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Decorator<'a>>) {
@@ -3378,7 +3376,6 @@ pub mod walk_mut {
         it: &mut JSXEmptyExpression,
     ) {
         // NOTE: AstType doesn't exists!
-        let _ = (visitor, it);
     }
 
     pub fn walk_jsx_fragment<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut JSXFragment<'a>) {

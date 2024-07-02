@@ -1574,7 +1574,6 @@ pub mod walk {
 
     pub fn walk_template_element<'a, V: Visit<'a>>(visitor: &mut V, it: &TemplateElement<'a>) {
         // NOTE: AstKind doesn't exists!
-        let _ = (visitor, it);
     }
 
     pub fn walk_expressions<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Expression<'a>>) {
@@ -2480,7 +2479,6 @@ pub mod walk {
 
     pub fn walk_js_doc_unknown_type<'a, V: Visit<'a>>(visitor: &mut V, it: &JSDocUnknownType) {
         // NOTE: AstKind doesn't exists!
-        let _ = (visitor, it);
     }
 
     pub fn walk_decorators<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Decorator<'a>>) {
@@ -3217,7 +3215,6 @@ pub mod walk {
 
     pub fn walk_jsx_empty_expression<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXEmptyExpression) {
         // NOTE: AstKind doesn't exists!
-        let _ = (visitor, it);
     }
 
     pub fn walk_jsx_fragment<'a, V: Visit<'a>>(visitor: &mut V, it: &JSXFragment<'a>) {

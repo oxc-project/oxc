@@ -583,8 +583,6 @@ impl<'a> VisitBuilder<'a> {
             .collect();
 
         let body = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-            let unused =
-                if fields_visits.is_empty() { Some(quote!(let _ = (visitor, it);)) } else { None };
             let note = insert!(
                 "// NOTE: {} doesn't exists!",
                 if self.is_mut { "AstType" } else { "AstKind" }
@@ -592,7 +590,6 @@ impl<'a> VisitBuilder<'a> {
             quote! {
                 #note
                 #(#fields_visits)*
-                #unused
             }
         } else {
             let kind = self.kind_type(ident);
