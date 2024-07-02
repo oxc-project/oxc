@@ -48,7 +48,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Pattern>
     fn consume_pattern(&mut self) -> Result<ast::Pattern<'a>> {
-        let start = self.reader.position();
+        let start = self.reader.span_position();
         // TODO: Read only constants
         // this._numCapturingParens = this.countCapturingParens();
         // TODO: Define state, use later somewhere
@@ -81,7 +81,7 @@ impl<'a> PatternParser<'a> {
         // }
 
         let pattern = ast::Pattern {
-            span: self.span_factory.create(start, self.reader.position()),
+            span: self.span_factory.create(start, self.reader.span_position()),
             alternatives,
         };
 
@@ -131,7 +131,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Alternative>
     fn consume_alternative(&mut self, i: usize) -> Result<ast::Alternative<'a>> {
-        let start = self.reader.position();
+        let start = self.reader.span_position();
 
         // TODO: Implement
         let _ = i;
@@ -149,7 +149,7 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(ast::Alternative {
-            span: self.span_factory.create(start, self.reader.position()),
+            span: self.span_factory.create(start, self.reader.span_position()),
             elements,
         })
     }
@@ -166,7 +166,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Element::Assertion(Box::new_in(assertion, self.allocator))));
         }
 
-        let start = self.reader.position();
+        let start = self.reader.span_position();
         match (self.consume_atom()?, self.consume_quantifier()?) {
             (Some(atom), None) => {
                 Ok(Some(ast::Element::QuantifiableElement(Box::new_in(atom, self.allocator))))
@@ -174,7 +174,7 @@ impl<'a> PatternParser<'a> {
             (Some(atom), Some(((min, max), greedy))) => {
                 return Ok(Some(ast::Element::Quantifier(Box::new_in(
                     ast::Quantifier {
-                        span: self.span_factory.create(start, self.reader.position()),
+                        span: self.span_factory.create(start, self.reader.span_position()),
                         min,
                         max,
                         greedy,
@@ -300,7 +300,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-SyntaxCharacter>
     fn consume_pattern_character(&mut self) -> Option<ast::Character> {
-        let start = self.reader.position();
+        let start = self.reader.span_position();
 
         let cp = self.reader.peek()?;
         if unicode::is_syntax_character(cp) {
@@ -309,13 +309,13 @@ impl<'a> PatternParser<'a> {
 
         self.reader.advance();
         Some(ast::Character {
-            span: self.span_factory.create(start, self.reader.position()),
+            span: self.span_factory.create(start, self.reader.span_position()),
             value: cp,
         })
     }
 
     fn consume_decimal_digits(&mut self) -> Option<usize> {
-        let start = self.reader.position();
+        let start = self.reader.span_position();
 
         let mut value = 0;
         while let Some(cp) = self.reader.peek() {
@@ -328,7 +328,7 @@ impl<'a> PatternParser<'a> {
             self.reader.advance();
         }
 
-        if self.reader.position() != start {
+        if self.reader.span_position() != start {
             return Some(value);
         }
 

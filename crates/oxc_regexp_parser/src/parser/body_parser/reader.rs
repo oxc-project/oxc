@@ -1,5 +1,6 @@
 pub struct Reader<'a> {
     source: &'a str,
+    // NOTE: For now, this exists only for `span_position()` method.
     char_indices: std::str::CharIndices<'a>,
     unicode_mode: bool,
     index: usize,
@@ -12,10 +13,10 @@ impl<'a> Reader<'a> {
 
     // NOTE: Should be decoupled from the reader...?
     // ```
-    // let pos = Position::new(source, unicode_mode);
-    // pos.get(reader.index);
+    // let reader_idx = reader.index;
+    // SpanPosition::new(source, unicode_mode).get(reader_idx);
     // ````
-    pub fn position(&self) -> usize {
+    pub fn span_position(&self) -> usize {
         let mut char_indices = self.char_indices.clone();
 
         if self.unicode_mode {
@@ -46,7 +47,8 @@ impl<'a> Reader<'a> {
     fn peek_nth(&self, n: usize) -> Option<u32> {
         let nth = self.index + n;
 
-        // NOTE: This may affect performance?
+        // TODO: This is not efficient.
+        // Refs oxc_parser/src/lexer/mod.rs using `VecDeque` for this?
         if self.unicode_mode {
             self.source.chars().nth(nth).map(|c| c as u32)
         } else {
@@ -200,23 +202,23 @@ mod test {
             while reader.peek() != Some('^' as u32) {
                 reader.advance();
             }
-            let s1 = reader.position();
+            let s1 = reader.span_position();
             assert!(reader.eat('^'));
-            let e1 = reader.position();
+            let e1 = reader.span_position();
 
             while reader.peek() != Some('@' as u32) {
                 reader.advance();
             }
-            let s2 = reader.position();
+            let s2 = reader.span_position();
             assert!(reader.eat('@'));
-            let e2 = reader.position();
+            let e2 = reader.span_position();
 
             while reader.peek() != Some('$' as u32) {
                 reader.advance();
             }
-            let s3 = reader.position();
+            let s3 = reader.span_position();
             assert!(reader.eat('$'));
-            let e3 = reader.position();
+            let e3 = reader.span_position();
 
             assert_eq!(&source_text[s1..e1], "^");
             assert_eq!(&source_text[s2..e2], "@");
