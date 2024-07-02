@@ -260,6 +260,7 @@ mod unicorn {
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
     pub mod no_negated_condition;
+    pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
     pub mod no_new_buffer;
@@ -619,6 +620,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_lonely_if,
     unicorn::no_magic_array_flat_depth,
     unicorn::no_negated_condition,
+    unicorn::no_negation_in_equality_check,
     unicorn::no_nested_ternary,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
