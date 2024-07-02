@@ -37,10 +37,19 @@ impl Generator for VisitGenerator {
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
         let visit = (String::from("visit"), generate_visit(ctx));
+        let visit_mut = (String::from("visit_mut"), generate_visit_mut(ctx));
 
-        GeneratorOutput::Many(HashMap::from_iter(vec![visit]))
+        GeneratorOutput::Many(HashMap::from_iter(vec![visit, visit_mut]))
     }
 }
+
+static CLIPPY_ALLOW: &str = "\
+    unused_variables,\
+    clippy::extra_unused_type_parameters,\
+    clippy::explicit_iter_loop,\
+    clippy::self_named_module_files,\
+    clippy::semicolon_if_nothing_returned,\
+    clippy::match_wildcard_for_single_variants";
 
 fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
     let header = generated_header!();
@@ -54,12 +63,13 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
         //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
     "};
 
-    let (visits, walks) = VisitBuilder::new(ctx).build();
+    let (visits, walks) = VisitBuilder::new(ctx, false).build();
+    let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
 
     quote! {
         #header
         #file_docs
-        insert!("#![allow(clippy::self_named_module_files, clippy::semicolon_if_nothing_returned, clippy::match_wildcard_for_single_variants)]");
+        #clippy_attr
 
         endl!();
 
@@ -78,14 +88,11 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
 
         /// Syntax tree traversal
         pub trait Visit<'a>: Sized {
-            #[allow(unused_variables)]
             fn enter_node(&mut self, kind: AstKind<'a>) {}
-            #[allow(unused_variables)]
             fn leave_node(&mut self, kind: AstKind<'a>) {}
 
             endl!();
 
-            #[allow(unused_variables)]
             fn enter_scope(&mut self, flags: ScopeFlags) {}
             fn leave_scope(&mut self) {}
 
@@ -115,16 +122,80 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
     }
 }
 
+fn generate_visit_mut(ctx: &CodegenCtx) -> TokenStream {
+    let header = generated_header!();
+    // we evaluate it outside of quote to take advantage of expression evaluation
+    // otherwise the `\n\` wouldn't work!
+    let file_docs = insert! {"\
+        //! Visitor Pattern\n\
+        //!\n\
+        //! See:\n\
+        //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)\n\
+        //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
+    "};
+
+    let (visits, walks) = VisitBuilder::new(ctx, true).build();
+    let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
+
+    quote! {
+        #header
+        #file_docs
+        #clippy_attr
+
+        endl!();
+
+        use oxc_allocator::Vec;
+        use oxc_syntax::scope::ScopeFlags;
+
+        endl!();
+
+        use crate::{ast::*, ast_kind::AstType};
+
+        endl!();
+
+        use walk_mut::*;
+
+        endl!();
+
+        /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
+        pub trait VisitMut<'a>: Sized {
+            fn enter_node(&mut self, ty: AstType) {}
+            fn leave_node(&mut self, ty: AstType) {}
+
+            endl!();
+
+            fn enter_scope(&mut self, flags: ScopeFlags) {}
+            fn leave_scope(&mut self) {}
+
+            endl!();
+
+            #(#visits)*
+        }
+
+        endl!();
+
+        pub mod walk_mut {
+            use super::*;
+
+            #(#walks)*
+
+        }
+    }
+}
+
 struct VisitBuilder<'a> {
     ctx: &'a CodegenCtx,
+
+    is_mut: bool,
+
     visits: Vec<TokenStream>,
     walks: Vec<TokenStream>,
     cache: HashMap<Ident, [Option<Cow<'a, Ident>>; 2]>,
 }
 
 impl<'a> VisitBuilder<'a> {
-    fn new(ctx: &'a CodegenCtx) -> Self {
-        Self { ctx, visits: Vec::new(), walks: Vec::new(), cache: HashMap::new() }
+    fn new(ctx: &'a CodegenCtx, is_mut: bool) -> Self {
+        Self { ctx, is_mut, visits: Vec::new(), walks: Vec::new(), cache: HashMap::new() }
     }
 
     fn build(mut self) -> (/* visits */ Vec<TokenStream>, /* walks */ Vec<TokenStream>) {
@@ -141,6 +212,33 @@ impl<'a> VisitBuilder<'a> {
 
         self.get_visitor(&program, false, None);
         (self.visits, self.walks)
+    }
+
+    fn with_ref_pat<T>(&self, tk: T) -> TokenStream
+    where
+        T: ToTokens,
+    {
+        if self.is_mut {
+            quote!(&mut #tk)
+        } else {
+            quote!(&#tk)
+        }
+    }
+
+    fn kind_type(&self, ident: &Ident) -> TokenStream {
+        if self.is_mut {
+            quote!(AstType::#ident)
+        } else {
+            quote!(AstKind::#ident(visitor.alloc(it)))
+        }
+    }
+
+    fn get_iter(&self) -> TokenStream {
+        if self.is_mut {
+            quote!(iter_mut)
+        } else {
+            quote!(iter)
+        }
     }
 
     fn get_visitor(
@@ -189,7 +287,7 @@ impl<'a> VisitBuilder<'a> {
             format_ident!("{it}")
         };
 
-        let as_param_type = quote!(&#as_type);
+        let as_param_type = self.with_ref_pat(&as_type);
         let (extra_params, extra_args) = if ident == "Function" {
             (quote!(, flags: Option<ScopeFlags>,), quote!(, flags))
         } else {
@@ -223,8 +321,9 @@ impl<'a> VisitBuilder<'a> {
 
         let walk_body = if collection {
             let singular_visit = self.get_visitor(ty, false, None);
+            let iter = self.get_iter();
             quote! {
-                for el in it {
+                for el in it.#iter() {
                     visitor.#singular_visit(el);
                 }
             }
@@ -237,9 +336,10 @@ impl<'a> VisitBuilder<'a> {
         };
 
         // replace the placeholder walker with the actual one!
+        let visit_trait = if self.is_mut { quote!(VisitMut) } else { quote!(Visit) };
         self.walks[this_walker] = quote! {
             endl!();
-            pub fn #walk_name <'a, V: Visit<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
+            pub fn #walk_name <'a, V: #visit_trait<'a>>(visitor: &mut V, it: #as_param_type #extra_params) {
                 #walk_body
             }
         };
@@ -330,7 +430,11 @@ impl<'a> VisitBuilder<'a> {
                 } else {
                     None
                 };
-                let to_child = format_ident!("to_{snake_name}");
+                let to_child = if self.is_mut {
+                    format_ident!("to_{snake_name}_mut")
+                } else {
+                    format_ident!("to_{snake_name}")
+                };
                 let visit = self.get_visitor(&typ, false, visit_as.as_ref());
                 Some(quote!(#match_macro => visitor.#visit(it.#to_child())))
             } else {
@@ -345,8 +449,9 @@ impl<'a> VisitBuilder<'a> {
             if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
                 tk
             } else {
+                let kind = self.kind_type(ident);
                 quote! {
-                    let kind = AstKind::#ident(visitor.alloc(it));
+                    let kind = #kind;
                     visitor.enter_node(kind);
                     #tk
                     visitor.leave_node(kind);
@@ -437,19 +542,23 @@ impl<'a> VisitBuilder<'a> {
                     visit_as.as_ref(),
                 );
                 let name = it.ident.as_ref().expect("expected named fields!");
+                let borrowed_field = self.with_ref_pat(quote!(it.#name));
                 let mut result = match typ_wrapper {
                     TypeWrapper::Opt | TypeWrapper::OptBox | TypeWrapper::OptVec => quote! {
-                        if let Some(ref #name) = it.#name {
+                        if let Some(#name) = #borrowed_field {
                             visitor.#visit(#name #(#args)*);
                         }
                     },
-                    TypeWrapper::VecOpt => quote! {
-                        for #name in (&it.#name).into_iter().flatten() {
-                            visitor.#visit(#name #(#args)*);
+                    TypeWrapper::VecOpt => {
+                        let iter = self.get_iter();
+                        quote! {
+                            for #name in it.#name.#iter().flatten() {
+                                visitor.#visit(#name #(#args)*);
+                            }
                         }
-                    },
+                    }
                     _ => quote! {
-                        visitor.#visit(&it.#name #(#args)*);
+                        visitor.#visit(#borrowed_field #(#args)*);
                     },
                 };
                 if have_enter_scope {
@@ -476,14 +585,19 @@ impl<'a> VisitBuilder<'a> {
         let body = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
             let unused =
                 if fields_visits.is_empty() { Some(quote!(let _ = (visitor, it);)) } else { None };
+            let note = insert!(
+                "// NOTE: {} doesn't exists!",
+                if self.is_mut { "AstType" } else { "AstKind" }
+            );
             quote! {
-                insert!("// NOTE: AstKind doesn't exists!");
+                #note
                 #(#fields_visits)*
                 #unused
             }
         } else {
+            let kind = self.kind_type(ident);
             quote! {
-                let kind = AstKind::#ident(visitor.alloc(it));
+                let kind = #kind;
                 visitor.enter_node(kind);
                 #(#fields_visits)*
                 visitor.leave_node(kind);

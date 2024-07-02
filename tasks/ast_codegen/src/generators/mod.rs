@@ -15,8 +15,8 @@ macro_rules! endl {
 /// used outside and accepts expressions.
 /// Wraps the result of the given expression in `insert!({value here});` and outputs it as `TokenStream`.
 macro_rules! insert {
-    ($txt:expr) => {{
-        let txt: &str = &*$txt;
+    ($fmt:literal $(, $args:expr)*) => {{
+        let txt = format!($fmt, $($args)*);
         format!(r#"insert!("{}");"#, txt).parse::<proc_macro2::TokenStream>().unwrap()
     }};
 }
@@ -25,9 +25,8 @@ macro_rules! insert {
 macro_rules! generated_header {
     () => {{
         let file = file!().replace("\\", "/");
-        let edit_comment = $crate::generators::insert!(format!(
-            "// To edit this generated file you have to edit `{file}`"
-        ));
+        let edit_comment =
+            $crate::generators::insert!("// To edit this generated file you have to edit `{file}`");
         // TODO add generation date, AST source hash, etc here.
         quote::quote! {
             insert!("// Auto-generated code, DO NOT EDIT DIRECTLY!");

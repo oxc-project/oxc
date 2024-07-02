@@ -221,14 +221,16 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     }
 
     {
-        // write `visit.rs` file
+        // write `visit.rs` and `visit_mut.rs` files
         let output = outputs[VisitGenerator.name()].as_many();
-        let span_content = pprint(&output["visit"]);
+        let content = pprint(&output["visit"]);
+        let content_mut = pprint(&output["visit_mut"]);
 
-        let path = format!("{output_dir}/visit.rs");
-        let mut file = fs::File::create(path)?;
+        let mut visit = fs::File::create(format!("{output_dir}/visit.rs"))?;
+        let mut visit_mut = fs::File::create(format!("{output_dir}/visit_mut.rs"))?;
 
-        file.write_all(span_content.as_bytes())?;
+        visit.write_all(content.as_bytes())?;
+        visit_mut.write_all(content_mut.as_bytes())?;
     }
 
     cargo_fmt(".")?;
