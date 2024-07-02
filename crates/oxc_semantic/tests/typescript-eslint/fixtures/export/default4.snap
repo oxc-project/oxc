@@ -1,0 +1,18 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/export/default4.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": []
+  }
+]

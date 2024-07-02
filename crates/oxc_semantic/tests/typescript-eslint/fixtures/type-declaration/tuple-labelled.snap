@@ -1,0 +1,40 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/tuple-labelled.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T1",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T1"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "T2",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T2"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "A",
+        "references": []
+      }
+    ]
+  }
+]

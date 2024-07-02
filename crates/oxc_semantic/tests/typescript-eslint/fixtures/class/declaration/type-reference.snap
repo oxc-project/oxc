@@ -1,0 +1,49 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/declaration/type-reference.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "A",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "A"
+          },
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "A"
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "A"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "T1",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "T2",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 3,
+        "name": "v",
+        "references": []
+      }
+    ]
+  }
+]

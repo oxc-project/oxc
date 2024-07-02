@@ -1,0 +1,23 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/export/named3-type.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Export | TypeAlias)",
+        "id": 0,
+        "name": "V",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "V"
+          }
+        ]
+      }
+    ]
+  }
+]

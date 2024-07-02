@@ -1,0 +1,18 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/jsx/text.tsx
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "Foo",
+        "references": []
+      }
+    ]
+  }
+]

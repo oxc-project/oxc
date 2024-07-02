@@ -1,0 +1,45 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/destructuring/array-assignment.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "obj",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "obj"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable)",
+        "id": 1,
+        "name": "b",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Write)",
+            "name": "b"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable)",
+        "id": 2,
+        "name": "c",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Write)",
+            "name": "c"
+          }
+        ]
+      }
+    ]
+  }
+]

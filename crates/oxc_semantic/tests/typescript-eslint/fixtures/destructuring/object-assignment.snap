@@ -1,0 +1,23 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/destructuring/object-assignment.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "obj",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "obj"
+          }
+        ]
+      }
+    ]
+  }
+]

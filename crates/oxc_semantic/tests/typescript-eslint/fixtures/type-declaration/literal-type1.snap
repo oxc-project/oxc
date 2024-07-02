@@ -1,0 +1,40 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/literal-type1.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "Color",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "Color"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "Quantity",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "Quantity"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "SeussFish",
+        "references": []
+      }
+    ]
+  }
+]

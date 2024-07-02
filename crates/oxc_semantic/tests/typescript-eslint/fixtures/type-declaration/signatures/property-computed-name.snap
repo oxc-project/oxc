@@ -1,0 +1,40 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/signatures/property-computed-name.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "x",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "x"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "T",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "A",
+        "references": []
+      }
+    ]
+  }
+]

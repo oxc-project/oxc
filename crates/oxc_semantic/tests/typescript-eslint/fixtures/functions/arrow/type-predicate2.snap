@@ -1,0 +1,43 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/functions/arrow/type-predicate2.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function | Arrow)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "arg",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "name": "arg"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "foo",
+        "references": []
+      }
+    ]
+  }
+]

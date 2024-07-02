@@ -1,0 +1,30 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/jsx/component.tsx
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "Foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Foo"
+          }
+        ]
+      }
+    ]
+  }
+]

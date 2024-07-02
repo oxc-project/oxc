@@ -1,0 +1,29 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/import/type-default-value.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(ImportBinding)",
+        "id": 0,
+        "name": "foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "foo"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "T",
+        "references": []
+      }
+    ]
+  }
+]

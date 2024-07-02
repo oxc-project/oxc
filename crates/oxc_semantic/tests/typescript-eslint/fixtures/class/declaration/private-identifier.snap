@@ -1,0 +1,25 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/declaration/private-identifier.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+        "id": 1,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "Foo",
+        "references": []
+      }
+    ]
+  }
+]

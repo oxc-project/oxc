@@ -1704,6 +1704,7 @@ dependencies = [
  "phf",
  "rustc-hash",
  "serde",
+ "serde_json",
  "tsify",
  "wasm-bindgen",
 ]

@@ -1,0 +1,54 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/declaration/extends-generic.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "U",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "A",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "A"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "T",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 3,
+        "name": "B",
+        "references": []
+      }
+    ]
+  }
+]

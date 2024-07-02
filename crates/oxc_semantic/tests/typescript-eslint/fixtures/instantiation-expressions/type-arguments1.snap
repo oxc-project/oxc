@@ -1,0 +1,60 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/instantiation-expressions/type-arguments1.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "T",
+            "references": []
+          }
+        ]
+      },
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 3,
+            "name": "T",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "Foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Foo"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 2,
+        "name": "Bar",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Bar"
+          }
+        ]
+      }
+    ]
+  }
+]

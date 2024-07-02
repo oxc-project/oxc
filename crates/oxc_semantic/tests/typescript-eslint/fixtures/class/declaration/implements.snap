@@ -1,0 +1,24 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/declaration/implements.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 0,
+        "name": "A",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "B",
+        "references": []
+      }
+    ]
+  }
+]

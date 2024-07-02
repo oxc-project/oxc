@@ -1,0 +1,46 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/functions/function-expression/type-parameters/body-reference.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "flag": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "symbols": [
+              {
+                "flag": "SymbolFlags(TypeParameter)",
+                "id": 2,
+                "name": "T",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(BlockScopedVariable)",
+            "id": 1,
+            "name": "x",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "foo",
+        "references": []
+      }
+    ]
+  }
+]

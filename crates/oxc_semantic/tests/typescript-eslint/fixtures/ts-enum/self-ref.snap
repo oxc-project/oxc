@@ -1,0 +1,43 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/ts-enum/self-ref.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(EnumMember)",
+            "id": 1,
+            "name": "a",
+            "references": []
+          },
+          {
+            "flag": "SymbolFlags(EnumMember)",
+            "id": 2,
+            "name": "b",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(RegularEnum)",
+        "id": 0,
+        "name": "Foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Foo"
+          }
+        ]
+      }
+    ]
+  }
+]

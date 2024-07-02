@@ -1,0 +1,34 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/declaration/index-signature.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "Bar",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "Bar"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "Foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "Foo"
+          }
+        ]
+      }
+    ]
+  }
+]

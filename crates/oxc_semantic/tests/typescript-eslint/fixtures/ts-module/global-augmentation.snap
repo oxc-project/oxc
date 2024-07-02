@@ -1,0 +1,25 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/ts-module/global-augmentation.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "id": 1,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(NameSpaceModule | Ambient)",
+        "id": 0,
+        "name": "global",
+        "references": []
+      }
+    ]
+  }
+]

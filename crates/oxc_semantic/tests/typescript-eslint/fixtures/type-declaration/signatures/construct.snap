@@ -1,0 +1,33 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/signatures/construct.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T"
+          },
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "A",
+        "references": []
+      }
+    ]
+  }
+]

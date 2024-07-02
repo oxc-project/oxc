@@ -1,0 +1,41 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/decorators/method.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": []
+      },
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 2,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "decorator",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "decorator"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "Foo",
+        "references": []
+      }
+    ]
+  }
+]

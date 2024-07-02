@@ -1,0 +1,37 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/ts-module/self-ref.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
+            "id": 1,
+            "name": "x",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(NameSpaceModule | ValueModule)",
+        "id": 0,
+        "name": "Foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Foo"
+          }
+        ]
+      }
+    ]
+  }
+]

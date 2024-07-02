@@ -1,0 +1,29 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/import-type-with-type-params.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "Param",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "Param"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "T",
+        "references": []
+      }
+    ]
+  }
+]

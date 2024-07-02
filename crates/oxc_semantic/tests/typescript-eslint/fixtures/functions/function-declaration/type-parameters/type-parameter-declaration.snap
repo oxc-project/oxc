@@ -1,0 +1,45 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/functions/function-declaration/type-parameters/type-parameter-declaration.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "flag": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "symbols": [
+              {
+                "flag": "SymbolFlags(TypeParameter)",
+                "id": 1,
+                "name": "T",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "foo",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "Unresolved",
+        "references": []
+      }
+    ]
+  }
+]

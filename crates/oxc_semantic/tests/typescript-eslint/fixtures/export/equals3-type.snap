@@ -1,0 +1,23 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/export/equals3-type.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 0,
+        "name": "Foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Foo"
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,0 +1,48 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/literal-type3.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "value",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "VerticalAlignment",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "VerticalAlignment"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "HorizontalAlignment",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "HorizontalAlignment"
+          }
+        ]
+      }
+    ]
+  }
+]

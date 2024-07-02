@@ -1,0 +1,35 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/declaration/properties.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "x",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "x"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "A",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "unresolved",
+        "references": []
+      }
+    ]
+  }
+]

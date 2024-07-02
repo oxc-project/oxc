@@ -1,0 +1,106 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/expression/parameter-properties.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "id": 2,
+            "symbols": [
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 3,
+                "name": "a",
+                "references": [
+                  {
+                    "flag": "ReferenceFlag(Read)",
+                    "name": "a"
+                  },
+                  {
+                    "flag": "ReferenceFlag(Read)",
+                    "name": "a"
+                  }
+                ]
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 4,
+                "name": "b",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 5,
+                "name": "c",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 6,
+                "name": "d",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 7,
+                "name": "e",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 8,
+                "name": "f",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "outer",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "outer"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "Outer",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "Outer"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "A",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 9,
+        "name": "unresolved",
+        "references": []
+      }
+    ]
+  }
+]

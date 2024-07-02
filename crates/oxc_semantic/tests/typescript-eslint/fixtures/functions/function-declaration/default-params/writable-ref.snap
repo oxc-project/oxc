@@ -1,0 +1,38 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/functions/function-declaration/default-params/writable-ref.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 1,
+            "name": "a",
+            "references": []
+          },
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "b",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "foo",
+        "references": []
+      }
+    ]
+  }
+]

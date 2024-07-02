@@ -1,0 +1,49 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/interface-heritage2.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(Export | TypeAlias)",
+            "id": 2,
+            "name": "unreferenced",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "unreferenced",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(NameSpaceModule)",
+        "id": 1,
+        "name": "Member",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Member"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 3,
+        "name": "Foo",
+        "references": []
+      }
+    ]
+  }
+]

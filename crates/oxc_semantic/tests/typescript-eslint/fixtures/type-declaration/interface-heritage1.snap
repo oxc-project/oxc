@@ -1,0 +1,29 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/interface-heritage1.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 0,
+        "name": "Parent",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Parent"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 1,
+        "name": "Foo",
+        "references": []
+      }
+    ]
+  }
+]

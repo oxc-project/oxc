@@ -1,0 +1,23 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/jsx/attribute-spread.tsx
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "x",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "x"
+          }
+        ]
+      }
+    ]
+  }
+]

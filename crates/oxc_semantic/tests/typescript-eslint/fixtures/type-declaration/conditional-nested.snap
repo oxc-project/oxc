@@ -1,0 +1,56 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/conditional-nested.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "T",
+            "references": []
+          }
+        ]
+      },
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 2,
+            "name": "U",
+            "references": []
+          }
+        ]
+      },
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 3,
+            "name": "U",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "Test",
+        "references": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,47 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/class/declaration/computed-member.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "outer1",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "outer1"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "outer2",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "outer2"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 2,
+        "name": "A",
+        "references": []
+      }
+    ]
+  }
+]

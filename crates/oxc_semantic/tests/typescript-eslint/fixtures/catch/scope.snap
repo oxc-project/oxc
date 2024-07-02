@@ -1,0 +1,54 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/catch/scope.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "symbols": []
+      },
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+            "id": 0,
+            "name": "e",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "name": "e"
+              }
+            ]
+          },
+          {
+            "flag": "SymbolFlags(BlockScopedVariable)",
+            "id": 1,
+            "name": "a",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "unresolved",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 3,
+        "name": "dontReference2",
+        "references": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,40 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/index-access2.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "K",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "K"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "A",
+        "references": []
+      }
+    ]
+  }
+]

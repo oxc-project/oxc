@@ -1,0 +1,75 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/jsx/namespaced-attribute.tsx
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 5,
+            "name": "props",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "name": "props"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(ImportBinding)",
+        "id": 0,
+        "name": "React",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "x",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "y",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 3,
+        "name": "FooProps",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "FooProps"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 4,
+        "name": "Foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Foo"
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "Foo"
+          }
+        ]
+      }
+    ]
+  }
+]

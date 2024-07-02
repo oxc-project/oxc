@@ -59,6 +59,10 @@ impl Reference {
         self.symbol_id = Some(symbol_id);
     }
 
+    pub fn flag(&self) -> &ReferenceFlag {
+        &self.flag
+    }
+
     pub fn flag_mut(&mut self) -> &mut ReferenceFlag {
         &mut self.flag
     }

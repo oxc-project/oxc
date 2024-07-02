@@ -1,0 +1,50 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/conditional1.ts
+---
+[
+  {
+    "children": [
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "U",
+            "references": []
+          }
+        ]
+      },
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 2,
+            "name": "V",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "Unresolved",
+        "references": []
+      }
+    ]
+  }
+]

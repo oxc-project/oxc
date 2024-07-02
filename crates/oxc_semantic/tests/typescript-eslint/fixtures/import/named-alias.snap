@@ -1,0 +1,33 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/import/named-alias.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(ImportBinding)",
+        "id": 0,
+        "name": "t",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "t"
+          },
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "t"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "T",
+        "references": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,74 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/type-declaration/type-query-with-parameters.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "flag": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "symbols": [
+              {
+                "flag": "SymbolFlags(TypeParameter)",
+                "id": 2,
+                "name": "T",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 1,
+            "name": "y",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "name": "y"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "symbols": [
+          {
+            "flag": "SymbolFlags(Export | TypeParameter)",
+            "id": 4,
+            "name": "T",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "foo",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "foo"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Export | TypeAlias)",
+        "id": 3,
+        "name": "Foo",
+        "references": []
+      }
+    ]
+  }
+]

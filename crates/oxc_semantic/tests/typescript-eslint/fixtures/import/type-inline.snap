@@ -1,0 +1,39 @@
+---
+source: crates/oxc_semantic/tests/typescript-eslint/main.rs
+input_file: crates/oxc_semantic/tests/typescript-eslint/fixtures/import/type-inline.ts
+---
+[
+  {
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "symbols": [
+      {
+        "flag": "SymbolFlags(ImportBinding)",
+        "id": 0,
+        "name": "T",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "name": "T"
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "name": "T"
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "Ref",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "unresolved",
+        "references": []
+      }
+    ]
+  }
+]
