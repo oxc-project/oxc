@@ -629,8 +629,8 @@ pub trait Visit<'a>: Sized {
         walk_enum_member(self, member);
     }
 
-    fn visit_enum(&mut self, decl: &TSEnumDeclaration<'a>) {
-        walk_enum(self, decl);
+    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
+        walk_ts_enum_declaration(self, decl);
     }
 
     fn visit_declaration(&mut self, decl: &Declaration<'a>) {
@@ -2547,7 +2547,10 @@ pub mod walk {
         visitor.leave_node(kind);
     }
 
-    pub fn walk_enum<'a, V: Visit<'a>>(visitor: &mut V, decl: &TSEnumDeclaration<'a>) {
+    pub fn walk_ts_enum_declaration<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        decl: &TSEnumDeclaration<'a>,
+    ) {
         let kind = AstKind::TSEnumDeclaration(visitor.alloc(decl));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&decl.id);
@@ -2574,7 +2577,7 @@ pub mod walk {
             Declaration::TSTypeAliasDeclaration(decl) => {
                 visitor.visit_ts_type_alias_declaration(decl);
             }
-            Declaration::TSEnumDeclaration(decl) => visitor.visit_enum(decl),
+            Declaration::TSEnumDeclaration(decl) => visitor.visit_ts_enum_declaration(decl),
             Declaration::TSImportEqualsDeclaration(decl) => {
                 visitor.visit_ts_import_equals_declaration(decl);
             }

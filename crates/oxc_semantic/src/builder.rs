@@ -1577,7 +1577,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_enum(&mut self, decl: &TSEnumDeclaration<'a>) {
+    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
