@@ -22,3 +22,10 @@ export class Baz {
   readonly prop1 = 'some string';
   prop2 = 'another string';
 }
+
+export class Boo {
+  constructor(
+    public readonly prop: number = 0,
+    readonly prop2: number = 1
+  ) {}
+}

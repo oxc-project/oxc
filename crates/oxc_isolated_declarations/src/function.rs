@@ -110,7 +110,7 @@ impl<'a> IsolatedDeclarations<'a> {
             param.span,
             pattern,
             None,
-            param.readonly,
+            false,
             false,
             self.ast.new_vec(),
         ))
