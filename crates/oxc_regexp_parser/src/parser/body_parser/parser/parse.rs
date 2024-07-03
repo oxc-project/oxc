@@ -11,8 +11,8 @@ use crate::{
 };
 
 pub struct PatternParser<'a> {
-    allocator: &'a Allocator,
-    source_text: &'a str,
+    pub(super) allocator: &'a Allocator,
+    pub(super) source_text: &'a str,
     pub(super) span_factory: SpanFactory,
     pub(super) reader: Reader<'a>,
     _state: ParserState,
@@ -47,15 +47,11 @@ impl<'a> PatternParser<'a> {
     // <https://tc39.es/ecma262/#prod-Pattern>
     fn consume_pattern(&mut self) -> Result<ast::Pattern<'a>> {
         let span_start = self.reader.span_position();
-        // TODO: Read only constants
-        // this._numCapturingParens = this.countCapturingParens();
         // TODO: Define state, use later somewhere
         // this._groupSpecifiers.clear();
         // TODO: Define state, use later here
         // this._backreferenceNames.clear();
 
-        // TODO: Maybe useless?
-        // this.onPatternEnter(start);
         let alternatives = self.consume_disjunction()?;
 
         if self.reader.peek().is_some() {
@@ -70,7 +66,6 @@ impl<'a> PatternParser<'a> {
             }
             return Err(OxcDiagnostic::error("Unexpected character"));
         }
-
         // TODO: Implement
         // for (const name of this._backreferenceNames) {
         //   if (!this._groupSpecifiers.hasInPattern(name)) {
@@ -83,7 +78,7 @@ impl<'a> PatternParser<'a> {
             alternatives,
         };
 
-        // TODO: Implement fix up for back references
+        // TODO: Implement, finalize backreferences with captured groups
         // this.onPatternLeave(start, this.index);
 
         Ok(pattern)
@@ -305,30 +300,15 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Atom>
     fn consume_atom(&mut self) -> Result<Option<ast::QuantifiableElement<'a>>> {
-        if let Some(character) = self.consume_pattern_character() {
-            return Ok(Some(ast::QuantifiableElement::Character(Box::new_in(
-                character,
-                self.allocator,
-            ))));
-        }
-        if let Some(any_character_set) = self.consume_dot() {
-            return Ok(Some(ast::QuantifiableElement::CharacterSet(Box::new_in(
-                ast::CharacterSet::AnyCharacterSet(Box::new_in(any_character_set, self.allocator)),
-                self.allocator,
-            ))));
-        }
-
-        // TODO: Implement
-        if self.reader.eat('👻') {
-            return Err(OxcDiagnostic::error("TODO"));
-        }
-
-        // if self.consume_reverse_solidus_atom_escape() {}
-        // if self.consume_character_class() {}
-        // if self.consume_capturing_group() {}
-        // if self.consume_uncapturing_group() {}
-
-        Ok(None)
+        Ok(self
+            .consume_pattern_character()
+            .or(self.consume_dot())
+            .or(self.consume_reverse_solidus_atom_escape()?)
+            // TODO: Implement
+            // self.consume_character_class()
+            // self.consume_capturing_group()
+            // self.consume_uncapturing_group()
+            .or(None))
     }
 
     // ```

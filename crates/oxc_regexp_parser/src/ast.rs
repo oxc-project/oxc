@@ -99,13 +99,14 @@ pub struct LookbehindAssertion<'a> {
 /// The type which includes all atom nodes that Quantifier node can have as children.
 #[derive(Debug)]
 pub enum QuantifiableElement<'a> {
+    Character(Box<'a, Character>),
+    CharacterSet(Box<'a, CharacterSet<'a>>),
+    CharacterClass(Box<'a, CharacterClass<'a>>),
+    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
     Backreference(Box<'a, Backreference<'a>>),
     CapturingGroup(Box<'a, CapturingGroup<'a>>),
-    Character(Box<'a, Character>),
-    CharacterClass(Box<'a, CharacterClass<'a>>),
-    CharacterSet(Box<'a, CharacterSet<'a>>),
-    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
     Group(Box<'a, Group<'a>>),
+    // NOTE: Is this really necessary?
     LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
 }
 
@@ -115,6 +116,7 @@ pub enum QuantifiableElement<'a> {
 pub enum Backreference<'a> {
     AmbiguousBackreference(Box<'a, AmbiguousBackreference<'a>>),
     UnambiguousBackreference(Box<'a, UnambiguousBackreference<'a>>),
+    TemporaryBackreference(Box<'a, TemporaryBackreference<'a>>),
 }
 
 #[derive(Debug)]
@@ -129,6 +131,13 @@ pub struct UnambiguousBackreference<'a> {
     pub span: Span,
     pub r#ref: Atom<'a>, // `\k<name>`
     pub resolved: CapturingGroup<'a>,
+}
+
+/// Not yet resolved backreference.
+#[derive(Debug)]
+pub struct TemporaryBackreference<'a> {
+    pub span: Span,
+    pub r#ref: Atom<'a>, // `\k<name>`
 }
 
 /// The capturing group.
