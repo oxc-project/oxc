@@ -3,9 +3,9 @@ use oxc_span::Span;
 
 #[derive(Debug, Default)]
 pub struct TriviaBuilder {
-    /// NOTE(lucab): This is a set of unique comments. Duplicated
-    /// comments could be generated in case of rewind; they are
-    /// filtered out at insertion time.
+    // NOTE(lucab): This is a set of unique comments. Duplicated
+    // comments could be generated in case of rewind; they are
+    // filtered out at insertion time.
     comments: Vec<(u32, Comment)>,
     irregular_whitespaces: Vec<Span>,
 }
