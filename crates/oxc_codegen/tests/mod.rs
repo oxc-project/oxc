@@ -216,7 +216,7 @@ fn typescript() {
         "abstract class A {private abstract static readonly prop: string}",
         "abstract class A {\n\tprivate abstract static readonly prop: string;\n}\n",
         false,
-    )
+    );
 }
 
 fn test_comment_helper(source_text: &str, expected: &str) {
