@@ -202,9 +202,21 @@ fn typescript() {
     test_ts("let foo: { <T>(t: T): void }", "let foo: {<T>(t: T): void};\n", false);
     test_ts("function <const T>(){}", "function<const T>() {}\n", false);
     test_ts("class A {m?(): void}", "class A {\n\tm?(): void;\n}\n", false);
-    test_ts("class A {constructor(public readonly a: number) {}}", "class A {\n\tconstructor(public readonly a: number) {}\n}\n", false);
-    test_ts("abstract class A {private abstract static m() {}}", "abstract class A {\n\tprivate abstract static m() {}\n}\n", false);
-    test_ts("abstract class A {private abstract static readonly prop: string}", "abstract class A {\n\tprivate abstract static readonly prop: string;\n}\n", false)
+    test_ts(
+        "class A {constructor(public readonly a: number) {}}",
+        "class A {\n\tconstructor(public readonly a: number) {}\n}\n",
+        false,
+    );
+    test_ts(
+        "abstract class A {private abstract static m() {}}",
+        "abstract class A {\n\tprivate abstract static m() {}\n}\n",
+        false,
+    );
+    test_ts(
+        "abstract class A {private abstract static readonly prop: string}",
+        "abstract class A {\n\tprivate abstract static readonly prop: string;\n}\n",
+        false,
+    )
 }
 
 fn test_comment_helper(source_text: &str, expected: &str) {
