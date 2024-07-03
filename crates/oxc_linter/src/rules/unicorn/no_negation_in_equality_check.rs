@@ -50,42 +50,34 @@ declare_oxc_lint!(
 
 impl Rule for NoNegationInEqualityCheck {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::BinaryExpression(binary_expr) => {
-                let Expression::UnaryExpression(left_unary_expr) = &binary_expr.left else {
-                    return;
-                };
+        if let AstKind::BinaryExpression(binary_expr) = node.kind() {
+            let Expression::UnaryExpression(left_unary_expr) = &binary_expr.left else {
+                return;
+            };
 
-                if left_unary_expr.operator != UnaryOperator::LogicalNot {
-                    return;
-                }
-
-                if let Expression::UnaryExpression(left_nested_unary_expr) =
-                    &left_unary_expr.argument
-                {
-                    if left_nested_unary_expr.operator == UnaryOperator::LogicalNot {
-                        return;
-                    }
-                }
-
-                if !binary_expr.operator.is_equality() {
-                    return;
-                }
-
-                let Some(suggested_operator) = binary_expr.operator.equality_inverse_operator()
-                else {
-                    return;
-                };
-
-                ctx.diagnostic(no_negation_in_equality_check_diagnostic(
-                    binary_expr.span,
-                    suggested_operator,
-                ));
-            }
-            _ => {
+            if left_unary_expr.operator != UnaryOperator::LogicalNot {
                 return;
             }
-        };
+
+            if let Expression::UnaryExpression(left_nested_unary_expr) = &left_unary_expr.argument {
+                if left_nested_unary_expr.operator == UnaryOperator::LogicalNot {
+                    return;
+                }
+            }
+
+            if !binary_expr.operator.is_equality() {
+                return;
+            }
+
+            let Some(suggested_operator) = binary_expr.operator.equality_inverse_operator() else {
+                return;
+            };
+
+            ctx.diagnostic(no_negation_in_equality_check_diagnostic(
+                binary_expr.span,
+                suggested_operator,
+            ));
+        }
     }
 }
 
