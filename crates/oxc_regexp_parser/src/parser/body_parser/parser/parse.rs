@@ -4,7 +4,7 @@ use oxc_diagnostics::{OxcDiagnostic, Result};
 use crate::{
     ast,
     parser::{
-        body_parser::{reader::Reader, state::ParserState, unicode},
+        body_parser::{reader::Reader, state::ParserState},
         options::ParserOptions,
         span::SpanFactory,
     },
@@ -13,8 +13,8 @@ use crate::{
 pub struct PatternParser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
-    span_factory: SpanFactory,
-    reader: Reader<'a>,
+    pub(super) span_factory: SpanFactory,
+    pub(super) reader: Reader<'a>,
     _state: ParserState,
 }
 
@@ -390,64 +390,6 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(None)
-    }
-
-    // ```
-    // PatternCharacter ::
-    //   SourceCharacter but not SyntaxCharacter
-    // ```
-    // <https://tc39.es/ecma262/#prod-PatternCharacter>
-    // ```
-    // SyntaxCharacter :: one of
-    //   ^ $ \ . * + ? ( ) [ ] { } |
-    // ```
-    // <https://tc39.es/ecma262/#prod-SyntaxCharacter>
-    fn consume_pattern_character(&mut self) -> Option<ast::Character> {
-        let span_start = self.reader.span_position();
-
-        let cp = self.reader.peek()?;
-        if unicode::is_syntax_character(cp) {
-            return None;
-        }
-
-        self.reader.advance();
-        Some(ast::Character {
-            span: self.span_factory.create(span_start, self.reader.span_position()),
-            value: cp,
-        })
-    }
-
-    fn consume_dot(&mut self) -> Option<ast::AnyCharacterSet> {
-        let span_start = self.reader.span_position();
-
-        if !self.reader.eat('.') {
-            return None;
-        }
-
-        Some(ast::AnyCharacterSet {
-            span: self.span_factory.create(span_start, self.reader.span_position()),
-        })
-    }
-
-    fn consume_decimal_digits(&mut self) -> Option<usize> {
-        let span_start = self.reader.span_position();
-
-        let mut value = 0;
-        while let Some(cp) = self.reader.peek() {
-            if !unicode::is_decimal_digits(cp) {
-                break;
-            }
-
-            // `- '0' as u32`: convert code point to digit
-            value = (10 * value) + (cp - '0' as u32) as usize;
-            self.reader.advance();
-        }
-
-        if self.reader.span_position() != span_start {
-            return Some(value);
-        }
-
-        None
     }
 }
 
