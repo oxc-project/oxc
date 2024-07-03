@@ -129,8 +129,8 @@ mod test {
             assert!(!reader.eat3('E', 'x', 'p'));
             assert!(reader.eat2('x', 'p'));
 
-            let start = reader.index;
-            assert_eq!(start, 7);
+            let checkpoint = reader.checkpoint();
+            assert_eq!(checkpoint, 7);
             assert_eq!(reader.peek(), Some('✨' as u32));
 
             reader.advance();
@@ -140,7 +140,7 @@ mod test {
             reader.advance();
             assert_eq!(reader.peek(), None);
 
-            reader.rewind(start);
+            reader.rewind(checkpoint);
             assert_eq!(reader.peek(), Some('✨' as u32));
         }
     }
@@ -153,7 +153,7 @@ mod test {
 
         assert!(unicode_reader.eat('𠮷')); // Can eat
         assert!(unicode_reader.eat2('野', '家'));
-        let start = unicode_reader.index;
+        let checkpoint = unicode_reader.checkpoint();
         assert!(unicode_reader.eat('は'));
 
         // Emoji + Skin tone
@@ -165,7 +165,7 @@ mod test {
         assert_eq!(unicode_reader.peek2(), Some('ち' as u32));
         assert_eq!(unicode_reader.peek3(), None);
 
-        unicode_reader.rewind(start);
+        unicode_reader.rewind(checkpoint);
         assert!(unicode_reader.eat('は'));
 
         let mut legacy_reader = Reader::new(source_text, false);
@@ -177,7 +177,7 @@ mod test {
 
         assert!(legacy_reader.eat('野'));
         assert!(legacy_reader.eat('家'));
-        let start = unicode_reader.index;
+        let checkpoint = unicode_reader.checkpoint();
         assert!(legacy_reader.eat('は'));
 
         legacy_reader.advance();
@@ -190,7 +190,7 @@ mod test {
         assert_eq!(legacy_reader.peek3(), Some('ち' as u32));
         assert!(legacy_reader.eat3('あ', 'っ', 'ち'));
 
-        legacy_reader.rewind(start);
+        legacy_reader.rewind(checkpoint);
         assert!(legacy_reader.eat('は'));
     }
 

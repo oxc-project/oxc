@@ -46,7 +46,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Pattern>
     fn consume_pattern(&mut self) -> Result<ast::Pattern<'a>> {
-        let start = self.reader.span_position();
+        let span_start = self.reader.span_position();
         // TODO: Read only constants
         // this._numCapturingParens = this.countCapturingParens();
         // TODO: Define state, use later somewhere
@@ -79,7 +79,7 @@ impl<'a> PatternParser<'a> {
         // }
 
         let pattern = ast::Pattern {
-            span: self.span_factory.create(start, self.reader.span_position()),
+            span: self.span_factory.create(span_start, self.reader.span_position()),
             alternatives,
         };
 
@@ -129,7 +129,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Alternative>
     fn consume_alternative(&mut self, i: usize) -> Result<ast::Alternative<'a>> {
-        let start = self.reader.span_position();
+        let span_start = self.reader.span_position();
 
         // TODO: Implement
         let _ = i;
@@ -147,7 +147,7 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(ast::Alternative {
-            span: self.span_factory.create(start, self.reader.span_position()),
+            span: self.span_factory.create(span_start, self.reader.span_position()),
             elements,
         })
     }
@@ -164,7 +164,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Element::Assertion(Box::new_in(assertion, self.allocator))));
         }
 
-        let start = self.reader.span_position();
+        let span_start = self.reader.span_position();
         match (self.consume_atom()?, self.consume_quantifier()?) {
             (Some(atom), None) => {
                 Ok(Some(ast::Element::QuantifiableElement(Box::new_in(atom, self.allocator))))
@@ -172,7 +172,7 @@ impl<'a> PatternParser<'a> {
             (Some(atom), Some(((min, max), greedy))) => {
                 return Ok(Some(ast::Element::Quantifier(Box::new_in(
                     ast::Quantifier {
-                        span: self.span_factory.create(start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
                         min,
                         max,
                         greedy,
@@ -197,13 +197,13 @@ impl<'a> PatternParser<'a> {
     //   (?<! Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // <https://tc39.es/ecma262/#prod-Assertion>
     fn consume_assertion(&mut self) -> Result<Option<ast::Assertion<'a>>> {
-        let start = self.reader.span_position();
+        let span_start = self.reader.span_position();
 
         if self.reader.eat('^') {
             return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
                 ast::BoundaryAssertion::EdgeAssertion(Box::new_in(
                     ast::EdgeAssertion {
-                        span: self.span_factory.create(start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
                         kind: ast::EdgeAssertionKind::Start,
                     },
                     self.allocator,
@@ -215,7 +215,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
                 ast::BoundaryAssertion::EdgeAssertion(Box::new_in(
                     ast::EdgeAssertion {
-                        span: self.span_factory.create(start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
                         kind: ast::EdgeAssertionKind::End,
                     },
                     self.allocator,
@@ -227,7 +227,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
                 ast::BoundaryAssertion::WordBoundaryAssertion(Box::new_in(
                     ast::WordBoundaryAssertion {
-                        span: self.span_factory.create(start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
                         negate: false,
                     },
                     self.allocator,
@@ -239,7 +239,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Assertion::BoundaryAssertion(Box::new_in(
                 ast::BoundaryAssertion::WordBoundaryAssertion(Box::new_in(
                     ast::WordBoundaryAssertion {
-                        span: self.span_factory.create(start, self.reader.span_position()),
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
                         negate: true,
                     },
                     self.allocator,
@@ -249,7 +249,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // Lookaround
-        let rewind_start = self.reader.checkpoint();
+        let checkpoint = self.reader.checkpoint();
         if self.reader.eat2('(', '?') {
             let lookaround = {
                 let is_lookbehind = self.reader.eat('<');
@@ -269,7 +269,7 @@ impl<'a> PatternParser<'a> {
                     return Err(OxcDiagnostic::error("Unterminated group"));
                 }
 
-                let span = self.span_factory.create(start, self.reader.span_position());
+                let span = self.span_factory.create(span_start, self.reader.span_position());
                 let lookaround_assertion = if is_lookbehind {
                     ast::LookaroundAssertion::LookbehindAssertion(Box::new_in(
                         ast::LookbehindAssertion { span, negate, alternatives },
@@ -288,7 +288,7 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            self.reader.rewind(rewind_start);
+            self.reader.rewind(checkpoint);
         }
 
         Ok(None)
@@ -403,7 +403,7 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-SyntaxCharacter>
     fn consume_pattern_character(&mut self) -> Option<ast::Character> {
-        let start = self.reader.span_position();
+        let span_start = self.reader.span_position();
 
         let cp = self.reader.peek()?;
         if unicode::is_syntax_character(cp) {
@@ -412,25 +412,25 @@ impl<'a> PatternParser<'a> {
 
         self.reader.advance();
         Some(ast::Character {
-            span: self.span_factory.create(start, self.reader.span_position()),
+            span: self.span_factory.create(span_start, self.reader.span_position()),
             value: cp,
         })
     }
 
     fn consume_dot(&mut self) -> Option<ast::AnyCharacterSet> {
-        let start = self.reader.span_position();
+        let span_start = self.reader.span_position();
 
         if !self.reader.eat('.') {
             return None;
         }
 
         Some(ast::AnyCharacterSet {
-            span: self.span_factory.create(start, self.reader.span_position()),
+            span: self.span_factory.create(span_start, self.reader.span_position()),
         })
     }
 
     fn consume_decimal_digits(&mut self) -> Option<usize> {
-        let start = self.reader.span_position();
+        let span_start = self.reader.span_position();
 
         let mut value = 0;
         while let Some(cp) = self.reader.peek() {
@@ -443,7 +443,7 @@ impl<'a> PatternParser<'a> {
             self.reader.advance();
         }
 
-        if self.reader.span_position() != start {
+        if self.reader.span_position() != span_start {
             return Some(value);
         }
 
