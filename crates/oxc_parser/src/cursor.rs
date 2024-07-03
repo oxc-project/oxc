@@ -1,8 +1,9 @@
 //! Code related to navigating `Token`s from the lexer
 
+use oxc_allocator::Vec;
 use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     diagnostics,
@@ -330,7 +331,7 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
-    pub(crate) fn consume_decorators(&mut self) -> oxc_allocator::Vec<'a, Decorator<'a>> {
+    pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
         let decorators = std::mem::take(&mut self.state.decorators);
         self.ast.new_vec_from_iter(decorators)
     }
@@ -340,7 +341,7 @@ impl<'a> ParserImpl<'a> {
         open: Kind,
         close: Kind,
         f: F,
-    ) -> Result<oxc_allocator::Vec<'a, T>>
+    ) -> Result<Vec<'a, T>>
     where
         F: Fn(&mut Self) -> Result<Option<T>>,
     {
@@ -367,7 +368,7 @@ impl<'a> ParserImpl<'a> {
         separator: Kind,
         trailing_separator: bool,
         f: F,
-    ) -> Result<oxc_allocator::Vec<'a, T>>
+    ) -> Result<Vec<'a, T>>
     where
         F: Fn(&mut Self) -> Result<T>,
     {
@@ -392,5 +393,44 @@ impl<'a> ParserImpl<'a> {
             list.push(f(self)?);
         }
         Ok(list)
+    }
+
+    pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(
+        &mut self,
+        close: Kind,
+        parse_element: E,
+        parse_rest: R,
+    ) -> Result<(Vec<'a, A>, Option<B>)>
+    where
+        E: Fn(&mut Self) -> Result<A>,
+        R: Fn(&mut Self) -> Result<B>,
+        B: GetSpan,
+    {
+        let mut list = self.ast.new_vec();
+        let mut rest = None;
+        let mut first = true;
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if first {
+                first = false;
+            } else {
+                self.expect(Kind::Comma)?;
+                if self.at(close) {
+                    break;
+                }
+            }
+
+            if self.at(Kind::Dot3) {
+                if let Some(r) = rest.replace(parse_rest(self)?) {
+                    self.error(diagnostics::binding_rest_element_last(r.span()));
+                }
+            } else {
+                list.push(parse_element(self)?);
+            }
+        }
+        Ok((list, rest))
     }
 }

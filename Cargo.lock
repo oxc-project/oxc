@@ -1337,6 +1337,7 @@ dependencies = [
 name = "oxc_ast_codegen"
 version = "0.0.0"
 dependencies = [
+ "convert_case",
  "itertools 0.13.0",
  "lazy_static",
  "prettyplease",
@@ -1499,7 +1500,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "convert_case",
  "dashmap 6.0.1",
@@ -1850,7 +1851,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.5.1"
+version = "0.5.2"
 dependencies = [
  "bpaf",
  "glob",

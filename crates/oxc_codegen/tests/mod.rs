@@ -199,6 +199,8 @@ fn typescript() {
         "class A {\n\treadonly type = 'frame';\n}\n",
         false,
     );
+    test_ts("let foo: { <T>(t: T): void }", "let foo: {<T>(t: T): void};\n", false);
+    test_ts("function <const T>(){}", "function<const T>() {}\n", false);
 }
 
 fn test_comment_helper(source_text: &str, expected: &str) {

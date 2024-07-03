@@ -13,3 +13,18 @@ export declare class Bar {
 export declare class Zoo {
 	foo<F>(f: F): F;
 }
+export declare abstract class Qux {
+	abstract foo(): void;
+	bar(): void;
+	baz(): void;
+}
+export declare class Baz {
+	readonly prop1: 'some string';
+	prop2: string;
+}
+export declare class Boo {
+	readonly prop: number;
+	private readonly prop2: number;
+	readonly prop3: number;
+	constructor(prop?: number, prop2?: number, prop3?: number);
+}

@@ -63,7 +63,6 @@
 
 mod context;
 mod cursor;
-mod list;
 mod modifiers;
 mod state;
 

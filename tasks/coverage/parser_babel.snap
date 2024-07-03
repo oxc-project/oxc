@@ -1439,7 +1439,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·               ─
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[core/uncategorised/396/input.js:1:12]
  1 │ function t(...rest, b) { }
    ·            ───────
@@ -2289,7 +2289,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·              ─
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[core/uncategorised/555/input.js:3:5]
  2 │     first,
  3 │     ...second,
@@ -2321,7 +2321,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·  ────
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/arrow-functions/comma-after-rest-param/input.js:1:2]
  1 │ (...rest,) => {}
    ·  ───────
@@ -2383,7 +2383,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
  3 │     ...second,
@@ -3984,7 +3984,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·       ─
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/uncategorised/277/input.js:1:15]
  1 │ function f(a, ...b, c) { }
    ·               ────
@@ -4011,7 +4011,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                                 ╰── `a` has already been declared here
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/uncategorised/283/input.js:1:2]
  1 │ (...a, b) => {}
    ·  ────
@@ -5191,7 +5191,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ }
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:8]
  1 │ async (...a,) => {};
    ·        ────
@@ -5439,6 +5439,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2018/object-rest-spread/7/input.js:1:7]
  1 │ let { ...x, y, z } = obj;
    ·       ────
+   ╰────
+
+  × Unexpected trailing comma after rest element
+   ╭─[es2018/object-rest-spread/8/input.js:1:17]
+ 1 │ let { x, y, ...z, } = obj;
+   ·                 ─
    ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -6971,6 +6977,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·         ─
    ╰────
 
+  × A rest element must be last in a destructuring pattern
+   ╭─[esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:5]
+ 1 │ ([a,...b,])=>0;
+   ·     ────
+   ╰────
+
   × Identifier `a` has already been declared
    ╭─[esprima/es2015-array-pattern/dupe-param-1/input.js:2:13]
  1 │ "use strict";
@@ -7012,13 +7024,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·     ╰── `,` expected
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:2]
  1 │ (...a, ...b) => 0
    ·  ────
    ╰────
 
-  × A rest parameter must be last in a parameter list
+  × A rest element must be last in a destructuring pattern
    ╭─[esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:2]
  1 │ (...a, ...b) => 0
    ·  ────
@@ -9574,7 +9586,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[esprima/invalid-syntax/migrated_0258/input.js:1:15]
  1 │ function f(a, ...b, c){}
    ·               ────

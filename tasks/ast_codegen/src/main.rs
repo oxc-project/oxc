@@ -5,6 +5,7 @@ mod fmt;
 mod generators;
 mod linker;
 mod schema;
+mod util;
 
 use std::{
     borrow::Cow,
@@ -22,7 +23,7 @@ use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
-use generators::{AstGenerator, AstKindGenerator};
+use generators::{AstGenerator, AstKindGenerator, VisitGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
 
@@ -191,6 +192,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .with(AstGenerator)
         .with(AstKindGenerator)
         .with(ImplGetSpanGenerator)
+        .with(VisitGenerator)
         .generate()?;
 
     let output_dir = output_dir()?;
@@ -216,6 +218,19 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let mut file = fs::File::create(path)?;
 
         file.write_all(span_content.as_bytes())?;
+    }
+
+    {
+        // write `visit.rs` and `visit_mut.rs` files
+        let output = outputs[VisitGenerator.name()].as_many();
+        let content = pprint(&output["visit"]);
+        let content_mut = pprint(&output["visit_mut"]);
+
+        let mut visit = fs::File::create(format!("{output_dir}/visit.rs"))?;
+        let mut visit_mut = fs::File::create(format!("{output_dir}/visit_mut.rs"))?;
+
+        visit.write_all(content.as_bytes())?;
+        visit_mut.write_all(content_mut.as_bytes())?;
     }
 
     cargo_fmt(".")?;

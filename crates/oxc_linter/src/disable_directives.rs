@@ -27,8 +27,8 @@ pub struct DisableDirectives<'a> {
 }
 
 impl<'a> DisableDirectives<'a> {
-    pub fn contains(&self, rule_name: &'static str, start: u32) -> bool {
-        self.intervals.find(start, start + 1).any(|interval| {
+    pub fn contains(&self, rule_name: &'static str, span: Span) -> bool {
+        self.intervals.find(span.start, span.end).any(|interval| {
             interval.val == DisabledRule::All
                 // Our rule name currently does not contain the prefix.
                 // For example, this will match `@typescript-eslint/no-var-requires` given

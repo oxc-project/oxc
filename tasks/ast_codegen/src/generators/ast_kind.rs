@@ -2,13 +2,13 @@ use itertools::Itertools;
 use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
-use crate::{schema::RType, CodegenCtx, Generator, GeneratorOutput};
+use crate::{schema::RType, util::TypeExt, CodegenCtx, Generator, GeneratorOutput, TypeRef};
 
 use super::generated_header;
 
 pub struct AstKindGenerator;
 
-const BLACK_LIST: [&str; 69] = [
+pub const BLACK_LIST: [&str; 69] = [
     "Expression",
     "ObjectPropertyKind",
     "TemplateElement",
@@ -84,13 +84,64 @@ pub fn blacklist((ident, _): &(Ident, Type)) -> bool {
     !BLACK_LIST.contains(&ident.to_string().as_str())
 }
 
-pub fn aliased_nodes() -> [(Ident, Type); 3] {
+pub fn aliased_nodes() -> [(Ident, Type); 1] {
     use syn::parse_quote as pq;
-    [
-        (pq!(FinallyClause), pq!(BlockStatement<'a>)),
-        (pq!(ClassHeritage), pq!(Expression<'a>)),
-        (pq!(ExpressionArrayElement), pq!(Expression<'a>)),
-    ]
+    [(pq!(ExpressionArrayElement), pq!(Expression<'a>))]
+}
+
+pub fn process_types(ty: &TypeRef) -> Vec<(Ident, Type)> {
+    let aliases = match &*ty.borrow() {
+        RType::Enum(enum_) => enum_
+            .item
+            .variants
+            .iter()
+            .filter_map(|it| {
+                it.attrs
+                    .iter()
+                    .find(|it| it.path().is_ident("visit_as"))
+                    .map(|attr| (it, attr))
+                    .map(|(it, attr)| {
+                        assert!(
+                            it.fields.len() == 1,
+                            "visit_as only supports single argument fields."
+                        );
+                        let field = it.fields.iter().next().unwrap();
+                        let type_name = field.ty.get_ident().inner_ident();
+                        (attr.parse_args().unwrap(), parse_quote!(#type_name<'a>))
+                    })
+            })
+            .collect_vec(),
+        RType::Struct(struct_) => struct_
+            .item
+            .fields
+            .iter()
+            .filter_map(|it| {
+                it.attrs
+                    .iter()
+                    .find(|it| it.path().is_ident("visit_as"))
+                    .map(|attr| (it, attr))
+                    .map(|(field, attr)| {
+                        let type_name = field.ty.get_ident().inner_ident();
+                        (attr.parse_args().unwrap(), parse_quote!(#type_name<'a>))
+                    })
+            })
+            .collect_vec(),
+        _ => panic!(),
+    };
+
+    Some(ty)
+        .into_iter()
+        .map(|kind| {
+            if let kind @ (RType::Enum(_) | RType::Struct(_)) = &*kind.borrow() {
+                let ident = kind.ident().unwrap().clone();
+                let typ = kind.as_type().unwrap();
+                (ident, typ)
+            } else {
+                panic!()
+            }
+        })
+        .chain(aliases)
+        .collect()
 }
 
 impl Generator for AstKindGenerator {
@@ -102,14 +153,11 @@ impl Generator for AstKindGenerator {
         let have_kinds: Vec<(Ident, Type)> = ctx
             .ty_table
             .iter()
-            .filter_map(|maybe_kind| match &*maybe_kind.borrow() {
-                kind @ (RType::Enum(_) | RType::Struct(_)) if kind.visitable() => {
-                    let ident = kind.ident().unwrap().clone();
-                    let typ = kind.as_type().unwrap();
-                    Some((ident, typ))
-                }
-                _ => None,
-            })
+            .filter(|it| it.borrow().visitable())
+            .filter(
+                |maybe_kind| matches!(&*maybe_kind.borrow(), kind @ (RType::Enum(_) | RType::Struct(_)) if kind.visitable())
+            )
+            .flat_map(process_types)
             .filter(blacklist)
             .chain(aliased_nodes())
             .collect();

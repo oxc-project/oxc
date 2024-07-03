@@ -2994,6 +2994,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeParameter<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        if self.r#const {
+            p.print_str(b"const ");
+        }
         self.name.gen(p, ctx);
         if let Some(constraint) = &self.constraint {
             p.print_str(b" extends ");
@@ -3073,6 +3076,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                 }
             }
             Self::TSCallSignatureDeclaration(signature) => {
+                if let Some(type_parameters) = signature.type_parameters.as_ref() {
+                    type_parameters.gen(p, ctx);
+                }
                 p.print_str(b"(");
                 if let Some(this_param) = &signature.this_param {
                     this_param.gen(p, ctx);

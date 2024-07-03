@@ -189,12 +189,21 @@ impl<'a> Message<'a> {
         Self { error, start, end, fix, fixed: false }
     }
 
+    #[inline]
     pub fn start(&self) -> u32 {
         self.start
     }
 
+    #[inline]
     pub fn end(&self) -> u32 {
         self.end
+    }
+}
+
+impl<'a> GetSpan for Message<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        Span::new(self.start(), self.end())
     }
 }
 

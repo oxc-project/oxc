@@ -66,7 +66,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         .value
                         .as_ref()
                         .and_then(|expr| {
-                            let ts_type = self.infer_type_from_expression(expr);
+                            let ts_type = if property.readonly {
+                                self.transform_expression_to_ts_type(expr)
+                            } else {
+                                self.infer_type_from_expression(expr)
+                            };
                             if ts_type.is_none() {
                                 self.error(property_must_have_explicit_type(property.key.span()));
                             }
@@ -75,6 +79,9 @@ impl<'a> IsolatedDeclarations<'a> {
                         .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type))
                 })
         };
+
+        // TODO if inferred type_annotations is TSLiteral, it should stand as value,
+        // so `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
 
         self.ast.class_property(
             property.r#type,
@@ -231,7 +238,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> oxc_allocator::Vec<'a, ClassElement<'a>> {
         let mut elements = self.ast.new_vec();
         for (index, param) in function.params.items.iter().enumerate() {
-            if param.accessibility.is_some() {
+            if param.accessibility.is_some() || param.readonly {
                 // transformed params will definitely have type annotation
                 let type_annotation = self.ast.copy(&params.items[index].pattern.type_annotation);
                 if let Some(new_element) =
@@ -329,7 +336,7 @@ impl<'a> IsolatedDeclarations<'a> {
             match element {
                 ClassElement::StaticBlock(_) => {}
                 ClassElement::MethodDefinition(ref method) => {
-                    if method.value.body.is_none() {
+                    if !method.r#type.is_abstract() && method.value.body.is_none() {
                         is_function_overloads = true;
                     } else if is_function_overloads {
                         // Skip implementation of function overloads

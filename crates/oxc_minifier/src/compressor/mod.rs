@@ -6,10 +6,7 @@ mod options;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::visit::walk_mut::{
-    walk_binary_expression_mut, walk_expression_mut, walk_return_statement_mut, walk_statement_mut,
-    walk_statements_mut,
-};
+use oxc_ast::visit::walk_mut;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::Span;
@@ -323,18 +320,18 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
             self.join_vars(stmts);
         }
 
-        walk_statements_mut(self, stmts);
+        walk_mut::walk_statements(self, stmts);
     }
 
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.compress_block(stmt);
         self.compress_while(stmt);
         self.fold_condition(stmt);
-        walk_statement_mut(self, stmt);
+        walk_mut::walk_statement(self, stmt);
     }
 
     fn visit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
-        walk_return_statement_mut(self, stmt);
+        walk_mut::walk_return_statement(self, stmt);
         // We may fold `void 1` to `void 0`, so compress it after visiting
         self.compress_return_statement(stmt);
     }
@@ -347,7 +344,7 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        walk_expression_mut(self, expr);
+        walk_mut::walk_expression(self, expr);
         self.compress_console(expr);
         self.fold_expression(expr);
         if !self.compress_undefined(expr) {
@@ -356,7 +353,7 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
     }
 
     fn visit_binary_expression(&mut self, expr: &mut BinaryExpression<'a>) {
-        walk_binary_expression_mut(self, expr);
+        walk_mut::walk_binary_expression(self, expr);
         self.compress_typeof_undefined(expr);
     }
 }

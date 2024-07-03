@@ -802,7 +802,7 @@ pub enum TSTypePredicateName<'a> {
 #[visited_node]
 #[scope(
     flags(ScopeFlags::TsModuleBlock),
-    strict_if(self.body.as_ref().is_some_and(|body| body.is_strict())),
+    strict_if(self.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict)),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

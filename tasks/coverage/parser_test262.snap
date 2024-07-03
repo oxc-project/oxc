@@ -2126,7 +2126,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  131 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:54:5]
  53 │ 
  54 │ 0, (...a,) => {
@@ -5392,7 +5392,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  123 │ });
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:46:9]
  45 │ 
  46 │ (async (...a,) => {
@@ -5651,7 +5651,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  109 │ });
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:33:19]
  32 │ 
  33 │ (async function f(...a,) {
@@ -5701,7 +5701,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  109 │ });
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:33:17]
  32 │ 
  33 │ (async function(...a,) {
@@ -6275,7 +6275,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  112 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:36:22]
  35 │ 
  36 │ 0, async function* g(...a,) {
@@ -6405,7 +6405,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  112 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-generator/rest-params-trailing-comma-early-error.js:36:20]
  35 │ 
  36 │ 0, async function*(...a,) {
@@ -6656,7 +6656,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  136 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:17]
  59 │ 0, class {
  60 │   async *method(...a,) {
@@ -6876,7 +6876,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  136 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:60:24]
  59 │ 0, class {
  60 │   static async *method(...a,) {
@@ -7096,7 +7096,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  134 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:57:23]
  56 │ var C = class {
  57 │   static async method(...a,) {
@@ -7210,7 +7210,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  134 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:57:23]
  56 │ var C = class {
  57 │   static async method(...a,) {
@@ -12223,7 +12223,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  157 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:81:11]
  80 │ 0, class {
  81 │   *method(...a,) {
@@ -12388,7 +12388,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  157 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:81:18]
  80 │ 0, class {
  81 │   static *method(...a,) {
@@ -12551,7 +12551,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  153 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/method/rest-params-trailing-comma-early-error.js:76:10]
  75 │ 0, class {
  76 │   method(...a,) {
@@ -12609,7 +12609,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  153 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:76:17]
  75 │ 0, class {
  76 │   static method(...a,) {
@@ -14122,7 +14122,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  132 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/function/rest-params-trailing-comma-early-error.js:55:13]
  54 │ 
  55 │ 0, function(...a,) {
@@ -14390,7 +14390,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/generators/rest-params-trailing-comma-early-error.js:57:14]
  56 │ 
  57 │ 0, function*(...a,) {
@@ -15439,7 +15439,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  117 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:41:17]
  40 │ 0, {
  41 │   async *method(...a,) {
@@ -15603,7 +15603,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  110 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:34:17]
  33 │ ({
  34 │   async *method(...a,) {
@@ -15811,7 +15811,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  139 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:63:11]
  62 │ 0, {
  63 │   *method(...a,) {
@@ -16032,7 +16032,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  135 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:58:10]
  57 │ 0, {
  58 │   method(...a,) {
@@ -20955,7 +20955,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
   help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/rest-parameters/position-invalid.js:13:15]
  12 │ $DONOTEVALUATE();
  13 │ function f(a, ...b, c) {}
@@ -21189,7 +21189,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  109 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/async-function/rest-params-trailing-comma-early-error.js:33:18]
  32 │ 
  33 │ async function f(...a,) {
@@ -21406,7 +21406,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  112 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/async-generator/rest-params-trailing-comma-early-error.js:36:19]
  35 │ 
  36 │ async function* f(...a,) {
@@ -21859,7 +21859,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  135 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:59:17]
  58 │ class C {
  59 │   async *method(...a,) {
@@ -22079,7 +22079,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  136 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:60:24]
  59 │ class C {
  60 │   static async *method(...a,) {
@@ -22307,7 +22307,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  134 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-method/rest-params-trailing-comma-early-error.js:57:16]
  56 │ class C {
  57 │   async method(...a,) {
@@ -22421,7 +22421,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:56:23]
  55 │ class C {
  56 │   static async method(...a,) {
@@ -27645,7 +27645,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  155 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:79:11]
  78 │ class C {
  79 │   *method(...a,) {
@@ -27810,7 +27810,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  155 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:79:18]
  78 │ class C {
  79 │   static *method(...a,) {
@@ -27973,7 +27973,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  152 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/method/rest-params-trailing-comma-early-error.js:75:10]
  74 │ class C {
  75 │   method(...a,) {
@@ -28031,7 +28031,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  152 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/method-static/rest-params-trailing-comma-early-error.js:75:17]
  74 │ class C {
  75 │   static method(...a,) {
@@ -31637,7 +31637,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/function/rest-params-trailing-comma-early-error.js:56:12]
  55 │ 
  56 │ function f(...a,) {
@@ -31807,7 +31807,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/generators/rest-params-trailing-comma-early-error.js:57:13]
  56 │ 
  57 │ function* f(...a,) {

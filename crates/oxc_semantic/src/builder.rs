@@ -1529,7 +1529,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
         expr.scope_id.set(Some(self.current_scope_id));
@@ -1577,14 +1577,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_enum(&mut self, decl: &TSEnumDeclaration<'a>) {
+    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
         self.enter_scope(ScopeFlags::empty());
         decl.scope_id.set(Some(self.current_scope_id));
         for member in &decl.members {
-            self.visit_enum_member(member);
+            self.visit_ts_enum_member(member);
         }
         self.leave_scope();
         self.leave_node(kind);

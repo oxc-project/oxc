@@ -439,12 +439,12 @@ impl<'a> ParserImpl<'a> {
 
     pub(crate) fn parse_ts_this_parameter(&mut self) -> Result<TSThisParameter<'a>> {
         let span = self.start_span();
-
+        self.parse_class_element_modifiers(true);
+        self.eat_decorators()?;
         let this = {
             let (span, name) = self.parse_identifier_kind(Kind::This);
             IdentifierName { span, name }
         };
-
         let type_annotation = self.parse_ts_type_annotation()?;
         Ok(self.ast.ts_this_parameter(self.end_span(span), this, type_annotation))
     }
