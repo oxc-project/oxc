@@ -336,7 +336,9 @@ impl<'a> IsolatedDeclarations<'a> {
             match element {
                 ClassElement::StaticBlock(_) => {}
                 ClassElement::MethodDefinition(ref method) => {
-                    if !method.r#type.is_abstract() && method.value.body.is_none() {
+                    if !(method.r#type.is_abstract() || method.optional)
+                        && method.value.body.is_none()
+                    {
                         is_function_overloads = true;
                     } else if is_function_overloads {
                         // Skip implementation of function overloads
