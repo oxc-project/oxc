@@ -129,8 +129,10 @@ mod typescript {
     pub mod ban_types;
     pub mod consistent_indexed_object_style;
     pub mod consistent_type_definitions;
+    pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
     pub mod no_duplicate_enum_values;
+    pub mod no_dynamic_delete;
     pub mod no_empty_interface;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
@@ -218,6 +220,7 @@ mod react {
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_render_return_value;
+    pub mod no_set_state;
     pub mod no_string_refs;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
@@ -258,6 +261,7 @@ mod unicorn {
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
     pub mod no_negated_condition;
+    pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
     pub mod no_new_buffer;
@@ -525,6 +529,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_enum_initializers,
     typescript::ban_types,
     typescript::consistent_type_definitions,
+    typescript::consistent_type_imports,
     typescript::consistent_indexed_object_style,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
@@ -548,6 +553,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::explicit_function_return_type,
     typescript::no_non_null_assertion,
     typescript::no_non_null_asserted_nullish_coalescing,
+    typescript::no_dynamic_delete,
     jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
@@ -616,6 +622,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_lonely_if,
     unicorn::no_magic_array_flat_depth,
     unicorn::no_negated_condition,
+    unicorn::no_negation_in_equality_check,
     unicorn::no_nested_ternary,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
@@ -689,6 +696,7 @@ oxc_macros::declare_all_lint_rules! {
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_render_return_value,
+    react::no_set_state,
     react::no_string_refs,
     react::no_unescaped_entities,
     react::no_is_mounted,
