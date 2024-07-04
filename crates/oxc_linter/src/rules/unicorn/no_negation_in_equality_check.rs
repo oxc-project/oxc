@@ -8,12 +8,13 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_negation_in_equality_check_diagnostic(
     span0: Span,
+    current_operator: BinaryOperator,
     suggested_operator: BinaryOperator,
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.",
     )
-    .with_help(format!("Remove the negation operator and use '{}' instead.", suggested_operator.as_str()))
+    .with_help(format!("Remove the negation operator and use '{}' instead of '{}'.", suggested_operator.as_str(), current_operator.as_str()))
     .with_label(span0)
 }
 
@@ -74,7 +75,8 @@ impl Rule for NoNegationInEqualityCheck {
             };
 
             ctx.diagnostic(no_negation_in_equality_check_diagnostic(
-                binary_expr.span,
+                left_unary_expr.span,
+                binary_expr.operator,
                 suggested_operator,
             ));
         }
