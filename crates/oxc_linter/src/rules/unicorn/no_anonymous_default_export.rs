@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_anonymous_default_export_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-anonymous-default-export): Disallow anonymous functions and classes as the default export")
         .with_help(format!("The {x1} should be named."))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

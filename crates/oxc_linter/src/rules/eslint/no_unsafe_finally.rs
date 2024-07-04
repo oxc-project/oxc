@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_unsafe_finally_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-unsafe-finally): Unsafe finally block")
         .with_help("Control flow inside try or catch blocks will be overwritten by this statement")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

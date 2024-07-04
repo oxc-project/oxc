@@ -108,17 +108,19 @@ fn test_switch_case() {
 
 #[test]
 fn test_function_parameters() {
-    SemanticTester::js(
+    let tester = SemanticTester::js(
         "
             const foo = 2;
-            function func(a = foo, b = a) {
+            const c = 0;
+            function func(a = foo, b = c, c = 0) {
                 const foo = 0;
             }
         ",
-    )
-    .has_root_symbol("foo")
-    .has_number_of_references(1)
-    .test();
+    );
+
+    tester.has_root_symbol("foo").has_number_of_references(1).test();
+    // b = c should reference the third parameter, so root symbol `c`` should have 0 reference
+    tester.has_root_symbol("c").has_number_of_references(0).test();
 }
 
 #[test]

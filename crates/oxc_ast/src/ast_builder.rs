@@ -608,10 +608,10 @@ impl<'a> AstBuilder<'a> {
     ) -> Expression<'a> {
         Expression::CallExpression(self.alloc(CallExpression {
             span,
-            callee,
             arguments,
-            optional,
+            callee,
             type_parameters,
+            optional,
         }))
     }
 
@@ -1067,6 +1067,7 @@ impl<'a> AstBuilder<'a> {
         ClassElement::PropertyDefinition(self.alloc(PropertyDefinition {
             r#type,
             span,
+            decorators,
             key,
             value,
             computed,
@@ -1078,7 +1079,6 @@ impl<'a> AstBuilder<'a> {
             readonly,
             type_annotation,
             accessibility,
-            decorators,
         }))
     }
 
@@ -1540,6 +1540,11 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
+    pub fn ts_parenthesized_type(self, span: Span, ty: TSType<'a>) -> TSType<'a> {
+        TSType::TSParenthesizedType(self.alloc(TSParenthesizedType { span, type_annotation: ty }))
+    }
+
+    #[inline]
     pub fn ts_intersection_type(self, span: Span, types: Vec<'a, TSType<'a>>) -> TSType<'a> {
         TSType::TSIntersectionType(self.alloc(TSIntersectionType { span, types }))
     }
@@ -1855,9 +1860,9 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSInterfaceDeclaration(self.alloc(TSInterfaceDeclaration {
             span,
             id,
-            body,
-            type_parameters,
             extends,
+            type_parameters,
+            body,
             declare,
         }))
     }
@@ -1874,8 +1879,8 @@ impl<'a> AstBuilder<'a> {
         Declaration::TSTypeAliasDeclaration(self.alloc(TSTypeAliasDeclaration {
             span,
             id,
-            type_annotation,
             type_parameters,
+            type_annotation,
             declare,
         }))
     }

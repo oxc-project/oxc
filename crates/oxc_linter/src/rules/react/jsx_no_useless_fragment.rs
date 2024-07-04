@@ -13,11 +13,11 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn needs_more_children(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.").with_label(span0)
 }
 
 fn child_of_html_element(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

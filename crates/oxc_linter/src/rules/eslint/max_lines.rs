@@ -5,10 +5,10 @@ use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn max_lines_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(max-lines): {x0:?}"))
-        .with_help("Reduce the number of lines in this file")
-        .with_labels([span1.into()])
+fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("eslint(max-lines): File has too many lines ({count})."))
+        .with_help(format!("Maximum allowed is {max}."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -120,24 +120,7 @@ impl Rule for MaxLines {
         };
 
         if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
-            let error = format!(
-                "File has too many lines ({}). Maximum allowed is {}.",
-                lines_in_file, self.max,
-            );
-
-            let start = ctx
-                .source_text()
-                .lines()
-                .take(self.max)
-                .map(|line| line.chars().count() + 1) // padding 1 each line for '\n'
-                .sum::<usize>();
-            ctx.diagnostic(max_lines_diagnostic(
-                &error,
-                Span::new(
-                    u32::try_from(start).unwrap_or(u32::MIN),
-                    u32::try_from(ctx.source_text().len()).unwrap_or(u32::MAX),
-                ),
-            ));
+            ctx.diagnostic(max_lines_diagnostic(lines_in_file, self.max, Span::new(0, 0)));
         }
     }
 }

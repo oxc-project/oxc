@@ -7,7 +7,7 @@ use crate::{context::LintContext, disable_directives::DisableRuleComment, rule::
 fn no_abusive_eslint_disable_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-abusive-eslint-disable): Unexpected `eslint-disable` comment that does not specify any rules to disable.")
         .with_help("Specify the rules you want to disable.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

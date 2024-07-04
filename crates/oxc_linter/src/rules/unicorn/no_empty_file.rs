@@ -10,7 +10,7 @@ use crate::{
 fn no_empty_file_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")
         .with_help("Delete this file or add some code to it.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -58,7 +58,13 @@ impl Rule for NoEmptyFile {
             return;
         }
 
-        ctx.diagnostic(no_empty_file_diagnostic(Span::new(0, 0)));
+        let mut span = program.span;
+        // only show diagnostic for the first 100 characters to avoid huge diagnostic messages with
+        // empty programs containing a bunch of comments.
+        // NOTE: if the enable/disable directives come after the first 100 characters they won't be
+        // respected by this diagnostic.
+        span.end = std::cmp::min(span.end, 100);
+        ctx.diagnostic(no_empty_file_diagnostic(span));
     }
 }
 
@@ -104,6 +110,7 @@ fn test() {
         r"[]",
         r"(() => {})()",
         "(() => {})();",
+        "/* eslint-disable no-empty-file */",
     ];
 
     let fail = vec![

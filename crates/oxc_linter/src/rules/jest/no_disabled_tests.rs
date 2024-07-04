@@ -66,7 +66,7 @@ declare_oxc_lint!(
 fn no_disabled_tests_diagnostic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{x0}(no-disabled-tests): {x1:?}"))
         .with_help(format!("{x2:?}"))
-        .with_labels([span3.into()])
+        .with_label(span3)
 }
 
 enum Message {

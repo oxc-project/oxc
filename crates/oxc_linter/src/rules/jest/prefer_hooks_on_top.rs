@@ -20,7 +20,7 @@ fn no_hook_on_top(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(prefer-hooks-on-top): Suggest having hooks before any test cases.",
     )
     .with_help("Hooks should come before test cases")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

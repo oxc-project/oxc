@@ -12,7 +12,7 @@ fn replacement(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         "eslint(no-nonoctal-decimal-escape): Don't use '{x0}' escape sequence."
     ))
     .with_help(format!("Replace '{x0}' with '{x1}'. This maintains the current functionality."))
-    .with_labels([span2.into()])
+    .with_label(span2)
 }
 
 fn escape_backslash(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
@@ -20,7 +20,7 @@ fn escape_backslash(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         "eslint(no-nonoctal-decimal-escape): Don't use '{x0}' escape sequence."
     ))
     .with_help(format!("Replace '{x0}' with '{x1}' to include the actual backslash character."))
-    .with_labels([span2.into()])
+    .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

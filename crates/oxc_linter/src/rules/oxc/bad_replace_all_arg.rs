@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{Expression, RegExpFlags},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,7 +16,10 @@ use crate::{
 fn bad_replace_all_arg_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")
         .with_help("To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.")
-        .with_labels([LabeledSpan::new_with_span(Some("`replaceAll` called here".into()), span0), LabeledSpan::new_with_span(Some("RegExp supplied here".into()), span1)])
+        .with_labels([
+            span0.label("`replaceAll` called here"),
+            span1.label("RegExp supplied here"),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]

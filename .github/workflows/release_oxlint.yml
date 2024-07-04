@@ -232,3 +232,17 @@ jobs:
           touch test.js
           ldd --version || true
           npx oxlint@${{ needs.check.outputs.version }} ./test.js
+
+  eslint-plugin-oxlint:
+    needs: publish
+    name: Update eslint-plugin-oxlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: benc-uk/workflow-dispatch@v1
+        with:
+          repo: oxc-project/eslint-plugin-oxlint
+          workflow: bump_oxlint.yml
+          token: ${{ secrets.PAT }}
+          ref: main
+          inputs: '{ "version": "${{ needs.check.outputs.version }}" }'

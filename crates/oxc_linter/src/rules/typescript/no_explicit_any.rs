@@ -9,7 +9,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_explicit_any_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(no-explicit-any): Unexpected any. Specify a different type.")
         .with_help("Use `unknown` instead, this will force you to explicitly, and safely, assert the type is correct.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

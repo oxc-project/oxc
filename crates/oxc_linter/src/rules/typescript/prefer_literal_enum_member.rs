@@ -9,7 +9,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn prefer_literal_enum_member_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(prefer-literal-enum-member): Explicit enum value must only be a literal value (string, number, boolean, etc).")
         .with_help("Require all enum members to be literal values.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

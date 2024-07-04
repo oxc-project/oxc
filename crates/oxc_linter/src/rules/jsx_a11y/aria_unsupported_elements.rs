@@ -36,7 +36,7 @@ pub struct AriaUnsupportedElements;
 fn aria_unsupported_elements_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.")
         .with_help(format!("Try removing the prop `{x1}`."))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 impl Rule for AriaUnsupportedElements {

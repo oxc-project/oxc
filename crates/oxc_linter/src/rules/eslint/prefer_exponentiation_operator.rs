@@ -15,7 +15,7 @@ fn prefer_exponentian_operator_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-unicorn(prefer-exponentian-operator): Prefer `**` over `Math.pow`.",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 declare_oxc_lint!(

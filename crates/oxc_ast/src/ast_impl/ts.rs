@@ -128,6 +128,16 @@ impl<'a> Hash for TSTypeParameter<'a> {
     }
 }
 
+impl<'a> TSType<'a> {
+    /// Remove nested parentheses from this type.
+    pub fn without_parenthesized(&self) -> &Self {
+        match self {
+            Self::TSParenthesizedType(expr) => expr.type_annotation.without_parenthesized(),
+            _ => self,
+        }
+    }
+}
+
 impl TSAccessibility {
     pub fn is_private(&self) -> bool {
         matches!(self, TSAccessibility::Private)

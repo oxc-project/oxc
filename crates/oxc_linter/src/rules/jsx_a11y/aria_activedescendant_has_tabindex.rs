@@ -17,7 +17,7 @@ use crate::{
 fn aria_activedescendant_has_tabindex_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-activedescendant-has-tabindex): Enforce elements with aria-activedescendant are tabbable.")
         .with_help("An element that manages focus with `aria-activedescendant` must have a tabindex.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

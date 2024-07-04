@@ -16,7 +16,7 @@ use crate::{
 fn missing_type_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsdoc(require-param-type): Missing JSDoc `@param` type.")
         .with_help("Add {type} to `@param` tag.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

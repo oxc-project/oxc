@@ -14,7 +14,7 @@ fn no_typos_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         "eslint-plugin-next(no-typos): {x0} may be a typo. Did you mean {x1}?"
     ))
     .with_help("Prevent common typos in Next.js's data fetching functions")
-    .with_labels([span2.into()])
+    .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

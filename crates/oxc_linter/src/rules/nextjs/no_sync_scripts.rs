@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_sync_scripts_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.")
         .with_help("See https://nextjs.org/docs/messages/no-sync-scripts")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

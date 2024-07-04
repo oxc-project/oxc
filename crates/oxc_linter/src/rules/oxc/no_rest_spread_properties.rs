@@ -7,7 +7,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_rest_spread_properties_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("oxc(no-rest-spread-properties): {x1} are not allowed. {x2}"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

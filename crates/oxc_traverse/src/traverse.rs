@@ -1639,6 +1639,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_ts_parenthesized_type(
+        &mut self,
+        node: &mut TSParenthesizedType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_parenthesized_type(
+        &mut self,
+        node: &mut TSParenthesizedType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_type_operator(&mut self, node: &mut TSTypeOperator<'a>, ctx: &mut TraverseCtx<'a>) {
     }
     #[inline]

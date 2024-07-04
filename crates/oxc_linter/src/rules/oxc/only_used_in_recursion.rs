@@ -15,7 +15,7 @@ fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     .with_help(
         "Remove the argument and its usage. Alternatively, use the argument in the function body.",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

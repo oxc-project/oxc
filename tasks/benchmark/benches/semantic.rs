@@ -20,6 +20,8 @@ fn bench_semantic(criterion: &mut Criterion) {
                 let program = allocator.alloc(ret.program);
                 b.iter_with_large_drop(|| {
                     SemanticBuilder::new(source_text, source_type)
+                        .with_trivias(ret.trivias.clone())
+                        .with_build_jsdoc(true)
                         .build_module_record(PathBuf::new(), program)
                         .build(program)
                 });

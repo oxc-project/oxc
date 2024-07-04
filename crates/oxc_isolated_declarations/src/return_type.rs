@@ -138,7 +138,7 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
         // We don't care about nested functions
     }
 
-    fn visit_arrow_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {
         // We don't care about nested functions
     }
 

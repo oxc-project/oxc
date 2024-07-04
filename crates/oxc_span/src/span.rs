@@ -275,6 +275,12 @@ impl Span {
     pub fn source_text<'a>(&self, source_text: &'a str) -> &'a str {
         &source_text[self.start as usize..self.end as usize]
     }
+
+    /// Create a [`LabeledSpan`] covering this [`Span`] with the given label.
+    #[must_use]
+    pub fn label<S: Into<String>>(self, label: S) -> LabeledSpan {
+        LabeledSpan::new_with_span(Some(label.into()), self)
+    }
 }
 
 impl Index<Span> for str {

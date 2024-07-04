@@ -12,7 +12,7 @@ use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode}
 fn no_array_for_each_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`")
         .with_help("Replace it with a for` loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

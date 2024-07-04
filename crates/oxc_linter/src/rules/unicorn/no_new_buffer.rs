@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_new_buffer_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.")
         .with_help("`new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

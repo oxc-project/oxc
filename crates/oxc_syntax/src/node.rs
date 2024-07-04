@@ -30,7 +30,6 @@ bitflags! {
         const JSDoc     = 1 << 0; // If the Node has a JSDoc comment attached
         const Class     = 1 << 1; // If Node is inside a class
         const HasYield  = 1 << 2; // If function has yield statement
-        const Parameter = 1 << 3; // If Node is inside a parameter
     }
 }
 
@@ -48,10 +47,5 @@ impl NodeFlags {
     #[inline]
     pub fn has_yield(&self) -> bool {
         self.contains(Self::HasYield)
-    }
-
-    #[inline]
-    pub fn has_parameter(&self) -> bool {
-        self.contains(Self::Parameter)
     }
 }

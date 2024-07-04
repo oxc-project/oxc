@@ -49,8 +49,8 @@ pub(crate) enum AncestorType {
     StaticMemberExpressionProperty = 17,
     PrivateFieldExpressionObject = 18,
     PrivateFieldExpressionField = 19,
-    CallExpressionCallee = 20,
-    CallExpressionArguments = 21,
+    CallExpressionArguments = 20,
+    CallExpressionCallee = 21,
     CallExpressionTypeParameters = 22,
     NewExpressionCallee = 23,
     NewExpressionArguments = 24,
@@ -167,10 +167,10 @@ pub(crate) enum AncestorType {
     MethodDefinitionDecorators = 135,
     MethodDefinitionKey = 136,
     MethodDefinitionValue = 137,
-    PropertyDefinitionKey = 138,
-    PropertyDefinitionValue = 139,
-    PropertyDefinitionTypeAnnotation = 140,
-    PropertyDefinitionDecorators = 141,
+    PropertyDefinitionDecorators = 138,
+    PropertyDefinitionKey = 139,
+    PropertyDefinitionValue = 140,
+    PropertyDefinitionTypeAnnotation = 141,
     StaticBlockBody = 142,
     AccessorPropertyKey = 143,
     AccessorPropertyValue = 144,
@@ -230,99 +230,100 @@ pub(crate) enum AncestorType {
     TSConditionalTypeFalseType = 198,
     TSUnionTypeTypes = 199,
     TSIntersectionTypeTypes = 200,
-    TSTypeOperatorTypeAnnotation = 201,
-    TSArrayTypeElementType = 202,
-    TSIndexedAccessTypeObjectType = 203,
-    TSIndexedAccessTypeIndexType = 204,
-    TSTupleTypeElementTypes = 205,
-    TSNamedTupleMemberElementType = 206,
-    TSNamedTupleMemberLabel = 207,
-    TSOptionalTypeTypeAnnotation = 208,
-    TSRestTypeTypeAnnotation = 209,
-    TSTypeReferenceTypeName = 210,
-    TSTypeReferenceTypeParameters = 211,
-    TSQualifiedNameLeft = 212,
-    TSQualifiedNameRight = 213,
-    TSTypeParameterInstantiationParams = 214,
-    TSTypeParameterName = 215,
-    TSTypeParameterConstraint = 216,
-    TSTypeParameterDefault = 217,
-    TSTypeParameterDeclarationParams = 218,
-    TSTypeAliasDeclarationId = 219,
-    TSTypeAliasDeclarationTypeAnnotation = 220,
+    TSParenthesizedTypeTypeAnnotation = 201,
+    TSTypeOperatorTypeAnnotation = 202,
+    TSArrayTypeElementType = 203,
+    TSIndexedAccessTypeObjectType = 204,
+    TSIndexedAccessTypeIndexType = 205,
+    TSTupleTypeElementTypes = 206,
+    TSNamedTupleMemberElementType = 207,
+    TSNamedTupleMemberLabel = 208,
+    TSOptionalTypeTypeAnnotation = 209,
+    TSRestTypeTypeAnnotation = 210,
+    TSTypeReferenceTypeName = 211,
+    TSTypeReferenceTypeParameters = 212,
+    TSQualifiedNameLeft = 213,
+    TSQualifiedNameRight = 214,
+    TSTypeParameterInstantiationParams = 215,
+    TSTypeParameterName = 216,
+    TSTypeParameterConstraint = 217,
+    TSTypeParameterDefault = 218,
+    TSTypeParameterDeclarationParams = 219,
+    TSTypeAliasDeclarationId = 220,
     TSTypeAliasDeclarationTypeParameters = 221,
-    TSClassImplementsExpression = 222,
-    TSClassImplementsTypeParameters = 223,
-    TSInterfaceDeclarationId = 224,
-    TSInterfaceDeclarationBody = 225,
-    TSInterfaceDeclarationTypeParameters = 226,
-    TSInterfaceDeclarationExtends = 227,
-    TSInterfaceBodyBody = 228,
-    TSPropertySignatureKey = 229,
-    TSPropertySignatureTypeAnnotation = 230,
-    TSIndexSignatureParameters = 231,
-    TSIndexSignatureTypeAnnotation = 232,
-    TSCallSignatureDeclarationThisParam = 233,
-    TSCallSignatureDeclarationParams = 234,
-    TSCallSignatureDeclarationReturnType = 235,
-    TSCallSignatureDeclarationTypeParameters = 236,
-    TSMethodSignatureKey = 237,
-    TSMethodSignatureThisParam = 238,
-    TSMethodSignatureParams = 239,
-    TSMethodSignatureReturnType = 240,
-    TSMethodSignatureTypeParameters = 241,
-    TSConstructSignatureDeclarationParams = 242,
-    TSConstructSignatureDeclarationReturnType = 243,
-    TSConstructSignatureDeclarationTypeParameters = 244,
-    TSIndexSignatureNameTypeAnnotation = 245,
-    TSInterfaceHeritageExpression = 246,
-    TSInterfaceHeritageTypeParameters = 247,
-    TSTypePredicateParameterName = 248,
-    TSTypePredicateTypeAnnotation = 249,
-    TSModuleDeclarationId = 250,
-    TSModuleDeclarationBody = 251,
-    TSModuleBlockDirectives = 252,
-    TSModuleBlockBody = 253,
-    TSTypeLiteralMembers = 254,
-    TSInferTypeTypeParameter = 255,
-    TSTypeQueryExprName = 256,
-    TSTypeQueryTypeParameters = 257,
-    TSImportTypeParameter = 258,
-    TSImportTypeQualifier = 259,
-    TSImportTypeAttributes = 260,
-    TSImportTypeTypeParameters = 261,
-    TSImportAttributesElements = 262,
-    TSImportAttributeName = 263,
-    TSImportAttributeValue = 264,
-    TSFunctionTypeThisParam = 265,
-    TSFunctionTypeParams = 266,
-    TSFunctionTypeReturnType = 267,
-    TSFunctionTypeTypeParameters = 268,
-    TSConstructorTypeParams = 269,
-    TSConstructorTypeReturnType = 270,
-    TSConstructorTypeTypeParameters = 271,
-    TSMappedTypeTypeParameter = 272,
-    TSMappedTypeNameType = 273,
-    TSMappedTypeTypeAnnotation = 274,
-    TSTemplateLiteralTypeQuasis = 275,
-    TSTemplateLiteralTypeTypes = 276,
-    TSAsExpressionExpression = 277,
-    TSAsExpressionTypeAnnotation = 278,
-    TSSatisfiesExpressionExpression = 279,
-    TSSatisfiesExpressionTypeAnnotation = 280,
-    TSTypeAssertionExpression = 281,
-    TSTypeAssertionTypeAnnotation = 282,
-    TSImportEqualsDeclarationId = 283,
-    TSImportEqualsDeclarationModuleReference = 284,
-    TSExternalModuleReferenceExpression = 285,
-    TSNonNullExpressionExpression = 286,
-    DecoratorExpression = 287,
-    TSExportAssignmentExpression = 288,
-    TSNamespaceExportDeclarationId = 289,
-    TSInstantiationExpressionExpression = 290,
-    TSInstantiationExpressionTypeParameters = 291,
-    JSDocNullableTypeTypeAnnotation = 292,
-    JSDocNonNullableTypeTypeAnnotation = 293,
+    TSTypeAliasDeclarationTypeAnnotation = 222,
+    TSClassImplementsExpression = 223,
+    TSClassImplementsTypeParameters = 224,
+    TSInterfaceDeclarationId = 225,
+    TSInterfaceDeclarationExtends = 226,
+    TSInterfaceDeclarationTypeParameters = 227,
+    TSInterfaceDeclarationBody = 228,
+    TSInterfaceBodyBody = 229,
+    TSPropertySignatureKey = 230,
+    TSPropertySignatureTypeAnnotation = 231,
+    TSIndexSignatureParameters = 232,
+    TSIndexSignatureTypeAnnotation = 233,
+    TSCallSignatureDeclarationThisParam = 234,
+    TSCallSignatureDeclarationParams = 235,
+    TSCallSignatureDeclarationReturnType = 236,
+    TSCallSignatureDeclarationTypeParameters = 237,
+    TSMethodSignatureKey = 238,
+    TSMethodSignatureThisParam = 239,
+    TSMethodSignatureParams = 240,
+    TSMethodSignatureReturnType = 241,
+    TSMethodSignatureTypeParameters = 242,
+    TSConstructSignatureDeclarationParams = 243,
+    TSConstructSignatureDeclarationReturnType = 244,
+    TSConstructSignatureDeclarationTypeParameters = 245,
+    TSIndexSignatureNameTypeAnnotation = 246,
+    TSInterfaceHeritageExpression = 247,
+    TSInterfaceHeritageTypeParameters = 248,
+    TSTypePredicateParameterName = 249,
+    TSTypePredicateTypeAnnotation = 250,
+    TSModuleDeclarationId = 251,
+    TSModuleDeclarationBody = 252,
+    TSModuleBlockDirectives = 253,
+    TSModuleBlockBody = 254,
+    TSTypeLiteralMembers = 255,
+    TSInferTypeTypeParameter = 256,
+    TSTypeQueryExprName = 257,
+    TSTypeQueryTypeParameters = 258,
+    TSImportTypeParameter = 259,
+    TSImportTypeQualifier = 260,
+    TSImportTypeAttributes = 261,
+    TSImportTypeTypeParameters = 262,
+    TSImportAttributesElements = 263,
+    TSImportAttributeName = 264,
+    TSImportAttributeValue = 265,
+    TSFunctionTypeThisParam = 266,
+    TSFunctionTypeParams = 267,
+    TSFunctionTypeReturnType = 268,
+    TSFunctionTypeTypeParameters = 269,
+    TSConstructorTypeParams = 270,
+    TSConstructorTypeReturnType = 271,
+    TSConstructorTypeTypeParameters = 272,
+    TSMappedTypeTypeParameter = 273,
+    TSMappedTypeNameType = 274,
+    TSMappedTypeTypeAnnotation = 275,
+    TSTemplateLiteralTypeQuasis = 276,
+    TSTemplateLiteralTypeTypes = 277,
+    TSAsExpressionExpression = 278,
+    TSAsExpressionTypeAnnotation = 279,
+    TSSatisfiesExpressionExpression = 280,
+    TSSatisfiesExpressionTypeAnnotation = 281,
+    TSTypeAssertionExpression = 282,
+    TSTypeAssertionTypeAnnotation = 283,
+    TSImportEqualsDeclarationId = 284,
+    TSImportEqualsDeclarationModuleReference = 285,
+    TSExternalModuleReferenceExpression = 286,
+    TSNonNullExpressionExpression = 287,
+    DecoratorExpression = 288,
+    TSExportAssignmentExpression = 289,
+    TSNamespaceExportDeclarationId = 290,
+    TSInstantiationExpressionExpression = 291,
+    TSInstantiationExpressionTypeParameters = 292,
+    JSDocNullableTypeTypeAnnotation = 293,
+    JSDocNonNullableTypeTypeAnnotation = 294,
 }
 
 /// Ancestor type used in AST traversal.
@@ -374,10 +375,10 @@ pub enum Ancestor<'a> {
         AncestorType::PrivateFieldExpressionObject as u16,
     PrivateFieldExpressionField(PrivateFieldExpressionWithoutField<'a>) =
         AncestorType::PrivateFieldExpressionField as u16,
-    CallExpressionCallee(CallExpressionWithoutCallee<'a>) =
-        AncestorType::CallExpressionCallee as u16,
     CallExpressionArguments(CallExpressionWithoutArguments<'a>) =
         AncestorType::CallExpressionArguments as u16,
+    CallExpressionCallee(CallExpressionWithoutCallee<'a>) =
+        AncestorType::CallExpressionCallee as u16,
     CallExpressionTypeParameters(CallExpressionWithoutTypeParameters<'a>) =
         AncestorType::CallExpressionTypeParameters as u16,
     NewExpressionCallee(NewExpressionWithoutCallee<'a>) = AncestorType::NewExpressionCallee as u16,
@@ -568,14 +569,14 @@ pub enum Ancestor<'a> {
     MethodDefinitionKey(MethodDefinitionWithoutKey<'a>) = AncestorType::MethodDefinitionKey as u16,
     MethodDefinitionValue(MethodDefinitionWithoutValue<'a>) =
         AncestorType::MethodDefinitionValue as u16,
+    PropertyDefinitionDecorators(PropertyDefinitionWithoutDecorators<'a>) =
+        AncestorType::PropertyDefinitionDecorators as u16,
     PropertyDefinitionKey(PropertyDefinitionWithoutKey<'a>) =
         AncestorType::PropertyDefinitionKey as u16,
     PropertyDefinitionValue(PropertyDefinitionWithoutValue<'a>) =
         AncestorType::PropertyDefinitionValue as u16,
     PropertyDefinitionTypeAnnotation(PropertyDefinitionWithoutTypeAnnotation<'a>) =
         AncestorType::PropertyDefinitionTypeAnnotation as u16,
-    PropertyDefinitionDecorators(PropertyDefinitionWithoutDecorators<'a>) =
-        AncestorType::PropertyDefinitionDecorators as u16,
     StaticBlockBody(StaticBlockWithoutBody<'a>) = AncestorType::StaticBlockBody as u16,
     AccessorPropertyKey(AccessorPropertyWithoutKey<'a>) = AncestorType::AccessorPropertyKey as u16,
     AccessorPropertyValue(AccessorPropertyWithoutValue<'a>) =
@@ -683,6 +684,8 @@ pub enum Ancestor<'a> {
     TSUnionTypeTypes(TSUnionTypeWithoutTypes<'a>) = AncestorType::TSUnionTypeTypes as u16,
     TSIntersectionTypeTypes(TSIntersectionTypeWithoutTypes<'a>) =
         AncestorType::TSIntersectionTypeTypes as u16,
+    TSParenthesizedTypeTypeAnnotation(TSParenthesizedTypeWithoutTypeAnnotation<'a>) =
+        AncestorType::TSParenthesizedTypeTypeAnnotation as u16,
     TSTypeOperatorTypeAnnotation(TSTypeOperatorWithoutTypeAnnotation<'a>) =
         AncestorType::TSTypeOperatorTypeAnnotation as u16,
     TSArrayTypeElementType(TSArrayTypeWithoutElementType<'a>) =
@@ -719,22 +722,22 @@ pub enum Ancestor<'a> {
         AncestorType::TSTypeParameterDeclarationParams as u16,
     TSTypeAliasDeclarationId(TSTypeAliasDeclarationWithoutId<'a>) =
         AncestorType::TSTypeAliasDeclarationId as u16,
-    TSTypeAliasDeclarationTypeAnnotation(TSTypeAliasDeclarationWithoutTypeAnnotation<'a>) =
-        AncestorType::TSTypeAliasDeclarationTypeAnnotation as u16,
     TSTypeAliasDeclarationTypeParameters(TSTypeAliasDeclarationWithoutTypeParameters<'a>) =
         AncestorType::TSTypeAliasDeclarationTypeParameters as u16,
+    TSTypeAliasDeclarationTypeAnnotation(TSTypeAliasDeclarationWithoutTypeAnnotation<'a>) =
+        AncestorType::TSTypeAliasDeclarationTypeAnnotation as u16,
     TSClassImplementsExpression(TSClassImplementsWithoutExpression<'a>) =
         AncestorType::TSClassImplementsExpression as u16,
     TSClassImplementsTypeParameters(TSClassImplementsWithoutTypeParameters<'a>) =
         AncestorType::TSClassImplementsTypeParameters as u16,
     TSInterfaceDeclarationId(TSInterfaceDeclarationWithoutId<'a>) =
         AncestorType::TSInterfaceDeclarationId as u16,
-    TSInterfaceDeclarationBody(TSInterfaceDeclarationWithoutBody<'a>) =
-        AncestorType::TSInterfaceDeclarationBody as u16,
-    TSInterfaceDeclarationTypeParameters(TSInterfaceDeclarationWithoutTypeParameters<'a>) =
-        AncestorType::TSInterfaceDeclarationTypeParameters as u16,
     TSInterfaceDeclarationExtends(TSInterfaceDeclarationWithoutExtends<'a>) =
         AncestorType::TSInterfaceDeclarationExtends as u16,
+    TSInterfaceDeclarationTypeParameters(TSInterfaceDeclarationWithoutTypeParameters<'a>) =
+        AncestorType::TSInterfaceDeclarationTypeParameters as u16,
+    TSInterfaceDeclarationBody(TSInterfaceDeclarationWithoutBody<'a>) =
+        AncestorType::TSInterfaceDeclarationBody as u16,
     TSInterfaceBodyBody(TSInterfaceBodyWithoutBody<'a>) = AncestorType::TSInterfaceBodyBody as u16,
     TSPropertySignatureKey(TSPropertySignatureWithoutKey<'a>) =
         AncestorType::TSPropertySignatureKey as u16,
@@ -930,8 +933,8 @@ impl<'a> Ancestor<'a> {
     pub fn is_call_expression(&self) -> bool {
         matches!(
             self,
-            Self::CallExpressionCallee(_)
-                | Self::CallExpressionArguments(_)
+            Self::CallExpressionArguments(_)
+                | Self::CallExpressionCallee(_)
                 | Self::CallExpressionTypeParameters(_)
         )
     }
@@ -1308,10 +1311,10 @@ impl<'a> Ancestor<'a> {
     pub fn is_property_definition(&self) -> bool {
         matches!(
             self,
-            Self::PropertyDefinitionKey(_)
+            Self::PropertyDefinitionDecorators(_)
+                | Self::PropertyDefinitionKey(_)
                 | Self::PropertyDefinitionValue(_)
                 | Self::PropertyDefinitionTypeAnnotation(_)
-                | Self::PropertyDefinitionDecorators(_)
         )
     }
 
@@ -1512,6 +1515,11 @@ impl<'a> Ancestor<'a> {
     }
 
     #[inline]
+    pub fn is_ts_parenthesized_type(&self) -> bool {
+        matches!(self, Self::TSParenthesizedTypeTypeAnnotation(_))
+    }
+
+    #[inline]
     pub fn is_ts_type_operator(&self) -> bool {
         matches!(self, Self::TSTypeOperatorTypeAnnotation(_))
     }
@@ -1584,8 +1592,8 @@ impl<'a> Ancestor<'a> {
         matches!(
             self,
             Self::TSTypeAliasDeclarationId(_)
-                | Self::TSTypeAliasDeclarationTypeAnnotation(_)
                 | Self::TSTypeAliasDeclarationTypeParameters(_)
+                | Self::TSTypeAliasDeclarationTypeAnnotation(_)
         )
     }
 
@@ -1602,9 +1610,9 @@ impl<'a> Ancestor<'a> {
         matches!(
             self,
             Self::TSInterfaceDeclarationId(_)
-                | Self::TSInterfaceDeclarationBody(_)
-                | Self::TSInterfaceDeclarationTypeParameters(_)
                 | Self::TSInterfaceDeclarationExtends(_)
+                | Self::TSInterfaceDeclarationTypeParameters(_)
+                | Self::TSInterfaceDeclarationBody(_)
         )
     }
 
@@ -2088,6 +2096,7 @@ impl<'a> Ancestor<'a> {
                 | Self::TSConditionalTypeFalseType(_)
                 | Self::TSUnionTypeTypes(_)
                 | Self::TSIntersectionTypeTypes(_)
+                | Self::TSParenthesizedTypeTypeAnnotation(_)
                 | Self::TSTypeOperatorTypeAnnotation(_)
                 | Self::TSArrayTypeElementType(_)
                 | Self::TSIndexedAccessTypeObjectType(_)
@@ -2823,11 +2832,42 @@ impl<'a> PrivateFieldExpressionWithoutField<'a> {
 }
 
 pub(crate) const OFFSET_CALL_EXPRESSION_SPAN: usize = offset_of!(CallExpression, span);
-pub(crate) const OFFSET_CALL_EXPRESSION_CALLEE: usize = offset_of!(CallExpression, callee);
 pub(crate) const OFFSET_CALL_EXPRESSION_ARGUMENTS: usize = offset_of!(CallExpression, arguments);
-pub(crate) const OFFSET_CALL_EXPRESSION_OPTIONAL: usize = offset_of!(CallExpression, optional);
+pub(crate) const OFFSET_CALL_EXPRESSION_CALLEE: usize = offset_of!(CallExpression, callee);
 pub(crate) const OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(CallExpression, type_parameters);
+pub(crate) const OFFSET_CALL_EXPRESSION_OPTIONAL: usize = offset_of!(CallExpression, optional);
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct CallExpressionWithoutArguments<'a>(pub(crate) *const CallExpression<'a>);
+
+impl<'a> CallExpressionWithoutArguments<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn callee(&self) -> &Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
+    }
+}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -2848,47 +2888,16 @@ impl<'a> CallExpressionWithoutCallee<'a> {
     }
 
     #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
         }
     }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct CallExpressionWithoutArguments<'a>(pub(crate) *const CallExpression<'a>);
-
-impl<'a> CallExpressionWithoutArguments<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn callee(&self) -> &Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
-        }
-    }
 
     #[inline]
     pub fn optional(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
     }
 }
 
@@ -2903,17 +2912,17 @@ impl<'a> CallExpressionWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn callee(&self) -> &Expression<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
-        }
-    }
-
-    #[inline]
     pub fn arguments(&self) -> &Vec<'a, Argument<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_ARGUMENTS)
                 as *const Vec<'a, Argument<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn callee(&self) -> &Expression<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CALL_EXPRESSION_CALLEE) as *const Expression<'a>)
         }
     }
 
@@ -6909,6 +6918,8 @@ impl<'a> MethodDefinitionWithoutValue<'a> {
 
 pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE: usize = offset_of!(PropertyDefinition, r#type);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_SPAN: usize = offset_of!(PropertyDefinition, span);
+pub(crate) const OFFSET_PROPERTY_DEFINITION_DECORATORS: usize =
+    offset_of!(PropertyDefinition, decorators);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_KEY: usize = offset_of!(PropertyDefinition, key);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_VALUE: usize = offset_of!(PropertyDefinition, value);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_COMPUTED: usize =
@@ -6929,264 +6940,6 @@ pub(crate) const OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION: usize =
     offset_of!(PropertyDefinition, type_annotation);
 pub(crate) const OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY: usize =
     offset_of!(PropertyDefinition, accessibility);
-pub(crate) const OFFSET_PROPERTY_DEFINITION_DECORATORS: usize =
-    offset_of!(PropertyDefinition, decorators);
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct PropertyDefinitionWithoutKey<'a>(pub(crate) *const PropertyDefinition<'a>);
-
-impl<'a> PropertyDefinitionWithoutKey<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &PropertyDefinitionType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
-                as *const PropertyDefinitionType)
-        }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn value(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
-                as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn definite(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn readonly(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_annotation(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn accessibility(&self) -> &Option<TSAccessibility> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct PropertyDefinitionWithoutValue<'a>(pub(crate) *const PropertyDefinition<'a>);
-
-impl<'a> PropertyDefinitionWithoutValue<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &PropertyDefinitionType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
-                as *const PropertyDefinitionType)
-        }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(&self) -> &PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn definite(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn readonly(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_annotation(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn accessibility(&self) -> &Option<TSAccessibility> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct PropertyDefinitionWithoutTypeAnnotation<'a>(pub(crate) *const PropertyDefinition<'a>);
-
-impl<'a> PropertyDefinitionWithoutTypeAnnotation<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &PropertyDefinitionType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
-                as *const PropertyDefinitionType)
-        }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(&self) -> &PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn value(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
-                as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#override(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn optional(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
-    }
-
-    #[inline]
-    pub fn definite(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn readonly(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
-    }
-
-    #[inline]
-    pub fn accessibility(&self) -> &Option<TSAccessibility> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
-                as *const Option<TSAccessibility>)
-        }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -7262,6 +7015,262 @@ impl<'a> PropertyDefinitionWithoutDecorators<'a> {
             &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn accessibility(&self) -> &Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct PropertyDefinitionWithoutKey<'a>(pub(crate) *const PropertyDefinition<'a>);
+
+impl<'a> PropertyDefinitionWithoutKey<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_annotation(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn accessibility(&self) -> &Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct PropertyDefinitionWithoutValue<'a>(pub(crate) *const PropertyDefinition<'a>);
+
+impl<'a> PropertyDefinitionWithoutValue<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_annotation(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE_ANNOTATION)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn accessibility(&self) -> &Option<TSAccessibility> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_ACCESSIBILITY)
+                as *const Option<TSAccessibility>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct PropertyDefinitionWithoutTypeAnnotation<'a>(pub(crate) *const PropertyDefinition<'a>);
+
+impl<'a> PropertyDefinitionWithoutTypeAnnotation<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &PropertyDefinitionType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_TYPE)
+                as *const PropertyDefinitionType)
+        }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_KEY) as *const PropertyKey<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn value(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_STATIC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#override(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OVERRIDE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn optional(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_OPTIONAL) as *const bool) }
+    }
+
+    #[inline]
+    pub fn definite(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_DEFINITE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn readonly(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROPERTY_DEFINITION_READONLY) as *const bool) }
     }
 
     #[inline]
@@ -8996,6 +9005,21 @@ impl<'a> TSIntersectionTypeWithoutTypes<'a> {
     }
 }
 
+pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_SPAN: usize = offset_of!(TSParenthesizedType, span);
+pub(crate) const OFFSET_TS_PARENTHESIZED_TYPE_TYPE_ANNOTATION: usize =
+    offset_of!(TSParenthesizedType, type_annotation);
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct TSParenthesizedTypeWithoutTypeAnnotation<'a>(pub(crate) *const TSParenthesizedType<'a>);
+
+impl<'a> TSParenthesizedTypeWithoutTypeAnnotation<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_TS_PARENTHESIZED_TYPE_SPAN) as *const Span) }
+    }
+}
+
 pub(crate) const OFFSET_TS_TYPE_OPERATOR_SPAN: usize = offset_of!(TSTypeOperator, span);
 pub(crate) const OFFSET_TS_TYPE_OPERATOR_OPERATOR: usize = offset_of!(TSTypeOperator, operator);
 pub(crate) const OFFSET_TS_TYPE_OPERATOR_TYPE_ANNOTATION: usize =
@@ -9470,10 +9494,10 @@ pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN: usize =
     offset_of!(TSTypeAliasDeclaration, span);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_ID: usize =
     offset_of!(TSTypeAliasDeclaration, id);
-pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION: usize =
-    offset_of!(TSTypeAliasDeclaration, type_annotation);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS: usize =
     offset_of!(TSTypeAliasDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION: usize =
+    offset_of!(TSTypeAliasDeclaration, type_annotation);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE: usize =
     offset_of!(TSTypeAliasDeclaration, declare);
 
@@ -9490,56 +9514,18 @@ impl<'a> TSTypeAliasDeclarationWithoutId<'a> {
     }
 
     #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn type_annotation(&self) -> &TSType<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION)
                 as *const TSType<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct TSTypeAliasDeclarationWithoutTypeAnnotation<'a>(
-    pub(crate) *const TSTypeAliasDeclaration<'a>,
-);
-
-impl<'a> TSTypeAliasDeclarationWithoutTypeAnnotation<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &BindingIdentifier<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
-                as *const BindingIdentifier<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
     }
 
@@ -9578,6 +9564,44 @@ impl<'a> TSTypeAliasDeclarationWithoutTypeParameters<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION)
                 as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct TSTypeAliasDeclarationWithoutTypeAnnotation<'a>(
+    pub(crate) *const TSTypeAliasDeclaration<'a>,
+);
+
+impl<'a> TSTypeAliasDeclarationWithoutTypeAnnotation<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &BindingIdentifier<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_ID)
+                as *const BindingIdentifier<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
     }
 
@@ -9636,12 +9660,12 @@ impl<'a> TSClassImplementsWithoutTypeParameters<'a> {
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SPAN: usize =
     offset_of!(TSInterfaceDeclaration, span);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_ID: usize = offset_of!(TSInterfaceDeclaration, id);
-pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_BODY: usize =
-    offset_of!(TSInterfaceDeclaration, body);
-pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS: usize =
-    offset_of!(TSInterfaceDeclaration, type_parameters);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_EXTENDS: usize =
     offset_of!(TSInterfaceDeclaration, extends);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_TYPE_PARAMETERS: usize =
+    offset_of!(TSInterfaceDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_BODY: usize =
+    offset_of!(TSInterfaceDeclaration, body);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_DECLARE: usize =
     offset_of!(TSInterfaceDeclaration, declare);
 
@@ -9658,10 +9682,10 @@ impl<'a> TSInterfaceDeclarationWithoutId<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Box<'a, TSInterfaceBody<'a>> {
+    pub fn extends(&self) -> &Option<Vec<'a, TSInterfaceHeritage<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
-                as *const Box<'a, TSInterfaceBody<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
         }
     }
 
@@ -9674,10 +9698,10 @@ impl<'a> TSInterfaceDeclarationWithoutId<'a> {
     }
 
     #[inline]
-    pub fn extends(&self) -> &Option<Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn body(&self) -> &Box<'a, TSInterfaceBody<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-                as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const Box<'a, TSInterfaceBody<'a>>)
         }
     }
 
@@ -9691,9 +9715,9 @@ impl<'a> TSInterfaceDeclarationWithoutId<'a> {
 
 #[repr(transparent)]
 #[derive(Debug)]
-pub struct TSInterfaceDeclarationWithoutBody<'a>(pub(crate) *const TSInterfaceDeclaration<'a>);
+pub struct TSInterfaceDeclarationWithoutExtends<'a>(pub(crate) *const TSInterfaceDeclaration<'a>);
 
-impl<'a> TSInterfaceDeclarationWithoutBody<'a> {
+impl<'a> TSInterfaceDeclarationWithoutExtends<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe {
@@ -9718,10 +9742,10 @@ impl<'a> TSInterfaceDeclarationWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn extends(&self) -> &Option<Vec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn body(&self) -> &Box<'a, TSInterfaceBody<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
-                as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const Box<'a, TSInterfaceBody<'a>>)
         }
     }
 
@@ -9756,18 +9780,18 @@ impl<'a> TSInterfaceDeclarationWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Box<'a, TSInterfaceBody<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
-                as *const Box<'a, TSInterfaceBody<'a>>)
-        }
-    }
-
-    #[inline]
     pub fn extends(&self) -> &Option<Vec<'a, TSInterfaceHeritage<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
                 as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, TSInterfaceBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
+                as *const Box<'a, TSInterfaceBody<'a>>)
         }
     }
 
@@ -9781,9 +9805,9 @@ impl<'a> TSInterfaceDeclarationWithoutTypeParameters<'a> {
 
 #[repr(transparent)]
 #[derive(Debug)]
-pub struct TSInterfaceDeclarationWithoutExtends<'a>(pub(crate) *const TSInterfaceDeclaration<'a>);
+pub struct TSInterfaceDeclarationWithoutBody<'a>(pub(crate) *const TSInterfaceDeclaration<'a>);
 
-impl<'a> TSInterfaceDeclarationWithoutExtends<'a> {
+impl<'a> TSInterfaceDeclarationWithoutBody<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe {
@@ -9800,10 +9824,10 @@ impl<'a> TSInterfaceDeclarationWithoutExtends<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Box<'a, TSInterfaceBody<'a>> {
+    pub fn extends(&self) -> &Option<Vec<'a, TSInterfaceHeritage<'a>>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_BODY)
-                as *const Box<'a, TSInterfaceBody<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_EXTENDS)
+                as *const Option<Vec<'a, TSInterfaceHeritage<'a>>>)
         }
     }
 

@@ -1048,6 +1048,9 @@ impl<'a> FormalParameters<'a> {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
     }
+    pub fn has_parameter(&self) -> bool {
+        !self.is_empty() || self.rest.is_some()
+    }
 }
 
 impl<'a> FunctionBody<'a> {
@@ -1295,6 +1298,12 @@ impl MethodDefinitionKind {
     }
 }
 
+impl MethodDefinitionType {
+    pub fn is_abstract(&self) -> bool {
+        matches!(self, Self::TSAbstractMethodDefinition)
+    }
+}
+
 impl<'a> PrivateIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name }
@@ -1374,18 +1383,15 @@ impl AccessorPropertyType {
 }
 
 impl<'a> ImportDeclarationSpecifier<'a> {
-    pub fn name(&self) -> CompactStr {
+    pub fn local(&self) -> &BindingIdentifier<'a> {
         match self {
-            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => &specifier.local,
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => &specifier.local,
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
+    }
+    pub fn name(&self) -> CompactStr {
+        self.local().name.to_compact_str()
     }
 }
 

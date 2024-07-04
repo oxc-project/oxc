@@ -6,7 +6,7 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/expando-function.ts
 
 export declare function foo(): void;
 export declare const bar: () => void;
-export declare module NS {
+export declare namespace NS {
 	export const goo: () => void;
 }
 

@@ -10,7 +10,7 @@ fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
         "eslint-plugin-unicorn(no-zero-fractions): Don't use a zero fraction in the number.",
     )
     .with_help(format!("Replace the number literal with `{x1}`"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn dangling_dot(span0: Span, x1: &str) -> OxcDiagnostic {
@@ -18,7 +18,7 @@ fn dangling_dot(span0: Span, x1: &str) -> OxcDiagnostic {
         "eslint-plugin-unicorn(no-zero-fractions): Don't use a dangling dot in the number.",
     )
     .with_help(format!("Replace the number literal with `{x1}`"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

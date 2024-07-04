@@ -148,11 +148,11 @@ pub trait TestCase {
         false
     }
 
-    fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
+    fn transform(&self, path: &Path) -> Result<String, Vec<OxcDiagnostic>> {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
-                return Err(vec![OxcDiagnostic::error(format!("{json_err:?}")).into()]);
+                return Err(vec![OxcDiagnostic::error(format!("{json_err:?}"))]);
             }
         };
 
@@ -180,7 +180,11 @@ pub trait TestCase {
             transform_options.clone(),
         )
         .build(&mut program);
-        result.map(|()| CodeGenerator::new().build(&program).source_text)
+        if result.errors.is_empty() {
+            Ok(CodeGenerator::new().build(&program).source_text)
+        } else {
+            Err(result.errors)
+        }
     }
 }
 
@@ -262,15 +266,14 @@ impl TestCase for ConformanceTestCase {
                         ret.trivias.clone(),
                         transform_options.clone(),
                     );
-                    let result = transformer.build(&mut program);
-                    if result.is_ok() {
+                    let ret = transformer.build(&mut program);
+                    if ret.errors.is_empty() {
                         transformed_code = CodeGenerator::new().build(&program).source_text;
                     } else {
-                        let error = result
-                            .err()
-                            .unwrap()
-                            .iter()
-                            .map(ToString::to_string)
+                        let error = ret
+                            .errors
+                            .into_iter()
+                            .map(|e| Error::from(e).to_string())
                             .collect::<Vec<_>>()
                             .join("\n");
                         actual_errors = get_babel_error(&error);

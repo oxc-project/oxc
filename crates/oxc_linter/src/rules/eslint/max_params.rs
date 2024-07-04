@@ -11,7 +11,7 @@ fn max_params_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
         .with_help(
             "This rule enforces a maximum number of parameters allowed in function definitions.",
         )
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

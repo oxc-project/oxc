@@ -9,7 +9,7 @@ Mismatch: "declarationRestParameters.ts"
 
 #### "declarationComputedPropertyNames.ts" ####
 //// [declarationComputedPropertyNames.ts] ////
-export module presentNs {
+export namespace presentNs {
 	export const a = Symbol();
 }
 const aliasing = Symbol;
@@ -67,7 +67,7 @@ export const D = {
 };
 
 //// [declarationComputedPropertyNames.d.ts] ////
-export declare module presentNs {
+export declare namespace presentNs {
 	export const a: unknown;
 }
 declare const aliasing: unknown;
