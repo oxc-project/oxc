@@ -2,6 +2,7 @@ mod module_lexer;
 
 use std::sync::Arc;
 
+use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
 use oxc_allocator::Allocator;
 pub use oxc_ast::ast::Program;
@@ -82,23 +83,16 @@ pub fn parse_without_return(source_text: String, options: Option<ParserOptions>)
     parse(&allocator, &source_text, &options);
 }
 
-/// # Panics
-///
-/// * File extension is invalid
-/// * Serde JSON serialization
-#[allow(clippy::needless_pass_by_value)]
-#[napi]
-pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseResult {
-    let options = options.unwrap_or_default();
-
+#[allow(clippy::needless_lifetimes)]
+fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
-    let ret = parse(&allocator, &source_text, &options);
+    let ret = parse(&allocator, source_text, options);
     let program = serde_json::to_string(&ret.program).unwrap();
 
     let errors = if ret.errors.is_empty() {
         vec![]
     } else {
-        let file_name = options.source_filename.unwrap_or_default();
+        let file_name = options.source_filename.clone().unwrap_or_default();
         let source = Arc::new(NamedSource::new(file_name, source_text.to_string()));
         ret.errors
             .into_iter()
@@ -115,7 +109,7 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
                 CommentKind::SingleLine => "Line",
                 CommentKind::MultiLine => "Block",
             },
-            value: span.source_text(&source_text).to_string(),
+            value: span.source_text(source_text).to_string(),
             start: span.start,
             end: span.end,
         })
@@ -126,9 +120,40 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
 
 /// # Panics
 ///
+/// * File extension is invalid
+/// * Serde JSON serialization
+#[allow(clippy::needless_pass_by_value)]
+#[napi]
+pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseResult {
+    let options = options.unwrap_or_default();
+    parse_with_return(&source_text, &options)
+}
+
+pub struct ResolveTask {
+    source_text: String,
+    options: ParserOptions,
+}
+
+#[napi]
+impl Task for ResolveTask {
+    type Output = ParseResult;
+    type JsValue = ParseResult;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(parse_with_return(&self.source_text, &self.options))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
+}
+
+/// # Panics
+///
 /// * Tokio crashes
 #[allow(clippy::needless_pass_by_value)]
 #[napi]
-pub async fn parse_async(source_text: String, options: Option<ParserOptions>) -> ParseResult {
-    tokio::spawn(async move { parse_sync(source_text, options) }).await.unwrap()
+pub fn parse_async(source_text: String, options: Option<ParserOptions>) -> AsyncTask<ResolveTask> {
+    let options = options.unwrap_or_default();
+    AsyncTask::new(ResolveTask { source_text, options })
 }
