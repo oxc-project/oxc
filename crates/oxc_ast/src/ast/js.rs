@@ -199,9 +199,9 @@ macro_rules! match_expression {
 }
 pub use match_expression;
 
-/// Fundamental syntactic structure used for naming variables, functions, and properties. It must start with a Unicode letter (including $ and _) and can be followed by Unicode letters, digits, $, or _.: `var` in `let var = 1;`
+/// `var` in `let var = 1;`
 ///
-/// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
+/// Fundamental syntactic structure used for naming variables, functions, and properties. It must start with a Unicode letter (including $ and _) and can be followed by Unicode letters, digits, $, or _.
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -286,7 +286,9 @@ pub struct ThisExpression {
     pub span: Span,
 }
 
-/// Represents an array literal, which can include elements, spread elements, or null values.: `[1, 2, ...[3, 4], null]` in `const array = [1, 2, ...[3, 4], null];`
+/// `[1, 2, ...[3, 4], null]` in `const array = [1, 2, ...[3, 4], null];`
+///
+/// Represents an array literal, which can include elements, spread elements, or null values.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
