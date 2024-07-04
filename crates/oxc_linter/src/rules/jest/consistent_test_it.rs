@@ -19,7 +19,7 @@ fn consistent_method(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic
         "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
     ))
     .with_help(format!("Prefer using '{x1:?}' instead of '{x2:?}'"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn consistent_method_within_describe(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
@@ -27,7 +27,7 @@ fn consistent_method_within_describe(x0: &str, x1: &str, x2: &str, span0: Span) 
         "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
     ))
     .with_help(format!("Prefer using '{x1:?}' instead of '{x2:?}' within describe"))
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
