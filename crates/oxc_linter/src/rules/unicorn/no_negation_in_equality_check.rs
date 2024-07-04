@@ -45,8 +45,7 @@ declare_oxc_lint!(
     /// if (!(foo === bar)) {}
     /// ```
     NoNegationInEqualityCheck,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    correctness,
 );
 
 impl Rule for NoNegationInEqualityCheck {
