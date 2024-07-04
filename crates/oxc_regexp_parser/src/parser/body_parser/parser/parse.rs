@@ -107,7 +107,6 @@ impl<'a> PatternParser<'a> {
             if !self.reader.eat('|') {
                 break;
             }
-
             i += 1;
         }
 

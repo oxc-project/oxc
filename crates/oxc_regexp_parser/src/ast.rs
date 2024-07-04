@@ -21,6 +21,7 @@ pub struct Pattern<'a> {
 #[derive(Debug)]
 pub struct Alternative<'a> {
     pub span: Span,
+    // NOTE: `terms: Vec<'a, Term<'a>>` ?
     pub elements: Vec<'a, Element<'a>>,
 }
 
