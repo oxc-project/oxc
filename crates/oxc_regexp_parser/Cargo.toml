@@ -24,4 +24,5 @@ oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_span        = { workspace = true }
 
-rustc-hash      = { workspace = true }
+rustc-hash       = { workspace = true }
+unicode-id-start = { workspace = true }

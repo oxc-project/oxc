@@ -42,16 +42,13 @@ impl<'a> Parser<'a> {
         .parse()?;
 
         // Then parse the pattern with the flags
-        let unicode_mode = flags.unicode || flags.unicode_sets;
-        let unicode_sets_mode = flags.unicode_sets;
-
         let pattern = PatternParser::new(
             self.allocator,
             &self.source_text[body_start_offset..body_end_offset],
             #[allow(clippy::cast_possible_truncation)]
             self.options
                 .with_span_offset(self.options.span_offset + body_start_offset as u32)
-                .with_modes(unicode_mode, unicode_sets_mode),
+                .with_unicode_flags(flags.unicode, flags.unicode_sets),
         )
         .parse()?;
 

@@ -1676,6 +1676,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_span",
  "rustc-hash",
+ "unicode-id-start",
 ]
 
 [[package]]

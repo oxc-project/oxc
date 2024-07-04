@@ -61,7 +61,7 @@ impl<'a> super::parse::PatternParser<'a> {
             return Ok(None);
         }
 
-        // `DecimalEscape`: `\1` means Backreference
+        // `DecimalEscape`: \1 means Backreference
         if self.consume_decimal_escape().is_some() {
             let span_end = self.reader.span_position();
 
@@ -79,9 +79,98 @@ impl<'a> super::parse::PatternParser<'a> {
 
         // TODO: Implement
         // if let Some(_) = self.consume_character_class_escape() {}
-        // if let Some(_) = self.consume_character_escape() {}
+
+        if let Some(cp) = self.consume_character_escape()? {
+            return Ok(Some(ast::QuantifiableElement::Character(Box::new_in(
+                ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    value: cp,
+                },
+                self.allocator,
+            ))));
+        }
+
+        // TODO: Implement
         // if let Some(_) = self.consume_k_group_name() {}
 
         Err(OxcDiagnostic::error("Invalid escape"))
+    }
+
+    // ```
+    // CharacterEscape[UnicodeMode] ::
+    //   ControlEscape
+    //   c AsciiLetter
+    //   0 [lookahead ∉ DecimalDigit]
+    //   HexEscapeSequence
+    //   RegExpUnicodeEscapeSequence[?UnicodeMode]
+    //   IdentityEscape[?UnicodeMode]
+    // ```
+    // <https://tc39.es/ecma262/#prod-CharacterEscape>
+    fn consume_character_escape(&mut self) -> Result<Option<u32>> {
+        // e.g. \n
+        if let Some(control_escape) = self.reader.peek().and_then(unicode::map_control_escape) {
+            self.reader.advance();
+            return Ok(Some(control_escape));
+        }
+
+        // e.g. \cM
+        let checkpoint = self.reader.checkpoint();
+        if self.reader.eat('c') {
+            if let Some(c_ascii_letter) = self.reader.peek().and_then(unicode::map_c_ascii_letter) {
+                self.reader.advance();
+                return Ok(Some(c_ascii_letter));
+            }
+            self.reader.rewind(checkpoint);
+        }
+
+        // e.g. \0
+        if self.reader.peek().map_or(false, |cp| cp == '0' as u32)
+            && self.reader.peek2().map_or(true, |cp| !unicode::is_decimal_digits(cp))
+        {
+            self.reader.advance();
+            return Ok(Some(0x00));
+        }
+
+        // e.g. \x41
+        if self.reader.eat('x') {
+            if let Some(hex) = self.consume_fixed_hex_digits(2) {
+                return Ok(Some(hex));
+            }
+            return Err(OxcDiagnostic::error("Invalid escape"));
+        }
+
+        // e.g. \u{1f600}
+        // TODO: Implement
+        // this.eatRegExpUnicodeEscapeSequence(false)
+
+        // e.g. \.
+        if let Some(identity_escape) = self.consume_identity_escape() {
+            return Ok(Some(identity_escape));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // IdentityEscape[UnicodeMode] ::
+    //   [+UnicodeMode] SyntaxCharacter
+    //   [+UnicodeMode] /
+    //   [~UnicodeMode] SourceCharacter but not UnicodeIDContinue
+    // ```
+    // <https://tc39.es/ecma262/#prod-IdentityEscape>
+    fn consume_identity_escape(&mut self) -> Option<u32> {
+        let cp = self.reader.peek()?;
+
+        if self.state.is_unicode_mode() && (unicode::is_syntax_character(cp) || cp == '/' as u32) {
+            self.reader.advance();
+            return Some(cp);
+        }
+
+        if !unicode::is_id_continue(cp) {
+            self.reader.advance();
+            return Some(cp);
+        }
+
+        None
     }
 }

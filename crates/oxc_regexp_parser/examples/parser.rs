@@ -15,6 +15,8 @@ fn main() {
         ("/a|b+|c/i", ParserOptions::default()),
         ("/a{0}|b{1,2}|c{3,}/i", ParserOptions::default()),
         ("/(?=a)|(?<=b)|(?!c)|(?<!d)/i", ParserOptions::default()),
+        (r"/\n\cM\0\x41\./", ParserOptions::default()),
+        (r"/\n\cM\0\x41\u{1f600}\./u", ParserOptions::default()),
     ] {
         println!("Test: {pat} + {options:?}");
         let parser = Parser::new(&allocator, pat, options);

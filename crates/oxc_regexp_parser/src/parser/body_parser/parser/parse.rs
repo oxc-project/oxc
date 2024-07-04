@@ -4,7 +4,7 @@ use oxc_diagnostics::{OxcDiagnostic, Result};
 use crate::{
     ast,
     parser::{
-        body_parser::{reader::Reader, state::ParserState},
+        body_parser::{reader::Reader, state::State},
         options::ParserOptions,
         span::SpanFactory,
     },
@@ -15,17 +15,20 @@ pub struct PatternParser<'a> {
     pub(super) source_text: &'a str,
     pub(super) span_factory: SpanFactory,
     pub(super) reader: Reader<'a>,
-    _state: ParserState,
+    pub(super) state: State,
 }
 
 impl<'a> PatternParser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
+        let unicode_mode = options.unicode_flag || options.unicode_sets_flag;
+        let unicode_sets_mode = options.unicode_sets_flag;
+
         Self {
             allocator,
             source_text,
             span_factory: SpanFactory::new(options.span_offset),
-            reader: Reader::new(source_text, options.is_unicode_mode()),
-            _state: ParserState,
+            reader: Reader::new(source_text, unicode_mode),
+            state: State::new(unicode_mode, unicode_sets_mode),
         }
     }
 
@@ -36,6 +39,7 @@ impl<'a> PatternParser<'a> {
 
         // TODO: Remove later, just for clippy unused
         self.reader.eat3('a', 'b', 'c');
+        self.state.is_unicode_sets_mode();
 
         self.consume_pattern()
     }
@@ -397,12 +401,13 @@ mod test {
             "a+b*?c{1}d{2,}e{3,4}?",
             r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$",
             "a.b..",
+            r"\n\cM\0\x41\.",
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, ParserOptions::default())
                     .parse()
                     .is_ok(),
-                "{source_text} should be parsed!"
+                "{source_text} should be parsed in legacy mode!"
             );
         }
     }
@@ -413,7 +418,7 @@ mod test {
 
         for source_text in &[
             "", "a)", r"b\", "c]", "d}", "e|+", "f|{", "g{", "g{1", "g{1,", "g{,", "g{2,1}",
-            "(?=h", "(?<!h",
+            "(?=h", "(?<!h", r"\xI",
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, ParserOptions::default())
@@ -436,7 +441,7 @@ mod test {
         let pattern = PatternParser::new(
             &allocator,
             source_text,
-            ParserOptions::default().with_modes(true, false),
+            ParserOptions::default().with_unicode_flags(true, false),
         )
         .parse()
         .unwrap();
@@ -444,7 +449,7 @@ mod test {
         let pattern = PatternParser::new(
             &allocator,
             source_text,
-            ParserOptions::default().with_modes(false, true),
+            ParserOptions::default().with_unicode_flags(true, true),
         )
         .parse()
         .unwrap();
