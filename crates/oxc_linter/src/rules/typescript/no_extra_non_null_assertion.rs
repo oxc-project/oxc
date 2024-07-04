@@ -7,7 +7,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_extra_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(no-extra-non-null-assertion): extra non-null assertion")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

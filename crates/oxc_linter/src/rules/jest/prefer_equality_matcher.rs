@@ -16,7 +16,7 @@ use crate::{
 fn use_equality_matcher_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers.")
         .with_help("Prefer using one of the equality matchers instead")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

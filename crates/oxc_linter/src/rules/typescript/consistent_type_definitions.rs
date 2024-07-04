@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{ExportDefaultDeclarationKind, TSType},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -11,10 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn consistent_type_definitions_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(consistent-type-definitions):")
         .with_help(format!("Use an `{x0}` instead of a `{x1}`"))
-        .with_labels([LabeledSpan::new_with_span(
-            Some(format!("Use an `{x0}` instead of a `{x1}`")),
-            span2,
-        )])
+        .with_label(span2.label(format!("Use an `{x0}` instead of a `{x1}`")))
 }
 
 #[derive(Debug, Default, Clone)]

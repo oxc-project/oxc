@@ -157,9 +157,6 @@ pub use indexing::{IdxRangeBounds, IdxSliceIndex};
 #[macro_use]
 mod macros;
 
-#[cfg(any(test, feature = "example_generated"))]
-pub mod example_generated;
-
 /// Represents a wrapped value convertible to and from a `usize`.
 ///
 /// Generally you implement this via the [`define_index_type!`] macro, rather

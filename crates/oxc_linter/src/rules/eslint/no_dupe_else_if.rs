@@ -12,7 +12,7 @@ use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode}
 fn no_dupe_else_if_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-dupe-else-if): duplicate conditions in if-else-if chains")
         .with_help("This branch can never execute. Its condition is a duplicate or covered by previous conditions in the if-else-if chain")
-        .with_labels([span0.into(), span1.into()])
+        .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]

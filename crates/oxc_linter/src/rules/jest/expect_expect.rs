@@ -21,7 +21,7 @@ use crate::{
 fn expect_expect_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(expect-expect): Test has no assertions")
         .with_help("Add assertion(s) in this Test")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

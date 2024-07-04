@@ -12,7 +12,7 @@ fn max_classes_per_file_diagnostic(total: usize, max: usize, span1: Span) -> Oxc
         "eslint(max-classes-per-file): File has too many classes ({total}). Maximum allowed is {max}",
     ))
     .with_help("Reduce the number of classes in this file")
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

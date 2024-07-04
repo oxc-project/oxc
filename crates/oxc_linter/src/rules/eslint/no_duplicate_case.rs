@@ -9,7 +9,7 @@ use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode}
 fn no_duplicate_case_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-duplicate-case): Disallow duplicate case labels")
         .with_help("Remove the duplicated case")
-        .with_labels([span0.into(), span1.into()])
+        .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]

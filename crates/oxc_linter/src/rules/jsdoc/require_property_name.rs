@@ -13,7 +13,7 @@ fn require_property_name_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jsdoc(require-property-name): Missing name in @property tag.",
     )
     .with_help("Add a type name to this @property tag.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -6,9 +6,26 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/non-exported-binding
 
 export declare function foo(): number;
 export { c, d, e };
+export declare const;
 
 
 ==================== Errors ====================
+
+  x TS9019: Binding elements can't be exported directly with
+  | --isolatedDeclarations.
+    ,-[12:16]
+ 11 | 
+ 12 | export const { f, g } = { f: 5, g: 6 };
+    :                ^
+    `----
+
+  x TS9019: Binding elements can't be exported directly with
+  | --isolatedDeclarations.
+    ,-[12:19]
+ 11 | 
+ 12 | export const { f, g } = { f: 5, g: 6 };
+    :                   ^
+    `----
 
   x TS9019: Binding elements can't be exported directly with
   | --isolatedDeclarations.

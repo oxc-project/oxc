@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.5.1] - 2024-06-29
+
+### Bug Fixes
+
+- 750cb43 oxlint: Gate custom allocators by feature flag (#3945) (Luca Bruno)
+
 ## [0.5.0] - 2024-06-27
 
 ### Features

@@ -272,6 +272,12 @@ impl Kind {
         self.is_identifier_name() || self == Str || self.is_number()
     }
 
+    pub fn is_identifier_or_keyword(self) -> bool {
+        self.is_literal_property_name()
+            || matches!(self, Self::PrivateIdentifier)
+            || self.is_all_keyword()
+    }
+
     pub fn is_variable_declaration(self) -> bool {
         matches!(self, Var | Let | Const)
     }

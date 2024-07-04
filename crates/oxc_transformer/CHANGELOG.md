@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.16.3] - 2024-07-02
+
+### Bug Fixes
+
+- bdee156 transformer/typescript: `declare class` incorrectly preserved as runtime class (#3997) (Dunqing)
+- a50ce3d transformer/typescript: Missing initializer for class constructor arguments with `private` and `protected` modifier (#3996) (Dunqing)
+
+## [0.16.2] - 2024-06-30
+
+### Performance
+
+- 1eac3d2 semantic: Use `Atom<'a>` for `Reference`s (#3972) (Don Isaac)
+
+### Refactor
+
+- 5845057 transformer: Pass in symbols and scopes (#3978) (Boshen)
+
+## [0.16.1] - 2024-06-29
+
+### Refactor
+
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+
 ## [0.16.0] - 2024-06-26
 
 - 1f85f1a ast: [**BREAKING**] Revert adding `span` field to the `BindingPattern` type. (#3899) (rzvxa)

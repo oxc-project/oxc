@@ -83,7 +83,10 @@ impl<'a> TypeScriptAnnotations<'a> {
                         });
 
                         !decl.specifiers.is_empty()
-                            || matches!(&decl.declaration, Some(decl) if !decl.is_typescript_syntax())
+                            || decl
+                                .declaration
+                                .as_ref()
+                                .is_some_and(|decl| !decl.is_typescript_syntax())
                     }
                 }
                 Statement::ExportAllDeclaration(decl) => !decl.export_kind.is_type(),
@@ -170,7 +173,6 @@ impl<'a> TypeScriptAnnotations<'a> {
         class.super_type_parameters = None;
         class.implements = None;
         class.r#abstract = false;
-        class.declare = false;
     }
 
     pub fn transform_class_body(&mut self, body: &mut ClassBody<'a>) {
@@ -239,7 +241,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
-                if param.is_public() {
+                if param.accessibility.is_some() {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,

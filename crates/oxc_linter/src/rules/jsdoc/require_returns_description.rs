@@ -15,7 +15,7 @@ fn missing_description_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jsdoc(require-returns-description): Missing JSDoc `@returns` description.",
     )
     .with_help("Add description comment to `@returns` tag.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

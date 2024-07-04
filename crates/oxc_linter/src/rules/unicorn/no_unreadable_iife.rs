@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_unreadable_iife_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.")
         .with_help("Rewrite the IIFE to avoid having a parenthesized arrow function body.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

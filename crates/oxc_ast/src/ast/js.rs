@@ -78,6 +78,7 @@ pub enum Expression<'a> {
     ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
     ClassExpression(Box<'a, Class<'a>>) = 17,
     ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+    #[visit_args(flags = None)]
     FunctionExpression(Box<'a, Function<'a>>) = 19,
     ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
     LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
@@ -250,6 +251,7 @@ pub enum ArrayExpressionElement<'a> {
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Elision) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
+    // TODO: support for attributes syntax here so we can use `#[visit_as(ExpressionArrayElement)]`
     @inherit Expression
 }
 }
@@ -453,10 +455,10 @@ pub struct PrivateFieldExpression<'a> {
 pub struct CallExpression<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub callee: Expression<'a>,
     pub arguments: Vec<'a, Argument<'a>>,
-    pub optional: bool, // for optional chaining
+    pub callee: Expression<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    pub optional: bool, // for optional chaining
 }
 
 /// New Expression
@@ -967,6 +969,7 @@ pub struct BlockStatement<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
+    #[visit_args(flags = None)]
     FunctionDeclaration(Box<'a, Function<'a>>) = 33,
     ClassDeclaration(Box<'a, Class<'a>>) = 34,
     UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
@@ -1291,6 +1294,7 @@ pub struct TryStatement<'a> {
     pub span: Span,
     pub block: Box<'a, BlockStatement<'a>>,
     pub handler: Option<Box<'a, CatchClause<'a>>>,
+    #[visit_as(FinallyClause)]
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
@@ -1340,6 +1344,7 @@ pub struct BindingPattern<'a> {
         feature = "serialize",
         tsify(type = "(BindingIdentifier | ObjectPattern | ArrayPattern | AssignmentPattern)")
     )]
+    #[span]
     pub kind: BindingPatternKind<'a>,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub optional: bool,
@@ -1432,7 +1437,7 @@ pub struct BindingRestElement<'a> {
 #[visited_node]
 #[scope(
     // TODO: `ScopeFlags::Function` is not correct if this is a `MethodDefinition`
-    flags(ScopeFlags::Function),
+    flags(flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function),
     strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())),
 )]
 #[derive(Debug)]
@@ -1586,6 +1591,7 @@ pub struct Class<'a> {
     pub decorators: Vec<'a, Decorator<'a>>,
     #[scope(enter_before)]
     pub id: Option<BindingIdentifier<'a>>,
+    #[visit_as(ClassHeritage)]
     pub super_class: Option<Expression<'a>>,
     pub body: Box<'a, ClassBody<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
@@ -1635,6 +1641,12 @@ pub struct MethodDefinition<'a> {
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
+    #[visit_args(flags = Some(match self.kind {
+        MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
+        MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
+        MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
+        MethodDefinitionKind::Method => ScopeFlags::empty(),
+    }))]
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
     pub computed: bool,
@@ -1659,6 +1671,7 @@ pub struct PropertyDefinition<'a> {
     pub r#type: PropertyDefinitionType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
     pub computed: bool,
@@ -1670,7 +1683,6 @@ pub struct PropertyDefinition<'a> {
     pub readonly: bool,
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
     pub accessibility: Option<TSAccessibility>,
-    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1946,9 +1958,11 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
+    #[visit_args(flags = None)]
     FunctionDeclaration(Box<'a, Function<'a>>) = 64,
     ClassDeclaration(Box<'a, Class<'a>>) = 65,
 
+    #[visit(ignore)]
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
 
     // `Expression` variants added here by `inherit_variants!` macro

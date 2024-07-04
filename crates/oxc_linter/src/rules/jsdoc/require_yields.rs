@@ -19,19 +19,19 @@ use crate::{
 fn missing_yields(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsdoc(require-yields): Missing JSDoc `@yields` declaration for generator function.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn duplicate_yields(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsdoc(require-yields): Duplicate `@yields` tags.")
         .with_help("Remove redundunt `@yields` tag.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn missing_yields_with_generator(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsdoc(require-yields): `@yields` tag is required when using `@generator` tag.")
         .with_help("Add `@yields` tag to the JSDoc comment.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

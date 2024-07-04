@@ -20,7 +20,7 @@ fn no_done_callback(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument",
     )
     .with_help("Return a Promise instead of relying on callback parameter")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn use_await_instead_of_callback(span0: Span) -> OxcDiagnostic {
@@ -28,7 +28,7 @@ fn use_await_instead_of_callback(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument",
     )
     .with_help("Use await instead of callback in async functions")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

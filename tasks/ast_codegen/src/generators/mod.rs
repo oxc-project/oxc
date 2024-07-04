@@ -1,6 +1,7 @@
 mod ast;
 mod ast_kind;
 mod impl_get_span;
+mod visit;
 
 /// Inserts a newline in the `TokenStream`.
 #[allow(unused)]
@@ -14,8 +15,9 @@ macro_rules! endl {
 /// used outside and accepts expressions.
 /// Wraps the result of the given expression in `insert!({value here});` and outputs it as `TokenStream`.
 macro_rules! insert {
-    ($txt:expr) => {{
-        format!(r#"insert!("{}");"#, $txt.as_str()).parse::<proc_macro2::TokenStream>().unwrap()
+    ($fmt:literal $(, $args:expr)*) => {{
+        let txt = format!($fmt, $($args)*);
+        format!(r#"insert!("{}");"#, txt).parse::<proc_macro2::TokenStream>().unwrap()
     }};
 }
 
@@ -23,9 +25,8 @@ macro_rules! insert {
 macro_rules! generated_header {
     () => {{
         let file = file!().replace("\\", "/");
-        let edit_comment = $crate::generators::insert!(format!(
-            "// To edit this generated file you have to edit `{file}`"
-        ));
+        let edit_comment =
+            $crate::generators::insert!("// To edit this generated file you have to edit `{file}`");
         // TODO add generation date, AST source hash, etc here.
         quote::quote! {
             insert!("// Auto-generated code, DO NOT EDIT DIRECTLY!");
@@ -41,3 +42,4 @@ pub(crate) use insert;
 pub use ast::AstGenerator;
 pub use ast_kind::AstKindGenerator;
 pub use impl_get_span::ImplGetSpanGenerator;
+pub use visit::VisitGenerator;

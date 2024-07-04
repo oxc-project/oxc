@@ -49,13 +49,11 @@ impl<'a> IsolatedDeclarations<'a> {
         check_binding: bool,
     ) -> Option<VariableDeclarator<'a>> {
         if decl.id.kind.is_destructuring_pattern() {
-            if check_binding {
-                decl.id.bound_names(&mut |id| {
-                    if self.scope.has_reference(&id.name) {
-                        self.error(binding_element_export(id.span));
-                    }
-                });
-            }
+            decl.id.bound_names(&mut |id| {
+                if !check_binding || self.scope.has_reference(&id.name) {
+                    self.error(binding_element_export(id.span));
+                }
+            });
             return None;
         }
 

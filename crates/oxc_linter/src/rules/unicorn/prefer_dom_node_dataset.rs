@@ -8,25 +8,25 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn set(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `setAttribute`.")
         .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1} = ...;`"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn get(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `getAttribute`.")
         .with_help(format!("Access the `.dataset` object directly: `element.dataset.{x1}`"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn has(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `hasAttribute`.")
         .with_help(format!("Check the `dataset` object directly: `Object.hasOwn(element.dataset, '{x1}')"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn remove(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-dataset): Prefer using `dataset` over `removeAttribute`.")
         .with_help(format!("Access the `.dataset` object directly: `delete element.dataset.{x1};"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

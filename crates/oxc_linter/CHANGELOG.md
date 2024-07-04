@@ -4,6 +4,37 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.5.2] - 2024-07-02
+
+### Features
+
+- b257d53 linter: Support report `@typescript-eslint/consistent-type-imports` (#3895) (mysteryven)
+- 2114475 linter: Implement @typescript-eslint/no-dynamic-delete (#3971) (kaykdm)
+- 10a3c9a linter/eslint-plugin-react: Implement no-set-state (#3975) (Jelle van der Waa)
+
+### Bug Fixes
+
+- 432d6d9 linter: Find disabled directives using the message's `Span`. (#4010) (rzvxa)
+- dbbb6fc linter: Global variable check should always check builtin variables (#3973) (Boshen)
+
+
+## [0.5.1] - 2024-06-29
+
+### Features
+
+- f64ad4b semantic: Make jsdoc building optional (turned off by default) (#3955) (Boshen)
+
+### Bug Fixes
+
+- c26975a linter: Only show the filename for max-lines (#3966) (Boshen)
+- 94329e4 linter: Handle useful but empty constructors in no-useless-constructor (#3951) (DonIsaac)
+- 6498a08 linter: No-useless-spread fixer with multiple spread elements (#3950) (DonIsaac)
+
+### Refactor
+
+- 1cca2a8 eslint: Convert with_labels to with_label where applicable (#3946) (Jelle van der Waa)
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+
 ## [0.5.0] - 2024-06-27
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

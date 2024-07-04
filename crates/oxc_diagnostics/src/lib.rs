@@ -118,8 +118,11 @@ impl OxcDiagnostic {
     }
 
     #[must_use]
-    pub fn with_labels<T: IntoIterator<Item = LabeledSpan>>(mut self, labels: T) -> Self {
-        self.inner.labels = Some(labels.into_iter().collect());
+    pub fn with_labels<L: Into<LabeledSpan>, T: IntoIterator<Item = L>>(
+        mut self,
+        labels: T,
+    ) -> Self {
+        self.inner.labels = Some(labels.into_iter().map(Into::into).collect());
         self
     }
 
@@ -132,9 +135,12 @@ impl OxcDiagnostic {
     }
 
     #[must_use]
-    pub fn and_labels<T: IntoIterator<Item = LabeledSpan>>(mut self, labels: T) -> Self {
+    pub fn and_labels<L: Into<LabeledSpan>, T: IntoIterator<Item = L>>(
+        mut self,
+        labels: T,
+    ) -> Self {
         let mut all_labels = self.inner.labels.unwrap_or_default();
-        all_labels.extend(labels);
+        all_labels.extend(labels.into_iter().map(Into::into));
         self.inner.labels = Some(all_labels);
         self
     }

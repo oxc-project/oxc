@@ -24,7 +24,7 @@ use crate::{
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
-    Semantic,
+    JSDocFinder, Semantic,
 };
 
 macro_rules! control_flow {
@@ -70,6 +70,7 @@ pub struct SemanticBuilder<'a> {
 
     pub label_builder: LabelBuilder<'a>,
 
+    build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
 
     check_syntax_error: bool,
@@ -109,6 +110,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: SymbolTable::default(),
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
+            build_jsdoc: false,
             jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
             cfg: None,
@@ -127,6 +129,12 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
+        self.build_jsdoc = yes;
         self
     }
 
@@ -167,6 +175,8 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
+        let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
+
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
@@ -176,27 +186,11 @@ impl<'a> SemanticBuilder<'a> {
             symbols: self.symbols,
             classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
-            jsdoc: self.jsdoc.build(),
+            jsdoc,
             unused_labels: self.label_builder.unused_node_ids,
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
-    }
-
-    pub fn build2(self) -> Semantic<'a> {
-        Semantic {
-            source_text: self.source_text,
-            source_type: self.source_type,
-            trivias: self.trivias,
-            nodes: self.nodes,
-            scopes: self.scope,
-            symbols: self.symbols,
-            classes: self.class_table_builder.build(),
-            module_record: Arc::new(ModuleRecord::default()),
-            jsdoc: self.jsdoc.build(),
-            unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg.map(ControlFlowGraphBuilder::build),
-        }
     }
 
     /// Push a Syntax Error
@@ -206,7 +200,8 @@ impl<'a> SemanticBuilder<'a> {
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
-        if self.jsdoc.retrieve_attached_jsdoc(&kind) {
+
+        if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
 
@@ -319,22 +314,10 @@ impl<'a> SemanticBuilder<'a> {
         Some(symbol_id)
     }
 
-    pub fn declare_reference(
-        &mut self,
-        reference: Reference,
-        add_unresolved_reference: bool,
-    ) -> ReferenceId {
+    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        if add_unresolved_reference {
-            self.scope.add_unresolved_reference(
-                self.current_scope_id,
-                reference_name,
-                reference_id,
-            );
-        } else {
-            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
-        }
+        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
         reference_id
     }
 
@@ -1546,7 +1529,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
         expr.scope_id.set(Some(self.current_scope_id));
@@ -1594,14 +1577,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_enum(&mut self, decl: &TSEnumDeclaration<'a>) {
+    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
         self.enter_scope(ScopeFlags::empty());
         decl.scope_id.set(Some(self.current_scope_id));
         for member in &decl.members {
-            self.visit_enum_member(member);
+            self.visit_ts_enum_member(member);
         }
         self.leave_scope();
         self.leave_node(kind);
@@ -1730,14 +1713,12 @@ impl<'a> SemanticBuilder<'a> {
                 element.bind(self);
             }
             AstKind::FormalParameters(_) => {
-                self.current_node_flags |= NodeFlags::Parameter;
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::FormalParameter(param) => {
                 param.bind(self);
             }
             AstKind::CatchParameter(param) => {
-                self.current_node_flags |= NodeFlags::Parameter;
                 param.bind(self);
             }
             AstKind::TSModuleDeclaration(module_declaration) => {
@@ -1848,8 +1829,17 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
-            AstKind::FormalParameters(_) | AstKind::CatchParameter(_) => {
-                self.current_node_flags -= NodeFlags::Parameter;
+            AstKind::FormalParameters(parameters) => {
+                if parameters.has_parameter() {
+                    // `function foo({bar: identifier_reference}) {}`
+                    //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved
+                    //                                          after all parameters have been declared
+                    //                                          to avoid binding to variables inside the scope
+                    self.resolve_references_for_current_scope();
+                }
+            }
+            AstKind::CatchParameter(_) => {
+                self.resolve_references_for_current_scope();
             }
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
@@ -1894,11 +1884,7 @@ impl<'a> SemanticBuilder<'a> {
         let flag = self.resolve_reference_usages();
         let name = ident.name.to_compact_str();
         let reference = Reference::new(ident.span, name, self.current_node_id, flag);
-        // `function foo({bar: identifier_reference}) {}`
-        //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
-        //                                          to avoid binding to variables inside the scope
-        let add_unresolved_reference = !self.current_node_flags.has_parameter();
-        let reference_id = self.declare_reference(reference, add_unresolved_reference);
+        let reference_id = self.declare_reference(reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1927,7 +1913,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_node_id,
             ReferenceFlag::read(),
         );
-        self.declare_reference(reference, true);
+        self.declare_reference(reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

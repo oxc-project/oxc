@@ -58,8 +58,8 @@ fn undefined_export(x0: &str, span1: Span) -> OxcDiagnostic {
 
 fn duplicate_export(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Duplicated export '{x0}'")).with_labels([
-        LabeledSpan::new_with_span(Some("Export has already been declared here".into()), span1),
-        LabeledSpan::new_with_span(Some("It cannot be redeclared here".into()), span2),
+        span1.label("Export has already been declared here"),
+        span2.label("It cannot be redeclared here"),
     ])
 }
 
@@ -548,7 +548,10 @@ fn invalid_label_target(span0: Span) -> OxcDiagnostic {
 
 fn invalid_label_non_iteration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("A `{x0}` statement can only jump to a label of an enclosing `for`, `while` or `do while` statement."))
-.with_labels([LabeledSpan::new_with_span(Some("This is an non-iteration statement".into()), span1), LabeledSpan::new_with_span(Some("for this label".into()), span2)])
+        .with_labels([
+            span1.label("This is an non-iteration statement"),
+            span2.label("for this label")
+        ])
 }
 
 fn check_label(label: &LabelIdentifier, ctx: &SemanticBuilder, is_continue: bool) {
@@ -1068,12 +1071,8 @@ fn is_in_formal_parameters<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) ->
 }
 
 fn await_or_yield_in_parameter(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("{x0} expression not allowed in formal parameter")).with_labels([
-        LabeledSpan::new_with_span(
-            Some(format!("{x0} expression not allowed in formal parameter")),
-            span1,
-        ),
-    ])
+    OxcDiagnostic::error(format!("{x0} expression not allowed in formal parameter"))
+        .with_label(span1.label(format!("{x0} expression not allowed in formal parameter")))
 }
 
 pub fn check_await_expression<'a>(

@@ -7,7 +7,7 @@ use crate::{context::LintContext, rule::Rule};
 fn no_irregular_whitespace_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-irregular-whitespace): Unexpected irregular whitespace")
         .with_help("Try to remove the irregular whitespace")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

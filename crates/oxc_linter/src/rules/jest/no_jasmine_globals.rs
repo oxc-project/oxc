@@ -13,7 +13,7 @@ use crate::{context::LintContext, rule::Rule};
 fn no_jasmine_globals_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jest(no-jasmine-globals): {x0:?}"))
         .with_help(format!("{x1:?}"))
-        .with_labels([span2.into()])
+        .with_label(span2)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-jasmine-globals.md>

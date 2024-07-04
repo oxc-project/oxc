@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXElement, JSXFragment, Statement},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -10,19 +10,22 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn missing_key_prop_for_element_in_array(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in array."#)
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn missing_key_prop_for_element_in_iterator(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): Missing "key" prop for element in iterator."#)
         .with_help(r#"Add a "key" prop to the element in the iterator (https://react.dev/learn/rendering-lists#keeping-list-items-in-order-with-key)."#)
-        .with_labels([LabeledSpan::new_with_span(Some("Iterator starts here".into()), span0), LabeledSpan::new_with_span(Some("Element generated here".into()), span1)])
+        .with_labels([
+            span0.label("Iterator starts here."),
+            span1.label("Element generated here."),
+        ])
 }
 
 fn key_prop_must_be_placed_before_spread(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"eslint-plugin-react(jsx-key): "key" prop must be placed before any `{...spread}`"#)
         .with_help("To avoid conflicting with React's new JSX transform: https://reactjs.org/blog/2020/09/22/introducing-the-new-jsx-transform.html")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

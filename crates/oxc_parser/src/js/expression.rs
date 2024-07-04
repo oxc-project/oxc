@@ -12,7 +12,6 @@ use oxc_syntax::{
 
 use super::{
     grammar::CoverGrammar,
-    list::{ArrayExpressionList, CallArguments, SequenceExpressionList},
     operator::{
         kind_to_precedence, map_assignment_operator, map_binary_operator, map_logical_operator,
         map_unary_operator, map_update_operator,
@@ -21,7 +20,6 @@ use super::{
 use crate::{
     diagnostics,
     lexer::{parse_big_int, parse_float, parse_int, Kind},
-    list::SeparatedList,
     Context, ParserImpl,
 };
 
@@ -203,9 +201,17 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_parenthesized_expression(&mut self, span: Span) -> Result<Expression<'a>> {
-        let list = self.context(Context::In, Context::Decorator, SequenceExpressionList::parse)?;
+        self.expect(Kind::LParen)?;
+        let mut expressions = self.context(Context::In, Context::Decorator, |p| {
+            p.parse_delimited_list(
+                Kind::RParen,
+                Kind::Comma,
+                /* trailing_separator */ false,
+                Self::parse_assignment_expression_or_higher,
+            )
+        })?;
+        self.expect(Kind::RParen)?;
 
-        let mut expressions = list.elements;
         let paren_span = self.end_span(span);
 
         if expressions.is_empty() {
@@ -360,8 +366,30 @@ impl<'a> ParserImpl<'a> {
     ///     [ `ElementList`[?Yield, ?Await] , Elisionopt ]
     pub(crate) fn parse_array_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-        let list = self.context(Context::In, Context::empty(), ArrayExpressionList::parse)?;
-        Ok(self.ast.array_expression(self.end_span(span), list.elements, list.trailing_comma))
+        self.expect(Kind::LBrack)?;
+        let elements = self.context(Context::In, Context::empty(), |p| {
+            p.parse_delimited_list(
+                Kind::RBrack,
+                Kind::Comma,
+                /* trailing_separator */ false,
+                Self::parse_array_expression_element,
+            )
+        })?;
+        let trailing_comma = self.at(Kind::Comma).then(|| {
+            let span = self.start_span();
+            self.bump_any();
+            self.end_span(span)
+        });
+        self.expect(Kind::RBrack)?;
+        Ok(self.ast.array_expression(self.end_span(span), elements, trailing_comma))
+    }
+
+    fn parse_array_expression_element(&mut self) -> Result<ArrayExpressionElement<'a>> {
+        match self.cur_kind() {
+            Kind::Comma => Ok(self.parse_elision()),
+            Kind::Dot3 => self.parse_spread_element().map(ArrayExpressionElement::SpreadElement),
+            _ => self.parse_assignment_expression_or_higher().map(ArrayExpressionElement::from),
+        }
     }
 
     /// Elision :
@@ -677,10 +705,19 @@ impl<'a> ParserImpl<'a> {
         }
 
         // parse `new ident` without arguments
-        let arguments = if self.at(Kind::LParen) {
+        let arguments = if self.eat(Kind::LParen) {
             // ArgumentList[Yield, Await] :
             //   AssignmentExpression[+In, ?Yield, ?Await]
-            self.context(Context::In, Context::empty(), CallArguments::parse)?.elements
+            let call_arguments = self.context(Context::In, Context::empty(), |p| {
+                p.parse_delimited_list(
+                    Kind::RParen,
+                    Kind::Comma,
+                    /* trailing_separator */ true,
+                    Self::parse_call_argument,
+                )
+            })?;
+            self.expect(Kind::RParen)?;
+            call_arguments
         } else {
             self.ast.new_vec()
         };
@@ -749,14 +786,31 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Expression<'a>> {
         // ArgumentList[Yield, Await] :
         //   AssignmentExpression[+In, ?Yield, ?Await]
-        let call_arguments = self.context(Context::In, Context::Decorator, CallArguments::parse)?;
+        self.expect(Kind::LParen)?;
+        let call_arguments = self.context(Context::In, Context::Decorator, |p| {
+            p.parse_delimited_list(
+                Kind::RParen,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_call_argument,
+            )
+        })?;
+        self.expect(Kind::RParen)?;
         Ok(self.ast.call_expression(
             self.end_span(lhs_span),
             lhs,
-            call_arguments.elements,
+            call_arguments,
             optional,
             type_parameters,
         ))
+    }
+
+    fn parse_call_argument(&mut self) -> Result<Argument<'a>> {
+        if self.at(Kind::Dot3) {
+            self.parse_spread_element().map(Argument::SpreadElement)
+        } else {
+            self.parse_assignment_expression_or_higher().map(Argument::from)
+        }
     }
 
     /// Section 13.4 Update Expression

@@ -1,10 +1,11 @@
 // TODO: remove me please!
 #![allow(dead_code, unused_imports)]
 mod defs;
+mod fmt;
 mod generators;
 mod linker;
-mod pprint;
 mod schema;
+mod util;
 
 use std::{
     borrow::Cow,
@@ -16,13 +17,13 @@ use std::{
     rc::Rc,
 };
 
+use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
-use pprint::pprint;
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
-use generators::{AstGenerator, AstKindGenerator};
+use generators::{AstGenerator, AstKindGenerator, VisitGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
 
@@ -191,6 +192,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .with(AstGenerator)
         .with(AstKindGenerator)
         .with(ImplGetSpanGenerator)
+        .with(VisitGenerator)
         .generate()?;
 
     let output_dir = output_dir()?;
@@ -218,41 +220,20 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         file.write_all(span_content.as_bytes())?;
     }
 
-    // NOTE: Print AstKind
-    // println!(
-    //     "{}",
-    //     outputs
-    //         .into_iter()
-    //         .find(|it| it.0 == AstKindGenerator.name())
-    //         .map(|(_, output)| {
-    //             let GeneratorOutput::One(result) = output else { unreachable!() };
-    //             prettyplease::unparse(&parse_file(result.to_string().as_str()).unwrap())
-    //         })
-    //         .unwrap()
-    // );
+    {
+        // write `visit.rs` and `visit_mut.rs` files
+        let output = outputs[VisitGenerator.name()].as_many();
+        let content = pprint(&output["visit"]);
+        let content_mut = pprint(&output["visit_mut"]);
 
-    // NOTE: Print AST
-    // println!(
-    //     "{}",
-    //     outputs
-    //         .into_iter()
-    //         .find(|it| it.0 == AstGenerator.name())
-    //         .map(|(_, output)| {
-    //             let GeneratorOutput::Many(results) = output else { unreachable!() };
-    //
-    //             results
-    //                 .into_iter()
-    //                 .map(|(k, v)| {
-    //                     format!(
-    //                         "file \"{}\":\n{}",
-    //                         k,
-    //                         prettyplease::unparse(&parse_file(v.to_string().as_str()).unwrap())
-    //                     )
-    //                 })
-    //                 .join("\n //-nextfile")
-    //         })
-    //         .unwrap()
-    // );
+        let mut visit = fs::File::create(format!("{output_dir}/visit.rs"))?;
+        let mut visit_mut = fs::File::create(format!("{output_dir}/visit_mut.rs"))?;
+
+        visit.write_all(content.as_bytes())?;
+        visit_mut.write_all(content_mut.as_bytes())?;
+    }
+
+    cargo_fmt(".")?;
 
     // let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
     // println!("{schema}");

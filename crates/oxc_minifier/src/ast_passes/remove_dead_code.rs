@@ -59,6 +59,6 @@ impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.remove_if(stmt);
         self.remove_conditional(stmt);
-        walk_mut::walk_statement_mut(self, stmt);
+        walk_mut::walk_statement(self, stmt);
     }
 }

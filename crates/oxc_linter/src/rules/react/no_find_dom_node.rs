@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_find_dom_node_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.")
         .with_help("Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

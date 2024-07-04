@@ -12,19 +12,19 @@ fn missing_message(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "eslint-plugin-unicorn(error-message): Pass a message to the {x0:1} constructor."
     ))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 fn empty_message(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-unicorn(error-message): Error message should not be an empty string.",
     )
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn not_string(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(error-message): Error message should be a string.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Default, Debug, Clone)]

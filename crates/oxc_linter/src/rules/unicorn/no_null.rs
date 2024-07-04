@@ -20,13 +20,13 @@ use crate::{
 fn replace_null_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
         .with_help("Replace the `null` literal with `undefined`.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn remove_null_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")
         .with_help("Remove the `null` literal.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

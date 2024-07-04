@@ -244,8 +244,9 @@ impl Oxc {
                 options,
             )
             .build(program);
-            if let Err(errs) = result {
-                self.save_diagnostics(errs);
+            if !result.errors.is_empty() {
+                let errors = result.errors.into_iter().map(Error::from).collect::<Vec<_>>();
+                self.save_diagnostics(errors);
             }
         }
 

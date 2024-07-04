@@ -209,8 +209,8 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        walk_arrow_expression(self, expr);
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+        walk_arrow_function_expression(self, expr);
         if expr.type_parameters.is_some() {
             self.leave_scope();
         }
@@ -261,16 +261,18 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
-    /// `type D<T> = { [K in keyof T]: K };`
+    /// `type D = { [key in keyof T]: K };`
     ///             ^^^^^^^^^^^^^^^^^^^^
-    ///                `K` is a type parameter
-    /// We need to add `K` to the scope
+    /// We need to add both `T` and `K` to the scope
     fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
         // copy from walk_ts_mapped_type
         self.enter_scope(ScopeFlags::empty());
         self.add_type_binding(ty.type_parameter.name.name.clone());
         if let Some(name) = &ty.name_type {
             self.visit_ts_type(name);
+        }
+        if let Some(constraint) = &ty.type_parameter.constraint {
+            self.visit_ts_type(constraint);
         }
         if let Some(type_annotation) = &ty.type_annotation {
             self.visit_ts_type(type_annotation);

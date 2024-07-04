@@ -10,7 +10,7 @@ fn default_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
         "eslint-plugin-import(default): No default export found in imported module {x0:?}"
     ))
     .with_help(format!("does {x0:?} have the default export?"))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/default.md>
