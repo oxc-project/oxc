@@ -83,12 +83,10 @@ pub fn parse_without_return(source_text: String, options: Option<ParserOptions>)
     parse(&allocator, &source_text, &options);
 }
 
-fn parse_with_return<'a>(
-    source_text: &'a str,
-    options: &ParserOptions,
-) -> ParseResult {
+#[allow(clippy::needless_lifetimes)]
+fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> ParseResult {
     let allocator = Allocator::default();
-    let ret = parse(&allocator, &source_text, &options);
+    let ret = parse(&allocator, source_text, options);
     let program = serde_json::to_string(&ret.program).unwrap();
 
     let errors = if ret.errors.is_empty() {
@@ -111,7 +109,7 @@ fn parse_with_return<'a>(
                 CommentKind::SingleLine => "Line",
                 CommentKind::MultiLine => "Block",
             },
-            value: span.source_text(&source_text).to_string(),
+            value: span.source_text(source_text).to_string(),
             start: span.start,
             end: span.end,
         })
@@ -133,7 +131,7 @@ pub fn parse_sync(source_text: String, options: Option<ParserOptions>) -> ParseR
 
 pub struct ResolveTask {
     source_text: String,
-    options: ParserOptions
+    options: ParserOptions,
 }
 
 #[napi]
