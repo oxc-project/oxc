@@ -579,7 +579,6 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_expect_resolves,
     jest::prefer_hooks_in_order,
     jest::prefer_hooks_on_top,
-    jest::prefer_importing_jest_globals,
     jest::prefer_jest_mocked,
     jest::prefer_lowercase_title,
     jest::prefer_mock_promise_shorthand,
