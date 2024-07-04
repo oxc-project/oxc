@@ -179,6 +179,16 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     // ==================== TSTypeParameter ====================
 
+    fn visit_ts_type_parameter(&mut self, it: &TSTypeParameter<'a>) {
+        self.add_type_binding(it.name.name.clone());
+        if let Some(constraint) = &it.constraint {
+            self.visit_ts_type(constraint);
+        }
+        if let Some(default) = &it.default {
+            self.visit_ts_type(default);
+        }
+    }
+
     /// ```ts
     /// function foo<T>(x: T): T {
     ///             ^^^
@@ -191,7 +201,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     /// until the end of the function. So we leave the scope in the parent node (Function)
     fn visit_ts_type_parameter_declaration(&mut self, decl: &TSTypeParameterDeclaration<'a>) {
         self.enter_scope(ScopeFlags::empty());
-        walk_ts_type_parameter_declaration(self, decl);
+        decl.params.iter().for_each(|param| self.visit_ts_type_parameter(param));
         // exit scope in parent AST node
     }
 
@@ -267,12 +277,9 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
         // copy from walk_ts_mapped_type
         self.enter_scope(ScopeFlags::empty());
-        self.add_type_binding(ty.type_parameter.name.name.clone());
+        self.visit_ts_type_parameter(&ty.type_parameter);
         if let Some(name) = &ty.name_type {
             self.visit_ts_type(name);
-        }
-        if let Some(constraint) = &ty.type_parameter.constraint {
-            self.visit_ts_type(constraint);
         }
         if let Some(type_annotation) = &ty.type_annotation {
             self.visit_ts_type(type_annotation);
@@ -292,6 +299,6 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     fn visit_ts_infer_type(&mut self, ty: &TSInferType<'a>) {
         // copy from walk_ts_infer_type
-        self.add_type_binding(ty.type_parameter.name.name.clone());
+        self.visit_ts_type_parameter(&ty.type_parameter);
     }
 }

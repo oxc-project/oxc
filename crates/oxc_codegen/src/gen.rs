@@ -682,11 +682,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FormalParameter<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.decorators.gen(p, ctx);
-        if self.readonly {
-            p.print_str(b"readonly ");
-        }
         if let Some(accessibility) = self.accessibility {
             accessibility.gen(p, ctx);
+        }
+        if self.readonly {
+            p.print_str(b"readonly ");
         }
         self.pattern.gen(p, ctx);
     }
@@ -2378,11 +2378,11 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for MethodDefinition<'a> {
         p.add_source_mapping(self.span.start);
         self.decorators.gen(p, ctx);
 
-        if self.r#type == MethodDefinitionType::TSAbstractMethodDefinition {
-            p.print_str(b"abstract ");
-        }
         if let Some(accessibility) = &self.accessibility {
             accessibility.gen(p, ctx);
+        }
+        if self.r#type == MethodDefinitionType::TSAbstractMethodDefinition {
+            p.print_str(b"abstract ");
         }
         if self.r#static {
             p.print_str(b"static ");
@@ -2440,13 +2440,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         self.decorators.gen(p, ctx);
-        if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
-            p.print_str(b"abstract ");
-        }
         if let Some(accessibility) = &self.accessibility {
             accessibility.gen(p, ctx);
         }
-
+        if self.r#type == PropertyDefinitionType::TSAbstractPropertyDefinition {
+            p.print_str(b"abstract ");
+        }
         if self.r#static {
             p.print_str(b"static ");
         }
