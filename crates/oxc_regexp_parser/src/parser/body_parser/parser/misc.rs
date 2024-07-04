@@ -9,7 +9,7 @@ impl<'a> super::parse::PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-DecimalDigits>
     pub(super) fn consume_decimal_digits(&mut self) -> Option<usize> {
-        let span_start = self.reader.span_position();
+        let checkpoint = self.reader.checkpoint();
 
         let mut value = 0;
         while let Some(cp) = self.reader.peek() {
@@ -22,7 +22,7 @@ impl<'a> super::parse::PatternParser<'a> {
             self.reader.advance();
         }
 
-        if self.reader.span_position() != span_start {
+        if self.reader.checkpoint() != checkpoint {
             return Some(value);
         }
 
@@ -48,6 +48,22 @@ impl<'a> super::parse::PatternParser<'a> {
                 self.reader.advance();
             }
 
+            return Some(value);
+        }
+
+        None
+    }
+
+    pub(super) fn consume_hex_digits(&mut self) -> Option<u32> {
+        let checkpoint = self.reader.checkpoint();
+
+        let mut value = 0;
+        while let Some(hex) = self.reader.peek().and_then(unicode::map_hex_digit) {
+            value = (16 * value) + hex;
+            self.reader.advance();
+        }
+
+        if self.reader.checkpoint() != checkpoint {
             return Some(value);
         }
 

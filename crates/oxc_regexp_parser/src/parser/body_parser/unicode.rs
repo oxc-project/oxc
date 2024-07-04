@@ -19,6 +19,22 @@ pub fn is_id_continue(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, unicode_id_start::is_id_continue_unicode)
 }
 
+pub fn is_valid_unicode(cp: u32) -> bool {
+    (0..=0x0010_ffff).contains(&cp)
+}
+
+pub fn is_lead_surrogate(cp: u32) -> bool {
+    (0xd800..=0xdbff).contains(&cp)
+}
+
+pub fn is_trail_surrogate(cp: u32) -> bool {
+    (0xdc00..=0xdfff).contains(&cp)
+}
+
+pub fn combine_surrogate_pair(lead: u32, trail: u32) -> u32 {
+    (lead - 0xd800) * 0x400 + trail - 0xdc00 + 0x10000
+}
+
 pub fn map_control_escape(cp: u32) -> Option<u32> {
     match char::from_u32(cp) {
         Some('f') => Some(0x0c),

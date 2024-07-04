@@ -400,7 +400,7 @@ mod test {
             "a+b*?c{1}d{2,}e{3,4}?",
             r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$",
             "a.b..",
-            r"\n\cM\0\x41\.",
+            r"\n\cM\0\x41\u1f60\.",
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, ParserOptions::default())
@@ -416,8 +416,23 @@ mod test {
         let allocator = Allocator::default();
 
         for source_text in &[
-            "", "a)", r"b\", "c]", "d}", "e|+", "f|{", "g{", "g{1", "g{1,", "g{,", "g{2,1}",
-            "(?=h", "(?<!h", r"\xI",
+            "",
+            "a)",
+            r"b\",
+            "c]",
+            "d}",
+            "e|+",
+            "f|{",
+            "g{",
+            "g{1",
+            "g{1,",
+            "g{,",
+            "g{2,1}",
+            "(?=h",
+            "(?<!h",
+            r"\xi",
+            r"j\u{1f600}",
+            r"j\u",
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, ParserOptions::default())
