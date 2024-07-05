@@ -27,6 +27,7 @@ oxc_span                  = { workspace = true }
 oxc_codegen               = { workspace = true }
 oxc_isolated_declarations = { workspace = true }
 oxc_transformer           = { workspace = true }
+oxc_diagnostics           = { workspace = true }
 
 napi        = { workspace = true }
 napi-derive = { workspace = true }
