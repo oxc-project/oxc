@@ -40,7 +40,7 @@ impl<'a> Folder<'a> {
         self
     }
 
-    pub(crate) fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
+    pub fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
         let folded_expr = match expr {
             Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
                 BinaryOperator::Equality

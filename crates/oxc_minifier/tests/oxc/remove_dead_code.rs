@@ -24,6 +24,21 @@ fn remove_dead_code() {
     test("if (true) { foo } else { bar }", "{foo}");
     test("if (false) { foo } else { bar }", "{bar}");
 
+    test("if (!false) { foo }", "{foo}");
+    test("if (!true) { foo } else { bar }", "{bar}");
+
+    test("if ('production' == 'production') { foo } else { bar }", "{foo}");
+    test("if ('development' == 'production') { foo } else { bar }", "{bar}");
+
+    test("if ('production' === 'production') { foo } else { bar }", "{foo}");
+    test("if ('development' === 'production') { foo } else { bar }", "{bar}");
+
     test("false ? foo : bar;", "bar");
     test("true ? foo : bar;", "foo");
+
+    test("!true ? foo : bar;", "bar");
+    test("!false ? foo : bar;", "foo");
+
+    test("!!false ? foo : bar;", "bar");
+    test("!!true ? foo : bar;", "foo");
 }
