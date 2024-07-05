@@ -1690,57 +1690,7 @@ pub mod walk {
     pub fn walk_expression_array_element<'a, V: Visit<'a>>(visitor: &mut V, it: &Expression<'a>) {
         let kind = AstKind::ExpressionArrayElement(visitor.alloc(it));
         visitor.enter_node(kind);
-        match it {
-            Expression::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
-            Expression::NullLiteral(it) => visitor.visit_null_literal(it),
-            Expression::NumericLiteral(it) => visitor.visit_numeric_literal(it),
-            Expression::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
-            Expression::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
-            Expression::StringLiteral(it) => visitor.visit_string_literal(it),
-            Expression::TemplateLiteral(it) => visitor.visit_template_literal(it),
-            Expression::Identifier(it) => visitor.visit_identifier_reference(it),
-            Expression::MetaProperty(it) => visitor.visit_meta_property(it),
-            Expression::Super(it) => visitor.visit_super(it),
-            Expression::ArrayExpression(it) => visitor.visit_array_expression(it),
-            Expression::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
-            Expression::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
-            Expression::AwaitExpression(it) => visitor.visit_await_expression(it),
-            Expression::BinaryExpression(it) => visitor.visit_binary_expression(it),
-            Expression::CallExpression(it) => visitor.visit_call_expression(it),
-            Expression::ChainExpression(it) => visitor.visit_chain_expression(it),
-            Expression::ClassExpression(it) => visitor.visit_class(it),
-            Expression::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
-            Expression::FunctionExpression(it) => {
-                let flags = None;
-                visitor.visit_function(it, flags)
-            }
-            Expression::ImportExpression(it) => visitor.visit_import_expression(it),
-            Expression::LogicalExpression(it) => visitor.visit_logical_expression(it),
-            Expression::NewExpression(it) => visitor.visit_new_expression(it),
-            Expression::ObjectExpression(it) => visitor.visit_object_expression(it),
-            Expression::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
-            Expression::SequenceExpression(it) => visitor.visit_sequence_expression(it),
-            Expression::TaggedTemplateExpression(it) => {
-                visitor.visit_tagged_template_expression(it)
-            }
-            Expression::ThisExpression(it) => visitor.visit_this_expression(it),
-            Expression::UnaryExpression(it) => visitor.visit_unary_expression(it),
-            Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
-            Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
-            Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
-            Expression::JSXElement(it) => visitor.visit_jsx_element(it),
-            Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
-            Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
-            Expression::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
-            Expression::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            Expression::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
-            Expression::TSInstantiationExpression(it) => {
-                visitor.visit_ts_instantiation_expression(it)
-            }
-            match_member_expression!(Expression) => {
-                visitor.visit_member_expression(it.to_member_expression())
-            }
-        }
+        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
