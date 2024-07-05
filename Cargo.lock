@@ -1551,7 +1551,6 @@ dependencies = [
 name = "oxc_minifier"
 version = "0.16.3"
 dependencies = [
- "insta",
  "itertools 0.13.0",
  "num-bigint",
  "num-traits",
@@ -1565,7 +1564,6 @@ dependencies = [
  "oxc_span",
  "oxc_syntax",
  "pico-args",
- "walkdir",
 ]
 
 [[package]]

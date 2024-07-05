@@ -16,26 +16,28 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
-use crate::ast_passes::RemoveParens;
+// use crate::ast_passes::RemoveParens;
 
 pub use self::options::CompressOptions;
 
 pub struct Compressor<'a> {
     ast: AstBuilder<'a>,
     options: CompressOptions,
-
-    prepass: RemoveParens<'a>,
+    // prepass: RemoveParens<'a>,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
     pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { ast: AstBuilder::new(allocator), options, prepass: RemoveParens::new(allocator) }
+        Self {
+            ast: AstBuilder::new(allocator),
+            options, /* prepass: RemoveParens::new(allocator) */
+        }
     }
 
     pub fn build(mut self, program: &mut Program<'a>) {
-        self.prepass.build(program);
+        // self.prepass.build(program);
         self.visit_program(program);
     }
 

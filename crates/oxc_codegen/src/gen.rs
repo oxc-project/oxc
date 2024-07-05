@@ -1053,7 +1053,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::ClassExpression(expr) => expr.gen(p, ctx),
             Self::JSXElement(el) => el.gen(p, ctx),
             Self::JSXFragment(fragment) => fragment.gen(p, ctx),
-            Self::ParenthesizedExpression(e) => e.expression.gen_expr(p, precedence, ctx),
+            Self::ParenthesizedExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSAsExpression(e) => e.gen_expr(p, precedence, ctx),
             Self::TSSatisfiesExpression(e) => {
                 e.expression.gen_expr(p, precedence, ctx);
@@ -1064,6 +1064,14 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
             Self::TSNonNullExpression(e) => e.expression.gen_expr(p, precedence, ctx),
             Self::TSInstantiationExpression(e) => e.expression.gen_expr(p, precedence, ctx),
         }
+    }
+}
+
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        self.expression.gen_expr(p, precedence, ctx);
+        p.print_str(b" as ");
+        self.type_annotation.gen(p, ctx);
     }
 }
 
@@ -1079,15 +1087,14 @@ impl<const MINIFY: bool> GenComment<MINIFY> for Function<'_> {
     }
 }
 
-impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
+impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.print_str(b"(");
         self.expression.gen_expr(p, precedence, ctx);
-        p.print_str(b" as ");
-        self.type_annotation.gen(p, ctx);
         p.print_str(b")");
     }
 }
+
 impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         // if let Some(mangler) = &p.mangler {
@@ -2062,9 +2069,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
             p.add_source_mapping(self.span.start);
             p.print_str(b"new ");
             self.callee.gen_expr(p, Precedence::NewWithoutArgs, ctx.and_forbid_call(true));
-            p.wrap(true, |p| {
-                p.print_list(&self.arguments, ctx);
-            });
+            p.print(b'(');
+            p.print_list(&self.arguments, ctx);
+            p.print(b')');
         });
     }
 }

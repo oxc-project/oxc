@@ -38,6 +38,6 @@ num-traits = { workspace = true }
 oxc_parser  = { workspace = true }
 oxc_codegen = { workspace = true }
 
-insta     = { workspace = true }
-walkdir   = { workspace = true }
+# insta     = { workspace = true }
+# walkdir   = { workspace = true }
 pico-args = { workspace = true }
