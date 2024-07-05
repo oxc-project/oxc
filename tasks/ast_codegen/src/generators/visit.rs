@@ -334,7 +334,7 @@ impl<'a> VisitBuilder<'a> {
         } else {
             match &*ty.borrow() {
                 // TODO: this one is a hot-fix to prevent flattening `ExpressionArrayElement`.
-                // Shouldn't be an edge case
+                // Shouldn't be an edge case, <https://github.com/oxc-project/oxc/issues/4060>
                 RType::Enum(enum_)
                     if enum_.item.ident == "Expression"
                         && visit_as.is_some_and(|it| it == "ExpressionArrayElement") =>
