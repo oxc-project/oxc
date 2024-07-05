@@ -2,183 +2,44 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
+mod tri;
+mod ty;
+mod util;
+
 use std::{cmp::Ordering, mem};
 
-use num_bigint::BigInt;
-#[allow(clippy::wildcard_imports)]
-use oxc_ast::ast::*;
+use oxc_ast::{ast::*, AstBuilder};
 use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
-use super::{
-    ast_util::{
-        get_boolean_value, get_number_value, get_side_free_bigint_value,
-        get_side_free_number_value, get_side_free_string_value, get_string_value, is_exact_int64,
-        IsLiteralValue, MayHaveSideEffects, NumberValue,
-    },
-    Compressor,
+use crate::compressor::ast_util::{
+    get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
+    get_side_free_string_value, get_string_value, is_exact_int64, IsLiteralValue,
+    MayHaveSideEffects, NumberValue,
 };
 
-/// Tri state
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Tri {
-    True,
-    False,
-    Unknown,
+use tri::Tri;
+use ty::Ty;
+use util::bigint_less_than_number;
+
+pub struct Folder<'a> {
+    ast: AstBuilder<'a>,
+    evaluate: bool,
 }
 
-impl Tri {
-    pub fn not(self) -> Self {
-        match self {
-            Self::True => Self::False,
-            Self::False => Self::True,
-            Self::Unknown => Self::Unknown,
-        }
+impl<'a> Folder<'a> {
+    pub fn new(ast: AstBuilder<'a>) -> Self {
+        Self { ast, evaluate: false }
     }
 
-    pub fn xor(self, other: Self) -> Self {
-        self.for_int(-self.value() * other.value())
+    pub fn with_evaluate(mut self, yes: bool) -> Self {
+        self.evaluate = yes;
+        self
     }
 
-    pub fn for_int(self, int: i8) -> Self {
-        match int {
-            -1 => Self::False,
-            1 => Self::True,
-            _ => Self::Unknown,
-        }
-    }
-
-    pub fn for_boolean(boolean: bool) -> Self {
-        if boolean {
-            Self::True
-        } else {
-            Self::False
-        }
-    }
-
-    pub fn value(self) -> i8 {
-        match self {
-            Self::True => 1,
-            Self::False => -1,
-            Self::Unknown => 0,
-        }
-    }
-}
-
-/// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1250)
-#[allow(clippy::cast_possible_truncation)]
-fn bigint_less_than_number(
-    bigint_value: &BigInt,
-    number_value: &NumberValue,
-    invert: Tri,
-    will_negative: bool,
-) -> Tri {
-    // if invert is false, then the number is on the right in tryAbstractRelationalComparison
-    // if it's true, then the number is on the left
-    match number_value {
-        NumberValue::NaN => Tri::for_boolean(will_negative),
-        NumberValue::PositiveInfinity => Tri::True.xor(invert),
-        NumberValue::NegativeInfinity => Tri::False.xor(invert),
-        NumberValue::Number(num) => {
-            if let Some(Ordering::Equal | Ordering::Greater) =
-                num.abs().partial_cmp(&2_f64.powi(53))
-            {
-                Tri::Unknown
-            } else {
-                let number_as_bigint = BigInt::from(*num as i64);
-
-                match bigint_value.cmp(&number_as_bigint) {
-                    Ordering::Less => Tri::True.xor(invert),
-                    Ordering::Greater => Tri::False.xor(invert),
-                    Ordering::Equal => {
-                        if is_exact_int64(*num) {
-                            Tri::False
-                        } else {
-                            Tri::for_boolean(num.is_sign_positive()).xor(invert)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-/// JavaScript Language Type
-///
-/// <https://tc39.es/ecma262/#sec-ecmascript-language-types>
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Ty {
-    BigInt,
-    Boolean,
-    Null,
-    Number,
-    Object,
-    Str,
-    Void,
-    Undetermined,
-}
-
-impl<'a> From<&Expression<'a>> for Ty {
-    fn from(expr: &Expression<'a>) -> Self {
-        // TODO: complete this
-        match expr {
-            Expression::BigIntLiteral(_) => Self::BigInt,
-            Expression::BooleanLiteral(_) => Self::Boolean,
-            Expression::NullLiteral(_) => Self::Null,
-            Expression::NumericLiteral(_) => Self::Number,
-            Expression::StringLiteral(_) => Self::Str,
-            Expression::ObjectExpression(_)
-            | Expression::ArrayExpression(_)
-            | Expression::RegExpLiteral(_)
-            | Expression::FunctionExpression(_) => Self::Object,
-            Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Self::Void,
-                "NaN" | "Infinity" => Self::Number,
-                _ => Self::Undetermined,
-            },
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-                UnaryOperator::Void => Self::Void,
-                UnaryOperator::UnaryNegation => {
-                    let argument_ty = Self::from(&unary_expr.argument);
-                    if argument_ty == Self::BigInt {
-                        return Self::BigInt;
-                    }
-                    Self::Number
-                }
-                UnaryOperator::UnaryPlus => Self::Number,
-                UnaryOperator::LogicalNot => Self::Boolean,
-                UnaryOperator::Typeof => Self::Str,
-                _ => Self::Undetermined,
-            },
-            Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
-                BinaryOperator::Addition => {
-                    let left_ty = Self::from(&binary_expr.left);
-                    let right_ty = Self::from(&binary_expr.right);
-
-                    if left_ty == Self::Str || right_ty == Self::Str {
-                        return Self::Str;
-                    }
-
-                    // There are some pretty weird cases for object types:
-                    //   {} + [] === "0"
-                    //   [] + {} === "[object Object]"
-                    if left_ty == Self::Object || right_ty == Self::Object {
-                        return Self::Undetermined;
-                    }
-
-                    Self::Undetermined
-                }
-                _ => Self::Undetermined,
-            },
-            _ => Self::Undetermined,
-        }
-    }
-}
-
-impl<'a> Compressor<'a> {
     pub(crate) fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
         let folded_expr = match expr {
             Expression::BinaryExpression(binary_expr) => match binary_expr.operator {
@@ -209,7 +70,7 @@ impl<'a> Compressor<'a> {
                 // don't match (even though the produced code is valid). Additionally, We'll likely
                 // want to add `evaluate` checks for all constant folding, not just additions, but
                 // we're adding this here until a decision is made.
-                BinaryOperator::Addition if self.options.evaluate => {
+                BinaryOperator::Addition if self.evaluate => {
                     self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right)
                 }
                 _ => None,
