@@ -11,12 +11,12 @@ impl<'a> super::parse::PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-PatternCharacter>
     pub(super) fn consume_pattern_character(&mut self) -> Option<ast::QuantifiableElement<'a>> {
+        let span_start = self.reader.span_position();
+
         let cp = self.reader.peek()?;
         if unicode::is_syntax_character(cp) {
             return None;
         }
-
-        let span_start = self.reader.span_position();
         self.reader.advance();
 
         Some(ast::QuantifiableElement::Character(Box::new_in(
@@ -95,6 +95,22 @@ impl<'a> super::parse::PatternParser<'a> {
 
         Err(OxcDiagnostic::error("Invalid escape"))
     }
+
+    // ```
+    // CharacterClassEscape[UnicodeMode] ::
+    //   d
+    //   D
+    //   s
+    //   S
+    //   w
+    //   W
+    //   [+UnicodeMode] p{ UnicodePropertyValueExpression }
+    //   [+UnicodeMode] P{ UnicodePropertyValueExpression }
+    // ```
+    // <https://tc39.es/ecma262/#prod-CharacterClassEscape>
+    // fn consume_character_class_escape(&mut self) -> Option<u32> {
+    //     None
+    // }
 
     // ```
     // CharacterEscape[UnicodeMode] ::

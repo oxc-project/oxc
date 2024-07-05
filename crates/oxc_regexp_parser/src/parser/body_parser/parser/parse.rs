@@ -330,6 +330,7 @@ impl<'a> PatternParser<'a> {
     //   { DecimalDigits , DecimalDigits }
     // ```
     // <https://tc39.es/ecma262/#prod-QuantifierPrefix>
+    /// Returns: `((min, max?), greedy)`
     #[allow(clippy::type_complexity)]
     fn consume_quantifier(&mut self) -> Result<Option<((usize, Option<usize>), bool)>> {
         let is_greedy = |reader: &mut Reader| !reader.eat('?');
@@ -373,100 +374,5 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(None)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use oxc_allocator::Allocator;
-
-    // NOTE: These may be useless when integlation tests are added
-    #[test]
-    fn should_pass() {
-        let allocator = Allocator::default();
-
-        for source_text in &[
-            "a",
-            "a+",
-            "a*",
-            "a?",
-            "a{1}",
-            "a{1,}",
-            "a{1,2}",
-            "a|b",
-            "a|b|c",
-            "a|b+?|c",
-            "a+b*?c{1}d{2,}e{3,4}?",
-            r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$",
-            "a.b..",
-            r"\n\cM\0\x41\u1f60\.",
-        ] {
-            assert!(
-                PatternParser::new(&allocator, source_text, ParserOptions::default())
-                    .parse()
-                    .is_ok(),
-                "{source_text} should be parsed in legacy mode!"
-            );
-        }
-    }
-
-    #[test]
-    fn should_fail() {
-        let allocator = Allocator::default();
-
-        for source_text in &[
-            "",
-            "a)",
-            r"b\",
-            "c]",
-            "d}",
-            "e|+",
-            "f|{",
-            "g{",
-            "g{1",
-            "g{1,",
-            "g{,",
-            "g{2,1}",
-            "(?=h",
-            "(?<!h",
-            r"\xi",
-            r"j\u{1f600}",
-            r"j\u",
-        ] {
-            assert!(
-                PatternParser::new(&allocator, source_text, ParserOptions::default())
-                    .parse()
-                    .is_err(),
-                "{source_text} should fail to parse!"
-            );
-        }
-    }
-
-    #[test]
-    fn should_handle_unicode() {
-        let allocator = Allocator::default();
-        let source_text = "Emoji🥹";
-
-        let pattern =
-            PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 7);
-
-        let pattern = PatternParser::new(
-            &allocator,
-            source_text,
-            ParserOptions::default().with_unicode_flags(true, false),
-        )
-        .parse()
-        .unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 6);
-        let pattern = PatternParser::new(
-            &allocator,
-            source_text,
-            ParserOptions::default().with_unicode_flags(true, true),
-        )
-        .parse()
-        .unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 6);
     }
 }

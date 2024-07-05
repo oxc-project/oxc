@@ -18,8 +18,8 @@ impl ParserOptions {
     }
 
     #[must_use]
-    /// Only for using `PattenrParser` alone usage.
-    /// `FlagParser` does not use, (Literal)`Parser` internally updates these value with parsed flags.
+    /// Only for `PattenrParser` alone usage.
+    /// `FlagParser` does not use these, (Literal)`Parser` internally updates with parsed flags.
     pub fn with_unicode_flags(self, unicode_flag: bool, unicode_sets_flag: bool) -> ParserOptions {
         ParserOptions { unicode_flag, unicode_sets_flag, ..self }
     }
