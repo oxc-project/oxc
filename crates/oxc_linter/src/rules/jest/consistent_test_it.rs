@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -18,7 +20,7 @@ fn consistent_method(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic
     OxcDiagnostic::warn(format!(
         "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
     ))
-    .with_help(format!("Prefer using '{x1:?}' instead of '{x2:?}'"))
+    .with_help(format!("Prefer using {x1:?} instead of {x2:?}"))
     .with_label(span0)
 }
 
@@ -26,7 +28,7 @@ fn consistent_method_within_describe(x0: &str, x1: &str, x2: &str, span0: Span) 
     OxcDiagnostic::warn(format!(
         "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
     ))
-    .with_help(format!("Prefer using '{x1:?}' instead of '{x2:?}' within describe"))
+    .with_help(format!("Prefer using {x1:?} instead of {x2:?} within describe"))
     .with_label(span0)
 }
 
@@ -37,6 +39,33 @@ enum TestCaseName {
     Test,
     Xit,
     Xtest,
+}
+
+impl std::fmt::Display for TestCaseName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Fit => write!(f, "fit"),
+            Self::IT => write!(f, "it"),
+            Self::Test => write!(f, "test"),
+            Self::Xit => write!(f, "xit"),
+            Self::Xtest => write!(f, "xtest"),
+        }
+    }
+}
+
+impl std::str::FromStr for TestCaseName {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "fit" => Ok(TestCaseName::Fit),
+            "it" => Ok(TestCaseName::IT),
+            "test" => Ok(TestCaseName::Test),
+            "xit" => Ok(TestCaseName::Xit),
+            "xtest" => Ok(TestCaseName::Xtest),
+            _ => Err("Unknown Test case name"),
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -148,18 +177,18 @@ impl Rule for ConsistentTestIt {
         let within_fn = config
             .and_then(|config| config.get("fn"))
             .and_then(serde_json::Value::as_str)
-            .and_then(Self::to_enum)
+            .and_then(|x| TestCaseName::from_str(x).ok())
             .unwrap_or(TestCaseName::Test);
 
         let within_describe = config
             .and_then(|config| config.get("withinDescribe"))
             .and_then(serde_json::Value::as_str)
-            .and_then(Self::to_enum)
+            .and_then(|x| TestCaseName::from_str(x).ok())
             .unwrap_or(
                 config
                     .and_then(|config| config.get("fn"))
                     .and_then(serde_json::Value::as_str)
-                    .and_then(Self::to_enum)
+                    .and_then(|x| TestCaseName::from_str(x).ok())
                     .unwrap_or(TestCaseName::IT),
             );
 
@@ -204,7 +233,7 @@ impl ConsistentTestIt {
         }
 
         let is_test = matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test));
-        let fn_to_str = Self::to_str(&self.within_fn);
+        let fn_to_str = self.within_fn.to_string();
 
         if is_test && describe_nesting_hash.is_empty() && !jest_fn_call.name.ends_with(&fn_to_str) {
             let opposite_test_keyword = Self::get_opposite_test_case(&self.within_fn);
@@ -220,7 +249,7 @@ impl ConsistentTestIt {
             }
         }
 
-        let describe_to_str = Self::to_str(&self.within_describe);
+        let describe_to_str = self.within_describe.to_string();
 
         if is_test
             && !describe_nesting_hash.is_empty()
@@ -245,34 +274,11 @@ impl ConsistentTestIt {
         }
     }
 
-    fn to_enum(test_case_name: &str) -> Option<TestCaseName> {
-        match test_case_name {
-            "fit" => Some(TestCaseName::Fit),
-            "it" => Some(TestCaseName::IT),
-            "test" => Some(TestCaseName::Test),
-            "xtest" => Some(TestCaseName::Xtest),
-            "xit" => Some(TestCaseName::Xit),
-            _ => None,
-        }
-    }
-
-    fn to_str(test_name: &TestCaseName) -> String {
-        let test_case_name = match test_name {
-            TestCaseName::Fit => "fit",
-            TestCaseName::IT => "it",
-            TestCaseName::Test => "test",
-            TestCaseName::Xtest => "xtest",
-            TestCaseName::Xit => "xit",
-        };
-
-        test_case_name.to_string()
-    }
-
     fn get_opposite_test_case(test_case_name: &TestCaseName) -> String {
         if matches!(test_case_name, TestCaseName::Test) {
-            Self::to_str(&TestCaseName::IT)
+            TestCaseName::IT.to_string()
         } else {
-            Self::to_str(&TestCaseName::Test)
+            TestCaseName::Test.to_string()
         }
     }
 
@@ -594,6 +600,7 @@ fn test() {
         ("it.each([])(\"foo\")", "test.each([])(\"foo\")"),
         ("it.each``(\"foo\")", "test.each``(\"foo\")"),
         // Note: couldn't fix
+        // Todo: this need to fixer support option configuration.
         // (
         //     "describe.each``(\"foo\", () => { it.each``(\"bar\") })",
         //     "describe.each``(\"foo\", () => { test.each``(\"bar\") })",
@@ -734,7 +741,8 @@ fn test() {
             "describe(\"suite\", () => { test.concurrent(\"foo\") })",
             "describe(\"suite\", () => { it.concurrent(\"foo\") })",
         ),
-        // Note: couldn't be fixed
+        // Note: couldn't fix
+        // Todo: this need to fixer support option configuration.
         // consistent-test-it with fn=test and withinDescribe=test
         // (
         //     "describe(\"suite\", () => { it(\"foo\") })",
@@ -761,7 +769,8 @@ fn test() {
         ),
         // consistent-test-it with withinDescribe=test
         ("it(\"foo\")", "test(\"foo\")"),
-        // Note: couldn't be fixed
+        // Note: couldn't fixed
+        // Todo: this need to fixer support option configuration.
         // (
         //     "describe(\"suite\", () => { it(\"foo\") })",
         //     "describe(\"suite\", () => { test(\"foo\") })",
@@ -866,7 +875,8 @@ fn test() {
     ];
 
     let fix_vitest = vec![
-        // Note: couldn't be fixed, because the fixer doesn't support to set the options for the fix cases.
+        // Note: couldn't  fixed, because the fixer doesn't support to set the options for the fix cases.
+        // Todo: this need to fixer support option configuration.
         // ("test(\"shows error\", () => {});", "it(\"shows error\", () => {});"),
         // ("test.skip(\"shows error\");", "it.skip(\"shows error\");"),
         // ("test.only('shows error');", "it.only('shows error');"),
