@@ -2,5 +2,6 @@ commit: d8086f14
 
 transformer_typescript Summary:
 AST Parsed     : 5283/5283 (100.00%)
-Positive Passed: 5282/5283 (99.98%)
+Positive Passed: 5281/5283 (99.96%)
 Mismatch: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
+Mismatch: "conformance/esDecorators/esDecorators-decoratorExpression.3.ts"

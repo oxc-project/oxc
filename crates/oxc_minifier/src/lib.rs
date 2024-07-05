@@ -1,7 +1,9 @@
+#![allow(clippy::wildcard_imports, clippy::unused_self)]
 //! ECMAScript Minifier
 
 mod ast_passes;
 mod compressor;
+mod folder;
 mod mangler;
 
 use oxc_allocator::Allocator;
