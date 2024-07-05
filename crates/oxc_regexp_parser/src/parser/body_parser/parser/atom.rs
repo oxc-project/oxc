@@ -2,7 +2,10 @@ use oxc_allocator::Box;
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom;
 
-use crate::{ast, parser::body_parser::unicode};
+use crate::{
+    ast,
+    parser::body_parser::{unicode, unicode_property},
+};
 
 impl<'a> super::parse::PatternParser<'a> {
     // ```
@@ -77,8 +80,52 @@ impl<'a> super::parse::PatternParser<'a> {
             ))));
         }
 
-        // TODO: Implement
-        // if let Some(_) = self.consume_character_class_escape() {}
+        if let Some((kind, negate)) = self.consume_character_class_escape() {
+            return Ok(Some(ast::QuantifiableElement::CharacterSet(Box::new_in(
+                ast::CharacterSet::EscapeCharacterSet(Box::new_in(
+                    ast::EscapeCharacterSet {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        kind,
+                        negate,
+                    },
+                    self.allocator,
+                )),
+                self.allocator,
+            ))));
+        }
+        if self.state.is_unicode_mode() {
+            if let Some(((name, value, negate), is_strings_related)) =
+                self.consume_character_class_escape_unicode()?
+            {
+                let span = self.span_factory.create(span_start, self.reader.span_position());
+                return Ok(Some(ast::QuantifiableElement::CharacterSet(Box::new_in(
+                    ast::CharacterSet::UnicodePropertyCharacterSet(Box::new_in(
+                        if is_strings_related {
+                            ast::UnicodePropertyCharacterSet::StringsUnicodePropertyCharacterSet(
+                                Box::new_in(
+                                    ast::StringsUnicodePropertyCharacterSet { span, key: name },
+                                    self.allocator,
+                                ),
+                            )
+                        } else {
+                            ast::UnicodePropertyCharacterSet::CharacterUnicodePropertyCharacterSet(
+                                Box::new_in(
+                                    ast::CharacterUnicodePropertyCharacterSet {
+                                        span,
+                                        key: name,
+                                        value,
+                                        negate,
+                                    },
+                                    self.allocator,
+                                ),
+                            )
+                        },
+                        self.allocator,
+                    )),
+                    self.allocator,
+                ))));
+            }
+        }
 
         if let Some(cp) = self.consume_character_escape()? {
             return Ok(Some(ast::QuantifiableElement::Character(Box::new_in(
@@ -108,9 +155,143 @@ impl<'a> super::parse::PatternParser<'a> {
     //   [+UnicodeMode] P{ UnicodePropertyValueExpression }
     // ```
     // <https://tc39.es/ecma262/#prod-CharacterClassEscape>
-    // fn consume_character_class_escape(&mut self) -> Option<u32> {
-    //     None
-    // }
+    /// Returns: `(kind, negate)`
+    fn consume_character_class_escape(&mut self) -> Option<(ast::EscapeCharacterSetKind, bool)> {
+        // NOTE: `mayContainStrings`?
+        if self.reader.eat('d') {
+            return Some((ast::EscapeCharacterSetKind::Digit, false));
+        }
+        if self.reader.eat('D') {
+            return Some((ast::EscapeCharacterSetKind::Digit, true));
+        }
+        if self.reader.eat('s') {
+            return Some((ast::EscapeCharacterSetKind::Space, false));
+        }
+        if self.reader.eat('S') {
+            return Some((ast::EscapeCharacterSetKind::Space, true));
+        }
+        if self.reader.eat('w') {
+            return Some((ast::EscapeCharacterSetKind::Word, false));
+        }
+        if self.reader.eat('W') {
+            return Some((ast::EscapeCharacterSetKind::Word, true));
+        }
+
+        None
+    }
+    /// Returns: `((name, value, is_strings_related_unicode_property), negate)`
+    #[allow(clippy::type_complexity)]
+    fn consume_character_class_escape_unicode(
+        &mut self,
+    ) -> Result<Option<((Atom<'a>, Option<Atom<'a>>, bool), bool)>> {
+        let negate = if self.reader.eat('p') {
+            Some(false)
+        } else if self.reader.eat('P') {
+            Some(true)
+        } else {
+            None
+        };
+
+        if let Some(negate) = negate {
+            if self.reader.eat('{') {
+                if let Some((name, value, is_strings_related)) =
+                    self.consume_unicode_property_value_expression()?
+                {
+                    if negate && is_strings_related {
+                        return Err(OxcDiagnostic::error("Invalid property name"));
+                    }
+                    if self.reader.eat('}') {
+                        // NOTE: `mayContainStrings`?
+                        return Ok(Some(((name, value, is_strings_related), negate)));
+                    }
+                }
+            }
+
+            return Err(OxcDiagnostic::error("Invalid property name"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // UnicodePropertyValueExpression ::
+    //   UnicodePropertyName = UnicodePropertyValue
+    //   LoneUnicodePropertyNameOrValue
+    // ```
+    // <https://tc39.es/ecma262/#prod-UnicodePropertyValueExpression>
+    /// Returns: `(name, value, is_strings_related_unicode_property)`
+    fn consume_unicode_property_value_expression(
+        &mut self,
+    ) -> Result<Option<(Atom<'a>, Option<Atom<'a>>, bool)>> {
+        let checkpoint = self.reader.checkpoint();
+
+        // UnicodePropertyName=UnicodePropertyValue
+        if let Some(name) = self.consume_unicode_property_name() {
+            if self.reader.eat('=') {
+                if let Some(value) = self.consume_unicode_property_value() {
+                    if unicode_property::is_valid_unicode_property(&name, &value) {
+                        return Ok(Some((name, Some(value), false)));
+                    }
+
+                    return Err(OxcDiagnostic::error("Invalid property name"));
+                }
+            }
+        }
+        self.reader.rewind(checkpoint);
+
+        // LoneUnicodePropertyNameOrValue(=UnicodePropertyValueCharacters)
+        if let Some(name_or_value) = self.consume_unicode_property_value() {
+            if unicode_property::is_valid_unicode_property("General_Category", &name_or_value) {
+                return Ok(Some(("General_Category".into(), Some(name_or_value), false)));
+            }
+
+            if unicode_property::is_valid_lone_unicode_property(&name_or_value) {
+                return Ok(Some((name_or_value, None, false)));
+            }
+
+            // Extra checks to express explicit AST type for strings related Unicode property
+            // These properies are introduced with `unicode_sets_mode`
+            if self.state.is_unicode_sets_mode()
+                && unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value)
+            {
+                return Ok(Some((name_or_value, None, true)));
+            }
+
+            return Err(OxcDiagnostic::error("Invalid property name"));
+        }
+
+        Ok(None)
+    }
+
+    fn consume_unicode_property_name(&mut self) -> Option<Atom<'a>> {
+        let span_start = self.reader.span_position();
+
+        let checkpoint = self.reader.checkpoint();
+        while unicode_property::is_unicode_property_name_character(self.reader.peek()?) {
+            self.reader.advance();
+        }
+
+        if checkpoint == self.reader.checkpoint() {
+            return None;
+        }
+
+        Some(Atom::from(&self.source_text[span_start..self.reader.span_position()]))
+    }
+
+    fn consume_unicode_property_value(&mut self) -> Option<Atom<'a>> {
+        let span_start = self.reader.span_position();
+
+        let checkpoint = self.reader.checkpoint();
+        while unicode_property::is_unicode_property_value_character(self.reader.peek()?) {
+            self.reader.advance();
+        }
+
+        if checkpoint == self.reader.checkpoint() {
+            return None;
+        }
+
+        Some(Atom::from(&self.source_text[span_start..self.reader.span_position()]))
+    }
 
     // ```
     // CharacterEscape[UnicodeMode] ::
@@ -260,7 +441,7 @@ impl<'a> super::parse::PatternParser<'a> {
         let cp = self.reader.peek()?;
 
         if self.state.is_unicode_mode() {
-            if (unicode::is_syntax_character(cp) || cp == '/' as u32) {
+            if unicode::is_syntax_character(cp) || cp == '/' as u32 {
                 self.reader.advance();
                 return Some(cp);
             }
