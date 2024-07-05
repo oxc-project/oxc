@@ -250,7 +250,7 @@ impl<'a> super::parse::PatternParser<'a> {
             }
 
             // Extra checks to express explicit AST type for strings related Unicode property
-            // These properies are introduced with `unicode_sets_mode`
+            // These properties are introduced with `unicode_sets_mode`
             if self.state.is_unicode_sets_mode()
                 && unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value)
             {
