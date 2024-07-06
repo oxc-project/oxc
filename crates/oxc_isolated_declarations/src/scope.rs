@@ -8,89 +8,106 @@ use oxc_span::Atom;
 use oxc_syntax::scope::ScopeFlags;
 use rustc_hash::FxHashSet;
 
+/// Declaration scope.
+#[derive(Debug)]
+struct Scope<'a> {
+    type_bindings: FxHashSet<Atom<'a>>,
+    value_bindings: FxHashSet<Atom<'a>>,
+    type_references: FxHashSet<Atom<'a>>,
+    value_references: FxHashSet<Atom<'a>>,
+    flags: ScopeFlags,
+}
+
+impl<'a> Scope<'a> {
+    fn new(flags: ScopeFlags) -> Self {
+        Self {
+            value_bindings: FxHashSet::default(),
+            type_bindings: FxHashSet::default(),
+            type_references: FxHashSet::default(),
+            value_references: FxHashSet::default(),
+            flags,
+        }
+    }
+}
+
+/// Linear tree of declaration scopes.
 pub struct ScopeTree<'a> {
-    type_bindings: Vec<'a, FxHashSet<Atom<'a>>>,
-    value_bindings: Vec<'a, FxHashSet<Atom<'a>>>,
-    type_references: Vec<'a, FxHashSet<Atom<'a>>>,
-    value_references: Vec<'a, FxHashSet<Atom<'a>>>,
-    flags: Vec<'a, ScopeFlags>,
+    levels: Vec<'a, Scope<'a>>,
 }
 
 impl<'a> ScopeTree<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         let ast = AstBuilder::new(allocator);
-        let mut scope = Self {
-            type_bindings: ast.new_vec(),
-            value_bindings: ast.new_vec(),
-            type_references: ast.new_vec(),
-            value_references: ast.new_vec(),
-            flags: ast.new_vec(),
-        };
-        scope.enter_scope(ScopeFlags::Top);
-        scope
+        let mut levels = ast.new_vec_with_capacity(1);
+        levels.push(Scope::new(ScopeFlags::Top));
+        Self { levels }
     }
 
     pub fn is_ts_module_block_flag(&self) -> bool {
-        self.flags.last().unwrap().contains(ScopeFlags::TsModuleBlock)
+        let scope = self.levels.last().unwrap();
+        scope.flags.contains(ScopeFlags::TsModuleBlock)
     }
 
     pub fn has_reference(&self, name: &str) -> bool {
-        self.value_references.last().is_some_and(|rs| rs.contains(name))
-            || self.type_references.last().is_some_and(|rs| rs.contains(name))
+        // XXX(lucab): this should probably unwrap?
+        let Some(scope) = self.levels.last() else { return false };
+        scope.value_references.contains(name) || scope.type_references.contains(name)
     }
 
     pub fn references_len(&self) -> usize {
-        self.value_references.last().unwrap().len() + self.type_references.last().unwrap().len()
+        let scope = self.levels.last().unwrap();
+        scope.value_references.len() + scope.type_references.len()
     }
 
     fn add_value_binding(&mut self, ident: Atom<'a>) {
-        self.value_bindings.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.value_bindings.insert(ident);
     }
 
     fn add_type_binding(&mut self, ident: Atom<'a>) {
-        self.type_bindings.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.type_bindings.insert(ident);
     }
 
     fn add_value_reference(&mut self, ident: Atom<'a>) {
-        self.value_references.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.value_references.insert(ident);
     }
 
     fn add_type_reference(&mut self, ident: Atom<'a>) {
-        self.type_references.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.type_references.insert(ident);
     }
 
-    /// resolve references in the current scope
-    /// and merge unresolved references to the parent scope
-    /// and remove the current scope
+    /// Resolve references in the current scope, and propagate unresolved ones.
     fn resolve_references(&mut self) {
-        let current_value_bindings = self.value_bindings.pop().unwrap_or_default();
-        let current_value_references = self.value_references.pop().unwrap_or_default();
-        self.type_references
-            .last_mut()
-            .unwrap()
-            .extend(current_value_references.difference(&current_value_bindings).cloned());
+        debug_assert!(self.levels.len() >= 2);
 
-        let current_type_bindings = self.type_bindings.pop().unwrap_or_default();
-        let current_type_references = self.type_references.pop().unwrap_or_default();
-        self.type_references
-            .last_mut()
-            .unwrap()
-            .extend(current_type_references.difference(&current_type_bindings).cloned());
+        // Remove the current scope.
+        let mut current_scope = self.levels.pop().unwrap();
+
+        // Resolve references in the current scope.
+        let current_value_bindings = current_scope.value_bindings;
+        let current_value_references = current_scope.value_references;
+        let val_diff = current_value_references.difference(&current_value_bindings).cloned();
+        current_scope.type_references.extend(val_diff);
+        let current_type_bindings = current_scope.type_bindings;
+        let current_type_references = current_scope.type_references;
+        let type_diff = current_type_references.difference(&current_type_bindings).cloned();
+
+        // Merge unresolved references to the parent scope.
+        self.levels.last_mut().unwrap().type_references.extend(type_diff);
     }
 }
 
 impl<'a> Visit<'a> for ScopeTree<'a> {
     fn enter_scope(&mut self, flags: ScopeFlags) {
-        self.flags.push(flags);
-        self.value_bindings.push(FxHashSet::default());
-        self.type_bindings.push(FxHashSet::default());
-        self.type_references.push(FxHashSet::default());
-        self.value_references.push(FxHashSet::default());
+        let scope = Scope::new(flags);
+        self.levels.push(scope);
     }
 
     fn leave_scope(&mut self) {
         self.resolve_references();
-        self.flags.pop();
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
