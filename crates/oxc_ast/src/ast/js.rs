@@ -305,7 +305,7 @@ pub struct ArrayExpression<'a> {
 }
 
 inherit_variants! {
-/// Array Expression Element
+/// Represents a element in an array literal.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
@@ -316,7 +316,10 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[serde(untagged)]
 pub enum ArrayExpressionElement<'a> {
+    /// `...[3, 4]` in `const array = [1, 2, ...[3, 4], null];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
+    /// `<empty>` in `const array = [1, , 2];`
+    ///
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Elision) = 65,
@@ -326,6 +329,8 @@ pub enum ArrayExpressionElement<'a> {
 }
 }
 
+/// <empty> in `const array = [1, <empty>, 2];`
+///
 /// Array Expression Elision Element
 /// Serialized as `null` in JSON AST. See `serialize.rs`.
 #[ast(visit)]
