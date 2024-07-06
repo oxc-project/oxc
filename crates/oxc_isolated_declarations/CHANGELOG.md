@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.1] - 2024-07-06
+
+### Bug Fixes
+
+- adee728 isolated_declarations: Don't report an error for parameters if they are ObjectPattern or ArrayPattern with an explicit type (#4065) (michaelm)
+- 1b8f208 isolated_declarations: Correct emit for private static methods (#4064) (michaelm)
+
+### Refactor
+
+- 65aee19 isolated-declarations: Reorganize scope tree (#4070) (Luca Bruno)
+
 ## [0.17.0] - 2024-07-05
 
 - c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
