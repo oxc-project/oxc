@@ -219,7 +219,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let mut variable_transformed_indexes_iter = variable_transformed_indexes.iter_mut();
 
             for (i, stmt) in new_stmts.iter_mut().enumerate() {
-                if transformed_indexes.insert(i) {
+                if transformed_indexes.contains(&i) {
                     continue;
                 }
                 let Some(decl) = stmt.as_declaration() else { continue };
