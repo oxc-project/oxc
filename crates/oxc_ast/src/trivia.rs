@@ -16,6 +16,7 @@ pub struct Comment {
 }
 
 impl Comment {
+    #[inline]
     pub fn new(end: u32, kind: CommentKind) -> Self {
         Self { kind, end }
     }
@@ -28,12 +29,14 @@ pub enum CommentKind {
 }
 
 impl CommentKind {
+    #[inline]
     pub fn is_single_line(self) -> bool {
-        matches!(self, Self::SingleLine)
+        self == Self::SingleLine
     }
 
+    #[inline]
     pub fn is_multi_line(self) -> bool {
-        matches!(self, Self::MultiLine)
+        self == Self::MultiLine
     }
 }
 
@@ -54,6 +57,7 @@ pub struct TriviasImpl {
 impl Deref for Trivias {
     type Target = TriviasImpl;
 
+    #[inline]
     fn deref(&self) -> &Self::Target {
         self.0.as_ref()
     }
