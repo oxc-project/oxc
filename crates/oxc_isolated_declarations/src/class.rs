@@ -142,6 +142,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         r#type: PropertyDefinitionType,
         key: PropertyKey<'a>,
+        r#static: bool,
         r#override: bool,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a> {
@@ -151,7 +152,7 @@ impl<'a> IsolatedDeclarations<'a> {
             key,
             None,
             false,
-            false,
+            r#static,
             false,
             r#override,
             false,
@@ -205,6 +206,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.create_class_property(
                     r#type,
                     self.ast.copy(&method.key),
+                    method.r#static,
                     method.r#override,
                     self.transform_accessibility(method.accessibility),
                 )

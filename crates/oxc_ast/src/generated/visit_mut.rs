@@ -794,13 +794,58 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
-    fn visit_conditional_expression(&mut self, it: &mut ConditionalExpression<'a>) {
-        walk_conditional_expression(self, it);
+    fn visit_class_body(&mut self, it: &mut ClassBody<'a>) {
+        walk_class_body(self, it);
+    }
+
+    #[inline]
+    fn visit_class_elements(&mut self, it: &mut Vec<'a, ClassElement<'a>>) {
+        walk_class_elements(self, it);
+    }
+
+    #[inline]
+    fn visit_class_element(&mut self, it: &mut ClassElement<'a>) {
+        walk_class_element(self, it);
+    }
+
+    #[inline]
+    fn visit_static_block(&mut self, it: &mut StaticBlock<'a>) {
+        walk_static_block(self, it);
+    }
+
+    #[inline]
+    fn visit_method_definition(&mut self, it: &mut MethodDefinition<'a>) {
+        walk_method_definition(self, it);
     }
 
     #[inline]
     fn visit_function(&mut self, it: &mut Function<'a>, flags: Option<ScopeFlags>) {
         walk_function(self, it, flags);
+    }
+
+    #[inline]
+    fn visit_property_definition(&mut self, it: &mut PropertyDefinition<'a>) {
+        walk_property_definition(self, it);
+    }
+
+    #[inline]
+    fn visit_accessor_property(&mut self, it: &mut AccessorProperty<'a>) {
+        walk_accessor_property(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
+        walk_ts_class_implementses(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_class_implements(&mut self, it: &mut TSClassImplements<'a>) {
+        walk_ts_class_implements(self, it);
+    }
+
+    #[inline]
+    fn visit_conditional_expression(&mut self, it: &mut ConditionalExpression<'a>) {
+        walk_conditional_expression(self, it);
     }
 
     #[inline]
@@ -981,51 +1026,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_jsx_closing_element(&mut self, it: &mut JSXClosingElement<'a>) {
         walk_jsx_closing_element(self, it);
-    }
-
-    #[inline]
-    fn visit_class_body(&mut self, it: &mut ClassBody<'a>) {
-        walk_class_body(self, it);
-    }
-
-    #[inline]
-    fn visit_class_elements(&mut self, it: &mut Vec<'a, ClassElement<'a>>) {
-        walk_class_elements(self, it);
-    }
-
-    #[inline]
-    fn visit_class_element(&mut self, it: &mut ClassElement<'a>) {
-        walk_class_element(self, it);
-    }
-
-    #[inline]
-    fn visit_static_block(&mut self, it: &mut StaticBlock<'a>) {
-        walk_static_block(self, it);
-    }
-
-    #[inline]
-    fn visit_method_definition(&mut self, it: &mut MethodDefinition<'a>) {
-        walk_method_definition(self, it);
-    }
-
-    #[inline]
-    fn visit_property_definition(&mut self, it: &mut PropertyDefinition<'a>) {
-        walk_property_definition(self, it);
-    }
-
-    #[inline]
-    fn visit_accessor_property(&mut self, it: &mut AccessorProperty<'a>) {
-        walk_accessor_property(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
-        walk_ts_class_implementses(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_class_implements(&mut self, it: &mut TSClassImplements<'a>) {
-        walk_ts_class_implements(self, it);
     }
 
     #[inline]
@@ -1709,57 +1709,7 @@ pub mod walk_mut {
     ) {
         let kind = AstType::ExpressionArrayElement;
         visitor.enter_node(kind);
-        match it {
-            Expression::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
-            Expression::NullLiteral(it) => visitor.visit_null_literal(it),
-            Expression::NumericLiteral(it) => visitor.visit_numeric_literal(it),
-            Expression::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
-            Expression::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
-            Expression::StringLiteral(it) => visitor.visit_string_literal(it),
-            Expression::TemplateLiteral(it) => visitor.visit_template_literal(it),
-            Expression::Identifier(it) => visitor.visit_identifier_reference(it),
-            Expression::MetaProperty(it) => visitor.visit_meta_property(it),
-            Expression::Super(it) => visitor.visit_super(it),
-            Expression::ArrayExpression(it) => visitor.visit_array_expression(it),
-            Expression::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
-            Expression::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
-            Expression::AwaitExpression(it) => visitor.visit_await_expression(it),
-            Expression::BinaryExpression(it) => visitor.visit_binary_expression(it),
-            Expression::CallExpression(it) => visitor.visit_call_expression(it),
-            Expression::ChainExpression(it) => visitor.visit_chain_expression(it),
-            Expression::ClassExpression(it) => visitor.visit_class(it),
-            Expression::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
-            Expression::FunctionExpression(it) => {
-                let flags = None;
-                visitor.visit_function(it, flags)
-            }
-            Expression::ImportExpression(it) => visitor.visit_import_expression(it),
-            Expression::LogicalExpression(it) => visitor.visit_logical_expression(it),
-            Expression::NewExpression(it) => visitor.visit_new_expression(it),
-            Expression::ObjectExpression(it) => visitor.visit_object_expression(it),
-            Expression::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
-            Expression::SequenceExpression(it) => visitor.visit_sequence_expression(it),
-            Expression::TaggedTemplateExpression(it) => {
-                visitor.visit_tagged_template_expression(it)
-            }
-            Expression::ThisExpression(it) => visitor.visit_this_expression(it),
-            Expression::UnaryExpression(it) => visitor.visit_unary_expression(it),
-            Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
-            Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
-            Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
-            Expression::JSXElement(it) => visitor.visit_jsx_element(it),
-            Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
-            Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
-            Expression::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
-            Expression::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            Expression::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
-            Expression::TSInstantiationExpression(it) => {
-                visitor.visit_ts_instantiation_expression(it)
-            }
-            match_member_expression!(Expression) => {
-                visitor.visit_member_expression(it.to_member_expression_mut())
-            }
-        }
+        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
@@ -3114,70 +3064,67 @@ pub mod walk_mut {
     pub fn walk_class_heritage<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Expression<'a>) {
         let kind = AstType::ClassHeritage;
         visitor.enter_node(kind);
-        match it {
-            Expression::BooleanLiteral(it) => visitor.visit_boolean_literal(it),
-            Expression::NullLiteral(it) => visitor.visit_null_literal(it),
-            Expression::NumericLiteral(it) => visitor.visit_numeric_literal(it),
-            Expression::BigIntLiteral(it) => visitor.visit_big_int_literal(it),
-            Expression::RegExpLiteral(it) => visitor.visit_reg_exp_literal(it),
-            Expression::StringLiteral(it) => visitor.visit_string_literal(it),
-            Expression::TemplateLiteral(it) => visitor.visit_template_literal(it),
-            Expression::Identifier(it) => visitor.visit_identifier_reference(it),
-            Expression::MetaProperty(it) => visitor.visit_meta_property(it),
-            Expression::Super(it) => visitor.visit_super(it),
-            Expression::ArrayExpression(it) => visitor.visit_array_expression(it),
-            Expression::ArrowFunctionExpression(it) => visitor.visit_arrow_function_expression(it),
-            Expression::AssignmentExpression(it) => visitor.visit_assignment_expression(it),
-            Expression::AwaitExpression(it) => visitor.visit_await_expression(it),
-            Expression::BinaryExpression(it) => visitor.visit_binary_expression(it),
-            Expression::CallExpression(it) => visitor.visit_call_expression(it),
-            Expression::ChainExpression(it) => visitor.visit_chain_expression(it),
-            Expression::ClassExpression(it) => visitor.visit_class(it),
-            Expression::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
-            Expression::FunctionExpression(it) => {
-                let flags = None;
-                visitor.visit_function(it, flags)
-            }
-            Expression::ImportExpression(it) => visitor.visit_import_expression(it),
-            Expression::LogicalExpression(it) => visitor.visit_logical_expression(it),
-            Expression::NewExpression(it) => visitor.visit_new_expression(it),
-            Expression::ObjectExpression(it) => visitor.visit_object_expression(it),
-            Expression::ParenthesizedExpression(it) => visitor.visit_parenthesized_expression(it),
-            Expression::SequenceExpression(it) => visitor.visit_sequence_expression(it),
-            Expression::TaggedTemplateExpression(it) => {
-                visitor.visit_tagged_template_expression(it)
-            }
-            Expression::ThisExpression(it) => visitor.visit_this_expression(it),
-            Expression::UnaryExpression(it) => visitor.visit_unary_expression(it),
-            Expression::UpdateExpression(it) => visitor.visit_update_expression(it),
-            Expression::YieldExpression(it) => visitor.visit_yield_expression(it),
-            Expression::PrivateInExpression(it) => visitor.visit_private_in_expression(it),
-            Expression::JSXElement(it) => visitor.visit_jsx_element(it),
-            Expression::JSXFragment(it) => visitor.visit_jsx_fragment(it),
-            Expression::TSAsExpression(it) => visitor.visit_ts_as_expression(it),
-            Expression::TSSatisfiesExpression(it) => visitor.visit_ts_satisfies_expression(it),
-            Expression::TSTypeAssertion(it) => visitor.visit_ts_type_assertion(it),
-            Expression::TSNonNullExpression(it) => visitor.visit_ts_non_null_expression(it),
-            Expression::TSInstantiationExpression(it) => {
-                visitor.visit_ts_instantiation_expression(it)
-            }
-            match_member_expression!(Expression) => {
-                visitor.visit_member_expression(it.to_member_expression_mut())
-            }
-        }
+        visitor.visit_expression(it);
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_conditional_expression<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut ConditionalExpression<'a>,
-    ) {
-        let kind = AstType::ConditionalExpression;
+    pub fn walk_class_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassBody<'a>) {
+        let kind = AstType::ClassBody;
         visitor.enter_node(kind);
-        visitor.visit_expression(&mut it.test);
-        visitor.visit_expression(&mut it.consequent);
-        visitor.visit_expression(&mut it.alternate);
+        visitor.visit_class_elements(&mut it.body);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_class_elements<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut Vec<'a, ClassElement<'a>>,
+    ) {
+        for el in it.iter_mut() {
+            visitor.visit_class_element(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_class_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassElement<'a>) {
+        match it {
+            ClassElement::StaticBlock(it) => visitor.visit_static_block(it),
+            ClassElement::MethodDefinition(it) => visitor.visit_method_definition(it),
+            ClassElement::PropertyDefinition(it) => visitor.visit_property_definition(it),
+            ClassElement::AccessorProperty(it) => visitor.visit_accessor_property(it),
+            ClassElement::TSIndexSignature(it) => visitor.visit_ts_index_signature(it),
+        }
+    }
+
+    #[inline]
+    pub fn walk_static_block<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut StaticBlock<'a>) {
+        visitor.enter_scope(ScopeFlags::ClassStaticBlock);
+        let kind = AstType::StaticBlock;
+        visitor.enter_node(kind);
+        visitor.visit_statements(&mut it.body);
+        visitor.leave_node(kind);
+        visitor.leave_scope();
+    }
+
+    #[inline]
+    pub fn walk_method_definition<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut MethodDefinition<'a>,
+    ) {
+        let kind = AstType::MethodDefinition;
+        visitor.enter_node(kind);
+        visitor.visit_decorators(&mut it.decorators);
+        visitor.visit_property_key(&mut it.key);
+        {
+            let flags = Some(match it.kind {
+                MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
+                MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
+                MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
+                MethodDefinitionKind::Method => ScopeFlags::empty(),
+            });
+            visitor.visit_function(&mut it.value, flags);
+        }
         visitor.leave_node(kind);
     }
 
@@ -3213,6 +3160,74 @@ pub mod walk_mut {
         }
         visitor.leave_node(kind);
         visitor.leave_scope();
+    }
+
+    #[inline]
+    pub fn walk_property_definition<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut PropertyDefinition<'a>,
+    ) {
+        let kind = AstType::PropertyDefinition;
+        visitor.enter_node(kind);
+        visitor.visit_decorators(&mut it.decorators);
+        visitor.visit_property_key(&mut it.key);
+        if let Some(value) = &mut it.value {
+            visitor.visit_expression(value);
+        }
+        if let Some(type_annotation) = &mut it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_accessor_property<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut AccessorProperty<'a>,
+    ) {
+        // NOTE: AstType doesn't exists!
+        visitor.visit_property_key(&mut it.key);
+        if let Some(value) = &mut it.value {
+            visitor.visit_expression(value);
+        }
+        visitor.visit_decorators(&mut it.decorators);
+    }
+
+    #[inline]
+    pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut Vec<'a, TSClassImplements<'a>>,
+    ) {
+        for el in it.iter_mut() {
+            visitor.visit_ts_class_implements(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_ts_class_implements<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSClassImplements<'a>,
+    ) {
+        let kind = AstType::TSClassImplements;
+        visitor.enter_node(kind);
+        visitor.visit_ts_type_name(&mut it.expression);
+        if let Some(type_parameters) = &mut it.type_parameters {
+            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_conditional_expression<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut ConditionalExpression<'a>,
+    ) {
+        let kind = AstType::ConditionalExpression;
+        visitor.enter_node(kind);
+        visitor.visit_expression(&mut it.test);
+        visitor.visit_expression(&mut it.consequent);
+        visitor.visit_expression(&mut it.alternate);
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3611,121 +3626,6 @@ pub mod walk_mut {
         let kind = AstType::JSXClosingElement;
         visitor.enter_node(kind);
         visitor.visit_jsx_element_name(&mut it.name);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_class_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassBody<'a>) {
-        let kind = AstType::ClassBody;
-        visitor.enter_node(kind);
-        visitor.visit_class_elements(&mut it.body);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_class_elements<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut Vec<'a, ClassElement<'a>>,
-    ) {
-        for el in it.iter_mut() {
-            visitor.visit_class_element(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_class_element<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut ClassElement<'a>) {
-        match it {
-            ClassElement::StaticBlock(it) => visitor.visit_static_block(it),
-            ClassElement::MethodDefinition(it) => visitor.visit_method_definition(it),
-            ClassElement::PropertyDefinition(it) => visitor.visit_property_definition(it),
-            ClassElement::AccessorProperty(it) => visitor.visit_accessor_property(it),
-            ClassElement::TSIndexSignature(it) => visitor.visit_ts_index_signature(it),
-        }
-    }
-
-    #[inline]
-    pub fn walk_static_block<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut StaticBlock<'a>) {
-        visitor.enter_scope(ScopeFlags::ClassStaticBlock);
-        let kind = AstType::StaticBlock;
-        visitor.enter_node(kind);
-        visitor.visit_statements(&mut it.body);
-        visitor.leave_node(kind);
-        visitor.leave_scope();
-    }
-
-    #[inline]
-    pub fn walk_method_definition<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut MethodDefinition<'a>,
-    ) {
-        let kind = AstType::MethodDefinition;
-        visitor.enter_node(kind);
-        visitor.visit_decorators(&mut it.decorators);
-        visitor.visit_property_key(&mut it.key);
-        {
-            let flags = Some(match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::empty(),
-            });
-            visitor.visit_function(&mut it.value, flags);
-        }
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_property_definition<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut PropertyDefinition<'a>,
-    ) {
-        let kind = AstType::PropertyDefinition;
-        visitor.enter_node(kind);
-        visitor.visit_decorators(&mut it.decorators);
-        visitor.visit_property_key(&mut it.key);
-        if let Some(value) = &mut it.value {
-            visitor.visit_expression(value);
-        }
-        if let Some(type_annotation) = &mut it.type_annotation {
-            visitor.visit_ts_type_annotation(type_annotation);
-        }
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_accessor_property<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut AccessorProperty<'a>,
-    ) {
-        // NOTE: AstType doesn't exists!
-        visitor.visit_property_key(&mut it.key);
-        if let Some(value) = &mut it.value {
-            visitor.visit_expression(value);
-        }
-        visitor.visit_decorators(&mut it.decorators);
-    }
-
-    #[inline]
-    pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut Vec<'a, TSClassImplements<'a>>,
-    ) {
-        for el in it.iter_mut() {
-            visitor.visit_ts_class_implements(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_ts_class_implements<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut TSClassImplements<'a>,
-    ) {
-        let kind = AstType::TSClassImplements;
-        visitor.enter_node(kind);
-        visitor.visit_ts_type_name(&mut it.expression);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
-        }
         visitor.leave_node(kind);
     }
 

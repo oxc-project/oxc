@@ -368,6 +368,7 @@ pub enum KnownMemberExpressionParentKind {
     TaggedTemplate,
 }
 
+#[derive(Debug)]
 pub struct KnownMemberExpressionProperty<'a> {
     pub element: MemberExpressionElement<'a>,
     pub parent: Option<&'a Expression<'a>>,
@@ -413,6 +414,7 @@ impl<'a> KnownMemberExpressionProperty<'a> {
     }
 }
 
+#[derive(Debug)]
 pub enum MemberExpressionElement<'a> {
     Expression(&'a Expression<'a>),
     IdentName(&'a IdentifierName<'a>),

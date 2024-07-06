@@ -333,6 +333,26 @@ impl<'a> VisitBuilder<'a> {
             )
         } else {
             match &*ty.borrow() {
+                // TODO: this one is a hot-fix to prevent flattening aliased `Expression`s,
+                // Such as `ExpressionArrayElement` and `ClassHeritage`.
+                // Shouldn't be an edge case, <https://github.com/oxc-project/oxc/issues/4060>
+                RType::Enum(enum_)
+                    if enum_.item.ident == "Expression"
+                        && visit_as.is_some_and(|it| {
+                            it == "ExpressionArrayElement" || it == "ClassHeritage"
+                        }) =>
+                {
+                    let kind = self.kind_type(visit_as.unwrap());
+                    (
+                        quote! {
+                            let kind = #kind;
+                            visitor.enter_node(kind);
+                            visitor.visit_expression(it);
+                            visitor.leave_node(kind);
+                        },
+                        false,
+                    )
+                }
                 RType::Enum(enum_) => self.generate_enum_walk(enum_, visit_as),
                 RType::Struct(struct_) => self.generate_struct_walk(struct_, visit_as),
                 _ => panic!(),

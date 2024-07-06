@@ -228,7 +228,10 @@ impl<'a> ArrowFunctions<'a> {
             scope_id: Cell::new(scope_id),
         };
 
-        Expression::FunctionExpression(self.ctx.ast.alloc(new_function))
+        let expr = Expression::FunctionExpression(self.ctx.ast.alloc(new_function));
+        // Avoid creating a function declaration.
+        // `() => {};` => `(function () {});`
+        self.ctx.ast.parenthesized_expression(SPAN, expr)
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {

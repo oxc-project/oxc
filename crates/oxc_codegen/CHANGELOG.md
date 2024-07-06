@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.0] - 2024-07-05
+
+### Features
+
+- 7768d23 isolated-declarations: Support optional class methods (#4035) (Egor Blinov)
+
+### Bug Fixes
+
+- aaac2d8 codegen: Preserve parentheses from AST instead calculating from  operator precedence (#4055) (Boshen)
+- 5e5b1b1 codegen: Correct accessibility emit for class formal-parameters/methods/properties (#4042) (Egor Blinov)
+- 7844734 codegen: Missing const keyword in TSTypeParamter (#4022) (Dunqing)
+- 6254a41 codegen: Missing TypeParamters in TSCallSignature (#4021) (Dunqing)
+
 ## [0.16.3] - 2024-07-02
 
 ### Bug Fixes
