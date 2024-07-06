@@ -9,6 +9,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::{index_vec, IndexVec};
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
@@ -22,7 +23,7 @@ use crate::{
     module_record::ModuleRecordBuilder,
     node::{AstNode, AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
-    scope::{ScopeFlags, ScopeId, ScopeTree},
+    scope::{ScopeFlags, ScopeId, ScopeTree, UnresolvedReferences},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     JSDocFinder, Semantic,
 };
@@ -65,6 +66,9 @@ pub struct SemanticBuilder<'a> {
     pub nodes: AstNodes<'a>,
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
+    /// NOTE(lucab): lazy vector, always access this through the
+    /// `unresolved_references_by_scope()` helper.
+    unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -108,6 +112,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
+            unresolved_references: index_vec![UnresolvedReferences::default()],
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
             build_jsdoc: false,
@@ -174,6 +179,8 @@ impl<'a> SemanticBuilder<'a> {
                 checker::check_module_record(&self);
             }
         }
+        self.scope.root_unresolved_references =
+            self.unresolved_references.swap_remove(self.scope.root_scope_id());
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -317,7 +324,11 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
+
+        self.unresolved_references_by_scope(self.current_scope_id)
+            .entry(reference_name)
+            .or_default()
+            .push(reference_id);
         reference_id
     }
 
@@ -340,8 +351,7 @@ impl<'a> SemanticBuilder<'a> {
 
     fn resolve_references_for_current_scope(&mut self) {
         let all_references = self
-            .scope
-            .unresolved_references_mut(self.current_scope_id)
+            .unresolved_references_by_scope(self.current_scope_id)
             .drain()
             .collect::<Vec<(_, Vec<_>)>>();
 
@@ -360,7 +370,10 @@ impl<'a> SemanticBuilder<'a> {
             }
             self.symbols.resolved_references[symbol_id].extend(reference_ids);
         } else {
-            self.scope.extend_unresolved_reference(parent_scope_id, name, reference_ids);
+            self.unresolved_references_by_scope(parent_scope_id)
+                .entry(name)
+                .or_default()
+                .extend(reference_ids);
         }
     }
 
@@ -391,6 +404,14 @@ impl<'a> SemanticBuilder<'a> {
         if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
             self.symbols.union_flag(symbol_id, SymbolFlags::Export);
         }
+    }
+
+    fn unresolved_references_by_scope(&mut self, scope_id: ScopeId) -> &mut UnresolvedReferences {
+        let min_new_len = scope_id + 1;
+        if self.unresolved_references.len() < min_new_len {
+            self.unresolved_references.resize_with(min_new_len.into(), Default::default);
+        }
+        &mut self.unresolved_references[scope_id]
     }
 }
 
