@@ -21,28 +21,28 @@ fn main() {
 
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
-    // if !ret.errors.is_empty() {
-    //     for error in ret.errors {
-    //         let error = error.with_source_code(source_text.clone());
-    //         println!("{error:?}");
-    //     }
-    //     return;
-    // }
+    if !ret.errors.is_empty() {
+        for error in ret.errors {
+            let error = error.with_source_code(source_text.clone());
+            println!("{error:?}");
+        }
+        return;
+    }
 
-    // println!("Original:\n");
-    // println!("{source_text}\n");
+    println!("Original:\n");
+    println!("{source_text}\n");
 
     let ret = IsolatedDeclarations::new(&allocator).build(&ret.program);
-    // let printed = CodeGenerator::new().build(&ret.program).source_text;
+    let printed = CodeGenerator::new().build(&ret.program).source_text;
 
-    // println!("Dts Emit:\n");
-    // println!("{printed}\n");
+    println!("Dts Emit:\n");
+    println!("{printed}\n");
 
-    // if !ret.errors.is_empty() {
-    //     println!("Transformed dts failed:\n");
-    //     for error in ret.errors {
-    //         let error = error.with_source_code(source_text.clone());
-    //         println!("{error:?}");
-    //     }
-    // }
+    if !ret.errors.is_empty() {
+        println!("Transformed dts failed:\n");
+        for error in ret.errors {
+            let error = error.with_source_code(source_text.clone());
+            println!("{error:?}");
+        }
+    }
 }
