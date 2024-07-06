@@ -41,4 +41,10 @@ fn remove_dead_code() {
 
     test("!!false ? foo : bar;", "bar");
     test("!!true ? foo : bar;", "foo");
+
+    // Shadowed `undefined` as a variable should not be erased.
+    test(
+        "function foo(undefined) { if (!undefined) { } }",
+        "function foo(undefined){if(!undefined){}}",
+    );
 }
