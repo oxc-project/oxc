@@ -10,15 +10,26 @@ export declare const F: {
 	readonly a: 'a';
 	readonly b: readonly ['b'];
 };
+export declare let GOOD: string;
 export declare const BAD: unknown;
+export declare let BAD2: unknown;
 
 
 ==================== Errors ====================
 
   x TS9010: Variable must have an explicit type annotation with
   | --isolatedDeclarations.
-    ,-[10:14]
-  9 | 
- 10 | export const BAD = `useCssV${v}ars`
+    ,-[12:14]
+ 11 | 
+ 12 | export const BAD = `useCssV${v}ars`
     :              ^^^
+ 13 | 
+    `----
+
+  x TS9010: Variable must have an explicit type annotation with
+  | --isolatedDeclarations.
+    ,-[14:12]
+ 13 | 
+ 14 | export let BAD2 = `useCssV${v}ars` as const
+    :            ^^^^
     `----

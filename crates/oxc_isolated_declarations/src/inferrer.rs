@@ -24,13 +24,8 @@ impl<'a> IsolatedDeclarations<'a> {
             Expression::NullLiteral(_) => Some(self.ast.ts_null_keyword(SPAN)),
             Expression::NumericLiteral(_) => Some(self.ast.ts_number_keyword(SPAN)),
             Expression::BigIntLiteral(_) => Some(self.ast.ts_bigint_keyword(SPAN)),
-            Expression::StringLiteral(_) => Some(self.ast.ts_string_keyword(SPAN)),
-            Expression::TemplateLiteral(lit) => {
-                if lit.expressions.is_empty() {
-                    Some(self.ast.ts_string_keyword(SPAN))
-                } else {
-                    None
-                }
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
+                Some(self.ast.ts_string_keyword(SPAN))
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
                 "undefined" => Some(self.ast.ts_undefined_keyword(SPAN)),
