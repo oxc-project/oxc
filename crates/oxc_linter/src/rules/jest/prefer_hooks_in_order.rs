@@ -134,7 +134,7 @@ declare_oxc_lint!(
     /// ```json
     /// {
     ///   "rules": {
-    ///      "vitest/prefer_hooks_in_order": "error"
+    ///      "vitest/prefer-hooks-in-order": "error"
     ///   }
     /// }
     PreferHooksInOrder,
