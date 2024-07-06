@@ -37,9 +37,9 @@ impl Rule for NoMultiStr {
             let source = literal.span.source_text(ctx.source_text());
             // https://github.com/eslint/eslint/blob/9e6d6405c3ee774c2e716a3453ede9696ced1be7/lib/shared/ast-utils.js#L12
             let position = source
-                .chars()
-                .position(|ch| matches!(ch, '\r' | '\n' | '\u{2028}' | '\u{2029}'))
-                .unwrap_or(0);
+                .find(|ch|
+                    matches!(ch, '\r' | '\n' | '\u{2028}' | '\u{2029}') 
+                ).unwrap_or(0);
             if position != 0 {
                 // We found the "newline" character but want to highlight the '\', so go back one
                 // character.
