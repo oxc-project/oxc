@@ -1,4 +1,4 @@
-use oxc_ast::{Comment, CommentKind, SortedComments, Trivias};
+use oxc_ast::{Comment, CommentKind, Trivias};
 use oxc_span::Span;
 
 #[derive(Debug, Default)]
@@ -12,8 +12,7 @@ pub struct TriviaBuilder {
 
 impl TriviaBuilder {
     pub fn build(self) -> Trivias {
-        let comments = SortedComments::from_iter(self.comments);
-        Trivias::new(comments, self.irregular_whitespaces)
+        Trivias::new(self.comments.into_boxed_slice(), self.irregular_whitespaces)
     }
 
     pub fn add_single_line_comment(&mut self, start: u32, end: u32) {
