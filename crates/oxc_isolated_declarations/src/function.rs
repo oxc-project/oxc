@@ -48,9 +48,13 @@ impl<'a> IsolatedDeclarations<'a> {
         is_remaining_params_have_required: bool,
     ) -> Option<FormalParameter<'a>> {
         let pattern = &param.pattern;
-        if pattern.type_annotation.is_none() && pattern.kind.is_destructuring_pattern() {
-            self.error(parameter_must_have_explicit_type(param.span));
-            return None;
+        if let BindingPatternKind::AssignmentPattern(pattern) = &pattern.kind {
+            if pattern.left.kind.is_destructuring_pattern()
+                && pattern.left.type_annotation.is_none()
+            {
+                self.error(parameter_must_have_explicit_type(param.span));
+                return None;
+            }
         }
 
         let is_assignment_pattern = pattern.kind.is_assignment_pattern();
