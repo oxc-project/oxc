@@ -324,12 +324,11 @@ pub enum ArrayExpressionElement<'a> {
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Elision) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
-    // TODO: support for attributes syntax here so we can use `#[visit(as(ExpressionArrayElement))]`
     @inherit Expression
 }
 }
 
-/// <empty> in `const array = [1, <empty>, 2];`
+/// empty slot in `const array = [1, , 2];`
 ///
 /// Array Expression Elision Element
 /// Serialized as `null` in JSON AST. See `serialize.rs`.
@@ -339,13 +338,9 @@ pub struct Elision {
     pub span: Span,
 }
 
-/// Object Expression
+/// `{ a: 1 }` in `const obj = { a: 1 };`
 ///
-/// ## Example
-/// ```ts
-/// const x = { foo: 'foo' }
-/// //        ^^^^^^^^^^^^^^
-/// ```
+/// Represents an object literal, which can include properties, spread properties, or computed properties and trailing comma.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -359,30 +354,21 @@ pub struct ObjectExpression<'a> {
     pub trailing_comma: Option<Span>,
 }
 
+/// Represents a property in an object literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ObjectPropertyKind<'a> {
-    /// Object Property
-    ///
-    /// ## Example
-    /// ```ts
-    /// const foo = 'foo'
-    /// const x = { foo, bar: 'bar' }
-    /// //          ^^^  ^^^^^^^^^^
+    /// `a: 1` in `const obj = { a: 1 };`
     ObjectProperty(Box<'a, ObjectProperty<'a>>),
-    /// Object Spread Property
-    ///
-    /// ## Example
-    /// ```ts
-    /// const obj = { foo: 'foo' }
-    /// const obj2 = { ...obj, bar: 'bar' }
-    /// //             ^^^^^^
-    /// ```
+    /// `...{ a: 1 }` in `const obj = { ...{ a: 1 } };`
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
+/// `a: 1` in `const obj = { a: 1 };`
+///
+/// Represents a property in an object literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -411,20 +397,26 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum PropertyKey<'a> {
+    /// `a` in `const obj = { a: 1 };`
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
+    /// `#a` in `class C { #a = 1; }`
     PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
 }
 
+/// Represents the kind of property in an object literal or class.
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum PropertyKind {
+    /// `{ a: 1 }` in `const obj = { a: 1 };`
     Init,
+    /// `{ get a() { return 1; } }` in `const obj = { get a() { return 1; } };`
     Get,
+    /// `{ set a(value) { this._a = value; } }` in `const obj = { set a(value) { this._a = value; } };`
     Set,
 }
 
