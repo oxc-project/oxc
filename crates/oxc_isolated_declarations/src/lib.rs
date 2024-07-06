@@ -121,7 +121,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut new_stmts = Vec::new();
         let mut variables_declarations = VecDeque::new();
         let mut variable_transformed_indexes = VecDeque::new();
-        let mut transformed_indexes = Vec::new();
+        let mut transformed_indexes = FxHashSet::default();
         // 1. Collect all declarations, module declarations
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
@@ -134,18 +134,18 @@ impl<'a> IsolatedDeclarations<'a> {
                             variables_declarations.push_back(
                                 self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                             );
-                            variable_transformed_indexes.push_back(Vec::default());
+                            variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::UsingDeclaration(decl) => {
                             variables_declarations.push_back(
                                 self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                             );
-                            variable_transformed_indexes.push_back(Vec::default());
+                            variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::TSModuleDeclaration(decl) => {
                             if decl.kind.is_global() {
                                 self.scope.visit_ts_module_declaration(decl);
-                                transformed_indexes.push(new_stmts.len());
+                                transformed_indexes.insert(new_stmts.len());
                             }
                         }
                         _ => {}
@@ -155,7 +155,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 match_module_declaration!(Statement) => {
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
                             {
@@ -165,7 +165,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                     new_stmts.push(Statement::VariableDeclaration(
                                         self.ast.alloc(var_decl),
                                     ));
-                                    transformed_indexes.push(new_stmts.len());
+                                    transformed_indexes.insert(new_stmts.len());
                                 }
 
                                 self.scope.visit_export_default_declaration(&new_decl);
@@ -180,7 +180,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_declaration(
                                     new_decl.declaration.as_ref().unwrap_or_else(|| unreachable!()),
@@ -198,7 +198,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             // We must transform this in the end, because we need to know all references
                         }
                         module_declaration => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             self.scope.visit_module_declaration(module_declaration);
                         }
                     }
@@ -219,7 +219,7 @@ impl<'a> IsolatedDeclarations<'a> {
             let mut variable_transformed_indexes_iter = variable_transformed_indexes.iter_mut();
 
             for (i, stmt) in new_stmts.iter_mut().enumerate() {
-                if transformed_indexes.contains(&i) {
+                if transformed_indexes.insert(i) {
                     continue;
                 }
                 let Some(decl) = stmt.as_declaration() else { continue };
@@ -241,13 +241,13 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         if let Some(decl) = self.transform_variable_declarator(declarator, true) {
                             self.scope.visit_variable_declarator(&decl);
-                            cur_transformed_indexes.push(ii);
+                            cur_transformed_indexes.insert(ii);
                             *declarator = decl;
                         }
                     }
                 } else if let Some(decl) = self.transform_declaration(decl, true) {
                     self.scope.visit_declaration(&decl);
-                    transformed_indexes.push(i);
+                    transformed_indexes.insert(i);
                     *stmt = Statement::from(decl);
                 }
             }
@@ -280,7 +280,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variables_declaration));
-                        transformed_indexes.push(index);
+                        transformed_indexes.insert(index);
                     }
                 }
                 Statement::UsingDeclaration(decl) => {
@@ -302,7 +302,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variable_declaration));
-                        transformed_indexes.push(index);
+                        transformed_indexes.insert(index);
                     }
                 }
                 Statement::ImportDeclaration(decl) => {
