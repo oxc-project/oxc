@@ -158,6 +158,7 @@ mod typescript {
 }
 
 mod jest {
+    pub mod consistent_test_it;
     pub mod expect_expect;
     pub mod max_expects;
     pub mod max_nested_describe;
@@ -555,6 +556,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_non_null_asserted_nullish_coalescing,
     typescript::no_dynamic_delete,
+    jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,
