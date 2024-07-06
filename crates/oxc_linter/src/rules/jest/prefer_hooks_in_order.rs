@@ -18,7 +18,7 @@ fn reorder_hooks(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "{x0}(prefer-hooks-in-order): Prefer having hooks in a consistent order.",
     ))
-    .with_help(format!("`{x1:?}` hooks should be before any `{x2:?}` hooks"))
+    .with_help(format!("{x1:?} hooks should be before any {x2:?} hooks"))
     .with_label(span0)
 }
 
@@ -128,7 +128,7 @@ declare_oxc_lint!(
     /// ```
     ///
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/prefer_hooks_in_order.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/prefer-hooks-in-order.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
