@@ -11,6 +11,7 @@ mod diagnostics;
 mod r#enum;
 mod formal_parameter_binding_pattern;
 mod function;
+mod global_symbol_binding_tracker;
 mod inferrer;
 mod literal;
 mod module;
@@ -29,6 +30,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, GetSpan, SourceType, SPAN};
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::global_symbol_binding_tracker::GlobalSymbolBindingTracker;
 use crate::scope::ScopeTree;
 
 #[derive(Debug, Clone, Copy)]
@@ -49,6 +51,7 @@ pub struct IsolatedDeclarations<'a> {
 
     // state
     scope: ScopeTree<'a>,
+    global_symbol_binding_tracker: GlobalSymbolBindingTracker,
     errors: RefCell<Vec<OxcDiagnostic>>,
 
     // options
@@ -75,6 +78,7 @@ impl<'a> IsolatedDeclarations<'a> {
             strip_internal,
             internal_annotations: is_internal_set,
             scope: ScopeTree::new(allocator),
+            global_symbol_binding_tracker: GlobalSymbolBindingTracker::new(),
             errors: RefCell::new(vec![]),
         }
     }
@@ -126,6 +130,10 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         program: &Program<'a>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        // Collect information about global Symbol usage within computed
+        // properties before performing any transformations.
+        self.global_symbol_binding_tracker.visit_program(program);
+
         let has_import_or_export = program.body.iter().any(|stmt| {
             matches!(
                 stmt,

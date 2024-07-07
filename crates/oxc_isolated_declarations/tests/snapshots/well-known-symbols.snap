@@ -1,0 +1,65 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/well-known-symbols.ts
+---
+```
+==================== .D.TS ====================
+
+export declare const foo: {
+	[Symbol.iterator]: () => void;
+	[Symbol.asyncIterator]: () => Promise<void>;
+	[globalThis.Symbol.iterator]: () => void;
+	[Symbol.toStringTag]: () => string;
+};
+export declare abstract class Foo {
+	[Symbol.iterator](): void;
+	[Symbol.asyncIterator](): Promise<void>;
+	[globalThis.Symbol.iterator](): void;
+	get [Symbol.toStringTag](): string;
+}
+export declare namespace Foo {
+	const foo: {};
+}
+export declare function bar(Symbol: {}, globalThis: {}): {};
+
+
+==================== Errors ====================
+
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[42:6]
+ 41 |   export const foo = {
+ 42 |     [Symbol.iterator]: (): void => {},
+    :      ^^^^^^^^^^^^^^^
+ 43 |     [globalThis.Symbol.iterator]: (): void => {},
+    `----
+
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[43:6]
+ 42 |     [Symbol.iterator]: (): void => {},
+ 43 |     [globalThis.Symbol.iterator]: (): void => {},
+    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 44 |   }
+    `----
+
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[49:6]
+ 48 |   return {
+ 49 |     [Symbol.iterator]: (): void => {},
+    :      ^^^^^^^^^^^^^^^
+ 50 |     [globalThis.Symbol.iterator]: (): void => {},
+    `----
+
+  x TS9038: Computed property names on class or object literals cannot be
+  | inferred with --isolatedDeclarations.
+    ,-[50:6]
+ 49 |     [Symbol.iterator]: (): void => {},
+ 50 |     [globalThis.Symbol.iterator]: (): void => {},
+    :      ^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 51 |   }
+    `----
+
+
+```

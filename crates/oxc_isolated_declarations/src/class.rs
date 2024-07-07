@@ -32,8 +32,15 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn report_property_key(&self, key: &PropertyKey<'a>, computed: bool) -> bool {
         if computed && !self.is_literal_key(key) {
-            self.error(computed_property_name(key.span()));
-            true
+            if self
+                .global_symbol_binding_tracker
+                .does_computed_property_reference_well_known_symbol(key)
+            {
+                false
+            } else {
+                self.error(computed_property_name(key.span()));
+                true
+            }
         } else {
             false
         }
@@ -281,17 +288,57 @@ impl<'a> IsolatedDeclarations<'a> {
     /// 1. If it has no parameter, create a parameter with the name `value`
     /// 2. If it has no parameter type, infer it from the getter method's return type
     fn transform_getter_or_setter_methods(&self, decl: &mut Class<'a>) {
-        let mut method_annotations: FxHashMap<_, (bool, _, _)> = FxHashMap::default();
+        let mut method_annotations_for_static_name: FxHashMap<_, (bool, _, _)> =
+            FxHashMap::default();
+        let mut method_annotations_for_well_known_symbol: FxHashMap<_, (bool, _, _)> =
+            FxHashMap::default();
+
         for element in decl.body.body.iter_mut() {
             if let ClassElement::MethodDefinition(method) = element {
-                if method.key.is_private_identifier()
-                    && (method.computed && !self.is_literal_key(&method.key))
-                {
+                if method.key.is_private_identifier() {
                     continue;
                 }
 
-                let Some(name) = method.key.static_name() else {
+                let Some((name, is_static)) =
+                    method.key.static_name().map(|name| (name, true)).or_else(|| {
+                        if let PropertyKey::StaticMemberExpression(expr) = &method.key {
+                            match &expr.object {
+                                Expression::Identifier(object_identifier) => {
+                                    if object_identifier.name == "Symbol" {
+                                        Some((expr.property.name.clone().into(), false))
+                                    } else {
+                                        None
+                                    }
+                                }
+                                Expression::StaticMemberExpression(static_member) => {
+                                    if let Expression::Identifier(identifier) =
+                                        &static_member.object
+                                    {
+                                        if identifier.name == "globalThis"
+                                            && static_member.property.name == "Symbol"
+                                        {
+                                            Some((expr.property.name.clone().into(), false))
+                                        } else {
+                                            None
+                                        }
+                                    } else {
+                                        None
+                                    }
+                                }
+                                _ => None,
+                            }
+                        } else {
+                            None
+                        }
+                    })
+                else {
                     continue;
+                };
+
+                let method_annotations = if is_static {
+                    &mut method_annotations_for_static_name
+                } else {
+                    &mut method_annotations_for_well_known_symbol
                 };
 
                 match method.kind {
@@ -328,7 +375,10 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        for (requires_inference, param, return_type) in method_annotations.into_values() {
+        for (requires_inference, param, return_type) in method_annotations_for_static_name
+            .into_values()
+            .chain(method_annotations_for_well_known_symbol.into_values())
+        {
             if requires_inference {
                 if let (Some(Some(annotation)), Some(option))
                 | (Some(option), Some(Some(annotation))) = (param, return_type)
