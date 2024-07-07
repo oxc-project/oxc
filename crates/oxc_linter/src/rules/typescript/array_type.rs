@@ -29,19 +29,19 @@ declare_oxc_lint!(
 );
 
 fn generic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden. Use '{x1}<{x2}>' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden. Use '{x1}<{x2}>' instead.")).with_label(span3)
 }
 
 fn generic_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden for non-simple types. Use '{x1}<{x2}>' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x0}{x2}[]' is forbidden for non-simple types. Use '{x1}<{x2}>' instead.")).with_label(span3)
 }
 
 fn array(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden. Use '{x0}{x2}[]' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden. Use '{x0}{x2}[]' instead.")).with_label(span3)
 }
 
 fn array_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden for simple types. Use '{x0}{x2}[]' instead.")).with_labels([span3.into()])
+    OxcDiagnostic::warn(format!("typescript-eslint(array-type): Array type using '{x1}<{x2}>' is forbidden for simple types. Use '{x0}{x2}[]' instead.")).with_label(span3)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -182,6 +182,7 @@ fn check_and_report_error_generic(
     if matches!(config, ArrayOption::Array) {
         return;
     }
+    let type_param = type_param.without_parenthesized();
     if matches!(config, ArrayOption::ArraySimple) && is_simple_type(type_param) {
         return;
     }

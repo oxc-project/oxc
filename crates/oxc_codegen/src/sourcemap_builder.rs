@@ -76,7 +76,7 @@ impl SourcemapBuilder {
     }
 
     pub fn add_source_mapping(&mut self, output: &[u8], position: u32, name: Option<Arc<str>>) {
-        if matches!(self.last_position, Some(last_position) if last_position >= position) {
+        if matches!(self.last_position, Some(last_position) if last_position == position) {
             return;
         }
         let (original_line, original_column) = self.search_original_line_and_column(position);
@@ -396,5 +396,16 @@ mod test {
             sm.get_source_view_token(1_u32).as_ref().and_then(|token| token.get_name()),
             Some("b")
         );
+    }
+
+    #[test]
+    fn add_source_mapping_for_unordered_position() {
+        let output = "".as_bytes();
+        let mut builder = SourcemapBuilder::default();
+        builder.with_name_and_source("x.js", "ab");
+        builder.add_source_mapping(output, 1, None);
+        builder.add_source_mapping(output, 0, None);
+        let sm = builder.into_sourcemap();
+        assert_eq!(sm.get_tokens().count(), 2);
     }
 }

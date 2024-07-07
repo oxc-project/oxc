@@ -15,7 +15,7 @@ fn numeric_separators_style_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.",
     )
     .with_help("Group digits with numeric separators (_) so longer numbers are easier to read.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
@@ -101,7 +101,7 @@ impl Rule for NumericSeparatorsStyle {
                     );
                 }
             }
-            AstKind::BigintLiteral(number) => {
+            AstKind::BigIntLiteral(number) => {
                 let raw = number.span.source_text(ctx.source_text());
 
                 if self.only_if_contains_separator && !raw.contains('_') {

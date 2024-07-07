@@ -4,7 +4,10 @@ use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 use rustc_hash::FxHashSet;
 use serde_json::{Number, Value};
 
-use crate::{config::OxlintConfig, rules::RULES, RuleCategory, RuleEnum, RuleWithSeverity};
+use crate::{
+    config::OxlintConfig, rules::RULES, utils::is_jest_rule_adapted_to_vitest, RuleCategory,
+    RuleEnum, RuleWithSeverity,
+};
 
 #[derive(Debug)]
 pub struct LintOptions {
@@ -21,6 +24,7 @@ pub struct LintOptions {
     pub import_plugin: bool,
     pub jsdoc_plugin: bool,
     pub jest_plugin: bool,
+    pub vitest_plugin: bool,
     pub jsx_a11y_plugin: bool,
     pub nextjs_plugin: bool,
     pub react_perf_plugin: bool,
@@ -39,6 +43,7 @@ impl Default for LintOptions {
             import_plugin: false,
             jsdoc_plugin: false,
             jest_plugin: false,
+            vitest_plugin: false,
             jsx_a11y_plugin: false,
             nextjs_plugin: false,
             react_perf_plugin: false,
@@ -106,6 +111,12 @@ impl LintOptions {
     #[must_use]
     pub fn with_jest_plugin(mut self, yes: bool) -> Self {
         self.jest_plugin = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_vitest_plugin(mut self, yes: bool) -> Self {
+        self.vitest_plugin = yes;
         self
     }
 
@@ -277,7 +288,15 @@ impl LintOptions {
                 "typescript" => self.typescript_plugin,
                 "import" => self.import_plugin,
                 "jsdoc" => self.jsdoc_plugin,
-                "jest" => self.jest_plugin,
+                "jest" => {
+                    if self.jest_plugin {
+                        return true;
+                    }
+                    if self.vitest_plugin && is_jest_rule_adapted_to_vitest(rule.name()) {
+                        return true;
+                    }
+                    false
+                }
                 "jsx_a11y" => self.jsx_a11y_plugin,
                 "nextjs" => self.nextjs_plugin,
                 "react_perf" => self.react_perf_plugin,

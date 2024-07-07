@@ -1,3 +1,5 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
 //! AST Definitions
 //!
 //! # Enum inheritance

@@ -5,17 +5,17 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn function(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `{x1}`. Call `{x1}` directly.")).with_labels([span0.into()])
+    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `{x1}`. Call `{x1}` directly.")).with_label(span0)
 }
 
 fn array_callback(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-native-coercion-functions): The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -132,14 +132,14 @@ fn check_function(
     None
 }
 
-fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a Atom<'a>> {
+fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a str> {
     if is_arrow {
         if let Statement::ExpressionStatement(expr_stmt) = &stmt {
             return expr_stmt
                 .expression
                 .without_parenthesized()
                 .get_identifier_reference()
-                .map(|v| &v.name);
+                .map(|v| v.name.as_str());
         }
     }
 
@@ -151,7 +151,10 @@ fn get_returned_ident<'a>(stmt: &'a Statement, is_arrow: bool) -> Option<&'a Ato
     }
     if let Statement::ReturnStatement(return_statement) = &stmt {
         if let Some(return_expr) = &return_statement.argument {
-            return return_expr.without_parenthesized().get_identifier_reference().map(|v| &v.name);
+            return return_expr
+                .without_parenthesized()
+                .get_identifier_reference()
+                .map(|v| v.name.as_str());
         }
     }
 
@@ -238,7 +241,7 @@ fn check_array_callback_methods(
         return false;
     };
 
-    first_param_name == returned_ident.as_str()
+    first_param_name == returned_ident
 }
 
 const NATIVE_COERCION_FUNCTION_NAMES: phf::Set<&'static str> = phf::phf_set! {

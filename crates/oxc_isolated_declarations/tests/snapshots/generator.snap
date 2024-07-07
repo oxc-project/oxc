@@ -1,0 +1,20 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/generator.ts
+---
+==================== .D.TS ====================
+
+declare function generatorGood(): Generator<number>;
+declare function generatorGoodBad();
+
+
+==================== Errors ====================
+
+  x TS9007: Function must have an explicit return type annotation with
+  | --isolatedDeclarations.
+   ,-[7:11]
+ 6 | // Incorrect
+ 7 | function *generatorGoodBad() {
+   :           ^^^^^^^^^^^^^^^^
+ 8 |   yield 50;
+   `----

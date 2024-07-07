@@ -7,7 +7,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,
@@ -22,11 +22,11 @@ use crate::{
 fn describe_repeat(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.")
         .with_help("Change the title of describe block.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn test_repeat(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.").with_help("Change the title of test.").with_labels([span0.into()])
+    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.").with_help("Change the title of test.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -116,7 +116,7 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a Atom<'a>, JestFnKind, AstNodeId)> {
+) -> Option<(Span, &'a str, JestFnKind, AstNodeId)> {
     let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;
     // we only need check `describe` or `test` block
@@ -135,7 +135,7 @@ fn filter_and_process_jest_result<'a>(
             Some((string_lit.span, &string_lit.value, kind, parent_id))
         }
         Some(Argument::TemplateLiteral(template_lit)) => {
-            template_lit.quasi().map(|quasi| (template_lit.span, quasi, kind, parent_id))
+            template_lit.quasi().map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id))
         }
         _ => None,
     }

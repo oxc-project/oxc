@@ -13,13 +13,13 @@ fn no_misused_new_interface_diagnostic(span0: Span) -> OxcDiagnostic {
         "typescript-eslint(no-misused-new): Interfaces cannot be constructed, only classes.",
     )
     .with_help("Consider removing this method from your interface.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn no_misused_new_class_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(no-misused-new): Class cannot have method named `new`.")
         .with_help("This method name is confusing, consider renaming the method to `constructor`")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

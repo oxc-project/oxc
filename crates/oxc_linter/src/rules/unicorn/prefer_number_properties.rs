@@ -11,7 +11,7 @@ use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstN
 fn prefer_number_properties_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-number-properties): Use `Number.{x1}` instead of the global `{x1}`"))
         .with_help(format!("Replace it with `Number.{x1}`"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -83,24 +83,6 @@ impl Rule for PreferNumberProperties {
                 }
                 _ => {}
             },
-            AstKind::IdentifierName(ident_name) => {
-                if matches!(
-                    ctx.nodes().parent_kind(node.id()),
-                    Some(AstKind::MemberExpression(_) | AstKind::PropertyKey(_))
-                ) {
-                    return;
-                };
-
-                match ident_name.name.as_str() {
-                    "NaN" | "Infinity" => {
-                        ctx.diagnostic(prefer_number_properties_diagnostic(
-                            ident_name.span,
-                            &ident_name.name,
-                        ));
-                    }
-                    _ => {}
-                }
-            }
             AstKind::CallExpression(call_expr) => {
                 let Some(ident_name) = extract_ident_from_expression(&call_expr.callee) else {
                     return;

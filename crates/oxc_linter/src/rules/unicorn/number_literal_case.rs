@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn uppercase_prefix(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.")
         .with_help(format!("Use lowercase for the number literal prefix `{x1}`."))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn uppercase_exponential_notation(span0: Span) -> OxcDiagnostic {
@@ -16,7 +16,7 @@ fn uppercase_exponential_notation(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase.",
     )
     .with_help("Use lowercase for `e` in exponential notations.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn lowercase_hexadecimal_digits(span0: Span) -> OxcDiagnostic {
@@ -24,13 +24,13 @@ fn lowercase_hexadecimal_digits(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(number-literal-case): Unexpected hexadecimal digits in lowercase.",
     )
     .with_help("Use uppercase for hexadecimal digits.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 fn uppercase_prefix_and_lowercase_hexadecimal_digits(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.")
         .with_help(format!("Use lowercase for the number literal prefix `{x1}` and uppercase for hexadecimal digits."))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -74,7 +74,7 @@ impl Rule for NumberLiteralCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (raw_literal, raw_span) = match node.kind() {
             AstKind::NumericLiteral(number) => (number.raw, number.span),
-            AstKind::BigintLiteral(number) => {
+            AstKind::BigIntLiteral(number) => {
                 let span = number.span;
                 (span.source_text(ctx.source_text()), span)
             }

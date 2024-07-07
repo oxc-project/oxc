@@ -13,7 +13,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unreachable_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("eslint(no-unreachable): Unreachable code.").with_labels([span.into()])
+    OxcDiagnostic::error("eslint(no-unreachable): Unreachable code.").with_label(span)
 }
 
 /// <https://github.com/eslint/eslint/blob/069aa680c78b8516b9a1b568519f1d01e74fb2a2/lib/rules/no-unreachable.js#L196>

@@ -1122,9 +1122,9 @@ impl GraphicalReportHandler {
         let mut column = context_data.column();
         let mut offset = context_data.span().offset();
         let mut line_offset = offset;
+        let mut line_str = String::with_capacity(context.len());
+        let mut lines = Vec::with_capacity(1);
         let mut iter = context.chars().peekable();
-        let mut line_str = String::new();
-        let mut lines = Vec::new();
         while let Some(char) = iter.next() {
             offset += char.len_utf8();
             let mut at_end_of_file = false;

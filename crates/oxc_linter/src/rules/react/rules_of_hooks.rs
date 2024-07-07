@@ -8,7 +8,7 @@ use oxc_cfg::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodeId, AstNodes};
-use oxc_span::{Atom, CompactStr};
+use oxc_span::CompactStr;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
@@ -375,7 +375,7 @@ fn get_declaration_identifier<'a>(
         match kind {
             // const useHook = () => {};
             AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1 => {
-                decl.declarations[0].id.get_identifier().map(Atom::to_compact_str)
+                decl.declarations[0].id.get_identifier().map(|id| id.to_compact_str())
             }
             // useHook = () => {};
             AstKind::AssignmentExpression(expr)
@@ -386,7 +386,7 @@ fn get_declaration_identifier<'a>(
             // const {useHook = () => {}} = {};
             // ({useHook = () => {}} = {});
             AstKind::AssignmentPattern(patt) => {
-                patt.left.get_identifier().map(Atom::to_compact_str)
+                patt.left.get_identifier().map(|id| id.to_compact_str())
             }
             // { useHook: () => {} }
             // { useHook() {} }

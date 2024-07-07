@@ -4,7 +4,12 @@ use oxc_diagnostics::Result;
 use oxc_span::{GetSpan, Span};
 
 use super::{VariableDeclarationContext, VariableDeclarationParent};
-use crate::{diagnostics, lexer::Kind, ParserImpl, StatementContext};
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    modifiers::{ModifierFlags, Modifiers},
+    ParserImpl, StatementContext,
+};
 
 impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Result<Statement<'a>> {
@@ -16,7 +21,7 @@ impl<'a> ParserImpl<'a> {
             self.parse_expression_statement(span, expr)
         // let.a = 1, let()[a] = 1
         } else if matches!(peeked, Kind::Dot | Kind::LParen) {
-            let expr = self.parse_expression()?;
+            let expr = self.parse_expr()?;
             Ok(self.ast.expression_statement(self.end_span(span), expr))
         // single statement let declaration: while (0) let
         } else if (stmt_ctx.is_single_statement() && peeked != Kind::LBrack)
@@ -41,7 +46,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         decl_ctx: VariableDeclarationContext,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, VariableDeclaration<'a>>> {
         let kind = match self.cur_kind() {
             Kind::Var => VariableDeclarationKind::Var,
@@ -67,7 +72,18 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
-        Ok(self.ast.variable_declaration(self.end_span(start_span), kind, declarations, modifiers))
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE,
+            diagnostics::modifier_cannot_be_used_here,
+        );
+
+        Ok(self.ast.variable_declaration(
+            self.end_span(start_span),
+            kind,
+            declarations,
+            modifiers.contains_declare(),
+        ))
     }
 
     fn parse_variable_declarator(

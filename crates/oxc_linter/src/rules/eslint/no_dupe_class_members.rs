@@ -1,4 +1,4 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
@@ -12,7 +12,10 @@ fn no_dupe_class_members_diagnostic(
 ) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint(no-dupe-class-members): Duplicate class member: {x0:?}"))
         .with_help("The last declaration overwrites previous ones, remove one of them or rename if both should be retained")
-        .with_labels([LabeledSpan::new_with_span(Some(format!("{x0:?} is previously declared here")), span1), LabeledSpan::new_with_span(Some(format!("{x0:?} is re-declared here")), span2)])
+        .with_labels([
+            span1.label(format!("{x0:?} is previously declared here")),
+            span2.label(format!("{x0:?} is re-declared here")),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]

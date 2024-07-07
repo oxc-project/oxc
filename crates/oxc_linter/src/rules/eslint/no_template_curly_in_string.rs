@@ -10,7 +10,7 @@ fn no_template_curly_in_string_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint(no-template-curly-in-string): Unexpected template string expression",
     )
     .with_help("Disallow template literal placeholder syntax in regular strings")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

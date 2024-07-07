@@ -11,7 +11,7 @@ fn no_compare_neg_zero_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
         "eslint(no-compare-neg-zero): Do not use the {x0} operator to compare against -0."
     ))
     .with_help("Use Object.is(x, -0) to test equality with -0 and use 0 for other cases")
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -63,7 +63,7 @@ fn is_neg_zero(expr: &Expression) -> bool {
     }
     match &unary.argument {
         Expression::NumericLiteral(number) => number.value == 0.0,
-        Expression::BigintLiteral(bigint) => bigint.is_zero(),
+        Expression::BigIntLiteral(bigint) => bigint.is_zero(),
         _ => false,
     }
 }

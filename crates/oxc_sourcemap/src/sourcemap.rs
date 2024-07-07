@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     decode::{decode, decode_from_string, JSONSourceMap},
-    encode::encode,
+    encode::{encode, encode_to_string},
     error::Result,
     token::{Token, TokenChunk},
     SourceViewToken,
@@ -62,12 +62,20 @@ impl SourceMap {
         decode_from_string(value)
     }
 
+    /// Convert `SourceMap` to vlq sourcemap.
+    /// # Errors
+    ///
+    /// The `serde_json` serialization Error.
+    pub fn to_json(&self) -> JSONSourceMap {
+        encode(self)
+    }
+
     /// Convert `SourceMap` to vlq sourcemap string.
     /// # Errors
     ///
     /// The `serde_json` serialization Error.
     pub fn to_json_string(&self) -> Result<String> {
-        encode(self)
+        encode_to_string(self)
     }
 
     /// Convert `SourceMap` to vlq sourcemap data url.

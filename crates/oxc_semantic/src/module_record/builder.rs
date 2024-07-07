@@ -243,22 +243,28 @@ impl ModuleRecordBuilder {
             return;
         }
         let exported_name = &decl.exported;
-        self.add_default_export(exported_name.span());
+        let exported_name_span = decl.exported.span();
+        self.add_default_export(exported_name_span);
 
-        let id = match &decl.declaration {
-            match_expression!(ExportDefaultDeclarationKind) => None,
-            ExportDefaultDeclarationKind::FunctionDeclaration(func) => func.id.as_ref(),
-            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref(),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => return,
+        let local_name = match &decl.declaration {
+            ExportDefaultDeclarationKind::Identifier(ident) => {
+                ExportLocalName::Default(NameSpan::new(ident.name.to_compact_str(), ident.span))
+            }
+            ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                func.id.as_ref().map_or_else(
+                    || ExportLocalName::Null,
+                    |id| ExportLocalName::Name(NameSpan::new(id.name.to_compact_str(), id.span)),
+                )
+            }
+            ExportDefaultDeclarationKind::ClassDeclaration(class) => class.id.as_ref().map_or_else(
+                || ExportLocalName::Null,
+                |id| ExportLocalName::Name(NameSpan::new(id.name.to_compact_str(), id.span)),
+            ),
+            _ => ExportLocalName::Null,
         };
         let export_entry = ExportEntry {
             export_name: ExportExportName::Default(exported_name.span()),
-            local_name: id.as_ref().map_or_else(
-                || ExportLocalName::Default(exported_name.span()),
-                |ident| {
-                    ExportLocalName::Name(NameSpan::new(ident.name.to_compact_str(), ident.span))
-                },
-            ),
+            local_name,
             span: decl.declaration.span(),
             ..ExportEntry::default()
         };

@@ -1,9 +1,9 @@
 commit: 12619ffe
 
 parser_babel Summary:
-AST Parsed     : 2095/2101 (99.71%)
-Positive Passed: 2087/2101 (99.33%)
-Negative Passed: 1362/1501 (90.74%)
+AST Parsed     : 2093/2101 (99.62%)
+Positive Passed: 2083/2101 (99.14%)
+Negative Passed: 1371/1501 (91.34%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -27,7 +27,6 @@ Expect Syntax Error: "es2015/uncategorised/297/input.js"
 Expect Syntax Error: "es2015/uncategorised/335/input.js"
 Expect Syntax Error: "es2017/async-functions/async-await-as-arrow-binding-identifier/input.js"
 Expect Syntax Error: "es2017/async-functions/await-binding-inside-arrow-params-inside-async-arrow-params/input.js"
-Expect Syntax Error: "es2017/trailing-function-commas/7/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/24/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-rest/input.js"
 Expect Syntax Error: "es2018/object-rest-spread/comma-after-spread-for-in/input.js"
@@ -39,6 +38,7 @@ Expect Syntax Error: "es2020/dynamic-import-createImportExpression-false/invalid
 Expect Syntax Error: "esprima/es2015-arrow-function/invalid-param-strict-mode/input.js"
 Expect Syntax Error: "esprima/es2015-generator/generator-parameter-binding-property-reserved/input.js"
 Expect Syntax Error: "esprima/invalid-syntax/migrated_0101/input.js"
+Expect Syntax Error: "esprima/invalid-syntax/migrated_0276/input.js"
 Expect Syntax Error: "typescript/cast/satisfies-const-error/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-assert-and-assign/input.ts"
 Expect Syntax Error: "typescript/cast/unparenthesized-type-assertion-and-assign/input.ts"
@@ -48,7 +48,6 @@ Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-3/i
 Expect Syntax Error: "typescript/class/abstract-method-with-body/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-with-body-computed/input.ts"
 Expect Syntax Error: "typescript/class/abstract-property-initializer/input.ts"
-Expect Syntax Error: "typescript/class/accessor-invalid/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-1/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-2/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-3/input.ts"
@@ -59,9 +58,6 @@ Expect Syntax Error: "typescript/class/declare-field-initializer/input.ts"
 Expect Syntax Error: "typescript/class/declare-initializer/input.ts"
 Expect Syntax Error: "typescript/class/declare-method/input.ts"
 Expect Syntax Error: "typescript/class/declare-readonly-field-initializer-w-annotation/input.ts"
-Expect Syntax Error: "typescript/class/duplicate-modifier-1/input.ts"
-Expect Syntax Error: "typescript/class/duplicate-modifier-2/input.ts"
-Expect Syntax Error: "typescript/class/duplicates-accessibility/input.ts"
 Expect Syntax Error: "typescript/class/generator-method-with-modifiers/input.ts"
 Expect Syntax Error: "typescript/class/index-signature-errors/input.ts"
 Expect Syntax Error: "typescript/class/invalid-modifiers-order/input.ts"
@@ -72,9 +68,6 @@ Expect Syntax Error: "typescript/class/modifiers-invalid-order/input.ts"
 Expect Syntax Error: "typescript/class/modifiers-override-errors/input.ts"
 Expect Syntax Error: "typescript/class/parameter-properties-binding-patterns/input.ts"
 Expect Syntax Error: "typescript/class/private-fields-modifier-abstract/input.ts"
-Expect Syntax Error: "typescript/class/private-fields-modifier-private/input.ts"
-Expect Syntax Error: "typescript/class/private-fields-modifier-protected/input.ts"
-Expect Syntax Error: "typescript/class/private-fields-modifier-public/input.ts"
 Expect Syntax Error: "typescript/class/property-optional-definite-assignment-not-allowed/input.ts"
 Expect Syntax Error: "typescript/declare/function/input.ts"
 Expect Syntax Error: "typescript/declare/module-class/input.ts"
@@ -90,14 +83,11 @@ Expect Syntax Error: "typescript/dts/invalid-class-initializer/input.ts"
 Expect Syntax Error: "typescript/expect-plugin/export-interface/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type/input.js"
 Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
-Expect Syntax Error: "typescript/export/double-declare/input.ts"
 Expect Syntax Error: "typescript/export/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
 Expect Syntax Error: "typescript/import/export-import-type/input.ts"
 Expect Syntax Error: "typescript/import/type-equals/input.ts"
-Expect Syntax Error: "typescript/interface/abstract/input.ts"
-Expect Syntax Error: "typescript/interface/export-abstract-interface/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-parameters/input.ts"
@@ -141,6 +131,7 @@ Expect Syntax Error: "typescript/types/read-only-1/input.ts"
 Expect Syntax Error: "typescript/types/read-only-2/input.ts"
 Expect Syntax Error: "typescript/types/read-only-3/input.ts"
 Expect Syntax Error: "typescript/types/read-only-4/input.ts"
+Expect Syntax Error: "typescript/types/tuple-labeled-invalid-optional/input.ts"
 Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
@@ -353,23 +344,85 @@ Expect to Parse: "typescript/regression/nested-extends-in-arrow-type-param-babel
    ·                               ───┬───
    ·                                  ╰── `,` expected
    ╰────
-Expect to Parse: "typescript/types/const-type-parameters/input.ts"
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts"
+
+  × Expected `{` but found `<<`
+   ╭─[typescript/type-arguments-bit-shift-left-like/class-heritage/input.ts:1:17]
+ 1 │ (class extends f<<T>(v: T) => void> {});
+   ·                 ─┬
+   ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx"
 
   × Unexpected token
-    ╭─[typescript/types/const-type-parameters/input.ts:14:12]
- 13 │ class C<T, const U> {}
- 14 │ class D<in const T> {}
-    ·            ─────
- 15 │ class E<const in T> {}
+   ╭─[typescript/type-arguments-bit-shift-left-like/jsx-opening-element/input.tsx:1:11]
+ 1 │ <Component<<T>(v: T) => void> />
+   ·           ──
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts"
+
+  × Expected `{` but found `<<`
+   ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/class-heritage/input.ts:1:17]
+ 1 │ (class extends f<<T>(v: T) => void> {});
+   ·                 ─┬
+   ·                  ╰── `{` expected
+   ╰────
+Expect to Parse: "typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx"
+
+  × Unexpected token
+   ╭─[typescript/type-arguments-bit-shift-left-like-babel-7/jsx-opening-element/input.tsx:1:11]
+ 1 │ <Component<<T>(v: T) => void> />
+   ·           ──
+   ╰────
+Expect to Parse: "typescript/types/const-type-parameters/input.ts"
+
+  × Identifier `method` has already been declared
+    ╭─[typescript/types/const-type-parameters/input.ts:29:3]
+ 28 │ class _ {
+ 29 │   method<const T>() {}
+    ·   ───┬──
+    ·      ╰── `method` has already been declared here
+ 30 │   method<const T extends U>() {}
+    ·   ───┬──
+    ·      ╰── It can not be redeclared here
+ 31 │   method<T, const U>() {}
+    ╰────
+
+  × Identifier `method` has already been declared
+    ╭─[typescript/types/const-type-parameters/input.ts:30:3]
+ 29 │   method<const T>() {}
+ 30 │   method<const T extends U>() {}
+    ·   ───┬──
+    ·      ╰── `method` has already been declared here
+ 31 │   method<T, const U>() {}
+    ·   ───┬──
+    ·      ╰── It can not be redeclared here
+ 32 │ }
     ╰────
 Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
 
-  × Unexpected token
-    ╭─[typescript/types/const-type-parameters-babel-7/input.ts:14:12]
- 13 │ class C<T, const U> {}
- 14 │ class D<in const T> {}
-    ·            ─────
- 15 │ class E<const in T> {}
+  × Identifier `method` has already been declared
+    ╭─[typescript/types/const-type-parameters-babel-7/input.ts:29:3]
+ 28 │ class _ {
+ 29 │   method<const T>() {}
+    ·   ───┬──
+    ·      ╰── `method` has already been declared here
+ 30 │   method<const T extends U>() {}
+    ·   ───┬──
+    ·      ╰── It can not be redeclared here
+ 31 │   method<T, const U>() {}
+    ╰────
+
+  × Identifier `method` has already been declared
+    ╭─[typescript/types/const-type-parameters-babel-7/input.ts:30:3]
+ 29 │   method<const T>() {}
+ 30 │   method<const T extends U>() {}
+    ·   ───┬──
+    ·      ╰── `method` has already been declared here
+ 31 │   method<T, const U>() {}
+    ·   ───┬──
+    ·      ╰── It can not be redeclared here
+ 32 │ }
     ╰────
 
   × Identifier `f` has already been declared
@@ -1386,7 +1439,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·               ─
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[core/uncategorised/396/input.js:1:12]
  1 │ function t(...rest, b) { }
    ·            ───────
@@ -2236,7 +2289,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·              ─
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[core/uncategorised/555/input.js:3:5]
  2 │     first,
  3 │     ...second,
@@ -2268,7 +2321,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·  ────
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/arrow-functions/comma-after-rest-param/input.js:1:2]
  1 │ (...rest,) => {}
    ·  ───────
@@ -2330,7 +2383,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
  3 │     ...second,
@@ -3931,7 +3984,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·       ─
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/uncategorised/277/input.js:1:15]
  1 │ function f(a, ...b, c) { }
    ·               ────
@@ -3958,7 +4011,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                                 ╰── `a` has already been declared here
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2015/uncategorised/283/input.js:1:2]
  1 │ (...a, b) => {}
    ·  ────
@@ -5138,7 +5191,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ }
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[es2017/async-functions/params-invalid-rest-trailing-comma/input.js:1:8]
  1 │ async (...a,) => {};
    ·        ────
@@ -5154,6 +5207,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2017/trailing-function-commas/6/input.js:1:14]
  1 │ function log(,) { }
    ·              ─
+   ╰────
+
+  × Expected `)` but found `,`
+   ╭─[es2017/trailing-function-commas/7/input.js:1:7]
+ 1 │ ('foo',)
+   ·       ┬
+   ·       ╰── `)` expected
    ╰────
 
   × Expected `(` but found `await`
@@ -5379,6 +5439,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2018/object-rest-spread/7/input.js:1:7]
  1 │ let { ...x, y, z } = obj;
    ·       ────
+   ╰────
+
+  × Unexpected trailing comma after rest element
+   ╭─[es2018/object-rest-spread/8/input.js:1:17]
+ 1 │ let { x, y, ...z, } = obj;
+   ·                 ─
    ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -6911,6 +6977,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·         ─
    ╰────
 
+  × A rest element must be last in a destructuring pattern
+   ╭─[esprima/es2015-array-binding-pattern/invalid-elision-after-rest/input.js:1:5]
+ 1 │ ([a,...b,])=>0;
+   ·     ────
+   ╰────
+
   × Identifier `a` has already been declared
    ╭─[esprima/es2015-array-pattern/dupe-param-1/input.js:2:13]
  1 │ "use strict";
@@ -6952,13 +7024,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·     ╰── `,` expected
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:2]
  1 │ (...a, ...b) => 0
    ·  ────
    ╰────
 
-  × A rest parameter must be last in a parameter list
+  × A rest element must be last in a destructuring pattern
    ╭─[esprima/es2015-arrow-function/arrow-with-multiple-rest/input.js:1:2]
  1 │ (...a, ...b) => 0
    ·  ────
@@ -9514,7 +9586,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[esprima/invalid-syntax/migrated_0258/input.js:1:15]
  1 │ function f(a, ...b, c){}
    ·               ────
@@ -9616,13 +9688,6 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[esprima/invalid-syntax/migrated_0275/input.js:1:11]
  1 │ class A {a static(){}}
    ·           ─
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[esprima/invalid-syntax/migrated_0276/input.js:1:23]
- 1 │ class A {static static static(){}}
-   ·                       ─
    ╰────
   help: Try insert a semicolon here
 
@@ -9912,6 +9977,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ func<T>(a: T);
    ╰────
 
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[typescript/class/accessor-invalid/input.ts:3:3]
+ 2 │   declare accessor prop7: number;
+ 3 │   private accessor #p: any;
+   ·   ───────
+ 4 │ 
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/class/declare-new-line-abstract/input.ts:1:8]
  1 │ declare abstract
@@ -9919,6 +9992,33 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ class A {}
    ╰────
   help: Try insert a semicolon here
+
+  × TS1030: 'declare' modifier already seen.
+   ╭─[typescript/class/duplicate-modifier-1/input.ts:2:18]
+ 1 │ class A {
+ 2 │   declare public declare foo;
+   ·                  ───────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'declare' modifier already seen.
+   ╭─[typescript/class/duplicate-modifier-2/input.ts:2:25]
+ 1 │ class A {
+ 2 │   declare public static declare foo;
+   ·                         ───────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'public' modifier already seen.
+   ╭─[typescript/class/duplicates-accessibility/input.ts:2:10]
+ 1 │ class Foo {
+ 2 │   public public a;
+   ·          ──────
+ 3 │   private public b;
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Type parameter list cannot be empty.
    ╭─[typescript/class/empty-type-parameters/input.ts:1:8]
@@ -10026,6 +10126,30 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  11 │ }
     ╰────
 
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[typescript/class/private-fields-modifier-private/input.ts:2:3]
+ 1 │ class A {
+ 2 │   private #a;
+   ·   ───────
+ 3 │ }
+   ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[typescript/class/private-fields-modifier-protected/input.ts:2:3]
+ 1 │ class A {
+ 2 │   protected #a;
+   ·   ─────────
+ 3 │ }
+   ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[typescript/class/private-fields-modifier-public/input.ts:2:3]
+ 1 │ class A {
+ 2 │   public #a;
+   ·   ──────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[typescript/const/invalid-initializer-ambient-context/input.ts:2:35]
  1 │ declare module N {
@@ -10072,6 +10196,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ export declare foo;
    ·                ───
    ╰────
+
+  × TS1030: 'declare' modifier already seen.
+   ╭─[typescript/export/double-declare/input.ts:1:16]
+ 1 │ export declare declare var name;
+   ·                ───────
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Type parameter list cannot be empty.
    ╭─[typescript/function/empty-type-parameters/input.ts:1:13]
@@ -10139,6 +10270,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·       ──
    ╰────
 
+  × 'abstract' modifier cannot be used here.
+   ╭─[typescript/interface/abstract/input.ts:1:1]
+ 1 │ abstract interface Foo {
+   · ────────
+ 2 │   foo: string;
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/declare-new-line/input.ts:1:8]
  1 │ declare interface
@@ -10146,6 +10284,13 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ I
    ╰────
   help: Try insert a semicolon here
+
+  × 'abstract' modifier cannot be used here.
+   ╭─[typescript/interface/export-abstract-interface/input.ts:1:8]
+ 1 │ export abstract interface I {
+   ·        ────────
+ 2 │ 
+   ╰────
 
   × Unexpected token
    ╭─[typescript/interface/export-default/input.ts:1:26]
@@ -10458,68 +10603,61 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·       ╰── It can not be redeclared here
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-private-02/input.ts:2:17]
+  × Unexpected token
+   ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-private-02/input.ts:2:18]
  1 │ class Foo {
  2 │   static private {}
+   ·                  ─
+ 3 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-protected-02/input.ts:2:20]
+ 1 │ class Foo {
+ 2 │   static protected {}
+   ·                    ─
+ 3 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-public-02/input.ts:2:17]
+ 1 │ class Foo {
+ 2 │   static public {}
    ·                 ─
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-protected-02/input.ts:2:19]
+  × Unexpected token
+   ╭─[typescript/static-blocks/invalid-static-block-with-modifier-abstract-02/input.ts:2:19]
  1 │ class Foo {
- 2 │   static protected {}
+ 2 │   static abstract {}
    ·                   ─
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/static-blocks/invalid-static-block-with-accessibility-public-02/input.ts:2:16]
- 1 │ class Foo {
- 2 │   static public {}
-   ·                ─
- 3 │ }
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/static-blocks/invalid-static-block-with-modifier-abstract-02/input.ts:2:18]
- 1 │ class Foo {
- 2 │   static abstract {}
-   ·                  ─
- 3 │ }
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/static-blocks/invalid-static-block-with-modifier-override-02/input.ts:2:18]
+  × Unexpected token
+   ╭─[typescript/static-blocks/invalid-static-block-with-modifier-override-02/input.ts:2:19]
  1 │ class Foo {
  2 │   static override {}
-   ·                  ─
+   ·                   ─
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/static-blocks/invalid-static-blocks-with-modifer-declare-02/input.ts:2:17]
+  × Unexpected token
+   ╭─[typescript/static-blocks/invalid-static-blocks-with-modifer-declare-02/input.ts:2:18]
  1 │ class Foo {
  2 │   static declare {}
-   ·                 ─
- 3 │ }
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-02/input.ts:2:18]
- 1 │ class Foo {
- 2 │   static readonly {}
    ·                  ─
  3 │ }
    ╰────
-  help: Try insert a semicolon here
+
+  × Unexpected token
+   ╭─[typescript/static-blocks/invalid-static-blocks-with-modifier-readonly-02/input.ts:2:19]
+ 1 │ class Foo {
+ 2 │   static readonly {}
+   ·                   ─
+ 3 │ }
+   ╰────
 
   × Unexpected token
    ╭─[typescript/tsx/anonymous-function-generator-invalid/input.ts:1:23]
@@ -10545,11 +10683,12 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:10]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:9]
  1 │ new A<T> if (0);
-   ·          ──
+   ·         ─
    ╰────
+  help: Try insert a semicolon here
 
   × Unexpected token
    ╭─[typescript/type-only-import-export-specifiers/export-invalid-type-only-keyword/input.ts:1:7]
@@ -10651,65 +10790,126 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·               ╰── `,` expected
    ╰────
 
-  × Expected `,` but found `?`
-   ╭─[typescript/types/tuple-labeled-invalid-optional/input.ts:1:15]
- 1 │ type T = [x: A?];
-   ·               ┬
-   ·               ╰── `,` expected
-   ╰────
-
-  × Expected `,` but found `Identifier`
-    ╭─[typescript/types/variance-annotations/input.ts:95:17]
+  × 'public' modifier cannot be used on a type parameter.
+    ╭─[typescript/types/variance-annotations/input.ts:95:10]
  94 │ 
  95 │ type T20<public T> = T;  // Error
-    ·                 ┬
-    ·                 ╰── `,` expected
+    ·          ──────
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expected `,` but found `Identifier`
-    ╭─[typescript/types/variance-annotations-babel-7/input.ts:95:17]
+  × TS1030: 'in' modifier already seen.
+    ╭─[typescript/types/variance-annotations/input.ts:96:17]
+ 95 │ type T20<public T> = T;  // Error
+ 96 │ type T21<in out in T> = T;  // Error
+    ·                 ──
+ 97 │ type T22<in out out T> = T;  // Error
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'out' modifier already seen.
+    ╭─[typescript/types/variance-annotations/input.ts:97:17]
+ 96 │ type T21<in out in T> = T;  // Error
+ 97 │ type T22<in out out T> = T;  // Error
+    ·                 ───
+ 98 │ type T23<out in T> = T;  // Error
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × 'public' modifier cannot be used on a type parameter.
+    ╭─[typescript/types/variance-annotations-babel-7/input.ts:95:10]
  94 │ 
  95 │ type T20<public T> = T;  // Error
-    ·                 ┬
-    ·                 ╰── `,` expected
+    ·          ──────
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expected `,` but found `Identifier`
-    ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:98:17]
+  × TS1030: 'in' modifier already seen.
+    ╭─[typescript/types/variance-annotations-babel-7/input.ts:96:17]
+ 95 │ type T20<public T> = T;  // Error
+ 96 │ type T21<in out in T> = T;  // Error
+    ·                 ──
+ 97 │ type T22<in out out T> = T;  // Error
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'out' modifier already seen.
+    ╭─[typescript/types/variance-annotations-babel-7/input.ts:97:17]
+ 96 │ type T21<in out in T> = T;  // Error
+ 97 │ type T22<in out out T> = T;  // Error
+    ·                 ───
+ 98 │ type T23<out in T> = T;  // Error
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × 'public' modifier cannot be used on a type parameter.
+    ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:98:10]
  97 │ 
  98 │ type T20<public T> = T;  // Error
-    ·                 ┬
-    ·                 ╰── `,` expected
+    ·          ──────
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expected `,` but found `Identifier`
-    ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:98:17]
+  × TS1030: 'in' modifier already seen.
+     ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:99:17]
+  98 │ type T20<public T> = T;  // Error
+  99 │ type T21<in out in T> = T;  // Error
+     ·                 ──
+ 100 │ type T22<in out out T> = T;  // Error
+     ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'out' modifier already seen.
+     ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:100:17]
+  99 │ type T21<in out in T> = T;  // Error
+ 100 │ type T22<in out out T> = T;  // Error
+     ·                 ───
+ 101 │ type T23<out in T> = T;  // Error
+     ╰────
+  help: Remove the duplicate modifier.
+
+  × 'public' modifier cannot be used on a type parameter.
+    ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:98:10]
  97 │ 
  98 │ type T20<public T> = T;  // Error
-    ·                 ┬
-    ·                 ╰── `,` expected
+    ·          ──────
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × Expected `)` but found `EOF`
+  × TS1030: 'in' modifier already seen.
+     ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:99:17]
+  98 │ type T20<public T> = T;  // Error
+  99 │ type T21<in out in T> = T;  // Error
+     ·                 ──
+ 100 │ type T22<in out out T> = T;  // Error
+     ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'out' modifier already seen.
+     ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:100:17]
+  99 │ type T21<in out in T> = T;  // Error
+ 100 │ type T22<in out out T> = T;  // Error
+     ·                 ───
+ 101 │ type T23<out in T> = T;  // Error
+     ╰────
+  help: Remove the duplicate modifier.
+
+  × Expected `]` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `}` but found `EOF`
    ╭─[typescript/types-arrow-function/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `]` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-array-like/input.ts:2:1]
  1 │ type F = ([
    ╰────
 
-  × Expected `)` but found `EOF`
+  × Expected `}` but found `EOF`
    ╭─[typescript/types-arrow-function-babel-7/invalid-incomplete-object-like/input.ts:2:1]
  1 │ type F = ({
    ╰────

@@ -10,7 +10,7 @@ fn ban_tslint_comment_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "typescript-eslint(ban-tslint-comment): tslint comment detected: \"{x0}\""
     ))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

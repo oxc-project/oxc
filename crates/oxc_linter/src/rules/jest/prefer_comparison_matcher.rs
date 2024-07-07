@@ -20,7 +20,7 @@ use crate::{
 fn use_to_be_comparison(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers")
         .with_help(format!("Prefer using `{x0:?}` instead"))
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

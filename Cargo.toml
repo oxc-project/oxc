@@ -74,24 +74,25 @@ cargo_common_metadata   = "allow" # TODO: fix this
 
 [workspace.dependencies]
 # publish = true
-oxc                       = { version = "0.15.0", path = "crates/oxc" }
-oxc_allocator             = { version = "0.15.0", path = "crates/oxc_allocator" }
-oxc_ast                   = { version = "0.15.0", path = "crates/oxc_ast" }
-oxc_codegen               = { version = "0.15.0", path = "crates/oxc_codegen" }
-oxc_diagnostics           = { version = "0.15.0", path = "crates/oxc_diagnostics" }
-oxc_index                 = { version = "0.15.0", path = "crates/oxc_index" }
-oxc_minifier              = { version = "0.15.0", path = "crates/oxc_minifier" }
-oxc_parser                = { version = "0.15.0", path = "crates/oxc_parser" }
-oxc_semantic              = { version = "0.15.0", path = "crates/oxc_semantic" }
-oxc_span                  = { version = "0.15.0", path = "crates/oxc_span" }
-oxc_syntax                = { version = "0.15.0", path = "crates/oxc_syntax" }
-oxc_transformer           = { version = "0.15.0", path = "crates/oxc_transformer" }
-oxc_sourcemap             = { version = "0.15.0", path = "crates/oxc_sourcemap" }
-oxc_ast_macros            = { version = "0.15.0", path = "crates/oxc_ast_macros" }
-oxc_traverse              = { version = "0.15.0", path = "crates/oxc_traverse" }
-oxc_module_lexer          = { version = "0.15.0", path = "crates/oxc_module_lexer" }
-oxc_cfg                   = { version = "0.15.0", path = "crates/oxc_cfg" }
-oxc_isolated_declarations = { version = "0.15.0", path = "crates/oxc_isolated_declarations" }
+oxc                       = { version = "0.17.1", path = "crates/oxc" }
+oxc_allocator             = { version = "0.17.1", path = "crates/oxc_allocator" }
+oxc_ast                   = { version = "0.17.1", path = "crates/oxc_ast" }
+oxc_codegen               = { version = "0.17.1", path = "crates/oxc_codegen" }
+oxc_diagnostics           = { version = "0.17.1", path = "crates/oxc_diagnostics" }
+oxc_index                 = { version = "0.17.1", path = "crates/oxc_index" }
+oxc_minifier              = { version = "0.17.1", path = "crates/oxc_minifier" }
+oxc_parser                = { version = "0.17.1", path = "crates/oxc_parser" }
+oxc_semantic              = { version = "0.17.1", path = "crates/oxc_semantic" }
+oxc_span                  = { version = "0.17.1", path = "crates/oxc_span" }
+oxc_syntax                = { version = "0.17.1", path = "crates/oxc_syntax" }
+oxc_transformer           = { version = "0.17.1", path = "crates/oxc_transformer" }
+oxc_sourcemap             = { version = "0.17.1", path = "crates/oxc_sourcemap" }
+oxc_ast_macros            = { version = "0.17.1", path = "crates/oxc_ast_macros" }
+oxc_traverse              = { version = "0.17.1", path = "crates/oxc_traverse" }
+oxc_module_lexer          = { version = "0.17.1", path = "crates/oxc_module_lexer" }
+oxc_cfg                   = { version = "0.17.1", path = "crates/oxc_cfg" }
+oxc_isolated_declarations = { version = "0.17.1", path = "crates/oxc_isolated_declarations" }
+oxc_transform_napi        = { version = "0.17.1", path = "napi/transform" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
@@ -99,8 +100,8 @@ oxc_linter       = { path = "crates/oxc_linter" }
 oxc_prettier     = { path = "crates/oxc_prettier" }
 oxc_tasks_common = { path = "tasks/common" }
 
-napi        = "2.16.6"
-napi-derive = "2.16.5"
+napi        = "3.0.0-alpha.3"
+napi-derive = "3.0.0-alpha.2"
 napi-build  = "2.1.3"
 
 assert-unchecked    = "0.1.2"
@@ -109,7 +110,7 @@ bpaf                = "0.9.12"
 bitflags            = "2.5.0"
 bumpalo             = "3.16.0"
 convert_case        = "0.6.0"
-dashmap             = "5.5.3"
+dashmap             = "6.0.0"
 flate2              = "1.0.30"
 futures             = "0.3.30"
 glob                = "0.3.1"
@@ -129,7 +130,7 @@ project-root        = "0.2.2"
 quote               = "1.0.36"
 rayon               = "1.10.0"
 regex               = "1.10.5"
-rustc-hash          = "1.*"
+rustc-hash          = "2.*"
 ryu-js              = "1.0.1"
 ropey               = "1.6.1"
 seq-macro           = "0.3.5"
@@ -142,7 +143,7 @@ tower-lsp           = "0.20.0"
 trybuild            = "1.0.96"
 unicode-id-start    = "1.*" # Relaxed version so the user can decide which unicode version to use.
 ureq                = { version = "2.9.6", default-features = false }
-url                 = "=2.5.0"
+url                 = "2.5.2"
 walkdir             = "2.5.0"
 indexmap            = "2.2.6"
 static_assertions   = "1.1.0"
@@ -168,7 +169,7 @@ memchr              = "2.7.2"
 once_cell           = "1.19.0"
 ouroboros           = "0.18.4"
 owo-colors          = "4.0.0"
-oxc_resolver        = "1.8.1"
+oxc_resolver        = "1.8.2"
 petgraph            = "0.6.5"
 rust-lapper         = "1.1.0"
 similar             = "2.5.0"
@@ -178,12 +179,13 @@ saphyr              = "0.0.1"
 base64-simd         = "0.8"
 cfg-if              = "1.0.0"
 schemars            = "0.8.21"
-oxc-browserslist    = "0.17.0"
+oxc-browserslist    = "1.0.1"
+prettyplease        = "0.2.20"
 criterion2          = { version = "0.11.0", default-features = false }
 daachorse           = { version = "1.0.0" }
 
 [workspace.metadata.cargo-shear]
-ignored = ["napi", "oxc_traverse"]
+ignored = ["napi", "oxc_transform_napi", "prettyplease"]
 
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,

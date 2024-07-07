@@ -1,17 +1,18 @@
-use oxc_ast::{Comment, CommentKind, Trivias, TriviasMap};
+use oxc_ast::{Comment, CommentKind, Trivias};
 use oxc_span::Span;
 
 #[derive(Debug, Default)]
 pub struct TriviaBuilder {
-    // Duplicated comments can be added from rewind, use `BTreeMap` to ensure uniqueness
+    // NOTE(lucab): This is a set of unique comments. Duplicated
+    // comments could be generated in case of rewind; they are
+    // filtered out at insertion time.
     comments: Vec<(u32, Comment)>,
     irregular_whitespaces: Vec<Span>,
 }
 
 impl TriviaBuilder {
     pub fn build(self) -> Trivias {
-        let comments = TriviasMap::from_iter(self.comments);
-        Trivias::new(comments, self.irregular_whitespaces)
+        Trivias::new(self.comments.into_boxed_slice(), self.irregular_whitespaces)
     }
 
     pub fn add_single_line_comment(&mut self, start: u32, end: u32) {
@@ -26,9 +27,9 @@ impl TriviaBuilder {
 
     fn add_comment(&mut self, start: u32, comment: Comment) {
         // The comments array is an ordered vec, only add the comment if its not added before,
-        // to avoid situations where the parser needs to rewind and reinsert the comment.
-        if let Some(comment) = self.comments.last_mut() {
-            if start <= comment.0 {
+        // to avoid situations where the parser needs to rewind and tries to reinsert the comment.
+        if let Some((last_start, _)) = self.comments.last() {
+            if start <= *last_start {
                 return;
             }
         }

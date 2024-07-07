@@ -3,8 +3,8 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
-// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
+// NB: `#[visited_node]` and `#[scope]` attributes on AST nodes do not do anything to the code in this file.
+// They are purely markers for codegen used in `oxc_traverse`. See docs in that crate.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
@@ -13,7 +13,7 @@ use std::{cell::Cell, hash::Hash};
 
 use oxc_allocator::{Box, Vec};
 use oxc_ast_macros::visited_node;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{Atom, Span};
 use oxc_syntax::scope::ScopeId;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -46,7 +46,8 @@ pub struct TSThisParameter<'a> {
 /// Enum Declaration
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
-#[visited_node(scope(ScopeFlags::empty()), enter_scope_before(members))]
+#[visited_node]
+#[scope]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -54,29 +55,11 @@ pub struct TSEnumDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
+    #[scope(enter_before)]
     pub members: Vec<'a, TSEnumMember<'a>>,
-    /// Valid Modifiers: `const`, `export`, `declare`
-    pub modifiers: Modifiers<'a>,
+    pub r#const: bool,
+    pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
-}
-
-impl<'a> TSEnumDeclaration<'a> {
-    pub fn new(
-        span: Span,
-        id: BindingIdentifier<'a>,
-        members: Vec<'a, TSEnumMember<'a>>,
-        modifiers: Modifiers<'a>,
-    ) -> Self {
-        Self { span, id, members, modifiers, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for TSEnumDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-        self.members.hash(state);
-        self.modifiers.hash(state);
-    }
 }
 
 #[visited_node]
@@ -140,7 +123,7 @@ pub enum TSLiteral<'a> {
     BooleanLiteral(Box<'a, BooleanLiteral>),
     NullLiteral(Box<'a, NullLiteral>),
     NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigintLiteral(Box<'a, BigIntLiteral<'a>>),
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>>),
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
     StringLiteral(Box<'a, StringLiteral<'a>>),
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
@@ -164,7 +147,6 @@ pub enum TSType<'a> {
     TSObjectKeyword(Box<'a, TSObjectKeyword>) = 7,
     TSStringKeyword(Box<'a, TSStringKeyword>) = 8,
     TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 9,
-    TSThisType(Box<'a, TSThisType>) = 10,
     TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 11,
     TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 12,
     TSVoidKeyword(Box<'a, TSVoidKeyword>) = 13,
@@ -182,6 +164,7 @@ pub enum TSType<'a> {
     TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
     TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
     TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
+    TSThisType(Box<'a, TSThisType>) = 10,
     TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
     TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 28,
     TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 29,
@@ -189,9 +172,11 @@ pub enum TSType<'a> {
     TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 31,
     TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
     TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
+    TSParenthesizedType(Box<'a, TSParenthesizedType<'a>>) = 34,
     // JSDoc
-    JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 34,
-    JSDocUnknownType(Box<'a, JSDocUnknownType>) = 35,
+    JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 35,
+    JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 36,
+    JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
 }
 
 /// Macro for matching `TSType`'s variants.
@@ -232,54 +217,13 @@ macro_rules! match_ts_type {
             | $ty::TSTypeQuery(_)
             | $ty::TSTypeReference(_)
             | $ty::TSUnionType(_)
+            | $ty::TSParenthesizedType(_)
             | $ty::JSDocNullableType(_)
+            | $ty::JSDocNonNullableType(_)
             | $ty::JSDocUnknownType(_)
     };
 }
 pub use match_ts_type;
-
-impl<'a> TSType<'a> {
-    pub fn get_identifier_reference(&self) -> Option<IdentifierReference<'a>> {
-        match self {
-            TSType::TSTypeReference(reference) => {
-                Some(TSTypeName::get_first_name(&reference.type_name))
-            }
-            TSType::TSQualifiedName(qualified) => Some(TSTypeName::get_first_name(&qualified.left)),
-            TSType::TSTypeQuery(query) => match &query.expr_name {
-                TSTypeQueryExprName::IdentifierReference(ident) => Some((*ident).clone()),
-                _ => None,
-            },
-            _ => None,
-        }
-    }
-
-    pub fn is_const_type_reference(&self) -> bool {
-        matches!(self, TSType::TSTypeReference(reference) if reference.type_name.is_const())
-    }
-
-    /// Check if type maybe `undefined`
-    pub fn is_maybe_undefined(&self) -> bool {
-        match self {
-            TSType::TSUndefinedKeyword(_) => true,
-            TSType::TSUnionType(un) => un.types.iter().any(Self::is_maybe_undefined),
-            _ => false,
-        }
-    }
-
-    #[rustfmt::skip]
-    pub fn is_keyword(&self) -> bool {
-        matches!(self, TSType::TSAnyKeyword(_) | TSType::TSBigIntKeyword(_) | TSType::TSBooleanKeyword(_)
-                | TSType::TSNeverKeyword(_) | TSType::TSNullKeyword(_) | TSType::TSNumberKeyword(_)
-                | TSType::TSObjectKeyword(_) | TSType::TSStringKeyword(_)| TSType::TSVoidKeyword(_)
-                | TSType::TSIntrinsicKeyword(_) | TSType::TSSymbolKeyword(_) | TSType::TSThisType(_)
-                | TSType::TSUndefinedKeyword(_) | TSType::TSUnknownKeyword(_)
-        )
-    }
-
-    pub fn is_keyword_or_literal(&self) -> bool {
-        self.is_keyword() || matches!(self, TSType::TSLiteralType(_))
-    }
-}
 
 /// `SomeType extends OtherType ? TrueType : FalseType;`
 ///
@@ -321,6 +265,16 @@ pub struct TSIntersectionType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub types: Vec<'a, TSType<'a>>,
+}
+
+#[visited_node]
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+pub struct TSParenthesizedType<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub type_annotation: TSType<'a>,
 }
 
 /// keyof unique readonly
@@ -393,7 +347,7 @@ pub struct TSTupleType<'a> {
 pub struct TSNamedTupleMember<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub element_type: TSType<'a>,
+    pub element_type: TSTupleElement<'a>,
     pub label: IdentifierName<'a>,
     pub optional: bool,
 }
@@ -602,41 +556,6 @@ macro_rules! match_ts_type_name {
 }
 pub use match_ts_type_name;
 
-impl<'a> TSTypeName<'a> {
-    pub fn get_first_name(name: &TSTypeName<'a>) -> IdentifierReference<'a> {
-        match name {
-            TSTypeName::IdentifierReference(name) => (*name).clone(),
-            TSTypeName::QualifiedName(name) => TSTypeName::get_first_name(&name.left),
-        }
-    }
-
-    pub fn is_const(&self) -> bool {
-        if let TSTypeName::IdentifierReference(ident) = self {
-            if ident.name == "const" {
-                return true;
-            }
-        }
-        false
-    }
-
-    pub fn is_identifier(&self) -> bool {
-        matches!(self, Self::IdentifierReference(_))
-    }
-
-    pub fn is_qualified_name(&self) -> bool {
-        matches!(self, Self::QualifiedName(_))
-    }
-}
-
-impl GetSpan for TSTypeName<'_> {
-    fn span(&self) -> Span {
-        match self {
-            TSTypeName::IdentifierReference(ident) => ident.span,
-            TSTypeName::QualifiedName(name) => name.span,
-        }
-    }
-}
-
 #[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -658,7 +577,8 @@ pub struct TSTypeParameterInstantiation<'a> {
     pub params: Vec<'a, TSType<'a>>,
 }
 
-#[visited_node(scope(ScopeFlags::empty()))]
+#[visited_node]
+#[scope]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -672,31 +592,6 @@ pub struct TSTypeParameter<'a> {
     pub out: bool,
     pub r#const: bool,
     pub scope_id: Cell<Option<ScopeId>>,
-}
-
-impl<'a> TSTypeParameter<'a> {
-    pub fn new(
-        span: Span,
-        name: BindingIdentifier<'a>,
-        constraint: Option<TSType<'a>>,
-        default: Option<TSType<'a>>,
-        r#in: bool,
-        out: bool,
-        r#const: bool,
-    ) -> Self {
-        Self { span, name, constraint, default, r#in, out, r#const, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for TSTypeParameter<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-        self.constraint.hash(state);
-        self.default.hash(state);
-        self.r#in.hash(state);
-        self.out.hash(state);
-        self.r#const.hash(state);
-    }
 }
 
 #[visited_node]
@@ -717,10 +612,9 @@ pub struct TSTypeAliasDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    pub type_annotation: TSType<'a>,
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    /// Valid Modifiers: `declare`, `export`
-    pub modifiers: Modifiers<'a>,
+    pub type_annotation: TSType<'a>,
+    pub declare: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -730,12 +624,6 @@ pub enum TSAccessibility {
     Private,
     Protected,
     Public,
-}
-
-impl TSAccessibility {
-    pub fn is_private(&self) -> bool {
-        matches!(self, TSAccessibility::Private)
-    }
 }
 
 #[visited_node]
@@ -760,11 +648,10 @@ pub struct TSInterfaceDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: BindingIdentifier<'a>,
-    pub body: Box<'a, TSInterfaceBody<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
-    /// Valid Modifiers: `export`, `default`, `declare`
-    pub modifiers: Modifiers<'a>,
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    pub body: Box<'a, TSInterfaceBody<'a>>,
+    pub declare: bool,
 }
 
 #[visited_node]
@@ -912,7 +799,11 @@ pub enum TSTypePredicateName<'a> {
     This(TSThisType),
 }
 
-#[visited_node(scope(ScopeFlags::TsModuleBlock), enter_scope_before(body))]
+#[visited_node]
+#[scope(
+    flags(ScopeFlags::TsModuleBlock),
+    strict_if(self.body.as_ref().is_some_and(TSModuleDeclarationBody::is_strict)),
+)]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -920,6 +811,7 @@ pub struct TSModuleDeclaration<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub id: TSModuleDeclarationName<'a>,
+    #[scope(enter_before)]
     pub body: Option<TSModuleDeclarationBody<'a>>,
     /// The keyword used to define this module declaration
     /// ```text
@@ -931,30 +823,8 @@ pub struct TSModuleDeclaration<'a> {
     ///         ^^^^^^
     /// ```
     pub kind: TSModuleDeclarationKind,
-    /// Valid Modifiers: `declare`, `export`
-    pub modifiers: Modifiers<'a>,
+    pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
-}
-
-impl<'a> TSModuleDeclaration<'a> {
-    pub fn new(
-        span: Span,
-        id: TSModuleDeclarationName<'a>,
-        body: Option<TSModuleDeclarationBody<'a>>,
-        kind: TSModuleDeclarationKind,
-        modifiers: Modifiers<'a>,
-    ) -> Self {
-        Self { span, id, body, kind, modifiers, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for TSModuleDeclaration<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.id.hash(state);
-        self.body.hash(state);
-        self.kind.hash(state);
-        self.modifiers.hash(state);
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -966,6 +836,12 @@ pub enum TSModuleDeclarationKind {
     Namespace,
 }
 
+impl TSModuleDeclarationKind {
+    pub fn is_global(self) -> bool {
+        matches!(self, TSModuleDeclarationKind::Global)
+    }
+}
+
 #[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -973,19 +849,6 @@ pub enum TSModuleDeclarationKind {
 pub enum TSModuleDeclarationName<'a> {
     Identifier(IdentifierName<'a>),
     StringLiteral(StringLiteral<'a>),
-}
-
-impl<'a> TSModuleDeclarationName<'a> {
-    pub fn is_string_literal(&self) -> bool {
-        matches!(self, Self::StringLiteral(_))
-    }
-
-    pub fn name(&self) -> &Atom<'a> {
-        match self {
-            Self::Identifier(ident) => &ident.name,
-            Self::StringLiteral(lit) => &lit.value,
-        }
-    }
 }
 
 #[visited_node]
@@ -997,13 +860,16 @@ pub enum TSModuleDeclarationBody<'a> {
     TSModuleBlock(Box<'a, TSModuleBlock<'a>>),
 }
 
+// See serializer in serialize.rs
 #[visited_node]
 #[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct TSModuleBlock<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    #[cfg_attr(feature = "serialize", serde(skip))]
+    pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
 }
 
@@ -1063,7 +929,8 @@ pub enum TSTypeQueryExprName<'a> {
 pub struct TSImportType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
-    pub argument: TSType<'a>,
+    pub is_type_of: bool, // `typeof import("foo")`
+    pub parameter: TSType<'a>,
     pub qualifier: Option<TSTypeName<'a>>,
     pub attributes: Option<TSImportAttributes<'a>>,
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
@@ -1255,117 +1122,6 @@ pub struct Decorator<'a> {
     pub expression: Expression<'a>,
 }
 
-impl<'a> Decorator<'a> {
-    /// Get the name of the decorator
-    /// ```ts
-    /// @decorator
-    /// @decorator.a.b
-    /// @decorator(xx)
-    /// @decorator.a.b(xx)
-    /// The name of the decorator is `decorator`
-    /// ```
-    pub fn name(&self) -> Option<&str> {
-        match &self.expression {
-            Expression::Identifier(ident) => Some(&ident.name),
-            expr @ match_member_expression!(Expression) => {
-                expr.to_member_expression().static_property_name()
-            }
-            Expression::CallExpression(call) => {
-                call.callee.get_member_expr().map(|member| member.static_property_name())?
-            }
-            _ => None,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
-pub enum ModifierKind {
-    Abstract,
-    Accessor,
-    Async,
-    Const,
-    Declare,
-    Default,
-    Export,
-    In,
-    Public,
-    Private,
-    Protected,
-    Readonly,
-    Static,
-    Out,
-    Override,
-}
-
-impl ModifierKind {
-    pub fn is_typescript_syntax(&self) -> bool {
-        !matches!(self, Self::Async | Self::Default | Self::Export | Self::Static)
-    }
-}
-
-#[derive(Debug, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
-pub struct Modifier {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
-    pub span: Span,
-    pub kind: ModifierKind,
-}
-
-#[derive(Debug, Default, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(transparent))]
-pub struct Modifiers<'a>(Option<Vec<'a, Modifier>>);
-
-impl<'a> Modifiers<'a> {
-    pub fn new(modifiers: Vec<'a, Modifier>) -> Self {
-        Self(Some(modifiers))
-    }
-
-    pub fn empty() -> Self {
-        Self(None)
-    }
-
-    pub fn is_none(&self) -> bool {
-        self.0.is_none()
-    }
-
-    pub fn contains(&self, target: ModifierKind) -> bool {
-        self.0
-            .as_ref()
-            .map_or(false, |modifiers| modifiers.iter().any(|modifier| modifier.kind == target))
-    }
-
-    pub fn find<F>(&self, f: F) -> Option<&Modifier>
-    where
-        F: Fn(&Modifier) -> bool,
-    {
-        self.0.as_ref().and_then(|modifiers| modifiers.iter().find(|modifier| f(modifier)))
-    }
-
-    pub fn is_contains_declare(&self) -> bool {
-        self.contains(ModifierKind::Declare)
-    }
-
-    pub fn is_contains_abstract(&self) -> bool {
-        self.contains(ModifierKind::Abstract)
-    }
-
-    pub fn remove_type_modifiers(&mut self) {
-        if let Some(list) = &mut self.0 {
-            list.retain(|m| !m.kind.is_typescript_syntax());
-        }
-    }
-
-    pub fn add_modifier(&mut self, modifier: Modifier) {
-        if let Some(list) = self.0.as_mut() {
-            list.push(modifier);
-        }
-    }
-}
-
 /// Export Assignment in non-module files
 ///
 /// `export = foo`
@@ -1411,16 +1167,6 @@ pub enum ImportOrExportKind {
     Type,
 }
 
-impl ImportOrExportKind {
-    pub fn is_value(&self) -> bool {
-        matches!(self, Self::Value)
-    }
-
-    pub fn is_type(&self) -> bool {
-        matches!(self, Self::Type)
-    }
-}
-
 // [`JSDoc`](https://github.com/microsoft/TypeScript/blob/54a554d8af2657630307cbfa8a3e4f3946e36507/src/compiler/types.ts#L393)
 
 /// `type foo = ty?` or `type foo = ?ty`
@@ -1429,6 +1175,18 @@ impl ImportOrExportKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
 pub struct JSDocNullableType<'a> {
+    #[cfg_attr(feature = "serialize", serde(flatten))]
+    pub span: Span,
+    pub type_annotation: TSType<'a>,
+    pub postfix: bool,
+}
+
+/// `type foo = ty!` or `type foo = !ty`
+#[visited_node]
+#[derive(Debug, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
+#[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
+pub struct JSDocNonNullableType<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub type_annotation: TSType<'a>,

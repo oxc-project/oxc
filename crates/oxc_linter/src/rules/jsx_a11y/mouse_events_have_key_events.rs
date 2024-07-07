@@ -14,13 +14,13 @@ use crate::{
 fn miss_on_focus(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(mouse-events-have-key-events): {x1} must be accompanied by onFocus for accessibility."))
         .with_help("Try to add onFocus.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn miss_on_blur(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(mouse-events-have-key-events): {x1} must be accompanied by onBlur for accessibility."))
         .with_help("Try to add onBlur.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

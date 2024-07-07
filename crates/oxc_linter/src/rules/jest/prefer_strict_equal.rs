@@ -12,7 +12,7 @@ use crate::{
 fn use_to_strict_equal(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.")
         .with_help("Use `toStrictEqual()` instead")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

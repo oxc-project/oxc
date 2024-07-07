@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{ExportDefaultDeclarationKind, TSType},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -11,10 +11,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn consistent_type_definitions_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(consistent-type-definitions):")
         .with_help(format!("Use an `{x0}` instead of a `{x1}`"))
-        .with_labels([LabeledSpan::new_with_span(
-            Some(format!("Use an `{x0}` instead of a `{x1}`")),
-            span2,
-        )])
+        .with_label(span2.label(format!("Use an `{x0}` instead of a `{x1}`")))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -72,11 +69,7 @@ impl Rule for ConsistentTypeDefinitions {
                 TSType::TSTypeLiteral(_)
                     if self.config == ConsistentTypeDefinitionsConfig::Interface =>
                 {
-                    let start = if decl.modifiers.is_contains_declare() {
-                        decl.span.start + 8
-                    } else {
-                        decl.span.start
-                    };
+                    let start = if decl.declare { decl.span.start + 8 } else { decl.span.start };
 
                     let name_span_start = &decl.id.span.start;
                     let mut name_span_end = &decl.id.span.end;
@@ -170,11 +163,7 @@ impl Rule for ConsistentTypeDefinitions {
             AstKind::TSInterfaceDeclaration(decl)
                 if self.config == ConsistentTypeDefinitionsConfig::Type =>
             {
-                let start = if decl.modifiers.is_contains_declare() {
-                    decl.span.start + 8
-                } else {
-                    decl.span.start
-                };
+                let start = if decl.declare { decl.span.start + 8 } else { decl.span.start };
 
                 let name_span_start = &decl.id.span.start;
                 let mut name_span_end = &decl.id.span.end;

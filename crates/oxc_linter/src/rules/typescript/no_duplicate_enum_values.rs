@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -11,7 +11,7 @@ fn no_duplicate_enum_values_diagnostic(span0: Span, span1: Span) -> OxcDiagnosti
         "typescript-eslint(no-duplicate-enum-values): Disallow duplicate enum member values",
     )
     .with_help("Duplicate values can lead to bugs that are hard to track down")
-    .with_labels([span0.into(), span1.into()])
+    .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -42,7 +42,7 @@ impl Rule for NoDuplicateEnumValues {
             return;
         };
         let mut seen_number_values: Vec<(f64, Span)> = vec![];
-        let mut seen_string_values: FxHashMap<&Atom, Span> = FxHashMap::default();
+        let mut seen_string_values: FxHashMap<&str, Span> = FxHashMap::default();
         for enum_member in &enum_body.members {
             let Some(initializer) = &enum_member.initializer else {
                 continue;
@@ -58,7 +58,7 @@ impl Rule for NoDuplicateEnumValues {
                     }
                 }
                 Expression::StringLiteral(s) => {
-                    if let Some(old_span) = seen_string_values.insert(&s.value, s.span) {
+                    if let Some(old_span) = seen_string_values.insert(s.value.as_str(), s.span) {
                         ctx.diagnostic(no_duplicate_enum_values_diagnostic(old_span, s.span));
                     }
                 }

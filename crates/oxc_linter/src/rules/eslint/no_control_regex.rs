@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use regex::{Matches, Regex};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
@@ -13,7 +13,7 @@ use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, Ast
 fn no_control_regex_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-control-regex): Unexpected control character(s)")
         .with_help(format!("Unexpected control character(s) in regular expression: \"{x0}\""))
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -67,7 +67,7 @@ impl Rule for NoControlRegex {
         if let Some(RegexPatternData { pattern, flags, span }) = regex_pattern(node) {
             let mut violations: Vec<&str> = Vec::new();
 
-            for matched_ctl_pattern in control_patterns(pattern.as_str()) {
+            for matched_ctl_pattern in control_patterns(pattern) {
                 let ctl = matched_ctl_pattern.as_str();
 
                 // check for an even number of backslashes, since these will
@@ -139,7 +139,7 @@ impl Rule for NoControlRegex {
 struct RegexPatternData<'a> {
     /// A regex pattern, either from a literal (`/foo/`) a RegExp constructor
     /// (`new RegExp("foo")`), or a RegExp function call (`RegExp("foo"))
-    pattern: &'a Atom<'a>,
+    pattern: &'a str,
     /// Regex flags, if found. It's possible for this to be `Some` but have
     /// no flags.
     ///
@@ -166,7 +166,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
     match kind {
         // regex literal
         AstKind::RegExpLiteral(reg) => Some(RegexPatternData {
-            pattern: &reg.regex.pattern,
+            pattern: reg.regex.pattern.as_ref(),
             flags: Some(reg.regex.flags),
             span: reg.span,
         }),
@@ -187,7 +187,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // Note that we're intentionally reporting the entire "new
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
-                        pattern: &pattern.value,
+                        pattern: pattern.value.as_ref(),
                         flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })
@@ -215,7 +215,7 @@ fn regex_pattern<'a>(node: &AstNode<'a>) -> Option<RegexPatternData<'a>> {
                     // Note that we're intentionally reporting the entire "new
                     // RegExp("pat") expression, not just "pat".
                     Some(RegexPatternData {
-                        pattern: &pattern.value,
+                        pattern: pattern.value.as_ref(),
                         flags: extract_regex_flags(&expr.arguments),
                         span: kind.span(),
                     })

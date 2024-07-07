@@ -10,7 +10,7 @@ fn no_unnecessary_await_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values",
     )
     .with_help("consider to remove the `await`")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -85,7 +85,7 @@ fn not_promise(expr: &Expression) -> bool {
         | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
         | Expression::NumericLiteral(_)
-        | Expression::BigintLiteral(_)
+        | Expression::BigIntLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_)
         | Expression::TemplateLiteral(_)

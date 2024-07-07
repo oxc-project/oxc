@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ModifierKind, TSModuleDeclarationKind, TSModuleDeclarationName},
+    ast::{TSModuleDeclarationKind, TSModuleDeclarationName},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -13,7 +13,7 @@ fn no_namespace_diagnostic(span0: Span) -> OxcDiagnostic {
         "typescript-eslint(no-namespace): ES2015 module syntax is preferred over namespaces.",
     )
     .with_help("Replace the namespace with an ES2015 module or use `declare module`")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -107,7 +107,7 @@ fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {
         let AstKind::TSModuleDeclaration(declaration) = node.kind() else {
             return false;
         };
-        declaration.modifiers.contains(ModifierKind::Declare)
+        declaration.declare
     })
 }
 

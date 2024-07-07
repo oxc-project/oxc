@@ -15,7 +15,7 @@ pub struct NoUselessConcat;
 fn no_useless_concat_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-useless-concat): Unexpected string concatenation of literals.")
         .with_help("Rewrite into one string literal")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 declare_oxc_lint!(

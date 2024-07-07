@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -15,7 +15,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn prefer_for_of_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("typescript-eslint(prefer-for-of): Expected a `for-of` loop instead of a `for` loop with this simple iteration.")
         .with_help("Consider using a for-of loop for this simple iteration.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -57,11 +57,11 @@ impl SpanExt for Span {
 }
 
 trait ExpressionExt {
-    fn is_increment_of(&self, var_name: &Atom) -> bool;
+    fn is_increment_of(&self, var_name: &str) -> bool;
 }
 
 impl<'a> ExpressionExt for Expression<'a> {
-    fn is_increment_of(&self, var_name: &Atom) -> bool {
+    fn is_increment_of(&self, var_name: &str) -> bool {
         match self {
             Expression::UpdateExpression(expr) => match (&expr.argument, &expr.operator) {
                 (

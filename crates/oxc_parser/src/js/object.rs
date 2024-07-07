@@ -4,8 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
-use super::list::ObjectExpressionProperties;
-use crate::{lexer::Kind, list::SeparatedList, Context, ParserImpl};
+use crate::{diagnostics, lexer::Kind, modifiers::Modifier, Context, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
@@ -15,13 +14,33 @@ impl<'a> ParserImpl<'a> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-        let object_expression_properties =
-            self.context(Context::In, Context::empty(), ObjectExpressionProperties::parse)?;
+        self.expect(Kind::LCurly)?;
+        let object_expression_properties = self.context(Context::In, Context::empty(), |p| {
+            p.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                /* trailing_separator */ false,
+                Self::parse_object_expression_property,
+            )
+        })?;
+        let trailing_comma = self.at(Kind::Comma).then(|| {
+            let span = self.start_span();
+            self.bump_any();
+            self.end_span(span)
+        });
+        self.expect(Kind::RCurly)?;
         Ok(self.ast.object_expression(
             self.end_span(span),
-            object_expression_properties.elements,
-            object_expression_properties.trailing_comma,
+            object_expression_properties,
+            trailing_comma,
         ))
+    }
+
+    fn parse_object_expression_property(&mut self) -> Result<ObjectPropertyKind<'a>> {
+        match self.cur_kind() {
+            Kind::Dot3 => self.parse_spread_element().map(ObjectPropertyKind::SpreadProperty),
+            _ => self.parse_property_definition().map(ObjectPropertyKind::ObjectProperty),
+        }
     }
 
     /// `PropertyDefinition`[Yield, Await]
@@ -43,6 +62,23 @@ impl<'a> ParserImpl<'a> {
             }
             // GeneratorMethod
             Kind::Star if class_element_name => self.parse_property_definition_method(),
+            // Report and handle illegal modifiers
+            // e.g. const x = { public foo() {} }
+            modifier_kind
+                if self.ts_enabled()
+                    && modifier_kind.is_modifier_kind()
+                    && peek_kind.is_identifier_or_keyword() =>
+            {
+                if let Ok(modifier) = Modifier::try_from(self.cur_token()) {
+                    self.error(diagnostics::modifier_cannot_be_used_here(&modifier));
+                } else {
+                    #[cfg(debug_assertions)]
+                    panic!("Kind::is_modifier_kind() is true but the token could not be converted to a Modifier.")
+                }
+                // re-parse
+                self.bump_any();
+                self.parse_property_definition()
+            }
             // IdentifierReference
             kind if kind.is_identifier_reference(false, false)
                 // test Kind::Dot to ignore ({ foo.bar: baz })

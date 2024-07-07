@@ -31,8 +31,7 @@ fn bench_transformer(criterion: &mut Criterion) {
                     trivias,
                     transform_options,
                 )
-                .build(program)
-                .unwrap();
+                .build(program);
                 allocator
             });
         });

@@ -258,7 +258,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::ts_arrow_function_this_parameter(this_param.span));
         }
 
-        let return_type = self.parse_ts_return_type_annotation()?;
+        let return_type = self.parse_ts_return_type_annotation(Kind::Arrow, false)?;
 
         self.ctx = self.ctx.and_await(has_await);
 
@@ -328,7 +328,7 @@ impl<'a> ParserImpl<'a> {
         if self.state.not_parenthesized_arrow.contains(&pos) {
             return Ok(None);
         }
-        if let Ok((type_parameters, params, return_type, r#async, span)) =
+        if let Some((type_parameters, params, return_type, r#async, span)) =
             self.try_parse(ParserImpl::parse_parenthesized_arrow_function_head)
         {
             return self

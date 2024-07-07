@@ -7,7 +7,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn require_yield_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(require-yield): This generator function does not have 'yield'")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

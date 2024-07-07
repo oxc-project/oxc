@@ -21,7 +21,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &TSEnumDeclaration<'a>,
     ) -> Option<Declaration<'a>> {
         let mut members = self.ast.new_vec();
-        let mut prev_initializer_value = Some(ConstantValue::Number(0.0));
+        let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
         for member in &decl.members {
             let value = if let Some(initializer) = &member.initializer {
@@ -90,11 +90,13 @@ impl<'a> IsolatedDeclarations<'a> {
 
             members.push(member);
         }
+
         Some(self.ast.ts_enum_declaration(
             decl.span,
             self.ast.copy(&decl.id),
             members,
-            self.modifiers_declare(),
+            decl.r#const,
+            self.is_declare(),
         ))
     }
 
@@ -103,17 +105,17 @@ impl<'a> IsolatedDeclarations<'a> {
     fn computed_constant_value(
         &self,
         expr: &Expression<'a>,
-        enum_name: &Atom<'a>,
+        enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         self.evaluate(expr, enum_name, prev_members)
     }
 
-    #[allow(clippy::unused_self)]
+    #[allow(clippy::unused_self, clippy::needless_pass_by_value)]
     fn evaluate_ref(
         &self,
         expr: &Expression<'a>,
-        enum_name: &Atom<'a>,
+        enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         match expr {
@@ -147,7 +149,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn evaluate(
         &self,
         expr: &Expression<'a>,
-        enum_name: &Atom<'a>,
+        enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         match expr {
@@ -183,7 +185,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn eval_binary_expression(
         &self,
         expr: &BinaryExpression<'a>,
-        enum_name: &Atom<'a>,
+        enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         let left = self.evaluate(&expr.left, enum_name, prev_members)?;
@@ -249,7 +251,7 @@ impl<'a> IsolatedDeclarations<'a> {
     fn eval_unary_expression(
         &self,
         expr: &UnaryExpression<'a>,
-        enum_name: &Atom<'a>,
+        enum_name: &str,
         prev_members: &FxHashMap<Atom<'a>, ConstantValue>,
     ) -> Option<ConstantValue> {
         let value = self.evaluate(&expr.argument, enum_name, prev_members)?;

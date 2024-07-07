@@ -5,8 +5,13 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use super::{list::FormalParameterList, FunctionKind};
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl, StatementContext};
+use super::FunctionKind;
+use crate::{
+    diagnostics,
+    lexer::Kind,
+    modifiers::{ModifierFlags, ModifierKind, Modifiers},
+    Context, ParserImpl, StatementContext,
+};
 
 impl FunctionKind {
     pub(crate) fn is_id_required(self) -> bool {
@@ -43,11 +48,72 @@ impl<'a> ParserImpl<'a> {
         params_kind: FormalParameterKind,
     ) -> Result<(Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>)> {
         let span = self.start_span();
-        let list: FormalParameterList<'_> = FormalParameterList::parse(self)?;
-        let formal_parameters =
-            self.ast.formal_parameters(self.end_span(span), params_kind, list.elements, list.rest);
-        let this_param = list.this_param;
+        self.expect(Kind::LParen)?;
+        let this_param = if self.ts_enabled() && self.at(Kind::This) {
+            let param = self.parse_ts_this_parameter()?;
+            if !self.at(Kind::RParen) {
+                self.expect(Kind::Comma)?;
+            }
+            Some(param)
+        } else {
+            None
+        };
+        let (list, rest) = self.parse_delimited_list_with_rest(
+            Kind::RParen,
+            Self::parse_formal_parameter,
+            Self::parse_rest_parameter,
+        )?;
+        self.expect(Kind::RParen)?;
+        let formal_parameters = self.ast.formal_parameters(
+            self.end_span(span),
+            params_kind,
+            list,
+            rest.map(|r| self.ast.alloc(r)),
+        );
         Ok((this_param, formal_parameters))
+    }
+
+    fn parse_parameter_modifiers(&mut self) -> Modifiers<'a> {
+        let modifiers = self.parse_class_element_modifiers(true);
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::ACCESSIBILITY
+                .union(ModifierFlags::READONLY)
+                .union(ModifierFlags::OVERRIDE),
+            diagnostics::cannot_appear_on_a_parameter,
+        );
+        modifiers
+    }
+
+    fn parse_formal_parameter(&mut self) -> Result<FormalParameter<'a>> {
+        let span = self.start_span();
+        self.eat_decorators()?;
+        let modifiers = self.parse_parameter_modifiers();
+        let pattern = self.parse_binding_pattern_with_initializer()?;
+        let decorators = self.consume_decorators();
+        Ok(self.ast.formal_parameter(
+            self.end_span(span),
+            pattern,
+            modifiers.accessibility(),
+            modifiers.contains_readonly(),
+            modifiers.contains_override(),
+            decorators,
+        ))
+    }
+
+    fn parse_rest_parameter(&mut self) -> Result<BindingRestElement<'a>> {
+        let element = self.parse_rest_element()?;
+        if self.at(Kind::Comma) {
+            if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
+                let span = self.cur_token().span();
+                self.bump_any();
+                self.error(diagnostics::binding_rest_element_trailing_comma(span));
+            }
+            if !self.ctx.has_ambient() {
+                self.error(diagnostics::rest_parameter_last(element.span));
+            }
+        }
+        Ok(element)
     }
 
     pub(crate) fn parse_function(
@@ -57,7 +123,7 @@ impl<'a> ParserImpl<'a> {
         r#async: bool,
         generator: bool,
         func_kind: FunctionKind,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let ctx = self.ctx;
         self.ctx = self.ctx.and_in(true).and_await(r#async).and_yield(generator);
@@ -67,7 +133,8 @@ impl<'a> ParserImpl<'a> {
         let (this_param, params) =
             self.parse_formal_parameters(FormalParameterKind::FormalParameter)?;
 
-        let return_type = self.parse_ts_return_type_annotation()?;
+        let return_type =
+            self.parse_ts_return_type_annotation(Kind::Colon, /* is_type */ true)?;
 
         let body = if self.at(Kind::LCurly) { Some(self.parse_function_body()?) } else { None };
 
@@ -102,18 +169,24 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            diagnostics::modifier_cannot_be_used_here,
+        );
+
         Ok(self.ast.function(
             function_type,
             self.end_span(span),
             id,
             generator,
             r#async,
+            modifiers.contains_declare(),
             this_param,
             params,
             body,
             type_parameters,
             return_type,
-            modifiers,
         ))
     }
 
@@ -152,7 +225,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Function)?;
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator)?;
-        self.parse_function(span, id, r#async, generator, func_kind, Modifiers::empty())
+        self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())
     }
 
     /// Parse function implementation in Typescript, cursor
@@ -161,7 +234,7 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         start_span: Span,
         func_kind: FunctionKind,
-        modifiers: Modifiers<'a>,
+        modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, Function<'a>>> {
         let r#async = modifiers.contains(ModifierKind::Async);
         self.expect(Kind::Function)?;
@@ -182,7 +255,7 @@ impl<'a> ParserImpl<'a> {
         let generator = self.eat(Kind::Star);
         let id = self.parse_function_id(func_kind, r#async, generator)?;
         let function =
-            self.parse_function(span, id, r#async, generator, func_kind, Modifiers::empty())?;
+            self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())?;
 
         Ok(self.ast.function_expression(function))
     }
@@ -207,7 +280,7 @@ impl<'a> ParserImpl<'a> {
             r#async,
             generator,
             FunctionKind::Expression,
-            Modifiers::empty(),
+            &Modifiers::empty(),
         )
     }
 

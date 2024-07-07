@@ -25,10 +25,10 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
-use es2015::ES2015;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, Trivias};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_span::SourceType;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
@@ -42,9 +42,16 @@ pub use crate::{
 };
 use crate::{
     context::{Ctx, TransformCtx},
+    es2015::ES2015,
     react::React,
     typescript::TypeScript,
 };
+
+pub struct TransformerReturn {
+    pub errors: std::vec::Vec<OxcDiagnostic>,
+    pub symbols: SymbolTable,
+    pub scopes: ScopeTree,
+}
 
 pub struct Transformer<'a> {
     ctx: Ctx<'a>,
@@ -79,20 +86,25 @@ impl<'a> Transformer<'a> {
         }
     }
 
-    /// # Errors
-    ///
-    /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), std::vec::Vec<Error>> {
-        let TransformCtx { ast: AstBuilder { allocator }, source_text, source_type, .. } =
-            *self.ctx;
-        traverse_mut(&mut self, program, source_text, source_type, allocator);
+    pub fn build(mut self, program: &mut Program<'a>) -> TransformerReturn {
+        let (symbols, scopes) = SemanticBuilder::new(self.ctx.source_text, self.ctx.source_type)
+            .build(program)
+            .semantic
+            .into_symbol_table_and_scope_tree();
+        let TransformCtx { ast: AstBuilder { allocator }, .. } = *self.ctx;
+        let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
+        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
+    }
 
-        let errors = self.ctx.take_errors();
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
+    pub fn build_with_symbols_and_scopes(
+        mut self,
+        symbols: SymbolTable,
+        scopes: ScopeTree,
+        program: &mut Program<'a>,
+    ) -> TransformerReturn {
+        let TransformCtx { ast: AstBuilder { allocator }, .. } = *self.ctx;
+        let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
+        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
 }
 
@@ -138,12 +150,28 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x0_typescript.transform_class_body(body);
     }
 
+    fn enter_import_declaration(
+        &mut self,
+        decl: &mut ImportDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.transform_import_declaration(decl);
+    }
+
     fn enter_export_named_declaration(
         &mut self,
         decl: &mut ExportNamedDeclaration<'a>,
         _ctx: &mut TraverseCtx<'a>,
     ) {
         self.x0_typescript.transform_export_named_declaration(decl);
+    }
+
+    fn enter_ts_module_declaration(
+        &mut self,
+        decl: &mut TSModuleDeclaration<'a>,
+        _ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.x0_typescript.transform_ts_module_declaration(decl);
     }
 
     fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -216,9 +244,9 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn exit_method_definition(
         &mut self,
         def: &mut MethodDefinition<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.transform_method_definition_on_exit(def);
+        self.x0_typescript.transform_method_definition_on_exit(def, ctx);
     }
 
     fn enter_new_expression(&mut self, expr: &mut NewExpression<'a>, _ctx: &mut TraverseCtx<'a>) {
@@ -238,8 +266,8 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x3_es2015.enter_statements(stmts);
     }
 
-    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_statements_on_exit(stmts);
+    fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_statements_on_exit(stmts, ctx);
         self.x3_es2015.exit_statements(stmts);
     }
 
@@ -264,24 +292,24 @@ impl<'a> Traverse<'a> for Transformer<'a> {
         self.x3_es2015.transform_declaration_on_exit(decl);
     }
 
-    fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_if_statement(stmt);
+    fn enter_if_statement(&mut self, stmt: &mut IfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_if_statement(stmt, ctx);
     }
 
-    fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_while_statement(stmt);
+    fn enter_while_statement(&mut self, stmt: &mut WhileStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_while_statement(stmt, ctx);
     }
 
     fn enter_do_while_statement(
         &mut self,
         stmt: &mut DoWhileStatement<'a>,
-        _ctx: &mut TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) {
-        self.x0_typescript.transform_do_while_statement(stmt);
+        self.x0_typescript.transform_do_while_statement(stmt, ctx);
     }
 
-    fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, _ctx: &mut TraverseCtx<'a>) {
-        self.x0_typescript.transform_for_statement(stmt);
+    fn enter_for_statement(&mut self, stmt: &mut ForStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.x0_typescript.transform_for_statement(stmt, ctx);
     }
 
     fn enter_ts_export_assignment(

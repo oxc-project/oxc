@@ -63,7 +63,7 @@
 
 mod context;
 mod cursor;
-mod list;
+mod modifiers;
 mod state;
 
 mod js;
@@ -81,7 +81,10 @@ pub mod lexer;
 
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, AstBuilder, Trivias};
+use oxc_ast::{
+    ast::{Expression, Program},
+    AstBuilder, Trivias,
+};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
@@ -227,6 +230,23 @@ mod parser_parse {
             );
             parser.parse()
         }
+
+        /// Parse `Expression`
+        ///
+        /// # Errors
+        ///
+        /// * Syntax Error
+        pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+            let unique = UniquePromise::new();
+            let parser = ParserImpl::new(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                unique,
+            );
+            parser.parse_expression()
+        }
     }
 }
 use parser_parse::UniquePromise;
@@ -293,19 +313,6 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    /// Backdoor to create a `ParserImpl` without holding a `UniquePromise`, for unit tests.
-    /// This function must NOT be exposed in public API as it breaks safety invariants.
-    #[cfg(test)]
-    fn new_for_tests(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        options: ParserOptions,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests();
-        Self::new(allocator, source_text, source_type, options, unique)
-    }
-
     /// Main entry point
     ///
     /// Returns an empty `Program` on unrecoverable error,
@@ -331,6 +338,17 @@ impl<'a> ParserImpl<'a> {
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect();
         let trivias = self.lexer.trivia_builder.build();
         ParserReturn { program, errors, trivias, panicked }
+    }
+
+    pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        // initialize cur_token and prev_token by moving onto the first token
+        self.bump_any();
+        let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        Ok(expr)
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -398,6 +416,10 @@ impl<'a> ParserImpl<'a> {
         self.errors.push(error);
     }
 
+    fn errors_count(&self) -> usize {
+        self.errors.len() + self.lexer.errors.len()
+    }
+
     fn ts_enabled(&self) -> bool {
         self.source_type.is_typescript()
     }
@@ -407,18 +429,27 @@ impl<'a> ParserImpl<'a> {
 mod test {
     use std::path::Path;
 
-    use oxc_ast::CommentKind;
+    use oxc_ast::{ast::Expression, CommentKind};
 
     use super::*;
 
     #[test]
-    fn smoke_test() {
+    fn parse_program_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let source = "";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
         assert!(ret.errors.is_empty());
+    }
+
+    #[test]
+    fn parse_expression_smoke_test() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = "a";
+        let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+        assert!(matches!(expr, Expression::Identifier(_)));
     }
 
     #[test]
@@ -452,7 +483,7 @@ mod test {
         let sources = [
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
-            ("@decorator 'use strict';", 1),
+            (";'use strict';", 2),
         ];
         for (source, body_length) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();

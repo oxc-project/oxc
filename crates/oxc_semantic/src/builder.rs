@@ -10,11 +10,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{CompactStr, SourceType, Span};
-use oxc_syntax::{
-    identifier::is_identifier_name,
-    module_record::{ExportImportName, ExportLocalName, ModuleRecord},
-    operator::AssignmentOperator,
-};
+use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
 use crate::{
     binder::Binder,
@@ -28,7 +24,7 @@ use crate::{
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
-    Semantic,
+    JSDocFinder, Semantic,
 };
 
 macro_rules! control_flow {
@@ -74,6 +70,7 @@ pub struct SemanticBuilder<'a> {
 
     pub label_builder: LabelBuilder<'a>,
 
+    build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
 
     check_syntax_error: bool,
@@ -113,6 +110,7 @@ impl<'a> SemanticBuilder<'a> {
             symbols: SymbolTable::default(),
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
+            build_jsdoc: false,
             jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
             cfg: None,
@@ -131,6 +129,12 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
+        self.build_jsdoc = yes;
         self
     }
 
@@ -171,6 +175,8 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
+        let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
+
         let semantic = Semantic {
             source_text: self.source_text,
             source_type: self.source_type,
@@ -180,27 +186,11 @@ impl<'a> SemanticBuilder<'a> {
             symbols: self.symbols,
             classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
-            jsdoc: self.jsdoc.build(),
+            jsdoc,
             unused_labels: self.label_builder.unused_node_ids,
             cfg: self.cfg.map(ControlFlowGraphBuilder::build),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
-    }
-
-    pub fn build2(self) -> Semantic<'a> {
-        Semantic {
-            source_text: self.source_text,
-            source_type: self.source_type,
-            trivias: self.trivias,
-            nodes: self.nodes,
-            scopes: self.scope,
-            symbols: self.symbols,
-            classes: self.class_table_builder.build(),
-            module_record: Arc::new(ModuleRecord::default()),
-            jsdoc: self.jsdoc.build(),
-            unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg.map(ControlFlowGraphBuilder::build),
-        }
     }
 
     /// Push a Syntax Error
@@ -210,7 +200,8 @@ impl<'a> SemanticBuilder<'a> {
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
-        if self.jsdoc.retrieve_attached_jsdoc(&kind) {
+
+        if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
 
@@ -323,22 +314,10 @@ impl<'a> SemanticBuilder<'a> {
         Some(symbol_id)
     }
 
-    pub fn declare_reference(
-        &mut self,
-        reference: Reference,
-        add_unresolved_reference: bool,
-    ) -> ReferenceId {
+    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
-        if add_unresolved_reference {
-            self.scope.add_unresolved_reference(
-                self.current_scope_id,
-                reference_name,
-                reference_id,
-            );
-        } else {
-            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
-        }
+        self.scope.add_unresolved_reference(self.current_scope_id, reference_name, reference_id);
         reference_id
     }
 
@@ -389,35 +368,29 @@ impl<'a> SemanticBuilder<'a> {
         self.symbols.add_redeclare_variable(symbol_id, span);
     }
 
-    fn add_export_flag_for_export_identifier(&mut self) {
-        self.module_record.indirect_export_entries.iter().for_each(|entry| {
-            if let ExportImportName::Name(name) = &entry.import_name {
-                if let Some(symbol_id) = self.symbols.get_symbol_id_from_name(name.name()) {
-                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+    fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
+        for stmt in &program.body {
+            if let Statement::ExportDefaultDeclaration(decl) = stmt {
+                if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
+                    self.add_export_flag_to_identifier(ident.name.as_str());
                 }
             }
-        });
-
-        self.module_record.local_export_entries.iter().for_each(|entry| {
-            match &entry.local_name {
-                ExportLocalName::Name(name_span) => {
-                    if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
-                        self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-                    }
-                }
-                ExportLocalName::Default(_) => {
-                    // export default identifier
-                    //                ^^^^^^^^^^
-                    let identifier = entry.span.source_text(self.source_text);
-                    if is_identifier_name(identifier) {
-                        if let Some(symbol_id) = self.scope.get_root_binding(identifier) {
-                            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+            if let Statement::ExportNamedDeclaration(decl) = stmt {
+                for specifier in &decl.specifiers {
+                    if specifier.export_kind.is_value() {
+                        if let Some(name) = specifier.local.identifier_name() {
+                            self.add_export_flag_to_identifier(name.as_str());
                         }
                     }
                 }
-                ExportLocalName::Null => {}
             }
-        });
+        }
+    }
+
+    fn add_export_flag_to_identifier(&mut self, name: &str) {
+        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
+            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+        }
     }
 }
 
@@ -427,27 +400,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
 
         let mut flags = flags;
-        // Inherit strict mode for functions
-        // https://tc39.es/ecma262/#sec-strict-mode-code
         if let Some(parent_scope_id) = parent_scope_id {
-            let mut strict_mode = self.scope.root_flags().is_strict_mode();
-            let parent_scope_flags = self.scope.get_flags(parent_scope_id);
-
-            if !strict_mode
-                && parent_scope_flags.is_function()
-                && parent_scope_flags.is_strict_mode()
-            {
-                strict_mode = true;
-            }
-
-            // inherit flags for non-function scopes
-            if !flags.contains(ScopeFlags::Function) {
-                flags |= parent_scope_flags & ScopeFlags::Modifiers;
-            };
-
-            if strict_mode {
-                flags |= ScopeFlags::StrictMode;
-            }
+            flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
         }
 
         self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
@@ -1575,7 +1529,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
         expr.scope_id.set(Some(self.current_scope_id));
@@ -1623,14 +1577,14 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_enum(&mut self, decl: &TSEnumDeclaration<'a>) {
+    fn visit_ts_enum_declaration(&mut self, decl: &TSEnumDeclaration<'a>) {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
         self.enter_scope(ScopeFlags::empty());
         decl.scope_id.set(Some(self.current_scope_id));
         for member in &decl.members {
-            self.visit_enum_member(member);
+            self.visit_ts_enum_member(member);
         }
         self.leave_scope();
         self.leave_node(kind);
@@ -1694,8 +1648,20 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+            AstKind::ExportDefaultDeclaration(_) => {
                 self.current_symbol_flags |= SymbolFlags::Export;
+            }
+            AstKind::ExportNamedDeclaration(decl) => {
+                self.current_symbol_flags |= SymbolFlags::Export;
+                if decl.export_kind.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Type;
+                }
+            }
+            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
+                self.current_reference_flag = ReferenceFlag::Type;
+            }
+            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
+                self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
@@ -1726,7 +1692,7 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
                 class.bind(self);
-                self.remove_export_flag();
+                self.current_symbol_flags -= SymbolFlags::Export;
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ClassBody(body) => {
@@ -1747,14 +1713,12 @@ impl<'a> SemanticBuilder<'a> {
                 element.bind(self);
             }
             AstKind::FormalParameters(_) => {
-                self.current_node_flags |= NodeFlags::Parameter;
-                self.remove_export_flag();
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::FormalParameter(param) => {
                 param.bind(self);
             }
             AstKind::CatchParameter(param) => {
-                self.current_node_flags |= NodeFlags::Parameter;
                 param.bind(self);
             }
             AstKind::TSModuleDeclaration(module_declaration) => {
@@ -1781,6 +1745,9 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
+            }
+            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
+                self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::TSTypeName(_) => {
                 self.current_reference_flag = ReferenceFlag::Type;
@@ -1829,15 +1796,27 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Program(_) => {
-                self.add_export_flag_for_export_identifier();
+            AstKind::Program(program) => {
+                self.add_export_flag_to_export_identifiers(program);
             }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
             }
-            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+            AstKind::ExportDefaultDeclaration(_) => {
                 self.current_symbol_flags -= SymbolFlags::Export;
+            }
+            AstKind::ExportNamedDeclaration(decl) => {
+                self.current_symbol_flags -= SymbolFlags::Export;
+                if decl.export_kind.is_type() {
+                    self.current_reference_flag -= ReferenceFlag::Type;
+                }
+            }
+            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
+                self.current_reference_flag -= ReferenceFlag::Type;
+            }
+            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
+                self.current_reference_flag -= ReferenceFlag::Type;
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
             AstKind::StaticBlock(_) => {
@@ -1850,8 +1829,17 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
-            AstKind::FormalParameters(_) | AstKind::CatchParameter(_) => {
-                self.current_node_flags -= NodeFlags::Parameter;
+            AstKind::FormalParameters(parameters) => {
+                if parameters.has_parameter() {
+                    // `function foo({bar: identifier_reference}) {}`
+                    //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved
+                    //                                          after all parameters have been declared
+                    //                                          to avoid binding to variables inside the scope
+                    self.resolve_references_for_current_scope();
+                }
+            }
+            AstKind::CatchParameter(_) => {
+                self.resolve_references_for_current_scope();
             }
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
@@ -1878,10 +1866,6 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn remove_export_flag(&mut self) {
-        self.current_symbol_flags -= SymbolFlags::Export;
-    }
-
     fn add_current_node_id_to_current_scope(&mut self) {
         self.scope.add_node_id(self.current_scope_id, self.current_node_id);
     }
@@ -1899,12 +1883,8 @@ impl<'a> SemanticBuilder<'a> {
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
         let name = ident.name.to_compact_str();
-        let reference = Reference::new(ident.span, name.clone(), self.current_node_id, flag);
-        // `function foo({bar: identifier_reference}) {}`
-        //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
-        //                                          to avoid binding to variables inside the scope
-        let add_unresolved_reference = !self.current_node_flags.has_parameter();
-        let reference_id = self.declare_reference(reference, add_unresolved_reference);
+        let reference = Reference::new(ident.span, name, self.current_node_id, flag);
+        let reference_id = self.declare_reference(reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1933,7 +1913,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_node_id,
             ReferenceFlag::read(),
         );
-        self.declare_reference(reference, true);
+        self.declare_reference(reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

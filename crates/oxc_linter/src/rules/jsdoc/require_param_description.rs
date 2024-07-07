@@ -18,7 +18,7 @@ fn missing_type_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-jsdoc(require-param-description): Missing JSDoc `@param` description.",
     )
     .with_help("Add description to `@param` tag.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

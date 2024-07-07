@@ -88,11 +88,8 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::LAngle)?;
         let name = self.parse_jsx_element_name()?;
         // <Component<TsType> for tsx
-        let type_parameters = if self.ts_enabled() {
-            self.context(Context::default(), self.ctx, Self::parse_ts_type_arguments)?
-        } else {
-            None
-        };
+        let type_parameters =
+            if self.ts_enabled() { self.try_parse_type_arguments()? } else { None };
         let attributes = self.parse_jsx_attributes()?;
         let self_closing = self.eat(Kind::Slash);
         if !self_closing || in_jsx_child {
@@ -265,7 +262,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_jsx_assignment_expression(&mut self) -> Result<Expression<'a>> {
         self.context(Context::default().and_await(self.ctx.has_await()), self.ctx, |p| {
-            let expr = p.parse_expression();
+            let expr = p.parse_expr();
             if let Ok(Expression::SequenceExpression(seq)) = &expr {
                 return Err(diagnostics::jsx_expressions_may_not_use_the_comma_operator(seq.span));
             }

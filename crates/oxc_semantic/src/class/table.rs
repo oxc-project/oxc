@@ -1,5 +1,5 @@
 use oxc_index::IndexVec;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::class::{ClassId, ElementId, ElementKind};
 use rustc_hash::FxHashMap;
 
@@ -76,10 +76,10 @@ impl ClassTable {
         self.declarations[class_id]
     }
 
-    pub fn get_element_ids(&self, class_id: ClassId, name: &Atom) -> Vec<ElementId> {
+    pub fn get_element_ids(&self, class_id: ClassId, name: &str) -> Vec<ElementId> {
         let mut element_ids = vec![];
         for (element_id, element) in self.elements[class_id].iter_enumerated() {
-            if element.name == *name {
+            if element.name == name {
                 element_ids.push(element_id);
 
                 // Property or Accessor only has 1 element

@@ -23,5 +23,10 @@ function qux() {
   const a = (() => {
     return 1;
   })();
- return `Hello, world!`;
+  return `Hello, world!`;
 }
+
+function quux() {
+  return `${''}`
+}
+// Inferred type is string

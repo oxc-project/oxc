@@ -22,6 +22,92 @@ impl<'a> Fix<'a> {
     }
 }
 
+pub enum CompositeFix<'a> {
+    Single(Fix<'a>),
+    Multiple(Vec<Fix<'a>>),
+}
+
+impl<'a> From<Fix<'a>> for CompositeFix<'a> {
+    fn from(fix: Fix<'a>) -> Self {
+        CompositeFix::Single(fix)
+    }
+}
+
+impl<'a> From<Vec<Fix<'a>>> for CompositeFix<'a> {
+    fn from(fixes: Vec<Fix<'a>>) -> Self {
+        CompositeFix::Multiple(fixes)
+    }
+}
+
+impl<'a> CompositeFix<'a> {
+    /// Gets one fix from the fixes. If we retrieve multiple fixes, this merges those into one.
+    /// <https://github.com/eslint/eslint/blob/main/lib/linter/report-translator.js#L181-L203>
+    pub fn normalize_fixes(self, source_text: &str) -> Fix<'a> {
+        match self {
+            CompositeFix::Single(fix) => fix,
+            CompositeFix::Multiple(fixes) => Self::merge_fixes(fixes, source_text),
+        }
+    }
+    // Merges multiple fixes to one, returns an `Fix::default`(which will not fix anything) if:
+    // 1. `fixes` is empty
+    // 2. contains overlapped ranges
+    // 3. contains negative ranges (span.start > span.end)
+    // <https://github.com/eslint/eslint/blob/main/lib/linter/report-translator.js#L147-L179>
+    fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
+        let mut fixes = fixes;
+        let empty_fix = Fix::default();
+        if fixes.is_empty() {
+            // Do nothing
+            return empty_fix;
+        }
+        if fixes.len() == 1 {
+            return fixes.pop().unwrap();
+        }
+
+        fixes.sort_by(|a, b| a.span.cmp(&b.span));
+
+        // safe, as fixes.len() > 1
+        let start = fixes[0].span.start;
+        let end = fixes[fixes.len() - 1].span.end;
+        let mut last_pos = start;
+        let mut output = String::new();
+
+        for fix in fixes {
+            let Fix { ref content, span } = fix;
+            // negative range or overlapping ranges is invalid
+            if span.start > span.end {
+                debug_assert!(false, "Negative range is invalid: {span:?}");
+                return empty_fix;
+            }
+            if last_pos > span.start {
+                debug_assert!(
+                    false,
+                    "Fix must not be overlapped, last_pos: {}, span.start: {}",
+                    last_pos, span.start
+                );
+                return empty_fix;
+            }
+
+            let Some(before) = source_text.get((last_pos) as usize..span.start as usize) else {
+                debug_assert!(false, "Invalid range: {}, {}", last_pos, span.start);
+                return empty_fix;
+            };
+
+            output.push_str(before);
+            output.push_str(content);
+            last_pos = span.end;
+        }
+
+        let Some(after) = source_text.get(last_pos as usize..end as usize) else {
+            debug_assert!(false, "Invalid range: {:?}", last_pos as usize..end as usize);
+            return empty_fix;
+        };
+
+        output.push_str(after);
+        Fix::new(output, Span::new(start, end))
+    }
+}
+
 /// Inspired by ESLint's [`RuleFixer`].
 ///
 /// [`RuleFixer`]: https://github.com/eslint/eslint/blob/main/lib/linter/rule-fixer.js
@@ -103,12 +189,21 @@ impl<'a> Message<'a> {
         Self { error, start, end, fix, fixed: false }
     }
 
+    #[inline]
     pub fn start(&self) -> u32 {
         self.start
     }
 
+    #[inline]
     pub fn end(&self) -> u32 {
         self.end
+    }
+}
+
+impl<'a> GetSpan for Message<'a> {
+    #[inline]
+    fn span(&self) -> Span {
+        Span::new(self.start(), self.end())
     }
 }
 
@@ -174,7 +269,7 @@ mod test {
     use oxc_diagnostics::OxcDiagnostic;
     use oxc_span::Span;
 
-    use super::{Fix, FixResult, Fixer, Message};
+    use super::{CompositeFix, Fix, FixResult, Fixer, Message};
 
     fn insert_at_end() -> OxcDiagnostic {
         OxcDiagnostic::warn("End")
@@ -204,8 +299,8 @@ mod test {
         OxcDiagnostic::warn("removestart")
     }
 
-    fn remove_middle(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("removemiddle").with_labels([span0.into()])
+    fn remove_middle(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("removemiddle").with_label(span)
     }
 
     fn remove_end() -> OxcDiagnostic {
@@ -216,16 +311,16 @@ mod test {
         OxcDiagnostic::warn("reversed range")
     }
 
-    fn no_fix(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix").with_labels([span0.into()])
+    fn no_fix(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("nofix").with_label(span)
     }
 
-    fn no_fix_1(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix1").with_labels([span0.into()])
+    fn no_fix_1(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("nofix1").with_label(span)
     }
 
-    fn no_fix_2(span0: Span) -> OxcDiagnostic {
-        OxcDiagnostic::warn("nofix2").with_labels([span0.into()])
+    fn no_fix_2(span: Span) -> OxcDiagnostic {
+        OxcDiagnostic::warn("nofix2").with_label(span)
     }
 
     const TEST_CODE: &str = "var answer = 6 * 7;";
@@ -447,5 +542,119 @@ mod test {
         assert_eq!(result.messages[0].error.to_string(), "nofix1");
         assert_eq!(result.messages[1].error.to_string(), "nofix2");
         assert!(result.fixed);
+    }
+
+    fn assert_fixed_corrected(source_text: &str, expected: &str, composite_fix: CompositeFix) {
+        let mut source_text = source_text.to_string();
+        let fix = composite_fix.normalize_fixes(&source_text);
+        let start = fix.span.start as usize;
+        let end = fix.span.end as usize;
+        source_text.replace_range(start..end, fix.content.to_string().as_str());
+        assert_eq!(source_text, expected);
+    }
+
+    #[test]
+    fn merge_fixes_in_composite_fix() {
+        let source_text = "foo bar baz";
+        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(4, 7))];
+        let composite_fix = CompositeFix::Multiple(fixes);
+        assert_fixed_corrected(source_text, "quux qux baz", composite_fix);
+    }
+
+    #[test]
+    fn one_fix_in_composite_fix() {
+        let source_text = "foo bar baz";
+        let fix = Fix::new("quxx", Span::new(4, 7));
+        let composite_fix = CompositeFix::Single(fix.clone());
+        assert_fixed_corrected(source_text, "foo quxx baz", composite_fix);
+
+        let composite_fix = CompositeFix::Multiple(vec![fix]);
+        assert_fixed_corrected(source_text, "foo quxx baz", composite_fix);
+    }
+
+    #[test]
+    fn zero_fixes_in_composite_fix() {
+        let source_text = "foo bar baz";
+        let composite_fix = CompositeFix::Multiple(vec![]);
+        assert_fixed_corrected(source_text, source_text, composite_fix);
+    }
+
+    #[test]
+    #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start: 2")]
+    fn overlapping_ranges_in_composite_fix() {
+        let source_text = "foo bar baz";
+        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(2, 5))];
+        let composite_fix = CompositeFix::Multiple(fixes);
+        assert_fixed_corrected(source_text, source_text, composite_fix);
+    }
+
+    #[test]
+    #[should_panic(expected = "Negative range is invalid: Span { start: 5, end: 2 }")]
+    fn negative_ranges_in_composite_fix() {
+        let source_text = "foo bar baz";
+        let fixes = vec![Fix::new("quux", Span::new(0, 3)), Fix::new("qux", Span::new(5, 2))];
+        let composite_fix = CompositeFix::Multiple(fixes);
+        assert_fixed_corrected(source_text, source_text, composite_fix);
+    }
+
+    fn assert_fixes_merged(fixes: Vec<Fix>, fix: &Fix, source_text: &str) {
+        let composite_fix = CompositeFix::from(fixes);
+        let merged_fix = composite_fix.normalize_fixes(source_text);
+        assert_eq!(merged_fix.content, fix.content);
+        assert_eq!(merged_fix.span, fix.span);
+    }
+
+    // Remain test caces picked from eslint
+    // <https://github.com/eslint/eslint/blob/main/tests/lib/linter/report-translator.js>
+    // 1. Combining autofixes
+    #[test]
+    fn merge_fixes_into_one() {
+        let source_text = "foo\nbar";
+        let fixes = vec![Fix::new("foo", Span::new(1, 2)), Fix::new("bar", Span::new(4, 5))];
+        assert_fixes_merged(fixes, &Fix::new("fooo\nbar", Span::new(1, 5)), source_text);
+    }
+
+    #[test]
+    fn respect_ranges_of_empty_insertions() {
+        let source_text = "foo\nbar";
+        let fixes = vec![
+            Fix::new("cd", Span::new(4, 5)),
+            Fix::new("", Span::new(2, 2)),
+            Fix::new("", Span::new(7, 7)),
+        ];
+        assert_fixes_merged(fixes, &Fix::new("o\ncdar", Span::new(2, 7)), source_text);
+    }
+
+    #[test]
+    fn pass_through_fixes_if_only_one_present() {
+        let source_text = "foo\nbar";
+        let fix = Fix::new("foo", Span::new(1, 2));
+        assert_fixes_merged(vec![fix.clone()], &fix, source_text);
+    }
+
+    #[test]
+    #[should_panic(expected = "Fix must not be overlapped, last_pos: 3, span.start: 2")]
+    fn throw_error_when_ranges_overlap() {
+        let source_text = "foo\nbar";
+        let fixes = vec![Fix::new("foo", Span::new(0, 3)), Fix::new("x", Span::new(2, 5))];
+        assert_fixes_merged(fixes, &Fix::default(), source_text);
+    }
+
+    // 2. unique `fix` and `fix.range` objects
+    #[test]
+    fn return_new_fix_when_fixes_is_one() {
+        let source_text = "foo\nbar";
+        let fix = Fix::new("baz", Span::new(0, 3));
+        let fixes = vec![fix.clone()];
+
+        assert_fixes_merged(fixes, &fix, source_text);
+    }
+
+    #[test]
+    fn create_new_fix_with_new_range_when_fixes_is_multiple() {
+        let source_text = "foo\nbar";
+        let fixes = vec![Fix::new("baz", Span::new(0, 3)), Fix::new("qux", Span::new(4, 7))];
+
+        assert_fixes_merged(fixes, &Fix::new("baz\nqux", Span::new(0, 7)), source_text);
     }
 }

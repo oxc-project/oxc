@@ -11,7 +11,7 @@ use oxc_transformer::{
 };
 
 // Instruction:
-// create a `test.js`,
+// create a `test.tsx`,
 // run `cargo run -p oxc_transformer --example transformer`
 // or `just watch "run -p oxc_transformer --example transformer"`
 

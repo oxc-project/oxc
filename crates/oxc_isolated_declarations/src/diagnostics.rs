@@ -1,5 +1,5 @@
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 pub fn function_must_have_explicit_return_type(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
@@ -112,7 +112,6 @@ pub fn implicitly_adding_undefined_to_type(span: Span) -> OxcDiagnostic {
     .with_label(span)
 }
 
-#[allow(dead_code)]
 pub fn function_with_assigning_properties(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(
         "TS9023: Assigning properties to functions without declaring them is not supported with --isolatedDeclarations. Add an explicit declaration for the properties assigned to this function.",
@@ -133,7 +132,8 @@ pub fn computed_property_name(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-pub fn type_containing_private_name(name: &Atom<'_>, span: Span) -> OxcDiagnostic {
+#[allow(clippy::needless_pass_by_value)]
+pub fn type_containing_private_name(name: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!(
         "TS9039: Type containing private name '{name}' can't be used with --isolatedDeclarations."
     ))

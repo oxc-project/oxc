@@ -11,7 +11,7 @@ fn double_comparisons_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
         .with_help(format!(
             "This logical expression can be simplified. Try using the `{x1}` operator instead."
         ))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/double_comparisons>

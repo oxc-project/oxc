@@ -1,16 +1,11 @@
 #![allow(clippy::unused_self)]
 
-mod ast_util;
-mod fold;
+pub(crate) mod ast_util;
 mod options;
-mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::visit::walk_mut::{
-    walk_binary_expression_mut, walk_expression_mut, walk_return_statement_mut, walk_statement_mut,
-    walk_statements_mut,
-};
+use oxc_ast::visit::walk_mut;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::Span;
@@ -20,25 +15,30 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
+use crate::folder::Folder;
+// use crate::ast_passes::RemoveParens;
+
 pub use self::options::CompressOptions;
-use self::prepass::Prepass;
 
 pub struct Compressor<'a> {
     ast: AstBuilder<'a>,
     options: CompressOptions,
 
-    prepass: Prepass<'a>,
+    // prepass: RemoveParens<'a>,
+    folder: Folder<'a>,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
     pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { ast: AstBuilder::new(allocator), options, prepass: Prepass::new(allocator) }
+        let ast = AstBuilder::new(allocator);
+        let folder = Folder::new(ast).with_evaluate(options.evaluate);
+        Self { ast, options /* prepass: RemoveParens::new(allocator) */, folder }
     }
 
     pub fn build(mut self, program: &mut Program<'a>) {
-        self.prepass.build(program);
+        // self.prepass.build(program);
         self.visit_program(program);
     }
 
@@ -323,18 +323,18 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
             self.join_vars(stmts);
         }
 
-        walk_statements_mut(self, stmts);
+        walk_mut::walk_statements(self, stmts);
     }
 
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.compress_block(stmt);
         self.compress_while(stmt);
-        self.fold_condition(stmt);
-        walk_statement_mut(self, stmt);
+        self.folder.fold_condition(stmt);
+        walk_mut::walk_statement(self, stmt);
     }
 
     fn visit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
-        walk_return_statement_mut(self, stmt);
+        walk_mut::walk_return_statement(self, stmt);
         // We may fold `void 1` to `void 0`, so compress it after visiting
         self.compress_return_statement(stmt);
     }
@@ -347,16 +347,16 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        walk_expression_mut(self, expr);
+        walk_mut::walk_expression(self, expr);
         self.compress_console(expr);
-        self.fold_expression(expr);
+        self.folder.fold_expression(expr);
         if !self.compress_undefined(expr) {
             self.compress_boolean(expr);
         }
     }
 
     fn visit_binary_expression(&mut self, expr: &mut BinaryExpression<'a>) {
-        walk_binary_expression_mut(self, expr);
+        walk_mut::walk_binary_expression(self, expr);
         self.compress_typeof_undefined(expr);
     }
 }

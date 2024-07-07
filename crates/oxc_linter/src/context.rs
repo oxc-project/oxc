@@ -3,12 +3,13 @@ use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 use oxc_cfg::ControlFlowGraph;
 use oxc_diagnostics::{OxcDiagnostic, Severity};
 use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
-use oxc_span::{SourceType, Span};
+use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
 use crate::{
+    config::OxlintRules,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::{Fix, Message, RuleFixer},
+    fixer::{CompositeFix, Message, RuleFixer},
     javascript_globals::GLOBALS,
     AllowWarnDeny, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
@@ -131,14 +132,21 @@ impl<'a> LintContext<'a> {
         &self.eslint_config.env
     }
 
+    pub fn rules(&self) -> &OxlintRules {
+        &self.eslint_config.rules
+    }
+
     pub fn env_contains_var(&self, var: &str) -> bool {
+        if GLOBALS["builtin"].contains_key("var") {
+            return true;
+        }
         for env in self.env().iter() {
-            let env = GLOBALS.get(env).unwrap_or(&GLOBALS["builtin"]);
-            if env.get(var).is_some() {
-                return true;
+            if let Some(env) = GLOBALS.get(env) {
+                if env.contains_key(var) {
+                    return true;
+                }
             }
         }
-
         false
     }
 
@@ -149,7 +157,7 @@ impl<'a> LintContext<'a> {
     }
 
     fn add_diagnostic(&self, message: Message<'a>) {
-        if !self.disable_directives.contains(self.current_rule_name, message.start()) {
+        if !self.disable_directives.contains(self.current_rule_name, message.span()) {
             let mut message = message;
             if message.error.severity != self.severity {
                 message.error = message.error.with_severity(self.severity);
@@ -166,14 +174,16 @@ impl<'a> LintContext<'a> {
     }
 
     /// Report a lint rule violation and provide an automatic fix.
-    pub fn diagnostic_with_fix<F: FnOnce(RuleFixer<'_, 'a>) -> Fix<'a>>(
-        &self,
-        diagnostic: OxcDiagnostic,
-        fix: F,
-    ) {
+    pub fn diagnostic_with_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
+    where
+        C: Into<CompositeFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
         if self.fix {
             let fixer = RuleFixer::new(self);
-            self.add_diagnostic(Message::new(diagnostic, Some(fix(fixer))));
+            let composite_fix: CompositeFix = fix(fixer).into();
+            let fix = composite_fix.normalize_fixes(self.source_text());
+            self.add_diagnostic(Message::new(diagnostic, Some(fix)));
         } else {
             self.diagnostic(diagnostic);
         }

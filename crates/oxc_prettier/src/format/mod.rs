@@ -686,7 +686,9 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSTypeQuery(v) => v.format(p),
             TSType::TSTypeReference(v) => v.format(p),
             TSType::TSUnionType(v) => v.format(p),
+            TSType::TSParenthesizedType(v) => v.format(p),
             TSType::JSDocNullableType(v) => v.format(p),
+            TSType::JSDocNonNullableType(v) => v.format(p),
             TSType::JSDocUnknownType(v) => v.format(p),
         }
     }
@@ -842,7 +844,7 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
             TSLiteral::BooleanLiteral(v) => v.format(p),
             TSLiteral::NullLiteral(v) => v.format(p),
             TSLiteral::NumericLiteral(v) => v.format(p),
-            TSLiteral::BigintLiteral(v) => v.format(p),
+            TSLiteral::BigIntLiteral(v) => v.format(p),
             TSLiteral::RegExpLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),
             TSLiteral::TemplateLiteral(v) => v.format(p),
@@ -919,6 +921,12 @@ impl<'a> Format<'a> for TSTypeReference<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSParenthesizedType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        wrap!(p, self, TSParenthesizedType, { self.type_annotation.format(p) })
+    }
+}
+
 impl<'a> Format<'a> for TSUnionType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
@@ -926,6 +934,12 @@ impl<'a> Format<'a> for TSUnionType<'a> {
 }
 
 impl<'a> Format<'a> for JSDocNullableType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for JSDocNonNullableType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -1209,7 +1223,8 @@ impl<'a> Format<'a> for ExportSpecifier<'a> {
 impl<'a> Format<'a> for ModuleExportName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            Self::Identifier(ident) => ident.format(p),
+            Self::IdentifierName(ident) => ident.format(p),
+            Self::IdentifierReference(ident) => ident.format(p),
             Self::StringLiteral(literal) => literal.format(p),
         }
     }
@@ -1249,7 +1264,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::BooleanLiteral(lit) => lit.format(p),
             Self::NullLiteral(lit) => lit.format(p),
             Self::NumericLiteral(lit) => lit.format(p),
-            Self::BigintLiteral(lit) => lit.format(p),
+            Self::BigIntLiteral(lit) => lit.format(p),
             Self::RegExpLiteral(lit) => lit.format(p),
             Self::StringLiteral(lit) => lit.format(p),
             Self::Identifier(ident) => ident.format(p),

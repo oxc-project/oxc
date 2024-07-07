@@ -129,8 +129,13 @@ impl TestCase {
     fn output(&self) -> Option<String> {
         let code = format_code_snippet(self.code.as_ref()?);
         let output = format_code_snippet(self.output.as_ref()?);
+        let config = self.config.as_ref().map_or_else(
+            || "None".to_string(),
+            |config| format!("Some(serde_json::json!({config}))"),
+        );
+
         // ("null==null", "null === null", None),
-        Some(format!(r#"({code}, {output}, None)"#))
+        Some(format!(r#"({code}, {output}, {config})"#))
     }
 }
 
@@ -198,10 +203,10 @@ impl<'a> Visit<'a> for TestCase {
                                 // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
                                 // are known to be used to format test cases for their own purposes.
                                 // We read the quasi of tagged template directly also for the future usage.
-                                tag_expr.quasi.quasi().map(ToString::to_string)
+                                tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.quasi().map(ToString::to_string)
+                                tag_expr.quasi().map(|quasi| quasi.to_string())
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
@@ -239,10 +244,10 @@ impl<'a> Visit<'a> for TestCase {
                         self.output = match &prop.value {
                             Expression::StringLiteral(s) => Some(s.value.to_string()),
                             Expression::TaggedTemplateExpression(tag_expr) => {
-                                tag_expr.quasi.quasi().map(ToString::to_string)
+                                tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.quasi().map(ToString::to_string)
+                                tag_expr.quasi().map(|quasi| quasi.to_string())
                             }
                             _ => None,
                         }
@@ -293,7 +298,7 @@ impl<'a> Visit<'a> for TestCase {
         if ident.name != "dedent" && ident.name != "outdent" {
             return;
         }
-        self.code = expr.quasi.quasi().map(std::string::ToString::to_string);
+        self.code = expr.quasi.quasi().map(|quasi| quasi.to_string());
         self.config = None;
     }
 }

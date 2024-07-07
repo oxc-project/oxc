@@ -99,8 +99,16 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_class_body(body);
     }
 
+    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
+        self.annotations.transform_import_declaration(decl);
+    }
+
     pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
         self.annotations.transform_export_named_declaration(decl);
+    }
+
+    pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
+        self.annotations.transform_ts_module_declaration(decl);
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
@@ -131,8 +139,12 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_method_definition(def);
     }
 
-    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
-        self.annotations.transform_method_definition_on_exit(def);
+    pub fn transform_method_definition_on_exit(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_method_definition_on_exit(def, ctx);
     }
 
     pub fn transform_new_expression(&mut self, expr: &mut NewExpression<'a>) {
@@ -147,28 +159,48 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_statements(stmts);
     }
 
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        self.annotations.transform_statements_on_exit(stmts);
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_statements_on_exit(stmts, ctx);
     }
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &TraverseCtx<'a>) {
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         self.r#enum.transform_statement(stmt, ctx);
     }
 
-    pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
-        self.annotations.transform_if_statement(stmt);
+    pub fn transform_if_statement(
+        &mut self,
+        stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_if_statement(stmt, ctx);
     }
 
-    pub fn transform_while_statement(&mut self, stmt: &mut WhileStatement<'a>) {
-        self.annotations.transform_while_statement(stmt);
+    pub fn transform_while_statement(
+        &mut self,
+        stmt: &mut WhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_while_statement(stmt, ctx);
     }
 
-    pub fn transform_do_while_statement(&mut self, stmt: &mut DoWhileStatement<'a>) {
-        self.annotations.transform_do_while_statement(stmt);
+    pub fn transform_do_while_statement(
+        &mut self,
+        stmt: &mut DoWhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_do_while_statement(stmt, ctx);
     }
 
-    pub fn transform_for_statement(&mut self, stmt: &mut ForStatement<'a>) {
-        self.annotations.transform_for_statement(stmt);
+    pub fn transform_for_statement(
+        &mut self,
+        stmt: &mut ForStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_statement(stmt, ctx);
     }
 
     pub fn transform_tagged_template_expression(

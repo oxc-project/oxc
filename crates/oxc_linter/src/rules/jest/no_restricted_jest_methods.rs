@@ -1,10 +1,8 @@
-use std::{collections::HashMap, hash::BuildHasherDefault};
-
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -20,7 +18,7 @@ fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods",
     )
     .with_help(format!("Use of `{x0:?}` is disallowed"))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
@@ -28,7 +26,7 @@ fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods",
     )
     .with_help(format!("{x0:?}"))
-    .with_labels([span1.into()])
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -146,7 +144,7 @@ impl NoRestrictedJestMethods {
     #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_jest_methods(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<HashMap<String, String, BuildHasherDefault<FxHasher>>> {
+    ) -> Option<FxHashMap<String, String>> {
         Some(
             matchers
                 .iter()

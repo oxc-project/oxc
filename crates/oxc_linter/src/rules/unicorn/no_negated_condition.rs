@@ -14,7 +14,7 @@ fn no_negated_condition_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.",
     )
     .with_help("Remove the negation operator and switch the consequent and alternate branches.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

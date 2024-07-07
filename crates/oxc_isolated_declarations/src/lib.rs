@@ -11,6 +11,7 @@ mod diagnostics;
 mod r#enum;
 mod function;
 mod inferrer;
+mod literal;
 mod module;
 mod return_type;
 mod scope;
@@ -18,11 +19,13 @@ mod types;
 
 use std::{cell::RefCell, collections::VecDeque, mem};
 
+use diagnostics::function_with_assigning_properties;
 use oxc_allocator::Allocator;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, Visit};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, SourceType, SPAN};
+use rustc_hash::FxHashSet;
 
 use crate::scope::ScopeTree;
 
@@ -104,6 +107,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
         }
+        self.report_error_for_expando_function(stmts);
         new_ast_stmts
     }
 
@@ -117,7 +121,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut new_stmts = Vec::new();
         let mut variables_declarations = VecDeque::new();
         let mut variable_transformed_indexes = VecDeque::new();
-        let mut transformed_indexes = Vec::new();
+        let mut transformed_indexes = FxHashSet::default();
         // 1. Collect all declarations, module declarations
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
@@ -130,13 +134,19 @@ impl<'a> IsolatedDeclarations<'a> {
                             variables_declarations.push_back(
                                 self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                             );
-                            variable_transformed_indexes.push_back(Vec::default());
+                            variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::UsingDeclaration(decl) => {
                             variables_declarations.push_back(
                                 self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                             );
-                            variable_transformed_indexes.push_back(Vec::default());
+                            variable_transformed_indexes.push_back(FxHashSet::default());
+                        }
+                        Declaration::TSModuleDeclaration(decl) => {
+                            if decl.kind.is_global() {
+                                self.scope.visit_ts_module_declaration(decl);
+                                transformed_indexes.insert(new_stmts.len());
+                            }
                         }
                         _ => {}
                     }
@@ -145,7 +155,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 match_module_declaration!(Statement) => {
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
                             {
@@ -155,7 +165,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                     new_stmts.push(Statement::VariableDeclaration(
                                         self.ast.alloc(var_decl),
                                     ));
-                                    transformed_indexes.push(new_stmts.len());
+                                    transformed_indexes.insert(new_stmts.len());
                                 }
 
                                 self.scope.visit_export_default_declaration(&new_decl);
@@ -170,7 +180,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_declaration(
                                     new_decl.declaration.as_ref().unwrap_or_else(|| unreachable!()),
@@ -188,7 +198,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             // We must transform this in the end, because we need to know all references
                         }
                         module_declaration => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             self.scope.visit_module_declaration(module_declaration);
                         }
                     }
@@ -231,13 +241,13 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         if let Some(decl) = self.transform_variable_declarator(declarator, true) {
                             self.scope.visit_variable_declarator(&decl);
-                            cur_transformed_indexes.push(ii);
+                            cur_transformed_indexes.insert(ii);
                             *declarator = decl;
                         }
                     }
                 } else if let Some(decl) = self.transform_declaration(decl, true) {
                     self.scope.visit_declaration(&decl);
-                    transformed_indexes.push(i);
+                    transformed_indexes.insert(i);
                     *stmt = Statement::from(decl);
                 }
             }
@@ -270,7 +280,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variables_declaration));
-                        transformed_indexes.push(index);
+                        transformed_indexes.insert(index);
                     }
                 }
                 Statement::UsingDeclaration(decl) => {
@@ -292,7 +302,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variable_declaration));
-                        transformed_indexes.push(index);
+                        transformed_indexes.insert(index);
                     }
                 }
                 Statement::ImportDeclaration(decl) => {
@@ -307,7 +317,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        if last_transformed_len == transformed_indexes.len() {
+        if !transformed_indexes.is_empty() && last_transformed_len == transformed_indexes.len() {
             need_empty_export_marker = false;
         }
 
@@ -320,6 +330,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         }
 
+        self.report_error_for_expando_function(stmts);
         new_ast_stmts
     }
 
@@ -327,6 +338,7 @@ impl<'a> IsolatedDeclarations<'a> {
         stmts: oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> impl Iterator<Item = Statement<'a>> + '_ {
         let mut last_function_name: Option<Atom<'a>> = None;
+        let mut is_export_default_function_overloads = false;
 
         stmts.into_iter().filter_map(move |stmt| match stmt {
             Statement::FunctionDeclaration(ref func) => {
@@ -372,18 +384,106 @@ impl<'a> IsolatedDeclarations<'a> {
                     Some(stmt)
                 }
             }
+            Statement::ExportDefaultDeclaration(ref decl) => {
+                if let ExportDefaultDeclarationKind::FunctionDeclaration(ref func) =
+                    decl.declaration
+                {
+                    if is_export_default_function_overloads && func.body.is_some() {
+                        is_export_default_function_overloads = false;
+                        return None;
+                    }
+                    is_export_default_function_overloads = true;
+                    Some(stmt)
+                } else {
+                    is_export_default_function_overloads = false;
+                    Some(stmt)
+                }
+            }
             _ => Some(stmt),
         })
     }
 
-    pub fn modifiers_declare(&self) -> Modifiers<'a> {
-        if self.scope.is_ts_module_block_flag() {
-            // If we are in a module block, we don't need to add declare
-            Modifiers::empty()
-        } else {
-            Modifiers::new(
-                self.ast.new_vec_single(Modifier { span: SPAN, kind: ModifierKind::Declare }),
-            )
+    pub fn report_error_for_expando_function(&self, stmts: &oxc_allocator::Vec<'a, Statement<'a>>) {
+        let mut can_expando_function_names = FxHashSet::default();
+        for stmt in stmts {
+            match stmt {
+                Statement::ExportNamedDeclaration(decl) => match decl.declaration.as_ref() {
+                    Some(Declaration::FunctionDeclaration(func)) => {
+                        if func.body.is_some() {
+                            if let Some(id) = func.id.as_ref() {
+                                can_expando_function_names.insert(id.name.clone());
+                            }
+                        }
+                    }
+                    Some(Declaration::VariableDeclaration(decl)) => {
+                        for declarator in &decl.declarations {
+                            if declarator.id.type_annotation.is_none()
+                                && declarator.init.as_ref().is_some_and(Expression::is_function)
+                            {
+                                if let Some(name) = declarator.id.get_identifier() {
+                                    can_expando_function_names.insert(name.clone());
+                                }
+                            }
+                        }
+                    }
+                    _ => (),
+                },
+                Statement::ExportDefaultDeclaration(decl) => {
+                    if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
+                        &decl.declaration
+                    {
+                        if func.body.is_some() {
+                            if let Some(id) = func.id.as_ref() {
+                                can_expando_function_names.insert(id.name.clone());
+                            }
+                        }
+                    }
+                }
+                Statement::FunctionDeclaration(func) => {
+                    if func.body.is_some() {
+                        if let Some(id) = func.id.as_ref() {
+                            if self.scope.has_reference(&id.name) {
+                                can_expando_function_names.insert(id.name.clone());
+                            }
+                        }
+                    }
+                }
+                Statement::VariableDeclaration(decl) => {
+                    for declarator in &decl.declarations {
+                        if declarator.id.type_annotation.is_none()
+                            && declarator.init.as_ref().is_some_and(Expression::is_function)
+                        {
+                            if let Some(name) = declarator.id.get_identifier() {
+                                if self.scope.has_reference(&name) {
+                                    can_expando_function_names.insert(name.clone());
+                                }
+                            }
+                        }
+                    }
+                }
+                Statement::ExpressionStatement(stmt) => {
+                    if let Expression::AssignmentExpression(assignment) = &stmt.expression {
+                        if let AssignmentTarget::StaticMemberExpression(static_member_expr) =
+                            &assignment.left
+                        {
+                            if let Expression::Identifier(ident) = &static_member_expr.object {
+                                if can_expando_function_names.contains(&ident.name) {
+                                    self.error(function_with_assigning_properties(
+                                        static_member_expr.span,
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                }
+
+                _ => {}
+            }
         }
+    }
+
+    pub fn is_declare(&self) -> bool {
+        // If we are in a module block, we don't need to add declare
+        !self.scope.is_ts_module_block_flag()
     }
 }

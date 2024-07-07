@@ -1,4 +1,4 @@
-use std::{collections::HashMap, hash::BuildHasherDefault, ops::Deref, path::Path};
+use std::{ops::Deref, path::Path};
 
 use oxc_ast::{
     ast::{Expression, ExpressionStatement, MemberExpression},
@@ -8,7 +8,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use regex::Regex;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -19,7 +19,7 @@ use crate::{
 fn no_snapshot(x0: usize, span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(no-large-snapshots): Disallow large snapshots.")
         .with_help(format!("`{x0:?}`s should begin with lowercase"))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn too_long_snapshots(x0: usize, x1: usize, span0: Span) -> OxcDiagnostic {
@@ -27,7 +27,7 @@ fn too_long_snapshots(x0: usize, x1: usize, span0: Span) -> OxcDiagnostic {
         .with_help(format!(
             "Expected Jest snapshot to be smaller than {x0:?} lines but was {x1:?} lines long"
         ))
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -280,7 +280,7 @@ impl NoLargeSnapshots {
     #[allow(clippy::unnecessary_wraps)]
     pub fn compile_allowed_snapshots(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<HashMap<String, Vec<String>, BuildHasherDefault<FxHasher>>> {
+    ) -> Option<FxHashMap<String, Vec<String>>> {
         Some(
             matchers
                 .iter()

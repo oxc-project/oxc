@@ -2,32 +2,32 @@ use oxc_ast::{
     ast::{
         match_expression, Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
         BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
-        ModuleExportName, ObjectPropertyKind, PropertyKey, VariableDeclarator,
+        ObjectPropertyKind, PropertyKey, VariableDeclarator,
     },
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn object(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn export(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-thenable): Do not export `then`.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 fn class(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.")
         .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -107,17 +107,8 @@ impl Rule for NoThenable {
                 }
                 // check specifier
                 for spec in &decl.specifiers {
-                    match spec.exported {
-                        ModuleExportName::Identifier(ref ident) => {
-                            if ident.name == "then" {
-                                ctx.diagnostic(export(ident.span));
-                            }
-                        }
-                        ModuleExportName::StringLiteral(ref lit) => {
-                            if lit.value == "then" {
-                                ctx.diagnostic(export(lit.span));
-                            }
-                        }
+                    if spec.exported.name() == "then" {
+                        ctx.diagnostic(export(spec.exported.span()));
                     }
                 }
             }

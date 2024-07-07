@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{Argument, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -14,11 +14,8 @@ fn uninvoked_array_callback_diagnostic(span0: Span, span1: Span) -> OxcDiagnosti
             "consider filling the array with `undefined` values using `Array.prototype.fill()`",
         )
         .with_labels([
-            LabeledSpan::new_with_span(Some("this callback will not be invoked".into()), span0),
-            LabeledSpan::new_with_span(
-                Some("because this is an array with only empty slots".into()),
-                span1,
-            ),
+            span0.label("this callback will not be invoked"),
+            span1.label("because this is an array with only empty slots"),
         ])
 }
 

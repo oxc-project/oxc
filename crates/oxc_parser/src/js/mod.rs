@@ -3,7 +3,6 @@
 #![allow(clippy::missing_errors_doc)]
 
 mod grammar;
-pub mod list;
 
 mod arrow;
 mod binding;

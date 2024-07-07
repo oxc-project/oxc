@@ -15,7 +15,7 @@ use crate::{
 fn unexpected_lowercase(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names")
         .with_help(format!("`{x0:?}`s should begin with lowercase"))
-        .with_labels([span1.into()])
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -204,7 +204,7 @@ impl PreferLowercaseTitle {
             let Some(template_string) = template_expr.quasi() else {
                 return;
             };
-            self.lint_string(ctx, template_string, template_expr.span);
+            self.lint_string(ctx, template_string.as_str(), template_expr.span);
         }
     }
 

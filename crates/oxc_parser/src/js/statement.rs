@@ -3,10 +3,10 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
-use super::{
-    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
+use super::{grammar::CoverGrammar, VariableDeclarationContext, VariableDeclarationParent};
+use crate::{
+    diagnostics, lexer::Kind, modifiers::Modifiers, Context, ParserImpl, StatementContext,
 };
-use crate::{diagnostics, lexer::Kind, list::NormalList, Context, ParserImpl, StatementContext};
 
 impl<'a> ParserImpl<'a> {
     // Section 12
@@ -37,52 +37,30 @@ impl<'a> ParserImpl<'a> {
 
         let mut expecting_directives = true;
         while !self.at(Kind::Eof) {
-            match self.cur_kind() {
-                Kind::RCurly if !is_top_level => break,
-                Kind::Import if !matches!(self.peek_kind(), Kind::Dot | Kind::LParen) => {
-                    let stmt = self.parse_import_declaration()?;
-                    statements.push(stmt);
-                    expecting_directives = false;
-                }
-                Kind::Export => {
-                    let stmt = self.parse_export_declaration()?;
-                    statements.push(stmt);
-                    expecting_directives = false;
-                }
-                Kind::At => {
-                    self.eat_decorators()?;
-                    expecting_directives = false;
-                    continue;
-                }
-                _ => {
-                    let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
-
-                    // Section 11.2.1 Directive Prologue
-                    // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
-                    // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
-                    if expecting_directives {
-                        if let Statement::ExpressionStatement(expr) = &stmt {
-                            if let Expression::StringLiteral(string) = &expr.expression {
-                                // span start will mismatch if they are parenthesized when `preserve_parens = false`
-                                if expr.span.start == string.span.start {
-                                    let src = &self.source_text[string.span.start as usize + 1
-                                        ..string.span.end as usize - 1];
-                                    let directive = self.ast.directive(
-                                        expr.span,
-                                        (*string).clone(),
-                                        Atom::from(src),
-                                    );
-                                    directives.push(directive);
-                                    continue;
-                                }
-                            }
+            if !is_top_level && self.at(Kind::RCurly) {
+                break;
+            }
+            let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
+            // Section 11.2.1 Directive Prologue
+            // The only way to get a correct directive is to parse the statement first and check if it is a string literal.
+            // All other method are flawed, see test cases in [babel](https://github.com/babel/babel/blob/main/packages/babel-parser/test/fixtures/core/categorized/not-directive/input.js)
+            if expecting_directives {
+                if let Statement::ExpressionStatement(expr) = &stmt {
+                    if let Expression::StringLiteral(string) = &expr.expression {
+                        // span start will mismatch if they are parenthesized when `preserve_parens = false`
+                        if expr.span.start == string.span.start {
+                            let src = &self.source_text
+                                [string.span.start as usize + 1..string.span.end as usize - 1];
+                            let directive =
+                                self.ast.directive(expr.span, (*string).clone(), Atom::from(src));
+                            directives.push(directive);
+                            continue;
                         }
-                        expecting_directives = false;
                     }
-
-                    statements.push(stmt);
                 }
-            };
+                expecting_directives = false;
+            }
+            statements.push(stmt);
         }
 
         Ok((directives, statements))
@@ -142,7 +120,7 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_expression_or_labeled_statement(&mut self) -> Result<Statement<'a>> {
         let span = self.start_span();
-        let expr = self.parse_expression()?;
+        let expr = self.parse_expr()?;
         if let Expression::Identifier(ident) = &expr {
             // Section 14.13 Labelled Statement
             // Avoids lookahead for a labeled statement, which is on a hot path
@@ -182,7 +160,7 @@ impl<'a> ParserImpl<'a> {
         let decl = self.parse_variable_declaration(
             start_span,
             VariableDeclarationContext::new(VariableDeclarationParent::Statement),
-            Modifiers::empty(),
+            &Modifiers::empty(),
         )?;
 
         if stmt_ctx.is_single_statement() && decl.kind.is_lexical() {
@@ -282,7 +260,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let init_expression =
-            self.context(Context::empty(), Context::In, ParserImpl::parse_expression)?;
+            self.context(Context::empty(), Context::In, ParserImpl::parse_expr)?;
 
         // for (a.b in ...), for ([a] in ..), for ({a} in ..)
         if self.at(Kind::In) || self.at(Kind::Of) {
@@ -309,7 +287,7 @@ impl<'a> ParserImpl<'a> {
         let start_span = self.start_span();
         let init_declaration = self.context(Context::empty(), Context::In, |p| {
             let decl_ctx = VariableDeclarationContext::new(VariableDeclarationParent::For);
-            p.parse_variable_declaration(start_span, decl_ctx, Modifiers::empty())
+            p.parse_variable_declaration(start_span, decl_ctx, &Modifiers::empty())
         })?;
 
         // for (.. a in) for (.. a of)
@@ -358,7 +336,7 @@ impl<'a> ParserImpl<'a> {
     ) -> Result<Statement<'a>> {
         self.expect(Kind::Semicolon)?;
         let test = if !self.at(Kind::Semicolon) && !self.at(Kind::RParen) {
-            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr)?)
         } else {
             None
         };
@@ -366,7 +344,7 @@ impl<'a> ParserImpl<'a> {
         let update = if self.at(Kind::RParen) {
             None
         } else {
-            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?)
+            Some(self.context(Context::In, Context::empty(), ParserImpl::parse_expr)?)
         };
         self.expect(Kind::RParen)?;
         if r#await {
@@ -385,7 +363,7 @@ impl<'a> ParserImpl<'a> {
         let is_for_in = self.at(Kind::In);
         self.bump_any(); // bump `in` or `of`
         let right = if is_for_in {
-            self.parse_expression()
+            self.parse_expr()
         } else {
             self.parse_assignment_expression_or_higher()
         }?;
@@ -432,7 +410,7 @@ impl<'a> ParserImpl<'a> {
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
         } else {
-            let expr = self.context(Context::In, Context::empty(), ParserImpl::parse_expression)?;
+            let expr = self.context(Context::In, Context::empty(), ParserImpl::parse_expr)?;
             self.asi()?;
             Some(expr)
         };
@@ -460,15 +438,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression()?;
-        let cases = {
-            let mut switch_cases = SwitchCases::new(self);
-            switch_cases.parse(self)?;
-            switch_cases.elements
-        };
+        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_switch_case)?;
         Ok(self.ast.switch_statement(self.end_span(span), discriminant, cases))
     }
 
-    pub(crate) fn parse_switch_case(&mut self) -> Result<SwitchCase<'a>> {
+    pub(crate) fn parse_switch_case(&mut self) -> Result<Option<SwitchCase<'a>>> {
         let span = self.start_span();
         let test = match self.cur_kind() {
             Kind::Default => {
@@ -477,7 +451,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::Case => {
                 self.bump_any();
-                let expression = self.parse_expression()?;
+                let expression = self.parse_expr()?;
                 Some(expression)
             }
             _ => return Err(self.unexpected()),
@@ -488,7 +462,7 @@ impl<'a> ParserImpl<'a> {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
             consequent.push(stmt);
         }
-        Ok(self.ast.switch_case(self.end_span(span), test, consequent))
+        Ok(Some(self.ast.switch_case(self.end_span(span), test, consequent)))
     }
 
     /// Section 14.14 Throw Statement
@@ -502,7 +476,7 @@ impl<'a> ParserImpl<'a> {
                 self.cur_token().span(),
             ));
         }
-        let argument = self.parse_expression()?;
+        let argument = self.parse_expr()?;
         self.asi()?;
         Ok(self.ast.throw_statement(self.end_span(span), argument))
     }

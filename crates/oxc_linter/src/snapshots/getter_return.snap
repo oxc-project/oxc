@@ -240,3 +240,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                     ─────────────
    ╰────
   help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.js:1:20]
+ 1 │ var foo = { get bar() { try { return a(); } catch {} } };
+   ·                    ───────────────────────────────────
+   ╰────
+  help: Return a value from all code paths in getter.
+
+  ⚠ eslint(getter-return): Expected to always return a value in getter.
+   ╭─[getter_return.js:1:20]
+ 1 │ var foo = { get bar() { try { return a(); } catch {  } finally {  } } };
+   ·                    ──────────────────────────────────────────────────
+   ╰────
+  help: Return a value from all code paths in getter.

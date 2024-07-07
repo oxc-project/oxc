@@ -7,7 +7,7 @@ use std::{
 
 use oxc_allocator::Allocator;
 use oxc_ast::{AstBuilder, Trivias};
-use oxc_diagnostics::{Error, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::SourceType;
 
 use crate::{helpers::module_imports::ModuleImports, TransformOptions};
@@ -65,9 +65,8 @@ impl<'a> TransformCtx<'a> {
         }
     }
 
-    pub fn take_errors(&self) -> Vec<Error> {
-        let errors: Vec<OxcDiagnostic> = mem::take(&mut self.errors.borrow_mut());
-        errors.into_iter().map(Error::from).collect()
+    pub fn take_errors(&self) -> Vec<OxcDiagnostic> {
+        mem::take(&mut self.errors.borrow_mut())
     }
 
     /// Add an Error

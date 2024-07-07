@@ -1,4 +1,4 @@
-use oxc_ast::{ast::ModifierKind, AstKind};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -8,7 +8,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn no_const_enum_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("oxc(no-const-enum): Unexpected const enum")
         .with_help("Const enums are not supported by bundlers and are incompatible with the isolatedModules mode. Their use can lead to import nonexistent values (because const enums are erased).")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,16 +41,16 @@ declare_oxc_lint!(
 impl Rule for NoConstEnum {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::TSEnumDeclaration(enum_decl) = node.kind() {
-            let Some(const_enum) =
-                enum_decl.modifiers.find(|modifier| matches!(modifier.kind, ModifierKind::Const))
-            else {
+            if !enum_decl.r#const {
                 return;
-            };
+            }
 
-            ctx.diagnostic_with_fix(no_const_enum_diagnostic(const_enum.span), |fixer| {
+            let span = Span::new(enum_decl.span.start, enum_decl.span.start + 5);
+
+            ctx.diagnostic_with_fix(no_const_enum_diagnostic(span), |fixer| {
                 // const enum Color { Red, Green, Blue }
                 // ^
-                let start = const_enum.span.start;
+                let start = span.start;
 
                 // const enum Color { Red, Green, Blue }
                 // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

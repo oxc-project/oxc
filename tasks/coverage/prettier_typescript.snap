@@ -2,7 +2,7 @@ commit: d8086f14
 
 prettier_typescript Summary:
 AST Parsed     : 5283/5283 (100.00%)
-Positive Passed: 2447/5283 (46.32%)
+Positive Passed: 2448/5283 (46.34%)
 Expect to Parse: "compiler/DeclarationErrorsNoEmitOnError.ts"
 Expect to Parse: "compiler/abstractInterfaceIdentifierName.ts"
 Expect to Parse: "compiler/abstractPropertyBasics.ts"
@@ -1408,7 +1408,6 @@ Expect to Parse: "compiler/sourceMap-FileWithComments.ts"
 Expect to Parse: "compiler/sourceMap-StringLiteralWithNewLine.ts"
 Expect to Parse: "compiler/sourceMapForFunctionInInternalModuleWithCommentPrecedingStatement01.ts"
 Expect to Parse: "compiler/sourceMapValidationClasses.ts"
-Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
 Expect to Parse: "compiler/sourceMapValidationDestructuringForArrayBindingPattern.ts"
 Expect to Parse: "compiler/sourceMapValidationDestructuringForArrayBindingPattern2.ts"
 Expect to Parse: "compiler/sourceMapValidationDestructuringForArrayBindingPatternDefaultValues.ts"

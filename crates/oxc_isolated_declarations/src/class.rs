@@ -17,13 +17,13 @@ impl<'a> IsolatedDeclarations<'a> {
         match key {
             PropertyKey::StringLiteral(_)
             | PropertyKey::NumericLiteral(_)
-            | PropertyKey::BigintLiteral(_) => true,
+            | PropertyKey::BigIntLiteral(_) => true,
             PropertyKey::TemplateLiteral(l) => l.expressions.is_empty(),
             PropertyKey::UnaryExpression(expr) => {
                 expr.operator.is_arithmetic()
                     && matches!(
                         expr.argument,
-                        Expression::NumericLiteral(_) | Expression::BigintLiteral(_)
+                        Expression::NumericLiteral(_) | Expression::BigIntLiteral(_)
                     )
             }
             _ => false,
@@ -66,7 +66,11 @@ impl<'a> IsolatedDeclarations<'a> {
                         .value
                         .as_ref()
                         .and_then(|expr| {
-                            let ts_type = self.infer_type_from_expression(expr);
+                            let ts_type = if property.readonly {
+                                self.transform_expression_to_ts_type(expr)
+                            } else {
+                                self.infer_type_from_expression(expr)
+                            };
                             if ts_type.is_none() {
                                 self.error(property_must_have_explicit_type(property.key.span()));
                             }
@@ -75,6 +79,9 @@ impl<'a> IsolatedDeclarations<'a> {
                         .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type))
                 })
         };
+
+        // TODO if inferred type_annotations is TSLiteral, it should stand as value,
+        // so `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
 
         self.ast.class_property(
             property.r#type,
@@ -108,12 +115,12 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&function.id),
             function.generator,
             function.r#async,
+            false,
             self.ast.copy(&function.this_param),
             params,
             None,
             self.ast.copy(&function.type_parameters),
             return_type,
-            Modifiers::empty(),
         );
 
         self.ast.class_method(
@@ -135,6 +142,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         r#type: PropertyDefinitionType,
         key: PropertyKey<'a>,
+        r#static: bool,
         r#override: bool,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a> {
@@ -144,7 +152,7 @@ impl<'a> IsolatedDeclarations<'a> {
             key,
             None,
             false,
-            false,
+            r#static,
             false,
             r#override,
             false,
@@ -198,11 +206,12 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.create_class_property(
                     r#type,
                     self.ast.copy(&method.key),
+                    method.r#static,
                     method.r#override,
                     self.transform_accessibility(method.accessibility),
                 )
             }
-            MethodDefinitionKind::Get => {
+            MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
                 let params = self.ast.formal_parameters(
                     SPAN,
                     FormalParameterKind::Signature,
@@ -221,9 +230,6 @@ impl<'a> IsolatedDeclarations<'a> {
                 );
                 self.transform_class_method_definition(method, params, None)
             }
-            MethodDefinitionKind::Constructor => {
-                unreachable!()
-            }
         }
     }
 
@@ -234,7 +240,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> oxc_allocator::Vec<'a, ClassElement<'a>> {
         let mut elements = self.ast.new_vec();
         for (index, param) in function.params.items.iter().enumerate() {
-            if param.accessibility.is_some() {
+            if param.accessibility.is_some() || param.readonly {
                 // transformed params will definitely have type annotation
                 let type_annotation = self.ast.copy(&params.items[index].pattern.type_annotation);
                 if let Some(new_element) =
@@ -247,29 +253,15 @@ impl<'a> IsolatedDeclarations<'a> {
         elements
     }
 
-    pub fn transform_class(&self, decl: &Class<'a>) -> Option<Box<'a, Class<'a>>> {
-        if decl.is_declare() {
-            return None;
-        }
-
-        if let Some(super_class) = &decl.super_class {
-            let is_not_allowed = match super_class {
-                Expression::Identifier(_) => false,
-                Expression::StaticMemberExpression(expr) => {
-                    !expr.get_first_object().is_identifier_reference()
-                }
-                _ => true,
-            };
-            if is_not_allowed {
-                self.error(extends_clause_expression(super_class.span()));
-            }
-        }
-
+    /// Infer get accessor return type from set accessor
+    /// Infer set accessor parameter type from get accessor return type
+    fn collect_inferred_accessor_types(
+        &self,
+        decl: &Class<'a>,
+    ) -> FxHashMap<Atom, Box<'a, TSTypeAnnotation<'a>>> {
         let mut inferred_accessor_types: FxHashMap<Atom<'a>, Box<'a, TSTypeAnnotation<'a>>> =
             FxHashMap::default();
 
-        // Infer get accessor return type from set accessor
-        // Infer set accessor parameter type from get accessor
         for element in &decl.body.body {
             if let ClassElement::MethodDefinition(method) = element {
                 if method.key.is_private_identifier()
@@ -314,12 +306,47 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
+        inferred_accessor_types
+    }
+
+    pub fn transform_class(
+        &self,
+        decl: &Class<'a>,
+        declare: Option<bool>,
+    ) -> Option<Box<'a, Class<'a>>> {
+        if decl.declare {
+            return None;
+        }
+
+        if let Some(super_class) = &decl.super_class {
+            let is_not_allowed = match super_class {
+                Expression::Identifier(_) => false,
+                Expression::StaticMemberExpression(expr) => {
+                    !expr.get_first_object().is_identifier_reference()
+                }
+                _ => true,
+            };
+            if is_not_allowed {
+                self.error(extends_clause_expression(super_class.span()));
+            }
+        }
+
         let mut has_private_key = false;
         let mut elements = self.ast.new_vec();
+        let mut is_function_overloads = false;
         for element in &decl.body.body {
             match element {
                 ClassElement::StaticBlock(_) => {}
                 ClassElement::MethodDefinition(ref method) => {
+                    if !(method.r#type.is_abstract() || method.optional)
+                        && method.value.body.is_none()
+                    {
+                        is_function_overloads = true;
+                    } else if is_function_overloads {
+                        // Skip implementation of function overloads
+                        is_function_overloads = false;
+                        continue;
+                    }
                     if method.key.is_private_identifier() {
                         has_private_key = true;
                         continue;
@@ -331,6 +358,8 @@ impl<'a> IsolatedDeclarations<'a> {
                         elements.push(self.transform_private_modifier_method(method));
                         continue;
                     }
+
+                    let inferred_accessor_types = self.collect_inferred_accessor_types(decl);
                     let function = &method.value;
                     let params = if method.kind.is_set() {
                         method.key.static_name().map_or_else(
@@ -441,11 +470,6 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = self.ast.class_body(decl.body.span, elements);
 
-        let mut modifiers = self.modifiers_declare();
-        if decl.modifiers.is_contains_abstract() {
-            modifiers.add_modifier(Modifier { span: SPAN, kind: ModifierKind::Abstract });
-        };
-
         Some(self.ast.class(
             decl.r#type,
             decl.span,
@@ -456,7 +480,8 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&decl.super_type_parameters),
             self.ast.copy(&decl.implements),
             self.ast.new_vec(),
-            modifiers,
+            decl.r#abstract,
+            declare.unwrap_or_else(|| self.is_declare()),
         ))
     }
 

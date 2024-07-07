@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_await_in_loop_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-await-in-loop): Unexpected `await` inside a loop.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

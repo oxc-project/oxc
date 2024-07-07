@@ -40,7 +40,7 @@ impl<'a> TypeScript<'a> {
         for stmt in self.ctx.ast.move_statement_vec(&mut program.body) {
             match stmt {
                 Statement::TSModuleDeclaration(decl) => {
-                    if !decl.modifiers.is_contains_declare() {
+                    if !decl.declare {
                         if !self.options.allow_namespaces {
                             self.ctx.error(namespace_not_supported(decl.span));
                         }
@@ -63,7 +63,7 @@ impl<'a> TypeScript<'a> {
                 Statement::ExportNamedDeclaration(ref export_decl) => {
                     match &export_decl.declaration {
                         Some(Declaration::TSModuleDeclaration(decl)) => {
-                            if !decl.modifiers.is_contains_declare() {
+                            if !decl.declare {
                                 if !self.options.allow_namespaces {
                                     self.ctx.error(namespace_not_supported(decl.span));
                                 }
@@ -141,8 +141,15 @@ impl<'a> TypeScript<'a> {
         let symbol_id = ctx.generate_uid(&real_name, scope_id, SymbolFlags::FunctionScopedVariable);
         let name = self.ctx.ast.new_atom(ctx.symbols().get_name(symbol_id));
 
-        let namespace_top_level = match body {
-            TSModuleDeclarationBody::TSModuleBlock(block) => block.unbox().body,
+        let directives;
+        let namespace_top_level;
+
+        match body {
+            TSModuleDeclarationBody::TSModuleBlock(block) => {
+                let block = block.unbox();
+                directives = block.directives;
+                namespace_top_level = block.body;
+            }
             // We handle `namespace X.Y {}` as if it was
             //   namespace X {
             //     export namespace Y {}
@@ -152,9 +159,10 @@ impl<'a> TypeScript<'a> {
                 let export_named_decl =
                     self.ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
                 let stmt = Statement::ExportNamedDeclaration(export_named_decl);
-                self.ctx.ast.new_vec_single(stmt)
+                directives = self.ctx.ast.new_vec();
+                namespace_top_level = self.ctx.ast.new_vec_single(stmt);
             }
-        };
+        }
 
         let mut new_stmts = self.ctx.ast.new_vec();
 
@@ -170,7 +178,7 @@ impl<'a> TypeScript<'a> {
                     if let Some(transformed) = self.handle_nested(decl.unbox(), None, ctx) {
                         if names.insert(module_name.clone()) {
                             new_stmts.push(Statement::from(
-                                self.create_variable_declaration(&module_name),
+                                self.create_variable_declaration(module_name.clone()),
                             ));
                         }
                         new_stmts.push(transformed);
@@ -182,14 +190,19 @@ impl<'a> TypeScript<'a> {
                     // legal syntax in TS namespaces
                     let export_decl = export_decl.unbox();
                     if let Some(decl) = export_decl.declaration {
-                        if decl.modifiers().is_some_and(Modifiers::is_contains_declare) {
+                        if decl.declare() {
                             continue;
                         }
                         match decl {
                             Declaration::TSEnumDeclaration(_)
                             | Declaration::FunctionDeclaration(_)
                             | Declaration::ClassDeclaration(_) => {
-                                self.add_declaration(decl, &name, &mut names, &mut new_stmts);
+                                self.add_declaration(
+                                    decl,
+                                    name.clone(),
+                                    &mut names,
+                                    &mut new_stmts,
+                                );
                             }
                             Declaration::VariableDeclaration(var_decl) => {
                                 var_decl.declarations.iter().for_each(|decl| {
@@ -197,7 +210,8 @@ impl<'a> TypeScript<'a> {
                                         self.ctx.error(namespace_exporting_non_const(decl.span));
                                     }
                                 });
-                                let stmts = self.handle_variable_declaration(var_decl, &name);
+                                let stmts =
+                                    self.handle_variable_declaration(var_decl, name.clone());
                                 new_stmts.extend(stmts);
                             }
                             Declaration::TSModuleDeclaration(module_decl) => {
@@ -216,7 +230,7 @@ impl<'a> TypeScript<'a> {
                                 ) {
                                     if names.insert(module_name.clone()) {
                                         new_stmts.push(Statement::from(
-                                            self.create_variable_declaration(&module_name),
+                                            self.create_variable_declaration(module_name.clone()),
                                         ));
                                     }
                                     new_stmts.push(transformed);
@@ -250,15 +264,23 @@ impl<'a> TypeScript<'a> {
             return None;
         }
 
-        Some(self.transform_namespace(name, real_name, new_stmts, parent_export, scope_id, ctx))
+        Some(self.transform_namespace(
+            name,
+            real_name,
+            new_stmts,
+            directives,
+            parent_export,
+            scope_id,
+            ctx,
+        ))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     //                         ^^^^^^^
-    fn create_variable_declaration(&self, name: &Atom<'a>) -> Declaration<'a> {
+    fn create_variable_declaration(&self, name: Atom<'a>) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
-            let ident = BindingIdentifier::new(SPAN, name.clone());
+            let ident = BindingIdentifier::new(SPAN, name);
             let pattern_kind = self.ctx.ast.binding_pattern_identifier(ident);
             let binding = self.ctx.ast.binding_pattern(pattern_kind, None, false);
             let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
@@ -268,41 +290,23 @@ impl<'a> TypeScript<'a> {
             SPAN,
             kind,
             declarations,
-            Modifiers::empty(),
+            false,
         ))
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
     //                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    #[allow(clippy::needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value, clippy::too_many_arguments)]
     fn transform_namespace(
         &self,
         arg_name: Atom<'a>,
         real_name: Atom<'a>,
-        mut stmts: Vec<'a, Statement<'a>>,
+        stmts: Vec<'a, Statement<'a>>,
+        directives: Vec<'a, Directive<'a>>,
         parent_export: Option<Expression<'a>>,
         scope_id: ScopeId,
         ctx: &mut TraverseCtx,
     ) -> Statement<'a> {
-        let mut directives = self.ctx.ast.new_vec();
-
-        // Check if the namespace has a `use strict` directive
-        if stmts.first().is_some_and(|stmt| {
-            matches!(stmt, Statement::ExpressionStatement(es) if
-                matches!(&es.expression, Expression::StringLiteral(literal) if
-                literal.value == "use strict")
-            )
-        }) {
-            stmts.remove(0);
-            let directive = self.ctx.ast.new_atom("use strict");
-            let directive = Directive {
-                span: SPAN,
-                expression: StringLiteral::new(SPAN, directive.clone()),
-                directive,
-            };
-            directives.push(directive);
-        }
-
         // `(function (_N) { var x; })(N || (N = {}))`;
         //  ^^^^^^^^^^^^^^^^^^^^^^^^^^
         let callee = {
@@ -404,7 +408,7 @@ impl<'a> TypeScript<'a> {
     fn add_declaration(
         &self,
         decl: Declaration<'a>,
-        name: &Atom<'a>,
+        name: Atom<'a>,
         names: &mut FxHashSet<Atom<'a>>,
         new_stmts: &mut Vec<'a, Statement<'a>>,
     ) {
@@ -413,30 +417,31 @@ impl<'a> TypeScript<'a> {
         let ident = decl.id().unwrap();
         let item_name = ident.name.clone();
         new_stmts.push(Statement::from(decl));
-        let assignment_statement = self.create_assignment_statement(name, &item_name);
+        let assignment_statement = self.create_assignment_statement(name, item_name.clone());
         let assignment_statement = self.ctx.ast.expression_statement(SPAN, assignment_statement);
         new_stmts.push(assignment_statement);
         names.insert(item_name);
     }
 
     // name.item_name = item_name
-    fn create_assignment_statement(&self, name: &Atom<'a>, item_name: &Atom<'a>) -> Expression<'a> {
-        let ident = self.ctx.ast.identifier_reference(SPAN, name.as_str());
+    fn create_assignment_statement(&self, name: Atom<'a>, item_name: Atom<'a>) -> Expression<'a> {
+        let ident = IdentifierReference::new(SPAN, name);
         let object = self.ctx.ast.identifier_reference_expression(ident);
         let property = IdentifierName::new(SPAN, item_name.clone());
         let left = self.ctx.ast.static_member(SPAN, object, property, false);
         let left = AssignmentTarget::from(left);
-        let ident = self.ctx.ast.identifier_reference(SPAN, item_name.as_str());
+        let ident = IdentifierReference::new(SPAN, item_name);
         let right = self.ctx.ast.identifier_reference_expression(ident);
         let op = AssignmentOperator::Assign;
         self.ctx.ast.assignment_expression(SPAN, op, left, right)
     }
 
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
+    #[allow(clippy::needless_pass_by_value)]
     fn handle_variable_declaration(
         &self,
         mut var_decl: Box<'a, VariableDeclaration<'a>>,
-        name: &Atom<'a>,
+        name: Atom<'a>,
     ) -> Vec<'a, Statement<'a>> {
         let is_all_binding_identifier = var_decl
             .declarations
@@ -475,7 +480,7 @@ impl<'a> TypeScript<'a> {
         // `export const [a] = 1` transforms to `const [a] = 1; N.a = a`
         let mut assignments = self.ctx.ast.new_vec();
         var_decl.bound_names(&mut |id| {
-            assignments.push(self.create_assignment_statement(name, &id.name));
+            assignments.push(self.create_assignment_statement(name.clone(), id.name.clone()));
         });
 
         let mut stmts = self.ctx.ast.new_vec_with_capacity(2);

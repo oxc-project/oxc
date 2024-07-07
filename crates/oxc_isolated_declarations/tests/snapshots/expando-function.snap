@@ -1,0 +1,44 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/expando-function.ts
+---
+==================== .D.TS ====================
+
+export declare function foo(): void;
+export declare const bar: () => void;
+export declare namespace NS {
+	export const goo: () => void;
+}
+
+
+==================== Errors ====================
+
+  x TS9023: Assigning properties to functions without declaring them is not
+  | supported with --isolatedDeclarations. Add an explicit declaration for the
+  | properties assigned to this function.
+    ,-[10:3]
+  9 |   export const goo = (): void => {}
+ 10 |   goo.length = 10
+    :   ^^^^^^^^^^
+ 11 | }
+    `----
+
+  x TS9023: Assigning properties to functions without declaring them is not
+  | supported with --isolatedDeclarations. Add an explicit declaration for the
+  | properties assigned to this function.
+   ,-[2:1]
+ 1 | export function foo(): void {}
+ 2 | foo.apply = () => {}
+   : ^^^^^^^^^
+ 3 | 
+   `----
+
+  x TS9023: Assigning properties to functions without declaring them is not
+  | supported with --isolatedDeclarations. Add an explicit declaration for the
+  | properties assigned to this function.
+   ,-[5:1]
+ 4 | export const bar = (): void => {}
+ 5 | bar.call = ()=> {}
+   : ^^^^^^^^
+ 6 | 
+   `----

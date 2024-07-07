@@ -17,7 +17,7 @@ use crate::{
 fn lang_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.")
         .with_help("Set a valid value for lang attribute.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -109,7 +109,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             Self::NumericLiteral(_)
             | Self::BooleanLiteral(_)
             | Self::StringLiteral(_)
-            | Self::BigintLiteral(_)
+            | Self::BigIntLiteral(_)
             | Self::NullLiteral(_)
             | Self::RegExpLiteral(_)
             | Self::MetaProperty(_)
@@ -395,7 +395,7 @@ pub fn get_bigint_value(expr: &Expression) -> Option<BigInt> {
                 None
             }
         }
-        Expression::BigintLiteral(_bigint_literal) => {
+        Expression::BigIntLiteral(_bigint_literal) => {
             // TODO: evaluate the bigint value
             None
         }
@@ -473,7 +473,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::NullLiteral(_) => Some(false),
         Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
         Expression::NumericLiteral(number_literal) => Some(number_literal.value != 0.0),
-        Expression::BigintLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
+        Expression::BigIntLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             // only for ``
@@ -485,7 +485,8 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                 .map(|cooked| !cooked.is_empty())
         }
         Expression::Identifier(ident) => {
-            if expr.is_undefined() || ident.name == "NaN" {
+            /* `undefined` can be a shadowed variable expr.is_undefined() || */
+            if ident.name == "NaN" {
                 Some(false)
             } else if ident.name == "Infinity" {
                 Some(true)
@@ -588,7 +589,7 @@ pub fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
         Expression::NumericLiteral(number_literal) => {
             Some(Cow::Owned(number_literal.value.to_string()))
         }
-        Expression::BigintLiteral(big_int_literal) => {
+        Expression::BigIntLiteral(big_int_literal) => {
             Some(Cow::Owned(big_int_literal.raw.to_string()))
         }
         Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),

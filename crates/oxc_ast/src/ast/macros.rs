@@ -93,7 +93,7 @@ macro_rules! inherit_variants {
                 /// Inherited from [`Expression`]
                 NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
                 /// Inherited from [`Expression`]
-                BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+                BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
                 /// Inherited from [`Expression`]
                 RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
                 /// Inherited from [`Expression`]
@@ -189,7 +189,7 @@ macro_rules! inherit_variants {
                 BooleanLiteral,
                 NullLiteral,
                 NumericLiteral,
-                BigintLiteral,
+                BigIntLiteral,
                 RegExpLiteral,
                 StringLiteral,
                 TemplateLiteral,
@@ -616,12 +616,16 @@ macro_rules! inherit_variants {
                 TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
                 /// Inherited from [`TSType`]
                 TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
+                /// Inherited from [`TSType`]
+                TSParenthesizedType(Box<'a, TSParenthesizedType<'a>>) = 34,
 
                 // JSDoc
                 /// Inherited from [`TSType`]
-                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 34,
+                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 35,
                 /// Inherited from [`TSType`]
-                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 35,
+                JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 36,
+                /// Inherited from [`TSType`]
+                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
 
                 $($rest)*
             }
@@ -670,7 +674,9 @@ macro_rules! inherit_variants {
                 TSTypeQuery,
                 TSTypeReference,
                 TSUnionType,
+                TSParenthesizedType,
                 JSDocNullableType,
+                JSDocNonNullableType,
                 JSDocUnknownType,
             ]
         );

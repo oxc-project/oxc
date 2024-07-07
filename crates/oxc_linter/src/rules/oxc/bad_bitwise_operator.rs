@@ -14,13 +14,13 @@ fn bad_bitwise_operator_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagno
         .with_help(format!(
             "Bitwise operator '{x0}' seems unintended. Did you mean logical operator '{x1}'?"
         ))
-        .with_labels([span2.into()])
+        .with_label(span2)
 }
 
 fn bad_bitwise_or_operator_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Bad bitwise operator")
         .with_help("Bitwise operator '|=' seems unintended. Consider using non-compound assignment and logical operator '||' instead.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

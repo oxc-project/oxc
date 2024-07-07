@@ -91,11 +91,17 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Build oxlint with cross
-        run: cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
-
-      - name: Build oxc_language_server with cross
-        run: cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
+      - name: Build
+        shell: bash
+        run: |
+          # Need to support 16kb-aligned pages for aarch64 systems,
+          # Asahi Linux & Raspberry Pi OS use a 16k page size.
+          # https://github.com/oxc-project/oxc/issues/3783
+          case ${{ matrix.target }} in
+            aarch64-*) export JEMALLOC_SYS_WITH_LG_PAGE=16 ;;
+          esac;
+          cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
+          cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
 
       # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binaries
@@ -137,6 +143,8 @@ jobs:
     permissions:
       contents: write # for softprops/action-gh-release@v1
       id-token: write # for `npm publish --provenance`
+    outputs:
+      version: ${{ steps.run.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -226,3 +234,17 @@ jobs:
           touch test.js
           ldd --version || true
           npx oxlint@${{ needs.check.outputs.version }} ./test.js
+
+  eslint-plugin-oxlint:
+    needs: publish
+    name: Update eslint-plugin-oxlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: benc-uk/workflow-dispatch@v1
+        with:
+          repo: oxc-project/eslint-plugin-oxlint
+          workflow: bump_oxlint.yml
+          token: ${{ secrets.PAT }}
+          ref: main
+          inputs: '{ "version": "${{ needs.publish.outputs.version }}" }'

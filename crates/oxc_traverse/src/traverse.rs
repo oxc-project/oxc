@@ -732,12 +732,6 @@ pub trait Traverse<'a> {
     fn exit_for_in_statement(&mut self, node: &mut ForInStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
-    fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-    }
-    #[inline]
-    fn exit_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
-
-    #[inline]
     fn enter_for_statement_left(
         &mut self,
         node: &mut ForStatementLeft<'a>,
@@ -751,6 +745,12 @@ pub trait Traverse<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
     }
+
+    #[inline]
+    fn enter_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {
+    }
+    #[inline]
+    fn exit_for_of_statement(&mut self, node: &mut ForOfStatement<'a>, ctx: &mut TraverseCtx<'a>) {}
 
     #[inline]
     fn enter_continue_statement(
@@ -1639,6 +1639,21 @@ pub trait Traverse<'a> {
     }
 
     #[inline]
+    fn enter_ts_parenthesized_type(
+        &mut self,
+        node: &mut TSParenthesizedType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_ts_parenthesized_type(
+        &mut self,
+        node: &mut TSParenthesizedType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
     fn enter_ts_type_operator(&mut self, node: &mut TSTypeOperator<'a>, ctx: &mut TraverseCtx<'a>) {
     }
     #[inline]
@@ -2401,6 +2416,21 @@ pub trait Traverse<'a> {
     fn exit_js_doc_nullable_type(
         &mut self,
         node: &mut JSDocNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+
+    #[inline]
+    fn enter_js_doc_non_nullable_type(
+        &mut self,
+        node: &mut JSDocNonNullableType<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+    }
+    #[inline]
+    fn exit_js_doc_non_nullable_type(
+        &mut self,
+        node: &mut JSDocNonNullableType<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
     }

@@ -2,7 +2,7 @@ use oxc_ast::{
     ast::{BindingIdentifier, BindingPatternKind},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -10,8 +10,8 @@ use crate::{context::LintContext, rule::Rule};
 
 fn no_redeclare_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint(no-redeclare): '{x0}' is already defined.")).with_labels([
-        LabeledSpan::new_with_span(Some(format!("'{x0}' is already defined.")), span1),
-        LabeledSpan::new_with_span(Some("It can not be redeclare here.".into()), span2),
+        span1.label(format!("'{x0}' is already defined.")),
+        span2.label("It can not be redeclare here."),
     ])
 }
 
@@ -19,20 +19,8 @@ fn no_redeclare_as_builti_in_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic 
     OxcDiagnostic::warn(format!(
         "eslint(no-redeclare): '{x0}' is already defined as a built-in global variable."
     ))
-    .with_labels([LabeledSpan::new_with_span(
-        Some(format!("'{x0}' is already defined as a built-in global variable.")),
-        span1,
-    )])
+    .with_label(span1.label(format!("'{x0}' is already defined as a built-in global variable.")))
 }
-
-// #[derive(Debug, Error, Diagnostic)]
-// #[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
-// #[diagnostic(severity(warning))]
-// struct NoRedeclareBySyntaxDiagnostic(
-//     String,
-//     #[label("'{0}' is already defined by a variable declaration.")] pub Span,
-//     #[label("It cannot be redeclared here.")] pub Span,
-// );
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRedeclare {

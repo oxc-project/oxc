@@ -15,6 +15,7 @@ mod import {
     pub mod no_cycle;
     pub mod no_default_export;
     // pub mod no_deprecated;
+    pub mod max_dependencies;
     pub mod no_duplicates;
     pub mod no_named_as_default;
     pub mod no_named_as_default_member;
@@ -75,6 +76,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_loss_of_precision;
+    pub mod no_multi_str;
     pub mod no_new;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
@@ -95,6 +97,7 @@ mod eslint {
     pub mod no_ternary;
     pub mod no_this_before_super;
     pub mod no_undef;
+    pub mod no_undefined;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -129,15 +132,19 @@ mod typescript {
     pub mod ban_types;
     pub mod consistent_indexed_object_style;
     pub mod consistent_type_definitions;
+    pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
     pub mod no_duplicate_enum_values;
+    pub mod no_dynamic_delete;
     pub mod no_empty_interface;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
     pub mod no_import_type_side_effects;
     pub mod no_misused_new;
     pub mod no_namespace;
+    pub mod no_non_null_asserted_nullish_coalescing;
     pub mod no_non_null_asserted_optional_chain;
+    pub mod no_non_null_assertion;
     pub mod no_this_alias;
     pub mod no_unnecessary_type_constraint;
     pub mod no_unsafe_declaration_merging;
@@ -153,6 +160,7 @@ mod typescript {
 }
 
 mod jest {
+    pub mod consistent_test_it;
     pub mod expect_expect;
     pub mod max_expects;
     pub mod max_nested_describe;
@@ -183,6 +191,7 @@ mod jest {
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
     pub mod prefer_hooks_on_top;
+    pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
     pub mod prefer_mock_promise_shorthand;
     pub mod prefer_spy_on;
@@ -214,9 +223,11 @@ mod react {
     pub mod no_find_dom_node;
     pub mod no_is_mounted;
     pub mod no_render_return_value;
+    pub mod no_set_state;
     pub mod no_string_refs;
     pub mod no_unescaped_entities;
     pub mod no_unknown_property;
+    pub mod prefer_es6_class;
     pub mod react_in_jsx_scope;
     pub mod require_render_return;
     pub mod rules_of_hooks;
@@ -253,6 +264,7 @@ mod unicorn {
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
     pub mod no_negated_condition;
+    pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
     pub mod no_new_buffer;
@@ -439,6 +451,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::no_multi_str,
     eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
@@ -487,6 +500,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
     eslint::no_undef,
+    eslint::no_undefined,
     eslint::no_unreachable,
     eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,
@@ -521,6 +535,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::prefer_enum_initializers,
     typescript::ban_types,
     typescript::consistent_type_definitions,
+    typescript::consistent_type_imports,
     typescript::consistent_indexed_object_style,
     typescript::no_duplicate_enum_values,
     typescript::no_empty_interface,
@@ -542,6 +557,10 @@ oxc_macros::declare_all_lint_rules! {
     typescript::triple_slash_reference,
     typescript::prefer_literal_enum_member,
     typescript::explicit_function_return_type,
+    typescript::no_non_null_assertion,
+    typescript::no_non_null_asserted_nullish_coalescing,
+    typescript::no_dynamic_delete,
+    jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,
@@ -572,6 +591,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_equality_matcher,
     jest::prefer_expect_resolves,
     jest::prefer_hooks_on_top,
+    jest::prefer_jest_mocked,
     jest::prefer_lowercase_title,
     jest::prefer_mock_promise_shorthand,
     jest::prefer_spy_on,
@@ -608,6 +628,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_lonely_if,
     unicorn::no_magic_array_flat_depth,
     unicorn::no_negated_condition,
+    unicorn::no_negation_in_equality_check,
     unicorn::no_nested_ternary,
     unicorn::no_new_array,
     unicorn::no_new_buffer,
@@ -681,10 +702,12 @@ oxc_macros::declare_all_lint_rules! {
     react::no_direct_mutation_state,
     react::no_find_dom_node,
     react::no_render_return_value,
+    react::no_set_state,
     react::no_string_refs,
     react::no_unescaped_entities,
     react::no_is_mounted,
     react::no_unknown_property,
+    react::prefer_es6_class,
     react::require_render_return,
     react::rules_of_hooks,
     react::void_dom_elements_no_children,
@@ -694,6 +717,7 @@ oxc_macros::declare_all_lint_rules! {
     react_perf::jsx_no_new_object_as_prop,
     import::default,
     import::export,
+    import::max_dependencies,
     import::named,
     import::namespace,
     import::no_amd,

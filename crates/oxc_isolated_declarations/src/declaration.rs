@@ -19,7 +19,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         check_binding: bool,
     ) -> Option<Box<'a, VariableDeclaration<'a>>> {
-        if decl.modifiers.is_contains_declare() {
+        if decl.declare {
             None
         } else {
             let declarations =
@@ -39,7 +39,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             decl.kind,
             self.ast.new_vec_from_iter(declarations),
-            self.modifiers_declare(),
+            self.is_declare(),
         )
     }
 
@@ -49,19 +49,17 @@ impl<'a> IsolatedDeclarations<'a> {
         check_binding: bool,
     ) -> Option<VariableDeclarator<'a>> {
         if decl.id.kind.is_destructuring_pattern() {
-            if check_binding {
-                decl.id.bound_names(&mut |id| {
-                    if self.scope.has_reference(&id.name) {
-                        self.error(binding_element_export(id.span));
-                    }
-                });
-            }
+            decl.id.bound_names(&mut |id| {
+                if !check_binding || self.scope.has_reference(&id.name) {
+                    self.error(binding_element_export(id.span));
+                }
+            });
             return None;
         }
 
         if check_binding {
             if let Some(name) = decl.id.get_identifier() {
-                if !self.scope.has_reference(name) {
+                if !self.scope.has_reference(&name) {
                     return None;
                 }
             }
@@ -73,8 +71,15 @@ impl<'a> IsolatedDeclarations<'a> {
             if let Some(init_expr) = &decl.init {
                 // if kind is const and it doesn't need to infer type from expression
                 if decl.kind.is_const() && !Self::is_need_to_infer_type_from_expression(init_expr) {
-                    init = Some(self.ast.copy(init_expr));
-                } else {
+                    if let Expression::TemplateLiteral(lit) = init_expr {
+                        init =
+                            self.transform_template_to_string(lit).map(Expression::StringLiteral);
+                    } else {
+                        init = Some(self.ast.copy(init_expr));
+                    }
+                } else if !decl.kind.is_const()
+                    || !matches!(init_expr, Expression::TemplateLiteral(_))
+                {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);
                 }
@@ -121,7 +126,7 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             VariableDeclarationKind::Const,
             declarations,
-            self.modifiers_declare(),
+            self.is_declare(),
         )
     }
 
@@ -133,14 +138,14 @@ impl<'a> IsolatedDeclarations<'a> {
         self.scope.enter_scope(ScopeFlags::TsModuleBlock);
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
-        self.ast.ts_module_block(SPAN, stmts)
+        self.ast.ts_module_block(SPAN, self.ast.new_vec(), stmts)
     }
 
     pub fn transform_ts_module_declaration(
         &mut self,
         decl: &Box<'a, TSModuleDeclaration<'a>>,
     ) -> Box<'a, TSModuleDeclaration<'a>> {
-        if decl.modifiers.is_contains_declare() {
+        if decl.declare {
             return self.ast.copy(decl);
         }
 
@@ -151,23 +156,23 @@ impl<'a> IsolatedDeclarations<'a> {
         match body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let inner = self.transform_ts_module_declaration(decl);
-                return self.ast.ts_module_declaration(
+                self.ast.ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
                     decl.kind,
-                    self.modifiers_declare(),
-                );
+                    self.is_declare(),
+                )
             }
             TSModuleDeclarationBody::TSModuleBlock(block) => {
                 let body = self.transform_ts_module_block(block);
-                return self.ast.ts_module_declaration(
+                self.ast.ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),
                     decl.kind,
-                    self.modifiers_declare(),
-                );
+                    self.is_declare(),
+                )
             }
         }
     }
@@ -182,7 +187,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 if !check_binding
                     || func.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
                 {
-                    self.transform_function(func).map(Declaration::FunctionDeclaration)
+                    self.transform_function(func, None).map(Declaration::FunctionDeclaration)
                 } else {
                     None
                 }
@@ -197,7 +202,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 if !check_binding
                     || decl.id.as_ref().is_some_and(|id| self.scope.has_reference(&id.name))
                 {
-                    self.transform_class(decl).map(Declaration::ClassDeclaration)
+                    self.transform_class(decl, None).map(Declaration::ClassDeclaration)
                 } else {
                     None
                 }

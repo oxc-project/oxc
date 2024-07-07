@@ -4,6 +4,75 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.0] - 2024-07-05
+
+- 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_memeber` to `visit_ts_enum_member`. (#4000) (rzvxa)
+
+- 4a0eaa0 ast: [**BREAKING**] Rename `visit_enum` to `visit_ts_enum_declaration`. (#3998) (rzvxa)
+
+- c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
+
+### Refactor
+
+
+## [0.16.3] - 2024-07-02
+
+### Bug Fixes
+
+- d995f94 semantic: Resolve reference incorrectly when a parameter references a parameter that hasn't been defined yet (#4004) (Dunqing)
+
+## [0.16.2] - 2024-06-30
+
+### Performance
+
+- b234ddd semantic: Only check for jsdoc if jsdoc building is enabled (Boshen)
+- 1eac3d2 semantic: Use `Atom<'a>` for `Reference`s (#3972) (Don Isaac)
+
+## [0.16.1] - 2024-06-29
+
+### Features
+
+- f64ad4b semantic: Make jsdoc building optional (turned off by default) (#3955) (Boshen)
+
+### Refactor
+
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+- 15ec254 semantic: Remove the unused `Semantic::build2` function (Boshen)
+
+## [0.16.0] - 2024-06-26
+
+- 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)
+
+- ae09a97 ast: [**BREAKING**] Remove `Modifiers` from ts nodes (#3846) (Boshen)
+
+- 1af5ed3 ast: [**BREAKING**] Replace `Modifiers` with `declare` and `const` on `EnumDeclaration` (#3845) (Boshen)
+
+- 0673677 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `Function` (#3844) (Boshen)
+
+- ee6ec4e ast: [**BREAKING**] Replace `Modifiers` with `declare` and `abstract` on `Class` (#3841) (Boshen)
+
+- 9b38119 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `VariableDeclaration` (#3839) (Boshen)
+
+- 4456034 ast: [**BREAKING**] Add `IdentifierReference` to `ExportSpecifier` (#3820) (Boshen)
+
+### Features
+
+- d5f6aeb semantic: Check for illegal symbol modifiers (#3838) (Don Isaac)
+
+### Bug Fixes
+
+- 8c9fc63 semantic: Apply strict mode scope flag for strict mode TS Modules (#3861) (overlookmotel)
+- 99a40ce semantic: `export default foo` should have `ExportLocalName::Default(NameSpan)` entry (#3823) (Boshen)
+- 17ad8f7 transformer: Create new scopes for new blocks in TS transform (#3908) (overlookmotel)
+
+### Performance
+
+- 10d1de5 semantic: Remove uneccessary allocation in builder (#3867) (DonIsaac)- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+
+### Refactor
+
+- 187f078 parser: Improve parsing of `parse_function_or_constructor_type` (#3892) (Boshen)- d6437fe Clean up some usages of `with_labels` (#3854) (Boshen)
+
 ## [0.15.0] - 2024-06-18
 
 - 0537d29 cfg: [**BREAKING**] Move control flow to its own crate. (#3728) (rzvxa)

@@ -4,6 +4,120 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.1] - 2024-07-06
+
+### Bug Fixes
+
+- aa585d3 ast_codegen, ast: Visit `ExpressionArrayElement` as `Expression`. (#4061) (rzvxa)
+
+### Refactor
+
+- 8fa98e0 ast: Inline trivial functions and shorten code (#4066) (overlookmotel)
+
+## [0.17.0] - 2024-07-05
+
+- e32b4bc ast: [**BREAKING**] Store trivia comments in a sorted slice (#4045) (Luca Bruno)
+
+- 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_memeber` to `visit_ts_enum_member`. (#4000) (rzvxa)
+
+- 4a0eaa0 ast: [**BREAKING**] Rename `visit_enum` to `visit_ts_enum_declaration`. (#3998) (rzvxa)
+
+- c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
+
+### Features
+
+- 1854a52 ast_codegen: Introduce the `#[span]` hint. (#4012) (rzvxa)
+- 7538af1 ast_codegen: Add visit generator (#3954) (rzvxa)
+
+### Bug Fixes
+
+- 05a047c isolated-declarations: Method following an abstract method gets dropped (#4024) (Dunqing)
+
+### Refactor
+
+- b51f75b ast_codegen: No longer outputs discard variable for empty visitors. (#4008) (rzvxa)
+
+## [0.16.3] - 2024-07-02
+
+### Features
+
+- b257d53 linter: Support report `@typescript-eslint/consistent-type-imports` (#3895) (mysteryven)
+
+### Bug Fixes
+
+- d995f94 semantic: Resolve reference incorrectly when a parameter references a parameter that hasn't been defined yet (#4004) (Dunqing)
+
+### Refactor
+
+- 0fe22a8 ast: Reorder fields to reflect their visit order. (#3994) (rzvxa)
+
+## [0.16.2] - 2024-06-30
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+
+## [0.16.1] - 2024-06-29
+
+### Bug Fixes
+
+- 31e4c3b isolated-declarations: `declare global {}` should be kept even if it is not exported (#3956) (Dunqing)
+
+## [0.16.0] - 2024-06-26
+
+- 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)
+
+- 1f85f1a ast: [**BREAKING**] Revert adding `span` field to the `BindingPattern` type. (#3899) (rzvxa)
+
+- ae09a97 ast: [**BREAKING**] Remove `Modifiers` from ts nodes (#3846) (Boshen)
+
+- 1af5ed3 ast: [**BREAKING**] Replace `Modifiers` with `declare` and `const` on `EnumDeclaration` (#3845) (Boshen)
+
+- 0673677 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `Function` (#3844) (Boshen)
+
+- ee6ec4e ast: [**BREAKING**] Replace `Modifiers` with `declare` and `abstract` on `Class` (#3841) (Boshen)
+
+- 9b38119 ast: [**BREAKING**] Replace `Modifiers` with `declare` on `VariableDeclaration` (#3839) (Boshen)
+
+- cfcef24 ast: [**BREAKING**] Add `directives` field to `TSModuleBlock` (#3830) (Boshen)
+
+- 4456034 ast: [**BREAKING**] Add `IdentifierReference` to `ExportSpecifier` (#3820) (Boshen)
+
+### Features
+
+- 497769c ast: Add some visitor functions (#3785) (Dunqing)
+- 4b06dc7 ast: Add TSType::TSIntrinsicKeyword to is_keyword (#3775) (Dunqing)
+- 5847e16 ast,parser: Add `intrinsic` keyword (#3767) (Boshen)
+- 2e026e1 ast_codegen: Generate `ast_kind.rs`. (#3888) (rzvxa)
+- 09f4d3c ast_codegen: Add `ImplGetSpanGenerator`. (#3852) (rzvxa)
+- d5f6aeb semantic: Check for illegal symbol modifiers (#3838) (Don Isaac)
+
+### Bug Fixes
+
+- 063cfde ast: Correct JSON serialization of `TSModuleBlock` (#3858) (overlookmotel)
+- 66f404c ast: Fix JSON serialization of `BindingPattern` (#3856) (overlookmotel)
+- 59ce38b isolated-declarations: Inferring of UnrayExpression incorrectly (#3920) (Dunqing)
+- 8c9fc63 semantic: Apply strict mode scope flag for strict mode TS Modules (#3861) (overlookmotel)
+- aea3e9a transformer: Correct spans for TS annotations transform (#3782) (overlookmotel)
+
+### Performance
+- 4f7ff7e Do not pass `&Atom` to functions (#3818) (overlookmotel)
+
+### Refactor
+
+- 6f26087 ast: Add comment about alternatives to `AstBuilder::copy` (#3905) (overlookmotel)
+- 442aca3 ast: Add comment not to use `AstBuilder::copy` (#3891) (overlookmotel)
+- acf69fa ast: Refactor custom `Serialize` impls (#3859) (overlookmotel)
+- 9e148e9 ast: Add line breaks (#3860) (overlookmotel)
+- 363d3d5 ast: Add span field to the `BindingPattern` type. (#3855) (rzvxa)
+- a648748 ast: Shorten code in AST builder (#3835) (overlookmotel)
+- 1206967 ast: Reduce allocations in AST builder (#3834) (overlookmotel)
+- 4cf3c76 parser: Improve parsing of TypeScript types (#3903) (Boshen)
+- 97d59fc parser: Move code around for parsing `Modifiers` (#3849) (Boshen)
+- 1061baa traverse: Separate `#[scope]` attr (#3901) (overlookmotel)
+- fcd21a6 traverse: Indicate scope entry point with `scope(enter_before)` attr (#3882) (overlookmotel)
+- 2045c92 traverse: Improve parsing attrs in traverse codegen (#3879) (overlookmotel)
+
 ## [0.15.0] - 2024-06-18
 
 - 0578ece ast: [**BREAKING**] Remove `ExportDefaultDeclarationKind::TSEnumDeclaration` (#3666) (Dunqing)

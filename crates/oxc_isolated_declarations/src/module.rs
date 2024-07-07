@@ -1,7 +1,6 @@
 use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_ast::Visit;
 use oxc_span::{Atom, GetSpan, SPAN};
 
 use crate::{diagnostics::default_export_inferred, IsolatedDeclarations};
@@ -39,13 +38,12 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Option<(Option<VariableDeclaration<'a>>, ExportDefaultDeclaration<'a>)> {
         let declaration = match &decl.declaration {
             ExportDefaultDeclarationKind::FunctionDeclaration(decl) => self
-                .transform_function(decl)
+                .transform_function(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::FunctionDeclaration(d))),
             ExportDefaultDeclarationKind::ClassDeclaration(decl) => self
-                .transform_class(decl)
+                .transform_class(decl, Some(false))
                 .map(|d| (None, ExportDefaultDeclarationKind::ClassDeclaration(d))),
-            ExportDefaultDeclarationKind::TSInterfaceDeclaration(interface_decl) => {
-                self.visit_ts_interface_declaration(interface_decl);
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                 Some((None, self.ast.copy(&decl.declaration)))
             }
             expr @ match_expression!(ExportDefaultDeclarationKind) => {
@@ -77,7 +75,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             span: SPAN,
                             kind,
                             declarations,
-                            modifiers: self.modifiers_declare(),
+                            declare: self.is_declare(),
                         }),
                         ExportDefaultDeclarationKind::from(
                             self.ast.identifier_reference_expression(
@@ -90,7 +88,7 @@ impl<'a> IsolatedDeclarations<'a> {
         };
 
         declaration.map(|(var_decl, declaration)| {
-            let exported = ModuleExportName::Identifier(IdentifierName::new(
+            let exported = ModuleExportName::IdentifierName(IdentifierName::new(
                 SPAN,
                 self.ast.new_atom("default"),
             ));
@@ -113,7 +111,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.scope.has_reference(&specifier.local.name)
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                self.scope.has_reference(&self.ast.new_atom(&specifier.name()))
+                self.scope.has_reference(specifier.name().as_str())
             }
         });
         if specifiers.is_empty() {

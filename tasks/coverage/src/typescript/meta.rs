@@ -165,7 +165,7 @@ impl TestCaseContent {
 pub struct Baseline {
     pub name: String,
     pub original: String,
-    pub original_diagnostic: String,
+    pub original_diagnostic: Vec<String>,
     pub oxc_printed: String,
     pub oxc_diagnostics: Vec<OxcDiagnostic>,
 }
@@ -218,7 +218,11 @@ impl BaselineFile {
         let mut files: Vec<Baseline> = vec![];
         let mut is_diagnostic = false;
 
-        for line in s.lines() {
+        let mut lines = s.lines().peekable();
+        loop {
+            let Some(line) = lines.next() else {
+                break;
+            };
             if let Some(remain) = line.strip_prefix("//// [") {
                 is_diagnostic = remain.starts_with("Diagnostics reported]");
                 if !is_diagnostic {
@@ -229,8 +233,14 @@ impl BaselineFile {
             }
             let last = files.last_mut().unwrap();
             if is_diagnostic {
-                last.original_diagnostic.push_str(line);
-                last.original_diagnostic.push_str("\r\n");
+                // Skip details of the diagnostic
+                if line.is_empty() {
+                    while lines.peek().is_some_and(|l| l.strip_prefix("//// [").is_none()) {
+                        lines.next();
+                    }
+                    continue;
+                }
+                last.original_diagnostic.push(line.to_string());
             } else {
                 last.original.push_str(line);
                 last.original.push_str("\r\n");

@@ -1,14 +1,14 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn react_in_jsx_scope_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX")
         .with_help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -45,14 +45,14 @@ impl Rule for ReactInJsxScope {
             _ => return,
         };
         let scope = ctx.scopes();
-        let react_name: &Atom = &Atom::from("React");
+        let react_name = "React";
         if scope.get_binding(scope.root_scope_id(), react_name).is_some() {
             return;
         }
 
         if !scope
             .ancestors(node.scope_id())
-            .any(|v| scope.get_bindings(v).iter().any(|(k, _)| k == react_name))
+            .any(|v| scope.get_bindings(v).iter().any(|(k, _)| k.as_str() == react_name))
         {
             ctx.diagnostic(react_in_jsx_scope_diagnostic(node_span));
         }

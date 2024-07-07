@@ -11,7 +11,7 @@ use crate::{context::LintContext, rule::Rule};
 fn no_import_assign_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint(no-import-assign): do not assign to imported bindings")
         .with_help("imported bindings are readonly")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -40,7 +40,7 @@ declare_oxc_lint!(
     /// Object.assign(mod_ns, { foo: "foo" }) // ERROR: The members of 'mod_ns' are readonly.
     /// ```
     NoImportAssign,
-    nursery
+    correctness
 );
 
 const OBJECT_MUTATION_METHODS: phf::Set<&'static str> =

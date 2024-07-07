@@ -65,7 +65,7 @@ fn explicit_function_return_type_diagnostic(span0: Span) -> OxcDiagnostic {
         "typescript-eslint(explicit-function-return-type): Missing return type on function.",
     )
     .with_help("Require explicit return types on functions and class methods.")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 impl Rule for ExplicitFunctionReturnType {

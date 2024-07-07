@@ -1,9 +1,9 @@
 commit: d8086f14
 
 parser_typescript Summary:
-AST Parsed     : 5280/5283 (99.94%)
-Positive Passed: 5273/5283 (99.81%)
-Negative Passed: 1053/4875 (21.60%)
+AST Parsed     : 5279/5283 (99.92%)
+Positive Passed: 5272/5283 (99.79%)
+Negative Passed: 1082/4875 (22.19%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -376,8 +376,6 @@ Expect Syntax Error: "compiler/constantEnumAssert.ts"
 Expect Syntax Error: "compiler/constraintErrors1.ts"
 Expect Syntax Error: "compiler/constraintWithIndexedAccess.ts"
 Expect Syntax Error: "compiler/constraints0.ts"
-Expect Syntax Error: "compiler/constructorArgsErrors1.ts"
-Expect Syntax Error: "compiler/constructorArgsErrors2.ts"
 Expect Syntax Error: "compiler/constructorArgsErrors3.ts"
 Expect Syntax Error: "compiler/constructorArgsErrors4.ts"
 Expect Syntax Error: "compiler/constructorAsType.ts"
@@ -467,7 +465,6 @@ Expect Syntax Error: "compiler/declarationEmitUnknownImport.ts"
 Expect Syntax Error: "compiler/declarationEmitVarInElidedBlock.ts"
 Expect Syntax Error: "compiler/declarationFileNoCrashOnExtraExportModifier.ts"
 Expect Syntax Error: "compiler/declarationMapsWithoutDeclaration.ts"
-Expect Syntax Error: "compiler/declareAlreadySeen.ts"
 Expect Syntax Error: "compiler/declareClassInterfaceImplementation.ts"
 Expect Syntax Error: "compiler/declareModifierOnImport1.ts"
 Expect Syntax Error: "compiler/decoratorInJsFile.ts"
@@ -652,7 +649,6 @@ Expect Syntax Error: "compiler/exhaustiveSwitchCheckCircularity.ts"
 Expect Syntax Error: "compiler/exhaustiveSwitchImplicitReturn.ts"
 Expect Syntax Error: "compiler/expandoFunctionContextualTypesNoValue.ts"
 Expect Syntax Error: "compiler/expandoFunctionNestedAssigments.ts"
-Expect Syntax Error: "compiler/exportAlreadySeen.ts"
 Expect Syntax Error: "compiler/exportAsNamespaceConflict.ts"
 Expect Syntax Error: "compiler/exportAssignmentWithExports.ts"
 Expect Syntax Error: "compiler/exportDeclarationsInAmbientNamespaces2.ts"
@@ -755,7 +751,6 @@ Expect Syntax Error: "compiler/functionTypeArgumentArityErrors.ts"
 Expect Syntax Error: "compiler/functionTypeArgumentAssignmentCompat.ts"
 Expect Syntax Error: "compiler/functionVariableInReturnTypeAnnotation.ts"
 Expect Syntax Error: "compiler/functionsMissingReturnStatementsAndExpressionsStrictNullChecks.ts"
-Expect Syntax Error: "compiler/functionsWithModifiersInBlocks1.ts"
 Expect Syntax Error: "compiler/fuzzy.ts"
 Expect Syntax Error: "compiler/generatorES6_5.ts"
 Expect Syntax Error: "compiler/generatorReturnExpressionIsChecked.ts"
@@ -969,6 +964,7 @@ Expect Syntax Error: "compiler/inlineSourceMap2.ts"
 Expect Syntax Error: "compiler/innerAliases.ts"
 Expect Syntax Error: "compiler/innerTypeCheckOfLambdaArgument.ts"
 Expect Syntax Error: "compiler/instanceSubtypeCheck2.ts"
+Expect Syntax Error: "compiler/instanceofOnInstantiationExpression.ts"
 Expect Syntax Error: "compiler/instanceofOperator.ts"
 Expect Syntax Error: "compiler/instanceofWithPrimitiveUnion.ts"
 Expect Syntax Error: "compiler/instanceofWithStructurallyIdenticalTypes.ts"
@@ -1167,7 +1163,6 @@ Expect Syntax Error: "compiler/missingTypeArguments2.ts"
 Expect Syntax Error: "compiler/mixedStaticAndInstanceClassMembers.ts"
 Expect Syntax Error: "compiler/mixinPrivateAndProtected.ts"
 Expect Syntax Error: "compiler/mixingStaticAndInstanceOverloads.ts"
-Expect Syntax Error: "compiler/modifierOnParameter1.ts"
 Expect Syntax Error: "compiler/modularizeLibrary_ErrorFromUsingES6ArrayWithOnlyES6ArrayLib.ts"
 Expect Syntax Error: "compiler/modularizeLibrary_ErrorFromUsingES6FeaturesWithOnlyES5Lib.ts"
 Expect Syntax Error: "compiler/modularizeLibrary_ErrorFromUsingWellknownSymbolWithOutES6WellknownSymbolLib.ts"
@@ -1205,7 +1200,6 @@ Expect Syntax Error: "compiler/multiLineContextDiagnosticWithPretty.ts"
 Expect Syntax Error: "compiler/multiLineErrors.ts"
 Expect Syntax Error: "compiler/multipleBaseInterfaesWithIncompatibleProperties.ts"
 Expect Syntax Error: "compiler/multipleClassPropertyModifiers.ts"
-Expect Syntax Error: "compiler/multipleClassPropertyModifiersErrors.ts"
 Expect Syntax Error: "compiler/multipleExportAssignments.ts"
 Expect Syntax Error: "compiler/multipleExportAssignmentsInAmbientDeclaration.ts"
 Expect Syntax Error: "compiler/multipleExports.ts"
@@ -1393,6 +1387,8 @@ Expect Syntax Error: "compiler/paramterDestrcuturingDeclaration.ts"
 Expect Syntax Error: "compiler/parenthesizedJSDocCastDoesNotNarrow.ts"
 Expect Syntax Error: "compiler/parseCommaSeparatedNewlineNumber.ts"
 Expect Syntax Error: "compiler/parseCommaSeparatedNewlineString.ts"
+Expect Syntax Error: "compiler/parseInvalidNonNullableTypes.ts"
+Expect Syntax Error: "compiler/parseInvalidNullableTypes.ts"
 Expect Syntax Error: "compiler/parseJsxExtends2.ts"
 Expect Syntax Error: "compiler/parseTypes.ts"
 Expect Syntax Error: "compiler/parseUnaryExpressionNoTypeAssertionInJsx1.ts"
@@ -1409,7 +1405,6 @@ Expect Syntax Error: "compiler/primitiveTypeAsInterfaceName.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsInterfaceNameGeneric.ts"
 Expect Syntax Error: "compiler/primitiveTypeAssignment.ts"
 Expect Syntax Error: "compiler/privacyGloImportParseErrors.ts"
-Expect Syntax Error: "compiler/privacyImportParseErrors.ts"
 Expect Syntax Error: "compiler/privateAccessInSubclass1.ts"
 Expect Syntax Error: "compiler/privateFieldAssignabilityFromUnknown.ts"
 Expect Syntax Error: "compiler/privateInterfaceProperties.ts"
@@ -1515,7 +1510,6 @@ Expect Syntax Error: "compiler/reservedNameOnModuleImportWithInterface.ts"
 Expect Syntax Error: "compiler/resolvingClassDeclarationWhenInBaseTypeResolution.ts"
 Expect Syntax Error: "compiler/restArgAssignmentCompat.ts"
 Expect Syntax Error: "compiler/restInvalidArgumentType.ts"
-Expect Syntax Error: "compiler/restParamModifier2.ts"
 Expect Syntax Error: "compiler/restParamsWithNonRestParams.ts"
 Expect Syntax Error: "compiler/restUnion3.ts"
 Expect Syntax Error: "compiler/returnInConstructor1.ts"
@@ -1904,7 +1898,6 @@ Expect Syntax Error: "compiler/useBeforeDeclaration_propertyAssignment.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_superClass.ts"
 Expect Syntax Error: "compiler/useUnknownInCatchVariables01.ts"
 Expect Syntax Error: "compiler/varAndFunctionShareName.ts"
-Expect Syntax Error: "compiler/varArgConstructorMemberParameter.ts"
 Expect Syntax Error: "compiler/varBlock.ts"
 Expect Syntax Error: "compiler/varNameConflictsWithImportInDifferentPartOfModule.ts"
 Expect Syntax Error: "compiler/vararg.ts"
@@ -1943,11 +1936,7 @@ Expect Syntax Error: "conformance/async/es5/asyncArrowFunction/asyncArrowFunctio
 Expect Syntax Error: "conformance/async/es5/asyncArrowFunction/asyncArrowFunction3_es5.ts"
 Expect Syntax Error: "conformance/async/es5/asyncArrowFunction/asyncArrowFunctionCapturesArguments_es5.ts"
 Expect Syntax Error: "conformance/async/es5/asyncAwaitIsolatedModules_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncClass_es5.ts"
 Expect Syntax Error: "conformance/async/es5/asyncDeclare_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncEnum_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncInterface_es5.ts"
-Expect Syntax Error: "conformance/async/es5/asyncModule_es5.ts"
 Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDeclaration13_es5.ts"
 Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDeclaration15_es5.ts"
 Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDeclaration3_es5.ts"
@@ -1956,11 +1945,7 @@ Expect Syntax Error: "conformance/async/es5/functionDeclarations/asyncFunctionDe
 Expect Syntax Error: "conformance/async/es6/asyncArrowFunction/asyncArrowFunction10_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncArrowFunction/asyncArrowFunction3_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncAwaitIsolatedModules_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncClass_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncDeclare_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncEnum_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncInterface_es6.ts"
-Expect Syntax Error: "conformance/async/es6/asyncModule_es6.ts"
 Expect Syntax Error: "conformance/async/es6/asyncQualifiedReturnType_es6.ts"
 Expect Syntax Error: "conformance/async/es6/await_unaryExpression_es6_1.ts"
 Expect Syntax Error: "conformance/async/es6/await_unaryExpression_es6_2.ts"
@@ -1987,6 +1972,7 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts"
+Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractProperties.ts"
@@ -1994,7 +1980,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAndInterfaceMergeConflictingMembers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingClassLikeType.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingNonConstructor.ts"
@@ -2009,6 +1994,7 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classWithPredefinedT
 Expect Syntax Error: "conformance/classes/classExpressions/classWithStaticFieldInParameterBindingPattern.2.ts"
 Expect Syntax Error: "conformance/classes/classExpressions/classWithStaticFieldInParameterInitializer.2.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock19.ts"
+Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock20.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock23.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock3.ts"
 Expect Syntax Error: "conformance/classes/classStaticBlock/classStaticBlock4.ts"
@@ -2035,7 +2021,6 @@ Expect Syntax Error: "conformance/classes/constructorDeclarations/constructorPar
 Expect Syntax Error: "conformance/classes/constructorDeclarations/constructorParameters/readonlyConstructorAssignment.ts"
 Expect Syntax Error: "conformance/classes/constructorDeclarations/constructorParameters/readonlyInAmbientClass.ts"
 Expect Syntax Error: "conformance/classes/constructorDeclarations/constructorParameters/readonlyInConstructorParameters.ts"
-Expect Syntax Error: "conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts"
 Expect Syntax Error: "conformance/classes/constructorDeclarations/constructorWithAssignableReturnExpression.ts"
 Expect Syntax Error: "conformance/classes/constructorDeclarations/superCalls/derivedClassConstructorWithoutSuperCall.ts"
 Expect Syntax Error: "conformance/classes/constructorDeclarations/superCalls/derivedClassParameterProperties.ts"
@@ -2111,6 +2096,7 @@ Expect Syntax Error: "conformance/classes/members/privateNames/privateNameStatic
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNameStaticFieldAccess.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNameStaticMethod.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNameStaticMethodAssignment.ts"
+Expect Syntax Error: "conformance/classes/members/privateNames/privateNameStaticMethodAsync.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNameUnused.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesAndDecorators.ts"
 Expect Syntax Error: "conformance/classes/members/privateNames/privateNamesAndStaticFields.ts"
@@ -2129,7 +2115,6 @@ Expect Syntax Error: "conformance/classes/members/privateNames/privateWriteOnlyA
 Expect Syntax Error: "conformance/classes/mixinAbstractClasses.2.ts"
 Expect Syntax Error: "conformance/classes/mixinAccessModifiers.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/abstractPropertyInitializer.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideMethod.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty2.ts"
@@ -2201,7 +2186,6 @@ Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod6.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethod8.ts"
 Expect Syntax Error: "conformance/decorators/class/method/decoratorOnClassMethodOverload1.ts"
-Expect Syntax Error: "conformance/decorators/class/method/parameter/decoratorOnClassMethodThisParameter.ts"
 Expect Syntax Error: "conformance/decorators/class/property/decoratorOnClassProperty11.ts"
 Expect Syntax Error: "conformance/decorators/class/property/decoratorOnClassProperty6.ts"
 Expect Syntax Error: "conformance/decorators/class/property/decoratorOnClassProperty7.ts"
@@ -2209,7 +2193,6 @@ Expect Syntax Error: "conformance/decorators/decoratorCallGeneric.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnEnum.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnFunctionDeclaration.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnFunctionExpression.ts"
-Expect Syntax Error: "conformance/decorators/invalid/decoratorOnFunctionParameter.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnImportEquals1.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnInterface.ts"
 Expect Syntax Error: "conformance/decorators/invalid/decoratorOnInternalModule.ts"
@@ -2853,8 +2836,6 @@ Expect Syntax Error: "conformance/internalModules/exportDeclarations/ModuleWithE
 Expect Syntax Error: "conformance/internalModules/importDeclarations/circularImportAlias.ts"
 Expect Syntax Error: "conformance/internalModules/importDeclarations/invalidImportAliasIdentifiers.ts"
 Expect Syntax Error: "conformance/internalModules/importDeclarations/shadowedInternalModule.ts"
-Expect Syntax Error: "conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts"
-Expect Syntax Error: "conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts"
 Expect Syntax Error: "conformance/internalModules/moduleDeclarations/InvalidNonInstantiatedModule.ts"
 Expect Syntax Error: "conformance/internalModules/moduleDeclarations/invalidNestedModules.ts"
 Expect Syntax Error: "conformance/jsdoc/assertionsAndNonReturningFunctions.ts"
@@ -3035,11 +3016,10 @@ Expect Syntax Error: "conformance/override/override2.ts"
 Expect Syntax Error: "conformance/override/override20.ts"
 Expect Syntax Error: "conformance/override/override3.ts"
 Expect Syntax Error: "conformance/override/override4.ts"
-Expect Syntax Error: "conformance/override/override5.ts"
 Expect Syntax Error: "conformance/override/override6.ts"
-Expect Syntax Error: "conformance/override/override7.ts"
 Expect Syntax Error: "conformance/override/override8.ts"
 Expect Syntax Error: "conformance/override/override9.ts"
+Expect Syntax Error: "conformance/override/overrideKeywordOrder.ts"
 Expect Syntax Error: "conformance/override/overrideParameterProperty.ts"
 Expect Syntax Error: "conformance/override/overrideWithoutNoImplicitOverride1.ts"
 Expect Syntax Error: "conformance/override/override_js2.ts"
@@ -3094,7 +3074,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration10.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration9.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts"
@@ -3157,9 +3136,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/IndexSignatures/parserIndex
 Expect Syntax Error: "conformance/parser/ecmascript5/IndexSignatures/parserIndexSignature5.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration2.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration1.ts"
@@ -3168,14 +3144,11 @@ Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration17.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration3.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration9.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration5.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ModuleDeclarations/parserModuleDeclaration1.d.ts"
@@ -3192,20 +3165,16 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParame
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ParameterLists/parserParameterList8.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected1.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected6.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/Protected/Protected7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RealWorld/parserindenter.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509534.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509618.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509668.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509693.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509698.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser536727.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser579071.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser618973.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression2.ts"
@@ -3651,8 +3620,10 @@ Expect Syntax Error: "conformance/types/tuple/contextualTypeWithTuple.ts"
 Expect Syntax Error: "conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion01.ts"
 Expect Syntax Error: "conformance/types/tuple/emptyTuples/emptyTuplesTypeAssertion02.ts"
 Expect Syntax Error: "conformance/types/tuple/indexerWithTuple.ts"
+Expect Syntax Error: "conformance/types/tuple/named/namedTupleMembersErrors.ts"
 Expect Syntax Error: "conformance/types/tuple/optionalTupleElements1.ts"
 Expect Syntax Error: "conformance/types/tuple/readonlyArraysAndTuples.ts"
+Expect Syntax Error: "conformance/types/tuple/restTupleElements1.ts"
 Expect Syntax Error: "conformance/types/tuple/strictTupleLength.ts"
 Expect Syntax Error: "conformance/types/tuple/tupleLengthCheck.ts"
 Expect Syntax Error: "conformance/types/tuple/unionsOfTupleTypes1.ts"
@@ -3842,6 +3813,15 @@ Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
     · ────
  24 │     const enum H {}
     ╰────
+Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
+
+  × Unexpected token
+    ╭─[compiler/sourceMapValidationDecorators.ts:18:7]
+ 17 │       @ParameterDecorator2(30) 
+ 18 │       ...b: string[]) {
+    ·       ───
+ 19 │     }
+    ╰────
 Expect to Parse: "compiler/withStatementInternalComments.ts"
 
   × 'with' statements are not allowed
@@ -4019,20 +3999,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[compiler/ParameterList5.ts:1:23]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList5.ts:1:16]
  1 │ function A(): (public B) => C {
-   ·                       ┬
-   ·                       ╰── `)` expected
+   ·                ────────
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[compiler/ParameterList6.ts:2:26]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[compiler/ParameterList6.ts:2:19]
  1 │ class C {
  2 │   constructor(C: (public A) => any) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·                   ────────
  3 │   }
    ╰────
 
@@ -4778,23 +4756,21 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[compiler/classMemberWithMissingIdentifier.ts:2:11]
+  × Unexpected token
+   ╭─[compiler/classMemberWithMissingIdentifier.ts:2:12]
  1 │ class C { 
  2 │     public {};
-   ·           ─
+   ·            ─
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[compiler/classMemberWithMissingIdentifier2.ts:2:11]
+  × Unexpected token
+   ╭─[compiler/classMemberWithMissingIdentifier2.ts:2:12]
  1 │ class C { 
  2 │     public {[name:string]:VariableDeclaration};
-   ·           ─
+   ·            ─
  3 │ }
    ╰────
-  help: Try insert a semicolon here
 
   × Identifier `foo` has already been declared
    ╭─[compiler/classOverloadForFunction.ts:1:7]
@@ -5649,6 +5625,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × TS1090: 'static' modifier cannot appear on a parameter.
+   ╭─[compiler/constructorArgsErrors1.ts:2:18]
+ 1 │ class foo {
+ 2 │     constructor (static a: number) {
+   ·                  ──────
+ 3 │     }
+   ╰────
+
+  × TS1090: 'static' modifier cannot appear on a parameter.
+   ╭─[compiler/constructorArgsErrors2.ts:2:25]
+ 1 │ class foo {
+ 2 │     constructor (public static a: number) {
+   ·                         ──────
+ 3 │     }
+   ╰────
+
   × Unexpected token
    ╭─[compiler/constructorArgsErrors5.ts:2:18]
  1 │ class foo {
@@ -5796,6 +5788,42 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·              ╰── `from` expected
  2 │ export default Foo
    ╰────
+
+  × TS1030: 'declare' modifier already seen.
+   ╭─[compiler/declareAlreadySeen.ts:2:13]
+ 1 │ module M {
+ 2 │     declare declare var x;
+   ·             ───────
+ 3 │     declare declare function f();
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'declare' modifier already seen.
+   ╭─[compiler/declareAlreadySeen.ts:3:13]
+ 2 │     declare declare var x;
+ 3 │     declare declare function f();
+   ·             ───────
+ 4 │ 
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'declare' modifier already seen.
+   ╭─[compiler/declareAlreadySeen.ts:5:13]
+ 4 │ 
+ 5 │     declare declare module N { }  
+   ·             ───────
+ 6 │ 
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'declare' modifier already seen.
+   ╭─[compiler/declareAlreadySeen.ts:7:13]
+ 6 │ 
+ 7 │     declare declare class C { }
+   ·             ───────
+ 8 │ }
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Cannot assign to this expression
    ╭─[compiler/decrementAndIncrementOperators.ts:4:1]
@@ -6434,6 +6462,86 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·         ╰── `from` expected
    ╰────
 
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:2:12]
+ 1 │ module M {
+ 2 │     export export var x = 1;
+   ·            ──────
+ 3 │     export export function f() { }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:3:12]
+ 2 │     export export var x = 1;
+ 3 │     export export function f() { }
+   ·            ──────
+ 4 │ 
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:6:16]
+ 5 │     export export module N {
+ 6 │         export export class C { }
+   ·                ──────
+ 7 │         export export interface I { }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:7:16]
+ 6 │         export export class C { }
+ 7 │         export export interface I { }
+   ·                ──────
+ 8 │     }  
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/exportAlreadySeen.ts:5:12]
+ 4 │ 
+ 5 │     export export module N {
+   ·            ──────
+ 6 │         export export class C { }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:12:12]
+ 11 │ declare module A {
+ 12 │     export export var x;
+    ·            ──────
+ 13 │     export export function f()
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:13:12]
+ 12 │     export export var x;
+ 13 │     export export function f()
+    ·            ──────
+ 14 │ 
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:16:16]
+ 15 │     export export module N {
+ 16 │         export export class C { }
+    ·                ──────
+ 17 │         export export interface I { }
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:17:16]
+ 16 │         export export class C { }
+ 17 │         export export interface I { }
+    ·                ──────
+ 18 │     }
+    ╰────
+
+  × 'export' modifier cannot be used here.
+    ╭─[compiler/exportAlreadySeen.ts:15:12]
+ 14 │ 
+ 15 │     export export module N {
+    ·            ──────
+ 16 │         export export class C { }
+    ╰────
+
   × Unexpected token
    ╭─[compiler/exportAssignmentWithDeclareAndExportModifiers.ts:2:16]
  1 │ var x;
@@ -6654,13 +6762,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │   function f() {
    ╰────
 
-  × Expected `=>` but found `)`
-   ╭─[compiler/functionTypesLackingReturnTypes.ts:2:17]
- 1 │ // Error (no '=>')
- 2 │ function f(x: ()) {
-   ·                 ┬
-   ·                 ╰── `=>` expected
- 3 │ }
+  × Expected `,` but found `var`
+   ╭─[compiler/functionTypesLackingReturnTypes.ts:6:1]
+ 5 │ // Error (no '=>')
+ 6 │ var g: (param);
+   · ─┬─
+   ·  ╰── `,` expected
+ 7 │ 
    ╰────
 
   × Identifier `total` has already been declared
@@ -6682,6 +6790,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
      ·     ─
  154 │ }
      ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[compiler/functionsWithModifiersInBlocks1.ts:4:12]
+ 3 │    export function f() { }
+ 4 │    declare export function f() { }
+   ·            ──────
+ 5 │ }
+   ╰────
 
   × Unexpected token
    ╭─[compiler/genericCallWithoutArgs.ts:4:18]
@@ -6884,14 +7000,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │         var non_export_var = 0;
    ╰────
   help: Try insert a semicolon here
-
-  × Unexpected token
-    ╭─[compiler/instanceofOnInstantiationExpression.ts:14:13]
- 13 │ 
- 14 │ Box<number> instanceof Object; // OK
-    ·             ──────────
- 15 │ (Box<number>) instanceof Object; // OK
-    ╰────
 
   × Unexpected token
     ╭─[compiler/intTypeCheck.ts:37:17]
@@ -7638,13 +7746,44 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                ────────
    ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[compiler/modifiersInObjectLiterals.ts:2:9]
+  × TS1090: 'declare' modifier cannot appear on a parameter.
+   ╭─[compiler/modifierOnParameter1.ts:2:16]
+ 1 │ class C {
+ 2 │    constructor(declare p) { }
+   ·                ───────
+ 3 │ }
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[compiler/modifiersInObjectLiterals.ts:2:2]
  1 │ let data = {
  2 │     public foo: 'hey',
-   ·            ─┬─
-   ·             ╰── `,` expected
+   ·     ──────
  3 │     private bar: 'nay',
+   ╰────
+
+  × 'private' modifier cannot be used here.
+   ╭─[compiler/modifiersInObjectLiterals.ts:3:2]
+ 2 │     public foo: 'hey',
+ 3 │     private bar: 'nay',
+   ·     ───────
+ 4 │     protected baz: 'oh my',
+   ╰────
+
+  × 'protected' modifier cannot be used here.
+   ╭─[compiler/modifiersInObjectLiterals.ts:4:2]
+ 3 │     private bar: 'nay',
+ 4 │     protected baz: 'oh my',
+   ·     ─────────
+ 5 │     abstract noWay: 'yes'   
+   ╰────
+
+  × 'abstract' modifier cannot be used here.
+   ╭─[compiler/modifiersInObjectLiterals.ts:5:2]
+ 4 │     protected baz: 'oh my',
+ 5 │     abstract noWay: 'yes'   
+   ·     ────────
+ 6 │ };
    ╰────
 
   × Unexpected token
@@ -7829,6 +7968,24 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    · ──────
  2 │     .then((role: Role) =>
    ╰────
+
+  × TS1030: 'public' modifier already seen.
+   ╭─[compiler/multipleClassPropertyModifiersErrors.ts:2:9]
+ 1 │ class C {
+ 2 │     public public p1;
+   ·            ──────
+ 3 │     private private p2;
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'private' modifier already seen.
+   ╭─[compiler/multipleClassPropertyModifiersErrors.ts:3:10]
+ 2 │     public public p1;
+ 3 │     private private p2;
+   ·             ───────
+ 4 │     static static p3;
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Identifier `z` has already been declared
     ╭─[compiler/nameCollisions.ts:10:5]
@@ -8053,18 +8210,16 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  23 │        endState: state
     ╰────
 
-  × Expected `,` but found `Identifier`
-   ╭─[compiler/objectLiteralMemberWithModifiers1.ts:1:18]
+  × 'public' modifier cannot be used here.
+   ╭─[compiler/objectLiteralMemberWithModifiers1.ts:1:11]
  1 │ var v = { public foo() { } }
-   ·                  ─┬─
-   ·                   ╰── `,` expected
+   ·           ──────
    ╰────
 
-  × Expected `,` but found `get`
-   ╭─[compiler/objectLiteralMemberWithModifiers2.ts:1:18]
+  × 'public' modifier cannot be used here.
+   ╭─[compiler/objectLiteralMemberWithModifiers2.ts:1:11]
  1 │ var v = { public get foo() { } }
-   ·                  ─┬─
-   ·                   ╰── `,` expected
+   ·           ──────
    ╰────
 
   × Expected `,` but found `?`
@@ -8474,23 +8629,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[compiler/parseInvalidNonNullableTypes.ts:1:36]
- 1 │ function f1(a: string): a is string! {
-   ·                                    ▲
- 2 │     return true;
-   ╰────
-  help: Try insert a semicolon here
-
-  × Expected `,` but found `?`
-   ╭─[compiler/parseInvalidNullableTypes.ts:5:22]
- 4 │ 
- 5 │ function f2(a: string?) {}
-   ·                      ┬
-   ·                      ╰── `,` expected
- 6 │ function f3(a: number?) {}
-   ╰────
-
   × Expected `>` but found `EOF`
    ╭─[compiler/parseJsxElementInUnaryExpressionNoCrash1.ts:1:5]
  1 │ ~< <
@@ -8628,6 +8766,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/prettyContextNotDebugAssertion.ts:1:12]
  1 │ if (true) {
    ╰────
+
+  × 'export' modifier cannot be used here.
+     ╭─[compiler/privacyImportParseErrors.ts:326:9]
+ 325 │ 
+ 326 │ declare export module "anotherParseError2" {
+     ·         ──────
+ 327 │     module m2 {
+     ╰────
 
   × Unexpected token
    ╭─[compiler/privateNameJsx.tsx:4:22]
@@ -8853,7 +8999,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × Unexpected token
+   ╭─[compiler/restParamModifier2.ts:2:24]
+ 1 │ class C {
+ 2 │     constructor(public ...rest: string[]) {}
+   ·                        ───
+ 3 │ }
+   ╰────
+
+  × A rest parameter must be last in a parameter list
    ╭─[compiler/restParameterNotLast.ts:1:12]
  1 │ function f(...x, y) { }
    ·            ────
@@ -10389,6 +10543,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   help: Try insert a semicolon here
 
   × Unexpected token
+    ╭─[compiler/varArgConstructorMemberParameter.ts:10:25]
+  9 │ class Foo3 {
+ 10 │     constructor (public ...args: string[]) { }
+    ·                         ───
+ 11 │ }
+    ╰────
+
+  × Unexpected token
    ╭─[compiler/varArgWithNoParamName.ts:1:16]
  1 │ function t1(...) {}
    ·                ─
@@ -10592,12 +10754,26 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncClass_es5.ts:1:1]
+ 1 │ async class C {
+   · ─────
+ 2 │ }
+   ╰────
+
   × Constructor can't be an async method
    ╭─[conformance/async/es5/asyncConstructor_es5.ts:2:9]
  1 │ class C {
  2 │   async constructor() {
    ·         ───────────
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncEnum_es5.ts:1:1]
+ 1 │ async enum E {
+   · ─────
+ 2 │   Value
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10607,6 +10783,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·             ─┬─
    ·              ╰── `(` expected
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncInterface_es5.ts:1:1]
+ 1 │ async interface I {
+   · ─────
+ 2 │ }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncModule_es5.ts:1:1]
+ 1 │ async module M {
+   · ─────
+ 2 │ }
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10699,12 +10889,26 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncClass_es6.ts:1:1]
+ 1 │ async class C {  
+   · ─────
+ 2 │ }
+   ╰────
+
   × Constructor can't be an async method
    ╭─[conformance/async/es6/asyncConstructor_es6.ts:2:9]
  1 │ class C {  
  2 │   async constructor() {    
    ·         ───────────
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncEnum_es6.ts:1:1]
+ 1 │ async enum E {  
+   · ─────
+ 2 │   Value
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10714,6 +10918,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·             ─┬─
    ·              ╰── `(` expected
  3 │   }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncInterface_es6.ts:1:1]
+ 1 │ async interface I {  
+   · ─────
+ 2 │ }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncModule_es6.ts:1:1]
+ 1 │ async module M {   
+   · ─────
+ 2 │ }
    ╰────
 
   × Expected `(` but found `Identifier`
@@ -10864,14 +11082,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  18 │ 
     ╰────
 
-  × Expected `(` but found `Identifier`
-    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts:16:20]
- 15 │     abstract async foo_f();
- 16 │     async abstract foo_g();
-    ·                    ──┬──
-    ·                      ╰── `(` expected
- 17 │ }
-    ╰────
+  × 'abstract' modifier cannot be used here.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
+ 1 │ abstract interface I {}
+   · ────────
+   ╰────
 
   × Identifier `C` has already been declared
    ╭─[conformance/classes/classDeclarations/classAndVariableWithSameName.ts:1:7]
@@ -10972,15 +11187,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                            ──
  22 │     getY = (obj: D) => obj.#y;
     ╰────
-
-  × Expected `(` but found `{`
-   ╭─[conformance/classes/classStaticBlock/classStaticBlock20.ts:2:18]
- 1 │ class C {
- 2 │     async static {
-   ·                  ┬
-   ·                  ╰── `(` expected
- 3 │         // something
-   ╰────
 
   × Cannot use `await` as an identifier in an async context
    ╭─[conformance/classes/classStaticBlock/classStaticBlock22.ts:4:9]
@@ -11151,6 +11357,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·          ╰── it cannot be redeclared here
  9 │ }
    ╰────
+
+  × TS1030: 'readonly' modifier already seen.
+   ╭─[conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts:2:14]
+ 1 │ class C {
+ 2 │     readonly readonly x: number;
+   ·              ────────
+ 3 │     constructor(readonly readonly y: number) {}
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/classes/constructorDeclarations/superCalls/derivedClassSuperCallsInNonConstructorMembers.ts:8:13]
@@ -11897,15 +12112,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  13 │     }
     ╰────
 
-  × Expected `(` but found `*`
-    ╭─[conformance/classes/members/privateNames/privateNameStaticMethodAsync.ts:11:18]
- 10 │     }
- 11 │     async static *#bazBad() { yield 42; }
-    ·                  ┬
-    ·                  ╰── `(` expected
- 12 │ }
-    ╰────
-
   × Private identifier '#method' is not allowed outside class bodies
     ╭─[conformance/classes/members/privateNames/privateNameStaticMethodClassExpression.ts:9:14]
   8 │ console.log(C.getClass().getField());
@@ -11937,11 +12143,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  25 │ a = b;                                    // Error
     ╰────
 
-  × Unexpected token
+  × Expected `]` but found `#identifier`
    ╭─[conformance/classes/members/privateNames/privateNamesAndIndexedAccess.ts:7:28]
  6 │         // not supported yet, could support in future:
  7 │         const badForNow: C[#bar] = 3;   // Error
-   ·                            ────
+   ·                            ──┬─
+   ·                              ╰── `]` expected
  8 │         // will never use this syntax, already taken:
    ╰────
 
@@ -11967,6 +12174,102 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  24 │ a.#prop;                                  // Error
     ·   ─────
  25 │ a = b;                                    // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:2:5]
+ 1 │ class A {
+ 2 │     public #foo = 3;         // Error
+   ·     ──────
+ 3 │     private #bar = 3;        // Error
+   ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:3:5]
+ 2 │     public #foo = 3;         // Error
+ 3 │     private #bar = 3;        // Error
+   ·     ───────
+ 4 │     protected #baz = 3;      // Error
+   ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:4:5]
+ 3 │     private #bar = 3;        // Error
+ 4 │     protected #baz = 3;      // Error
+   ·     ─────────
+ 5 │     readonly #qux = 3;       // OK
+   ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+   ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:8:5]
+ 7 │ 
+ 8 │     public #fooMethod() { return  3; }         // Error
+   ·     ──────
+ 9 │     private #barMethod() { return  3; }        // Error
+   ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:9:5]
+  8 │     public #fooMethod() { return  3; }         // Error
+  9 │     private #barMethod() { return  3; }        // Error
+    ·     ───────
+ 10 │     protected #bazMethod() { return  3; }      // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:10:5]
+  9 │     private #barMethod() { return  3; }        // Error
+ 10 │     protected #bazMethod() { return  3; }      // Error
+    ·     ─────────
+ 11 │     readonly #quxMethod() { return  3; }       // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:17:5]
+ 16 │ 
+ 17 │     public get #fooProp() { return  3; }         // Error
+    ·     ──────
+ 18 │     public set #fooProp(value: number) {  }      // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:18:5]
+ 17 │     public get #fooProp() { return  3; }         // Error
+ 18 │     public set #fooProp(value: number) {  }      // Error
+    ·     ──────
+ 19 │     private get #barProp() { return  3; }        // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:19:5]
+ 18 │     public set #fooProp(value: number) {  }      // Error
+ 19 │     private get #barProp() { return  3; }        // Error
+    ·     ───────
+ 20 │     private set #barProp(value: number) {  }     // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:20:5]
+ 19 │     private get #barProp() { return  3; }        // Error
+ 20 │     private set #barProp(value: number) {  }     // Error
+    ·     ───────
+ 21 │     protected get #bazProp() { return  3; }      // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:21:5]
+ 20 │     private set #barProp(value: number) {  }     // Error
+ 21 │     protected get #bazProp() { return  3; }      // Error
+    ·     ─────────
+ 22 │     protected set #bazProp(value: number) {  }   // Error
+    ╰────
+
+  × An accessibility modifier cannot be used with a private identifier.
+    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:22:5]
+ 21 │     protected get #bazProp() { return  3; }      // Error
+ 22 │     protected set #bazProp(value: number) {  }   // Error
+    ·     ─────────
+ 23 │     readonly get #quxProp() { return  3; }       // Error
     ╰────
 
   × Expected `(` but found `#identifier`
@@ -12017,6 +12320,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × TS1030: 'public' modifier already seen.
+    ╭─[conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:42:12]
+ 41 │     private protected get getter() { return 0; }
+ 42 │     public public set setter(a: number) { }
+    ·            ──────
+ 43 │ }
+    ╰────
+  help: Remove the duplicate modifier.
+
   × Identifier `accessor` has already been declared
     ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor11.ts:5:12]
   4 │ 
@@ -12031,6 +12343,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·         ╰── It can not be redeclared here
  10 │     c
     ╰────
+
+  × TS1030: 'accessor' modifier already seen.
+   ╭─[conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:2:14]
+ 1 │ abstract class C1 {
+ 2 │     accessor accessor a: any;
+   ·              ────────
+ 3 │     readonly accessor b: any;
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Unexpected token
     ╭─[conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:10:15]
@@ -12252,6 +12573,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │   }
    ╰────
 
+  × Unexpected token
+   ╭─[conformance/decorators/class/method/parameter/decoratorOnClassMethodThisParameter.ts:4:17]
+ 3 │ class C {
+ 4 │     method(@dec this: C) {}
+   ·                 ────
+ 5 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/decorators/class/property/decoratorOnClassProperty3.ts:4:11]
  3 │ class C {
@@ -12261,14 +12590,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
-   ╭─[conformance/decorators/decoratorMetadata-jsdoc.ts:5:15]
- 4 │     @decorator()
- 5 │     a?: string?;
-   ·               ▲
- 6 │     @decorator()
-   ╰────
-  help: Try insert a semicolon here
+  × Unexpected token
+    ╭─[conformance/decorators/decoratorMetadata-jsdoc.ts:9:9]
+  8 │     @decorator()
+  9 │     c?: *;
+    ·         ─
+ 10 │ }
+    ╰────
 
   × Unexpected token
    ╭─[conformance/decorators/invalid/decoratorOnArrowFunction.ts:3:17]
@@ -12284,6 +12612,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │     @dec A
    ·     ─
  5 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[conformance/decorators/invalid/decoratorOnFunctionParameter.ts:5:22]
+ 4 │ 
+ 5 │ function direct(@dec this: C) { return this.n; }
+   ·                      ────
+ 6 │ function called(@dec() this: C) { return this.n; }
    ╰────
 
   × Unexpected token
@@ -12704,12 +13040,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
     ╰────
 
-  × A rest parameter cannot have an initializer
-    ╭─[conformance/es6/destructuring/destructuringParameterDeclaration4.ts:15:16]
- 14 │ function a3(...b?) { }            // Error, can't be optional
- 15 │ function a4(...b = [1,2,3]) { }   // Error, can't have initializer
-    ·                ───────────
- 16 │ function a5([a, b, [[c]]]) { }
+  × Unexpected token
+    ╭─[conformance/es6/destructuring/destructuringParameterDeclaration4.ts:29:24]
+ 28 │ class C {
+ 29 │     constructor(public ...temp) { }  // Error, rest parameter can't have properties
+    ·                        ───
+ 30 │ }
     ╰────
 
   × Expected `:` but found `}`
@@ -15229,6 +15565,21 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest element must be last in a destructuring pattern
+   ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:1:8]
+ 1 │ const [...a,] = [];
+   ·        ────
+ 2 │ const {...b,} = {};
+   ╰────
+
+  × Unexpected trailing comma after rest element
+   ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:2:12]
+ 1 │ const [...a,] = [];
+ 2 │ const {...b,} = {};
+   ·            ─
+ 3 │ let c, d;
+   ╰────
+
+  × A rest element must be last in a destructuring pattern
    ╭─[conformance/es7/trailingCommasInBindingPatterns.ts:2:8]
  1 │ const [...a,] = [];
  2 │ const {...b,} = {};
@@ -15244,7 +15595,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  5 │ ({...d,} = {});
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[conformance/es7/trailingCommasInFunctionParametersAndArguments.ts:5:13]
  4 │ 
  5 │ function f2(...args,) {}
@@ -15292,12 +15643,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  8 │         this += value;
    ╰────
 
-  × Unexpected token
-    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:16:2]
- 15 │ // Missing the first operand
- 16 │ (, ANY);
-    ·  ─
- 17 │ (, BOOLEAN);
+  × Expected `)` but found `,`
+    ╭─[conformance/expressions/commaOperator/commaOperatorWithoutOperand.ts:9:5]
+  8 │ // Missing the second operand
+  9 │ (ANY, );
+    ·     ┬
+    ·     ╰── `)` expected
+ 10 │ (BOOLEAN, );
     ╰────
 
   × 'with' statements are not allowed
@@ -15814,13 +16166,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                      ─
    ╰────
 
-  × Expected `>` but found `,`
-   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:5:14]
+  × Expected `)` but found `,`
+   ╭─[conformance/externalModules/topLevelAwaitErrors.1.ts:4:9]
+ 3 │ // reparse call as invalid await should error
  4 │ await (1,);
+   ·         ┬
+   ·         ╰── `)` expected
  5 │ await <number, string>(1);
-   ·              ┬
-   ·              ╰── `>` expected
- 6 │ 
    ╰────
 
   × Cannot use `await` as an identifier in an async context
@@ -15913,7 +16265,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  12 │ }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
   8 │ //Function overload signature with rest param followed by non-optional parameter
   9 │ function fn5(x: string, ...y: any[], z: string);
@@ -16066,6 +16418,222 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·        ─
  3 │     let;
    ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:4:5]
+ 3 │ module Y {
+ 4 │     public class A { s: string }
+   ·     ──────
+ 5 │ 
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:6:5]
+ 5 │ 
+ 6 │     public class BB<T> extends A {
+   ·     ──────
+ 7 │         id: number;
+   ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:12:5]
+ 11 │ module Y2 {
+ 12 │     public class AA<T> { s: T }
+    ·     ──────
+ 13 │     public interface I { id: number }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:13:5]
+ 12 │     public class AA<T> { s: T }
+ 13 │     public interface I { id: number }
+    ·     ──────
+ 14 │ 
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:15:5]
+ 14 │ 
+ 15 │     public class B extends AA<string> implements I { id: number }
+    ·     ──────
+ 16 │ }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
+ 18 │ module Y3 {
+ 19 │     public module Module {
+    ·     ──────
+ 20 │         class A { s: string }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
+ 24 │ module Y4 {
+ 25 │     public enum Color { Blue, Red }
+    ·     ──────
+ 26 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:29:5]
+ 28 │ module YY {
+ 29 │     private class A { s: string }
+    ·     ───────
+ 30 │ 
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:31:5]
+ 30 │ 
+ 31 │     private class BB<T> extends A {
+    ·     ───────
+ 32 │         id: number;
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:37:5]
+ 36 │ module YY2 {
+ 37 │     private class AA<T> { s: T }
+    ·     ───────
+ 38 │     private interface I { id: number }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:38:5]
+ 37 │     private class AA<T> { s: T }
+ 38 │     private interface I { id: number }
+    ·     ───────
+ 39 │ 
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:40:5]
+ 39 │ 
+ 40 │     private class B extends AA<string> implements I { id: number }
+    ·     ───────
+ 41 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
+ 43 │ module YY3 {
+ 44 │     private module Module {
+    ·     ───────
+ 45 │         class A { s: string }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
+ 49 │ module YY4 {
+ 50 │     private enum Color { Blue, Red }
+    ·     ───────
+ 51 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:55:5]
+ 54 │ module YYY {
+ 55 │     static class A { s: string }
+    ·     ──────
+ 56 │ 
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:57:5]
+ 56 │ 
+ 57 │     static class BB<T> extends A {
+    ·     ──────
+ 58 │         id: number;
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:63:5]
+ 62 │ module YYY2 {
+ 63 │     static class AA<T> { s: T }
+    ·     ──────
+ 64 │     static interface I { id: number }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:64:5]
+ 63 │     static class AA<T> { s: T }
+ 64 │     static interface I { id: number }
+    ·     ──────
+ 65 │ 
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:66:5]
+ 65 │ 
+ 66 │     static class B extends AA<string> implements I { id: number }
+    ·     ──────
+ 67 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
+ 69 │ module YYY3 {
+ 70 │     static module Module {
+    ·     ──────
+ 71 │         class A { s: string }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:76:5]
+ 75 │ module YYY4 {
+ 76 │     static enum Color { Blue, Red }
+    ·     ──────
+ 77 │ }
+    ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:4:5]
+ 3 │ module Y {
+ 4 │     public var x: number = 0;
+   ·     ──────
+ 5 │ }
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:8:5]
+ 7 │ module Y2 {
+ 8 │     public function fn(x: string) { }
+   ·     ──────
+ 9 │ }
+   ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:12:5]
+ 11 │ module Y4 {
+ 12 │     static var x: number = 0;
+    ·     ──────
+ 13 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:16:5]
+ 15 │ module YY {
+ 16 │     static function fn(x: string) { }
+    ·     ──────
+ 17 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:20:5]
+ 19 │ module YY2 {
+ 20 │     private var x: number = 0;
+    ·     ───────
+ 21 │ }
+    ╰────
+
+  × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithVarStatements.ts:25:5]
+ 24 │ module YY3 {
+ 25 │     private function fn(x: string) { }
+    ·     ───────
+ 26 │ }
+    ╰────
 
   × Identifier `Point` has already been declared
    ╭─[conformance/internalModules/moduleDeclarations/invalidInstantiatedModule.ts:2:18]
@@ -16253,21 +16821,29 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  23 │ ; <Comp\u{0061} x={12} />
     ╰────
 
-  × Expected `(` but found `Identifier`
-    ╭─[conformance/override/overrideKeywordOrder.ts:12:18]
- 11 │   override async m1() {}
- 12 │   async override m2() {} // error
-    ·                  ─┬
-    ·                   ╰── `(` expected
- 13 │ }
+  × TS1030: 'override' modifier already seen.
+    ╭─[conformance/override/override5.ts:22:14]
+ 21 │ 
+ 22 │     override override oop: number;
+    ·              ────────
+ 23 │ 
     ╰────
+  help: Remove the duplicate modifier.
 
-  × Expected `,` but found `get`
-   ╭─[conformance/parser/ecmascript5/Accessors/parserAccessors10.ts:2:10]
+  × TS1030: 'override' modifier already seen.
+    ╭─[conformance/override/override7.ts:19:14]
+ 18 │ 
+ 19 │     override override oop: number;
+    ·              ────────
+ 20 │ 
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Accessors/parserAccessors10.ts:2:3]
  1 │ var v = {
  2 │   public get foo() { }
-   ·          ─┬─
-   ·           ╰── `,` expected
+   ·   ──────
  3 │ };
    ╰────
 
@@ -16325,6 +16901,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × TS1030: 'public' modifier already seen.
+   ╭─[conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts:2:10]
+ 1 │ class C {
+ 2 │   public public constructor() { }
+   ·          ──────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Classes can't have a field named 'constructor'
    ╭─[conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration8.ts:3:10]
@@ -17154,6 +17739,27 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
 
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration3.ts:1:1]
+ 1 │ public interface I {
+   · ──────
+ 2 │ }
+   ╰────
+
+  × 'static' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration4.ts:1:1]
+ 1 │ static interface I {
+   · ──────
+ 2 │ }
+   ╰────
+
+  × 'export' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/InterfaceDeclarations/parserInterfaceDeclaration6.ts:1:8]
+ 1 │ export export interface I {
+   ·        ──────
+ 2 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:11]
  1 │ class C {
@@ -17202,6 +17808,24 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·            ────
  3 │ }
    ╰────
+
+  × TS1030: 'public' modifier already seen.
+   ╭─[conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration7.ts:2:12]
+ 1 │ class C {
+ 2 │     public public get Foo() { }
+   ·            ──────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'public' modifier already seen.
+   ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration1.ts:2:12]
+ 1 │ class C {
+ 2 │     public public Foo() { }
+   ·            ──────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:2:11]
@@ -17268,6 +17892,15 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  13 │ }
     ╰────
 
+  × TS1030: 'public' modifier already seen.
+   ╭─[conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration1.ts:2:10]
+ 1 │ class C {
+ 2 │   public public Foo;
+   ·          ──────
+ 3 │ }
+   ╰────
+  help: Remove the duplicate modifier.
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:2:9]
  1 │ class C {
@@ -17306,7 +17939,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ };
    ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
    ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList1.ts:2:6]
  1 │ class C {
  2 │    F(...A, B) { }
@@ -17351,20 +17984,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:23]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList5.ts:1:16]
  1 │ function A(): (public B) => C {
-   ·                       ┬
-   ·                       ╰── `)` expected
+   ·                ────────
  2 │ }
    ╰────
 
-  × Expected `)` but found `Identifier`
-   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:26]
+  × A parameter property is only allowed in a constructor implementation.
+   ╭─[conformance/parser/ecmascript5/ParameterLists/parserParameterList6.ts:2:19]
  1 │ class C {
  2 │   constructor(C: (public A) => any) {
-   ·                          ┬
-   ·                          ╰── `)` expected
+   ·                   ────────
  3 │   }
    ╰────
 
@@ -17374,6 +18005,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │    foo(...bar?) { }
    ·              ─
  3 │ }
+   ╰────
+
+  × 'protected' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Protected/Protected1.ts:1:1]
+ 1 │ protected class C {
+   · ─────────
+ 2 │ }
+   ╰────
+
+  × 'protected' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
+ 1 │ protected module M {
+   · ─────────
+ 2 │ }
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -17399,6 +18044,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │    }
    ·    ─
  5 │ 
+   ╰────
+
+  × Unexpected token
+   ╭─[conformance/parser/ecmascript5/RegressionTests/parser509668.ts:3:23]
+ 2 │   // Doesn't work, but should
+ 3 │   constructor (public ...args: string[]) { }
+   ·                       ───
+ 4 │ }
    ╰────
 
   × Empty parenthesized expression
@@ -17465,6 +18118,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × 'export' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/RegressionTests/parser618973.ts:1:8]
+ 1 │ export export class Foo {
+   ·        ──────
+ 2 │   public Bar() {
+   ╰────
 
   × The keyword 'static' is reserved
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser642331.ts:2:18]
@@ -18311,11 +18971,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │ }
    ╰────
 
-  × Expected `,` but found `get`
-   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName5.ts:1:18]
+  × 'public' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName5.ts:1:11]
  1 │ var v = { public get [e]() { } };
-   ·                  ─┬─
-   ·                   ╰── `,` expected
+   ·           ──────
    ╰────
 
   × Expected `;` but found `Identifier`
@@ -19986,14 +20645,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  36 │ }
     ╰────
 
-  × A rest element must be last in a destructuring pattern
-   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:5:11]
- 4 │ var f = function foo(...x) { }
- 5 │ var f2 = (...x, ...y) => { }
-   ·           ────
- 6 │ 
-   ╰────
-
   × A rest parameter must be last in a parameter list
    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:5:11]
  4 │ var f = function foo(...x) { }
@@ -20003,12 +20654,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
- 12 │     (...x);
- 13 │     foo(...x, ...y);
-    ·         ────
- 14 │ }
-    ╰────
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:5:11]
+ 4 │ var f = function foo(...x) { }
+ 5 │ var f2 = (...x, ...y) => { }
+   ·           ────
+ 6 │ 
+   ╰────
 
   × A rest parameter must be last in a parameter list
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
@@ -20019,11 +20670,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:23:21]
- 22 │     foo(...x) { },
- 23 │     a: function foo(...x, ...y) { },
-    ·                     ────
- 24 │     b: (...x) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:13:9]
+ 12 │     (...x);
+ 13 │     foo(...x, ...y);
+    ·         ────
+ 14 │ }
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20035,12 +20686,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
- 4 │ var f = function foo(...x: number) { }
- 5 │ var f2 = (...x: Date, ...y: boolean) => { }
-   ·           ──────────
- 6 │ 
-   ╰────
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParameterWithoutAnnotationIsAnyArray.ts:23:21]
+ 22 │     foo(...x) { },
+ 23 │     a: function foo(...x, ...y) { },
+    ·                     ────
+ 24 │     b: (...x) => { }
+    ╰────
 
   × A rest parameter must be last in a parameter list
    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
@@ -20051,6 +20702,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest element must be last in a destructuring pattern
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:5:11]
+ 4 │ var f = function foo(...x: number) { }
+ 5 │ var f2 = (...x: Date, ...y: boolean) => { }
+   ·           ──────────
+ 6 │ 
+   ╰────
+
+  × A rest parameter must be last in a parameter list
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
+ 12 │     (...x: string);
+ 13 │     foo(...x: number, ...y: number);
+    ·         ────────────
+ 14 │ }
+    ╰────
+
+  × A rest element must be last in a destructuring pattern
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
  12 │     (...x: string);
  13 │     foo(...x: number, ...y: number);
@@ -20059,11 +20726,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:13:9]
- 12 │     (...x: string);
- 13 │     foo(...x: number, ...y: number);
-    ·         ────────────
- 14 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
+ 22 │     foo(...x: string) { },
+ 23 │     a: function foo(...x: number, ...y: Date) { },
+    ·                     ────────────
+ 24 │     b: (...x: string) => { }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20075,11 +20742,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes.ts:23:21]
- 22 │     foo(...x: string) { },
- 23 │     a: function foo(...x: number, ...y: Date) { },
-    ·                     ────────────
- 24 │     b: (...x: string) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:9:11]
+  8 │ var f = function foo(...x: MyThing) { }
+  9 │ var f2 = (...x: MyThing, ...y: MyThing) => { }
+    ·           ─────────────
+ 10 │ 
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20091,11 +20758,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:9:11]
-  8 │ var f = function foo(...x: MyThing) { }
-  9 │ var f2 = (...x: MyThing, ...y: MyThing) => { }
-    ·           ─────────────
- 10 │ 
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
+ 16 │     (...x: MyThing);
+ 17 │     foo(...x: MyThing, ...y: MyThing);
+    ·         ─────────────
+ 18 │ }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20107,11 +20774,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:17:9]
- 16 │     (...x: MyThing);
- 17 │     foo(...x: MyThing, ...y: MyThing);
-    ·         ─────────────
- 18 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:27:21]
+ 26 │     foo(...x: MyThing) { },
+ 27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
+    ·                     ─────────────
+ 28 │     b: (...x: MyThing) => { }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20123,11 +20790,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:27:21]
- 26 │     foo(...x: MyThing) { },
- 27 │     a: function foo(...x: MyThing, ...y: MyThing) { },
-    ·                     ─────────────
- 28 │     b: (...x: MyThing) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
+ 35 │ var f3 = function foo(...x: MyThing2<string>) { }
+ 36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
+    ·           ──────────────────────
+ 37 │ 
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20139,11 +20806,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:36:11]
- 35 │ var f3 = function foo(...x: MyThing2<string>) { }
- 36 │ var f4 = (...x: MyThing2<string>, ...y: MyThing2<string>) => { }
-    ·           ──────────────────────
- 37 │ 
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:44:9]
+ 43 │     (...x: MyThing2<string>);
+ 44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
+    ·         ──────────────────────
+ 45 │ }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20155,11 +20822,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:44:9]
- 43 │     (...x: MyThing2<string>);
- 44 │     foo(...x: MyThing2<string>, ...y: MyThing2<string>);
-    ·         ──────────────────────
- 45 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
+ 53 │     foo(...x: MyThing2<string>) { },
+ 54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
+    ·                     ──────────────────────
+ 55 │     b: (...x: MyThing2<string>) => { }
     ╰────
 
   × A rest element must be last in a destructuring pattern
@@ -20171,12 +20838,12 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest parameter must be last in a parameter list
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersOfNonArrayTypes2.ts:54:21]
- 53 │     foo(...x: MyThing2<string>) { },
- 54 │     a: function foo(...x: MyThing2<string>, ...y: MyThing2<string>) { },
-    ·                     ──────────────────────
- 55 │     b: (...x: MyThing2<string>) => { }
-    ╰────
+   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
+ 4 │ var f = function foo(...x: number[]) { }
+ 5 │ var f2 = (...x: number[], ...y: number[]) => { }
+   ·           ──────────────
+ 6 │ 
+   ╰────
 
   × A rest element must be last in a destructuring pattern
    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
@@ -20187,22 +20854,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × A rest parameter must be last in a parameter list
-   ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:5:11]
- 4 │ var f = function foo(...x: number[]) { }
- 5 │ var f2 = (...x: number[], ...y: number[]) => { }
-   ·           ──────────────
- 6 │ 
-   ╰────
-
-  × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
- 12 │     (...x: number[]);
- 13 │     foo(...x: number[], ...y: number[]);
-    ·         ──────────────
- 14 │ }
-    ╰────
-
-  × A rest parameter must be last in a parameter list
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
  12 │     (...x: number[]);
  13 │     foo(...x: number[], ...y: number[]);
@@ -20211,11 +20862,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:23:21]
- 22 │     foo(...x: number[]) { },
- 23 │     a: function foo(...x: number[], ...y: number[]) { },
-    ·                     ──────────────
- 24 │     b: (...x: number[]) => { }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:13:9]
+ 12 │     (...x: number[]);
+ 13 │     foo(...x: number[], ...y: number[]);
+    ·         ──────────────
+ 14 │ }
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20227,11 +20878,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
- 31 │ var f3 = function foo(...x: Array<string>) { }
- 32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
-    ·           ───────────────────
- 33 │ 
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:23:21]
+ 22 │     foo(...x: number[]) { },
+ 23 │     a: function foo(...x: number[], ...y: number[]) { },
+    ·                     ──────────────
+ 24 │     b: (...x: number[]) => { }
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20243,11 +20894,11 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
-    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:40:9]
- 39 │     (...x: Array<string>);
- 40 │     foo(...x: Array<string>, ...y: Array<string>);
-    ·         ───────────────────
- 41 │ }
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:32:11]
+ 31 │ var f3 = function foo(...x: Array<string>) { }
+ 32 │ var f4 = (...x: Array<string>, ...y: Array<string>) => { }
+    ·           ───────────────────
+ 33 │ 
     ╰────
 
   × A rest parameter must be last in a parameter list
@@ -20259,6 +20910,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × A rest element must be last in a destructuring pattern
+    ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:40:9]
+ 39 │     (...x: Array<string>);
+ 40 │     foo(...x: Array<string>, ...y: Array<string>);
+    ·         ───────────────────
+ 41 │ }
+    ╰────
+
+  × A rest parameter must be last in a parameter list
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
  49 │     foo(...x: Array<string>) { },
  50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
@@ -20266,7 +20925,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  51 │     b: (...x: Array<string>) => { }
     ╰────
 
-  × A rest parameter must be last in a parameter list
+  × A rest element must be last in a destructuring pattern
     ╭─[conformance/types/objectTypeLiteral/callSignatures/restParametersWithArrayTypeAnnotations.ts:50:21]
  49 │     foo(...x: Array<string>) { },
  50 │     a: function foo(...x: Array<string>, ...y: Array<string>) { },
@@ -20420,32 +21079,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  165 │ function notFirst(a: number, this: C): number { return this.n; }
      ╰────
 
-  × Expected `,` but found `this`
-     ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:168:26]
- 167 │ ///// parse errors /////
- 168 │ function modifiers(async this: C): number { return this.n; }
-     ·                          ──┬─
-     ·                            ╰── `,` expected
- 169 │ function restParam(...this: C): number { return this.n; }
+  × Unexpected token
+     ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:165:30]
+ 164 │ var thisConstructorType: new (this: number) => number;
+ 165 │ function notFirst(a: number, this: C): number { return this.n; }
+     ·                              ────
+ 166 │ 
      ╰────
-
-  × Expected `,` but found `?`
-    ╭─[conformance/types/tuple/named/namedTupleMembersErrors.ts:10:35]
-  9 │ 
- 10 │ export type Opt = [element: string?]; // question mark on element disallowed
-    ·                                   ┬
-    ·                                   ╰── `,` expected
- 11 │ 
-    ╰────
-
-  × Expected `,` but found `?`
-    ╭─[conformance/types/tuple/restTupleElements1.ts:10:22]
-  9 │ type T08 = [...string];  // Error
- 10 │ type T09 = [...string?];  // Error
-    ·                      ┬
-    ·                      ╰── `,` expected
- 11 │ type T10 = [string, ...[...string[]]];
-    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/types/typeAliases/reservedNamesInAliases.ts:6:5]
@@ -20486,14 +21126,31 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  19 │ const a9 = (f<number>)<number>;  // Error, no applicable signatures
     ╰────
 
-  × Expected `,` but found `Identifier`
-    ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:95:17]
+  × 'public' modifier cannot be used on a type parameter.
+    ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:95:10]
  94 │ 
  95 │ type T20<public T> = T;  // Error
-    ·                 ┬
-    ·                 ╰── `,` expected
+    ·          ──────
  96 │ type T21<in out in T> = T;  // Error
     ╰────
+
+  × TS1030: 'in' modifier already seen.
+    ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:96:17]
+ 95 │ type T20<public T> = T;  // Error
+ 96 │ type T21<in out in T> = T;  // Error
+    ·                 ──
+ 97 │ type T22<in out out T> = T;  // Error
+    ╰────
+  help: Remove the duplicate modifier.
+
+  × TS1030: 'out' modifier already seen.
+    ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:97:17]
+ 96 │ type T21<in out in T> = T;  // Error
+ 97 │ type T22<in out out T> = T;  // Error
+    ·                 ───
+ 98 │ type T23<out in T> = T;  // Error
+    ╰────
+  help: Remove the duplicate modifier.
 
   × Unexpected token
    ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotationsWithCircularlyReferencesError.ts:1:12]

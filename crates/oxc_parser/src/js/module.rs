@@ -1,13 +1,11 @@
 use oxc_allocator::{Box, Vec};
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use rustc_hash::FxHashMap;
 
-use super::{
-    list::{AssertEntries, ExportNamedSpecifiers, ImportSpecifierList},
-    FunctionKind,
-};
-use crate::{diagnostics, lexer::Kind, list::SeparatedList, Context, ParserImpl};
+use super::FunctionKind;
+use crate::{diagnostics, lexer::Kind, modifiers::Modifiers, Context, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     /// [Import Call](https://tc39.es/ecma262/#sec-import-calls)
@@ -125,8 +123,17 @@ impl<'a> ParserImpl<'a> {
 
     // import { export1 , export2 as alias2 , [...] } from "module-name";
     fn parse_import_specifiers(&mut self) -> Result<Vec<'a, ImportDeclarationSpecifier<'a>>> {
-        self.context(Context::empty(), self.ctx, ImportSpecifierList::parse)
-            .map(|x| x.import_specifiers)
+        self.expect(Kind::LCurly)?;
+        let list = self.context(Context::empty(), self.ctx, |p| {
+            p.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_import_specifier,
+            )
+        })?;
+        self.expect(Kind::RCurly)?;
+        Ok(list)
     }
 
     /// [Import Attributes](https://tc39.es/proposal-import-attributes)
@@ -139,8 +146,38 @@ impl<'a> ParserImpl<'a> {
             }
         };
         let span = self.start_span();
-        let with_entries = self.context(Context::empty(), self.ctx, AssertEntries::parse)?.elements;
+        self.expect(Kind::LCurly)?;
+        let with_entries = self.context(Context::empty(), self.ctx, |p| {
+            p.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                /*trailing_separator*/ true,
+                Self::parse_import_attribute,
+            )
+        })?;
+        self.expect(Kind::RCurly)?;
+
+        let mut keys = FxHashMap::default();
+        for e in &with_entries {
+            let key = e.key.as_atom().as_str();
+            let span = e.key.span();
+            if let Some(old_span) = keys.insert(key, span) {
+                self.error(diagnostics::redeclaration(key, old_span, span));
+            }
+        }
+
         Ok(Some(WithClause { span: self.end_span(span), attributes_keyword, with_entries }))
+    }
+
+    fn parse_import_attribute(&mut self) -> Result<ImportAttribute<'a>> {
+        let span = self.start_span();
+        let key = match self.cur_kind() {
+            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()?),
+            _ => ImportAttributeKey::Identifier(self.parse_identifier_name()?),
+        };
+        self.expect(Kind::Colon)?;
+        let value = self.parse_literal_string()?;
+        Ok(ImportAttribute { span: self.end_span(span), key, value })
     }
 
     pub(crate) fn parse_ts_export_assignment_declaration(
@@ -218,8 +255,16 @@ impl<'a> ParserImpl<'a> {
         span: Span,
     ) -> Result<Box<'a, ExportNamedDeclaration<'a>>> {
         let export_kind = self.parse_import_or_export_kind();
-        let specifiers =
-            self.context(Context::empty(), self.ctx, ExportNamedSpecifiers::parse)?.elements;
+        self.expect(Kind::LCurly)?;
+        let mut specifiers = self.context(Context::empty(), self.ctx, |p| {
+            p.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                /* trailing_separator */ true,
+                Self::parse_export_named_specifier,
+            )
+        })?;
+        self.expect(Kind::RCurly)?;
         let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
             let source = self.parse_literal_string()?;
             (Some(source), self.parse_import_attributes()?)
@@ -229,7 +274,7 @@ impl<'a> ParserImpl<'a> {
 
         // ExportDeclaration : export NamedExports ;
         if source.is_none() {
-            for specifier in &specifiers {
+            for specifier in specifiers.iter_mut() {
                 match &specifier.local {
                     // It is a Syntax Error if ReferencedBindings of NamedExports contains any StringLiterals.
                     ModuleExportName::StringLiteral(literal) => {
@@ -242,18 +287,25 @@ impl<'a> ParserImpl<'a> {
                     // For each IdentifierName n in ReferencedBindings of NamedExports:
                     // It is a Syntax Error if StringValue of n is a ReservedWord or the StringValue of n
                     // is one of "implements", "interface", "let", "package", "private", "protected", "public", or "static".
-                    ModuleExportName::Identifier(id) => {
-                        let match_result = Kind::match_keyword(&id.name);
+                    ModuleExportName::IdentifierName(ident) => {
+                        let match_result = Kind::match_keyword(&ident.name);
                         if match_result.is_reserved_keyword()
                             || match_result.is_future_reserved_keyword()
                         {
                             self.error(diagnostics::export_reserved_word(
                                 &specifier.local.to_string(),
                                 &specifier.exported.to_string(),
-                                id.span,
+                                ident.span,
                             ));
                         }
+
+                        // `local` becomes a reference for `export { local }`.
+                        specifier.local = ModuleExportName::IdentifierReference(
+                            self.ast.identifier_reference(ident.span, ident.name.as_str()),
+                        );
                     }
+                    // No prior code path should lead to parsing `ModuleExportName` as `IdentifierReference`.
+                    ModuleExportName::IdentifierReference(_) => unreachable!(),
                 }
             }
         }
@@ -280,12 +332,12 @@ impl<'a> ParserImpl<'a> {
         // For more information, please refer to <https://babeljs.io/docs/babel-plugin-proposal-decorators#decoratorsbeforeexport>
         self.eat_decorators()?;
         let modifiers = if self.ts_enabled() {
-            self.eat_modifiers_before_declaration().1
+            self.eat_modifiers_before_declaration()?
         } else {
             Modifiers::empty()
         };
 
-        let declaration = self.parse_declaration(decl_span, modifiers)?;
+        let declaration = self.parse_declaration(decl_span, &modifiers)?;
         let span = self.end_span(span);
         Ok(self.ast.export_named_declaration(
             span,
@@ -311,19 +363,19 @@ impl<'a> ParserImpl<'a> {
         self.eat_decorators()?;
         let declaration = match self.cur_kind() {
             Kind::Class => self
-                .parse_class_declaration(decl_span, /* modifiers */ Modifiers::empty())
+                .parse_class_declaration(decl_span, /* modifiers */ &Modifiers::empty())
                 .map(ExportDefaultDeclarationKind::ClassDeclaration)?,
             _ if self.at(Kind::Abstract) && self.peek_at(Kind::Class) && self.ts_enabled() => {
                 // eat the abstract modifier
-                let (_, modifiers) = self.eat_modifiers_before_declaration();
-                self.parse_class_declaration(decl_span, modifiers)
+                let modifiers = self.eat_modifiers_before_declaration()?;
+                self.parse_class_declaration(decl_span, &modifiers)
                     .map(ExportDefaultDeclarationKind::ClassDeclaration)?
             }
             _ if self.at(Kind::Interface)
                 && !self.peek_token().is_on_new_line
                 && self.ts_enabled() =>
             {
-                self.parse_ts_interface_declaration(decl_span, Modifiers::empty()).map(|decl| {
+                self.parse_ts_interface_declaration(decl_span, &Modifiers::empty()).map(|decl| {
                     match decl {
                         Declaration::TSInterfaceDeclaration(decl) => {
                             ExportDefaultDeclarationKind::TSInterfaceDeclaration(decl)
@@ -343,7 +395,7 @@ impl<'a> ParserImpl<'a> {
                 decl
             }
         };
-        let exported = ModuleExportName::Identifier(exported);
+        let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
         Ok(self.ast.export_default_declaration(span, declaration, exported))
     }
@@ -371,7 +423,7 @@ impl<'a> ParserImpl<'a> {
     // ImportSpecifier :
     //   ImportedBinding
     //   ModuleExportName as ImportedBinding
-    pub(crate) fn parse_import_specifier(&mut self) -> Result<Box<'a, ImportSpecifier<'a>>> {
+    pub(crate) fn parse_import_specifier(&mut self) -> Result<ImportDeclarationSpecifier<'a>> {
         let specifier_span = self.start_span();
         let peek_kind = self.peek_kind();
         let mut import_kind = ImportOrExportKind::Value;
@@ -400,14 +452,14 @@ impl<'a> ParserImpl<'a> {
         } else {
             let local = self.parse_binding_identifier()?;
             let imported = IdentifierName { span: local.span, name: local.name.clone() };
-            (ModuleExportName::Identifier(imported), local)
+            (ModuleExportName::IdentifierName(imported), local)
         };
-        Ok(self.ast.alloc(ImportSpecifier {
+        Ok(ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
             span: self.end_span(specifier_span),
             imported,
             local,
             import_kind,
-        }))
+        })))
     }
 
     // ModuleExportName :
@@ -424,7 +476,7 @@ impl<'a> ParserImpl<'a> {
                 };
                 Ok(ModuleExportName::StringLiteral(literal))
             }
-            _ => Ok(ModuleExportName::Identifier(self.parse_identifier_name()?)),
+            _ => Ok(ModuleExportName::IdentifierName(self.parse_identifier_name()?)),
         }
     }
 
@@ -462,5 +514,38 @@ impl<'a> ParserImpl<'a> {
         }
 
         ImportOrExportKind::Value
+    }
+
+    fn parse_export_named_specifier(&mut self) -> Result<ExportSpecifier<'a>> {
+        let specifier_span = self.start_span();
+        let peek_kind = self.peek_kind();
+        // export { type}              // name: `type`
+        // export { type type }        // name: `type`    type-export: `true`
+        // export { type as }          // name: `as`      type-export: `true`
+        // export { type as as }       // name: `type`    type-export: `false` (aliased to `as`)
+        // export { type as as as }    // name: `as`      type-export: `true`, aliased to `as`
+        let mut export_kind = ImportOrExportKind::Value;
+        if self.ts_enabled() && self.at(Kind::Type) {
+            if self.peek_at(Kind::As) {
+                if self.nth_at(2, Kind::As) {
+                    if self.nth_at(3, Kind::Str) || self.nth_kind(3).is_identifier_name() {
+                        export_kind = ImportOrExportKind::Type;
+                    }
+                } else if !(self.nth_at(2, Kind::Str) || self.nth_kind(2).is_identifier_name()) {
+                    export_kind = ImportOrExportKind::Type;
+                }
+            } else if (matches!(peek_kind, Kind::Str) || peek_kind.is_identifier_name()) {
+                export_kind = ImportOrExportKind::Type;
+            }
+        }
+
+        if export_kind == ImportOrExportKind::Type {
+            self.bump_any();
+        }
+
+        let local = self.parse_module_export_name()?;
+        let exported =
+            if self.eat(Kind::As) { self.parse_module_export_name()? } else { local.clone() };
+        Ok(ExportSpecifier { span: self.end_span(specifier_span), local, exported, export_kind })
     }
 }

@@ -1,10 +1,8 @@
-use std::{collections::HashMap, hash::BuildHasherDefault};
-
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHashMap;
 
 use crate::{
     context::LintContext,
@@ -15,7 +13,7 @@ use crate::{
 fn exceeded_max_assertion(x0: usize, x1: usize, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(max-expects): Enforces a maximum number assertion calls in a test body.")
         .with_help(format!("Too many assertion calls ({x0:?}) - maximum allowed is {x1:?}"))
-        .with_labels([span2.into()])
+        .with_label(span2)
 }
 
 #[derive(Debug, Clone)]
@@ -78,8 +76,7 @@ impl Rule for MaxExpects {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let mut count_map: HashMap<usize, usize, BuildHasherDefault<FxHasher>> =
-            FxHashMap::default();
+        let mut count_map: FxHashMap<usize, usize> = FxHashMap::default();
 
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
             self.run(possible_jest_node, &mut count_map, ctx);
@@ -91,7 +88,7 @@ impl MaxExpects {
     fn run<'a>(
         &self,
         jest_node: &PossibleJestNode<'a, '_>,
-        count_map: &mut HashMap<usize, usize, BuildHasherDefault<FxHasher>>,
+        count_map: &mut FxHashMap<usize, usize>,
         ctx: &LintContext<'a>,
     ) {
         let node = jest_node.node;

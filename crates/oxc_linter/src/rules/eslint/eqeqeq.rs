@@ -12,7 +12,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 fn eqeqeq_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("eslint(eqeqeq): Expected {x1} and instead saw {x0}"))
         .with_help(format!("Prefer {x1} operator"))
-        .with_labels([span2.into()])
+        .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -193,7 +193,7 @@ fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
             | (Expression::NullLiteral(_), Expression::NullLiteral(_))
             | (Expression::StringLiteral(_), Expression::StringLiteral(_))
             | (Expression::NumericLiteral(_), Expression::NumericLiteral(_))
-            | (Expression::BigintLiteral(_), Expression::BigintLiteral(_))
+            | (Expression::BigIntLiteral(_), Expression::BigIntLiteral(_))
             | (Expression::RegExpLiteral(_), Expression::RegExpLiteral(_))
             | (Expression::TemplateLiteral(_), Expression::TemplateLiteral(_))
     )

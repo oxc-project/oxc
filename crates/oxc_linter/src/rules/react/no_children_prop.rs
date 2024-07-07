@@ -13,7 +13,7 @@ fn no_children_prop_diagnostic(span0: Span) -> OxcDiagnostic {
         "eslint-plugin-react(no-children-prop): Avoid passing children using a prop.",
     )
     .with_help("The canonical way to pass children in React is to use JSX elements")
-    .with_labels([span0.into()])
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

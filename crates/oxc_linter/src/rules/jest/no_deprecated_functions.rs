@@ -13,7 +13,7 @@ fn deprecated_function(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
         "eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions",
     )
     .with_help(format!("{x0:?} has been deprecated in favor of {x1:?}"))
-    .with_labels([span2.into()])
+    .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

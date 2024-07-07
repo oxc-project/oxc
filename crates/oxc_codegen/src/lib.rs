@@ -15,7 +15,7 @@ use oxc_ast::{
     ast::{BlockStatement, Directive, Expression, Program, Statement},
     Comment, Trivias,
 };
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
@@ -73,7 +73,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     start_of_default_export: usize,
 
     /// Track the current indentation level
-    indent: u8,
+    indent: u32,
 
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
@@ -394,7 +394,8 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
-    fn print_symbol(&mut self, span: Span, _symbol_id: Option<SymbolId>, fallback: &Atom) {
+    #[allow(clippy::needless_pass_by_value)]
+    fn print_symbol(&mut self, span: Span, _symbol_id: Option<SymbolId>, fallback: &str) {
         // if let Some(mangler) = &self.mangler {
         // if let Some(symbol_id) = symbol_id {
         // let name = mangler.get_symbol_name(symbol_id);
@@ -439,14 +440,14 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     #[inline]
-    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
-        if wrap {
-            self.print(b'(');
-        }
+    fn wrap<F: FnMut(&mut Self)>(&mut self, _wrap: bool, mut f: F) {
+        // if wrap {
+        // self.print(b'(');
+        // }
         f(self);
-        if wrap {
-            self.print(b')');
-        }
+        // if wrap {
+        // self.print(b')');
+        // }
     }
 
     #[inline]
@@ -466,7 +467,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         if let Some(directives) = directives {
             if directives.is_empty() {
                 if let Some(Statement::ExpressionStatement(s)) = statements.first() {
-                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
+                    if matches!(s.expression, Expression::StringLiteral(_)) {
                         self.print_semicolon();
                         self.print_soft_newline();
                     }

@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 474/927
+Passed: 444/927
 
 # All Passed:
 * babel-preset-react
@@ -433,25 +433,30 @@ Passed: 474/927
 * shipped-proposals/new-class-features-chrome-94/input.js
 * shipped-proposals/new-class-features-firefox-70/input.js
 
-# babel-plugin-transform-arrow-functions (1/6)
+# babel-plugin-transform-arrow-functions (0/6)
 * assumption-newableArrowFunctions-false/basic/input.js
 * assumption-newableArrowFunctions-false/naming/input.js
 * assumption-newableArrowFunctions-false/self-referential/input.js
 * spec/newableArrowFunction-default/input.js
 * spec/newableArrowFunction-vs-spec-false/input.js
+* spec/newableArrowFunction-vs-spec-true/input.js
 
-# babel-preset-typescript (7/10)
+# babel-preset-typescript (5/10)
+* jsx-compat/js-valid/input.js
+* jsx-compat/tsx-valid/input.tsx
 * node-extensions/import-in-cts/input.cts
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (130/151)
+# babel-plugin-transform-typescript (128/151)
+* class/accessor-allowDeclareFields-false/input.ts
+* class/accessor-allowDeclareFields-true/input.ts
+* class/private-method-override/input.ts
 * enum/mix-references/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
 * exports/interface/input.ts
-* imports/elide-no-import-specifiers/input.ts
-* imports/import-removed-exceptions/input.ts
+* imports/elision-locations/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-4/input.ts
@@ -468,9 +473,34 @@ Passed: 474/927
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-plugin-transform-react-jsx (141/142)
+# babel-plugin-transform-react-jsx (120/142)
+* autoImport/auto-import-react-source-type-module/input.js
+* autoImport/auto-import-react-source-type-script/input.js
+* autoImport/import-source/input.js
+* autoImport/import-source-pragma/input.js
+* autoImport/react-defined/input.js
+* react/arrow-functions/input.js
+* react/does-not-add-source-self/input.mjs
+* react/should-properly-handle-comments-between-props/input.js
+* react-automatic/arrow-functions/input.js
 * react-automatic/does-not-add-source-self-automatic/input.mjs
+* react-automatic/handle-nonstatic-children/input.js
+* react-automatic/handle-static-children/input.js
+* react-automatic/key-undefined-works/input.js
+* react-automatic/should-properly-handle-comments-between-props/input.js
+* react-automatic/should-properly-handle-keys/input.js
+* react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
+* react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
+* runtime/classic/input.js
+* runtime/defaults-to-automatic/input.js
+* runtime/pragma-runtime-classsic/input.js
+* runtime/runtime-automatic/input.js
+* sourcemaps/JSXText/input.js
 
-# babel-plugin-transform-react-jsx-development (9/10)
+# babel-plugin-transform-react-jsx-development (5/10)
+* cross-platform/auto-import-dev/input.js
+* cross-platform/classic-runtime/input.js
+* cross-platform/handle-static-children/input.js
+* cross-platform/within-derived-classes-constructor/input.js
 * cross-platform/within-ts-module-block/input.ts
 

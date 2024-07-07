@@ -15,7 +15,7 @@ use crate::{
 fn no_focused_tests_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("eslint-plugin-jest(no-focused-tests): Unexpected focused test.")
         .with_help("Remove focus from test.")
-        .with_labels([span0.into()])
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
