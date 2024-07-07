@@ -64,17 +64,18 @@ bench   = false
 [dependencies]
 # All `oxc_*` dependencies optional as on CI we build each benchmark separately
 # with only the crates it needs, to speed up the builds
-oxc_allocator    = { workspace = true, optional = true }
-oxc_linter       = { workspace = true, optional = true }
-oxc_minifier     = { workspace = true, optional = true }
-oxc_parser       = { workspace = true, features = ["benchmarking"], optional = true }
-oxc_prettier     = { workspace = true, optional = true }
-oxc_semantic     = { workspace = true, optional = true }
-oxc_span         = { workspace = true, optional = true }
-oxc_tasks_common = { workspace = true, optional = true }
-oxc_transformer  = { workspace = true, optional = true }
-oxc_codegen      = { workspace = true, optional = true }
-oxc_sourcemap    = { workspace = true, features = ["concurrent"], optional = true }
+oxc_allocator             = { workspace = true, optional = true }
+oxc_linter                = { workspace = true, optional = true }
+oxc_minifier              = { workspace = true, optional = true }
+oxc_parser                = { workspace = true, features = ["benchmarking"], optional = true }
+oxc_prettier              = { workspace = true, optional = true }
+oxc_semantic              = { workspace = true, optional = true }
+oxc_span                  = { workspace = true, optional = true }
+oxc_tasks_common          = { workspace = true, optional = true }
+oxc_transformer           = { workspace = true, optional = true }
+oxc_codegen               = { workspace = true, optional = true }
+oxc_sourcemap             = { workspace = true, features = ["concurrent"], optional = true }
+oxc_isolated_declarations = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
 
@@ -86,6 +87,7 @@ serde_json = { workspace = true, optional = true }
 default = [
   "dep:oxc_allocator",
   "dep:oxc_codegen",
+  "dep:oxc_isolated_declarations",
   "dep:oxc_linter",
   "dep:oxc_minifier",
   "dep:oxc_parser",
@@ -124,3 +126,10 @@ linter = [
   "dep:oxc_tasks_common",
 ]
 prettier = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_prettier", "dep:oxc_span", "dep:oxc_tasks_common"]
+isolated_declarations = [
+  "dep:oxc_allocator",
+  "dep:oxc_isolated_declarations",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+]
