@@ -112,6 +112,16 @@ fn test() {
         ),
         ("var App; var React; enum A { App };  React.render(<App />);", None),
         ("var React; enum A { App }; var App; React.render(<App />);", None),
+        ("var React; import App = require('./app'); React.render(<App />);", None),
+        (
+            "
+        var React;
+        import { Foo } from './foo';
+        import App = Foo.App;
+        React.render(<App />);
+        ",
+            None,
+        ),
     ];
 
     let fail = vec![

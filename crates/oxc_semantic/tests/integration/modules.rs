@@ -202,3 +202,25 @@ fn test_export_in_invalid_scope() {
     assert!(!errors.is_empty(), "expected an export within a function to produce a check error, but no errors were produced");
     assert!(semantic.module_record().exported_bindings.is_empty());
 }
+
+#[test]
+fn test_import_assignment() {
+    SemanticTester::ts(
+        "
+    import Foo = require('./foo')
+    ",
+    )
+    .has_root_symbol("Foo")
+    .contains_flags(SymbolFlags::ImportBinding)
+    .test();
+
+    SemanticTester::ts(
+        "
+    import { Foo } from './foo'
+    import Baz = Foo.Bar.Baz
+    ",
+    )
+    .has_root_symbol("Baz")
+    .contains_flags(SymbolFlags::ImportBinding)
+    .test();
+}
