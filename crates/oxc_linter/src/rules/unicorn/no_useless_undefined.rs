@@ -237,7 +237,7 @@ impl Rule for NoUselessUndefined {
                 if !self.check_arguments {
                     return;
                 }
-    
+
                 if should_ignore(&call_expr.callee) {
                     return;
                 }
