@@ -120,7 +120,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                     let property_signature = self.ast.ts_signature_property_signature(
                         object.span,
-                        false,
+                        object.computed,
                         false,
                         is_const,
                         self.ast.copy(&object.key),
