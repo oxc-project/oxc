@@ -206,7 +206,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
       - uses: cargo-bins/cargo-binstall@main
         if: steps.filter.outputs.src == 'true'
-      - run: cargo binstall --no-confirm cargo-shear@1.0.0
+      - run: cargo binstall --no-confirm cargo-shear@1
         if: steps.filter.outputs.src == 'true'
       - run: cargo shear
         if: steps.filter.outputs.src == 'true'
