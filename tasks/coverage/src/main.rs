@@ -22,7 +22,7 @@ fn main() {
         "parser" => args.run_parser(),
         "codegen" => args.run_codegen(),
         "codegen-runtime" => args.run_codegen_runtime(),
-        "prettier" => args.run_prettier(),
+        // "prettier" => args.run_prettier(),
         "transformer" => args.run_transformer(),
         "transpiler" => args.run_transpiler(),
         "minifier" => args.run_minifier(),
