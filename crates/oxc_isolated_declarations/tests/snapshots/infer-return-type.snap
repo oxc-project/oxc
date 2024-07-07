@@ -8,6 +8,7 @@ declare function foo(): number;
 declare function bar(): number | undefined;
 declare function baz();
 declare function qux(): string;
+declare function quux(): string;
 
 
 ==================== Errors ====================

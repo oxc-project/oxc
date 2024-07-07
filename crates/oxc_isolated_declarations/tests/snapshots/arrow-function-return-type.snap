@@ -7,6 +7,7 @@ input_file: crates/oxc_isolated_declarations/tests/fixtures/arrow-function-retur
 declare function A(): unknown;
 declare const B: unknown;
 declare const C: unknown;
+declare const D: () => string;
 
 
 ==================== Errors ====================
@@ -31,8 +32,9 @@ declare const C: unknown;
 
   x TS9007: Function must have an explicit return type annotation with
   | --isolatedDeclarations.
-   ,-[9:20]
- 8 | 
- 9 | const C = function () {}
-   :                    ^
-   `----
+    ,-[9:20]
+  8 | 
+  9 | const C = function () {}
+    :                    ^
+ 10 | 
+    `----
