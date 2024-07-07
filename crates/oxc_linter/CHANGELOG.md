@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.5.3] - 2024-07-07
+
+### Features
+
+- 1681b11 linter: Eslint-plugin-jest/consistent-test-it (#4053) (cinchen)
+- 6876490 linter: Add rule no-undefined (#4041) (jordan boyer)
+- bf04dee linter: Implement unicorn/no-negation-in-equality-check (#4034) (Nissim Chekroun)
+- aa45604 linter/eslint: Implement no-multi-str (#4038) (Jelle van der Waa)
+
+### Bug Fixes
+
+- 7b2dc3b linter: Fix panic in import/namespace (#4080) (Boshen)
+
 ## [0.5.2] - 2024-07-02
 
 ### Features
