@@ -1359,6 +1359,7 @@ dependencies = [
  "criterion2",
  "oxc_allocator",
  "oxc_codegen",
+ "oxc_isolated_declarations",
  "oxc_linter",
  "oxc_minifier",
  "oxc_parser",

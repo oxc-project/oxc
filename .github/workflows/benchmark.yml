@@ -55,6 +55,7 @@ jobs:
           - lexer
           - parser
           - transformer
+          - isolated_declarations
           - semantic
           - minifier
           - codegen_sourcemap
