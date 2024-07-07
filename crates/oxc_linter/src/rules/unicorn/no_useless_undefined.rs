@@ -97,22 +97,22 @@ fn should_ignore(callee: &Expression) -> bool {
     match callee {
         Expression::Identifier(identifier) => {
             let name = identifier.name.as_str();
-            return is_match_ignore_func_name(name);
+            is_match_ignore_func_name(name)
         }
         Expression::StaticMemberExpression(static_assertions) => {
             let name = static_assertions.property.name.as_str();
-            return is_match_ignore_func_name(name);
+            is_match_ignore_func_name(name)
         }
         _ => {
-            return false;
+            false
         }
     }
 }
 
 fn is_function_bind_call(call_expr: &CallExpression) -> bool {
-    return !call_expr.optional
+    !call_expr.optional
         && matches!(&call_expr.callee, Expression::StaticMemberExpression(member_expr)
-        if member_expr.property.name.as_str() == "bind");
+        if member_expr.property.name.as_str() == "bind")
 }
 
 fn is_undefined(arg: &Argument) -> bool {
@@ -245,7 +245,7 @@ impl Rule for NoUselessUndefined {
                 let arguments = &call_expr.arguments;
 
                 // Ignore arguments in `Function#bind()`, but not `this` argument
-                if is_function_bind_call(&call_expr) && arguments.len() != 1 {
+                if is_function_bind_call(call_expr) && arguments.len() != 1 {
                     return;
                 }
                 let mut undefined_args_spans = Vec::new();
@@ -275,7 +275,7 @@ impl Rule for NoUselessUndefined {
                 }
                 // If all arguments removed, and there is trailing comma, we need remove it.
                 if remaining_count == 0 {
-                    end = call_expr.span.end - 1
+                    end = call_expr.span.end - 1;
                 }
 
                 let delete_span = Span::new(start, end);
@@ -285,7 +285,6 @@ impl Rule for NoUselessUndefined {
                 );
             }
             _ => {
-                return;
             }
         }
     }
