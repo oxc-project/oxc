@@ -101,6 +101,7 @@ mod eslint {
     pub mod no_unsafe_optional_chaining;
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
+    pub mod no_useless_backreference;
     pub mod no_useless_catch;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
@@ -492,6 +493,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
     eslint::no_unused_private_class_members,
+    eslint::no_useless_backreference,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
     eslint::no_useless_rename,
