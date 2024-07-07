@@ -103,9 +103,7 @@ fn should_ignore(callee: &Expression) -> bool {
             let name = static_assertions.property.name.as_str();
             is_match_ignore_func_name(name)
         }
-        _ => {
-            false
-        }
+        _ => false,
     }
 }
 
@@ -284,8 +282,7 @@ impl Rule for NoUselessUndefined {
                     |fixer| fixer.delete_range(delete_span),
                 );
             }
-            _ => {
-            }
+            _ => {}
         }
     }
 }
