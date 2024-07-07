@@ -35,6 +35,6 @@
     "test": "node ./test-node.mjs"
   },
   "devDependencies": {
-    "wasm-pack": "^0.12.1"
+    "wasm-pack": "^0.13.0"
   }
 }
