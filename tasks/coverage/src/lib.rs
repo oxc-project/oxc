@@ -59,7 +59,7 @@ impl AppArgs {
     pub fn run_all(&self) {
         self.run_parser();
         self.run_codegen();
-        self.run_prettier();
+        // self.run_prettier();
         self.run_transformer();
         self.run_transpiler();
         // self.run_codegen_runtime();
