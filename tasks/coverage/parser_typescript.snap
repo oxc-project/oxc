@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
 Positive Passed: 5272/5283 (99.79%)
-Negative Passed: 1085/4875 (22.26%)
+Negative Passed: 1086/4875 (22.28%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -2118,7 +2118,6 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOv
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty3.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty4.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty6.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationES2022.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor1.ts"
@@ -12360,6 +12359,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  43 │ }
     ╰────
   help: Remove the duplicate modifier.
+
+  × TS(1267): Property 'p' cannot have an initializer because it is marked abstract.
+   ╭─[conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract p = 'yep'
+   ·              ─
+ 3 │ }
+   ╰────
 
   × Identifier `accessor` has already been declared
     ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor11.ts:5:12]

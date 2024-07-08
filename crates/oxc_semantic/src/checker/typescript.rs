@@ -1,4 +1,4 @@
-use oxc_ast::syntax_directed_operations::BoundNames;
+use oxc_ast::syntax_directed_operations::{BoundNames, PropName};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
@@ -182,5 +182,25 @@ pub fn check_ts_import_equals_declaration<'a>(
     // `import { Foo } from './foo'; import type Bar = Foo.Bar` is not allowed
     if decl.import_kind.is_type() && !decl.module_reference.is_external() {
         ctx.error(import_alias_cannot_use_import_type(decl.span));
+    }
+}
+
+/// Property '<prop>' cannot have an initializer because it is marked abstract.(1267)
+fn abstract_property_cannot_have_initializer(prop_name: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error(
+        format!("TS(1267): Property '{prop_name}' cannot have an initializer because it is marked abstract."),
+    )
+    .with_label(span)
+}
+
+pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &SemanticBuilder<'a>) {
+    if prop.r#type.is_abstract() && prop.value.is_some() {
+        // let (prop, span) = match prop.key {
+        //     Property
+        // }
+        let (prop_name, span) = prop.key.prop_name().unwrap_or_else(|| {
+            (&ctx.source_text[prop.span], prop.key.span())
+        });
+        ctx.error(abstract_property_cannot_have_initializer(prop_name, span));
     }
 }

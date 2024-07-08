@@ -1271,6 +1271,12 @@ impl<'a> ClassElement<'a> {
     }
 }
 
+impl PropertyDefinitionType {
+    pub fn is_abstract(&self) -> bool {
+        matches!(self, Self::TSAbstractPropertyDefinition)
+    }
+}
+
 impl MethodDefinitionKind {
     pub fn is_constructor(&self) -> bool {
         matches!(self, Self::Constructor)
