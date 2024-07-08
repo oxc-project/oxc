@@ -212,7 +212,9 @@ pub struct IdentifierName<'a> {
     pub name: Atom<'a>,
 }
 
-/// Identifier Reference
+/// `x` inside `func` in `const x = 0; function func() { console.log(x); }`
+///
+/// Represents an identifier reference, which is a reference to a variable, function, class, or object.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -239,7 +241,9 @@ pub struct IdentifierReference<'a> {
     pub reference_flag: ReferenceFlag,
 }
 
-/// Binding Identifier
+/// `x` in `const x = 0;`
+///
+/// Represents a binding identifier, which is an identifier that is used to declare a variable, function, class, or object.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -261,7 +265,9 @@ pub struct BindingIdentifier<'a> {
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
-/// Label Identifier
+/// `loop` in `loop: while (true) { break loop; }`
+///
+/// Represents a label identifier, which is an identifier that is used to label a statement.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
