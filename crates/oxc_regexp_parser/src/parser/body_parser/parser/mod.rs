@@ -1,7 +1,7 @@
 mod atom;
 mod atom_escape;
 /// Main entry point for `PatternParser`
-/// All others are splitted files to `impl PatternParser`
+/// All others are just split files to `impl PatternParser`
 mod parse;
 mod shared;
 
