@@ -1,6 +1,6 @@
 use oxc_allocator::Box;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::Atom;
+use oxc_span::Atom as SpanAtom;
 
 use crate::{
     ast,
@@ -70,7 +70,7 @@ impl<'a> super::parse::PatternParser<'a> {
                 ast::Backreference::TemporaryBackreference(Box::new_in(
                     ast::TemporaryBackreference {
                         span: self.span_factory.create(span_start, span_end),
-                        r#ref: Atom::from(&self.source_text[span_start..span_end]),
+                        r#ref: SpanAtom::from(&self.source_text[span_start..span_end]),
                     },
                     self.allocator,
                 )),
@@ -181,7 +181,7 @@ impl<'a> super::parse::PatternParser<'a> {
     #[allow(clippy::type_complexity)]
     fn consume_character_class_escape_unicode(
         &mut self,
-    ) -> Result<Option<((Atom<'a>, Option<Atom<'a>>, bool), bool)>> {
+    ) -> Result<Option<((SpanAtom<'a>, Option<SpanAtom<'a>>, bool), bool)>> {
         let negate = if self.reader.eat('p') {
             Some(false)
         } else if self.reader.eat('P') {
@@ -220,7 +220,7 @@ impl<'a> super::parse::PatternParser<'a> {
     /// Returns: `(name, value, is_strings_related_unicode_property)`
     fn consume_unicode_property_value_expression(
         &mut self,
-    ) -> Result<Option<(Atom<'a>, Option<Atom<'a>>, bool)>> {
+    ) -> Result<Option<(SpanAtom<'a>, Option<SpanAtom<'a>>, bool)>> {
         let checkpoint = self.reader.checkpoint();
 
         // UnicodePropertyName=UnicodePropertyValue
@@ -266,7 +266,7 @@ impl<'a> super::parse::PatternParser<'a> {
         Ok(None)
     }
 
-    fn consume_unicode_property_name(&mut self) -> Option<Atom<'a>> {
+    fn consume_unicode_property_name(&mut self) -> Option<SpanAtom<'a>> {
         let span_start = self.reader.span_position();
 
         let checkpoint = self.reader.checkpoint();
@@ -278,10 +278,10 @@ impl<'a> super::parse::PatternParser<'a> {
             return None;
         }
 
-        Some(Atom::from(&self.source_text[span_start..self.reader.span_position()]))
+        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
     }
 
-    fn consume_unicode_property_value(&mut self) -> Option<Atom<'a>> {
+    fn consume_unicode_property_value(&mut self) -> Option<SpanAtom<'a>> {
         let span_start = self.reader.span_position();
 
         let checkpoint = self.reader.checkpoint();
@@ -293,7 +293,7 @@ impl<'a> super::parse::PatternParser<'a> {
             return None;
         }
 
-        Some(Atom::from(&self.source_text[span_start..self.reader.span_position()]))
+        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
     }
 
     // ```
