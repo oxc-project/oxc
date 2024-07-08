@@ -20,6 +20,8 @@ workspace = true
 doctest = false
 
 [dependencies]
+oxc_allocator = { workspace = true }
+
 miette      = { workspace = true }
 compact_str = { workspace = true }
 

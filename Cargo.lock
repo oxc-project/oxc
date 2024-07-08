@@ -1726,6 +1726,7 @@ version = "0.17.2"
 dependencies = [
  "compact_str",
  "miette",
+ "oxc_allocator",
  "serde",
  "tsify",
  "wasm-bindgen",
