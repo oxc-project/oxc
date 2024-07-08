@@ -205,22 +205,13 @@ fn test_export_in_invalid_scope() {
 
 #[test]
 fn test_import_assignment() {
-    SemanticTester::ts(
-        "
-    import Foo = require('./foo')
-    ",
-    )
-    .has_root_symbol("Foo")
-    .contains_flags(SymbolFlags::ImportBinding)
-    .test();
+    SemanticTester::ts("import Foo = require('./foo')")
+        .has_root_symbol("Foo")
+        .contains_flags(SymbolFlags::ImportBinding)
+        .test();
 
-    SemanticTester::ts(
-        "
-    import { Foo } from './foo'
-    import Baz = Foo.Bar.Baz
-    ",
-    )
-    .has_root_symbol("Baz")
-    .contains_flags(SymbolFlags::ImportBinding)
-    .test();
+    SemanticTester::ts("import { Foo } from './foo'; import Baz = Foo.Bar.Baz")
+        .has_root_symbol("Baz")
+        .contains_flags(SymbolFlags::ImportBinding)
+        .test();
 }
