@@ -29,7 +29,7 @@ See more at [oxc.rs](https://oxc.rs)!
 
 ## 🙋Who's using Oxc?
 
-- [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transpilng.
+- [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transpiling.
 - [Rolldown][rolldown], [Rspack][rspack], and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
 - [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json) and [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint) uses oxlint for linting.
 
