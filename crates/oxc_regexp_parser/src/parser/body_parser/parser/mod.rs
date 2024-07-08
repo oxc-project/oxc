@@ -1,5 +1,8 @@
+/// impl `PatternParser`
 mod atom;
+mod atom_escape;
 mod misc;
+/// Main entry point for `PatternParser`
 mod parse;
 
 pub use parse::PatternParser;
