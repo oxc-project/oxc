@@ -168,3 +168,19 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
         }
     });
 }
+
+/// TS(1392)
+fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("TS(1392): An import alias cannot use 'import type'").with_label(span)
+}
+
+pub fn check_ts_import_equals_declaration<'a>(
+    decl: &TSImportEqualsDeclaration<'a>,
+    ctx: &SemanticBuilder<'a>,
+) {
+    // `import type Foo = require('./foo')` is allowed
+    // `import { Foo } from './foo'; import type Bar = Foo.Bar` is not allowed
+    if decl.import_kind.is_type() && !decl.module_reference.is_external() {
+        ctx.error(import_alias_cannot_use_import_type(decl.span));
+    }
+}

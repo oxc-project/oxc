@@ -241,7 +241,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         // for each of them in the constructor body.
         if def.kind == MethodDefinitionKind::Constructor {
             for param in def.value.params.items.as_mut_slice() {
-                if param.accessibility.is_some() {
+                if param.accessibility.is_some() || param.readonly || param.r#override {
                     if let Some(id) = param.pattern.get_binding_identifier() {
                         self.assignments.push(Assignment {
                             span: id.span,

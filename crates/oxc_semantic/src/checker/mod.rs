@@ -99,6 +99,9 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
+        AstKind::TSImportEqualsDeclaration(decl) => {
+            ts::check_ts_import_equals_declaration(decl, ctx);
+        }
         _ => {}
     }
 }
