@@ -254,15 +254,17 @@ impl<'a> super::parse::PatternParser<'a> {
         let cp = self.reader.peek()?;
 
         if self.state.is_unicode_mode() {
-            if unicode::is_syntax_character(cp) || cp == '/' as u32 {
+            if unicode::is_syntax_character(cp) {
                 self.reader.advance();
                 return Some(cp);
             }
-
-            return None;
+            if cp == '/' as u32 {
+                self.reader.advance();
+                return Some(cp);
+            }
         }
 
-        if !unicode::is_id_continue(cp) {
+        if !self.state.is_unicode_mode() && !unicode::is_id_continue(cp) {
             self.reader.advance();
             return Some(cp);
         }
