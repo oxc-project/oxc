@@ -28,7 +28,6 @@ oxc_span         = { workspace = true }
 oxc_diagnostics  = { workspace = true }
 oxc_module_lexer = { path = "../../crates/oxc_module_lexer" }
 
-tokio       = { workspace = true }
 napi        = { workspace = true, features = ["async"] }
 napi-derive = { workspace = true }
 serde_json  = { workspace = true }

@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.1] - 2024-07-06
+
+### Bug Fixes
+
+- aa585d3 ast_codegen, ast: Visit `ExpressionArrayElement` as `Expression`. (#4061) (rzvxa)
+
+### Refactor
+
+- 8fa98e0 ast: Inline trivial functions and shorten code (#4066) (overlookmotel)
+
+## [0.17.0] - 2024-07-05
+
+- e32b4bc ast: [**BREAKING**] Store trivia comments in a sorted slice (#4045) (Luca Bruno)
+
+- 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_memeber` to `visit_ts_enum_member`. (#4000) (rzvxa)
+
+- 4a0eaa0 ast: [**BREAKING**] Rename `visit_enum` to `visit_ts_enum_declaration`. (#3998) (rzvxa)
+
+- c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
+
+### Features
+
+- 1854a52 ast_codegen: Introduce the `#[span]` hint. (#4012) (rzvxa)
+- 7538af1 ast_codegen: Add visit generator (#3954) (rzvxa)
+
+### Bug Fixes
+
+- 05a047c isolated-declarations: Method following an abstract method gets dropped (#4024) (Dunqing)
+
+### Refactor
+
+- b51f75b ast_codegen: No longer outputs discard variable for empty visitors. (#4008) (rzvxa)
+
 ## [0.16.3] - 2024-07-02
 
 ### Features

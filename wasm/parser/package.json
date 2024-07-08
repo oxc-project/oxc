@@ -1,6 +1,6 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.16.3",
+  "version": "0.17.1",
   "description": "Wasm target for the oxc parser.",
   "keywords": [
     "JavaScript",
@@ -35,6 +35,6 @@
     "test": "node ./test-node.mjs"
   },
   "devDependencies": {
-    "wasm-pack": "^0.12.1"
+    "wasm-pack": "^0.13.0"
   }
 }

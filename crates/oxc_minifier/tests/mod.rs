@@ -1,8 +1,9 @@
-mod closure;
-mod esbuild;
+#![allow(unused)]
+// mod closure;
+// mod esbuild;
 mod oxc;
-mod tdewolff;
-mod terser;
+// mod tdewolff;
+// mod terser;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::WhitespaceRemover;

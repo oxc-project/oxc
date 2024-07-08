@@ -143,6 +143,8 @@ jobs:
     permissions:
       contents: write # for softprops/action-gh-release@v1
       id-token: write # for `npm publish --provenance`
+    outputs:
+      version: ${{ steps.run.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -245,4 +247,4 @@ jobs:
           workflow: bump_oxlint.yml
           token: ${{ secrets.PAT }}
           ref: main
-          inputs: '{ "version": "${{ needs.check.outputs.version }}" }'
+          inputs: '{ "version": "${{ needs.publish.outputs.version }}" }'

@@ -77,7 +77,9 @@ impl<'a> IsolatedDeclarations<'a> {
                     } else {
                         init = Some(self.ast.copy(init_expr));
                     }
-                } else {
+                } else if !decl.kind.is_const()
+                    || !matches!(init_expr, Expression::TemplateLiteral(_))
+                {
                     // otherwise, we need to infer type from expression
                     binding_type = self.infer_type_from_expression(init_expr);
                 }

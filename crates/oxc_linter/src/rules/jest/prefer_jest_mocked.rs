@@ -233,6 +233,7 @@ fn test() {
             "(jest.mocked(foo)).mockReturnValue(1);",
         ),
         // Note: couldn't fix
+        // Todo: this need to fixer support option configuration.
         // (
         //     "(<jest.Mock>foo).mockReturnValue(1);",
         //     "(jest.mocked(foo)).mockReturnValue(1);",
@@ -243,6 +244,7 @@ fn test() {
             "(jest.mocked(foo)).mockReturnValue(1);",
         ),
         // Note: couldn't fix
+        // Todo: this need to fixer support option configuration.
         // (
         //     "(<jest.Mock>foo as unknown).mockReturnValue(1);",
         //     "(jest.mocked(foo) as unknown).mockReturnValue(1);",

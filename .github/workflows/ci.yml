@@ -157,7 +157,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-      - uses: crate-ci/typos@v1.22.9
+      - uses: crate-ci/typos@v1.23.1
         with:
           files: .
 
@@ -206,7 +206,7 @@ jobs:
         if: steps.filter.outputs.src == 'true'
       - uses: cargo-bins/cargo-binstall@main
         if: steps.filter.outputs.src == 'true'
-      - run: cargo binstall --no-confirm cargo-shear
+      - run: cargo binstall --no-confirm cargo-shear@1
         if: steps.filter.outputs.src == 'true'
       - run: cargo shear
         if: steps.filter.outputs.src == 'true'

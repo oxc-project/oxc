@@ -76,6 +76,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_loss_of_precision;
+    pub mod no_multi_str;
     pub mod no_new;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
@@ -96,6 +97,7 @@ mod eslint {
     pub mod no_ternary;
     pub mod no_this_before_super;
     pub mod no_undef;
+    pub mod no_undefined;
     pub mod no_unreachable;
     pub mod no_unsafe_finally;
     pub mod no_unsafe_negation;
@@ -157,6 +159,7 @@ mod typescript {
 }
 
 mod jest {
+    pub mod consistent_test_it;
     pub mod expect_expect;
     pub mod max_expects;
     pub mod max_nested_describe;
@@ -260,6 +263,7 @@ mod unicorn {
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
     pub mod no_negated_condition;
+    pub mod no_negation_in_equality_check;
     pub mod no_nested_ternary;
     pub mod no_new_array;
     pub mod no_new_buffer;
@@ -447,6 +451,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::no_multi_str,
     eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
@@ -495,6 +500,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_shadow_restricted_names,
     eslint::no_sparse_arrays,
     eslint::no_undef,
+    eslint::no_undefined,
     eslint::no_unreachable,
     eslint::no_unsafe_finally,
     eslint::no_unsafe_negation,
@@ -553,6 +559,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_non_null_asserted_nullish_coalescing,
     typescript::no_dynamic_delete,
+    jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,
@@ -620,6 +627,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_lonely_if,
     unicorn::no_magic_array_flat_depth,
     unicorn::no_negated_condition,
+    unicorn::no_negation_in_equality_check,
     unicorn::no_nested_ternary,
     unicorn::no_new_array,
     unicorn::no_new_buffer,

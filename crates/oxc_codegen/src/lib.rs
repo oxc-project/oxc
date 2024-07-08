@@ -73,7 +73,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     start_of_default_export: usize,
 
     /// Track the current indentation level
-    indent: u8,
+    indent: u32,
 
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
@@ -440,14 +440,14 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     #[inline]
-    fn wrap<F: FnMut(&mut Self)>(&mut self, wrap: bool, mut f: F) {
-        if wrap {
-            self.print(b'(');
-        }
+    fn wrap<F: FnMut(&mut Self)>(&mut self, _wrap: bool, mut f: F) {
+        // if wrap {
+        // self.print(b'(');
+        // }
         f(self);
-        if wrap {
-            self.print(b')');
-        }
+        // if wrap {
+        // self.print(b')');
+        // }
     }
 
     #[inline]
@@ -467,7 +467,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         if let Some(directives) = directives {
             if directives.is_empty() {
                 if let Some(Statement::ExpressionStatement(s)) = statements.first() {
-                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
+                    if matches!(s.expression, Expression::StringLiteral(_)) {
                         self.print_semicolon();
                         self.print_soft_newline();
                     }
