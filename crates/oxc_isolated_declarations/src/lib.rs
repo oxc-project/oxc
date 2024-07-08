@@ -9,6 +9,7 @@ mod class;
 mod declaration;
 mod diagnostics;
 mod r#enum;
+mod formal_parameter_binding_pattern;
 mod function;
 mod inferrer;
 mod literal;

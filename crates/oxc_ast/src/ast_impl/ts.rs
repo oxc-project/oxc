@@ -194,6 +194,13 @@ impl<'a> TSModuleBlock<'a> {
     }
 }
 
+impl<'a> TSModuleReference<'a> {
+    /// Returns `true` if this is an [`TSModuleReference::ExternalModuleReference`].
+    pub fn is_external(&self) -> bool {
+        matches!(self, Self::ExternalModuleReference(_))
+    }
+}
+
 impl<'a> Decorator<'a> {
     /// Get the name of the decorator
     /// ```ts
