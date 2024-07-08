@@ -74,6 +74,9 @@ mod test {
             ),
             (r"k\p{Emoji_Presentation", ParserOptions::default().with_unicode_flags(true, false)),
             (r"k\p{Script=", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"l\ka", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"l\k<", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"l\k<a", ParserOptions::default().with_unicode_flags(true, false)),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),
