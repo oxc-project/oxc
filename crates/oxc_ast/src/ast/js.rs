@@ -199,7 +199,7 @@ macro_rules! match_expression {
 }
 pub use match_expression;
 
-/// `var` in `let var = 1;`
+/// `foo` in `let foo = 1;`
 ///
 /// Fundamental syntactic structure used for naming variables, functions, and properties. It must start with a Unicode letter (including $ and _) and can be followed by Unicode letters, digits, $, or _.
 #[ast(visit)]
