@@ -1672,6 +1672,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ImportNamespaceSpecifier(specifier) => {
                 specifier.bind(self);
             }
+            AstKind::TSImportEqualsDeclaration(decl) => {
+                decl.bind(self);
+            }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
                 self.make_all_namespaces_valuelike();

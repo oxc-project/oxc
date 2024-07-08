@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
 Positive Passed: 5272/5283 (99.79%)
-Negative Passed: 1082/4875 (22.19%)
+Negative Passed: 1085/4875 (22.26%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -874,7 +874,6 @@ Expect Syntax Error: "compiler/implicitAnyWidenToAny.ts"
 Expect Syntax Error: "compiler/implicitConstParameters.ts"
 Expect Syntax Error: "compiler/importAnImport.ts"
 Expect Syntax Error: "compiler/importAndVariableDeclarationConflict1.ts"
-Expect Syntax Error: "compiler/importAndVariableDeclarationConflict3.ts"
 Expect Syntax Error: "compiler/importAndVariableDeclarationConflict4.ts"
 Expect Syntax Error: "compiler/importDeclRefereingExternalModuleWithNoResolve.ts"
 Expect Syntax Error: "compiler/importDeclWithClassModifiers.ts"
@@ -1186,8 +1185,6 @@ Expect Syntax Error: "compiler/moduleImport.ts"
 Expect Syntax Error: "compiler/moduleNewExportBug.ts"
 Expect Syntax Error: "compiler/moduleNoneErrors.ts"
 Expect Syntax Error: "compiler/moduleProperty2.ts"
-Expect Syntax Error: "compiler/moduleSharesNameWithImportDeclarationInsideIt3.ts"
-Expect Syntax Error: "compiler/moduleSharesNameWithImportDeclarationInsideIt5.ts"
 Expect Syntax Error: "compiler/moduleVariableArrayIndexer.ts"
 Expect Syntax Error: "compiler/moduleVisibilityTest2.ts"
 Expect Syntax Error: "compiler/moduleVisibilityTest3.ts"
@@ -6866,6 +6863,17 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  17 │             }
     ╰────
 
+  × Identifier `x` has already been declared
+   ╭─[compiler/importAndVariableDeclarationConflict3.ts:5:8]
+ 4 │ 
+ 5 │ import x = m.m;
+   ·        ┬
+   ·        ╰── `x` has already been declared here
+ 6 │ import x = m.m;
+   ·        ┬
+   ·        ╰── It can not be redeclared here
+   ╰────
+
   × Unexpected token
    ╭─[compiler/importAssertionNonstring.ts:1:52]
  1 │ import * as thing1 from "./mod.mjs" assert {field: 0};
@@ -7961,6 +7969,30 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  10 │     export var z = y;  // property visible to any code
     ╰────
   help: Try insert a semicolon here
+
+  × Identifier `M` has already been declared
+    ╭─[compiler/moduleSharesNameWithImportDeclarationInsideIt3.ts:10:12]
+  9 │ module A.M {
+ 10 │     import M = Z.M;
+    ·            ┬
+    ·            ╰── `M` has already been declared here
+ 11 │     import M = Z.I;
+    ·            ┬
+    ·            ╰── It can not be redeclared here
+ 12 │ 
+    ╰────
+
+  × Identifier `M` has already been declared
+    ╭─[compiler/moduleSharesNameWithImportDeclarationInsideIt5.ts:10:12]
+  9 │ module A.M {
+ 10 │     import M = Z.I;
+    ·            ┬
+    ·            ╰── `M` has already been declared here
+ 11 │     import M = Z.M;
+    ·            ┬
+    ·            ╰── It can not be redeclared here
+ 12 │ 
+    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[compiler/multiLinePropertyAccessAndArrowFunctionIndent1.ts:1:1]
