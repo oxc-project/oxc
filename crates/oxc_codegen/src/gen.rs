@@ -12,6 +12,7 @@ use oxc_syntax::{
 
 use crate::{
     annotation_comment::{gen_comment, get_leading_annotate_comment},
+    gen_comment::GenComment,
     Codegen, Context, Operator,
 };
 
@@ -30,11 +31,6 @@ where
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         (**self).gen(p, ctx);
     }
-}
-
-/// the [GenComment] trait only generate annotate comments like `/* @__PURE__ */` and `/* @__NO_SIDE_EFFECTS__ */`.
-pub trait GenComment<const MINIFY: bool> {
-    fn gen_comment(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
 }
 
 impl<'a, const MINIFY: bool, T> GenExpr<MINIFY> for Box<'a, T>
@@ -1075,18 +1071,6 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
     }
 }
 
-impl<const MINIFY: bool> GenComment<MINIFY> for ArrowFunctionExpression<'_> {
-    fn gen_comment(&self, codegen: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        gen_comment(self.span.start, codegen);
-    }
-}
-
-impl<const MINIFY: bool> GenComment<MINIFY> for Function<'_> {
-    fn gen_comment(&self, codegen: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        gen_comment(self.span.start, codegen);
-    }
-}
-
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.print_str(b"(");
@@ -1436,6 +1420,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let wrap = precedence > self.precedence() || ctx.has_forbid_call();
         let ctx = ctx.and_forbid_call(false);
+        self.gen_comment(p, ctx);
         p.wrap(wrap, |p| {
             p.add_source_mapping(self.span.start);
             self.callee.gen_expr(p, self.precedence(), ctx);
@@ -2065,6 +2050,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        self.gen_comment(p, ctx);
         p.wrap(precedence > self.precedence(), |p| {
             p.add_source_mapping(self.span.start);
             p.print_str(b"new ");
