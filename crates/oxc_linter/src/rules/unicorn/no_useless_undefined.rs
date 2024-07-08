@@ -47,42 +47,42 @@ declare_oxc_lint!(
 
 // Create a static set for all function names
 static FUNCTION_NAMES: phf::Set<&'static str> = phf::phf_set! {
-        // Compare function names
-        "is",
-        "equal",
-        "notEqual",
-        "strictEqual",
-        "notStrictEqual",
-        "propertyVal",
-        "notPropertyVal",
-        "not",
-        "include",
-        "property",
-        "toBe",
-        "toHaveBeenCalledWith",
-        "toContain",
-        "toContainEqual",
-        "toEqual",
-        "same",
-        "notSame",
-        "strictSame",
-        "strictNotSame",
-        // `array.push(undefined)`
-        "push",
-        // `array.unshift(undefined)`
-        "unshift",
-        // `array.includes(undefined)`
-        "includes",
-        // `set.add(undefined)`
-        "add",
-        // `set.has(undefined)`
-        "has",
-        // `map.set(foo, undefined)`
-        "set",
-        // `React.createContext(undefined)`
-        "createContext",
-        // https://vuejs.org/api/reactivity-core.html#ref
-        "ref",
+    // Compare function names
+    "is",
+    "equal",
+    "notEqual",
+    "strictEqual",
+    "notStrictEqual",
+    "propertyVal",
+    "notPropertyVal",
+    "not",
+    "include",
+    "property",
+    "toBe",
+    "toHaveBeenCalledWith",
+    "toContain",
+    "toContainEqual",
+    "toEqual",
+    "same",
+    "notSame",
+    "strictSame",
+    "strictNotSame",
+    // `array.push(undefined)`
+    "push",
+    // `array.unshift(undefined)`
+    "unshift",
+    // `array.includes(undefined)`
+    "includes",
+    // `set.add(undefined)`
+    "add",
+    // `set.has(undefined)`
+    "has",
+    // `map.set(foo, undefined)`
+    "set",
+    // `React.createContext(undefined)`
+    "createContext",
+    // https://vuejs.org/api/reactivity-core.html#ref
+    "ref",
 };
 
 fn is_match_ignore_func_name(name: &str) -> bool {
@@ -118,6 +118,19 @@ fn is_undefined(arg: &Argument) -> bool {
     false
 }
 
+fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+    let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
+        return false;
+    };
+    match parent_node.kind() {
+        AstKind::ArrowFunctionExpression(arrow_func_express) => {
+            arrow_func_express.return_type.is_some()
+        }
+        AstKind::Function(func) => func.return_type.is_some(),
+        _ => is_has_function_return_type(parent_node, ctx),
+    }
+}
+
 impl Rule for NoUselessUndefined {
     fn from_configuration(value: serde_json::Value) -> Self {
         let check_arguments =
@@ -139,6 +152,9 @@ impl Rule for NoUselessUndefined {
                 match parent_node_kind {
                     // `return undefined`
                     AstKind::ReturnStatement(ret_stmt) => {
+                        if is_has_function_return_type(parent_node, ctx) {
+                            return;
+                        }
                         ctx.diagnostic_with_fix(
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
@@ -190,6 +206,10 @@ impl Rule for NoUselessUndefined {
                             return;
                         };
 
+                        if is_has_function_return_type(parent_node, ctx) {
+                            return;
+                        }
+
                         ctx.diagnostic_with_fix(
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| fixer.replace(func_body.span, "{}"),
@@ -208,6 +228,9 @@ impl Rule for NoUselessUndefined {
                         if variable_declarator.kind == VariableDeclarationKind::Const {
                             return;
                         }
+                        if is_has_function_return_type(parent_node, ctx) {
+                            return;
+                        }
                         return ctx.diagnostic_with_fix(
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| {
@@ -222,6 +245,9 @@ impl Rule for NoUselessUndefined {
                     AstKind::AssignmentPattern(assign_pattern) => {
                         let left = &assign_pattern.left;
                         let delete_span = Span::new(left.span().end, undefined_literal.span.end);
+                        if is_has_function_return_type(parent_node, ctx) {
+                            return;
+                        }
                         return ctx.diagnostic_with_fix(
                             no_useless_undefined_diagnostic(undefined_literal.span),
                             |fixer| fixer.delete_range(delete_span),
@@ -353,9 +379,223 @@ fn test() {
         // `checkArrowFunctionBody: false`
         (r"const foo = () => undefined", options_ignore_arrow_function_body()),
         (r"const x = { a: undefined }", None),
+        // https://github.com/zeit/next.js/blob/3af0fe5cf2542237f34d106872d104c3606b1858/packages/next/build/utils.ts#L620
+        (r"prerenderPaths?.add(entry)", None),
+        (
+            r#"
+            function getThing(): string | undefined {
+                if (someCondition) {
+                    return "hello world";
+                }
+
+                return undefined;
+            }
+        "#,
+            None,
+        ),
+        (
+            r#"
+            function getThing(): string | undefined {
+                if (someCondition) {
+                    return "hello world";
+                } else if (anotherCondition) {
+                    return undefined;
+                }
+
+                return undefined;
+            }
+        "#,
+            None,
+        ),
+        (r"const foo = (): undefined => {return undefined;}", None),
+        (r"const foo = (): undefined => undefined;", None),
+        (r"const foo = (): string => undefined;", None),
+        (r"const foo = function (): undefined {return undefined}", None),
+        (r"export function foo(): undefined {return undefined}", None),
+        (
+            r"
+                    const object = {
+                        method(): undefined {
+                            return undefined;
+                        }
+                    }
+                ",
+            None,
+        ),
+        (
+            r"
+            class A {
+                method(): undefined {
+                    return undefined;
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            r"
+            const A = class A {
+                method(): undefined {
+                    return undefined
+                }
+            };
+        ",
+            None,
+        ),
+        (
+            r"
+            class A {
+                static method(): undefined {
+                    return undefined
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            r"
+            class A {
+                get method(): undefined {
+                    return undefined;
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            r"
+            class A {
+                static get method(): undefined {
+                    return undefined;
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            r"
+            class A {
+                #method(): undefined {
+                    return undefined;
+                }
+            }
+        ",
+            None,
+        ),
+        (
+            r"
+            class A {
+                private method(): undefined {
+                    return undefined;
+                }
+            }
+        ",
+            None,
+        ),
+        (r"createContext<T>(undefined);", None),
+        (r"React.createContext<T>(undefined);", None),
+        (r"const x = { a: undefined }", None),
+        (
+            r"
+            const y: any = {}
+            y.foo = undefined
+        ",
+            None,
+        ),
+        (
+            r"
+            class Foo {
+                public x: number | undefined = undefined
+            }
+        ",
+            None,
+        ),
     ];
 
-    let fail = vec![(r"let foo = undefined;", None)];
+    let fail = vec![
+        (
+            r"
+        foo(
+            undefined,
+            bar,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+        )
+        ",
+            None,
+        ),
+        (r"function foo([bar = undefined] = []) {}", None),
+        (
+            r"
+			foo(
+				undefined,
+				bar,
+				undefined,
+				undefined,
+				undefined,
+				undefined,
+			)
+		",
+            None,
+        ),
+        ("function foo([bar = undefined] = []) {}", None),
+        ("foo(bar, undefined, undefined);", None),
+        ("let a = undefined, b = 2;", None),
+        // TODO: Handle parenthesized undefined
+        /* (
+            r#"
+        function foo() {
+            return /* */ (
+                /* */
+                (
+                    /* */
+                    undefined
+                    /* */
+                )
+                /* */
+            ) /* */ ;
+        }
+        "#,
+            None,
+        ),
+        (
+            r#"
+        function * foo() {
+            yield /* */ (
+                /* */
+                (
+                    /* */
+                    undefined
+                    /* */
+                )
+                /* */
+            ) /* */ ;
+        }
+        "#,
+            None,
+        ),
+        (
+            r#"
+        const foo = () => /* */ (
+            /* */
+            (
+                /* */
+                undefined
+                /* */
+            )
+            /* */
+        );
+        "#,
+            None,
+        ), */
+        ("foo.bind(undefined)", None),
+        ("bind(foo, undefined)", None),
+        ("foo.bind?.(bar, undefined)", None),
+        ("foo[bind](bar, undefined)", None),
+        ("foo.notBind(bar, undefined)", None),
+    ];
 
     let fix = vec![
         (r"function foo() {return undefined;}", r"function foo() {return;}", None),
@@ -396,7 +636,34 @@ fn test() {
         ("function foo({bar = undefined} = {}) {}", "function foo({bar} = {}) {}", None),
         ("function foo([bar = undefined]) {}", "function foo([bar]) {}", None),
         ("function foo([bar = undefined] = []) {}", "function foo([bar] = []) {}", None),
+        // TODO: maybe fix into `x?: string`?
+        (
+            "function foo(x: string | undefined = undefined) { }",
+            "function foo(x: string | undefined) { }",
+            None,
+        ),
         ("return undefined;", "return;", None),
+        (
+            r"
+            function foo():undefined {
+					function nested() {
+						return undefined;
+					}
+
+					return nested();
+				}
+        ",
+            r"
+            function foo():undefined {
+					function nested() {
+						return;
+					}
+
+					return nested();
+				}
+        ",
+            None,
+        ),
     ];
 
     Tester::new(NoUselessUndefined::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
