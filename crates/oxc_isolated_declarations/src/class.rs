@@ -54,40 +54,44 @@ impl<'a> IsolatedDeclarations<'a> {
         &self,
         property: &PropertyDefinition<'a>,
     ) -> ClassElement<'a> {
-        let type_annotations = if property.accessibility.is_some_and(|a| a.is_private()) {
-            None
-        } else {
-            property
-                .type_annotation
-                .as_ref()
-                .map(|type_annotation| self.ast.copy(type_annotation))
-                .or_else(|| {
-                    property
-                        .value
-                        .as_ref()
-                        .and_then(|expr| {
-                            let ts_type = if property.readonly {
-                                self.transform_expression_to_ts_type(expr)
-                            } else {
-                                self.infer_type_from_expression(expr)
-                            };
-                            if ts_type.is_none() {
-                                self.error(property_must_have_explicit_type(property.key.span()));
-                            }
-                            ts_type
-                        })
-                        .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type))
-                })
-        };
+        let mut type_annotations = None;
+        let mut value = None;
 
-        // TODO if inferred type_annotations is TSLiteral, it should stand as value,
-        // so `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
+        if property.accessibility.map_or(true, |a| !a.is_private()) {
+            if property.type_annotation.is_some() {
+                type_annotations = self.ast.copy(&property.type_annotation);
+            } else if let Some(expr) = property.value.as_ref() {
+                let ts_type = if property.readonly {
+                    // `field = 'string'` remain `field = 'string'` instead of `field: 'string'`
+                    if Self::is_need_to_infer_type_from_expression(expr) {
+                        self.transform_expression_to_ts_type(expr)
+                    } else {
+                        if let Expression::TemplateLiteral(lit) = expr {
+                            value = self
+                                .transform_template_to_string(lit)
+                                .map(Expression::StringLiteral);
+                        } else {
+                            value = Some(self.ast.copy(expr));
+                        }
+                        None
+                    }
+                } else {
+                    self.infer_type_from_expression(expr)
+                };
+
+                type_annotations = ts_type.map(|t| self.ast.ts_type_annotation(SPAN, t));
+            }
+
+            if type_annotations.is_none() && value.is_none() {
+                self.error(property_must_have_explicit_type(property.key.span()));
+            }
+        }
 
         self.ast.class_property(
             property.r#type,
             property.span,
             self.ast.copy(&property.key),
-            None,
+            value,
             property.computed,
             property.r#static,
             property.declare,
