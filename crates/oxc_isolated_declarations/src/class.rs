@@ -241,8 +241,12 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut elements = self.ast.new_vec();
         for (index, param) in function.params.items.iter().enumerate() {
             if param.accessibility.is_some() || param.readonly {
-                // transformed params will definitely have type annotation
-                let type_annotation = self.ast.copy(&params.items[index].pattern.type_annotation);
+                let type_annotation = if param.accessibility.is_some_and(|a| a.is_private()) {
+                    None
+                } else {
+                    // transformed params will definitely have type annotation
+                    self.ast.copy(&params.items[index].pattern.type_annotation)
+                };
                 if let Some(new_element) =
                     self.transform_formal_parameter_to_class_property(param, type_annotation)
                 {
