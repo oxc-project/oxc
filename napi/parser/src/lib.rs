@@ -56,7 +56,7 @@ fn parse<'a>(
     let source_type = options
         .source_filename
         .as_ref()
-        .map(|name| SourceType::from_path(name).unwrap())
+        .and_then(|name| SourceType::from_path(name).ok())
         .unwrap_or_default();
     let source_type = match options.source_type.as_deref() {
         Some("script") => source_type.with_script(true),
