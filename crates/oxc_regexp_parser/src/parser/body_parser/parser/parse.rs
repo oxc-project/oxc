@@ -300,15 +300,22 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Atom>
     fn consume_atom(&mut self) -> Result<Option<ast::Atom<'a>>> {
-        Ok(self
-            .consume_pattern_character()
-            .or(self.consume_dot())
-            .or(self.consume_reverse_solidus_atom_escape()?)
-            // TODO: Implement
-            // self.consume_character_class()
-            // self.consume_capturing_group()
-            // self.consume_uncapturing_group()
-            .or(None))
+        if let Some(atom) = self.consume_pattern_character() {
+            return Ok(Some(atom));
+        }
+        if let Some(atom) = self.consume_dot() {
+            return Ok(Some(atom));
+        }
+        if let Some(atom) = self.consume_reverse_solidus_atom_escape()? {
+            return Ok(Some(atom));
+        }
+
+        // TODO: Implement
+        // self.consume_character_class()
+        // self.consume_capturing_group()
+        // self.consume_uncapturing_group()
+
+        Ok(None)
     }
 
     // ```

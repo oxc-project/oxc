@@ -16,11 +16,7 @@ impl<'a> super::parse::PatternParser<'a> {
         if unicode::is_non_zero_digit(self.reader.peek()?) {
             let mut value = 0;
 
-            while let Some(cp) = self.reader.peek() {
-                if !unicode::is_decimal_digits(cp) {
-                    break;
-                }
-
+            while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digits(cp)) {
                 // `- '0' as u32`: convert code point to digit
                 value = (10 * value) + (cp - '0' as u32) as usize;
                 self.reader.advance();
