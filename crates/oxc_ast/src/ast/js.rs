@@ -280,9 +280,9 @@ pub struct LabelIdentifier<'a> {
     pub name: Atom<'a>,
 }
 
-/// This Expression
+/// `this` in `return this.prop;`
 ///
-/// Corresponds to the `this` keyword.
+/// Represents a `this` expression, which is a reference to the current object.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
