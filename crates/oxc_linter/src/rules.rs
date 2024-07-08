@@ -76,6 +76,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_loss_of_precision;
+    pub mod no_multi_str;
     pub mod no_new;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
@@ -450,6 +451,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::no_multi_str,
     eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,

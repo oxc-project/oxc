@@ -83,6 +83,17 @@ impl Rule for Radix {
                         {
                             Self::check_arguments(self, call_expr, ctx);
                         }
+                    } else if let Expression::ParenthesizedExpression(paren_expr) =
+                        &member_expr.object
+                    {
+                        if let Expression::Identifier(ident) = &paren_expr.expression {
+                            if ident.name == "Number"
+                                && member_expr.property.name == "parseInt"
+                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
+                            {
+                                Self::check_arguments(self, call_expr, ctx);
+                            }
+                        }
                     }
                 }
                 Expression::ChainExpression(chain_expr) => {
@@ -192,6 +203,7 @@ fn test() {
         ("var Number; Number.parseInt(foo, 10);", Some(json!(["as-needed"]))),
         // ("/* globals parseInt:off */ parseInt(foo);", Some(json!(["always"]))),
         // ("Number.parseInt(foo, 10);", Some(json!(["as-needed"]))), // { globals: { Number: "off" } }
+        (r#"function *f(){ yield(Number).parseInt("10", foo) }"#, None), // { "ecmaVersion": 6 },
     ];
 
     let fail = vec![
@@ -220,6 +232,7 @@ fn test() {
         (r#"Number.parseInt?.("10");"#, None),
         (r#"Number?.parseInt("10");"#, None),
         (r#"(Number?.parseInt)("10");"#, None),
+        ("function *f(){ yield(Number).parseInt() }", None), // { "ecmaVersion": 6 },
     ];
 
     Tester::new(Radix::NAME, pass, fail).test_and_snapshot();

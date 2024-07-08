@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.2] - 2024-07-08
+
+### Features
+
+- e386b62 semantic: Check for invalid type import assignments (#4097) (DonIsaac)
+
+### Bug Fixes
+
+- 0f02608 semantic: Bind `TSImportEqualsDeclaration`s (#4100) (Don Isaac)
+
+### Performance
+
+- 9114c8e semantic: Keep a single map of unresolved references (#4107) (Luca Bruno)
+
 ## [0.17.0] - 2024-07-05
 
 - 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_memeber` to `visit_ts_enum_member`. (#4000) (rzvxa)

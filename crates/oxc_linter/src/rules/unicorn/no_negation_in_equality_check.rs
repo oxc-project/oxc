@@ -45,7 +45,7 @@ declare_oxc_lint!(
     /// if (!(foo === bar)) {}
     /// ```
     NoNegationInEqualityCheck,
-    correctness,
+    pedantic,
 );
 
 impl Rule for NoNegationInEqualityCheck {

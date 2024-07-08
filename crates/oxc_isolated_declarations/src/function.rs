@@ -9,6 +9,7 @@ use crate::{
         function_must_have_explicit_return_type, implicitly_adding_undefined_to_type,
         parameter_must_have_explicit_type,
     },
+    formal_parameter_binding_pattern::FormalParameterBindingPattern,
     IsolatedDeclarations,
 };
 
@@ -48,9 +49,13 @@ impl<'a> IsolatedDeclarations<'a> {
         is_remaining_params_have_required: bool,
     ) -> Option<FormalParameter<'a>> {
         let pattern = &param.pattern;
-        if pattern.type_annotation.is_none() && pattern.kind.is_destructuring_pattern() {
-            self.error(parameter_must_have_explicit_type(param.span));
-            return None;
+        if let BindingPatternKind::AssignmentPattern(pattern) = &pattern.kind {
+            if pattern.left.kind.is_destructuring_pattern()
+                && pattern.left.type_annotation.is_none()
+            {
+                self.error(parameter_must_have_explicit_type(param.span));
+                return None;
+            }
         }
 
         let is_assignment_pattern = pattern.kind.is_assignment_pattern();
@@ -60,6 +65,8 @@ impl<'a> IsolatedDeclarations<'a> {
             } else {
                 self.ast.copy(&param.pattern)
             };
+
+        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
 
         if is_assignment_pattern || pattern.type_annotation.is_none() {
             let type_annotation = pattern

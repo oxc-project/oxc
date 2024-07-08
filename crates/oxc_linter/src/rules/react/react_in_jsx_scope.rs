@@ -50,10 +50,7 @@ impl Rule for ReactInJsxScope {
             return;
         }
 
-        if !scope
-            .ancestors(node.scope_id())
-            .any(|v| scope.get_bindings(v).iter().any(|(k, _)| k.as_str() == react_name))
-        {
+        if scope.find_binding(node.scope_id(), react_name).is_none() {
             ctx.diagnostic(react_in_jsx_scope_diagnostic(node_span));
         }
     }

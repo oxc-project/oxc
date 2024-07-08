@@ -150,3 +150,9 @@ source: crates/oxc_linter/src/tester.rs
  1 │ (Number?.parseInt)("10");
    · ────────────────────────
    ╰────
+
+  ⚠ eslint(radix): Missing parameters.
+   ╭─[radix.tsx:1:21]
+ 1 │ function *f(){ yield(Number).parseInt() }
+   ·                     ───────────────────
+   ╰────
