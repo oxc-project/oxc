@@ -22,6 +22,10 @@ export abstract class Qux {
 export class Baz {
   readonly prop1 = 'some string';
   prop2 = 'another string';
+  private prop3 = 'yet another string';
+  private prop4(): void {}
+  private static prop5 = 'yet another string';
+  private static prop6(): void {}
 }
 
 export class Boo {

@@ -73,7 +73,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     start_of_default_export: usize,
 
     /// Track the current indentation level
-    indent: u8,
+    indent: u32,
 
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,

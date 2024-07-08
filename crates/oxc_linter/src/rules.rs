@@ -76,6 +76,7 @@ mod eslint {
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
     pub mod no_loss_of_precision;
+    pub mod no_multi_str;
     pub mod no_new;
     pub mod no_new_native_nonconstructor;
     pub mod no_new_wrappers;
@@ -158,6 +159,7 @@ mod typescript {
 }
 
 mod jest {
+    pub mod consistent_test_it;
     pub mod expect_expect;
     pub mod max_expects;
     pub mod max_nested_describe;
@@ -448,6 +450,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_caller,
     eslint::no_case_declarations,
     eslint::no_class_assign,
+    eslint::no_multi_str,
     eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
@@ -555,6 +558,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_assertion,
     typescript::no_non_null_asserted_nullish_coalescing,
     typescript::no_dynamic_delete,
+    jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
     jest::max_nested_describe,

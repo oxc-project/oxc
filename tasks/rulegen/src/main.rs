@@ -129,8 +129,13 @@ impl TestCase {
     fn output(&self) -> Option<String> {
         let code = format_code_snippet(self.code.as_ref()?);
         let output = format_code_snippet(self.output.as_ref()?);
+        let config = self.config.as_ref().map_or_else(
+            || "None".to_string(),
+            |config| format!("Some(serde_json::json!({config}))"),
+        );
+
         // ("null==null", "null === null", None),
-        Some(format!(r#"({code}, {output}, None)"#))
+        Some(format!(r#"({code}, {output}, {config})"#))
     }
 }
 

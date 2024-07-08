@@ -227,16 +227,17 @@ fn check_deep_namespace_for_node(
             let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
                 return;
             };
-
-            let mut namespaces = namespaces.to_owned();
-            namespaces.push(name.into());
-            check_deep_namespace_for_node(
-                parent_node,
-                source,
-                namespaces.as_slice(),
-                module.loaded_modules.get(module_source.as_str()).unwrap().value(),
-                ctx,
-            );
+            if let Some(module_record) = module.loaded_modules.get(module_source.as_str()) {
+                let mut namespaces = namespaces.to_owned();
+                namespaces.push(name.into());
+                check_deep_namespace_for_node(
+                    parent_node,
+                    source,
+                    &namespaces,
+                    module_record.value(),
+                    ctx,
+                );
+            }
         } else {
             check_binding_exported(
                 name,

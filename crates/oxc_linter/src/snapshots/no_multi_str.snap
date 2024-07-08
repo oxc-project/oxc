@@ -1,0 +1,40 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-multi-str): Unexpected multi string.
+   ╭─[no_multi_str.tsx:1:17]
+ 1 │ var x = 'Line 1 \
+   ·                 ─
+ 2 │              Line 2'
+   ╰────
+
+  ⚠ eslint(no-multi-str): Unexpected multi string.
+   ╭─[no_multi_str.tsx:1:14]
+ 1 │ test('Line 1 \
+   ·              ─
+ 2 │              Line 2');
+   ╰────
+
+  ⚠ eslint(no-multi-str): Unexpected multi string.
+   ╭─[no_multi_str.tsx:1:5]
+ 1 │ 'foo\bar';
+   ·     ─
+   ╰────
+
+  ⚠ eslint(no-multi-str): Unexpected multi string.
+   ╭─[no_multi_str.tsx:1:5]
+ 1 │ 'foo\ bar';
+   ·     ─
+   ╰────
+
+  ⚠ eslint(no-multi-str): Unexpected multi string.
+   ╭─[no_multi_str.tsx:1:5]
+ 1 │ 'foo\ ar';
+   ·     ─
+   ╰────
+
+  ⚠ eslint(no-multi-str): Unexpected multi string.
+   ╭─[no_multi_str.tsx:1:2]
+ 1 │ '\ still fails';
+   ·  ─
+   ╰────

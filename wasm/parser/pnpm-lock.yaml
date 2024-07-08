@@ -6,8 +6,8 @@ settings:
 
 devDependencies:
   wasm-pack:
-    specifier: ^0.12.1
-    version: 0.12.1
+    specifier: ^0.13.0
+    version: 0.13.0
 
 packages:
 
@@ -158,8 +158,8 @@ packages:
       yallist: 4.0.0
     dev: true
 
-  /wasm-pack@0.12.1:
-    resolution: {integrity: sha512-dIyKWUumPFsGohdndZjDXRFaokUT/kQS+SavbbiXVAvA/eN4riX5QNdB6AhXQx37zNxluxQkuixZUgJ8adKjOg==}
+  /wasm-pack@0.13.0:
+    resolution: {integrity: sha512-AmboGZEnZoIcVCzSlkLEmNFEqJN+IwgshJ5S7pi30uNUTce4LvWkifQzsQRxnWj47G8gkqZxlyGlyQplsnIS7w==}
     hasBin: true
     requiresBuild: true
     dependencies:

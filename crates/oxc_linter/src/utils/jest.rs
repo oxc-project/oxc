@@ -19,7 +19,7 @@ pub use crate::utils::jest::parse_jest_fn::{
     ParsedGeneralJestFnCall, ParsedJestFnCall as ParsedJestFnCallNew,
 };
 
-const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
+pub const JEST_METHOD_NAMES: phf::Set<&'static str> = phf_set![
     "afterAll",
     "afterEach",
     "beforeAll",

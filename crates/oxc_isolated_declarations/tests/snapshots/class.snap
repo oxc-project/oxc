@@ -22,6 +22,10 @@ export declare abstract class Qux {
 export declare class Baz {
 	readonly prop1: 'some string';
 	prop2: string;
+	private prop3;
+	private prop4;
+	private static prop5;
+	private static prop6;
 }
 export declare class Boo {
 	readonly prop: number;
