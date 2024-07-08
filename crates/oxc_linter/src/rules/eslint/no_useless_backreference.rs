@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use std::iter::Peekable;
+use std::{collections::HashSet, iter::Peekable};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessBackreference;
@@ -16,14 +16,6 @@ enum RegexGroup {
     RegexLookAheadGroup(),
     RegexLookBehindGroup(),
 }
-
-struct RegexCaptureGroup();
-
-struct RegexNonCaptureGroup();
-
-struct RegexLookAheadGroup();
-
-struct RegexLookBehindGroup();
 
 declare_oxc_lint!(
     /// ### What it does
@@ -135,9 +127,12 @@ fn get_capture_group_count(regex: &str) -> u32 {
 fn has_invalid_back_reference(regex: &str) -> bool {
     let mut chars = regex.chars().peekable();
     let mut backslash_started = false;
-    let mut inside_character_class_count: u32 = 0; // ToDO: can be 8, atm for just simple programming
-    let mut captures_ended: u32 = 0; // ToDO: can be 8, atm for just simple programming
-    let captures_groups: u32 = get_capture_group_count(regex); // ToDO: can be 8, atm for just simple programming
+
+    // ToDO: can be all 8, atm for just simple programming
+    let mut inside_character_class_count: u32 = 0;
+    let mut group_started: HashSet<usize> = HashSet::new();
+    let mut group_finished: HashSet<usize> = HashSet::new();
+    let captures_groups: u32 = get_capture_group_count(regex);
 
     while let Some(char) = chars.next() {
         // check for backslash
@@ -146,26 +141,40 @@ fn has_invalid_back_reference(regex: &str) -> bool {
             continue;
         }
 
-        if !backslash_started && char == '[' {
-            inside_character_class_count += 1;
+        if !backslash_started {
+            match char {
+                '[' => {
+                    inside_character_class_count += 1;
+                },
+                ']' => {
+                    inside_character_class_count -= 1;
+                },
+                '(' => {
+                    let group_type = get_group_type_by_open_bracet(char, &mut chars);
+
+                    match group_type {
+                        RegexGroup::RegexNonCaptureGroup() => {}
+                        _ => {
+                            group_started.insert(group_started.len());
+                        }
+                    }
+                },
+                ')' => {
+                    group_finished.insert(group_started.len());
+                },
+                
+                // ToDo: disallow for alternative routes
+                '|' => {},
+                _ => {},
+            }
         }
 
-        if !backslash_started && char == ']' {
-            inside_character_class_count -= 1;
-        }
-
-        if !backslash_started && char == ')' {
-            captures_ended += 1;
-        }
-
-        // starts with a backlash followed by a positive number
-        if backslash_started
-            && inside_character_class_count == 0
-            && char != '0'
-            && char.is_ascii_digit()
+        // starts with a backlash followed by a positive number or an k for named backreference
+        // not inside a character class (e. : [abc])
+        else if inside_character_class_count == 0 && (char != '0' && char.is_ascii_digit())
         {
             let next_char = chars.peek();
-            let digit_result: u32;
+            let digit_result: u32; // ToDo: u8, can be only max 99
 
             match next_char {
                 Some(next_char) => {
@@ -175,19 +184,20 @@ fn has_invalid_back_reference(regex: &str) -> bool {
                     } else {
                         digit_result = char.to_digit(10).unwrap();
                     }
-    
-                },
+                }
                 None => {
                     digit_result = char.to_digit(10).unwrap();
                 }
             }
-           
-            println!("digits {} {}, {} {}", regex, digit_result, captures_groups, captures_ended);
-        
+
+            println!("digits {} {}, {} {:?}", regex, digit_result, captures_groups, group_finished);
+
             // we are trying to access a capture group and not an octal
             if digit_result <= captures_groups {
                 // this capture group did not end
-                if digit_result > captures_ended {
+                let digit_result_usize = digit_result as usize;
+
+                if !group_finished.contains(&digit_result_usize) {
                     return true;
                 }
             }
@@ -196,9 +206,6 @@ fn has_invalid_back_reference(regex: &str) -> bool {
         if char != '\\' {
             backslash_started = false;
         }
-
-        // ToDo: disallow for alternative routes
-        if char == '|' {}
     }
 
     return false;
@@ -225,7 +232,6 @@ impl Rule for NoUselessBackreference {
 
                 match regex {
                     Argument::TemplateLiteral(args) => {
-
                         if args.expressions.len() == 0 && args.quasis.len() == 1 {
                             // let template_value = args.quasis[0].value.cooked.unwrap();
 
