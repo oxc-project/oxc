@@ -372,6 +372,39 @@ let l2 = () => {}, l3 = () => {};
 const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 ",
     );
+
+    test_comment_helper(
+        r"
+isFunction(options)
+    ? // #8326: extend call and options.name access are considered side-effects
+      // by Rollup, so we have to wrap it in a pure-annotated IIFE.
+      /*#__PURE__*/ (() =>
+        extend({ name: options.name }, extraOptions, { setup: options }))()
+    : options
+        ",
+        r"isFunction(options) ? /*#__PURE__*/ (() => extend({name: options.name}, extraOptions, {setup: options}))() : options;
+",
+    );
+
+    test_comment_helper(
+        r"
+const obj = {
+  props: /*#__PURE__*/ extend({}, TransitionPropsValidators, {
+    tag: String,
+    moveClass: String,
+  }),
+};
+const p = /*#__PURE__*/ Promise.resolve();
+",
+        "const obj = {props: /*#__PURE__*/ extend({}, TransitionPropsValidators, {\n\ttag: String,\n\tmoveClass: String\n})};\nconst p = /*#__PURE__*/ Promise.resolve();\n",
+    );
+
+    test_comment_helper(
+        r"
+const staticCacheMap = /*#__PURE__*/ new WeakMap()
+",
+        "const staticCacheMap = /*#__PURE__*/ new WeakMap();\n",
+    );
 }
 
 #[test]
