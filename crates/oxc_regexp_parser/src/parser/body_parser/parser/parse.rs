@@ -39,7 +39,6 @@ impl<'a> PatternParser<'a> {
 
         // TODO: Remove later, just for clippy unused
         self.reader.eat3('a', 'b', 'c');
-        self.state.is_unicode_sets_mode();
 
         self.consume_pattern()
     }

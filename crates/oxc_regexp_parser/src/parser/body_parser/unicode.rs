@@ -23,6 +23,26 @@ pub fn is_valid_unicode(cp: u32) -> bool {
     (0..=0x0010_ffff).contains(&cp)
 }
 
+// ```
+// UnicodePropertyNameCharacter ::
+//   AsciiLetter
+//   _
+// ```
+// <https://tc39.es/ecma262/#prod-UnicodePropertyNameCharacter>
+pub fn is_unicode_property_name_character(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, |c| c.is_ascii_alphabetic() || c == '_')
+}
+
+// ```
+// UnicodePropertyValueCharacter ::
+//   UnicodePropertyNameCharacter
+//   DecimalDigit
+// ```
+// <https://tc39.es/ecma262/#prod-UnicodePropertyValueCharacter>
+pub fn is_unicode_property_value_character(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, |c| c.is_ascii_alphanumeric() || c == '_')
+}
+
 pub fn is_lead_surrogate(cp: u32) -> bool {
     (0xd800..=0xdbff).contains(&cp)
 }

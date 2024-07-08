@@ -202,7 +202,7 @@ impl<'a> super::parse::PatternParser<'a> {
                     }
                     if self.reader.eat('}') {
                         // NOTE: `mayContainStrings`?
-                        return Ok(Some(((name, value, is_strings_related), negate)));
+                        return Ok(Some(((name, value, negate), is_strings_related)));
                     }
                 }
             }
@@ -239,7 +239,7 @@ impl<'a> super::parse::PatternParser<'a> {
         }
         self.reader.rewind(checkpoint);
 
-        // LoneUnicodePropertyNameOrValue(=UnicodePropertyValueCharacters)
+        // LoneUnicodePropertyNameOrValue
         if let Some(name_or_value) = self.consume_unicode_property_value() {
             if unicode_property::is_valid_unicode_property("General_Category", &name_or_value) {
                 return Ok(Some(("General_Category".into(), Some(name_or_value), false)));
@@ -249,11 +249,16 @@ impl<'a> super::parse::PatternParser<'a> {
                 return Ok(Some((name_or_value, None, false)));
             }
 
-            // Extra checks to express explicit AST type for strings related Unicode property
-            // These properties are introduced with `unicode_sets_mode`
-            if self.state.is_unicode_sets_mode()
-                && unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value)
-            {
+            if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
+                // Early errors:
+                // It is a Syntax Error
+                // - if the enclosing Pattern does not have a [UnicodeSetsMode] parameter
+                // - and the source text matched by LoneUnicodePropertyNameOrValue is a binary property of strings
+                //   - listed in the “Property name” column of Table 68.
+                if !self.state.is_unicode_sets_mode() {
+                    return Err(OxcDiagnostic::error("Syntax Error"));
+                }
+
                 return Ok(Some((name_or_value, None, true)));
             }
 
@@ -267,7 +272,7 @@ impl<'a> super::parse::PatternParser<'a> {
         let span_start = self.reader.span_position();
 
         let checkpoint = self.reader.checkpoint();
-        while unicode_property::is_unicode_property_name_character(self.reader.peek()?) {
+        while unicode::is_unicode_property_name_character(self.reader.peek()?) {
             self.reader.advance();
         }
 
@@ -282,7 +287,7 @@ impl<'a> super::parse::PatternParser<'a> {
         let span_start = self.reader.span_position();
 
         let checkpoint = self.reader.checkpoint();
-        while unicode_property::is_unicode_property_value_character(self.reader.peek()?) {
+        while unicode::is_unicode_property_value_character(self.reader.peek()?) {
             self.reader.advance();
         }
 
