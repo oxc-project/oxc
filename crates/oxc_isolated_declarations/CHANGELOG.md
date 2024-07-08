@@ -4,6 +4,19 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.2] - 2024-07-08
+
+### Bug Fixes
+
+- 5c31236 isolated-declarations: Keep literal value for readonly property (#4106) (Dunqing)
+- e67c7d1 isolated-declarations: Do not infer type for private parameters (#4105) (Dunqing)
+- 3fcad5e isolated_declarations: Remove nested AssignmentPatterns from inside parameters (#4077) (michaelm)
+- f8d77e4 isolated_declarations: Infer type of template literal expressions as string (#4068) (michaelm)
+
+### Performance
+
+- 7ed27b7 isolated-declarations: Use `FxHashSet` instead of `Vec` to speed up the `contain` (#4074) (Dunqing)
+
 ## [0.17.1] - 2024-07-06
 
 ### Bug Fixes
