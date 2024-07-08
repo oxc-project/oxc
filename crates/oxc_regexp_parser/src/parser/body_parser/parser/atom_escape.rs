@@ -326,6 +326,22 @@ impl<'a> super::parse::PatternParser<'a> {
         Err(OxcDiagnostic::error("Invalid unicode escape"))
     }
 
+    fn consume_hex_digits(&mut self) -> Option<u32> {
+        let checkpoint = self.reader.checkpoint();
+
+        let mut value = 0;
+        while let Some(hex) = self.reader.peek().and_then(unicode::map_hex_digit) {
+            value = (16 * value) + hex;
+            self.reader.advance();
+        }
+
+        if self.reader.checkpoint() != checkpoint {
+            return Some(value);
+        }
+
+        None
+    }
+
     // ```
     // IdentityEscape[UnicodeMode] ::
     //   [+UnicodeMode] SyntaxCharacter
