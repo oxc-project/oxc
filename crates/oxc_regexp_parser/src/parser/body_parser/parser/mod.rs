@@ -1,9 +1,9 @@
-/// impl `PatternParser`
 mod atom;
 mod atom_escape;
-mod misc;
 /// Main entry point for `PatternParser`
+/// All others are splitted files to `impl PatternParser`
 mod parse;
+mod shared;
 
 pub use parse::PatternParser;
 
