@@ -418,11 +418,11 @@ pub enum PropertyKey<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum PropertyKind {
-    /// `{ a: 1 }` in `const obj = { a: 1 };`
+    /// `a: 1` in `const obj = { a: 1 };`
     Init,
-    /// `{ get a() { return 1; } }` in `const obj = { get a() { return 1; } };`
+    /// `get a() { return 1; }` in `const obj = { get a() { return 1; } };`
     Get,
-    /// `{ set a(value) { this._a = value; } }` in `const obj = { set a(value) { this._a = value; } };`
+    /// `set a(value) { this._a = value; }` in `const obj = { set a(value) { this._a = value; } };`
     Set,
 }
 
