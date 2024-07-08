@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-dark-transparent.png" width="600">
-    <img alt="OXC Logo" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-white.png" width="600">
+    <source media="(prefers-color-scheme: dark)" srcset="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/preview-dark-bubbles.png" width="700">
+    <img alt="OXC Logo" src="https://github.com/oxc-project/oxc-assets/raw/main/preview-white-bubbles.png" width="700">
   </picture>
 </p>
 
