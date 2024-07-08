@@ -3,7 +3,7 @@ commit: 12619ffe
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
 Positive Passed: 2083/2101 (99.14%)
-Negative Passed: 1371/1501 (91.34%)
+Negative Passed: 1373/1501 (91.47%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -86,8 +86,6 @@ Expect Syntax Error: "typescript/expect-plugin/export-type-named/input.js"
 Expect Syntax Error: "typescript/export/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-in-script/input.ts"
 Expect Syntax Error: "typescript/import/equals-require-in-script/input.ts"
-Expect Syntax Error: "typescript/import/export-import-type/input.ts"
-Expect Syntax Error: "typescript/import/type-equals/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-optional-parameter-babel-7/input.ts"
 Expect Syntax Error: "typescript/interface/get-set-invalid-parameters/input.ts"
@@ -10268,6 +10266,26 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/function/pattern-optional-parameters-arrow/input.ts:1:7]
  1 │ ([]?, {}) => {}
    ·       ──
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
+   ╭─[typescript/import/export-import-type/input.ts:1:8]
+ 1 │ export import type A = B.C;
+   ·        ────────────────────
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
+   ╭─[typescript/import/type-equals/input.ts:1:1]
+ 1 │ import type A = B.C;
+   · ────────────────────
+ 2 │ import type B = C;
+   ╰────
+
+  × TS(1392): An import alias cannot use 'import type'
+   ╭─[typescript/import/type-equals/input.ts:2:1]
+ 1 │ import type A = B.C;
+ 2 │ import type B = C;
+   · ──────────────────
    ╰────
 
   × 'abstract' modifier cannot be used here.
