@@ -28,6 +28,11 @@ mod test {
             ("a+b*?c{1}d{2,}e{3,4}?", ParserOptions::default()),
             (r"^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$", ParserOptions::default()),
             ("a.b..", ParserOptions::default()),
+            (r"\d\D\s\S\w\W", ParserOptions::default()),
+            (
+                r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
+                ParserOptions::default().with_unicode_flags(true, false),
+            ),
             (r"\n\cM\0\x41\u1f60\.\/", ParserOptions::default()),
             (r"\u{1f600}", ParserOptions::default().with_unicode_flags(true, false)),
         ] {
@@ -60,6 +65,12 @@ mod test {
             (r"\xi", ParserOptions::default()),
             (r"j\u{1f600}", ParserOptions::default()),
             (r"j\u", ParserOptions::default()),
+            (
+                r"k\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
+                ParserOptions::default(),
+            ),
+            (r"k\p{Emoji_Presentation", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"k\p{Script=", ParserOptions::default().with_unicode_flags(true, false)),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),
