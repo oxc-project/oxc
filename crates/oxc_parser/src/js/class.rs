@@ -303,15 +303,22 @@ impl<'a> ParserImpl<'a> {
                 if r#static && name == "prototype" && !self.ctx.has_ambient() {
                     self.error(diagnostics::static_prototype(span));
                 }
-                if !r#static && name == "constructor" {
-                    if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
-                        self.error(diagnostics::constructor_getter_setter(span));
-                    }
-                    if r#async {
-                        self.error(diagnostics::constructor_async(span));
-                    }
-                    if generator {
-                        self.error(diagnostics::constructor_generator(span));
+                if name == "constructor" {
+                    self.verify_modifiers(
+                        &modifiers,
+                        ModifierFlags::all() - ModifierFlags::ABSTRACT,
+                        diagnostics::modifier_cannot_be_used_here,
+                    );
+                    if !r#static {
+                        if kind == MethodDefinitionKind::Get || kind == MethodDefinitionKind::Set {
+                            self.error(diagnostics::constructor_getter_setter(span));
+                        }
+                        if r#async {
+                            self.error(diagnostics::constructor_async(span));
+                        }
+                        if generator {
+                            self.error(diagnostics::constructor_generator(span));
+                        }
                     }
                 }
             }
