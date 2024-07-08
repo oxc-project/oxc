@@ -56,9 +56,7 @@ impl<'a> super::parse::PatternParser<'a> {
     //   [+NamedCaptureGroups] k GroupName[?UnicodeMode]
     // ```
     // <https://tc39.es/ecma262/#prod-AtomEscape>
-    pub(super) fn consume_reverse_solidus_atom_escape(
-        &mut self,
-    ) -> Result<Option<ast::Atom<'a>>> {
+    pub(super) fn consume_reverse_solidus_atom_escape(&mut self) -> Result<Option<ast::Atom<'a>>> {
         let span_start = self.reader.span_position();
         if !self.reader.eat('\\') {
             return Ok(None);

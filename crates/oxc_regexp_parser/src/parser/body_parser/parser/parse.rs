@@ -163,9 +163,7 @@ impl<'a> PatternParser<'a> {
 
         let span_start = self.reader.span_position();
         match (self.consume_atom()?, self.consume_quantifier()?) {
-            (Some(atom), None) => {
-                Ok(Some(ast::Term::Atom(Box::new_in(atom, self.allocator))))
-            }
+            (Some(atom), None) => Ok(Some(ast::Term::Atom(Box::new_in(atom, self.allocator)))),
             (Some(atom), Some(((min, max), greedy))) => {
                 return Ok(Some(ast::Term::AtomWithQuantifier(Box::new_in(
                     ast::Quantifier {
