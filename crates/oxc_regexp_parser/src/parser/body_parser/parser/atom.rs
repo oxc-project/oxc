@@ -63,6 +63,7 @@ impl<'a> super::parse::PatternParser<'a> {
         if self.consume_decimal_escape().is_some() {
             let span_end = self.reader.span_position();
 
+            // NOTE: Should be distinguished from `k<GroupName>`?
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
                 ast::Backreference::TemporaryBackreference(Box::new_in(
                     ast::TemporaryBackreference {
@@ -132,8 +133,20 @@ impl<'a> super::parse::PatternParser<'a> {
             ))));
         }
 
-        // TODO: Implement
-        // if let Some(_) = self.consume_k_group_name() {}
+        // `k<GroupName>`: \k<name> means Backreference
+        if let Some(r#ref) = self.consume_k_group_name()? {
+            // NOTE: Should be distinguished from `DecimalEscape`?
+            return Ok(Some(ast::Atom::Backreference(Box::new_in(
+                ast::Backreference::TemporaryBackreference(Box::new_in(
+                    ast::TemporaryBackreference {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        r#ref,
+                    },
+                    self.allocator,
+                )),
+                self.allocator,
+            ))));
+        }
 
         Err(OxcDiagnostic::error("Invalid escape"))
     }

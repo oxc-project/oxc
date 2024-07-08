@@ -248,101 +248,6 @@ impl<'a> super::parse::PatternParser<'a> {
     }
 
     // ```
-    // RegExpUnicodeEscapeSequence[UnicodeMode] ::
-    //   [+UnicodeMode] u HexLeadSurrogate \u HexTrailSurrogate
-    //   [+UnicodeMode] u HexLeadSurrogate
-    //   [+UnicodeMode] u HexTrailSurrogate
-    //   [+UnicodeMode] u HexNonSurrogate
-    //   [~UnicodeMode] u Hex4Digits
-    //   [+UnicodeMode] u{ CodePoint }
-    // ```
-    // <https://tc39.es/ecma262/#prod-RegExpUnicodeEscapeSequence>
-    fn consume_reg_exp_unicode_escape_sequence(&mut self) -> Result<Option<u32>> {
-        if !self.reader.eat('u') {
-            return Ok(None);
-        }
-
-        if self.state.is_unicode_mode() {
-            let checkpoint = self.reader.checkpoint();
-
-            // HexLeadSurrogate + HexTrailSurrogate
-            if let Some(lead_surrogate) =
-                self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
-            {
-                if self.reader.eat2('\\', 'u') {
-                    if let Some(trail_surrogate) = self
-                        .consume_fixed_hex_digits(4)
-                        .filter(|&cp| unicode::is_trail_surrogate(cp))
-                    {
-                        return Ok(Some(unicode::combine_surrogate_pair(
-                            lead_surrogate,
-                            trail_surrogate,
-                        )));
-                    }
-                }
-            }
-            self.reader.rewind(checkpoint);
-
-            // NOTE: `regexpp` seems not to support these 2 cases, why...?
-
-            // HexLeadSurrogate
-            if let Some(lead_surrogate) =
-                self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
-            {
-                return Ok(Some(lead_surrogate));
-            }
-            self.reader.rewind(checkpoint);
-
-            // HexTrailSurrogate
-            if let Some(trail_surrogate) =
-                self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_trail_surrogate(cp))
-            {
-                return Ok(Some(trail_surrogate));
-            }
-            self.reader.rewind(checkpoint);
-        }
-
-        // HexNonSurrogate and Hex4Digits are the same
-        if let Some(hex_digits) = self.consume_fixed_hex_digits(4) {
-            return Ok(Some(hex_digits));
-        }
-
-        // {CodePoint}
-        if self.state.is_unicode_mode() {
-            let checkpoint = self.reader.checkpoint();
-
-            if self.reader.eat('{') {
-                if let Some(hex_digits) =
-                    self.consume_hex_digits().filter(|&cp| unicode::is_valid_unicode(cp))
-                {
-                    if self.reader.eat('}') {
-                        return Ok(Some(hex_digits));
-                    }
-                }
-            }
-            self.reader.rewind(checkpoint);
-        }
-
-        Err(OxcDiagnostic::error("Invalid unicode escape"))
-    }
-
-    fn consume_hex_digits(&mut self) -> Option<u32> {
-        let checkpoint = self.reader.checkpoint();
-
-        let mut value = 0;
-        while let Some(hex) = self.reader.peek().and_then(unicode::map_hex_digit) {
-            value = (16 * value) + hex;
-            self.reader.advance();
-        }
-
-        if self.reader.checkpoint() != checkpoint {
-            return Some(value);
-        }
-
-        None
-    }
-
-    // ```
     // IdentityEscape[UnicodeMode] ::
     //   [+UnicodeMode] SyntaxCharacter
     //   [+UnicodeMode] /
@@ -367,5 +272,20 @@ impl<'a> super::parse::PatternParser<'a> {
         }
 
         None
+    }
+
+    pub(super) fn consume_k_group_name(&mut self) -> Result<Option<SpanAtom<'a>>> {
+        if self.reader.eat('k') {
+            if let Some(group_name) = self.consume_group_name()? {
+                // TODO: Implement
+                // this._backreferenceNames.add(groupName);
+
+                return Ok(Some(group_name));
+            }
+
+            return Err(OxcDiagnostic::error("Invalid named reference"));
+        }
+
+        Ok(None)
     }
 }
