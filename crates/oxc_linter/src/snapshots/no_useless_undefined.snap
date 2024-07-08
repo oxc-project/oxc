@@ -6,4 +6,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let foo = undefined;
    ·           ─────────
    ╰────
-  help: Consider using `null` instead.
+  help: Consider removing `undefined` or using `null` instead.

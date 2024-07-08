@@ -1,4 +1,4 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression, VariableDeclarationKind},
     AstKind,
@@ -11,7 +11,7 @@ fn warn() -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.",
     )
-    .with_help("Consider using `null` instead.")
+    .with_help("Consider removing `undefined` or using `null` instead.")
 }
 fn no_useless_undefined_diagnostic(span0: Span) -> OxcDiagnostic {
     warn().with_label(span0)
@@ -45,52 +45,51 @@ declare_oxc_lint!(
     pedantic,
 );
 
-const COMPARE_FUNCTION_NAMES: &[&str] = &[
-    "is",
-    "equal",
-    "notEqual",
-    "strictEqual",
-    "notStrictEqual",
-    "propertyVal",
-    "notPropertyVal",
-    "not",
-    "include",
-    "property",
-    "toBe",
-    "toHaveBeenCalledWith",
-    "toContain",
-    "toContainEqual",
-    "toEqual",
-    "same",
-    "notSame",
-    "strictSame",
-    "strictNotSame",
-];
+// Create a static set for all function names
+static FUNCTION_NAMES: phf::Set<&'static str> = phf::phf_set! {
+        // Compare function names
+        "is",
+        "equal",
+        "notEqual",
+        "strictEqual",
+        "notStrictEqual",
+        "propertyVal",
+        "notPropertyVal",
+        "not",
+        "include",
+        "property",
+        "toBe",
+        "toHaveBeenCalledWith",
+        "toContain",
+        "toContainEqual",
+        "toEqual",
+        "same",
+        "notSame",
+        "strictSame",
+        "strictNotSame",
+        // `array.push(undefined)`
+        "push",
+        // `array.unshift(undefined)`
+        "unshift",
+        // `array.includes(undefined)`
+        "includes",
+        // `set.add(undefined)`
+        "add",
+        // `set.has(undefined)`
+        "has",
+        // `map.set(foo, undefined)`
+        "set",
+        // `React.createContext(undefined)`
+        "createContext",
+        // https://vuejs.org/api/reactivity-core.html#ref
+        "ref",
+};
 
 fn is_match_ignore_func_name(name: &str) -> bool {
-    COMPARE_FUNCTION_NAMES.contains(&name)
-        // `array.push(undefined)`
-        || name == "push"
-        // `array.unshift(undefined)`
-        || name == "unshift"
-		// `array.includes(undefined)`
-        || name == "includes"
-
-		// `set.add(undefined)`
-        || name == "add"
-		// `set.has(undefined)`
-        || name == "has"
-
-		// `map.set(foo, undefined)`
-        || name == "set"
-
-        // `React.createContext(undefined)`
-        || name == "createContext"
-		// `setState(undefined)`
+    // Check if the name is in the static set
+    FUNCTION_NAMES.contains(name)
+        // `setState(undefined)`
         || name.starts_with("set")
-
-        // https://vuejs.org/api/reactivity-core.html#ref
-		|| name == "ref"
 }
 
 fn should_ignore(callee: &Expression) -> bool {
@@ -108,16 +107,13 @@ fn should_ignore(callee: &Expression) -> bool {
 }
 
 fn is_function_bind_call(call_expr: &CallExpression) -> bool {
-    !call_expr.optional
-        && matches!(&call_expr.callee, Expression::StaticMemberExpression(member_expr)
-        if member_expr.property.name.as_str() == "bind")
+    !call_expr.optional && is_method_call(call_expr, None, Some(&["bind"]), None, None)
 }
 
 fn is_undefined(arg: &Argument) -> bool {
-    if let Argument::Identifier(undefined_literal) = arg {
-        if undefined_literal.name == "undefined" {
-            return true;
-        }
+    let expr = arg.to_expression();
+    if let Expression::Identifier(_) = expr {
+        return expr.is_undefined();
     }
     false
 }
@@ -140,95 +136,102 @@ impl Rule for NoUselessUndefined {
                 let Some(parent_node) = ctx.nodes().parent_node(node.id()) else { return };
                 let parent_node_kind = parent_node.kind();
 
-                // `return undefined`
-                if let AstKind::ReturnStatement(ret_stmt) = parent_node_kind {
-                    ctx.diagnostic_with_fix(
-                        no_useless_undefined_diagnostic(undefined_literal.span),
-                        |fixer| {
-                            let comments_range = ctx
-                                .semantic()
-                                .trivias()
-                                .comments_range(ret_stmt.span.start..ret_stmt.span.end);
-                            if let Some((_, comment)) = comments_range.last() {
+                match parent_node_kind {
+                    // `return undefined`
+                    AstKind::ReturnStatement(ret_stmt) => {
+                        ctx.diagnostic_with_fix(
+                            no_useless_undefined_diagnostic(undefined_literal.span),
+                            |fixer| {
+                                let comments_range = ctx
+                                    .semantic()
+                                    .trivias()
+                                    .comments_range(ret_stmt.span.start..ret_stmt.span.end);
+                                if let Some((_, comment)) = comments_range.last() {
+                                    fixer.delete_range(Span::new(
+                                        comment.end + 2,
+                                        undefined_literal.span.end,
+                                    ))
+                                } else {
+                                    fixer.delete_range(Span::new(
+                                        ret_stmt.span().start + 6,
+                                        undefined_literal.span.end,
+                                    ))
+                                }
+                            },
+                        );
+                    }
+                    // `yield undefined`
+                    AstKind::YieldExpression(yield_expr) => {
+                        if yield_expr.delegate {
+                            return;
+                        }
+                        ctx.diagnostic_with_fix(
+                            no_useless_undefined_diagnostic(undefined_literal.span),
+                            |fixer| fixer.replace(yield_expr.span, "yield"),
+                        );
+                    }
+                    // `() => undefined`
+                    AstKind::ExpressionStatement(_) => {
+                        if !self.check_arrow_function_body {
+                            return;
+                        }
+                        let Some(grand_parent_node) = ctx.nodes().parent_node(parent_node.id())
+                        else {
+                            return;
+                        };
+                        let grand_parent_node_kind = grand_parent_node.kind();
+                        let AstKind::FunctionBody(func_body) = grand_parent_node_kind else {
+                            return;
+                        };
+                        let Some(grand_grand_parent_node) =
+                            ctx.nodes().parent_node(grand_parent_node.id())
+                        else {
+                            return;
+                        };
+                        let grand_grand_parent_node_kind = grand_grand_parent_node.kind();
+                        let AstKind::ArrowFunctionExpression(_) = grand_grand_parent_node_kind
+                        else {
+                            return;
+                        };
+
+                        ctx.diagnostic_with_fix(
+                            no_useless_undefined_diagnostic(undefined_literal.span),
+                            |fixer| fixer.replace(func_body.span, "{}"),
+                        );
+                    }
+                    // `let foo = undefined` / `var foo = undefined`
+                    AstKind::VariableDeclarator(variable_declarator) => {
+                        let Some(grand_parent_node) = ctx.nodes().parent_node(parent_node.id())
+                        else {
+                            return;
+                        };
+                        let grand_parent_node_kind = grand_parent_node.kind();
+                        let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
+                            return;
+                        };
+                        if variable_declarator.kind == VariableDeclarationKind::Const {
+                            return;
+                        }
+                        return ctx.diagnostic_with_fix(
+                            no_useless_undefined_diagnostic(undefined_literal.span),
+                            |fixer| {
                                 fixer.delete_range(Span::new(
-                                    comment.end + 2,
+                                    variable_declarator.id.span().end,
                                     undefined_literal.span.end,
                                 ))
-                            } else {
-                                fixer.delete_range(Span::new(
-                                    ret_stmt.span().start + 6,
-                                    undefined_literal.span.end,
-                                ))
-                            }
-                        },
-                    );
-                // `yield undefined`
-                } else if let AstKind::YieldExpression(yield_expr) = parent_node_kind {
-                    if yield_expr.delegate {
-                        return;
+                            },
+                        );
                     }
-                    ctx.diagnostic_with_fix(
-                        no_useless_undefined_diagnostic(undefined_literal.span),
-                        |fixer| fixer.replace(yield_expr.span, "yield"),
-                    );
-                // `() => undefined`
-                } else if let AstKind::ExpressionStatement(_) = parent_node_kind {
-                    if !self.check_arrow_function_body {
-                        return;
+                    // `const {foo = undefined} = {}`
+                    AstKind::AssignmentPattern(assign_pattern) => {
+                        let left = &assign_pattern.left;
+                        let delete_span = Span::new(left.span().end, undefined_literal.span.end);
+                        return ctx.diagnostic_with_fix(
+                            no_useless_undefined_diagnostic(undefined_literal.span),
+                            |fixer| fixer.delete_range(delete_span),
+                        );
                     }
-                    let Some(grand_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
-                        return;
-                    };
-                    let grand_parent_node_kind = grand_parent_node.kind();
-                    let AstKind::FunctionBody(func_body) = grand_parent_node_kind else {
-                        return;
-                    };
-                    let Some(grand_grand_parent_node) =
-                        ctx.nodes().parent_node(grand_parent_node.id())
-                    else {
-                        return;
-                    };
-                    let grand_grand_parent_node_kind = grand_grand_parent_node.kind();
-                    let AstKind::ArrowFunctionExpression(_) = grand_grand_parent_node_kind else {
-                        return;
-                    };
-
-                    ctx.diagnostic_with_fix(
-                        no_useless_undefined_diagnostic(undefined_literal.span),
-                        |fixer| fixer.replace(func_body.span, "{}"),
-                    );
-                // `let foo = undefined` / `var foo = undefined`
-                } else if let AstKind::VariableDeclarator(variable_declarator) = parent_node_kind {
-                    let Some(grand_parent_node) = ctx.nodes().parent_node(parent_node.id()) else {
-                        return;
-                    };
-
-                    let grand_parent_node_kind = grand_parent_node.kind();
-                    let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
-                        return;
-                    };
-                    if variable_declarator.kind == VariableDeclarationKind::Const {
-                        return;
-                    }
-                    return ctx.diagnostic_with_fix(
-                        no_useless_undefined_diagnostic(undefined_literal.span),
-                        |fixer| {
-                            fixer.delete_range(Span::new(
-                                variable_declarator.id.span().end,
-                                undefined_literal.span.end,
-                            ))
-                        },
-                    );
-                // `const {foo = undefined} = {}`
-                } else if let AstKind::AssignmentPattern(assign_pattern) = parent_node_kind {
-                    let left = &assign_pattern.left;
-                    let delete_span = Span::new(left.span().end, undefined_literal.span.end);
-                    return ctx.diagnostic_with_fix(
-                        no_useless_undefined_diagnostic(undefined_literal.span),
-                        |fixer| fixer.delete_range(delete_span),
-                    );
-                } else {
-                    return;
+                    _ => {}
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -353,6 +356,7 @@ fn test() {
         (r"foo.bind(undefined);", options_ignore_arguments()),
         // `checkArrowFunctionBody: false`
         (r"const foo = () => undefined", options_ignore_arrow_function_body()),
+        (r"const x = { a: undefined }", None),
     ];
 
     let fail = vec![(r"let foo = undefined;", None)];
