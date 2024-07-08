@@ -44,10 +44,7 @@ pub fn is_unicode_property_value_character(cp: u32) -> bool {
 }
 
 pub fn is_identifier_start_char(cp: u32) -> bool {
-    char::from_u32(cp)
-        .map_or(false, |c| {
-            unicode_id_start::is_id_start(c) || c == '$' || c == '_'
-        })
+    char::from_u32(cp).map_or(false, |c| unicode_id_start::is_id_start(c) || c == '$' || c == '_')
 }
 
 pub fn is_identifier_part_char(cp: u32) -> bool {

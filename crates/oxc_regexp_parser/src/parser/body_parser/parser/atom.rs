@@ -1,6 +1,5 @@
 use oxc_allocator::Box;
 use oxc_diagnostics::{OxcDiagnostic, Result};
-use oxc_span::Atom as SpanAtom;
 
 use crate::{ast, parser::body_parser::unicode};
 
@@ -60,15 +59,15 @@ impl<'a> super::parse::PatternParser<'a> {
         }
 
         // `DecimalEscape`: \1 means Backreference
-        if self.consume_decimal_escape().is_some() {
+        if let Some(decimal) = self.consume_decimal_escape() {
             let span_end = self.reader.span_position();
 
             // NOTE: Should be distinguished from `k<GroupName>`?
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
-                ast::Backreference::TemporaryBackreference(Box::new_in(
-                    ast::TemporaryBackreference {
+                ast::Backreference::TemporaryNormalBackreference(Box::new_in(
+                    ast::TemporaryNormalBackreference {
                         span: self.span_factory.create(span_start, span_end),
-                        r#ref: SpanAtom::from(&self.source_text[span_start..span_end]),
+                        r#ref: decimal,
                     },
                     self.allocator,
                 )),
@@ -137,8 +136,8 @@ impl<'a> super::parse::PatternParser<'a> {
         if let Some(r#ref) = self.consume_k_group_name()? {
             // NOTE: Should be distinguished from `DecimalEscape`?
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
-                ast::Backreference::TemporaryBackreference(Box::new_in(
-                    ast::TemporaryBackreference {
+                ast::Backreference::TemporaryNamedBackreference(Box::new_in(
+                    ast::TemporaryNamedBackreference {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         r#ref,
                     },

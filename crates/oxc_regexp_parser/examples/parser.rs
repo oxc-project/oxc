@@ -17,7 +17,8 @@ fn main() {
         ("/(?=a)|(?<=b)|(?!c)|(?<!d)/i", ParserOptions::default()),
         (r"/\n\cM\0\x41\./", ParserOptions::default()),
         (r"/\n\cM\0\x41\u1234\./u", ParserOptions::default()),
-        (r"/\n\cM\0\x41\u{1f600}\./u", ParserOptions::default().with_unicode_flags(true, false)),
+        (r"/\n\cM\0\x41\u{1f600}\./u", ParserOptions::default()),
+        (r"/a\k<f>x\1c/u", ParserOptions::default()),
     ] {
         println!("Test: {pat} + {options:?}");
         let parser = Parser::new(&allocator, pat, options);

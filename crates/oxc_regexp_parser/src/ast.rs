@@ -1,6 +1,8 @@
 use oxc_allocator::{Box, Vec};
 use oxc_span::{Atom as SpanAtom, Span};
 
+// NOTE: Should keep all `enum` size == 16
+
 /// The root node.
 #[derive(Debug)]
 pub struct RegExpLiteral<'a> {
@@ -114,30 +116,36 @@ pub enum Atom<'a> {
 /// E.g. `\1`, `\k<name>`
 #[derive(Debug)]
 pub enum Backreference<'a> {
-    AmbiguousBackreference(Box<'a, AmbiguousBackreference<'a>>),
-    UnambiguousBackreference(Box<'a, UnambiguousBackreference<'a>>),
-    TemporaryBackreference(Box<'a, TemporaryBackreference<'a>>),
+    NormalBackreference(Box<'a, NormalBackreference<'a>>),
+    NamedBackreference(Box<'a, NamedBackreference<'a>>),
+    TemporaryNormalBackreference(Box<'a, TemporaryNormalBackreference>),
+    TemporaryNamedBackreference(Box<'a, TemporaryNamedBackreference<'a>>),
 }
 
 #[derive(Debug)]
-pub struct AmbiguousBackreference<'a> {
+pub struct NormalBackreference<'a> {
     pub span: Span,
-    pub r#ref: SpanAtom<'a>, // `\1`
+    pub r#ref: usize, // 1 for \1
+    pub resolved: CapturingGroup<'a>,
+}
+
+#[derive(Debug)]
+pub struct NamedBackreference<'a> {
+    pub span: Span,
+    pub r#ref: SpanAtom<'a>, // name for \k<name>
     pub resolved: Vec<'a, CapturingGroup<'a>>,
 }
 
 #[derive(Debug)]
-pub struct UnambiguousBackreference<'a> {
+pub struct TemporaryNormalBackreference {
     pub span: Span,
-    pub r#ref: SpanAtom<'a>, // `\k<name>`
-    pub resolved: CapturingGroup<'a>,
+    pub r#ref: usize, // 1 for \1
 }
 
-/// Not yet resolved backreference.
 #[derive(Debug)]
-pub struct TemporaryBackreference<'a> {
+pub struct TemporaryNamedBackreference<'a> {
     pub span: Span,
-    pub r#ref: SpanAtom<'a>, // `\k<name>`
+    pub r#ref: SpanAtom<'a>, // name for \k<name>
 }
 
 /// The capturing group.
