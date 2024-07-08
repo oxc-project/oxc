@@ -185,21 +185,83 @@ pub fn check_ts_import_equals_declaration<'a>(
     }
 }
 
-/// Property '<prop>' cannot have an initializer because it is marked abstract.(1267)
-fn abstract_property_cannot_have_initializer(prop_name: &str, span: Span) -> OxcDiagnostic {
+fn abstract_element_cannot_have_initializer(
+    code: u32,
+    elem_name: &str,
+    prop_name: &str,
+    span: Span,
+    init_or_impl: &str,
+) -> OxcDiagnostic {
+    // let (prop_name, span) = prop_key.prop_name().unwrap_or_else(|| {
+    //     (&ctx.source_text[prop.span], prop_key.span())
+    // });
     OxcDiagnostic::error(
-        format!("TS(1267): Property '{prop_name}' cannot have an initializer because it is marked abstract."),
+        format!("TS({code}): {elem_name} '{prop_name}' cannot have an {init_or_impl} because it is marked abstract."),
     )
     .with_label(span)
 }
 
+/// TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+fn abstract_method_cannot_have_implementation(method_name: &str, span: Span) -> OxcDiagnostic {
+    abstract_element_cannot_have_initializer(1245, "Method", method_name, span, "implementation")
+}
+
+/// TS(1267): Property 'foo' cannot have an initializer because it is marked abstract.
+fn abstract_property_cannot_have_initializer(prop_name: &str, span: Span) -> OxcDiagnostic {
+    abstract_element_cannot_have_initializer(1267, "Property", prop_name, span, "initializer")
+}
+
+/// TS(1318): Accessor 'foo' cannot have an implementation because it is marked abstract.
+///
+/// Applies to getters/setters
+///
+/// > TS's original message, `An abstract accessor cannot have an
+/// > implementation.`, is less helpful than the one provided here.
+fn abstract_accessor_cannot_have_implementation(accessor_name: &str, span: Span) -> OxcDiagnostic {
+    abstract_element_cannot_have_initializer(
+        1318,
+        "Accessor",
+        accessor_name,
+        span,
+        "implementation",
+    )
+}
+// /// 'abstract' modifier can only appear on a class, method, or property
+// /// declaration. (1242)
+
+// fn cannot_be_abstract(span: Span) -> OxcDiagnostic {
+//     OxcDiagnostic::error(
+//         "TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.",
+//     )
+//     .with_label(span)
+// }
+
+pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
+    if method.r#type.is_abstract() && method.value.body.is_some() {
+        let (method_name, span) = method.key.prop_name().unwrap_or_else(|| {
+            let key_span = method.key.span();
+            (&ctx.source_text[key_span], key_span)
+        });
+        match method.kind {
+            MethodDefinitionKind::Method => {
+                ctx.error(abstract_method_cannot_have_implementation(method_name, span));
+            }
+            MethodDefinitionKind::Get | MethodDefinitionKind::Set => {
+                ctx.error(abstract_accessor_cannot_have_implementation(method_name, span));
+            }
+            // abstract classes can have concrete methods. Constructors cannot
+            // have abstract modifiers, but this gets checked during parsing
+            MethodDefinitionKind::Constructor => {}
+        }
+        ctx.error(abstract_method_cannot_have_implementation(method_name, span));
+    }
+}
+
 pub fn check_property_definition<'a>(prop: &PropertyDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     if prop.r#type.is_abstract() && prop.value.is_some() {
-        // let (prop, span) = match prop.key {
-        //     Property
-        // }
         let (prop_name, span) = prop.key.prop_name().unwrap_or_else(|| {
-            (&ctx.source_text[prop.span], prop.key.span())
+            let key_span = prop.key.span();
+            (&ctx.source_text[key_span], key_span)
         });
         ctx.error(abstract_property_cannot_have_initializer(prop_name, span));
     }

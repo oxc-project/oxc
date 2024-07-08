@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
 Positive Passed: 5272/5283 (99.79%)
-Negative Passed: 1086/4875 (22.28%)
+Negative Passed: 1090/4875 (22.36%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -1952,10 +1952,8 @@ Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDe
 Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDeclaration8_es6.ts"
 Expect Syntax Error: "conformance/asyncGenerators/asyncGeneratorParameterEvaluation.ts"
 Expect Syntax Error: "conformance/classes/awaitAndYieldInProperty.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts"
@@ -1967,8 +1965,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts"
@@ -11073,6 +11069,46 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  47 │ }
     ╰────
 
+  × TS(1318): Accessor 'aa' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
+ 2 │    abstract get a();
+ 3 │    abstract get aa() { return 1; } // error
+   ·                 ──
+ 4 │    abstract set b(x: string);
+   ╰────
+
+  × TS(1245): Method 'aa' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
+ 2 │    abstract get a();
+ 3 │    abstract get aa() { return 1; } // error
+   ·                 ──
+ 4 │    abstract set b(x: string);
+   ╰────
+
+  × TS(1318): Accessor 'bb' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
+ 4 │    abstract set b(x: string);
+ 5 │    abstract set bb(x: string) {} // error
+   ·                 ──
+ 6 │ }
+   ╰────
+
+  × TS(1245): Method 'bb' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
+ 4 │    abstract set b(x: string);
+ 5 │    abstract set bb(x: string) {} // error
+   ·                 ──
+ 6 │ }
+   ╰────
+
+  × TS(1245): Method 'constructor' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract constructor() {}
+   ·              ───────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts:8:5]
  7 │         this.
@@ -11112,6 +11148,38 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                 ╰── It can not be redeclared here
  18 │ 
     ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract foo() {}
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract foo() {}
+   ·              ───
+ 3 │ }
+   ╰────
 
   × 'abstract' modifier cannot be used here.
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]

@@ -3,7 +3,7 @@ commit: 12619ffe
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
 Positive Passed: 2083/2101 (99.14%)
-Negative Passed: 1374/1501 (91.54%)
+Negative Passed: 1377/1501 (91.74%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions-if-body/input.js"
@@ -45,8 +45,6 @@ Expect Syntax Error: "typescript/cast/unparenthesized-type-assertion-and-assign/
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-1/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-2/input.ts"
 Expect Syntax Error: "typescript/class/abstract-method-in-non-abstract-class-3/input.ts"
-Expect Syntax Error: "typescript/class/abstract-method-with-body/input.ts"
-Expect Syntax Error: "typescript/class/abstract-method-with-body-computed/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-1/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-2/input.ts"
 Expect Syntax Error: "typescript/class/constructor-with-invalid-order-modifiers-3/input.ts"
@@ -57,7 +55,6 @@ Expect Syntax Error: "typescript/class/declare-field-initializer/input.ts"
 Expect Syntax Error: "typescript/class/declare-initializer/input.ts"
 Expect Syntax Error: "typescript/class/declare-method/input.ts"
 Expect Syntax Error: "typescript/class/declare-readonly-field-initializer-w-annotation/input.ts"
-Expect Syntax Error: "typescript/class/generator-method-with-modifiers/input.ts"
 Expect Syntax Error: "typescript/class/index-signature-errors/input.ts"
 Expect Syntax Error: "typescript/class/invalid-modifiers-order/input.ts"
 Expect Syntax Error: "typescript/class/method-readonly/input.ts"
@@ -9974,6 +9971,38 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  2 │ func<T>(a: T);
    ╰────
 
+  × TS(1245): Method 'method' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/class/abstract-method-with-body/input.ts:2:12]
+ 1 │ abstract class Foo {
+ 2 │   abstract method() {}
+   ·            ──────
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'method' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/class/abstract-method-with-body/input.ts:2:12]
+ 1 │ abstract class Foo {
+ 2 │   abstract method() {}
+   ·            ──────
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'foo()' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/class/abstract-method-with-body-computed/input.ts:2:13]
+ 1 │ abstract class Foo {
+ 2 │   abstract [foo()]() {}
+   ·             ─────
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'foo()' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/class/abstract-method-with-body-computed/input.ts:2:13]
+ 1 │ abstract class Foo {
+ 2 │   abstract [foo()]() {}
+   ·             ─────
+ 3 │ }
+   ╰────
+
   × TS(1267): Property 'prop' cannot have an initializer because it is marked abstract.
    ╭─[typescript/class/abstract-property-initializer/input.ts:2:12]
  1 │ abstract class Foo {
@@ -9982,7 +10011,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │   abstract [Bar.foo] = 2
    ╰────
 
-  × TS(1267): Property 'abstract [Bar.foo] = 2' cannot have an initializer because it is marked abstract.
+  × TS(1267): Property 'Bar.foo' cannot have an initializer because it is marked abstract.
    ╭─[typescript/class/abstract-property-initializer/input.ts:3:13]
  2 │   abstract prop = 1
  3 │   abstract [Bar.foo] = 2
@@ -9998,7 +10027,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  5 │   abstract 2 = 4
    ╰────
 
-  × TS(1267): Property 'abstract 2 = 4' cannot have an initializer because it is marked abstract.
+  × TS(1267): Property '2' cannot have an initializer because it is marked abstract.
    ╭─[typescript/class/abstract-property-initializer/input.ts:5:12]
  4 │   abstract [Bar] = 3
  5 │   abstract 2 = 4
@@ -10073,6 +10102,22 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ class Foo extends Bar implements {
    ·                                  ─
  2 │ }
+   ╰────
+
+  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/class/generator-method-with-modifiers/input.ts:5:13]
+ 4 │   static *c() {}
+ 5 │   abstract *d() {}
+   ·             ─
+ 6 │   readonly *e() {}
+   ╰────
+
+  × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
+   ╭─[typescript/class/generator-method-with-modifiers/input.ts:5:13]
+ 4 │   static *c() {}
+ 5 │   abstract *d() {}
+   ·             ─
+ 6 │   readonly *e() {}
    ╰────
 
   × Unexpected token
