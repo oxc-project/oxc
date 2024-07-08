@@ -1,5 +1,5 @@
 use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, Span};
+use oxc_span::{Atom as SpanAtom, Span};
 
 /// The root node.
 #[derive(Debug)]
@@ -21,17 +21,16 @@ pub struct Pattern<'a> {
 #[derive(Debug)]
 pub struct Alternative<'a> {
     pub span: Span,
-    // NOTE: `terms: Vec<'a, Term<'a>>` ?
-    pub elements: Vec<'a, Element<'a>>,
+    pub terms: Vec<'a, Term<'a>>,
 }
 
 /// The type which includes all atom nodes.
 #[derive(Debug)]
-pub enum Element<'a> {
+pub enum Term<'a> {
     Assertion(Box<'a, Assertion<'a>>),
     #[allow(clippy::enum_variant_names)]
-    QuantifiableElement(Box<'a, QuantifiableElement<'a>>),
-    Quantifier(Box<'a, Quantifier<'a>>),
+    Atom(Box<'a, Atom<'a>>),
+    AtomWithQuantifier(Box<'a, Quantifier<'a>>),
 }
 
 /// The assertion.
@@ -99,7 +98,7 @@ pub struct LookbehindAssertion<'a> {
 
 /// The type which includes all atom nodes that Quantifier node can have as children.
 #[derive(Debug)]
-pub enum QuantifiableElement<'a> {
+pub enum Atom<'a> {
     Character(Box<'a, Character>),
     CharacterSet(Box<'a, CharacterSet<'a>>),
     CharacterClass(Box<'a, CharacterClass<'a>>),
@@ -108,7 +107,7 @@ pub enum QuantifiableElement<'a> {
     CapturingGroup(Box<'a, CapturingGroup<'a>>),
     Group(Box<'a, Group<'a>>),
     // NOTE: Is this really necessary?
-    LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
+    // LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
 }
 
 /// The backreference.
@@ -123,14 +122,14 @@ pub enum Backreference<'a> {
 #[derive(Debug)]
 pub struct AmbiguousBackreference<'a> {
     pub span: Span,
-    pub r#ref: Atom<'a>, // `\1`
+    pub r#ref: SpanAtom<'a>, // `\1`
     pub resolved: Vec<'a, CapturingGroup<'a>>,
 }
 
 #[derive(Debug)]
 pub struct UnambiguousBackreference<'a> {
     pub span: Span,
-    pub r#ref: Atom<'a>, // `\k<name>`
+    pub r#ref: SpanAtom<'a>, // `\k<name>`
     pub resolved: CapturingGroup<'a>,
 }
 
@@ -138,7 +137,7 @@ pub struct UnambiguousBackreference<'a> {
 #[derive(Debug)]
 pub struct TemporaryBackreference<'a> {
     pub span: Span,
-    pub r#ref: Atom<'a>, // `\k<name>`
+    pub r#ref: SpanAtom<'a>, // `\k<name>`
 }
 
 /// The capturing group.
@@ -146,7 +145,7 @@ pub struct TemporaryBackreference<'a> {
 #[derive(Debug)]
 pub struct CapturingGroup<'a> {
     pub span: Span,
-    pub name: Option<Atom<'a>>,
+    pub name: Option<SpanAtom<'a>>,
     pub alternatives: Vec<'a, Alternative<'a>>,
     pub references: Vec<'a, Backreference<'a>>,
 }
@@ -214,8 +213,8 @@ pub struct StringAlternative<'a> {
 #[derive(Debug)]
 pub struct CharacterUnicodePropertyCharacterSet<'a> {
     pub span: Span,
-    pub key: Atom<'a>,
-    pub value: Option<Atom<'a>>,
+    pub key: SpanAtom<'a>,
+    pub value: Option<SpanAtom<'a>>,
     pub negate: bool,
 }
 
@@ -282,7 +281,7 @@ pub enum UnicodePropertyCharacterSet<'a> {
 #[derive(Debug)]
 pub struct StringsUnicodePropertyCharacterSet<'a> {
     pub span: Span,
-    pub key: Atom<'a>,
+    pub key: SpanAtom<'a>,
 }
 
 /// The expression character class.
@@ -356,7 +355,7 @@ pub struct Quantifier<'a> {
     pub min: usize,
     pub max: Option<usize>, // `None` means `Infinity`
     pub greedy: bool,
-    pub element: QuantifiableElement<'a>,
+    pub atom: Atom<'a>,
 }
 
 /// The flags.

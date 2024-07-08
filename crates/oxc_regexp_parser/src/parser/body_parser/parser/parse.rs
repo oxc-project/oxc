@@ -145,7 +145,7 @@ impl<'a> PatternParser<'a> {
 
         Ok(ast::Alternative {
             span: self.span_factory.create(span_start, self.reader.span_position()),
-            elements,
+            terms: elements,
         })
     }
 
@@ -156,24 +156,24 @@ impl<'a> PatternParser<'a> {
     //   Atom[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] Quantifier
     // ```
     // <https://tc39.es/ecma262/#prod-Term>
-    fn consume_term(&mut self) -> Result<Option<ast::Element<'a>>> {
+    fn consume_term(&mut self) -> Result<Option<ast::Term<'a>>> {
         if let Some(assertion) = self.consume_assertion()? {
-            return Ok(Some(ast::Element::Assertion(Box::new_in(assertion, self.allocator))));
+            return Ok(Some(ast::Term::Assertion(Box::new_in(assertion, self.allocator))));
         }
 
         let span_start = self.reader.span_position();
         match (self.consume_atom()?, self.consume_quantifier()?) {
             (Some(atom), None) => {
-                Ok(Some(ast::Element::QuantifiableElement(Box::new_in(atom, self.allocator))))
+                Ok(Some(ast::Term::Atom(Box::new_in(atom, self.allocator))))
             }
             (Some(atom), Some(((min, max), greedy))) => {
-                return Ok(Some(ast::Element::Quantifier(Box::new_in(
+                return Ok(Some(ast::Term::AtomWithQuantifier(Box::new_in(
                     ast::Quantifier {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         min,
                         max,
                         greedy,
-                        element: atom,
+                        atom,
                     },
                     self.allocator,
                 ))));
@@ -301,7 +301,7 @@ impl<'a> PatternParser<'a> {
     //   (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     // <https://tc39.es/ecma262/#prod-Atom>
-    fn consume_atom(&mut self) -> Result<Option<ast::QuantifiableElement<'a>>> {
+    fn consume_atom(&mut self) -> Result<Option<ast::Atom<'a>>> {
         Ok(self
             .consume_pattern_character()
             .or(self.consume_dot())

@@ -13,7 +13,7 @@ impl<'a> super::parse::PatternParser<'a> {
     //   SourceCharacter but not SyntaxCharacter
     // ```
     // <https://tc39.es/ecma262/#prod-PatternCharacter>
-    pub(super) fn consume_pattern_character(&mut self) -> Option<ast::QuantifiableElement<'a>> {
+    pub(super) fn consume_pattern_character(&mut self) -> Option<ast::Atom<'a>> {
         let span_start = self.reader.span_position();
 
         let cp = self.reader.peek()?;
@@ -22,7 +22,7 @@ impl<'a> super::parse::PatternParser<'a> {
         }
         self.reader.advance();
 
-        Some(ast::QuantifiableElement::Character(Box::new_in(
+        Some(ast::Atom::Character(Box::new_in(
             ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 value: cp,
@@ -31,13 +31,13 @@ impl<'a> super::parse::PatternParser<'a> {
         )))
     }
 
-    pub(super) fn consume_dot(&mut self) -> Option<ast::QuantifiableElement<'a>> {
+    pub(super) fn consume_dot(&mut self) -> Option<ast::Atom<'a>> {
         let span_start = self.reader.span_position();
         if !self.reader.eat('.') {
             return None;
         }
 
-        Some(ast::QuantifiableElement::CharacterSet(Box::new_in(
+        Some(ast::Atom::CharacterSet(Box::new_in(
             ast::CharacterSet::AnyCharacterSet(Box::new_in(
                 ast::AnyCharacterSet {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
@@ -58,7 +58,7 @@ impl<'a> super::parse::PatternParser<'a> {
     // <https://tc39.es/ecma262/#prod-AtomEscape>
     pub(super) fn consume_reverse_solidus_atom_escape(
         &mut self,
-    ) -> Result<Option<ast::QuantifiableElement<'a>>> {
+    ) -> Result<Option<ast::Atom<'a>>> {
         let span_start = self.reader.span_position();
         if !self.reader.eat('\\') {
             return Ok(None);
@@ -68,7 +68,7 @@ impl<'a> super::parse::PatternParser<'a> {
         if self.consume_decimal_escape().is_some() {
             let span_end = self.reader.span_position();
 
-            return Ok(Some(ast::QuantifiableElement::Backreference(Box::new_in(
+            return Ok(Some(ast::Atom::Backreference(Box::new_in(
                 ast::Backreference::TemporaryBackreference(Box::new_in(
                     ast::TemporaryBackreference {
                         span: self.span_factory.create(span_start, span_end),
@@ -81,7 +81,7 @@ impl<'a> super::parse::PatternParser<'a> {
         }
 
         if let Some((kind, negate)) = self.consume_character_class_escape() {
-            return Ok(Some(ast::QuantifiableElement::CharacterSet(Box::new_in(
+            return Ok(Some(ast::Atom::CharacterSet(Box::new_in(
                 ast::CharacterSet::EscapeCharacterSet(Box::new_in(
                     ast::EscapeCharacterSet {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
@@ -98,7 +98,7 @@ impl<'a> super::parse::PatternParser<'a> {
                 self.consume_character_class_escape_unicode()?
             {
                 let span = self.span_factory.create(span_start, self.reader.span_position());
-                return Ok(Some(ast::QuantifiableElement::CharacterSet(Box::new_in(
+                return Ok(Some(ast::Atom::CharacterSet(Box::new_in(
                     ast::CharacterSet::UnicodePropertyCharacterSet(Box::new_in(
                         if is_strings_related {
                             ast::UnicodePropertyCharacterSet::StringsUnicodePropertyCharacterSet(
@@ -128,7 +128,7 @@ impl<'a> super::parse::PatternParser<'a> {
         }
 
         if let Some(cp) = self.consume_character_escape()? {
-            return Ok(Some(ast::QuantifiableElement::Character(Box::new_in(
+            return Ok(Some(ast::Atom::Character(Box::new_in(
                 ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
                     value: cp,

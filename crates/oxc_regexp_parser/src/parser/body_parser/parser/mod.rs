@@ -86,7 +86,7 @@ mod test {
 
         let pattern =
             PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 15);
+        assert_eq!(pattern.alternatives[0].terms.len(), 15);
 
         let pattern = PatternParser::new(
             &allocator,
@@ -95,7 +95,7 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 14);
+        assert_eq!(pattern.alternatives[0].terms.len(), 14);
         let pattern = PatternParser::new(
             &allocator,
             source_text,
@@ -103,6 +103,6 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.alternatives[0].elements.len(), 14);
+        assert_eq!(pattern.alternatives[0].terms.len(), 14);
     }
 }
