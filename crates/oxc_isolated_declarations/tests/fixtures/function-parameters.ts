@@ -10,6 +10,10 @@ export const fooGood2 = ({a, b}: object = { a: 1, b: 2 }): number => {
   return 2;
 }
 
+const x = 42;
+const y = '';
+export function fooGood3({a = x, b: [{c = y}]}: object): void {}
+
 // Incorrect
 export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
 export function fnDeclBad2<T>(p: T = [], r2: T): void { }

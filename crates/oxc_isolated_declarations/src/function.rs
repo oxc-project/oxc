@@ -9,6 +9,7 @@ use crate::{
         function_must_have_explicit_return_type, implicitly_adding_undefined_to_type,
         parameter_must_have_explicit_type,
     },
+    formal_parameter_binding_pattern::FormalParameterBindingPattern,
     IsolatedDeclarations,
 };
 
@@ -64,6 +65,8 @@ impl<'a> IsolatedDeclarations<'a> {
             } else {
                 self.ast.copy(&param.pattern)
             };
+
+        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
 
         if is_assignment_pattern || pattern.type_annotation.is_none() {
             let type_annotation = pattern
