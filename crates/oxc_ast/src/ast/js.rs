@@ -426,9 +426,9 @@ pub enum PropertyKind {
     Set,
 }
 
-/// Template Literal
+/// `` `Hello, ${name}` `` in `` const foo = `Hello, ${name}` ``
 ///
-/// This is interpreted by interleaving the expression elements in between the quasi elements.
+/// Represents a template literal, which can include quasi elements and expression elements.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -440,6 +440,9 @@ pub struct TemplateLiteral<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
+/// `` foo`Hello, ${name}` `` in `` const foo = foo`Hello, ${name}` ``
+///
+/// Represents a tagged template expression, which can include a tag and a quasi.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -452,6 +455,9 @@ pub struct TaggedTemplateExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
+/// `Hello, ` in `` `Hello, ${name}` ``
+///
+/// Represents a quasi element in a template literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -463,7 +469,7 @@ pub struct TemplateElement<'a> {
     pub value: TemplateElementValue<'a>,
 }
 
-/// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
+/// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[ast]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
