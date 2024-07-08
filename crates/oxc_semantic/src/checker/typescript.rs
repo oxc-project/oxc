@@ -192,9 +192,6 @@ fn abstract_element_cannot_have_initializer(
     span: Span,
     init_or_impl: &str,
 ) -> OxcDiagnostic {
-    // let (prop_name, span) = prop_key.prop_name().unwrap_or_else(|| {
-    //     (&ctx.source_text[prop.span], prop_key.span())
-    // });
     OxcDiagnostic::error(
         format!("TS({code}): {elem_name} '{prop_name}' cannot have an {init_or_impl} because it is marked abstract."),
     )
@@ -226,15 +223,6 @@ fn abstract_accessor_cannot_have_implementation(accessor_name: &str, span: Span)
         "implementation",
     )
 }
-// /// 'abstract' modifier can only appear on a class, method, or property
-// /// declaration. (1242)
-
-// fn cannot_be_abstract(span: Span) -> OxcDiagnostic {
-//     OxcDiagnostic::error(
-//         "TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.",
-//     )
-//     .with_label(span)
-// }
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
     if method.r#type.is_abstract() && method.value.body.is_some() {

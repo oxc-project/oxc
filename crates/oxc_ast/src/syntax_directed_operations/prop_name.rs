@@ -31,7 +31,6 @@ impl<'a> PropName for PropertyKey<'a> {
             PropertyKey::StaticIdentifier(ident) => Some((&ident.name, ident.span)),
             PropertyKey::Identifier(ident) => Some((&ident.name, ident.span)),
             PropertyKey::StringLiteral(lit) => Some((&lit.value, lit.span)),
-            // PropertyKey::NumericLiteral(lit) => Some((&lit.raw, lit.span)),
             _ => None,
         }
     }
