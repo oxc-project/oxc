@@ -403,9 +403,9 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum PropertyKey<'a> {
-    /// `a` in `const obj = { a: 1 };`
+    /// `a` in `class C { static a = 1; }`
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
-    /// `#a` in `class C { #a = 1; }`
+    /// `a` in `class C { #a = 1; }`
     PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
