@@ -224,24 +224,36 @@ fn abstract_accessor_cannot_have_implementation(accessor_name: &str, span: Span)
     )
 }
 
+/// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
+fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.")
+        .with_label(span)
+}
+
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {
-    if method.r#type.is_abstract() && method.value.body.is_some() {
-        let (method_name, span) = method.key.prop_name().unwrap_or_else(|| {
-            let key_span = method.key.span();
-            (&ctx.source_text[key_span], key_span)
-        });
-        match method.kind {
-            MethodDefinitionKind::Method => {
-                ctx.error(abstract_method_cannot_have_implementation(method_name, span));
+    if method.r#type.is_abstract() {
+        // constructors cannot be abstract, no matter what
+        if method.kind.is_constructor() {
+            ctx.error(illegal_abstract_modifier(method.key.span()));
+        } else if method.value.body.is_some() {
+            // abstract class elements cannot have bodies or initializers
+            let (method_name, span) = method.key.prop_name().unwrap_or_else(|| {
+                let key_span = method.key.span();
+                (&ctx.source_text[key_span], key_span)
+            });
+            match method.kind {
+                MethodDefinitionKind::Method => {
+                    ctx.error(abstract_method_cannot_have_implementation(method_name, span));
+                }
+                MethodDefinitionKind::Get | MethodDefinitionKind::Set => {
+                    ctx.error(abstract_accessor_cannot_have_implementation(method_name, span));
+                }
+                // abstract classes can have concrete methods. Constructors cannot
+                // have abstract modifiers, but this gets checked during parsing
+                MethodDefinitionKind::Constructor => {}
             }
-            MethodDefinitionKind::Get | MethodDefinitionKind::Set => {
-                ctx.error(abstract_accessor_cannot_have_implementation(method_name, span));
-            }
-            // abstract classes can have concrete methods. Constructors cannot
-            // have abstract modifiers, but this gets checked during parsing
-            MethodDefinitionKind::Constructor => {}
+            ctx.error(abstract_method_cannot_have_implementation(method_name, span));
         }
-        ctx.error(abstract_method_cannot_have_implementation(method_name, span));
     }
 }
 

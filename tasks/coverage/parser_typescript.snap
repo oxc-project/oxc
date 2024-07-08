@@ -11101,7 +11101,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  6 │ }
    ╰────
 
-  × TS(1245): Method 'constructor' cannot have an implementation because it is marked abstract.
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts:2:14]
  1 │ abstract class A {
  2 │     abstract constructor() {}
