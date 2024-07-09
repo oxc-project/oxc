@@ -2177,8 +2177,8 @@ impl<'a> Ancestor<'a> {
 }
 
 pub(crate) const OFFSET_PROGRAM_SPAN: usize = offset_of!(Program, span);
-pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
 pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
+pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
 pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
 pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
 pub(crate) const OFFSET_PROGRAM_SCOPE_ID: usize = offset_of!(Program, scope_id);
@@ -2231,16 +2231,16 @@ impl<'a> ProgramWithoutHashbang<'a> {
     }
 
     #[inline]
-    pub fn source_type(&self) -> &SourceType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
-    }
-
-    #[inline]
     pub fn directives(&self) -> &Vec<'a, Directive<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_DIRECTIVES)
                 as *const Vec<'a, Directive<'a>>)
         }
+    }
+
+    #[inline]
+    pub fn source_type(&self) -> &SourceType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
     }
 
     #[inline]
@@ -2269,16 +2269,16 @@ impl<'a> ProgramWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn source_type(&self) -> &SourceType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
-    }
-
-    #[inline]
     pub fn directives(&self) -> &Vec<'a, Directive<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_PROGRAM_DIRECTIVES)
                 as *const Vec<'a, Directive<'a>>)
         }
+    }
+
+    #[inline]
+    pub fn source_type(&self) -> &SourceType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
     }
 
     #[inline]
