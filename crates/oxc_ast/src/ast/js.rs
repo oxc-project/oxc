@@ -587,7 +587,9 @@ pub struct CallExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// New Expression
+/// `new C()` in `class C {}; new C();`
+///
+/// Represents a new expression, which can include a callee and arguments.
 ///
 /// ## Example
 /// ```ts
