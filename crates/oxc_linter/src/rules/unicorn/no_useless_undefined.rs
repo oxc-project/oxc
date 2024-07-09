@@ -20,10 +20,16 @@ fn no_useless_undefined_diagnostic_spans(spans: Vec<Span>) -> OxcDiagnostic {
     warn().with_labels(spans)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 pub struct NoUselessUndefined {
     check_arguments: bool,
     check_arrow_function_body: bool,
+}
+
+impl Default for NoUselessUndefined {
+    fn default() -> Self {
+        Self { check_arguments: true, check_arrow_function_body: true }
+    }
 }
 
 declare_oxc_lint!(
