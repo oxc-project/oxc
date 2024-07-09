@@ -121,7 +121,7 @@ impl<'a> Semantic<'a> {
     }
 
     /// Find which scope a symbol is declared in
-    pub fn symbol_scope(&self, symbol_id: SymbolId) -> ScopeId {
+    pub fn symbol_scope(&self, symbol_id: SymbolId) -> Option<ScopeId> {
         self.symbols.get_scope_id(symbol_id)
     }
 
@@ -198,7 +198,7 @@ mod tests {
             .iter_bindings()
             .find(|(_scope_id, _symbol_id, name)| name.as_str() == "Fn")
             .unwrap();
-        assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), top_level_a.0);
+        assert_eq!(semantic.symbols.get_scope_id(top_level_a.1), Some(top_level_a.0));
     }
 
     #[test]

@@ -198,8 +198,9 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let scope_id = self.semantic.symbol_scope(symbol_id);
-                let scope_flags = self.semantic.scopes().get_flags(scope_id);
-                if scope_flags.contains(expected_flags) {
+                let scope_flags =
+                    scope_id.map(|scope_id| self.semantic.scopes().get_flags(scope_id));
+                if scope_flags.is_some_and(|flags| flags.contains(expected_flags)) {
                     Ok(symbol_id)
                 } else {
                     Err(OxcDiagnostic::error(format!(
@@ -219,8 +220,9 @@ impl<'a> SymbolTester<'a> {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
                 let scope_id = self.semantic.symbol_scope(symbol_id);
-                let scope_flags = self.semantic.scopes().get_flags(scope_id);
-                if scope_flags.contains(excluded_flags) {
+                let scope_flags =
+                    scope_id.map(|scope_id| self.semantic.scopes().get_flags(scope_id));
+                if scope_flags.is_some_and(|flag| flag.contains(excluded_flags)) {
                     Err(OxcDiagnostic::error(format!(
                         "Binding {target_name} is in a scope with excluded flags.\n\tExpected: not {excluded_flags:?}\n\tActual: {scope_flags:?}"
                     )))

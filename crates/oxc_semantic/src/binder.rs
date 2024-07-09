@@ -34,7 +34,12 @@ impl<'a> Binder for VariableDeclarator<'a> {
 
         if self.kind.is_lexical() {
             self.id.bound_names(&mut |ident| {
-                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+                let symbol_id = builder.declare_symbol_on_current_scope(
+                    ident.span,
+                    &ident.name,
+                    includes,
+                    excludes,
+                );
                 ident.symbol_id.set(Some(symbol_id));
             });
             return;
@@ -80,12 +85,16 @@ impl<'a> Binder for Class<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let Some(ident) = &self.id else { return };
         if !self.declare {
-            let symbol_id = builder.declare_symbol(
-                ident.span,
-                &ident.name,
-                SymbolFlags::Class,
-                SymbolFlags::ClassExcludes,
-            );
+            let symbol_id = if self.is_declaration() {
+                builder.declare_symbol_on_current_scope(
+                    ident.span,
+                    &ident.name,
+                    SymbolFlags::Class,
+                    SymbolFlags::ClassExcludes,
+                )
+            } else {
+                builder.declare_symbol(ident.span, &ident.name, SymbolFlags::Class)
+            };
             ident.symbol_id.set(Some(symbol_id));
         }
     }
@@ -143,12 +152,8 @@ impl<'a> Binder for Function<'a> {
             } else if self.r#type == FunctionType::FunctionExpression {
                 // https://tc39.es/ecma262/#sec-runtime-semantics-instantiateordinaryfunctionexpression
                 // 5. Perform ! funcEnv.CreateImmutableBinding(name, false).
-                let symbol_id = builder.declare_symbol(
-                    ident.span,
-                    &ident.name,
-                    SymbolFlags::Function,
-                    SymbolFlags::empty(),
-                );
+                let symbol_id =
+                    builder.declare_symbol(ident.span, &ident.name, SymbolFlags::Function);
                 ident.symbol_id.set(Some(symbol_id));
             }
         }
@@ -196,7 +201,12 @@ impl<'a> Binder for BindingRestElement<'a> {
         let excludes =
             SymbolFlags::FunctionScopedVariable | SymbolFlags::FunctionScopedVariableExcludes;
         self.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol_on_current_scope(
+                ident.span,
+                &ident.name,
+                includes,
+                excludes,
+            );
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -235,7 +245,12 @@ impl<'a> Binder for FormalParameter<'a> {
         };
 
         self.bound_names(&mut |ident| {
-            let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
+            let symbol_id = builder.declare_symbol_on_current_scope(
+                ident.span,
+                &ident.name,
+                includes,
+                excludes,
+            );
             ident.symbol_id.set(Some(symbol_id));
         });
     }
@@ -254,7 +269,7 @@ impl<'a> Binder for CatchParameter<'a> {
             ident.symbol_id.set(Some(symbol_id));
         } else {
             self.pattern.bound_names(&mut |ident| {
-                let symbol_id = builder.declare_symbol(
+                let symbol_id = builder.declare_symbol_on_current_scope(
                     ident.span,
                     &ident.name,
                     SymbolFlags::BlockScopedVariable | SymbolFlags::CatchVariable,
@@ -267,7 +282,7 @@ impl<'a> Binder for CatchParameter<'a> {
 }
 
 fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut SemanticBuilder) {
-    let symbol_id = builder.declare_symbol(
+    let symbol_id = builder.declare_symbol_on_current_scope(
         ident.span,
         &ident.name,
         SymbolFlags::ImportBinding,
@@ -302,7 +317,7 @@ impl<'a> Binder for TSImportEqualsDeclaration<'a> {
 
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let symbol_id = builder.declare_symbol(
+        let symbol_id = builder.declare_symbol_on_current_scope(
             self.id.span,
             &self.id.name,
             SymbolFlags::TypeAlias,
@@ -314,7 +329,7 @@ impl<'a> Binder for TSTypeAliasDeclaration<'a> {
 
 impl<'a> Binder for TSInterfaceDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let symbol_id = builder.declare_symbol(
+        let symbol_id = builder.declare_symbol_on_current_scope(
             self.id.span,
             &self.id.name,
             SymbolFlags::Interface,
@@ -333,7 +348,12 @@ impl<'a> Binder for TSEnumDeclaration<'a> {
         } else {
             SymbolFlags::RegularEnumExcludes
         };
-        let symbol_id = builder.declare_symbol(self.id.span, &self.id.name, includes, excludes);
+        let symbol_id = builder.declare_symbol_on_current_scope(
+            self.id.span,
+            &self.id.name,
+            includes,
+            excludes,
+        );
         self.id.symbol_id.set(Some(symbol_id));
     }
 }
@@ -350,7 +370,7 @@ impl<'a> Binder for TSEnumMember<'a> {
             TSEnumMemberName::StaticNumericLiteral(n) => Cow::Owned(n.value.to_string()),
             match_expression!(TSEnumMemberName) => panic!("TODO: implement"),
         };
-        builder.declare_symbol(
+        builder.declare_symbol_on_current_scope(
             self.span,
             &name,
             SymbolFlags::EnumMember,
@@ -364,7 +384,7 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
         // At declaration time a module has no value declaration it is only when a value declaration
         // is made inside a the scope of a module that the symbol is modified
         let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
-        builder.declare_symbol(
+        builder.declare_symbol_on_current_scope(
             self.span,
             self.id.name().as_str(),
             SymbolFlags::NameSpaceModule | ambient,
@@ -375,7 +395,7 @@ impl<'a> Binder for TSModuleDeclaration<'a> {
 
 impl<'a> Binder for TSTypeParameter<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        let symbol_id = builder.declare_symbol(
+        let symbol_id = builder.declare_symbol_on_current_scope(
             self.name.span,
             &self.name.name,
             SymbolFlags::TypeParameter,

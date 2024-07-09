@@ -175,6 +175,14 @@ source: crates/oxc_linter/src/tester.rs
  3 │           constructor(foo: String | Object | Function) {}
    ╰────
 
+  ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
+   ╭─[ban_types.tsx:2:68]
+ 1 │ 
+ 2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
+   ·                                                                    ──────
+ 3 │           constructor(foo: String | Object | Function) {}
+   ╰────
+
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:3:28]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {

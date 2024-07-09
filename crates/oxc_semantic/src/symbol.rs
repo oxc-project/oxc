@@ -7,6 +7,8 @@ pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
+use rustc_hash::FxHashMap;
+
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 #[cfg(feature = "serialize")]
@@ -32,9 +34,10 @@ pub struct SymbolTable {
     pub spans: IndexVec<SymbolId, Span>,
     pub names: IndexVec<SymbolId, CompactStr>,
     pub flags: IndexVec<SymbolId, SymbolFlags>,
-    pub scope_ids: IndexVec<SymbolId, ScopeId>,
+    pub scope_ids: IndexVec<SymbolId, Option<ScopeId>>,
     /// Pointer to the AST Node where this symbol is declared
     pub declarations: IndexVec<SymbolId, AstNodeId>,
+    pub declaration_symbol: FxHashMap<AstNodeId, SymbolId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     pub references: IndexVec<ReferenceId, Reference>,
     pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
@@ -61,6 +64,10 @@ impl SymbolTable {
         self.spans
             .iter_enumerated()
             .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
+    }
+
+    pub fn get_symbol_id_from_declaration(&self, declaration: AstNodeId) -> Option<SymbolId> {
+        self.declaration_symbol.get(&declaration).copied()
     }
 
     pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
@@ -97,16 +104,20 @@ impl SymbolTable {
         self.flags[symbol_id] |= includes;
     }
 
-    pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
+    pub fn set_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        self.scope_ids[symbol_id] = Some(scope_id);
+    }
+
+    pub fn get_scope_id(&self, symbol_id: SymbolId) -> Option<ScopeId> {
         self.scope_ids[symbol_id]
     }
 
     pub fn get_scope_id_from_span(&self, span: &Span) -> Option<ScopeId> {
-        self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
+        self.get_symbol_id_from_span(span).and_then(|symbol_id| self.get_scope_id(symbol_id))
     }
 
     pub fn get_scope_id_from_name(&self, name: &str) -> Option<ScopeId> {
-        self.get_symbol_id_from_name(name).map(|symbol_id| self.get_scope_id(symbol_id))
+        self.get_symbol_id_from_name(name).and_then(|symbol_id| self.get_scope_id(symbol_id))
     }
 
     pub fn get_declaration(&self, symbol_id: SymbolId) -> AstNodeId {
@@ -117,19 +128,19 @@ impl SymbolTable {
         &mut self,
         span: Span,
         name: CompactStr,
+        declaration: AstNodeId,
         flag: SymbolFlags,
-        scope_id: ScopeId,
+        scope_id: Option<ScopeId>,
     ) -> SymbolId {
         _ = self.spans.push(span);
         _ = self.names.push(name);
+        _ = self.declarations.push(declaration);
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
         _ = self.resolved_references.push(vec![]);
-        self.redeclare_variables.push(vec![])
-    }
-
-    pub fn add_declaration(&mut self, node_id: AstNodeId) {
-        self.declarations.push(node_id);
+        let symbol_id = self.redeclare_variables.push(vec![]);
+        self.declaration_symbol.insert(declaration, symbol_id);
+        symbol_id
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
