@@ -220,7 +220,7 @@ pub fn has_pure_notation(span: Span, ctx: &LintContext) -> bool {
     let Some(comment) = ctx.semantic().trivias().comments_range(..span.start).next_back() else {
         return false;
     };
-    let raw = comment.span().source_text(ctx.semantic().source_text());
+    let raw = comment.span.source_text(ctx.semantic().source_text());
 
     raw.contains("@__PURE__") || raw.contains("#__PURE__")
 }
@@ -259,7 +259,7 @@ pub fn has_comment_about_side_effect_check(span: Span, ctx: &LintContext) -> boo
 pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -> Option<&'a str> {
     let comment = ctx.semantic().trivias().comments_range(..span.start).next_back()?;
 
-    let comment_text = comment.span().source_text(ctx.source_text());
+    let comment_text = comment.span.source_text(ctx.source_text());
 
     if !is_tree_shaking_comment(comment_text) {
         return None;
@@ -267,7 +267,7 @@ pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -
 
     // If there are non-whitespace characters between the `comment`` and the `span`,
     // we treat the `comment` not belongs to the `span`.
-    let only_whitespace = ctx.source_text()[comment.span().end as usize..span.start as usize]
+    let only_whitespace = ctx.source_text()[comment.span.end as usize..span.start as usize]
         .strip_prefix("*/") // for multi-line comment
         .is_some_and(|s| s.trim().is_empty());
 
@@ -288,9 +288,9 @@ pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -
         return None;
     };
 
-    if comment.span().end < current_line_start {
+    if comment.span.end < current_line_start {
         let previous_line =
-            ctx.source_text()[..comment.span().end as usize].lines().next_back().unwrap_or("");
+            ctx.source_text()[..comment.span.end as usize].lines().next_back().unwrap_or("");
         let nothing_before_comment = previous_line
             .trim()
             .strip_prefix(if comment.kind == CommentKind::SingleLine { "//" } else { "/*" })

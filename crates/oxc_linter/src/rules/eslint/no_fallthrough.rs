@@ -213,8 +213,7 @@ impl NoFallthrough {
                 .trivias()
                 .comments_range(range)
                 .map(|comment| {
-                    &semantic.source_text()
-                        [comment.span().start as usize..comment.span().end as usize]
+                    &semantic.source_text()[comment.span.start as usize..comment.span.end as usize]
                 })
                 .last()
                 .map(str::trim);

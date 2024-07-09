@@ -28,7 +28,7 @@ fn main() -> Result<(), String> {
     let comments = ret
         .trivias
         .comments()
-        .map(|comment| comment.span().source_text(&source_text))
+        .map(|comment| comment.span.source_text(&source_text))
         .collect::<Vec<_>>();
     println!("{comments:?}");
 

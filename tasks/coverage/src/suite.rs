@@ -445,9 +445,9 @@ pub trait Case: Sized + Sync + Send + UnwindSafe {
     fn check_comments(&self, trivias: &Trivias) -> Option<TestResult> {
         let mut uniq: HashSet<Span> = HashSet::new();
         for comment in trivias.comments() {
-            if !uniq.insert(*comment.span()) {
+            if !uniq.insert(comment.span) {
                 return Some(TestResult::DuplicatedComments(
-                    comment.span().source_text(self.code()).to_string(),
+                    comment.span.source_text(self.code()).to_string(),
                 ));
             }
         }

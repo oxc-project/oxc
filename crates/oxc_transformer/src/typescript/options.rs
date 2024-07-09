@@ -56,7 +56,7 @@ impl TypeScriptOptions {
     /// This behavior is aligned with babel.
     pub(crate) fn update_with_comments(mut self, ctx: &TransformCtx) -> Self {
         for comment in ctx.trivias.comments() {
-            let mut comment = comment.span().source_text(ctx.source_text).trim_start();
+            let mut comment = comment.span.source_text(ctx.source_text).trim_start();
             // strip leading jsdoc comment `*` and then whitespaces
             while let Some(cur_comment) = comment.strip_prefix('*') {
                 comment = cur_comment.trim_start();

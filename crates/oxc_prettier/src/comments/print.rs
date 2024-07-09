@@ -34,8 +34,8 @@ impl<'a> Prettier<'a> {
         let mut peekable_trivias = self.trivias.clone();
 
         while let Some(comment) = peekable_trivias.peek().copied() {
-            let start = comment.span().start;
-            let end = comment.span().end;
+            let start = comment.span.start;
+            let end = comment.span.end;
             let mut should_break = true;
             let comment = Comment::new(start, end, comment.kind);
 
@@ -71,8 +71,8 @@ impl<'a> Prettier<'a> {
     pub(crate) fn print_leading_comments(&mut self, range: Span) -> Option<Doc<'a>> {
         let mut parts = self.vec();
         while let Some(comment) = self.trivias.peek().copied() {
-            let start = comment.span().start;
-            let end = comment.span().end;
+            let start = comment.span.start;
+            let end = comment.span.end;
             let comment = Comment::new(start, end, comment.kind);
             // Comment before the span
             if end <= range.start {
@@ -120,8 +120,8 @@ impl<'a> Prettier<'a> {
         let mut parts = self.vec();
         let mut previous_comment: Option<Comment> = None;
         while let Some(comment) = self.trivias.peek().copied() {
-            let start = comment.span().start;
-            let end = comment.span().end;
+            let start = comment.span.start;
+            let end = comment.span.end;
             let comment = Comment::new(start, end, comment.kind);
             // Trailing comment if there is nothing in between.
             if range.end < comment.start
@@ -187,8 +187,8 @@ impl<'a> Prettier<'a> {
     pub(crate) fn print_inner_comment(&mut self, range: Span) -> Vec<'a, Doc<'a>> {
         let mut parts = self.vec();
         while let Some(comment) = self.trivias.peek().copied() {
-            let start = comment.span().start;
-            let end = comment.span().end;
+            let start = comment.span.start;
+            let end = comment.span.end;
             let comment = Comment::new(start, end, comment.kind);
             // Comment within the span
             if comment.start >= range.start && comment.end <= range.end {
@@ -210,8 +210,8 @@ impl<'a> Prettier<'a> {
     ) -> Option<Doc<'a>> {
         let mut parts = vec![];
         while let Some(comment) = self.trivias.peek().copied() {
-            let start = comment.span().start;
-            let end = comment.span().end;
+            let start = comment.span.start;
+            let end = comment.span.end;
             let comment = Comment::new(start, end, comment.kind);
             // Comment within the span
             if comment.end <= range.end {

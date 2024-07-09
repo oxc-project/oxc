@@ -162,7 +162,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                             .semantic()
                                             .trivias()
                                             .comments_range(node_start..node_end)
-                                            .map(|comment| (*comment, comment.span()));
+                                            .map(|comment| (*comment, comment.span));
 
                                         let comments_text = {
                                             let mut comments_vec: Vec<String> = vec![];

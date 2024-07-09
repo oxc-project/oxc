@@ -12,8 +12,8 @@ use oxc_span::Span;
 #[derive(Debug, Clone, Copy)]
 pub struct Comment {
     pub kind: CommentKind,
-    /// The span of the comment text (leading/trailing delimiters not included).
-    span: Span,
+    /// The span of the comment text (without leading/trailing delimiters).
+    pub span: Span,
 }
 
 impl Comment {
@@ -21,12 +21,6 @@ impl Comment {
     pub fn new(start: u32, end: u32, kind: CommentKind) -> Self {
         let span = Span::new(start, end);
         Self { kind, span }
-    }
-
-    /// Return the span of the comment text (without delimiters).
-    #[inline]
-    pub fn span(&self) -> &Span {
-        &self.span
     }
 }
 

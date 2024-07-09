@@ -109,9 +109,9 @@ fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> Parse
                 CommentKind::SingleLine => "Line",
                 CommentKind::MultiLine => "Block",
             },
-            value: comment.span().source_text(source_text).to_string(),
-            start: comment.span().start,
-            end: comment.span().end,
+            value: comment.span.source_text(source_text).to_string(),
+            start: comment.span.start,
+            end: comment.span.end,
         })
         .collect::<Vec<Comment>>();
 

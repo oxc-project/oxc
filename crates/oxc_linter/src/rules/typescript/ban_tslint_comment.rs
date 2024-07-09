@@ -39,13 +39,13 @@ impl Rule for BanTslintComment {
         let source_text_len = ctx.semantic().source_text().len();
 
         for comment in comments {
-            let raw = comment.span().source_text(ctx.semantic().source_text());
+            let raw = comment.span.source_text(ctx.semantic().source_text());
 
             if is_tslint_comment_directive(raw) {
                 let comment_span = get_full_comment(
                     source_text_len,
-                    comment.span().start,
-                    comment.span().end,
+                    comment.span.start,
+                    comment.span.end,
                     comment.kind.is_multi_line(),
                 );
 

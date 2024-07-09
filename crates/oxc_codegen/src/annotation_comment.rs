@@ -16,15 +16,14 @@ pub fn get_leading_annotate_comment<const MINIFY: bool>(
     let maybe_leading_comment = codegen.try_get_leading_comment(node_start);
     let comment = maybe_leading_comment?;
     let real_end = match comment.kind {
-        CommentKind::SingleLine => comment.span().end,
-        CommentKind::MultiLine => comment.span().end + 2,
+        CommentKind::SingleLine => comment.span.end,
+        CommentKind::MultiLine => comment.span.end + 2,
     };
     let source_code = codegen.source_text;
     let content_between = &source_code[real_end as usize..node_start as usize];
     // Used for VariableDeclaration (Rollup only respects "const" and only for the first one)
     if content_between.chars().all(|ch| ch.is_ascii_whitespace()) {
-        let comment_content =
-            &source_code[comment.span().start as usize..comment.span().end as usize];
+        let comment_content = &source_code[comment.span.start as usize..comment.span.end as usize];
         if MATCHER.find_iter(&comment_content).next().is_some() {
             return Some(*comment);
         }
@@ -38,17 +37,13 @@ pub fn print_comment<const MINIFY: bool>(comment: Comment, p: &mut Codegen<{ MIN
     match comment.kind {
         CommentKind::SingleLine => {
             p.print_str("//");
-            p.print_range_of_source_code(
-                comment.span().start as usize..comment.span().end as usize,
-            );
+            p.print_range_of_source_code(comment.span.start as usize..comment.span.end as usize);
             p.print_soft_newline();
             p.print_indent();
         }
         CommentKind::MultiLine => {
             p.print_str("/*");
-            p.print_range_of_source_code(
-                comment.span().start as usize..comment.span().end as usize,
-            );
+            p.print_range_of_source_code(comment.span.start as usize..comment.span.end as usize);
             p.print_str("*/");
             p.print_soft_space();
         }

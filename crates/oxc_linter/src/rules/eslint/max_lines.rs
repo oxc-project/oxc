@@ -84,7 +84,7 @@ impl Rule for MaxLines {
             let mut comment_lines: usize = 0;
             for comment in ctx.semantic().trivias().comments() {
                 if comment.kind.is_single_line() {
-                    let comment_line = ctx.source_text()[..comment.span().start as usize]
+                    let comment_line = ctx.source_text()[..comment.span.start as usize]
                         .lines()
                         .next_back()
                         .unwrap_or("");
@@ -93,8 +93,8 @@ impl Rule for MaxLines {
                     }
                 } else {
                     let mut start_line =
-                        ctx.source_text()[..comment.span().start as usize].lines().count();
-                    let comment_start_line = ctx.source_text()[..comment.span().start as usize]
+                        ctx.source_text()[..comment.span.start as usize].lines().count();
+                    let comment_start_line = ctx.source_text()[..comment.span.start as usize]
                         .lines()
                         .next_back()
                         .unwrap_or("");
@@ -102,11 +102,9 @@ impl Rule for MaxLines {
                         start_line += 1;
                     }
                     let mut end_line =
-                        ctx.source_text()[..=comment.span().end as usize].lines().count();
-                    let comment_end_line = ctx.source_text()[comment.span().end as usize..]
-                        .lines()
-                        .next()
-                        .unwrap_or("");
+                        ctx.source_text()[..=comment.span.end as usize].lines().count();
+                    let comment_end_line =
+                        ctx.source_text()[comment.span.end as usize..].lines().next().unwrap_or("");
                     if line_has_just_comment(comment_end_line, "*/") {
                         end_line += 1;
                     }
