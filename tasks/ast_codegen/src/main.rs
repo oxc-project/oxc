@@ -17,6 +17,7 @@ use std::{
     rc::Rc,
 };
 
+use bpaf::{Bpaf, Parser};
 use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
 use proc_macro2::TokenStream;
@@ -26,6 +27,7 @@ use defs::TypeDef;
 use generators::{AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
+use util::write_all_to;
 
 use crate::generators::ImplGetSpanGenerator;
 
@@ -204,18 +206,29 @@ fn write_generated_streams(
     let output_dir = output_dir()?;
     for (name, stream) in streams {
         let content = pprint(&stream);
-
         let path = format!("{output_dir}/{name}.rs");
-        let mut file = fs::File::create(path)?;
-
-        file.write_all(content.as_bytes())?;
+        write_all_to(content.as_bytes(), path)?;
     }
     Ok(())
 }
 
+#[derive(Debug, Bpaf)]
+pub struct CliOptions {
+    /// Runs all generators but won't write anything down.
+    #[bpaf(switch)]
+    dry_run: bool,
+    /// Don't run cargo fmt at the end
+    #[bpaf(switch)]
+    no_fmt: bool,
+    /// Path of output `schema.json`.
+    schema: Option<std::path::PathBuf>,
+}
+
 #[allow(clippy::print_stdout)]
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let CodegenResult { outputs, .. } = files()
+    let cli_options = cli_options().run();
+
+    let CodegenResult { outputs, schema } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .with(AstKindGenerator)
         .with(AstBuilderGenerator)
@@ -226,11 +239,20 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let (streams, _): (Vec<_>, Vec<_>) =
         outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Stream(_)));
-    write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?;
 
-    cargo_fmt(".")?;
+    if !cli_options.dry_run {
+        write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?;
+    }
 
-    // let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
-    // println!("{schema}");
+    if !cli_options.no_fmt {
+        cargo_fmt(".")?;
+    }
+
+    if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
+        let path = schema_path.to_str().expect("invalid path for schema output.");
+        let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
+        write_all_to(schema.as_bytes(), path)?;
+    }
+
     Ok(())
 }
