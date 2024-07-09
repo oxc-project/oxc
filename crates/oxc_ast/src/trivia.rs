@@ -24,6 +24,7 @@ impl Comment {
     }
 
     /// Return the span of the comment text (without delimiters).
+    #[inline]
     pub fn span(&self) -> &Span {
         &self.span
     }
