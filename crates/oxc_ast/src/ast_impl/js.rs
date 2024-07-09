@@ -5,8 +5,8 @@ use crate::ast::*;
 
 use std::{cell::Cell, fmt, hash::Hash};
 
-use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_allocator::{Box, FromIn, Vec};
+use oxc_span::{Atom, CompactStr, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     reference::{ReferenceFlag, ReferenceId},
@@ -662,6 +662,15 @@ impl<'a> Statement<'a> {
                 | Statement::ForStatement(_)
                 | Statement::WhileStatement(_)
         )
+    }
+}
+
+impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
+    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+        Statement::ExpressionStatement(Box::from_in(
+            ExpressionStatement { span: expression.span(), expression },
+            alloc,
+        ))
     }
 }
 
