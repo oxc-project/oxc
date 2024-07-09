@@ -53,6 +53,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let expanded = quote! {
         #(pub use self::#use_stmts::#struct_names;)*
 
+        use schemars::JsonSchema;
         use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
 
@@ -84,6 +85,16 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
             pub fn documentation(&self) -> Option<&'static str> {
                 match self {
                     #(Self::#struct_names(_) => #struct_names::documentation()),*
+                }
+            }
+
+            /// Gets a [`schemars::schema::Schema`] for the rule's
+            /// configuration. This will be [`None`] for rules that don't
+            /// specify a config schema.
+            pub fn schema(&self, gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+                match self {
+                    // #(Self::#struct_names(_) => #struct_names::json_schema(gen)),*
+                    #(Self::#struct_names(_) => gen.subschema_for::<#struct_names>()),*
                 }
             }
 
