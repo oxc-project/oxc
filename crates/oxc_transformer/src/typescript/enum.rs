@@ -2,6 +2,7 @@ use std::cell::Cell;
 
 use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
+use oxc_semantic::AstNodeId;
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
     number::{NumberBase, ToJsInt32, ToJsString},
@@ -77,8 +78,9 @@ impl<'a> TypeScriptEnum<'a> {
         let param_symbol_id = ctx.symbols_mut().create_symbol(
             decl.id.span,
             enum_name.to_compact_str(),
+            AstNodeId::dummy(),
             SymbolFlags::FunctionScopedVariable,
-            func_scope_id,
+            Some(func_scope_id),
         );
         let ident = BindingIdentifier {
             span: decl.id.span,

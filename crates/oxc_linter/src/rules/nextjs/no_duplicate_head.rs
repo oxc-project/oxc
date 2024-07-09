@@ -52,7 +52,7 @@ impl Rule for NoDuplicateHead {
             return;
         }
 
-        let scope_id = symbols.get_scope_id(symbol_id);
+        let Some(scope_id) = symbols.get_scope_id(symbol_id) else { return };
         if scope_id != ctx.scopes().root_scope_id() {
             return;
         }

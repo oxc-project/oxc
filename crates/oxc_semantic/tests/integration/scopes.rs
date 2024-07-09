@@ -76,7 +76,7 @@ fn test_function_level_strict() {
         .is_in_scope(ScopeFlags::StrictMode | ScopeFlags::Function)
         .expect(|(semantic, symbol_id)| -> Result<(), &'static str> {
             let scope_id = semantic.symbol_scope(symbol_id);
-            let Some(parent_scope_id) = semantic.scopes().get_parent_id(scope_id) else {
+            let Some(parent_scope_id) = scope_id.and_then(|scope_id| semantic.scopes().get_parent_id(scope_id)) else {
                 return Err("Expected x's scope to have a parent")
             };
             let parent_flags = semantic.scopes().get_flags(parent_scope_id);

@@ -2,8 +2,8 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
-Positive Passed: 5268/5283 (99.72%)
-Negative Passed: 1096/4875 (22.48%)
+Positive Passed: 5271/5283 (99.77%)
+Negative Passed: 1094/4875 (22.44%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -2565,12 +2565,14 @@ Expect Syntax Error: "conformance/es7/exponentiationOperator/exponentiationOpera
 Expect Syntax Error: "conformance/es7/exponentiationOperator/exponentiationOperatorWithUndefinedValueAndInvalidOperands.ts"
 Expect Syntax Error: "conformance/es7/exponentiationOperator/exponentiationOperatorWithUndefinedValueAndValidOperands.ts"
 Expect Syntax Error: "conformance/esDecorators/classDeclaration/accessors/esDecorators-classDeclaration-accessors-nonStaticAbstract.ts"
+Expect Syntax Error: "conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-parameterDecorators.ts"
 Expect Syntax Error: "conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticAbstract.ts"
 Expect Syntax Error: "conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticAbstractAccessor.ts"
 Expect Syntax Error: "conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-nonStaticAmbient.ts"
 Expect Syntax Error: "conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAmbient.ts"
 Expect Syntax Error: "conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-nonStaticAbstract.ts"
 Expect Syntax Error: "conformance/esDecorators/esDecorators-arguments.ts"
+Expect Syntax Error: "conformance/esDecorators/esDecorators-emitDecoratorMetadata.ts"
 Expect Syntax Error: "conformance/expressions/arrayLiterals/arrayLiterals.ts"
 Expect Syntax Error: "conformance/expressions/arrayLiterals/arrayLiterals3.ts"
 Expect Syntax Error: "conformance/expressions/asOperator/asOperator2.ts"
@@ -3799,21 +3801,6 @@ Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
     · ────
  24 │     const enum H {}
     ╰────
-Expect to Parse: "compiler/mixinIntersectionIsValidbaseType.ts"
-
-  × Identifier `A` has already been declared
-    ╭─[compiler/mixinIntersectionIsValidbaseType.ts:22:29]
- 21 │ const AMixin = <K extends Constructor<Initable> & Initable>(SuperClass: K) => {
- 22 │     let SomeHowOkay = class A extends SuperClass {
-    ·                             ┬
-    ·                             ╰── `A` has already been declared here
- 23 │     };
- 24 │ 
- 25 │     let SomeHowNotOkay = class A extends Serializable(SuperClass) {
-    ·                                ┬
-    ·                                ╰── It can not be redeclared here
- 26 │     };
-    ╰────
 Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
 
   × Unexpected token
@@ -3844,21 +3831,6 @@ Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
      ·             ╰── It can not be redeclared here
  132 │     }
      ╰────
-Expect to Parse: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty8.ts"
-
-  × Identifier `Base` has already been declared
-    ╭─[conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty8.ts:14:7]
- 13 │ 
- 14 │ const Base = classWithProperties({
-    ·       ──┬─
-    ·         ╰── `Base` has already been declared here
- 15 │     get x() { return 'boolean' as const },
- 16 │     y: 'string',
- 17 │ }, class Base {
-    ·          ──┬─
-    ·            ╰── It can not be redeclared here
- 18 │ });
-    ╰────
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
 
   × Classes may not have a static property named prototype
@@ -3926,18 +3898,6 @@ Expect to Parse: "conformance/es6/moduleExportsSystem/topLevelVarHoistingCommonJ
  64 │ with (_) {
     · ────
  65 │     var y = _;
-    ╰────
-Expect to Parse: "conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.11.ts"
-
-  × Identifier `C` has already been declared
-    ╭─[conformance/esDecorators/classExpression/namedEvaluation/esDecorators-classExpression-namedEvaluation.11.ts:10:13]
-  9 │ 
- 10 │ (@dec class C {});
-    ·             ┬
-    ·             ╰── `C` has already been declared here
- 11 │ (class C { @dec y: any });
-    ·        ┬
-    ·        ╰── It can not be redeclared here
     ╰────
 Expect to Parse: "conformance/esDecorators/esDecorators-decoratorExpression.1.ts"
 
@@ -9517,24 +9477,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  13 │     barn((private, public, package) => { });
     ·                            ───────
  14 │ 
-    ╰────
-
-  × Identifier `package` has already been declared
-    ╭─[compiler/strictModeReservedWord.ts:8:9]
-  7 │     let let = "blah";
-  8 │     var package = "hello"
-    ·         ───┬───
-    ·            ╰── `package` has already been declared here
-  9 │     function package() { }
- 10 │     function bar(private, implements, let) { }
- 11 │     function baz<implements, protected>() { }
- 12 │     function barn(cb: (private, public, package) => void) { }
- 13 │     barn((private, public, package) => { });
- 14 │ 
- 15 │     var myClass = class package extends public {}
-    ·                         ───┬───
-    ·                            ╰── It can not be redeclared here
- 16 │ 
     ╰────
 
   × The keyword 'package' is reserved
@@ -15902,38 +15844,6 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·           ─
  3 │ }
    ╰────
-
-  × Identifier `C` has already been declared
-   ╭─[conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-parameterDecorators.ts:3:7]
- 2 │ 
- 3 │ class C {
-   ·       ┬
-   ·       ╰── `C` has already been declared here
- 4 │     constructor(@dec x: any) {}
-   ╰────
-    ╭─[conformance/esDecorators/classDeclaration/esDecorators-classDeclaration-parameterDecorators.ts:11:8]
- 10 │ 
- 11 │ (class C {
-    ·        ┬
-    ·        ╰── It can not be redeclared here
- 12 │     constructor(@dec x: any) {}
-    ╰────
-
-  × Identifier `C` has already been declared
-   ╭─[conformance/esDecorators/esDecorators-emitDecoratorMetadata.ts:4:7]
- 3 │ @dec
- 4 │ class C {
-   ·       ┬
-   ·       ╰── `C` has already been declared here
- 5 │     constructor(x: number) {}
-   ╰────
-    ╭─[conformance/esDecorators/esDecorators-emitDecoratorMetadata.ts:26:13]
- 25 │ 
- 26 │ (@dec class C {
-    ·             ┬
-    ·             ╰── It can not be redeclared here
- 27 │     constructor(x: number) {}
-    ╰────
 
   × Private identifier '#foo' is not allowed outside class bodies
    ╭─[conformance/esDecorators/esDecorators-privateFieldAccess.ts:3:13]

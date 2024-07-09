@@ -275,6 +275,15 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    /// Declares a `Symbol` for the node, adds it to symbol table
+    ///
+    /// includes: the `SymbolFlags` that node has in addition to its declaration type (eg: export, ambient, etc.)
+    pub fn declare_symbol(&mut self, span: Span, name: &str, includes: SymbolFlags) -> SymbolId {
+        let includes = includes | self.current_symbol_flags;
+        let name = CompactStr::new(name);
+        self.symbols.create_symbol(span, name, self.current_node_id, includes, None)
+    }
+
     /// Declares a `Symbol` for the node, adds it to symbol table, and binds it to the scope.
     ///
     /// includes: the `SymbolFlags` that node has in addition to its declaration type (eg: export, ambient, etc.)
@@ -296,14 +305,13 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         let includes = includes | self.current_symbol_flags;
-        let name = CompactStr::new(name);
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
-        self.symbols.add_declaration(self.current_node_id);
-        self.scope.add_binding(scope_id, name, symbol_id);
+        let symbol_id = self.declare_symbol(span, name, includes);
+        self.symbols.set_scope_id(symbol_id, scope_id);
+        self.scope.add_binding(scope_id, CompactStr::new(name), symbol_id);
         symbol_id
     }
 
-    pub fn declare_symbol(
+    pub fn declare_symbol_on_current_scope(
         &mut self,
         span: Span,
         name: &str,
@@ -354,11 +362,9 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
-        let name = CompactStr::new(name);
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
-        self.symbols.add_declaration(self.current_node_id);
-        self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
+        let symbol_id = self.declare_symbol(span, name, includes);
+        self.symbols.set_scope_id(symbol_id, scope_id);
+        self.scope.get_bindings_mut(scope_id).insert(CompactStr::new(name), symbol_id);
         symbol_id
     }
 
@@ -372,7 +378,22 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
-        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
+        if let Some(symbol_id) =
+            self.scope.get_binding(self.current_scope_id, &name).or_else(|| {
+                self.symbols.get_symbol_id_from_declaration(self.current_node_id).and_then(
+                    |symbol_id| {
+                        let flag = self.symbols.get_flag(symbol_id);
+                        if (flag.is_class() || flag.is_function())
+                            && self.symbols.get_name(symbol_id) == name
+                        {
+                            Some(symbol_id)
+                        } else {
+                            None
+                        }
+                    },
+                )
+            })
+        {
             for reference_id in &reference_ids {
                 self.symbols.references[*reference_id].set_symbol_id(symbol_id);
             }
