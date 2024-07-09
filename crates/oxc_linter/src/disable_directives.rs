@@ -93,8 +93,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
         // This algorithm iterates through the comments and builds all intervals
         // for matching disable and enable pairs.
         // Wrongly ordered matching pairs are not taken into consideration.
-        for (_, span) in self.trivias.clone().comments() {
-            let text = span.source_text(self.source_text);
+        for comment in self.trivias.clone().comments() {
+            let text = comment.span().source_text(self.source_text);
             let text = text.trim_start();
 
             if let Some(text) =
@@ -103,30 +103,35 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
-                        self.disable_all_start = Some(span.end);
+                        self.disable_all_start = Some(comment.span().end);
                     }
-                    self.disable_all_comments.push(span);
+                    self.disable_all_comments.push(*comment.span());
                     continue;
                 }
 
                 // `eslint-disable-next-line`
                 if let Some(text) = text.strip_prefix("-next-line") {
                     // Get the span up to the next new line
-                    let stop = self.source_text[span.end as usize..]
+                    let stop = self.source_text[comment.span().end as usize..]
                         .lines()
                         .take(2)
-                        .fold(span.end, |acc, line| acc + line.len() as u32);
+                        .fold(comment.span().end, |acc, line| acc + line.len() as u32);
                     if text.trim().is_empty() {
-                        self.add_interval(span.end, stop, DisabledRule::All);
-                        self.disable_all_comments.push(span);
+                        self.add_interval(comment.span().end, stop, DisabledRule::All);
+                        self.disable_all_comments.push(*comment.span());
                     } else {
                         // `eslint-disable-next-line rule_name1, rule_name2`
                         let mut rules = vec![];
                         Self::get_rule_names(text, |rule_name| {
-                            self.add_interval(span.end, stop, DisabledRule::Single(rule_name));
+                            self.add_interval(
+                                comment.span().end,
+                                stop,
+                                DisabledRule::Single(rule_name),
+                            );
                             rules.push(rule_name);
                         });
-                        self.disable_rule_comments.push(DisableRuleComment { span, rules });
+                        self.disable_rule_comments
+                            .push(DisableRuleComment { span: *comment.span(), rules });
                     }
                     continue;
                 }
@@ -134,16 +139,16 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable-line`
                 if let Some(text) = text.strip_prefix("-line") {
                     // Get the span between the preceding newline to this comment
-                    let start = self.source_text[..=span.start as usize]
+                    let start = self.source_text[..=comment.span().start as usize]
                         .lines()
                         .next_back()
-                        .map_or(0, |line| span.start - (line.len() as u32 - 1));
-                    let stop = span.start;
+                        .map_or(0, |line| comment.span().start - (line.len() as u32 - 1));
+                    let stop = comment.span().start;
 
                     // `eslint-disable-line`
                     if text.trim().is_empty() {
                         self.add_interval(start, stop, DisabledRule::All);
-                        self.disable_all_comments.push(span);
+                        self.disable_all_comments.push(*comment.span());
                     } else {
                         // `eslint-disable-line rule-name1, rule-name2`
                         let mut rules = vec![];
@@ -151,7 +156,8 @@ impl<'a> DisableDirectivesBuilder<'a> {
                             self.add_interval(start, stop, DisabledRule::Single(rule_name));
                             rules.push(rule_name);
                         });
-                        self.disable_rule_comments.push(DisableRuleComment { span, rules });
+                        self.disable_rule_comments
+                            .push(DisableRuleComment { span: *comment.span(), rules });
                     }
                     continue;
                 }
@@ -159,10 +165,11 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-disable rule-name1, rule-name2`
                 let mut rules = vec![];
                 Self::get_rule_names(text, |rule_name| {
-                    self.disable_start_map.entry(rule_name).or_insert(span.end);
+                    self.disable_start_map.entry(rule_name).or_insert(comment.span().end);
                     rules.push(rule_name);
                 });
-                self.disable_rule_comments.push(DisableRuleComment { span, rules });
+                self.disable_rule_comments
+                    .push(DisableRuleComment { span: *comment.span(), rules });
 
                 continue;
             }
@@ -173,13 +180,17 @@ impl<'a> DisableDirectivesBuilder<'a> {
                 // `eslint-enable`
                 if text.trim().is_empty() {
                     if let Some(start) = self.disable_all_start.take() {
-                        self.add_interval(start, span.start, DisabledRule::All);
+                        self.add_interval(start, comment.span().start, DisabledRule::All);
                     }
                 } else {
                     // `eslint-enable rule-name1, rule-name2`
                     Self::get_rule_names(text, |rule_name| {
                         if let Some(start) = self.disable_start_map.remove(rule_name) {
-                            self.add_interval(start, span.start, DisabledRule::Single(rule_name));
+                            self.add_interval(
+                                start,
+                                comment.span().start,
+                                DisabledRule::Single(rule_name),
+                            );
                         }
                     });
                 }

@@ -28,8 +28,8 @@ impl<'a> JSDocBuilder<'a> {
         let not_attached_docs = self
             .trivias
             .comments()
-            .filter(|(_, span)| !self.leading_comments_seen.contains(&span.start))
-            .filter_map(|(kind, span)| self.parse_if_jsdoc_comment(kind, span))
+            .filter(|comment| !self.leading_comments_seen.contains(&comment.span().start))
+            .filter_map(|comment| self.parse_if_jsdoc_comment(comment.kind, *comment.span()))
             .collect::<Vec<_>>();
 
         JSDocFinder::new(self.attached_docs, not_attached_docs)

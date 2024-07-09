@@ -79,8 +79,8 @@ impl Trivias {
         }))
     }
 
-    pub fn comments(&self) -> impl Iterator<Item = (CommentKind, Span)> + '_ {
-        self.comments.iter().map(|comment| (comment.kind, comment.span))
+    pub fn comments(&self) -> impl Iterator<Item = &Comment> {
+        self.comments.iter()
     }
 
     pub fn comments_range<R>(&self, range: R) -> CommentsRange<'_>

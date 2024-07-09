@@ -52,10 +52,10 @@ impl Rule for NoCommentedOutTests {
         }
         let comments = ctx.semantic().trivias().comments();
         let source_text = ctx.semantic().source_text();
-        let commented_tests = comments.filter_map(|(_, span)| {
-            let text = span.source_text(source_text);
+        let commented_tests = comments.filter_map(|comment| {
+            let text = comment.span().source_text(source_text);
             if RE.is_match(text) {
-                Some(span)
+                Some(*comment.span())
             } else {
                 None
             }
