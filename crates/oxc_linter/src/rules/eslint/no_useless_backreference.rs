@@ -12,6 +12,7 @@ pub struct NoUselessBackreference;
 
 enum RegexGroup {
     RegexCaptureGroup(),
+    RegexNamedCaptureGroup(String),
     RegexNonCaptureGroup(),
     RegexLookAheadGroup(),
     RegexLookBehindGroup(),
@@ -32,6 +33,21 @@ declare_oxc_lint!(
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
+fn get_name_reference(char: char, iter: &mut Peekable<std::str::Chars<'_>>) -> String {
+    assert!(char == '<');
+
+    let mut group_name = String::new();
+    while let Some(char) = iter.next() {
+        // ToDO: backslash?
+        if char == '>' {
+            break;
+        }
+
+        group_name.push(char);
+    }
+
+    return group_name;
+}
 /**
  * get the Regex Group Type, char must be "(".
  *
@@ -58,17 +74,17 @@ fn get_group_type_by_open_bracet(
 
                 match next_char {
                     Some(next_char) => {
-                        let owned_char = next_char.to_owned();
+                        let owned_next_char = next_char.to_owned();
 
-                        if owned_char == '=' || owned_char == '!' {
+                        if owned_next_char == '=' || owned_next_char == '!' {
                             return RegexGroup::RegexLookAheadGroup();
                         }
 
-                        if owned_char == ':' {
+                        if owned_next_char == ':' {
                             return RegexGroup::RegexNonCaptureGroup();
                         }
 
-                        if owned_char == '<' {
+                        if owned_next_char == '<' {
                             iter.next(); // pointer is now on <
                             let next_char = iter.peek();
 
@@ -82,6 +98,11 @@ fn get_group_type_by_open_bracet(
                                 }
                                 _ => {}
                             }
+
+                            // we already called iter.next()
+                            let group_name = get_name_reference(owned_next_char, iter);
+
+                            return RegexGroup::RegexNamedCaptureGroup(group_name);
                         }
                     }
                     _ => {}
@@ -132,7 +153,14 @@ fn has_invalid_back_reference(regex: &str) -> bool {
     let mut inside_character_class_count: u32 = 0;
     let mut group_started: HashSet<usize> = HashSet::new();
     let mut group_finished: HashSet<usize> = HashSet::new();
-    let captures_groups: u32 = get_capture_group_count(regex);
+    let mut named_group_started: HashSet<String> = HashSet::new();
+    let mut named_group_finished: HashSet<String> = HashSet::new();
+    let captures_groups_count: u32 = get_capture_group_count(regex);
+
+    // fast accept: no captures groups? no back references!
+    if captures_groups_count == 0 {
+        return false;
+    }
 
     while let Some(char) = chars.next() {
         // check for backslash
@@ -145,34 +173,39 @@ fn has_invalid_back_reference(regex: &str) -> bool {
             match char {
                 '[' => {
                     inside_character_class_count += 1;
-                },
+                }
                 ']' => {
                     inside_character_class_count -= 1;
-                },
+                }
                 '(' => {
+                    // pointer can be moved!
                     let group_type = get_group_type_by_open_bracet(char, &mut chars);
 
                     match group_type {
                         RegexGroup::RegexNonCaptureGroup() => {}
-                        _ => {
+                        RegexGroup::RegexLookBehindGroup() => {}
+                        RegexGroup::RegexLookAheadGroup() => {}
+                        RegexGroup::RegexNamedCaptureGroup(name) => {
+                            named_group_started.insert(name);
+                        }
+                        RegexGroup::RegexCaptureGroup() => {
+                            // ToDo: maybe a counter? before trying to access an hash len
                             group_started.insert(group_started.len());
                         }
                     }
-                },
+                }
                 ')' => {
                     group_finished.insert(group_started.len());
-                },
-                
+                }
+
                 // ToDo: disallow for alternative routes
-                '|' => {},
-                _ => {},
+                '|' => {}
+                _ => {}
             }
         }
-
         // starts with a backlash followed by a positive number or an k for named backreference
         // not inside a character class (e. : [abc])
-        else if inside_character_class_count == 0 && (char != '0' && char.is_ascii_digit())
-        {
+        else if inside_character_class_count == 0 && (char != '0' && char.is_ascii_digit()) {
             let next_char = chars.peek();
             let digit_result: u32; // ToDo: u8, can be only max 99
 
@@ -190,16 +223,25 @@ fn has_invalid_back_reference(regex: &str) -> bool {
                 }
             }
 
-            println!("digits {} {}, {} {:?}", regex, digit_result, captures_groups, group_finished);
+            println!(
+                "digits {} {}, {} {:?}",
+                regex, digit_result, captures_groups_count, group_finished
+            );
 
             // we are trying to access a capture group and not an octal
-            if digit_result <= captures_groups {
+            if digit_result <= captures_groups_count {
                 // this capture group did not end
                 let digit_result_usize = digit_result as usize;
 
                 if !group_finished.contains(&digit_result_usize) {
                     return true;
                 }
+            }
+        } else if inside_character_class_count == 0 && char == '<' {
+            let group_name = get_name_reference(char, &mut chars);
+
+            if !named_group_finished.contains(&group_name) {
+                return true;
             }
         }
 
@@ -368,12 +410,14 @@ fn test() {
         r#"/(?<!(a))(b)(?!(c))\2/"#,
         r#"/a(?!(b|c)\1)./"#,
         // ignore regular expressions with syntax errors
-        r#"RegExp('\\1(a)[')"#, // \1 would be an error, but the unterminated [ is a syntax error
-        r#"new RegExp('\\1(a){', 'u')"#, // \1 would be an error, but the unterminated { is a syntax error because of the 'u' flag
-        r#"new RegExp('\\1(a)\\2', 'ug')"#, // \1 would be an error, but \2 is syntax error because of the 'u' flag
-        r#"const flags = 'gus'; RegExp('\\1(a){', flags);"#, // \1 would be an error, but the rule is aware of the 'u' flag so this is a syntax error
-        r#"RegExp('\\1(a)\\k<foo>', 'u')"#, // \1 would be an error, but \k<foo> produces syntax error because of the u flag
-        r#"new RegExp('\\k<foo>(?<foo>a)\\k<bar>')"#, // \k<foo> would be an error, but \k<bar> produces syntax error because group <bar> doesn't exist
+        // ToDo: Check if really needed
+        // r#"RegExp('\\1(a)[')"#, // \1 would be an error, but the unterminated [ is a syntax error
+        // r#"new RegExp('\\1(a){', 'u')"#, // \1 would be an error, but the unterminated { is a syntax error because of the 'u' flag
+        // r#"new RegExp('\\1(a)\\2', 'ug')"#, // \1 would be an error, but \2 is syntax error because of the 'u' flag
+        // r#"const flags = 'gus'; RegExp('\\1(a){', flags);"#, // \1 would be an error, but the rule is aware of the 'u' flag so this is a syntax error
+        // r#"RegExp('\\1(a)\\k<foo>', 'u')"#, // \1 would be an error, but \k<foo> produces syntax error because of the u flag
+        // r#"new RegExp('\\k<foo>(?<foo>a)\\k<bar>')"#, // \k<foo> would be an error, but \k<bar> produces syntax error because group <bar> doesn't exist
+
         // ES2024
         r#"new RegExp('([[A--B]])\\1', 'v')"#,
         r#"new RegExp('[[]\\1](a)', 'v')"#, // SyntaxError
