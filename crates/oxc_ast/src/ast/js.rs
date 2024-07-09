@@ -660,7 +660,7 @@ pub enum Argument<'a> {
 
 /// `++i` in `let i = 0; ++i;`
 ///
-/// Represents an update expression, which can include an operator and an argument.
+/// Represents an update expression, which can include an operator and an argument. The following syntaxes are supported. `++a`, `a++`, `--a`, `a--`
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
