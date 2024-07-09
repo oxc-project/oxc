@@ -23,7 +23,7 @@ use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
-use generators::{AstGenerator, AstKindGenerator, VisitGenerator};
+use generators::{AstBuilderGenerator, AstGenerator, AstKindGenerator, VisitGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
 
@@ -191,6 +191,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .with(AstGenerator)
         .with(AstKindGenerator)
+        .with(AstBuilderGenerator)
         .with(ImplGetSpanGenerator)
         .with(VisitGenerator)
         .generate()?;
@@ -215,6 +216,17 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         let span_content = pprint(output);
 
         let path = format!("{output_dir}/ast_kind.rs");
+        let mut file = fs::File::create(path)?;
+
+        file.write_all(span_content.as_bytes())?;
+    }
+
+    {
+        // write `ast_builder.rs` file
+        let output = outputs[AstBuilderGenerator.name()].as_one();
+        let span_content = pprint(output);
+
+        let path = format!("{output_dir}/ast_builder.rs");
         let mut file = fs::File::create(path)?;
 
         file.write_all(span_content.as_bytes())?;

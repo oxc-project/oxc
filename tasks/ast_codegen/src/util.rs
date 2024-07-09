@@ -3,12 +3,15 @@ use proc_macro2::{Group, TokenStream, TokenTree};
 use quote::{quote, ToTokens};
 use syn::{GenericArgument, Ident, PathArguments, Type, TypePath};
 
+use crate::{CodegenCtx, TypeRef};
+
 pub trait TokenStreamExt {
     fn replace_ident(self, needle: &str, replace: &Ident) -> TokenStream;
 }
 
 pub trait TypeExt {
     fn get_ident(&self) -> TypeIdentResult;
+    fn analyze(&self, ctx: &CodegenCtx) -> TypeAnalyzeResult;
 }
 
 pub trait StrExt: AsRef<str> {
@@ -64,6 +67,25 @@ impl<'a> TypeIdentResult<'a> {
     }
 }
 
+#[derive(Debug, PartialEq)]
+pub enum TypeWrapper {
+    None,
+    Box,
+    Vec,
+    Opt,
+    VecBox,
+    VecOpt,
+    OptBox,
+    OptVec,
+    Ref,
+}
+
+#[derive(Debug)]
+pub struct TypeAnalyzeResult {
+    pub type_ref: Option<TypeRef>,
+    pub wrapper: TypeWrapper,
+}
+
 impl TypeExt for Type {
     fn get_ident(&self) -> TypeIdentResult {
         match self {
@@ -109,6 +131,52 @@ impl TypeExt for Type {
             Type::Reference(typ) => TypeIdentResult::reference(typ.elem.get_ident()),
             _ => panic!("Unsupported type."),
         }
+    }
+
+    fn analyze(&self, ctx: &CodegenCtx) -> TypeAnalyzeResult {
+        fn analyze<'a>(res: &'a TypeIdentResult) -> Option<(&'a Ident, TypeWrapper)> {
+            let mut wrapper = TypeWrapper::None;
+            let ident = match res {
+                TypeIdentResult::Ident(inner) => inner,
+                TypeIdentResult::Box(inner) => {
+                    wrapper = TypeWrapper::Box;
+                    let (inner, inner_kind) = analyze(inner)?;
+                    assert!(inner_kind == TypeWrapper::None,);
+                    inner
+                }
+                TypeIdentResult::Vec(inner) => {
+                    wrapper = TypeWrapper::Vec;
+                    let (inner, inner_kind) = analyze(inner)?;
+                    if inner_kind == TypeWrapper::Opt {
+                        wrapper = TypeWrapper::VecOpt;
+                    } else if inner_kind != TypeWrapper::None {
+                        panic!();
+                    }
+                    inner
+                }
+                TypeIdentResult::Option(inner) => {
+                    wrapper = TypeWrapper::Opt;
+                    let (inner, inner_kind) = analyze(inner)?;
+                    if inner_kind == TypeWrapper::Vec {
+                        wrapper = TypeWrapper::OptVec;
+                    } else if inner_kind == TypeWrapper::Box {
+                        wrapper = TypeWrapper::OptBox;
+                    } else if inner_kind != TypeWrapper::None {
+                        panic!();
+                    }
+                    inner
+                }
+                TypeIdentResult::Reference(_) => return None,
+            };
+            Some((ident, wrapper))
+        }
+        let type_ident = self.get_ident();
+        let Some((type_ident, wrapper)) = analyze(&type_ident) else {
+            return TypeAnalyzeResult { type_ref: None, wrapper: TypeWrapper::Ref };
+        };
+
+        let type_ref = ctx.find(&type_ident.to_string());
+        TypeAnalyzeResult { type_ref, wrapper }
     }
 }
 
