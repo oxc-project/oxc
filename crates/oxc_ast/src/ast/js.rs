@@ -611,7 +611,9 @@ pub struct NewExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-/// Meta Property `new.target` | `import.meta`
+/// `import.meta` in `console.log(import.meta);` or `new.target` in `function Foo() { console.log(new.target); }`
+///
+/// Represents a meta property.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
