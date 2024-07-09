@@ -112,8 +112,9 @@ impl Rule for TripleSlashReference {
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
         let mut refs_for_import = HashMap::new();
 
-        for (start, comment) in ctx.semantic().trivias().comments_range(0..comments_range_end) {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end as usize];
+        for comment in ctx.semantic().trivias().comments_range(0..comments_range_end) {
+            let raw = &ctx.semantic().source_text()
+                [comment.span.start as usize..comment.span.end as usize];
             if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)
                     || (group1 == "path" && self.path == PathOption::Never)
@@ -121,12 +122,13 @@ impl Rule for TripleSlashReference {
                 {
                     ctx.diagnostic(triple_slash_reference_diagnostic(
                         &group2,
-                        Span::new(*start - 2, comment.end),
+                        Span::new(comment.span.start - 2, comment.span.end),
                     ));
                 }
 
                 if group1 == "types" && self.types == TypesOption::PreferImport {
-                    refs_for_import.insert(group2, Span::new(*start - 2, comment.end));
+                    refs_for_import
+                        .insert(group2, Span::new(comment.span.start - 2, comment.span.end));
                 }
             }
         }

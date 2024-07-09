@@ -508,7 +508,7 @@ mod test {
             let ret = Parser::new(&allocator, source, source_type).parse();
             let comments = ret.trivias.comments().collect::<Vec<_>>();
             assert_eq!(comments.len(), 1, "{source}");
-            assert_eq!(comments.first().unwrap().0, kind, "{source}");
+            assert_eq!(comments.first().unwrap().kind, kind, "{source}");
         }
     }
 
