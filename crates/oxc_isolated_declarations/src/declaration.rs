@@ -35,7 +35,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.ast.variable_declaration(
+        self.ast.alloc_variable_declaration(
             decl.span,
             decl.kind,
             self.ast.new_vec_from_iter(declarations),
@@ -85,7 +85,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             if init.is_none() && binding_type.is_none() {
-                binding_type = Some(self.ast.ts_unknown_keyword(SPAN));
+                binding_type = Some(self.ast.ts_type_unknown_keyword(SPAN));
                 if !decl.init.as_ref().is_some_and(Expression::is_function) {
                     self.error(variable_must_have_explicit_type(decl.id.span()));
                 }
@@ -122,7 +122,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &UsingDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.ast.variable_declaration(
+        self.ast.alloc_variable_declaration(
             decl.span,
             VariableDeclarationKind::Const,
             declarations,
@@ -138,7 +138,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.scope.enter_scope(ScopeFlags::TsModuleBlock);
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
-        self.ast.ts_module_block(SPAN, self.ast.new_vec(), stmts)
+        self.ast.alloc_ts_module_block(SPAN, self.ast.new_vec(), stmts)
     }
 
     pub fn transform_ts_module_declaration(
@@ -156,7 +156,7 @@ impl<'a> IsolatedDeclarations<'a> {
         match body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let inner = self.transform_ts_module_declaration(decl);
-                self.ast.ts_module_declaration(
+                self.ast.alloc_ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
@@ -166,7 +166,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             TSModuleDeclarationBody::TSModuleBlock(block) => {
                 let body = self.transform_ts_module_block(block);
-                self.ast.ts_module_declaration(
+                self.ast.alloc_ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),

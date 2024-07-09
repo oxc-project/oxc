@@ -47,11 +47,9 @@ impl<'a> Compressor<'a> {
     /// `1/0`
     #[allow(unused)]
     fn create_one_div_zero(&mut self) -> Expression<'a> {
-        let left = self.ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
-        let left = self.ast.literal_number_expression(left);
-        let right = self.ast.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
-        let right = self.ast.literal_number_expression(right);
-        self.ast.binary_expression(SPAN, left, BinaryOperator::Division, right)
+        let left = self.ast.expression_numeric_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+        let right = self.ast.expression_numeric_literal(SPAN, 0.0, "0", NumberBase::Decimal);
+        self.ast.expression_binary(SPAN, left, BinaryOperator::Division, right)
     }
 
     /* Statements */
@@ -146,10 +144,10 @@ impl<'a> Compressor<'a> {
     fn compress_while(&mut self, stmt: &mut Statement<'a>) {
         let Statement::WhileStatement(while_stmt) = stmt else { return };
         if self.options.loops {
-            let dummy_test = self.ast.this_expression(SPAN);
+            let dummy_test = self.ast.expression_this(SPAN);
             let test = std::mem::replace(&mut while_stmt.test, dummy_test);
             let body = self.ast.move_statement(&mut while_stmt.body);
-            *stmt = self.ast.for_statement(SPAN, None, Some(test), None, body);
+            *stmt = self.ast.statement_for(SPAN, None, Some(test), None, body);
         }
     }
 
@@ -187,14 +185,13 @@ impl<'a> Compressor<'a> {
     fn compress_boolean(&mut self, expr: &mut Expression<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans {
-            let num = self.ast.number_literal(
+            let num = self.ast.expression_numeric_literal(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },
                 if lit.value { "0" } else { "1" },
                 NumberBase::Decimal,
             );
-            let num = self.ast.literal_number_expression(num);
-            *expr = self.ast.unary_expression(SPAN, UnaryOperator::LogicalNot, num);
+            *expr = self.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num);
             return true;
         }
         false
@@ -231,7 +228,7 @@ impl<'a> Compressor<'a> {
                     let span = expr.span;
                     let left = self.ast.void_0();
                     let operator = BinaryOperator::StrictEquality;
-                    let right = self.ast.identifier_reference_expression(id_ref);
+                    let right = self.ast.expression_from_identifier_reference(id_ref);
                     let cmp = BinaryExpression { span, left, operator, right };
                     *expr = cmp;
                 }

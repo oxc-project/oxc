@@ -54,9 +54,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     // declare const _default: Type
                     let kind = VariableDeclarationKind::Const;
                     let name = self.create_unique_name("_default");
-                    let id = self
-                        .ast
-                        .binding_pattern_identifier(BindingIdentifier::new(SPAN, name.clone()));
+                    let id = self.ast.binding_pattern_kind_binding_identifier(SPAN, &name);
                     let type_annotation = self
                         .infer_type_from_expression(expr)
                         .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
@@ -65,7 +63,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         self.error(default_export_inferred(expr.span()));
                     }
 
-                    let id = BindingPattern { kind: id, type_annotation, optional: false };
+                    let id = self.ast.binding_pattern(id, type_annotation, false);
                     let declarations = self
                         .ast
                         .new_vec_single(self.ast.variable_declarator(SPAN, kind, id, None, true));
@@ -78,9 +76,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             declare: self.is_declare(),
                         }),
                         ExportDefaultDeclarationKind::from(
-                            self.ast.identifier_reference_expression(
-                                self.ast.identifier_reference(SPAN, &name),
-                            ),
+                            self.ast.expression_identifier_reference(SPAN, &name),
                         ),
                     ))
                 }
@@ -118,7 +114,7 @@ impl<'a> IsolatedDeclarations<'a> {
             // We don't need to print this import statement
             None
         } else {
-            Some(self.ast.import_declaration(
+            Some(self.ast.alloc_import_declaration(
                 decl.span,
                 Some(specifiers),
                 self.ast.copy(&decl.source),

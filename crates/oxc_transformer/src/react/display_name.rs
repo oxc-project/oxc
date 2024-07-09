@@ -124,14 +124,18 @@ impl<'a> ReactDisplayName<'a> {
         if not_safe {
             return;
         }
-        let object_property = {
-            let kind = PropertyKind::Init;
-            let identifier_name = IdentifierName::new(SPAN, self.ctx.ast.new_atom(DISPLAY_NAME));
-            let key = self.ctx.ast.property_key_identifier(identifier_name);
-            let string_literal = StringLiteral::new(SPAN, name);
-            let value = self.ctx.ast.literal_string_expression(string_literal);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
-        };
-        obj_expr.properties.insert(0, ObjectPropertyKind::ObjectProperty(object_property));
+        obj_expr.properties.insert(
+            0,
+            self.ctx.ast.object_property_kind_object_property(
+                SPAN,
+                PropertyKind::Init,
+                self.ctx.ast.property_key_identifier_name(SPAN, DISPLAY_NAME),
+                self.ctx.ast.expression_string_literal(SPAN, name),
+                None,
+                false,
+                false,
+                false,
+            ),
+        );
     }
 }

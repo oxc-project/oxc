@@ -217,14 +217,14 @@ impl<'a> ParserImpl<'a> {
                 _ => unreachable!(),
             };
             let params_span = self.end_span(ident.span);
-            let ident = self.ast.binding_pattern_identifier(ident);
-            let pattern = self.ast.binding_pattern(ident, None, false);
+            let ident = self.ast.binding_pattern_kind_from_binding_identifier(ident);
+            let pattern = self.ast.binding_pattern(ident, Option::<TSTypeAnnotation>::None, false);
             let formal_parameter = self.ast.plain_formal_parameter(params_span, pattern);
-            self.ast.formal_parameters(
+            self.ast.alloc_formal_parameters(
                 params_span,
                 FormalParameterKind::ArrowFormalParameters,
                 self.ast.new_vec_single(formal_parameter),
-                None,
+                Option::<BindingRestElement>::None,
             )
         };
 
@@ -292,15 +292,19 @@ impl<'a> ParserImpl<'a> {
         let body = if expression {
             let expr = self.parse_assignment_expression_or_higher()?;
             let span = expr.span();
-            let expr_stmt = self.ast.expression_statement(span, expr);
-            self.ast.function_body(span, self.ast.new_vec(), self.ast.new_vec_single(expr_stmt))
+            let expr_stmt = self.ast.statement_expression(span, expr);
+            self.ast.alloc_function_body(
+                span,
+                self.ast.new_vec(),
+                self.ast.new_vec_single(expr_stmt),
+            )
         } else {
             self.parse_function_body()?
         };
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
 
-        Ok(self.ast.arrow_function_expression(
+        Ok(self.ast.expression_arrow_function(
             self.end_span(span),
             expression,
             r#async,

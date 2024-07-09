@@ -147,7 +147,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
                 self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.new_vec(), None),
             );
-            program.body.push(self.ctx.ast.module_declaration(export_decl));
+            program.body.push(self.ctx.ast.statement_module_declaration(export_decl));
         }
     }
 
@@ -276,7 +276,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                 def.value
                     .body
                     .get_or_insert_with(|| {
-                        self.ctx.ast.function_body(
+                        self.ctx.ast.alloc_function_body(
                             SPAN,
                             self.ctx.ast.new_vec(),
                             self.ctx.ast.new_vec(),
@@ -549,18 +549,20 @@ impl<'a> Assignment<'a> {
         );
         let id = IdentifierReference::new_read(self.span, self.name.clone(), Some(reference_id));
 
-        ctx.ast.expression_statement(
+        ctx.ast.statement_expression(
             SPAN,
-            ctx.ast.assignment_expression(
+            ctx.ast.expression_assignment(
                 SPAN,
                 AssignmentOperator::Assign,
-                ctx.ast.simple_assignment_target_member_expression(ctx.ast.static_member(
-                    SPAN,
-                    ctx.ast.this_expression(SPAN),
-                    IdentifierName::new(self.span, self.name.clone()),
-                    false,
-                )),
-                ctx.ast.identifier_reference_expression(id),
+                ctx.ast
+                    .simple_assignment_target_member_expression(ctx.ast.member_expression_static(
+                        SPAN,
+                        ctx.ast.expression_this(SPAN),
+                        ctx.ast.identifier_name(self.span, &self.name),
+                        false,
+                    ))
+                    .into(),
+                ctx.ast.expression_from_identifier_reference(id),
             ),
         )
     }

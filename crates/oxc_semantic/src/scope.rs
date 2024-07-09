@@ -11,7 +11,7 @@ use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
-type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
+pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 
 /// Scope Tree
 ///
@@ -27,7 +27,7 @@ pub struct ScopeTree {
     node_ids: FxHashMap<ScopeId, AstNodeId>,
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
-    unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
+    pub(crate) root_unresolved_references: UnresolvedReferences,
 }
 
 impl ScopeTree {
@@ -88,7 +88,7 @@ impl ScopeTree {
     }
 
     pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
-        &self.unresolved_references[self.root_scope_id()]
+        &self.root_unresolved_references
     }
 
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
@@ -142,7 +142,7 @@ impl ScopeTree {
     }
 
     pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId) {
-        self.add_unresolved_reference(self.root_scope_id(), name, reference_id);
+        self.root_unresolved_references.entry(name).or_default().push(reference_id);
     }
 
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
@@ -184,7 +184,6 @@ impl ScopeTree {
         let scope_id = self.parent_ids.push(parent_id);
         _ = self.flags.push(flags);
         _ = self.bindings.push(Bindings::default());
-        _ = self.unresolved_references.push(UnresolvedReferences::default());
 
         if let Some(parent_id) = parent_id {
             self.child_ids.entry(parent_id).or_default().push(scope_id);
@@ -203,30 +202,5 @@ impl ScopeTree {
 
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
         self.bindings[scope_id].shift_remove(name);
-    }
-
-    pub(crate) fn add_unresolved_reference(
-        &mut self,
-        scope_id: ScopeId,
-        name: CompactStr,
-        reference_id: ReferenceId,
-    ) {
-        self.unresolved_references[scope_id].entry(name).or_default().push(reference_id);
-    }
-
-    pub(crate) fn extend_unresolved_reference(
-        &mut self,
-        scope_id: ScopeId,
-        name: CompactStr,
-        reference_ids: Vec<ReferenceId>,
-    ) {
-        self.unresolved_references[scope_id].entry(name).or_default().extend(reference_ids);
-    }
-
-    pub(crate) fn unresolved_references_mut(
-        &mut self,
-        scope_id: ScopeId,
-    ) -> &mut UnresolvedReferences {
-        &mut self.unresolved_references[scope_id]
     }
 }

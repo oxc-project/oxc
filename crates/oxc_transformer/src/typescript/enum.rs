@@ -85,19 +85,23 @@ impl<'a> TypeScriptEnum<'a> {
             name: decl.id.name.clone(),
             symbol_id: Cell::new(Some(param_symbol_id)),
         };
-        let kind = ast.binding_pattern_identifier(ident);
-        let id = ast.binding_pattern(kind, None, false);
+        let kind = ast.binding_pattern_kind_from_binding_identifier(ident);
+        let id = ast.binding_pattern(kind, Option::<TSTypeAnnotation>::None, false);
 
         // ((Foo) => {
         let params = ast.formal_parameter(SPAN, id, None, false, false, ast.new_vec());
         let params = ast.new_vec_single(params);
-        let params =
-            ast.formal_parameters(SPAN, FormalParameterKind::ArrowFormalParameters, params, None);
+        let params = ast.alloc_formal_parameters(
+            SPAN,
+            FormalParameterKind::ArrowFormalParameters,
+            params,
+            Option::<BindingRestElement>::None,
+        );
 
         // Foo[Foo["X"] = 0] = "X";
         let is_already_declared = self.enums.contains_key(&enum_name);
         let statements = self.transform_ts_enum_members(&decl.members, enum_name.clone(), ctx);
-        let body = ast.function_body(decl.span, ast.new_vec(), statements);
+        let body = ast.alloc_function_body(decl.span, ast.new_vec(), statements);
         let callee = Expression::FunctionExpression(ctx.alloc(Function {
             r#type: FunctionType::FunctionExpression,
             span: SPAN,
@@ -116,7 +120,7 @@ impl<'a> TypeScriptEnum<'a> {
         let var_symbol_id = decl.id.symbol_id.get().unwrap();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
-            let object_expr = ast.object_expression(SPAN, ast.new_vec(), None);
+            let object_expr = ast.expression_object(SPAN, ast.new_vec(), None);
             ast.new_vec_single(Argument::from(object_expr))
         } else {
             // }(Foo || {});
@@ -127,13 +131,19 @@ impl<'a> TypeScriptEnum<'a> {
                 var_symbol_id,
                 ReferenceFlag::Read,
             );
-            let left = ast.identifier_reference_expression(left);
-            let right = ast.object_expression(SPAN, ast.new_vec(), None);
-            let expression = ast.logical_expression(SPAN, left, op, right);
+            let left = ast.expression_from_identifier_reference(left);
+            let right = ast.expression_object(SPAN, ast.new_vec(), None);
+            let expression = ast.expression_logical(SPAN, left, op, right);
             ast.new_vec_single(Argument::from(expression))
         };
 
-        let call_expression = ast.call_expression(SPAN, callee, arguments, false, None);
+        let call_expression = ast.expression_call(
+            SPAN,
+            arguments,
+            callee,
+            Option::<TSTypeParameterInstantiation>::None,
+            false,
+        );
 
         if is_already_declared {
             let op = AssignmentOperator::Assign;
@@ -143,9 +153,9 @@ impl<'a> TypeScriptEnum<'a> {
                 var_symbol_id,
                 ReferenceFlag::Write,
             );
-            let left = ast.simple_assignment_target_identifier(left);
-            let expr = ast.assignment_expression(SPAN, op, left, call_expression);
-            return Some(ast.expression_statement(decl.span, expr));
+            let left = ast.simple_assignment_target_from_identifier_reference(left);
+            let expr = ast.expression_assignment(SPAN, op, left.into(), call_expression);
+            return Some(ast.statement_expression(decl.span, expr));
         }
 
         let kind = if is_export || is_not_top_scope {
@@ -155,13 +165,14 @@ impl<'a> TypeScriptEnum<'a> {
         };
         let decls = {
             let binding_identifier = decl.id.clone();
-            let binding_pattern_kind = ast.binding_pattern_identifier(binding_identifier);
-            let binding = ast.binding_pattern(binding_pattern_kind, None, false);
+            let binding_pattern_kind =
+                ast.binding_pattern_kind_from_binding_identifier(binding_identifier);
+            let binding =
+                ast.binding_pattern(binding_pattern_kind, Option::<TSTypeAnnotation>::None, false);
             let decl = ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
             ast.new_vec_single(decl)
         };
-        let variable_declaration = ast.variable_declaration(decl.span, kind, decls, false);
-        let variable_declaration = Declaration::VariableDeclaration(variable_declaration);
+        let variable_declaration = ast.declaration_variable(decl.span, kind, decls, false);
 
         let stmt = if let Some(export_span) = export_span {
             let declaration = ctx
@@ -237,10 +248,7 @@ impl<'a> TypeScriptEnum<'a> {
                             }
                             ConstantValue::String(str) => {
                                 prev_constant_value = None;
-                                ast.literal_string_expression(StringLiteral {
-                                    span: SPAN,
-                                    value: ast.new_atom(&str),
-                                })
+                                ast.expression_string_literal(SPAN, str)
                             }
                         }
                     }
@@ -260,19 +268,14 @@ impl<'a> TypeScriptEnum<'a> {
                 }
             } else if let Some(prev_member_name) = prev_member_name {
                 let self_ref = {
-                    let obj = ast.identifier_reference_expression(IdentifierReference::new(
-                        SPAN,
-                        enum_name.clone(),
-                    ));
-                    let expr = ctx
-                        .ast
-                        .literal_string_expression(StringLiteral::new(SPAN, prev_member_name));
-                    ast.computed_member_expression(SPAN, obj, expr, false)
+                    let obj = ast.expression_identifier_reference(SPAN, &enum_name);
+                    let expr = ctx.ast.expression_string_literal(SPAN, prev_member_name);
+                    ast.member_expression_computed(SPAN, obj, expr, false).into()
                 };
 
                 // 1 + Foo["x"]
                 let one = self.get_number_literal_expression(1.0);
-                ast.binary_expression(SPAN, one, BinaryOperator::Addition, self_ref)
+                ast.expression_binary(SPAN, one, BinaryOperator::Addition, self_ref)
             } else {
                 self.get_number_literal_expression(0.0)
             };
@@ -281,55 +284,43 @@ impl<'a> TypeScriptEnum<'a> {
 
             // Foo["x"] = init
             let member_expr = {
-                let obj = ast.identifier_reference_expression(IdentifierReference::new(
-                    SPAN,
-                    enum_name.clone(),
-                ));
-                let literal = StringLiteral::new(SPAN, member_name.clone());
-                let expr = ast.literal_string_expression(literal);
+                let obj = ast.expression_identifier_reference(SPAN, &enum_name);
+                let expr = ast.expression_string_literal(SPAN, member_name);
 
-                ast.computed_member(SPAN, obj, expr, false)
+                ast.member_expression_computed(SPAN, obj, expr, false)
             };
             let left = ast.simple_assignment_target_member_expression(member_expr);
-            let mut expr = ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, init);
+            let mut expr =
+                ast.expression_assignment(SPAN, AssignmentOperator::Assign, left.into(), init);
 
             // Foo[Foo["x"] = init] = "x"
             if !is_str {
                 let member_expr = {
-                    let obj = ast.identifier_reference_expression(IdentifierReference::new(
-                        SPAN,
-                        enum_name.clone(),
-                    ));
-                    ast.computed_member(SPAN, obj, expr, false)
+                    let obj = ast.expression_identifier_reference(SPAN, &enum_name);
+                    ast.member_expression_computed(SPAN, obj, expr, false)
                 };
                 let left = ast.simple_assignment_target_member_expression(member_expr);
-                let right =
-                    ast.literal_string_expression(StringLiteral::new(SPAN, member_name.clone()));
-                expr = ast.assignment_expression(SPAN, AssignmentOperator::Assign, left, right);
+                let right = ast.expression_string_literal(SPAN, member_name);
+                expr =
+                    ast.expression_assignment(SPAN, AssignmentOperator::Assign, left.into(), right);
             }
 
             prev_member_name = Some(member_name.clone());
-            statements.push(ast.expression_statement(member.span, expr));
+            statements.push(ast.statement_expression(member.span, expr));
         }
 
         self.enums.insert(enum_name.clone(), previous_enum_members.clone());
 
-        let enum_ref =
-            ast.identifier_reference_expression(IdentifierReference::new(SPAN, enum_name));
+        let enum_ref = ast.expression_identifier_reference(SPAN, enum_name);
         // return Foo;
-        let return_stmt = ast.return_statement(SPAN, Some(enum_ref));
+        let return_stmt = ast.statement_return(SPAN, Some(enum_ref));
         statements.push(return_stmt);
 
         statements
     }
 
     fn get_number_literal_expression(&self, value: f64) -> Expression<'a> {
-        self.ctx.ast.literal_number_expression(NumericLiteral {
-            span: SPAN,
-            value,
-            raw: self.ctx.ast.new_str(&value.to_string()),
-            base: NumberBase::Decimal,
-        })
+        self.ctx.ast.expression_numeric_literal(SPAN, value, value.to_string(), NumberBase::Decimal)
     }
 
     fn get_initializer_expr(&self, value: f64) -> Expression<'a> {
@@ -337,15 +328,14 @@ impl<'a> TypeScriptEnum<'a> {
 
         // Infinity
         let expr = if value.is_infinite() {
-            let ident = IdentifierReference::new(SPAN, self.ctx.ast.new_atom("Infinity"));
-            self.ctx.ast.identifier_reference_expression(ident)
+            self.ctx.ast.expression_identifier_reference(SPAN, "Infinity")
         } else {
             let value = if is_negative { -value } else { value };
             self.get_number_literal_expression(value)
         };
 
         if is_negative {
-            self.ctx.ast.unary_expression(SPAN, UnaryOperator::UnaryNegation, expr)
+            self.ctx.ast.expression_unary(SPAN, UnaryOperator::UnaryNegation, expr)
         } else {
             expr
         }
@@ -588,10 +578,9 @@ impl<'a, 'b> VisitMut<'a> for IdentifierReferenceRename<'a, 'b> {
 
                 // TODO: shadowed case, e.g. let ident = 1; ident; // ident is not an enum
                 // enum_name.identifier
-                let ident_reference = IdentifierReference::new(SPAN, self.enum_name.clone());
-                let object = self.ctx.ast.identifier_reference_expression(ident_reference);
-                let property = IdentifierName::new(SPAN, ident.name.clone());
-                Some(self.ctx.ast.static_member_expression(SPAN, object, property, false))
+                let object = self.ctx.ast.expression_identifier_reference(SPAN, &self.enum_name);
+                let property = self.ctx.ast.identifier_name(SPAN, &ident.name);
+                Some(self.ctx.ast.member_expression_static(SPAN, object, property, false).into())
             }
             _ => None,
         };

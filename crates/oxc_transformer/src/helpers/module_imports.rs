@@ -102,14 +102,14 @@ impl<'a> ModuleImports<'a> {
                 import_kind: ImportOrExportKind::Value,
             }))
         }));
-        let import_stmt = self.ast.import_declaration(
+        let import_stmt = self.ast.module_declaration_import_declaration(
             SPAN,
             Some(specifiers),
             StringLiteral::new(SPAN, source),
             None,
             ImportOrExportKind::Value,
         );
-        self.ast.module_declaration(ModuleDeclaration::ImportDeclaration(import_stmt))
+        self.ast.statement_module_declaration(import_stmt)
     }
 
     fn get_require(
@@ -118,13 +118,9 @@ impl<'a> ModuleImports<'a> {
         names: std::vec::Vec<NamedImport<'a>>,
     ) -> Statement<'a> {
         let var_kind = VariableDeclarationKind::Var;
-        let callee = {
-            let ident = IdentifierReference::new(SPAN, Atom::from("require"));
-            self.ast.identifier_reference_expression(ident)
-        };
+        let callee = self.ast.expression_identifier_reference(SPAN, Atom::from("require"));
         let args = {
-            let string = StringLiteral::new(SPAN, source);
-            let arg = Argument::from(self.ast.literal_string_expression(string));
+            let arg = Argument::from(self.ast.expression_string_literal(SPAN, source));
             self.ast.new_vec_single(arg)
         };
         let name = names.into_iter().next().unwrap();
@@ -134,14 +130,24 @@ impl<'a> ModuleImports<'a> {
                 name: name.imported,
                 symbol_id: Cell::new(Some(name.symbol_id)),
             };
-            self.ast.binding_pattern(self.ast.binding_pattern_identifier(ident), None, false)
+            self.ast.binding_pattern(
+                self.ast.binding_pattern_kind_from_binding_identifier(ident),
+                Option::<TSTypeAnnotation>::None,
+                false,
+            )
         };
         let decl = {
-            let init = self.ast.call_expression(SPAN, callee, args, false, None);
+            let init = self.ast.expression_call(
+                SPAN,
+                args,
+                callee,
+                Option::<TSTypeParameterInstantiation>::None,
+                false,
+            );
             let decl = self.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             self.ast.new_vec_single(decl)
         };
-        let var_decl = self.ast.variable_declaration(SPAN, var_kind, decl, false);
-        Statement::VariableDeclaration(var_decl)
+        let var_decl = self.ast.declaration_variable(SPAN, var_kind, decl, false);
+        self.ast.statement_declaration(var_decl)
     }
 }

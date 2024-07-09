@@ -223,9 +223,7 @@ impl<'a> TypeScript<'a> {
                                 let module_name = module_decl.id.name().clone();
                                 if let Some(transformed) = self.handle_nested(
                                     module_decl.unbox(),
-                                    Some(self.ctx.ast.identifier_reference_expression(
-                                        IdentifierReference::new(SPAN, name.clone()),
-                                    )),
+                                    Some(self.ctx.ast.expression_identifier_reference(SPAN, &name)),
                                     ctx,
                                 ) {
                                     if names.insert(module_name.clone()) {
@@ -280,18 +278,13 @@ impl<'a> TypeScript<'a> {
     fn create_variable_declaration(&self, name: Atom<'a>) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Let;
         let declarations = {
-            let ident = BindingIdentifier::new(SPAN, name);
-            let pattern_kind = self.ctx.ast.binding_pattern_identifier(ident);
-            let binding = self.ctx.ast.binding_pattern(pattern_kind, None, false);
+            let pattern_kind = self.ctx.ast.binding_pattern_kind_binding_identifier(SPAN, name);
+            let binding =
+                self.ctx.ast.binding_pattern(pattern_kind, Option::<TSTypeAnnotation>::None, false);
             let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
             self.ctx.ast.new_vec_single(decl)
         };
-        Declaration::VariableDeclaration(self.ctx.ast.variable_declaration(
-            SPAN,
-            kind,
-            declarations,
-            false,
-        ))
+        self.ctx.ast.declaration_variable(SPAN, kind, declarations, false)
     }
 
     // `namespace Foo { }` -> `let Foo; (function (_Foo) { })(Foo || (Foo = {}));`
@@ -312,16 +305,16 @@ impl<'a> TypeScript<'a> {
         let callee = {
             let body = self.ctx.ast.function_body(SPAN, directives, stmts);
             let params = {
-                let ident =
-                    self.ctx.ast.binding_pattern_identifier(BindingIdentifier::new(SPAN, arg_name));
-                let pattern = self.ctx.ast.binding_pattern(ident, None, false);
+                let ident = self.ctx.ast.binding_pattern_kind_binding_identifier(SPAN, arg_name);
+                let pattern =
+                    self.ctx.ast.binding_pattern(ident, Option::<TSTypeAnnotation>::None, false);
                 let items =
                     self.ctx.ast.new_vec_single(self.ctx.ast.plain_formal_parameter(SPAN, pattern));
                 self.ctx.ast.formal_parameters(
                     SPAN,
                     FormalParameterKind::FormalParameter,
                     items,
-                    None,
+                    Option::<BindingRestElement>::None,
                 )
             };
             let function = self.ctx.ast.plain_function(
@@ -334,8 +327,8 @@ impl<'a> TypeScript<'a> {
             function.scope_id.set(Some(scope_id));
             *ctx.scopes_mut().get_flags_mut(scope_id) =
                 ScopeFlags::Function | ScopeFlags::StrictMode;
-            let function_expr = self.ctx.ast.function_expression(function);
-            self.ctx.ast.parenthesized_expression(SPAN, function_expr)
+            let function_expr = self.ctx.ast.expression_from_function(function);
+            self.ctx.ast.expression_parenthesized(SPAN, function_expr)
         };
 
         // (function (_N) { var M; (function (_M) { var x; })(M || (M = _N.M || (_N.M = {})));})(N || (N = {}));
@@ -343,17 +336,14 @@ impl<'a> TypeScript<'a> {
         //                                                   Nested namespace arguments         Normal namespace arguments
         let arguments = {
             // M
-            let logical_left = {
-                let ident = IdentifierReference::new(SPAN, real_name.clone());
-                self.ctx.ast.identifier_reference_expression(ident)
-            };
+            let logical_left = self.ctx.ast.expression_identifier_reference(SPAN, &real_name);
 
             // (_N.M = {}) or (N = {})
             let mut logical_right = {
                 // _N.M
                 let assign_left = if let Some(parent_export) = self.ctx.ast.copy(&parent_export) {
                     self.ctx.ast.simple_assignment_target_member_expression(
-                        self.ctx.ast.static_member(
+                        self.ctx.ast.member_expression_static(
                             SPAN,
                             parent_export,
                             IdentifierName::new(SPAN, real_name.clone()),
@@ -362,45 +352,53 @@ impl<'a> TypeScript<'a> {
                     )
                 } else {
                     // _N
-                    self.ctx.ast.simple_assignment_target_identifier(IdentifierReference::new(
-                        SPAN,
-                        real_name.clone(),
-                    ))
+                    self.ctx
+                        .ast
+                        .simple_assignment_target_identifier_reference(SPAN, real_name.clone())
                 };
 
                 let assign_right =
-                    self.ctx.ast.object_expression(SPAN, self.ctx.ast.new_vec(), None);
+                    self.ctx.ast.expression_object(SPAN, self.ctx.ast.new_vec(), None);
                 let op = AssignmentOperator::Assign;
-                let assign_expr =
-                    self.ctx.ast.assignment_expression(SPAN, op, assign_left, assign_right);
-                self.ctx.ast.parenthesized_expression(SPAN, assign_expr)
+                let assign_expr = self.ctx.ast.expression_assignment(
+                    SPAN,
+                    op,
+                    self.ctx.ast.assignment_target_simple(assign_left),
+                    assign_right,
+                );
+                self.ctx.ast.expression_parenthesized(SPAN, assign_expr)
             };
 
             // (M = _N.M || (_N.M = {}))
             if let Some(parent_export) = parent_export {
-                let assign_left = self.ctx.ast.simple_assignment_target_identifier(
-                    IdentifierReference::new(SPAN, real_name.clone()),
-                );
+                let assign_left =
+                    self.ctx.ast.simple_assignment_target_identifier_reference(SPAN, &real_name);
                 let assign_right = {
                     let property = IdentifierName::new(SPAN, real_name.clone());
                     let logical_left =
-                        self.ctx.ast.static_member_expression(SPAN, parent_export, property, false);
+                        self.ctx.ast.member_expression_static(SPAN, parent_export, property, false);
                     let op = LogicalOperator::Or;
-                    self.ctx.ast.logical_expression(SPAN, logical_left, op, logical_right)
+                    self.ctx.ast.expression_logical(SPAN, logical_left.into(), op, logical_right)
                 };
                 let op = AssignmentOperator::Assign;
                 logical_right =
-                    self.ctx.ast.assignment_expression(SPAN, op, assign_left, assign_right);
-                logical_right = self.ctx.ast.parenthesized_expression(SPAN, logical_right);
+                    self.ctx.ast.expression_assignment(SPAN, op, assign_left.into(), assign_right);
+                logical_right = self.ctx.ast.expression_parenthesized(SPAN, logical_right);
             }
 
             let op = LogicalOperator::Or;
-            let expr = self.ctx.ast.logical_expression(SPAN, logical_left, op, logical_right);
-            self.ctx.ast.new_vec_single(Argument::from(expr))
+            let expr = self.ctx.ast.expression_logical(SPAN, logical_left, op, logical_right);
+            self.ctx.ast.new_vec_single(self.ctx.ast.argument_expression(expr))
         };
 
-        let expr = self.ctx.ast.call_expression(SPAN, callee, arguments, false, None);
-        self.ctx.ast.expression_statement(SPAN, expr)
+        let expr = self.ctx.ast.expression_call(
+            SPAN,
+            arguments,
+            callee,
+            Option::<TSTypeParameterInstantiation>::None,
+            false,
+        );
+        self.ctx.ast.statement_expression(SPAN, expr)
     }
 
     /// Add assignment statement for decl id
@@ -418,22 +416,20 @@ impl<'a> TypeScript<'a> {
         let item_name = ident.name.clone();
         new_stmts.push(Statement::from(decl));
         let assignment_statement = self.create_assignment_statement(name, item_name.clone());
-        let assignment_statement = self.ctx.ast.expression_statement(SPAN, assignment_statement);
+        let assignment_statement = self.ctx.ast.statement_expression(SPAN, assignment_statement);
         new_stmts.push(assignment_statement);
         names.insert(item_name);
     }
 
     // name.item_name = item_name
     fn create_assignment_statement(&self, name: Atom<'a>, item_name: Atom<'a>) -> Expression<'a> {
-        let ident = IdentifierReference::new(SPAN, name);
-        let object = self.ctx.ast.identifier_reference_expression(ident);
-        let property = IdentifierName::new(SPAN, item_name.clone());
-        let left = self.ctx.ast.static_member(SPAN, object, property, false);
+        let object = self.ctx.ast.expression_identifier_reference(SPAN, name);
+        let property = self.ctx.ast.identifier_name(SPAN, &item_name);
+        let left = self.ctx.ast.member_expression_static(SPAN, object, property, false);
         let left = AssignmentTarget::from(left);
-        let ident = IdentifierReference::new(SPAN, item_name);
-        let right = self.ctx.ast.identifier_reference_expression(ident);
+        let right = self.ctx.ast.expression_identifier_reference(SPAN, item_name);
         let op = AssignmentOperator::Assign;
-        self.ctx.ast.assignment_expression(SPAN, op, left, right)
+        self.ctx.ast.expression_assignment(SPAN, op, left, right)
     }
 
     /// Convert `export const foo = 1` to `Namespace.foo = 1`;
@@ -456,21 +452,24 @@ impl<'a> TypeScript<'a> {
                     return;
                 };
                 if let Some(init) = &declarator.init {
-                    declarator.init = Some(self.ctx.ast.assignment_expression(
-                        SPAN,
-                        AssignmentOperator::Assign,
-                        self.ctx.ast.simple_assignment_target_member_expression(
-                            self.ctx.ast.static_member(
-                                SPAN,
-                                self.ctx.ast.identifier_reference_expression(
-                                    IdentifierReference::new(SPAN, name.clone()),
-                                ),
-                                IdentifierName::new(SPAN, property_name.clone()),
-                                false,
-                            ),
+                    declarator.init = Some(
+                        self.ctx.ast.expression_assignment(
+                            SPAN,
+                            AssignmentOperator::Assign,
+                            self.ctx
+                                .ast
+                                .simple_assignment_target_member_expression(
+                                    self.ctx.ast.member_expression_static(
+                                        SPAN,
+                                        self.ctx.ast.expression_identifier_reference(SPAN, &name),
+                                        self.ctx.ast.identifier_name(SPAN, property_name),
+                                        false,
+                                    ),
+                                )
+                                .into(),
+                            self.ctx.ast.copy(init),
                         ),
-                        self.ctx.ast.copy(init),
-                    ));
+                    );
                 }
             });
             return self.ctx.ast.new_vec_single(Statement::VariableDeclaration(var_decl));
@@ -488,7 +487,7 @@ impl<'a> TypeScript<'a> {
         stmts.push(
             self.ctx
                 .ast
-                .expression_statement(SPAN, self.ctx.ast.sequence_expression(SPAN, assignments)),
+                .statement_expression(SPAN, self.ctx.ast.expression_sequence(SPAN, assignments)),
         );
         stmts
     }

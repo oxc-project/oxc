@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_span"
-version                = "0.17.1"
+version                = "0.17.2"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -20,6 +20,8 @@ workspace = true
 doctest = false
 
 [dependencies]
+oxc_allocator = { workspace = true }
+
 miette      = { workspace = true }
 compact_str = { workspace = true }
 
