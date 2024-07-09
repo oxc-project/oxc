@@ -23,7 +23,7 @@ use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
-use generators::{AstBuilderGenerator, AstGenerator, AstKindGenerator, VisitGenerator};
+use generators::{AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
 
@@ -47,37 +47,50 @@ trait Generator {
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput;
 }
 
+type GeneratedStream = (&'static str, TokenStream);
+
 #[derive(Debug, Clone)]
 enum GeneratorOutput {
     None,
-    One(TokenStream),
-    Many(HashMap<String, TokenStream>),
     Info(String),
+    Stream(GeneratedStream),
 }
 
 impl GeneratorOutput {
-    pub fn as_none(&self) {
-        assert!(matches!(self, Self::None));
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
     }
 
-    pub fn as_one(&self) -> &TokenStream {
-        if let Self::One(it) = self {
-            it
-        } else {
-            panic!();
-        }
+    pub fn expect_none(&self) {
+        assert!(self.is_none());
     }
 
-    pub fn as_many(&self) -> &HashMap<String, TokenStream> {
-        if let Self::Many(it) = self {
-            it
-        } else {
-            panic!();
-        }
-    }
-
-    pub fn as_info(&self) -> &String {
+    pub fn to_info(&self) -> &String {
         if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn to_stream(&self) -> &GeneratedStream {
+        if let Self::Stream(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_info(self) -> String {
+        if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_stream(self) -> GeneratedStream {
+        if let Self::Stream(it) = self {
             it
         } else {
             panic!();
@@ -179,71 +192,41 @@ fn files() -> impl std::iter::Iterator<Item = String> {
     vec![path("literal"), path("js"), path("ts"), path("jsx")].into_iter()
 }
 
-fn output_dir() -> Result<String> {
+fn output_dir() -> std::io::Result<String> {
     let dir = format!("{AST_ROOT_DIR}/src/generated");
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&dir)?;
     Ok(dir)
+}
+
+fn write_generated_streams(
+    streams: impl IntoIterator<Item = GeneratedStream>,
+) -> std::io::Result<()> {
+    let output_dir = output_dir()?;
+    for (name, stream) in streams {
+        let content = pprint(&stream);
+
+        let path = format!("{output_dir}/{name}.rs");
+        let mut file = fs::File::create(path)?;
+
+        file.write_all(content.as_bytes())?;
+    }
+    Ok(())
 }
 
 #[allow(clippy::print_stdout)]
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let CodegenResult { outputs, .. } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
-        .with(AstGenerator)
         .with(AstKindGenerator)
         .with(AstBuilderGenerator)
         .with(ImplGetSpanGenerator)
         .with(VisitGenerator)
+        .with(VisitMutGenerator)
         .generate()?;
 
-    let output_dir = output_dir()?;
-    let outputs: HashMap<_, _> = outputs.into_iter().collect();
-
-    {
-        // write `span.rs` file
-        let output = outputs[ImplGetSpanGenerator.name()].as_one();
-        let span_content = pprint(output);
-
-        let path = format!("{output_dir}/span.rs");
-        let mut file = fs::File::create(path)?;
-
-        file.write_all(span_content.as_bytes())?;
-    }
-
-    {
-        // write `ast_kind.rs` file
-        let output = outputs[AstKindGenerator.name()].as_one();
-        let span_content = pprint(output);
-
-        let path = format!("{output_dir}/ast_kind.rs");
-        let mut file = fs::File::create(path)?;
-
-        file.write_all(span_content.as_bytes())?;
-    }
-
-    {
-        // write `ast_builder.rs` file
-        let output = outputs[AstBuilderGenerator.name()].as_one();
-        let span_content = pprint(output);
-
-        let path = format!("{output_dir}/ast_builder.rs");
-        let mut file = fs::File::create(path)?;
-
-        file.write_all(span_content.as_bytes())?;
-    }
-
-    {
-        // write `visit.rs` and `visit_mut.rs` files
-        let output = outputs[VisitGenerator.name()].as_many();
-        let content = pprint(&output["visit"]);
-        let content_mut = pprint(&output["visit_mut"]);
-
-        let mut visit = fs::File::create(format!("{output_dir}/visit.rs"))?;
-        let mut visit_mut = fs::File::create(format!("{output_dir}/visit_mut.rs"))?;
-
-        visit.write_all(content.as_bytes())?;
-        visit_mut.write_all(content_mut.as_bytes())?;
-    }
+    let (streams, _): (Vec<_>, Vec<_>) =
+        outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Stream(_)));
+    write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?;
 
     cargo_fmt(".")?;
 

@@ -36,16 +36,19 @@ impl Generator for ImplGetSpanGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput::One(quote! {
-            #header
-            insert!("#![allow(clippy::match_same_arms)]");
-            endl!();
+        GeneratorOutput::Stream((
+            "span",
+            quote! {
+                #header
+                insert!("#![allow(clippy::match_same_arms)]");
+                endl!();
 
-            use crate::ast::*;
-            use oxc_span::{GetSpan, Span};
+                use crate::ast::*;
+                use oxc_span::{GetSpan, Span};
 
-            #(#impls)*
-        })
+                #(#impls)*
+            },
+        ))
     }
 }
 
