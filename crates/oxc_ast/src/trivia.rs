@@ -12,13 +12,20 @@ use oxc_span::Span;
 #[derive(Debug, Clone, Copy)]
 pub struct Comment {
     pub kind: CommentKind,
-    pub end: u32,
+    /// The span of the comment text (leading/trailing delimiters not included).
+    span: Span,
 }
 
 impl Comment {
     #[inline]
-    pub fn new(end: u32, kind: CommentKind) -> Self {
-        Self { kind, end }
+    pub fn new(start: u32, end: u32, kind: CommentKind) -> Self {
+        let span = Span::new(start, end);
+        Self { kind, span }
+    }
+
+    /// Return the span of the comment text (without delimiters).
+    pub fn span(&self) -> &Span {
+        &self.span
     }
 }
 
@@ -41,7 +48,7 @@ impl CommentKind {
 }
 
 /// Sorted set of unique trivia comments, in ascending order by starting position.
-pub type SortedComments = Box<[(u32, Comment)]>;
+pub type SortedComments = Box<[Comment]>;
 
 #[derive(Debug, Clone, Default)]
 pub struct Trivias(Arc<TriviasImpl>);
@@ -51,7 +58,7 @@ pub struct TriviasImpl {
     /// Unique comments, ordered by increasing span-start.
     comments: SortedComments,
 
-    irregular_whitespaces: Vec<Span>,
+    irregular_whitespaces: Box<[Span]>,
 }
 
 impl Deref for Trivias {
@@ -65,11 +72,14 @@ impl Deref for Trivias {
 
 impl Trivias {
     pub fn new(comments: SortedComments, irregular_whitespaces: Vec<Span>) -> Trivias {
-        Self(Arc::new(TriviasImpl { comments, irregular_whitespaces }))
+        Self(Arc::new(TriviasImpl {
+            comments,
+            irregular_whitespaces: irregular_whitespaces.into_boxed_slice(),
+        }))
     }
 
     pub fn comments(&self) -> impl Iterator<Item = (CommentKind, Span)> + '_ {
-        self.comments.iter().map(|(start, comment)| (comment.kind, Span::new(*start, comment.end)))
+        self.comments.iter().map(|comment| (comment.kind, comment.span))
     }
 
     pub fn comments_range<R>(&self, range: R) -> CommentsRange<'_>
@@ -83,21 +93,21 @@ impl Trivias {
         self.comments_range(span.start..span.end).count() > 0
     }
 
-    pub fn irregular_whitespaces(&self) -> &Vec<Span> {
+    pub fn irregular_whitespaces(&self) -> &[Span] {
         &self.irregular_whitespaces
     }
 }
 
 /// Double-ended iterator over a range of comments, by starting position.
 pub struct CommentsRange<'a> {
-    comments: &'a [(u32, Comment)],
+    comments: &'a [Comment],
     range: (Bound<u32>, Bound<u32>),
     current_start: usize,
     current_end: usize,
 }
 
 impl<'a> CommentsRange<'a> {
-    fn new(comments: &'a [(u32, Comment)], start: Bound<u32>, end: Bound<u32>) -> Self {
+    fn new(comments: &'a [Comment], start: Bound<u32>, end: Bound<u32>) -> Self {
         // Directly skip all comments that are already known to start
         // outside the requested range.
         let partition_start = {
@@ -106,7 +116,7 @@ impl<'a> CommentsRange<'a> {
                 Bound::Included(x) => x,
                 Bound::Excluded(x) => x.saturating_add(1),
             };
-            comments.partition_point(|(start, _)| *start < range_start)
+            comments.partition_point(|comment| comment.span.start < range_start)
         };
         let partition_end = {
             let range_end = match end {
@@ -114,7 +124,7 @@ impl<'a> CommentsRange<'a> {
                 Bound::Included(x) => x,
                 Bound::Excluded(x) => x.saturating_sub(1),
             };
-            comments.partition_point(|(start, _)| *start <= range_end)
+            comments.partition_point(|comment| comment.span.start <= range_end)
         };
         Self {
             comments,
@@ -126,14 +136,14 @@ impl<'a> CommentsRange<'a> {
 }
 
 impl<'c> Iterator for CommentsRange<'c> {
-    type Item = (&'c u32, &'c Comment);
+    type Item = &'c Comment;
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.current_start < self.current_end {
-            for (start, comment) in &self.comments[self.current_start..self.current_end] {
+            for comment in &self.comments[self.current_start..self.current_end] {
                 self.current_start = self.current_start.saturating_add(1);
-                if self.range.contains(start) {
-                    return Some((start, comment));
+                if self.range.contains(&comment.span.start) {
+                    return Some(comment);
                 }
             }
         }
@@ -149,11 +159,10 @@ impl<'c> Iterator for CommentsRange<'c> {
 impl<'c> DoubleEndedIterator for CommentsRange<'c> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.current_start < self.current_end {
-            for (start, comment) in self.comments[self.current_start..self.current_end].iter().rev()
-            {
+            for comment in self.comments[self.current_start..self.current_end].iter().rev() {
                 self.current_end = self.current_end.saturating_sub(1);
-                if self.range.contains(start) {
-                    return Some((start, comment));
+                if self.range.contains(&comment.span.start) {
+                    return Some(comment);
                 }
             }
         }
@@ -170,11 +179,11 @@ mod test {
     #[test]
     fn test_comments_range() {
         let comments: SortedComments = vec![
-            (0, Comment { end: 4, kind: CommentKind::SingleLine }),
-            (5, Comment { end: 9, kind: CommentKind::SingleLine }),
-            (10, Comment { end: 13, kind: CommentKind::SingleLine }),
-            (14, Comment { end: 17, kind: CommentKind::SingleLine }),
-            (18, Comment { end: 23, kind: CommentKind::SingleLine }),
+            Comment { span: Span::new(0, 4), kind: CommentKind::SingleLine },
+            Comment { span: Span::new(5, 9), kind: CommentKind::SingleLine },
+            Comment { span: Span::new(10, 13), kind: CommentKind::SingleLine },
+            Comment { span: Span::new(14, 17), kind: CommentKind::SingleLine },
+            Comment { span: Span::new(18, 23), kind: CommentKind::SingleLine },
         ]
         .into_boxed_slice();
         let full_len = comments.len();
