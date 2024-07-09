@@ -658,7 +658,9 @@ pub enum Argument<'a> {
 }
 }
 
-/// Update Expression
+/// `++i` in `let i = 0; ++i;`
+///
+/// Represents an update expression, which can include an operator and an argument.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
