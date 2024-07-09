@@ -485,6 +485,8 @@ pub struct TemplateElementValue<'a> {
     pub cooked: Option<Atom<'a>>,
 }
 
+/// Represents a member access expression, which can include computed member access, static member access, or private field access.
+///
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
 #[ast(visit)]
 #[repr(C, u8)]
@@ -492,11 +494,11 @@ pub struct TemplateElementValue<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum MemberExpression<'a> {
-    /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
+    /// `ar[0]` in `const ar = [1, 2]; ar[0];`
     ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
-    /// `MemberExpression[?Yield, ?Await] . IdentifierName`
+    /// `console.log` in `console.log('Hello, World!');`
     StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
-    /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+    /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
     PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 }
 
@@ -511,7 +513,9 @@ macro_rules! match_member_expression {
 }
 pub use match_member_expression;
 
-/// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
+/// `ar[0]` in `const ar = [1, 2]; ar[0];`
+///
+/// Represents a computed member access expression, which can include an object and an expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -524,7 +528,9 @@ pub struct ComputedMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// `MemberExpression[?Yield, ?Await] . IdentifierName`
+/// `console.log` in `console.log('Hello, World!');`
+///
+/// Represents a static member access expression, which can include an object and a property.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -537,15 +543,9 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+/// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
 ///
-/// ## Example
-/// ```ts
-/// //    _______ object
-/// const foo.bar?.#baz
-/// //           ↑ ^^^^ field
-/// //           optional
-/// ```
+/// Represents a private field access expression, which can include an object and a private identifier.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
