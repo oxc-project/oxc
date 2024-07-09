@@ -107,7 +107,7 @@ pub enum Atom<'a> {
     ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
     Backreference(Box<'a, Backreference<'a>>),
     CapturingGroup(Box<'a, CapturingGroup<'a>>),
-    Group(Box<'a, Group<'a>>),
+    NonCapturingGroup(Box<'a, NonCapturingGroup<'a>>),
     // NOTE: Is this really necessary?
     // LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
 }
@@ -347,10 +347,10 @@ pub enum ClassSubtractionLeft<'a> {
     ClassSubtraction(Box<'a, ClassSubtraction<'a>>),
 }
 
-/// The uncapturing group.
+/// The non-capturing group.
 /// E.g. `(?:ab)`
 #[derive(Debug)]
-pub struct Group<'a> {
+pub struct NonCapturingGroup<'a> {
     pub span: Span,
     pub alternatives: Vec<'a, Alternative<'a>>,
 }

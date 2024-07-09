@@ -38,6 +38,7 @@ mod test {
             ),
             (r"\n\cM\0\x41\u1f60\.\/", ParserOptions::default()),
             (r"\u{1f600}", ParserOptions::default().with_unicode_flags(true, false)),
+            ("(?:abc)", ParserOptions::default()),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_ok(),
@@ -77,6 +78,7 @@ mod test {
             (r"l\ka", ParserOptions::default().with_unicode_flags(true, false)),
             (r"l\k<", ParserOptions::default().with_unicode_flags(true, false)),
             (r"l\k<a", ParserOptions::default().with_unicode_flags(true, false)),
+            ("m(?:", ParserOptions::default()),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),

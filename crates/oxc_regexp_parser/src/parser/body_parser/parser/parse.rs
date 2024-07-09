@@ -37,9 +37,6 @@ impl<'a> PatternParser<'a> {
             return Err(OxcDiagnostic::error("Empty"));
         }
 
-        // TODO: Remove later, just for clippy unused
-        self.reader.eat3('a', 'b', 'c');
-
         self.consume_pattern()
     }
 
@@ -93,7 +90,7 @@ impl<'a> PatternParser<'a> {
     //   Alternative[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] | Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups]
     // ```
     // <https://tc39.es/ecma262/#prod-Disjunction>
-    fn consume_disjunction(&mut self) -> Result<Vec<'a, ast::Alternative<'a>>> {
+    pub(super) fn consume_disjunction(&mut self) -> Result<Vec<'a, ast::Alternative<'a>>> {
         let mut alternatives = Vec::new_in(self.allocator);
 
         // TODO: Implement
@@ -306,14 +303,17 @@ impl<'a> PatternParser<'a> {
         if let Some(atom) = self.consume_dot() {
             return Ok(Some(atom));
         }
-        if let Some(atom) = self.consume_reverse_solidus_atom_escape()? {
+        if let Some(atom) = self.consume_atom_escape()? {
             return Ok(Some(atom));
         }
 
         // TODO: Implement
         // self.consume_character_class()
         // self.consume_capturing_group()
-        // self.consume_uncapturing_group()
+
+        if let Some(atom) = self.consume_non_capturing_group()? {
+            return Ok(Some(atom));
+        }
 
         Ok(None)
     }

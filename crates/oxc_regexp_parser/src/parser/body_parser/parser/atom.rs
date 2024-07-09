@@ -52,7 +52,7 @@ impl<'a> super::parse::PatternParser<'a> {
     //   [+NamedCaptureGroups] k GroupName[?UnicodeMode]
     // ```
     // <https://tc39.es/ecma262/#prod-AtomEscape>
-    pub(super) fn consume_reverse_solidus_atom_escape(&mut self) -> Result<Option<ast::Atom<'a>>> {
+    pub(super) fn consume_atom_escape(&mut self) -> Result<Option<ast::Atom<'a>>> {
         let span_start = self.reader.span_position();
         if !self.reader.eat('\\') {
             return Ok(None);
@@ -148,5 +148,29 @@ impl<'a> super::parse::PatternParser<'a> {
         }
 
         Err(OxcDiagnostic::error("Invalid escape"))
+    }
+
+    // ```
+    // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // ```
+    pub(super) fn consume_non_capturing_group(&mut self) -> Result<Option<ast::Atom<'a>>> {
+        let span_start = self.reader.span_position();
+        if self.reader.eat3('(', '?', ':') {
+            let alternatives = self.consume_disjunction()?;
+
+            if self.reader.eat(')') {
+                return Ok(Some(ast::Atom::NonCapturingGroup(Box::new_in(
+                    ast::NonCapturingGroup {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        alternatives,
+                    },
+                    self.allocator,
+                ))));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated group"));
+        }
+
+        Ok(None)
     }
 }
