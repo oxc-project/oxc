@@ -24,7 +24,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let params = self.transform_formal_parameters(&func.params);
 
         return_type.map(|return_type| {
-            self.ast.ts_function_type(
+            self.ast.ts_type_function_type(
                 func.span,
                 self.ast.copy(&func.this_param),
                 params,
@@ -50,7 +50,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let params = self.transform_formal_parameters(&func.params);
 
         return_type.map(|return_type| {
-            self.ast.ts_function_type(
+            self.ast.ts_type_function_type(
                 func.span,
                 None,
                 params,
@@ -94,7 +94,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             if !is_const && object.method {
                                 let return_type = self.infer_function_return_type(function);
                                 let params = self.transform_formal_parameters(&function.params);
-                                return Some(self.ast.ts_method_signature(
+                                return Some(self.ast.ts_signature_method_signature(
                                     object.span,
                                     self.ast.copy(&object.key),
                                     object.computed,
@@ -119,7 +119,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             return None;
                         }
 
-                        let property_signature = self.ast.ts_property_signature(
+                        let property_signature = self.ast.ts_signature_property_signature(
                             object.span,
                             false,
                             false,
@@ -137,7 +137,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
                 },
             ));
-        self.ast.ts_type_literal(SPAN, members)
+        self.ast.ts_type_type_literal(SPAN, members)
     }
 
     pub fn transform_array_expression_to_ts_type(
@@ -153,7 +153,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         None
                     }
                     ArrayExpressionElement::Elision(elision) => {
-                        Some(TSTupleElement::from(self.ast.ts_undefined_keyword(elision.span)))
+                        Some(TSTupleElement::from(self.ast.ts_type_undefined_keyword(elision.span)))
                     }
                     _ => self
                         .transform_expression_to_ts_type(element.to_expression())
@@ -161,9 +161,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }));
 
-        let ts_type = self.ast.ts_tuple_type(SPAN, element_types);
+        let ts_type = self.ast.ts_type_tuple_type(SPAN, element_types);
         if is_const {
-            self.ast.ts_type_operator_type(SPAN, TSTypeOperatorOperator::Readonly, ts_type)
+            self.ast.ts_type_type_operator(SPAN, TSTypeOperatorOperator::Readonly, ts_type)
         } else {
             ts_type
         }
@@ -172,32 +172,34 @@ impl<'a> IsolatedDeclarations<'a> {
     // https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-4.html#const-assertions
     pub fn transform_expression_to_ts_type(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
-            Expression::BooleanLiteral(lit) => {
-                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BooleanLiteral(self.ast.copy(lit))))
-            }
-            Expression::NumericLiteral(lit) => {
-                Some(self.ast.ts_literal_type(SPAN, TSLiteral::NumericLiteral(self.ast.copy(lit))))
-            }
-            Expression::BigIntLiteral(lit) => {
-                Some(self.ast.ts_literal_type(SPAN, TSLiteral::BigIntLiteral(self.ast.copy(lit))))
-            }
-            Expression::StringLiteral(lit) => {
-                Some(self.ast.ts_literal_type(SPAN, TSLiteral::StringLiteral(self.ast.copy(lit))))
-            }
-            Expression::NullLiteral(lit) => Some(self.ast.ts_null_keyword(lit.span)),
+            Expression::BooleanLiteral(lit) => Some(
+                self.ast.ts_type_literal_type(SPAN, TSLiteral::BooleanLiteral(self.ast.copy(lit))),
+            ),
+            Expression::NumericLiteral(lit) => Some(
+                self.ast.ts_type_literal_type(SPAN, TSLiteral::NumericLiteral(self.ast.copy(lit))),
+            ),
+            Expression::BigIntLiteral(lit) => Some(
+                self.ast.ts_type_literal_type(SPAN, TSLiteral::BigIntLiteral(self.ast.copy(lit))),
+            ),
+            Expression::StringLiteral(lit) => Some(
+                self.ast.ts_type_literal_type(SPAN, TSLiteral::StringLiteral(self.ast.copy(lit))),
+            ),
+            Expression::NullLiteral(lit) => Some(self.ast.ts_type_null_keyword(lit.span)),
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Some(self.ast.ts_undefined_keyword(ident.span)),
+                "undefined" => Some(self.ast.ts_type_undefined_keyword(ident.span)),
                 _ => None,
             },
-            Expression::TemplateLiteral(lit) => self
-                .transform_template_to_string(lit)
-                .map(|string| self.ast.ts_literal_type(lit.span, TSLiteral::StringLiteral(string))),
+            Expression::TemplateLiteral(lit) => {
+                self.transform_template_to_string(lit).map(|string| {
+                    self.ast.ts_type_literal_type(lit.span, TSLiteral::StringLiteral(string))
+                })
+            }
             Expression::UnaryExpression(expr) => {
                 if Self::can_infer_unary_expression(expr) {
-                    Some(
-                        self.ast
-                            .ts_literal_type(SPAN, TSLiteral::UnaryExpression(self.ast.copy(expr))),
-                    )
+                    Some(self.ast.ts_type_literal_type(
+                        SPAN,
+                        TSLiteral::UnaryExpression(self.ast.copy(expr)),
+                    ))
                 } else {
                     None
                 }

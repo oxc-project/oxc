@@ -43,11 +43,11 @@ impl<'a> ReactJsxSource<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> ObjectPropertyKind<'a> {
         let kind = PropertyKind::Init;
-        let ident = IdentifierName::new(SPAN, SOURCE.into());
-        let key = self.ctx.ast.property_key_identifier(ident);
+        let key = self.ctx.ast.property_key_identifier_name(SPAN, SOURCE);
         let value = self.get_source_object(line, column, ctx);
-        let obj = self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false);
-        ObjectPropertyKind::ObjectProperty(obj)
+        self.ctx
+            .ast
+            .object_property_kind_object_property(SPAN, kind, key, value, None, false, false, false)
     }
 
     pub fn report_error(&self, span: Span) {
@@ -81,18 +81,18 @@ impl<'a> ReactJsxSource<'a> {
             }
         }
 
-        let key = JSXAttributeName::Identifier(
-            self.ctx.ast.alloc(self.ctx.ast.jsx_identifier(SPAN, SOURCE.into())),
-        );
+        let key = self.ctx.ast.jsx_attribute_name_jsx_identifier(SPAN, SOURCE);
         // TODO: We shouldn't calculate line + column from scratch each time as it's expensive.
         // Build a table of byte indexes of each line's start on first usage, and save it.
         // Then calculate line and column from that.
         let (line, column) = get_line_column(elem.span.start, self.ctx.source_text);
         let object = self.get_source_object(line, column, ctx);
-        let expr = self.ctx.ast.jsx_expression_container(SPAN, JSXExpression::from(object));
-        let value = JSXAttributeValue::ExpressionContainer(expr);
-        let attribute_item = self.ctx.ast.jsx_attribute(SPAN, key, Some(value));
-        elem.attributes.push(JSXAttributeItem::Attribute(attribute_item));
+        let value = self
+            .ctx
+            .ast
+            .jsx_attribute_value_jsx_expression_container(SPAN, JSXExpression::from(object));
+        let attribute_item = self.ctx.ast.jsx_attribute_item_jsx_attribute(SPAN, key, Some(value));
+        elem.attributes.push(attribute_item);
     }
 
     #[allow(clippy::cast_precision_loss)]
@@ -105,44 +105,45 @@ impl<'a> ReactJsxSource<'a> {
         let kind = PropertyKind::Init;
 
         let filename = {
-            let name = IdentifierName::new(SPAN, "fileName".into());
-            let key = self.ctx.ast.property_key_identifier(name);
+            let key = self.ctx.ast.property_key_identifier_name(SPAN, "fileName");
             let ident = self.get_filename_var(ctx).create_read_reference(ctx);
-            let value = self.ctx.ast.identifier_reference_expression(ident);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
+            let value = self.ctx.ast.expression_from_identifier_reference(ident);
+            self.ctx.ast.object_property_kind_object_property(
+                SPAN, kind, key, value, None, false, false, false,
+            )
         };
 
         let line_number = {
-            let ident = IdentifierName::new(SPAN, "lineNumber".into());
-            let key = self.ctx.ast.property_key_identifier(ident);
-            let number = self.ctx.ast.number_literal(
+            let key = self.ctx.ast.property_key_identifier_name(SPAN, "lineNumber");
+            let value = self.ctx.ast.expression_numeric_literal(
                 SPAN,
                 line as f64,
-                self.ctx.ast.new_str(&line.to_string()),
+                line.to_string(),
                 NumberBase::Decimal,
             );
-            let value = self.ctx.ast.literal_number_expression(number);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
+            self.ctx.ast.object_property_kind_object_property(
+                SPAN, kind, key, value, None, false, false, false,
+            )
         };
 
         let column_number = {
-            let ident = IdentifierName::new(SPAN, "columnNumber".into());
-            let key = self.ctx.ast.property_key_identifier(ident);
-            let number = self.ctx.ast.number_literal(
+            let key = self.ctx.ast.property_key_identifier_name(SPAN, "columnNumber");
+            let value = self.ctx.ast.expression_numeric_literal(
                 SPAN,
                 column as f64,
-                self.ctx.ast.new_str(&column.to_string()),
+                column.to_string(),
                 NumberBase::Decimal,
             );
-            let value = self.ctx.ast.literal_number_expression(number);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
+            self.ctx.ast.object_property_kind_object_property(
+                SPAN, kind, key, value, None, false, false, false,
+            )
         };
 
         let mut properties = self.ctx.ast.new_vec_with_capacity(3);
-        properties.push(ObjectPropertyKind::ObjectProperty(filename));
-        properties.push(ObjectPropertyKind::ObjectProperty(line_number));
-        properties.push(ObjectPropertyKind::ObjectProperty(column_number));
-        self.ctx.ast.object_expression(SPAN, properties, None)
+        properties.push(filename);
+        properties.push(line_number);
+        properties.push(column_number);
+        self.ctx.ast.expression_object(SPAN, properties, None)
     }
 
     pub fn get_var_file_name_statement(&mut self) -> Option<Statement<'a>> {
@@ -151,16 +152,18 @@ impl<'a> ReactJsxSource<'a> {
         let var_kind = VariableDeclarationKind::Var;
         let id = {
             let ident = filename_var.create_binding_identifier();
-            let ident = self.ctx.ast.binding_pattern_identifier(ident);
-            self.ctx.ast.binding_pattern(ident, None, false)
+            let ident = self.ctx.ast.binding_pattern_kind_from_binding_identifier(ident);
+            self.ctx.ast.binding_pattern(ident, Option::<TSTypeAnnotation>::None, false)
         };
         let decl = {
-            let string = self.ctx.ast.string_literal(SPAN, &self.ctx.source_path.to_string_lossy());
-            let init = self.ctx.ast.literal_string_expression(string);
+            let init = self
+                .ctx
+                .ast
+                .expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
             let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
             self.ctx.ast.new_vec_single(decl)
         };
-        let var_decl = self.ctx.ast.variable_declaration(SPAN, var_kind, decl, false);
+        let var_decl = self.ctx.ast.alloc_variable_declaration(SPAN, var_kind, decl, false);
         Some(Statement::VariableDeclaration(var_decl))
     }
 
