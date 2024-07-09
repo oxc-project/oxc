@@ -62,10 +62,9 @@ impl<'a> super::parse::PatternParser<'a> {
         if let Some(decimal) = self.consume_decimal_escape() {
             let span_end = self.reader.span_position();
 
-            // NOTE: Should be distinguished from `k<GroupName>`?
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
-                ast::Backreference::TemporaryNormalBackreference(Box::new_in(
-                    ast::TemporaryNormalBackreference {
+                ast::Backreference::NormalBackreference(Box::new_in(
+                    ast::NormalBackreference {
                         span: self.span_factory.create(span_start, span_end),
                         r#ref: decimal,
                     },
@@ -134,10 +133,9 @@ impl<'a> super::parse::PatternParser<'a> {
 
         // `k<GroupName>`: \k<name> means Backreference
         if let Some(r#ref) = self.consume_k_group_name()? {
-            // NOTE: Should be distinguished from `DecimalEscape`?
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
-                ast::Backreference::TemporaryNamedBackreference(Box::new_in(
-                    ast::TemporaryNamedBackreference {
+                ast::Backreference::NamedBackreference(Box::new_in(
+                    ast::NamedBackreference {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         r#ref,
                     },

@@ -116,36 +116,24 @@ pub enum Atom<'a> {
 /// E.g. `\1`, `\k<name>`
 #[derive(Debug)]
 pub enum Backreference<'a> {
-    NormalBackreference(Box<'a, NormalBackreference<'a>>),
+    NormalBackreference(Box<'a, NormalBackreference>),
     NamedBackreference(Box<'a, NamedBackreference<'a>>),
-    TemporaryNormalBackreference(Box<'a, TemporaryNormalBackreference>),
-    TemporaryNamedBackreference(Box<'a, TemporaryNamedBackreference<'a>>),
 }
 
 #[derive(Debug)]
-pub struct NormalBackreference<'a> {
+pub struct NormalBackreference {
     pub span: Span,
     pub r#ref: usize, // 1 for \1
-    pub resolved: CapturingGroup<'a>,
+                      // NOTE: How to handle this...?
+                      // pub resolved: CapturingGroup<'a>,
 }
 
 #[derive(Debug)]
 pub struct NamedBackreference<'a> {
     pub span: Span,
     pub r#ref: SpanAtom<'a>, // name for \k<name>
-    pub resolved: Vec<'a, CapturingGroup<'a>>,
-}
-
-#[derive(Debug)]
-pub struct TemporaryNormalBackreference {
-    pub span: Span,
-    pub r#ref: usize, // 1 for \1
-}
-
-#[derive(Debug)]
-pub struct TemporaryNamedBackreference<'a> {
-    pub span: Span,
-    pub r#ref: SpanAtom<'a>, // name for \k<name>
+                             // NOTE: How to handle this...?
+                             // pub resolved: Vec<'a, CapturingGroup<'a>>,
 }
 
 /// The capturing group.
@@ -155,7 +143,8 @@ pub struct CapturingGroup<'a> {
     pub span: Span,
     pub name: Option<SpanAtom<'a>>,
     pub alternatives: Vec<'a, Alternative<'a>>,
-    pub references: Vec<'a, Backreference<'a>>,
+    // NOTE: How to handle this...?
+    // pub references: Vec<'a, Backreference<'a>>,
 }
 
 /// The character.
