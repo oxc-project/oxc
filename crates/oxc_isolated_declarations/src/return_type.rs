@@ -63,7 +63,7 @@ impl<'a> FunctionReturnType<'a> {
         let Some(mut expr_type) = transformer.infer_type_from_expression(&expr) else {
             // Avoid report error in parent function
             return if expr.is_function() {
-                Some(transformer.ast.ts_unknown_keyword(SPAN))
+                Some(transformer.ast.ts_type_unknown_keyword(SPAN))
             } else {
                 None
             };
@@ -106,8 +106,8 @@ impl<'a> FunctionReturnType<'a> {
         if visitor.return_statement_count > 1 {
             let types = transformer
                 .ast
-                .new_vec_from_iter([expr_type, transformer.ast.ts_undefined_keyword(SPAN)]);
-            expr_type = transformer.ast.ts_union_type(SPAN, types);
+                .new_vec_from_iter([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
+            expr_type = transformer.ast.ts_type_union_type(SPAN, types);
         }
         Some(expr_type)
     }

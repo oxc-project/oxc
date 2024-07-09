@@ -114,8 +114,10 @@ impl<'a> ArrowFunctions<'a> {
 
         if let Some(id) = &self.this_var {
             let binding_pattern = self.ctx.ast.binding_pattern(
-                self.ctx.ast.binding_pattern_identifier(id.create_binding_identifier()),
-                None,
+                self.ctx
+                    .ast
+                    .binding_pattern_kind_from_binding_identifier(id.create_binding_identifier()),
+                Option::<TSTypeAnnotation>::None,
                 false,
             );
 
@@ -123,11 +125,11 @@ impl<'a> ArrowFunctions<'a> {
                 SPAN,
                 VariableDeclarationKind::Var,
                 binding_pattern,
-                Some(self.ctx.ast.this_expression(SPAN)),
+                Some(self.ctx.ast.expression_this(SPAN)),
                 false,
             );
 
-            let stmt = self.ctx.ast.variable_declaration(
+            let stmt = self.ctx.ast.alloc_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
                 self.ctx.ast.new_vec_single(variable_declarator),
@@ -191,7 +193,7 @@ impl<'a> ArrowFunctions<'a> {
                 let return_statement = self
                     .ctx
                     .ast
-                    .return_statement(stmt.span, Some(self.ctx.ast.copy(&stmt.expression)));
+                    .statement_return(stmt.span, Some(self.ctx.ast.copy(&stmt.expression)));
                 body.statements.push(return_statement);
             }
         }
@@ -231,7 +233,7 @@ impl<'a> ArrowFunctions<'a> {
         let expr = Expression::FunctionExpression(self.ctx.ast.alloc(new_function));
         // Avoid creating a function declaration.
         // `() => {};` => `(function () {});`
-        self.ctx.ast.parenthesized_expression(SPAN, expr)
+        self.ctx.ast.expression_parenthesized(SPAN, expr)
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
@@ -257,7 +259,7 @@ impl<'a> ArrowFunctions<'a> {
 
                 let ident =
                     self.get_this_name(ctx).create_spanned_read_reference(this_expr.span, ctx);
-                *expr = self.ctx.ast.identifier_reference_expression(ident);
+                *expr = self.ctx.ast.expression_from_identifier_reference(ident);
             }
             Expression::ArrowFunctionExpression(arrow_function_expr) => {
                 *expr = self.transform_arrow_function_expression(arrow_function_expr, ctx);

@@ -33,9 +33,13 @@ impl<'a> TypeScript<'a> {
     ) -> Declaration<'a> {
         let kind = VariableDeclarationKind::Var;
         let decls = {
-            let binding_identifier = BindingIdentifier::new(SPAN, decl.id.name.clone());
-            let binding_pattern_kind = self.ctx.ast.binding_pattern_identifier(binding_identifier);
-            let binding = self.ctx.ast.binding_pattern(binding_pattern_kind, None, false);
+            let binding_pattern_kind =
+                self.ctx.ast.binding_pattern_kind_binding_identifier(SPAN, &decl.id.name);
+            let binding = self.ctx.ast.binding_pattern(
+                binding_pattern_kind,
+                Option::<TSTypeAnnotation>::None,
+                false,
+            );
             let decl_span = decl.span;
 
             let init = match &mut decl.module_reference {
@@ -49,13 +53,17 @@ impl<'a> TypeScript<'a> {
                         ));
                     }
 
-                    let callee = self.ctx.ast.identifier_reference_expression(
-                        IdentifierReference::new(SPAN, "require".into()),
-                    );
+                    let callee = self.ctx.ast.expression_identifier_reference(SPAN, "require");
                     let arguments = self.ctx.ast.new_vec_single(Argument::from(
-                        self.ctx.ast.literal_string_expression(reference.expression.clone()),
+                        self.ctx.ast.expression_from_string_literal(reference.expression.clone()),
                     ));
-                    self.ctx.ast.call_expression(SPAN, callee, arguments, false, None)
+                    self.ctx.ast.expression_call(
+                        SPAN,
+                        arguments,
+                        callee,
+                        Option::<TSTypeParameterInstantiation>::None,
+                        false,
+                    )
                 }
             };
             self.ctx.ast.new_vec_single(self.ctx.ast.variable_declarator(
@@ -66,9 +74,8 @@ impl<'a> TypeScript<'a> {
                 false,
             ))
         };
-        let variable_declaration = self.ctx.ast.variable_declaration(SPAN, kind, decls, false);
 
-        Declaration::VariableDeclaration(variable_declaration)
+        self.ctx.ast.declaration_variable(SPAN, kind, decls, false)
     }
 
     fn transform_ts_type_name(
@@ -85,14 +92,18 @@ impl<'a> TypeScript<'a> {
                 } else {
                     unreachable!()
                 }
-                self.ctx.ast.identifier_reference_expression(ctx.ast.copy(ident))
+                self.ctx.ast.expression_from_identifier_reference(ctx.ast.copy(ident))
             }
-            TSTypeName::QualifiedName(qualified_name) => self.ctx.ast.static_member_expression(
-                SPAN,
-                self.transform_ts_type_name(&mut qualified_name.left, ctx),
-                qualified_name.right.clone(),
-                false,
-            ),
+            TSTypeName::QualifiedName(qualified_name) => self
+                .ctx
+                .ast
+                .member_expression_static(
+                    SPAN,
+                    self.transform_ts_type_name(&mut qualified_name.left, ctx),
+                    qualified_name.right.clone(),
+                    false,
+                )
+                .into(),
         }
     }
 

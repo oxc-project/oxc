@@ -40,7 +40,7 @@ impl<'a> ParserImpl<'a> {
         })?;
 
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.function_body(self.end_span(span), directives, statements))
+        Ok(self.ast.alloc_function_body(self.end_span(span), directives, statements))
     }
 
     pub(crate) fn parse_formal_parameters(
@@ -64,12 +64,8 @@ impl<'a> ParserImpl<'a> {
             Self::parse_rest_parameter,
         )?;
         self.expect(Kind::RParen)?;
-        let formal_parameters = self.ast.formal_parameters(
-            self.end_span(span),
-            params_kind,
-            list,
-            rest.map(|r| self.ast.alloc(r)),
-        );
+        let formal_parameters =
+            self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
         Ok((this_param, formal_parameters))
     }
 
@@ -175,17 +171,17 @@ impl<'a> ParserImpl<'a> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        Ok(self.ast.function(
+        Ok(self.ast.alloc_function(
             function_type,
             self.end_span(span),
             id,
             generator,
             r#async,
             modifiers.contains_declare(),
+            type_parameters,
             this_param,
             params,
             body,
-            type_parameters,
             return_type,
         ))
     }
@@ -211,7 +207,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.function_declaration(decl))
+        Ok(Statement::FunctionDeclaration(decl))
     }
 
     /// Parse function implementation in Javascript, cursor
@@ -257,7 +253,7 @@ impl<'a> ParserImpl<'a> {
         let function =
             self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())?;
 
-        Ok(self.ast.function_expression(function))
+        Ok(self.ast.expression_from_function(function))
     }
 
     /// Section 15.4 Method Definitions
@@ -319,7 +315,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.yield_expression(self.end_span(span), delegate, argument))
+        Ok(self.ast.expression_yield(self.end_span(span), delegate, argument))
     }
 
     // id: None - for AnonymousDefaultExportedFunctionDeclaration

@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.17.2] - 2024-07-08
+
+### Bug Fixes
+
+- 5472b7c codegen: 256 indentations level is not enough for codegen (Boshen)
+
 ## [0.17.1] - 2024-07-06
 
 ### Bug Fixes

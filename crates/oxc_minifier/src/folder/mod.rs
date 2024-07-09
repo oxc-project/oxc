@@ -9,7 +9,7 @@ mod util;
 use std::{cmp::Ordering, mem};
 
 use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
@@ -127,8 +127,7 @@ impl<'a> Folder<'a> {
                 let right_string = get_string_value(right)?;
                 // let value = left_string.to_owned().
                 let value = left_string + right_string;
-                let string_literal = StringLiteral::new(span, self.ast.new_atom(&value));
-                Some(self.ast.literal_string_expression(string_literal))
+                Some(self.ast.expression_string_literal(span, value))
             },
 
             // number addition
@@ -140,9 +139,8 @@ impl<'a> Folder<'a> {
                 let Ok(value) = TryInto::<f64>::try_into(left_number + right_number) else { return None };
                 // Float if value has a fractional part, otherwise Decimal
                 let number_base = if is_exact_int64(value) { NumberBase::Decimal } else { NumberBase::Float };
-                let number_literal = self.ast.number_literal(span, value, "", number_base);
                 // todo: add raw &str
-                Some(self.ast.literal_number_expression(number_literal))
+                Some(self.ast.expression_numeric_literal(span, value, "", number_base))
             },
             _ => None
         }
@@ -160,8 +158,7 @@ impl<'a> Folder<'a> {
             Tri::False => false,
             Tri::Unknown => return None,
         };
-        let boolean_literal = self.ast.boolean_literal(span, value);
-        Some(self.ast.literal_boolean_expression(boolean_literal))
+        Some(self.ast.expression_boolean_literal(span, value))
     }
 
     fn evaluate_comparison<'b>(
@@ -215,15 +212,12 @@ impl<'a> Folder<'a> {
                 let right_number = get_side_free_number_value(right_expr);
 
                 if let Some(NumberValue::Number(num)) = right_number {
-                    let raw = self.ast.new_str(num.to_string().as_str());
-
-                    let number_literal = self.ast.number_literal(
+                    let number_literal_expr = self.ast.expression_numeric_literal(
                         right_expr.span(),
                         num,
-                        raw,
+                        num.to_string(),
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
-                    let number_literal_expr = self.ast.literal_number_expression(number_literal);
 
                     return self.try_abstract_equality_comparison(left_expr, &number_literal_expr);
                 }
@@ -235,15 +229,12 @@ impl<'a> Folder<'a> {
                 let left_number = get_side_free_number_value(left_expr);
 
                 if let Some(NumberValue::Number(num)) = left_number {
-                    let raw = self.ast.new_str(num.to_string().as_str());
-
-                    let number_literal = self.ast.number_literal(
+                    let number_literal_expr = self.ast.expression_numeric_literal(
                         left_expr.span(),
                         num,
-                        raw,
+                        num.to_string(),
                         if num.fract() == 0.0 { NumberBase::Decimal } else { NumberBase::Float },
                     );
-                    let number_literal_expr = self.ast.literal_number_expression(number_literal);
 
                     return self.try_abstract_equality_comparison(&number_literal_expr, right_expr);
                 }
@@ -450,8 +441,7 @@ impl<'a> Folder<'a> {
             };
 
             if let Some(type_name) = type_name {
-                let string_literal = StringLiteral::new(span, Atom::from(type_name));
-                return Some(self.ast.literal_string_expression(string_literal));
+                return Some(self.ast.expression_string_literal(span, type_name));
             }
         }
 
@@ -474,12 +464,14 @@ impl<'a> Folder<'a> {
                         if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
                             return None;
                         }
-                        let bool_literal = self.ast.boolean_literal(unary_expr.span, !boolean);
-                        return Some(self.ast.literal_boolean_expression(bool_literal));
+                        return Some(
+                            self.ast.expression_boolean_literal(unary_expr.span, !boolean),
+                        );
                     }
                     Expression::BigIntLiteral(_) => {
-                        let bool_literal = self.ast.boolean_literal(unary_expr.span, !boolean);
-                        return Some(self.ast.literal_boolean_expression(bool_literal));
+                        return Some(
+                            self.ast.expression_boolean_literal(unary_expr.span, !boolean),
+                        );
                     }
                     _ => {}
                 },
@@ -488,13 +480,12 @@ impl<'a> Folder<'a> {
                 // +Infinity -> Infinity
                 UnaryOperator::UnaryPlus => match &unary_expr.argument {
                     Expression::NumericLiteral(number_literal) => {
-                        let literal = self.ast.number_literal(
+                        return Some(self.ast.expression_numeric_literal(
                             unary_expr.span,
                             number_literal.value,
                             number_literal.raw,
                             number_literal.base,
-                        );
-                        return Some(self.ast.literal_number_expression(literal));
+                        ));
                     }
                     Expression::Identifier(ident) => {
                         if matches!(ident.name.as_str(), "NaN" | "Infinity") {
@@ -508,18 +499,16 @@ impl<'a> Folder<'a> {
                         if let Some(NumberValue::Number(value)) =
                             get_number_value(&unary_expr.argument)
                         {
-                            let raw = self.ast.new_str(value.to_string().as_str());
-                            let literal = self.ast.number_literal(
+                            return Some(self.ast.expression_numeric_literal(
                                 unary_expr.span,
                                 value,
-                                raw,
+                                value.to_string(),
                                 if value.fract() == 0.0 {
                                     NumberBase::Decimal
                                 } else {
                                     NumberBase::Float
                                 },
-                            );
-                            return Some(self.ast.literal_number_expression(literal));
+                            ));
                         }
                     }
                 },
@@ -528,14 +517,12 @@ impl<'a> Folder<'a> {
                 UnaryOperator::UnaryNegation => match &unary_expr.argument {
                     Expression::NumericLiteral(number_literal) => {
                         let value = -number_literal.value;
-                        let raw = self.ast.new_str(value.to_string().as_str());
-                        let literal = self.ast.number_literal(
+                        return Some(self.ast.expression_numeric_literal(
                             unary_expr.span,
                             value,
-                            raw,
+                            value.to_string(),
                             number_literal.base,
-                        );
-                        return Some(self.ast.literal_number_expression(literal));
+                        ));
                     }
                     Expression::BigIntLiteral(_big_int_literal) => {
                         // let value = big_int_literal.value.clone().neg();
@@ -558,13 +545,12 @@ impl<'a> Folder<'a> {
                         if number_literal.value.fract() == 0.0 {
                             let int_value =
                                 NumericLiteral::ecmascript_to_int32(number_literal.value);
-                            let literal = self.ast.number_literal(
+                            return Some(self.ast.expression_numeric_literal(
                                 unary_expr.span,
                                 f64::from(!int_value),
                                 number_literal.raw,
                                 NumberBase::Decimal, // since it be converted to i32, it should always be decimal.
-                            );
-                            return Some(self.ast.literal_number_expression(literal));
+                            ));
                         }
                     }
                     Expression::BigIntLiteral(_big_int_literal) => {
@@ -577,14 +563,12 @@ impl<'a> Folder<'a> {
                     Expression::Identifier(ident) => {
                         if ident.name == "NaN" {
                             let value = -1_f64;
-                            let raw = self.ast.new_str("-1");
-                            let literal = self.ast.number_literal(
+                            return Some(self.ast.expression_numeric_literal(
                                 unary_expr.span,
                                 value,
-                                raw,
+                                "-1",
                                 NumberBase::Decimal,
-                            );
-                            return Some(self.ast.literal_number_expression(literal));
+                            ));
                         }
                     }
                     _ => {}
@@ -607,7 +591,7 @@ impl<'a> Folder<'a> {
                     reference_id: ident.reference_id.clone(),
                     reference_flag: ident.reference_flag,
                 };
-                return Some(self.ast.identifier_reference_expression(ident));
+                return Some(self.ast.expression_from_identifier_reference(ident));
             }
         }
 
@@ -625,15 +609,13 @@ impl<'a> Folder<'a> {
         };
 
         if can_replace {
-            let number_literal = self.ast.number_literal(
+            let argument = self.ast.expression_numeric_literal(
                 unary_expr.argument.span(),
                 0_f64,
-                self.ast.new_str("0"),
+                "0",
                 NumberBase::Decimal,
             );
-
-            let argument = self.ast.literal_number_expression(number_literal);
-            return Some(self.ast.unary_expression(unary_expr.span, UnaryOperator::Void, argument));
+            return Some(self.ast.expression_unary(unary_expr.span, UnaryOperator::Void, argument));
         }
         None
     }
@@ -679,12 +661,12 @@ impl<'a> Folder<'a> {
                 _ => unreachable!("Unknown binary operator {:?}", op),
             };
 
-            let value_raw = self.ast.new_str(result_val.to_string().as_str());
-
-            let number_literal =
-                self.ast.number_literal(span, result_val, value_raw, NumberBase::Decimal);
-
-            return Some(self.ast.literal_number_expression(number_literal));
+            return Some(self.ast.expression_numeric_literal(
+                span,
+                result_val,
+                result_val.to_string(),
+                NumberBase::Decimal,
+            ));
         }
 
         None
@@ -719,7 +701,7 @@ impl<'a> Folder<'a> {
             let mut vec = self.ast.new_vec_with_capacity(2);
             vec.push(left);
             vec.push(right);
-            let sequence_expr = self.ast.sequence_expression(logic_expr.span, vec);
+            let sequence_expr = self.ast.expression_sequence(logic_expr.span, vec);
             return Some(sequence_expr);
         } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left {
             if left_child.operator == logic_expr.operator {
@@ -734,7 +716,7 @@ impl<'a> Folder<'a> {
                         {
                             let left = self.move_out_expression(&mut left_child.left);
                             let right = self.move_out_expression(&mut logic_expr.right);
-                            let logic_expr = self.ast.logical_expression(
+                            let logic_expr = self.ast.expression_logical(
                                 logic_expr.span,
                                 left,
                                 left_child_op,
@@ -797,8 +779,7 @@ impl<'a> Folder<'a> {
     }
 
     fn move_out_expression(&mut self, expr: &mut Expression<'a>) -> Expression<'a> {
-        let null_literal = NullLiteral::new(expr.span());
-        let null_expr = self.ast.literal_null_expression(null_literal);
+        let null_expr = self.ast.expression_null_literal(expr.span());
         mem::replace(expr, null_expr)
     }
 

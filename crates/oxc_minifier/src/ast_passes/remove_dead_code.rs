@@ -37,7 +37,7 @@ impl<'a> RemoveDeadCode<'a> {
                 *stmt = if let Some(alternate) = &mut if_stmt.alternate {
                     self.ast.move_statement(alternate)
                 } else {
-                    self.ast.empty_statement(SPAN)
+                    self.ast.statement_empty(SPAN)
                 };
             }
             _ => {}

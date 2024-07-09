@@ -22,7 +22,7 @@ use syn::{
 use crate::{
     generators::{ast_kind::BLACK_LIST as KIND_BLACK_LIST, insert},
     schema::{Inherit, REnum, RStruct, RType},
-    util::{StrExt, TokenStreamExt, TypeExt, TypeIdentResult},
+    util::{StrExt, TokenStreamExt, TypeExt, TypeIdentResult, TypeWrapper},
     CodegenCtx, Generator, GeneratorOutput, Result, TypeRef,
 };
 
@@ -551,7 +551,12 @@ impl<'a> VisitBuilder<'a> {
             .fields
             .iter()
             .filter_map(|it| {
-                let (typ, typ_wrapper) = self.analyze_type(&it.ty)?;
+                let ty_res = it.ty.analyze(self.ctx);
+                let typ = ty_res.type_ref?;
+                if !typ.borrow().visitable() {
+                    return None;
+                }
+                let typ_wrapper = ty_res.wrapper;
                 let visit_as: Option<Ident> =
                     it.attrs.iter().find(|it| it.path().is_ident("visit_as")).map(|it| {
                         match &it.meta {
@@ -657,54 +662,6 @@ impl<'a> VisitBuilder<'a> {
         (result, fields_visits.len() <= 5)
     }
 
-    fn analyze_type(&self, ty: &Type) -> Option<(TypeRef, TypeWrapper)> {
-        fn analyze<'a>(res: &'a TypeIdentResult) -> Option<(&'a Ident, TypeWrapper)> {
-            let mut wrapper = TypeWrapper::None;
-            let ident = match res {
-                TypeIdentResult::Ident(inner) => inner,
-                TypeIdentResult::Box(inner) => {
-                    wrapper = TypeWrapper::Box;
-                    let (inner, inner_kind) = analyze(inner)?;
-                    assert!(inner_kind == TypeWrapper::None,);
-                    inner
-                }
-                TypeIdentResult::Vec(inner) => {
-                    wrapper = TypeWrapper::Vec;
-                    let (inner, inner_kind) = analyze(inner)?;
-                    if inner_kind == TypeWrapper::Opt {
-                        wrapper = TypeWrapper::VecOpt;
-                    } else if inner_kind != TypeWrapper::None {
-                        panic!();
-                    }
-                    inner
-                }
-                TypeIdentResult::Option(inner) => {
-                    wrapper = TypeWrapper::Opt;
-                    let (inner, inner_kind) = analyze(inner)?;
-                    if inner_kind == TypeWrapper::Vec {
-                        wrapper = TypeWrapper::OptVec;
-                    } else if inner_kind == TypeWrapper::Box {
-                        wrapper = TypeWrapper::OptBox;
-                    } else if inner_kind != TypeWrapper::None {
-                        panic!();
-                    }
-                    inner
-                }
-                TypeIdentResult::Reference(_) => return None,
-            };
-            Some((ident, wrapper))
-        }
-        let type_ident = ty.get_ident();
-        let (type_ident, wrapper) = analyze(&type_ident)?;
-
-        let type_ref = self.ctx.find(&type_ident.to_string())?;
-        if type_ref.borrow().visitable() {
-            Some((type_ref, wrapper))
-        } else {
-            None
-        }
-    }
-
     fn visit_args_fold(
         mut accumulator: (Vec<TokenStream>, Vec<TokenStream>),
         arg: VisitArg,
@@ -715,18 +672,6 @@ impl<'a> VisitBuilder<'a> {
         accumulator.1.push(quote!(, #id));
         accumulator
     }
-}
-
-#[derive(PartialEq)]
-enum TypeWrapper {
-    None,
-    Box,
-    Vec,
-    Opt,
-    VecBox,
-    VecOpt,
-    OptBox,
-    OptVec,
 }
 
 #[derive(Debug)]

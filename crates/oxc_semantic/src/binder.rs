@@ -294,6 +294,12 @@ impl<'a> Binder for ImportNamespaceSpecifier<'a> {
     }
 }
 
+impl<'a> Binder for TSImportEqualsDeclaration<'a> {
+    fn bind(&self, builder: &mut SemanticBuilder) {
+        declare_symbol_for_import_specifier(&self.id, builder);
+    }
+}
+
 impl<'a> Binder for TSTypeAliasDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let symbol_id = builder.declare_symbol(

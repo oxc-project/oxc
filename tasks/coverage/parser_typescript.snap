@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
 Positive Passed: 5272/5283 (99.79%)
-Negative Passed: 1082/4875 (22.19%)
+Negative Passed: 1094/4875 (22.44%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -27,7 +27,6 @@ Expect Syntax Error: "compiler/ParameterList8.ts"
 Expect Syntax Error: "compiler/abstractClassInLocalScopeIsAbstract.ts"
 Expect Syntax Error: "compiler/abstractClassUnionInstantiation.ts"
 Expect Syntax Error: "compiler/abstractPropertyInConstructor.ts"
-Expect Syntax Error: "compiler/abstractPropertyNegative.ts"
 Expect Syntax Error: "compiler/accessInstanceMemberFromStaticMethod01.ts"
 Expect Syntax Error: "compiler/accessStaticMemberFromInstanceMethod01.ts"
 Expect Syntax Error: "compiler/accessorAccidentalCallDiagnostic.ts"
@@ -100,7 +99,6 @@ Expect Syntax Error: "compiler/arrayOfSubtypeIsAssignableToReadonlyArray.ts"
 Expect Syntax Error: "compiler/arrayReferenceWithoutTypeArgs.ts"
 Expect Syntax Error: "compiler/arrayToLocaleStringES5.ts"
 Expect Syntax Error: "compiler/arrowFunctionInConstructorArgument1.ts"
-Expect Syntax Error: "compiler/asiAbstract.ts"
 Expect Syntax Error: "compiler/asiPublicPrivateProtected.ts"
 Expect Syntax Error: "compiler/assignLambdaToNominalSubtypeOfFunction.ts"
 Expect Syntax Error: "compiler/assignToEnum.ts"
@@ -874,7 +872,6 @@ Expect Syntax Error: "compiler/implicitAnyWidenToAny.ts"
 Expect Syntax Error: "compiler/implicitConstParameters.ts"
 Expect Syntax Error: "compiler/importAnImport.ts"
 Expect Syntax Error: "compiler/importAndVariableDeclarationConflict1.ts"
-Expect Syntax Error: "compiler/importAndVariableDeclarationConflict3.ts"
 Expect Syntax Error: "compiler/importAndVariableDeclarationConflict4.ts"
 Expect Syntax Error: "compiler/importDeclRefereingExternalModuleWithNoResolve.ts"
 Expect Syntax Error: "compiler/importDeclWithClassModifiers.ts"
@@ -1186,8 +1183,6 @@ Expect Syntax Error: "compiler/moduleImport.ts"
 Expect Syntax Error: "compiler/moduleNewExportBug.ts"
 Expect Syntax Error: "compiler/moduleNoneErrors.ts"
 Expect Syntax Error: "compiler/moduleProperty2.ts"
-Expect Syntax Error: "compiler/moduleSharesNameWithImportDeclarationInsideIt3.ts"
-Expect Syntax Error: "compiler/moduleSharesNameWithImportDeclarationInsideIt5.ts"
 Expect Syntax Error: "compiler/moduleVariableArrayIndexer.ts"
 Expect Syntax Error: "compiler/moduleVisibilityTest2.ts"
 Expect Syntax Error: "compiler/moduleVisibilityTest3.ts"
@@ -1955,10 +1950,8 @@ Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDe
 Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDeclaration8_es6.ts"
 Expect Syntax Error: "conformance/asyncGenerators/asyncGeneratorParameterEvaluation.ts"
 Expect Syntax Error: "conformance/classes/awaitAndYieldInProperty.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts"
@@ -1969,9 +1962,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance1.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts"
@@ -1979,7 +1969,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSingleLineDecl.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAndInterfaceMergeConflictingMembers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingClassLikeType.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingNonConstructor.ts"
@@ -2121,7 +2110,6 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOv
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty3.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty4.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty6.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationES2022.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor1.ts"
@@ -4027,6 +4015,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × TS(1253): Abstract properties can only appear within an abstract class.
+    ╭─[compiler/abstractPropertyNegative.ts:15:14]
+ 14 │     readonly ro = "readonly please";
+ 15 │     abstract notAllowed: string;
+    ·              ──────────
+ 16 │     get concreteWithNoBody(): string;
+    ╰────
+
   × Unexpected token
    ╭─[compiler/accessorBodyInTypeContext.ts:2:15]
  1 │ type A = {
@@ -4187,6 +4183,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                ┬
    ·                ╰── `=>` expected
  3 │ 
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[compiler/asiAbstract.ts:3:12]
+ 2 │ class NonAbstractClass {
+ 3 │   abstract s();
+   ·            ─
+ 4 │ }
    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
@@ -6866,6 +6870,17 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  17 │             }
     ╰────
 
+  × Identifier `x` has already been declared
+   ╭─[compiler/importAndVariableDeclarationConflict3.ts:5:8]
+ 4 │ 
+ 5 │ import x = m.m;
+   ·        ┬
+   ·        ╰── `x` has already been declared here
+ 6 │ import x = m.m;
+   ·        ┬
+   ·        ╰── It can not be redeclared here
+   ╰────
+
   × Unexpected token
    ╭─[compiler/importAssertionNonstring.ts:1:52]
  1 │ import * as thing1 from "./mod.mjs" assert {field: 0};
@@ -7961,6 +7976,30 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  10 │     export var z = y;  // property visible to any code
     ╰────
   help: Try insert a semicolon here
+
+  × Identifier `M` has already been declared
+    ╭─[compiler/moduleSharesNameWithImportDeclarationInsideIt3.ts:10:12]
+  9 │ module A.M {
+ 10 │     import M = Z.M;
+    ·            ┬
+    ·            ╰── `M` has already been declared here
+ 11 │     import M = Z.I;
+    ·            ┬
+    ·            ╰── It can not be redeclared here
+ 12 │ 
+    ╰────
+
+  × Identifier `M` has already been declared
+    ╭─[compiler/moduleSharesNameWithImportDeclarationInsideIt5.ts:10:12]
+  9 │ module A.M {
+ 10 │     import M = Z.I;
+    ·            ┬
+    ·            ╰── `M` has already been declared here
+ 11 │     import M = Z.M;
+    ·            ┬
+    ·            ╰── It can not be redeclared here
+ 12 │ 
+    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
    ╭─[compiler/multiLinePropertyAccessAndArrowFunctionIndent1.ts:1:1]
@@ -10799,6 +10838,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncModule_es5.ts:1:1]
+ 1 │ async module M {
+   · ─────
+ 2 │ }
+   ╰────
+
   × Expected `(` but found `Identifier`
    ╭─[conformance/async/es5/asyncSetter_es5.ts:2:13]
  1 │ class C {
@@ -10934,6 +10980,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncModule_es6.ts:1:1]
+ 1 │ async module M {   
+   · ─────
+ 2 │ }
+   ╰────
+
   × Expected `(` but found `Identifier`
    ╭─[conformance/async/es6/asyncSetter_es6.ts:2:13]
  1 │ class C {
@@ -11042,6 +11095,46 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  47 │ }
     ╰────
 
+  × TS(1318): Accessor 'aa' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
+ 2 │    abstract get a();
+ 3 │    abstract get aa() { return 1; } // error
+   ·                 ──
+ 4 │    abstract set b(x: string);
+   ╰────
+
+  × TS(1245): Method 'aa' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
+ 2 │    abstract get a();
+ 3 │    abstract get aa() { return 1; } // error
+   ·                 ──
+ 4 │    abstract set b(x: string);
+   ╰────
+
+  × TS(1318): Accessor 'bb' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
+ 4 │    abstract set b(x: string);
+ 5 │    abstract set bb(x: string) {} // error
+   ·                 ──
+ 6 │ }
+   ╰────
+
+  × TS(1245): Method 'bb' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
+ 4 │    abstract set b(x: string);
+ 5 │    abstract set bb(x: string) {} // error
+   ·                 ──
+ 6 │ }
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract constructor() {}
+   ·              ───────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts:8:5]
  7 │         this.
@@ -11049,6 +11142,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·     ─
  9 │ }
    ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:50:14]
+ 49 │ class H { // error -- not declared abstract
+ 50 │     abstract baz() : number;
+    ·              ───
+ 51 │ }
+    ╰────
 
   × Unexpected token
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractManyKeywords.ts:3:1]
@@ -11081,6 +11182,62 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                 ╰── It can not be redeclared here
  18 │ 
     ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
+ 1 │ class A {
+ 2 │     abstract foo();
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract foo() {}
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract foo() {}
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts:2:14]
+ 1 │ class A {
+ 2 │     abstract foo();
+   ·              ───
+ 3 │ }
+   ╰────
 
   × 'abstract' modifier cannot be used here.
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
@@ -12328,6 +12485,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  43 │ }
     ╰────
   help: Remove the duplicate modifier.
+
+  × TS(1267): Property 'p' cannot have an initializer because it is marked abstract.
+   ╭─[conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract p = 'yep'
+   ·              ─
+ 3 │ }
+   ╰────
 
   × Identifier `accessor` has already been declared
     ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor11.ts:5:12]
@@ -16468,6 +16633,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
+ 18 │ module Y3 {
+ 19 │     public module Module {
+    ·     ──────
+ 20 │         class A { s: string }
+    ╰────
+
+  × 'public' modifier cannot be used here.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
  24 │ module Y4 {
  25 │     public enum Color { Blue, Red }
@@ -16524,6 +16697,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
+ 43 │ module YY3 {
+ 44 │     private module Module {
+    ·     ───────
+ 45 │         class A { s: string }
+    ╰────
+
+  × 'private' modifier cannot be used here.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
  49 │ module YY4 {
  50 │     private enum Color { Blue, Red }
@@ -16569,6 +16750,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  66 │     static class B extends AA<string> implements I { id: number }
     ·     ──────
  67 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
+ 69 │ module YYY3 {
+ 70 │     static module Module {
+    ·     ──────
+ 71 │         class A { s: string }
     ╰────
 
   × 'static' modifier cannot be used here.
@@ -18010,6 +18199,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × 'protected' modifier cannot be used here.
    ╭─[conformance/parser/ecmascript5/Protected/Protected1.ts:1:1]
  1 │ protected class C {
+   · ─────────
+ 2 │ }
+   ╰────
+
+  × 'protected' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
+ 1 │ protected module M {
    · ─────────
  2 │ }
    ╰────

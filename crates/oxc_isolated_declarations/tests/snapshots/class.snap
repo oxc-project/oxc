@@ -20,7 +20,7 @@ export declare abstract class Qux {
 	baz(): void;
 }
 export declare class Baz {
-	readonly prop1: 'some string';
+	readonly prop1 = 'some string';
 	prop2: string;
 	private prop3;
 	private prop4;
@@ -29,7 +29,7 @@ export declare class Baz {
 }
 export declare class Boo {
 	readonly prop: number;
-	private readonly prop2: number;
+	private readonly prop2;
 	readonly prop3: number;
 	constructor(prop?: number, prop2?: number, prop3?: number);
 }

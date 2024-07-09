@@ -9,6 +9,7 @@ use crate::{
         function_must_have_explicit_return_type, implicitly_adding_undefined_to_type,
         parameter_must_have_explicit_type,
     },
+    formal_parameter_binding_pattern::FormalParameterBindingPattern,
     IsolatedDeclarations,
 };
 
@@ -26,17 +27,17 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.error(function_must_have_explicit_return_type(get_function_span(func)));
             }
             let params = self.transform_formal_parameters(&func.params);
-            Some(self.ast.function(
+            Some(self.ast.alloc_function(
                 func.r#type,
                 func.span,
                 self.ast.copy(&func.id),
                 false,
                 false,
                 declare.unwrap_or_else(|| self.is_declare()),
+                self.ast.copy(&func.type_parameters),
                 self.ast.copy(&func.this_param),
                 params,
-                None,
-                self.ast.copy(&func.type_parameters),
+                Option::<FunctionBody>::None,
                 return_type,
             ))
         }
@@ -65,6 +66,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.copy(&param.pattern)
             };
 
+        FormalParameterBindingPattern::remove_assignments_from_kind(self.ast, &mut pattern.kind);
+
         if is_assignment_pattern || pattern.type_annotation.is_none() {
             let type_annotation = pattern
                 .type_annotation
@@ -88,11 +91,11 @@ impl<'a> IsolatedDeclarations<'a> {
                             // union with undefined
                             return self.ast.ts_type_annotation(
                                 SPAN,
-                                self.ast.ts_union_type(
+                                self.ast.ts_type_union_type(
                                     SPAN,
                                     self.ast.new_vec_from_iter([
                                         ts_type,
-                                        self.ast.ts_undefined_keyword(SPAN),
+                                        self.ast.ts_type_undefined_keyword(SPAN),
                                     ]),
                                 ),
                             );
@@ -137,7 +140,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        self.ast.formal_parameters(
+        self.ast.alloc_formal_parameters(
             params.span,
             FormalParameterKind::Signature,
             items,

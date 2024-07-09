@@ -25,7 +25,7 @@ impl<'a> ParserImpl<'a> {
         self.ctx = self.ctx.and_in(has_in);
         self.bump(Kind::Comma);
         self.expect(Kind::RParen)?;
-        Ok(self.ast.import_expression(self.end_span(span), expression, arguments))
+        Ok(self.ast.expression_import(self.end_span(span), expression, arguments))
     }
 
     /// Section 16.2.2 Import Declaration
@@ -58,14 +58,16 @@ impl<'a> ParserImpl<'a> {
         let with_clause = self.parse_import_attributes()?;
         self.asi()?;
         let span = self.end_span(span);
-        let decl = ModuleDeclaration::ImportDeclaration(self.ast.import_declaration(
-            span,
-            specifiers,
-            source,
-            with_clause,
-            import_kind,
-        ));
-        Ok(self.ast.module_declaration(decl))
+        Ok(self
+            .ast
+            .module_declaration_import_declaration(
+                span,
+                specifiers,
+                source,
+                with_clause,
+                import_kind,
+            )
+            .into())
     }
 
     // Full Syntax: <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import#syntax>
@@ -236,7 +238,7 @@ impl<'a> ParserImpl<'a> {
                 .parse_export_named_declaration(span)
                 .map(ModuleDeclaration::ExportNamedDeclaration),
         }?;
-        Ok(self.ast.module_declaration(decl))
+        Ok(Statement::from(decl))
     }
 
     // export NamedExports ;
@@ -312,7 +314,7 @@ impl<'a> ParserImpl<'a> {
 
         self.asi()?;
         let span = self.end_span(span);
-        Ok(self.ast.export_named_declaration(
+        Ok(self.ast.alloc_export_named_declaration(
             span,
             None,
             specifiers,
@@ -339,7 +341,7 @@ impl<'a> ParserImpl<'a> {
 
         let declaration = self.parse_declaration(decl_span, &modifiers)?;
         let span = self.end_span(span);
-        Ok(self.ast.export_named_declaration(
+        Ok(self.ast.alloc_export_named_declaration(
             span,
             Some(declaration),
             self.ast.new_vec(),
@@ -397,7 +399,7 @@ impl<'a> ParserImpl<'a> {
         };
         let exported = ModuleExportName::IdentifierName(exported);
         let span = self.end_span(span);
-        Ok(self.ast.export_default_declaration(span, declaration, exported))
+        Ok(self.ast.alloc_export_default_declaration(span, declaration, exported))
     }
 
     // export ExportFromClause FromClause ;
@@ -417,7 +419,7 @@ impl<'a> ParserImpl<'a> {
         let with_clause = self.parse_import_attributes()?;
         self.asi()?;
         let span = self.end_span(span);
-        Ok(self.ast.export_all_declaration(span, exported, source, with_clause, export_kind))
+        Ok(self.ast.alloc_export_all_declaration(span, exported, source, with_clause, export_kind))
     }
 
     // ImportSpecifier :
