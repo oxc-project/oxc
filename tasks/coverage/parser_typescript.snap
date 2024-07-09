@@ -10826,6 +10826,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncModule_es5.ts:1:1]
+ 1 │ async module M {
+   · ─────
+ 2 │ }
+   ╰────
+
   × Expected `(` but found `Identifier`
    ╭─[conformance/async/es5/asyncSetter_es5.ts:2:13]
  1 │ class C {
@@ -10950,6 +10957,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × 'async' modifier cannot be used here.
    ╭─[conformance/async/es6/asyncInterface_es6.ts:1:1]
  1 │ async interface I {  
+   · ─────
+ 2 │ }
+   ╰────
+
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncModule_es6.ts:1:1]
+ 1 │ async module M {   
    · ─────
  2 │ }
    ╰────
@@ -16575,6 +16589,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
+ 18 │ module Y3 {
+ 19 │     public module Module {
+    ·     ──────
+ 20 │         class A { s: string }
+    ╰────
+
+  × 'public' modifier cannot be used here.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
  24 │ module Y4 {
  25 │     public enum Color { Blue, Red }
@@ -16631,6 +16653,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
+ 43 │ module YY3 {
+ 44 │     private module Module {
+    ·     ───────
+ 45 │         class A { s: string }
+    ╰────
+
+  × 'private' modifier cannot be used here.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
  49 │ module YY4 {
  50 │     private enum Color { Blue, Red }
@@ -16676,6 +16706,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  66 │     static class B extends AA<string> implements I { id: number }
     ·     ──────
  67 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
+ 69 │ module YYY3 {
+ 70 │     static module Module {
+    ·     ──────
+ 71 │         class A { s: string }
     ╰────
 
   × 'static' modifier cannot be used here.
@@ -18117,6 +18155,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × 'protected' modifier cannot be used here.
    ╭─[conformance/parser/ecmascript5/Protected/Protected1.ts:1:1]
  1 │ protected class C {
+   · ─────────
+ 2 │ }
+   ╰────
+
+  × 'protected' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
+ 1 │ protected module M {
    · ─────────
  2 │ }
    ╰────

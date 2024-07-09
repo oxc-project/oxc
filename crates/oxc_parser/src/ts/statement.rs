@@ -265,6 +265,11 @@ impl<'a> ParserImpl<'a> {
         kind: TSModuleDeclarationKind,
         modifiers: &Modifiers<'a>,
     ) -> Result<Box<'a, TSModuleDeclaration<'a>>> {
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE | ModifierFlags::EXPORT,
+            diagnostics::modifier_cannot_be_used_here,
+        );
         let id = match self.cur_kind() {
             Kind::Str => self.parse_literal_string().map(TSModuleDeclarationName::StringLiteral),
             _ => self.parse_identifier_name().map(TSModuleDeclarationName::Identifier),
