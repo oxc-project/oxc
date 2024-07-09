@@ -1,5 +1,6 @@
 use oxc_allocator::Box;
 use oxc_diagnostics::{OxcDiagnostic, Result};
+use oxc_span::Atom as SpanAtom;
 
 use crate::{ast, parser::body_parser::unicode};
 
@@ -149,10 +150,60 @@ impl<'a> super::parse::PatternParser<'a> {
     }
 
     // ```
+    //  ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // ```
+    pub(super) fn consume_capturing_group(&mut self) -> Result<Option<ast::Atom<'a>>> {
+        let span_start = self.reader.span_position();
+
+        if self.reader.eat('(') {
+            let group_name = self.consume_group_specifier()?;
+            let alternatives = self.consume_disjunction()?;
+
+            if self.reader.eat(')') {
+                return Ok(Some(ast::Atom::CapturingGroup(Box::new_in(
+                    ast::CapturingGroup {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        name: group_name,
+                        alternatives,
+                    },
+                    self.allocator,
+                ))));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated group"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // GroupSpecifier[UnicodeMode] ::
+    //   ? GroupName[?UnicodeMode]
+    // ```
+    // <https://tc39.es/ecma262/#prod-GroupSpecifier>
+    fn consume_group_specifier(&mut self) -> Result<Option<SpanAtom<'a>>> {
+        if self.reader.eat('?') {
+            if let Some(group_name) = self.consume_group_name()? {
+                // TODO: Implement
+                // if (this._groupSpecifiers.hasInScope(this._lastStrValue)) {
+                //   this.raise("Duplicate capture group name");
+                // }
+                // this._groupSpecifiers.addToScope(this._lastStrValue);
+                return Ok(Some(group_name));
+            }
+
+            return Err(OxcDiagnostic::error("Invalid group"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
     // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     pub(super) fn consume_non_capturing_group(&mut self) -> Result<Option<ast::Atom<'a>>> {
         let span_start = self.reader.span_position();
+
         if self.reader.eat3('(', '?', ':') {
             let alternatives = self.consume_disjunction()?;
 

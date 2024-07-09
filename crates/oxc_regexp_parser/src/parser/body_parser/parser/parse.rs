@@ -309,7 +309,17 @@ impl<'a> PatternParser<'a> {
 
         // TODO: Implement
         // self.consume_character_class()
-        // self.consume_capturing_group()
+
+        // In the spec, (named) capturing group and non-capturing group are defined in that order.
+        // If `:` is not valid as a `GroupSpecifier`, why is it not defined in reverse order...?
+        // Anyway, if we don't look ahead here, we will get a syntax error.
+        let checkpoint = self.reader.checkpoint();
+        if !self.reader.eat3('(', '?', ':') {
+            if let Some(atom) = self.consume_capturing_group()? {
+                return Ok(Some(atom));
+            }
+        }
+        self.reader.rewind(checkpoint);
 
         if let Some(atom) = self.consume_non_capturing_group()? {
             return Ok(Some(atom));

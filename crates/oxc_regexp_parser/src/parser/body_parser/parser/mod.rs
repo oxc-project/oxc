@@ -79,6 +79,8 @@ mod test {
             (r"l\k<", ParserOptions::default().with_unicode_flags(true, false)),
             (r"l\k<a", ParserOptions::default().with_unicode_flags(true, false)),
             ("m(?:", ParserOptions::default()),
+            ("(n", ParserOptions::default()),
+            ("(?<n>", ParserOptions::default()),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),
