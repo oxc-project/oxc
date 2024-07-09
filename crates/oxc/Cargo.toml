@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc"
-version                = "0.18.0"
+version                = "0.19.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
