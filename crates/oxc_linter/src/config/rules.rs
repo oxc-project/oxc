@@ -1,14 +1,17 @@
 use std::{borrow::Cow, fmt, ops::Deref};
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
-use rustc_hash::FxHashMap;
-use schemars::{gen::SchemaGenerator, schema::Schema, JsonSchema};
+use schemars::{
+    gen::SchemaGenerator,
+    schema::{Schema, SchemaObject},
+    JsonSchema,
+};
 use serde::{
     de::{self, Deserializer, Visitor},
     Deserialize,
 };
 
-use crate::AllowWarnDeny;
+use crate::{rules::RULES, AllowWarnDeny};
 
 // TS type is `Record<string, RuleConf>`
 //   - type SeverityConf = 0 | 1 | 2 | "off" | "warn" | "error";
@@ -35,15 +38,48 @@ impl JsonSchema for OxlintRules {
     }
 
     fn json_schema(gen: &mut SchemaGenerator) -> Schema {
-        #[allow(unused)]
-        #[derive(Debug, Clone, JsonSchema)]
-        #[serde(untagged)]
-        enum DummyRule {
-            Toggle(AllowWarnDeny),
-            ToggleAndConfig(Vec<serde_json::Value>),
-        }
-        gen.subschema_for::<FxHashMap<String, DummyRule>>()
+        let mut schema: SchemaObject = SchemaObject::default();
+        schema.object().properties.extend(RULES.iter().map(|rule| {
+            let rule_config_schema = rule.schema(gen);
+            let mut rule_schema = rule_property_schema(gen, rule_config_schema);
+
+            let docs = rule.documentation();
+            rule_schema.metadata().description = docs.map(Into::into);
+            if let Some(docs) = docs {
+                // markdownDescription is a non-standard property that VSCode
+                // uses in intellisense. It lets us show the rule's
+                // documentation with markdown formatting.
+                rule_schema
+                    .extensions
+                    .insert("markdownDescription".into(), docs.to_string().into());
+            }
+
+            // Don't scope eslint rules, only plugins.
+            let scoped_name = if rule.plugin_name() == "eslint" {
+                rule.name().into()
+            } else {
+                rule.plugin_name().to_string() + "/" + rule.name()
+            };
+
+            (scoped_name, rule_schema.into())
+        }));
+
+        schema.into()
     }
+}
+
+fn rule_property_schema(gen: &mut SchemaGenerator, config_schema: Schema) -> SchemaObject {
+    let any_list = gen.subschema_for::<Vec<serde_json::Value>>().into_object();
+    let toggle_schema = gen.subschema_for::<AllowWarnDeny>().into_object();
+    let mut toggle_and_config = SchemaObject::default();
+    toggle_and_config.array().items = Some(Schema::Object(toggle_schema.clone()).into());
+    toggle_and_config.array().additional_items = Some(Box::new(config_schema));
+
+    let mut schema = SchemaObject::default();
+    schema.subschemas().any_of =
+        Some(vec![toggle_schema.into(), toggle_and_config.into(), any_list.into()]);
+
+    schema
 }
 
 // Manually implement Deserialize because the type is a bit complex...

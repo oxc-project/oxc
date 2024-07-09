@@ -41,6 +41,7 @@ impl Parse for LintRuleMeta {
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let LintRuleMeta { name, category, documentation, used_in_test } = metadata;
+    // e.g. NoDebugger to no-debugger
     let canonical_name = name.to_string().to_case(Case::Kebab);
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
@@ -69,6 +70,44 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
 
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)
+            }
+        }
+
+        impl schemars::JsonSchema for #name {
+            #[inline]
+            fn schema_name() -> String {
+                Self::NAME.to_string()
+            }
+
+            #[inline]
+            fn schema_id() -> std::borrow::Cow<'static, str> {
+                std::borrow::Cow::Borrowed(#canonical_name)
+            }
+
+            fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+                use schemars::schema::{Schema, SchemaObject};
+
+                let mut schema: Schema = #name::schema(gen)
+                    .unwrap_or_else(|| {
+                        let mut obj = SchemaObject::default();
+                        obj.object().additional_properties = Some(Box::new(Schema::Bool(true)));
+                        obj.into()
+                    });
+
+                let schema = match schema {
+                    Schema::Object(mut obj) => {
+                        let meta = obj.metadata();
+                        meta.title = Some("Config for ".to_string() + Self::NAME);
+                        // meta.description = Self::documentation().map(Into::into);
+                        // if let Some(docs) = Self::documentation() {
+                        //     obj.extensions.insert("markdownDescription".into(), docs.into());
+                        // }
+                        Schema::Object(obj)
+                    },
+                    s => s
+                };
+
+                schema
             }
         }
     };

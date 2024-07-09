@@ -215,7 +215,8 @@ impl JsonSchema for AllowWarnDeny {
         string_schema.enum_values =
             Some(vec!["allow".into(), "off".into(), "warn".into(), "error".into(), "deny".into()]);
         string_schema.metadata().description = Some(
-            r#"Oxlint rule.
+            r#"Enable/disable rules and set severity levels.
+
 - "allow" or "off": Turn off the rule.
 - "warn": Turn the rule on as a warning (doesn't affect exit code).
 - "error" or "deny": Turn the rule on as an error (will exit with a failure code)."#
@@ -225,8 +226,8 @@ impl JsonSchema for AllowWarnDeny {
         int_schema.number().minimum = Some(0.0);
         int_schema.number().maximum = Some(2.0);
         int_schema.metadata().description = Some(
-            "Oxlint rule.
-    
+            r"Enable/disable rules and set severity levels.
+
 - 0: Turn off the rule.
 - 1: Turn the rule on as a warning (doesn't affect exit code).
 - 2: Turn the rule on as an error (will exit with a failure code)."
@@ -235,6 +236,13 @@ impl JsonSchema for AllowWarnDeny {
 
         let mut schema = SchemaObject::default();
         schema.subschemas().one_of = Some(vec![string_schema.into(), int_schema.into()]);
+        // schema.metadata().title = Some("Enable or disable a rule".to_string());
+        //         schema.metadata().description = Some(
+        //             r#"
+        // - (0, "allow", "off"): Turn off the rule.
+        // - (1, "warn"): Turn the rule on as a warning (doesn't affect exit code).
+        // - (2, "error", "deny"): Turn the rule on as an error (will exit with a failure code)."#.to_string(),
+        //         );
 
         schema.into()
     }
@@ -250,6 +258,9 @@ impl From<AllowWarnDeny> for Severity {
     }
 }
 
+// impl JsonSchema for AllowWarnDeny {
+
+// }
 impl LintOptions {
     /// # Errors
     ///
