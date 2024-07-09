@@ -28,8 +28,8 @@ impl<'a> JSDocBuilder<'a> {
         let not_attached_docs = self
             .trivias
             .comments()
-            .filter(|(_, span)| !self.leading_comments_seen.contains(&span.start))
-            .filter_map(|(kind, span)| self.parse_if_jsdoc_comment(kind, span))
+            .filter(|comment| !self.leading_comments_seen.contains(&comment.span.start))
+            .filter_map(|comment| self.parse_if_jsdoc_comment(comment.kind, comment.span))
             .collect::<Vec<_>>();
 
         JSDocFinder::new(self.attached_docs, not_attached_docs)
@@ -119,20 +119,18 @@ impl<'a> JSDocBuilder<'a> {
         let mut leading_comments = vec![];
         // May be better to set range start for perf?
         // But once I tried, coverage tests start failing...
-        for (start, comment) in self.trivias.comments_range(..span.start) {
-            if self.leading_comments_seen.contains(start) {
+        for comment in self.trivias.comments_range(..span.start) {
+            if self.leading_comments_seen.contains(&comment.span.start) {
                 continue;
             }
 
-            leading_comments.push((start, comment));
-            self.leading_comments_seen.insert(*start);
+            leading_comments.push(comment);
+            self.leading_comments_seen.insert(comment.span.start);
         }
 
         let leading_jsdoc_comments = leading_comments
             .into_iter()
-            .filter_map(|(start, comment)| {
-                self.parse_if_jsdoc_comment(comment.kind, Span::new(*start, comment.end))
-            })
+            .filter_map(|comment| self.parse_if_jsdoc_comment(comment.kind, comment.span))
             .collect::<Vec<_>>();
 
         if !leading_jsdoc_comments.is_empty() {

@@ -212,8 +212,8 @@ impl NoFallthrough {
             let comment = semantic
                 .trivias()
                 .comments_range(range)
-                .map(|(start, comment)| {
-                    &semantic.source_text()[*start as usize..comment.end as usize]
+                .map(|comment| {
+                    &semantic.source_text()[comment.span.start as usize..comment.span.end as usize]
                 })
                 .last()
                 .map(str::trim);

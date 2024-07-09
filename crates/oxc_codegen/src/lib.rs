@@ -517,7 +517,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 }
 
-pub(crate) type MoveCommentMap = FxHashMap<u32, (u32, Comment)>;
+pub(crate) type MoveCommentMap = FxHashMap<u32, Comment>;
 
 // Comment related
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
@@ -541,15 +541,15 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     ///
     ///  }, b = 10000;
     /// ```
-    fn move_comment(&mut self, position: u32, full_comment_info: (u32, Comment)) {
+    fn move_comment(&mut self, position: u32, full_comment_info: Comment) {
         self.move_comment_map.insert(position, full_comment_info);
     }
 
-    fn try_get_leading_comment(&self, start: u32) -> Option<(&u32, &Comment)> {
+    fn try_get_leading_comment(&self, start: u32) -> Option<&Comment> {
         self.trivias.comments_range(0..start).next_back()
     }
 
-    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<(u32, Comment)> {
+    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Comment> {
         self.move_comment_map.remove(&node_start)
     }
 }
