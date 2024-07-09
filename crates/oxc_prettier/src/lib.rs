@@ -84,7 +84,7 @@ impl<'a> Prettier<'a> {
             allocator,
             source_text,
             options,
-            trivias: trivias.comments().cloned().collect::<Vec<_>>().into_iter().peekable(),
+            trivias: trivias.comments().copied().collect::<Vec<_>>().into_iter().peekable(),
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
