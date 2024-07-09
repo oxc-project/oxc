@@ -135,24 +135,24 @@ impl<'a> AstBuilder<'a> {
     pub fn program(
         self,
         span: Span,
-        source_type: SourceType,
         directives: Vec<'a, Directive<'a>>,
+        source_type: SourceType,
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, directives, hashbang, body, scope_id: Default::default() }
+        Program { span, directives, source_type, hashbang, body, scope_id: Default::default() }
     }
 
     #[inline]
     pub fn alloc_program(
         self,
         span: Span,
-        source_type: SourceType,
         directives: Vec<'a, Directive<'a>>,
+        source_type: SourceType,
         hashbang: Option<Hashbang<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, Program<'a>> {
-        self.program(span, source_type, directives, hashbang, body).into_in(self.allocator)
+        self.program(span, directives, source_type, hashbang, body).into_in(self.allocator)
     }
 
     #[inline]
