@@ -558,7 +558,9 @@ pub struct PrivateFieldExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// Call Expression
+/// `foo()` in `function foo() { return 1; }; foo();`
+///
+/// Represents a call expression, which can include a callee and arguments.
 ///
 /// ## Examples
 /// ```ts
