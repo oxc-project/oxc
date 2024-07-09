@@ -70,6 +70,7 @@ pub fn check<'a>(node: &AstNode<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::Class(class) => {
             js::check_class(class, node, ctx);
+            ts::check_class(class, ctx);
         }
         AstKind::MethodDefinition(method) => {
             js::check_method_definition(method, ctx);

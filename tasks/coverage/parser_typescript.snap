@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
 Positive Passed: 5272/5283 (99.79%)
-Negative Passed: 1090/4875 (22.36%)
+Negative Passed: 1094/4875 (22.44%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -27,7 +27,6 @@ Expect Syntax Error: "compiler/ParameterList8.ts"
 Expect Syntax Error: "compiler/abstractClassInLocalScopeIsAbstract.ts"
 Expect Syntax Error: "compiler/abstractClassUnionInstantiation.ts"
 Expect Syntax Error: "compiler/abstractPropertyInConstructor.ts"
-Expect Syntax Error: "compiler/abstractPropertyNegative.ts"
 Expect Syntax Error: "compiler/accessInstanceMemberFromStaticMethod01.ts"
 Expect Syntax Error: "compiler/accessStaticMemberFromInstanceMethod01.ts"
 Expect Syntax Error: "compiler/accessorAccidentalCallDiagnostic.ts"
@@ -100,7 +99,6 @@ Expect Syntax Error: "compiler/arrayOfSubtypeIsAssignableToReadonlyArray.ts"
 Expect Syntax Error: "compiler/arrayReferenceWithoutTypeArgs.ts"
 Expect Syntax Error: "compiler/arrayToLocaleStringES5.ts"
 Expect Syntax Error: "compiler/arrowFunctionInConstructorArgument1.ts"
-Expect Syntax Error: "compiler/asiAbstract.ts"
 Expect Syntax Error: "compiler/asiPublicPrivateProtected.ts"
 Expect Syntax Error: "compiler/assignLambdaToNominalSubtypeOfFunction.ts"
 Expect Syntax Error: "compiler/assignToEnum.ts"
@@ -1964,7 +1962,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance1.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts"
@@ -1972,7 +1969,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSingleLineDecl.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAndInterfaceMergeConflictingMembers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingClassLikeType.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingNonConstructor.ts"
@@ -4019,6 +4015,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × TS(1253): Abstract properties can only appear within an abstract class.
+    ╭─[compiler/abstractPropertyNegative.ts:15:14]
+ 14 │     readonly ro = "readonly please";
+ 15 │     abstract notAllowed: string;
+    ·              ──────────
+ 16 │     get concreteWithNoBody(): string;
+    ╰────
+
   × Unexpected token
    ╭─[compiler/accessorBodyInTypeContext.ts:2:15]
  1 │ type A = {
@@ -4179,6 +4183,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                ┬
    ·                ╰── `=>` expected
  3 │ 
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[compiler/asiAbstract.ts:3:12]
+ 2 │ class NonAbstractClass {
+ 3 │   abstract s();
+   ·            ─
+ 4 │ }
    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
@@ -11131,6 +11143,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  9 │ }
    ╰────
 
+  × TS(1244): Abstract methods can only appear within an abstract class.
+    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:50:14]
+ 49 │ class H { // error -- not declared abstract
+ 50 │     abstract baz() : number;
+    ·              ───
+ 51 │ }
+    ╰────
+
   × Unexpected token
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractManyKeywords.ts:3:1]
  2 │ export abstract class B {}
@@ -11163,6 +11183,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  18 │ 
     ╰────
 
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
+ 1 │ class A {
+ 2 │     abstract foo();
+   ·              ───
+ 3 │ }
+   ╰────
+
   × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
  5 │ class B {
@@ -11172,6 +11200,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
 
   × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
  5 │ class B {
  6 │     abstract foo() {}
@@ -11191,6 +11227,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
  1 │ abstract class A {
  2 │     abstract foo() {}
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts:2:14]
+ 1 │ class A {
+ 2 │     abstract foo();
    ·              ───
  3 │ }
    ╰────

@@ -185,6 +185,27 @@ pub fn check_ts_import_equals_declaration<'a>(
     }
 }
 
+/// - Abstract properties can only appear within an abstract class. (1253)
+/// - Abstract methods can only appear within an abstract class. (1244)
+fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnostic {
+    let (code, elem_kind) = if is_property { (1253, "properties") } else { (1244, "methods") };
+    OxcDiagnostic::error(format!(
+        "TS({code}): Abstract {elem_kind} can only appear within an abstract class."
+    ))
+    .with_label(span)
+}
+
+pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
+    if !class.r#abstract {
+        for elem in &class.body.body {
+            if elem.is_abstract() {
+                let span = elem.property_key().map_or_else(|| elem.span(), GetSpan::span);
+                ctx.error(abstract_elem_in_concrete_class(elem.is_property(), span));
+            }
+        }
+    }
+}
+
 fn abstract_element_cannot_have_initializer(
     code: u32,
     elem_name: &str,

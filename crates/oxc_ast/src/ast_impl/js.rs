@@ -1269,6 +1269,23 @@ impl<'a> ClassElement<'a> {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
     }
+
+    /// Has this property been marked as abstract?
+    ///
+    /// ```ts
+    /// abstract class Foo {    // <-- not considered
+    ///   foo: string;          // <-- false
+    ///   abstract bar: string; // <-- true
+    /// }
+    /// ```
+    pub fn is_abstract(&self) -> bool {
+        match self {
+            Self::MethodDefinition(method) => method.r#type.is_abstract(),
+            Self::AccessorProperty(accessor) => accessor.r#type.is_abstract(),
+            Self::PropertyDefinition(property) => property.r#type.is_abstract(),
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+        }
+    }
 }
 
 impl PropertyDefinitionType {
