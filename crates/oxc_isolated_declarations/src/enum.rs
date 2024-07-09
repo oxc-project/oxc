@@ -20,7 +20,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         decl: &TSEnumDeclaration<'a>,
     ) -> Option<Declaration<'a>> {
-        let mut members = self.ast.new_vec();
+        let mut members = self.ast.vec();
         let mut prev_initializer_value = Some(ConstantValue::Number(-1.0));
         let mut prev_members = FxHashMap::default();
         for member in &decl.members {
@@ -63,10 +63,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         // Infinity
                         let expr = if v.is_infinite() {
-                            self.ast.expression_identifier_reference(
-                                SPAN,
-                                self.ast.new_atom("Infinity"),
-                            )
+                            self.ast.expression_identifier_reference(SPAN, "Infinity")
                         } else {
                             let value = if is_negative { -v } else { v };
                             self.ast.expression_numeric_literal(

@@ -328,9 +328,9 @@ impl<'a> ParserImpl<'a> {
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
-                    self.ast.new_vec(),
+                    self.ast.vec(),
                     None,
-                    self.ast.new_vec(),
+                    self.ast.vec(),
                 );
                 (program, true)
             }

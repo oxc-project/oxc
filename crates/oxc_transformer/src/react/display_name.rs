@@ -67,7 +67,7 @@ impl<'a> ReactDisplayName<'a> {
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
                     if let Some(name) = prop.key().static_name() {
-                        FinderRet::Found(ctx.ast.new_atom(&name))
+                        FinderRet::Found(ctx.ast.atom(&name))
                     } else {
                         FinderRet::Stop
                     }
@@ -75,7 +75,7 @@ impl<'a> ReactDisplayName<'a> {
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    FinderRet::Found(ctx.ast.new_atom(&self.ctx.filename))
+                    FinderRet::Found(ctx.ast.atom(&self.ctx.filename))
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_via_statement() => FinderRet::Stop,

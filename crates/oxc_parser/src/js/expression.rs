@@ -349,7 +349,7 @@ impl<'a> ParserImpl<'a> {
         self.ast.reg_exp_literal(
             self.end_span(span),
             EmptyObject,
-            RegExp { pattern: self.ast.new_atom(pattern), flags },
+            RegExp { pattern: self.ast.atom(pattern), flags },
         )
     }
 
@@ -409,8 +409,8 @@ impl<'a> ParserImpl<'a> {
     ///     `SubstitutionTemplate`[?Yield, ?Await, ?Tagged]
     fn parse_template_literal(&mut self, tagged: bool) -> Result<TemplateLiteral<'a>> {
         let span = self.start_span();
-        let mut expressions = self.ast.new_vec();
-        let mut quasis = self.ast.new_vec();
+        let mut expressions = self.ast.vec();
+        let mut quasis = self.ast.vec();
         match self.cur_kind() {
             Kind::NoSubstitutionTemplate => {
                 quasis.push(self.parse_template_element(tagged));
@@ -490,7 +490,7 @@ impl<'a> ParserImpl<'a> {
         let cur_src = self.cur_src();
         let raw = &cur_src[1..cur_src.len() - end_offset as usize];
         let raw = Atom::from(if cooked.is_some() && raw.contains('\r') {
-            self.ast.new_str(raw.replace("\r\n", "\n").replace('\r', "\n").as_str())
+            self.ast.str(raw.replace("\r\n", "\n").replace('\r', "\n").as_str())
         } else {
             raw
         });
@@ -506,11 +506,11 @@ impl<'a> ParserImpl<'a> {
         }
 
         let tail = matches!(cur_kind, Kind::TemplateTail | Kind::NoSubstitutionTemplate);
-        TemplateElement {
+        self.ast.template_element(
             span,
             tail,
-            value: TemplateElementValue { raw, cooked: cooked.map(Atom::from) },
-        }
+            TemplateElementValue { raw, cooked: cooked.map(Atom::from) },
+        )
     }
 
     /// Section 13.3 Meta Property
@@ -727,7 +727,7 @@ impl<'a> ParserImpl<'a> {
             self.expect(Kind::RParen)?;
             call_arguments
         } else {
-            self.ast.new_vec()
+            self.ast.vec()
         };
 
         if matches!(callee, Expression::ImportExpression(_)) {
@@ -1071,7 +1071,7 @@ impl<'a> ParserImpl<'a> {
         span: Span,
         first_expression: Expression<'a>,
     ) -> Result<Expression<'a>> {
-        let mut expressions = self.ast.new_vec_single(first_expression);
+        let mut expressions = self.ast.vec1(first_expression);
         while self.eat(Kind::Comma) {
             let expression = self.parse_assignment_expression_or_higher()?;
             expressions.push(expression);

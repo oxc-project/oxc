@@ -15,7 +15,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(ExportNamedDeclaration {
             span: decl.span(),
             declaration: Some(decl),
-            specifiers: self.ast.new_vec(),
+            specifiers: self.ast.vec(),
             source: None,
             export_kind: ImportOrExportKind::Value,
             with_clause: None,
@@ -23,10 +23,10 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
-        let mut binding = self.ast.new_atom(name);
+        let mut binding = self.ast.atom(name);
         let mut i = 1;
         while self.scope.has_reference(&binding) {
-            binding = self.ast.new_atom(format!("{name}_{i}").as_str());
+            binding = self.ast.atom(format!("{name}_{i}").as_str());
             i += 1;
         }
         binding
@@ -64,9 +64,8 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
 
                     let id = self.ast.binding_pattern(id, type_annotation, false);
-                    let declarations = self
-                        .ast
-                        .new_vec_single(self.ast.variable_declarator(SPAN, kind, id, None, true));
+                    let declarations =
+                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, true));
 
                     Some((
                         Some(VariableDeclaration {
@@ -84,10 +83,8 @@ impl<'a> IsolatedDeclarations<'a> {
         };
 
         declaration.map(|(var_decl, declaration)| {
-            let exported = ModuleExportName::IdentifierName(IdentifierName::new(
-                SPAN,
-                self.ast.new_atom("default"),
-            ));
+            let exported =
+                ModuleExportName::IdentifierName(self.ast.identifier_name(SPAN, "default"));
             (var_decl, ExportDefaultDeclaration { span: decl.span, declaration, exported })
         })
     }

@@ -106,7 +106,7 @@ impl<'a> FunctionReturnType<'a> {
         if visitor.return_statement_count > 1 {
             let types = transformer
                 .ast
-                .new_vec_from_iter([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
+                .vec_from_iter([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
             expr_type = transformer.ast.ts_type_union_type(SPAN, types);
         }
         Some(expr_type)

@@ -78,65 +78,63 @@ impl<'a> IsolatedDeclarations<'a> {
         is_const: bool,
     ) -> TSType<'a> {
         let members =
-            self.ast.new_vec_from_iter(expr.properties.iter().filter_map(
-                |property| match property {
-                    ObjectPropertyKind::ObjectProperty(object) => {
-                        if self.report_property_key(&object.key, object.computed) {
-                            return None;
-                        }
-
-                        if object.shorthand {
-                            self.error(shorthand_property(object.span));
-                            return None;
-                        }
-
-                        if let Expression::FunctionExpression(function) = &object.value {
-                            if !is_const && object.method {
-                                let return_type = self.infer_function_return_type(function);
-                                let params = self.transform_formal_parameters(&function.params);
-                                return Some(self.ast.ts_signature_method_signature(
-                                    object.span,
-                                    self.ast.copy(&object.key),
-                                    object.computed,
-                                    false,
-                                    TSMethodSignatureKind::Method,
-                                    self.ast.copy(&function.this_param),
-                                    params,
-                                    return_type,
-                                    self.ast.copy(&function.type_parameters),
-                                ));
-                            }
-                        }
-
-                        let type_annotation = if is_const {
-                            self.transform_expression_to_ts_type(&object.value)
-                        } else {
-                            self.infer_type_from_expression(&object.value)
-                        };
-
-                        if type_annotation.is_none() {
-                            self.error(inferred_type_of_expression(object.value.span()));
-                            return None;
-                        }
-
-                        let property_signature = self.ast.ts_signature_property_signature(
-                            object.span,
-                            false,
-                            false,
-                            is_const,
-                            self.ast.copy(&object.key),
-                            type_annotation.map(|type_annotation| {
-                                self.ast.ts_type_annotation(SPAN, type_annotation)
-                            }),
-                        );
-                        Some(property_signature)
+            self.ast.vec_from_iter(expr.properties.iter().filter_map(|property| match property {
+                ObjectPropertyKind::ObjectProperty(object) => {
+                    if self.report_property_key(&object.key, object.computed) {
+                        return None;
                     }
-                    ObjectPropertyKind::SpreadProperty(spread) => {
-                        self.error(object_with_spread_assignments(spread.span));
-                        None
+
+                    if object.shorthand {
+                        self.error(shorthand_property(object.span));
+                        return None;
                     }
-                },
-            ));
+
+                    if let Expression::FunctionExpression(function) = &object.value {
+                        if !is_const && object.method {
+                            let return_type = self.infer_function_return_type(function);
+                            let params = self.transform_formal_parameters(&function.params);
+                            return Some(self.ast.ts_signature_method_signature(
+                                object.span,
+                                self.ast.copy(&object.key),
+                                object.computed,
+                                false,
+                                TSMethodSignatureKind::Method,
+                                self.ast.copy(&function.this_param),
+                                params,
+                                return_type,
+                                self.ast.copy(&function.type_parameters),
+                            ));
+                        }
+                    }
+
+                    let type_annotation = if is_const {
+                        self.transform_expression_to_ts_type(&object.value)
+                    } else {
+                        self.infer_type_from_expression(&object.value)
+                    };
+
+                    if type_annotation.is_none() {
+                        self.error(inferred_type_of_expression(object.value.span()));
+                        return None;
+                    }
+
+                    let property_signature = self.ast.ts_signature_property_signature(
+                        object.span,
+                        false,
+                        false,
+                        is_const,
+                        self.ast.copy(&object.key),
+                        type_annotation.map(|type_annotation| {
+                            self.ast.ts_type_annotation(SPAN, type_annotation)
+                        }),
+                    );
+                    Some(property_signature)
+                }
+                ObjectPropertyKind::SpreadProperty(spread) => {
+                    self.error(object_with_spread_assignments(spread.span));
+                    None
+                }
+            }));
         self.ast.ts_type_type_literal(SPAN, members)
     }
 
@@ -145,21 +143,20 @@ impl<'a> IsolatedDeclarations<'a> {
         expr: &ArrayExpression<'a>,
         is_const: bool,
     ) -> TSType<'a> {
-        let element_types =
-            self.ast.new_vec_from_iter(expr.elements.iter().filter_map(|element| {
-                match element {
-                    ArrayExpressionElement::SpreadElement(spread) => {
-                        self.error(arrays_with_spread_elements(spread.span));
-                        None
-                    }
-                    ArrayExpressionElement::Elision(elision) => {
-                        Some(TSTupleElement::from(self.ast.ts_type_undefined_keyword(elision.span)))
-                    }
-                    _ => self
-                        .transform_expression_to_ts_type(element.to_expression())
-                        .map(TSTupleElement::from),
+        let element_types = self.ast.vec_from_iter(expr.elements.iter().filter_map(|element| {
+            match element {
+                ArrayExpressionElement::SpreadElement(spread) => {
+                    self.error(arrays_with_spread_elements(spread.span));
+                    None
                 }
-            }));
+                ArrayExpressionElement::Elision(elision) => {
+                    Some(TSTupleElement::from(self.ast.ts_type_undefined_keyword(elision.span)))
+                }
+                _ => self
+                    .transform_expression_to_ts_type(element.to_expression())
+                    .map(TSTupleElement::from),
+            }
+        }));
 
         let ts_type = self.ast.ts_type_tuple_type(SPAN, element_types);
         if is_const {

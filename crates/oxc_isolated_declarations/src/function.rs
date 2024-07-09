@@ -93,7 +93,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 SPAN,
                                 self.ast.ts_type_union_type(
                                     SPAN,
-                                    self.ast.new_vec_from_iter([
+                                    self.ast.vec_from_iter([
                                         ts_type,
                                         self.ast.ts_type_undefined_keyword(SPAN),
                                     ]),
@@ -113,7 +113,7 @@ impl<'a> IsolatedDeclarations<'a> {
             );
         }
 
-        Some(self.ast.formal_parameter(param.span, pattern, None, false, false, self.ast.new_vec()))
+        Some(self.ast.formal_parameter(param.span, pattern, None, false, false, self.ast.vec()))
     }
 
     pub fn transform_formal_parameters(
@@ -124,15 +124,14 @@ impl<'a> IsolatedDeclarations<'a> {
             return self.ast.alloc(self.ast.copy(params));
         }
 
-        let items = self.ast.new_vec_from_iter(params.items.iter().enumerate().filter_map(
-            |(index, item)| {
+        let items =
+            self.ast.vec_from_iter(params.items.iter().enumerate().filter_map(|(index, item)| {
                 let is_remaining_params_have_required =
                     params.items.iter().skip(index).any(|item| {
                         !(item.pattern.optional || item.pattern.kind.is_assignment_pattern())
                     });
                 self.transform_formal_parameter(item, is_remaining_params_have_required)
-            },
-        ));
+            }));
 
         if let Some(rest) = &params.rest {
             if rest.argument.type_annotation.is_none() {
