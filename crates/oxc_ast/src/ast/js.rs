@@ -625,17 +625,9 @@ pub struct MetaProperty<'a> {
     pub property: IdentifierName<'a>,
 }
 
-/// Spread Element
+/// `...[1, 2]` in `const arr = [...[1, 2]];`
 ///
-/// An array or object spread. Could be used in unpacking or a declaration.
-///
-/// ## Example
-/// ```ts
-/// const [first, ...rest] = arr
-/// //            ^^^^^^^
-/// const obj = { foo: 'foo', ...obj2 }
-/// //                        ^^^^^^^
-/// ```
+/// Represents a spread element, which can include an argument.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -659,6 +651,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum Argument<'a> {
+    /// `...[1, 2]` in `const arr = [...[1, 2]];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
