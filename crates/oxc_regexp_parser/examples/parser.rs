@@ -19,6 +19,7 @@ fn main() {
         (r"/\n\cM\0\x41\u1234\./u", ParserOptions::default()),
         (r"/\n\cM\0\x41\u{1f600}\./u", ParserOptions::default()),
         (r"/a\k<f>x\1c/u", ParserOptions::default()),
+        (r"/(cg)(?<n>cg)(?:g)/", ParserOptions::default()),
     ] {
         println!("Test: {pat} + {options:?}");
         let parser = Parser::new(&allocator, pat, options);
