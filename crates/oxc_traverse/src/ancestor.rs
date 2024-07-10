@@ -147,8 +147,8 @@ pub(crate) enum AncestorType {
     FunctionReturnType = 115,
     FormalParametersItems = 116,
     FormalParametersRest = 117,
-    FormalParameterPattern = 118,
-    FormalParameterDecorators = 119,
+    FormalParameterDecorators = 118,
+    FormalParameterPattern = 119,
     FunctionBodyDirectives = 120,
     FunctionBodyStatements = 121,
     ArrowFunctionExpressionParams = 122,
@@ -172,9 +172,9 @@ pub(crate) enum AncestorType {
     PropertyDefinitionValue = 140,
     PropertyDefinitionTypeAnnotation = 141,
     StaticBlockBody = 142,
-    AccessorPropertyKey = 143,
-    AccessorPropertyValue = 144,
-    AccessorPropertyDecorators = 145,
+    AccessorPropertyDecorators = 143,
+    AccessorPropertyKey = 144,
+    AccessorPropertyValue = 145,
     ImportExpressionSource = 146,
     ImportExpressionArguments = 147,
     ImportDeclarationSpecifiers = 148,
@@ -537,10 +537,10 @@ pub enum Ancestor<'a> {
         AncestorType::FormalParametersItems as u16,
     FormalParametersRest(FormalParametersWithoutRest<'a>) =
         AncestorType::FormalParametersRest as u16,
-    FormalParameterPattern(FormalParameterWithoutPattern<'a>) =
-        AncestorType::FormalParameterPattern as u16,
     FormalParameterDecorators(FormalParameterWithoutDecorators<'a>) =
         AncestorType::FormalParameterDecorators as u16,
+    FormalParameterPattern(FormalParameterWithoutPattern<'a>) =
+        AncestorType::FormalParameterPattern as u16,
     FunctionBodyDirectives(FunctionBodyWithoutDirectives<'a>) =
         AncestorType::FunctionBodyDirectives as u16,
     FunctionBodyStatements(FunctionBodyWithoutStatements<'a>) =
@@ -578,11 +578,11 @@ pub enum Ancestor<'a> {
     PropertyDefinitionTypeAnnotation(PropertyDefinitionWithoutTypeAnnotation<'a>) =
         AncestorType::PropertyDefinitionTypeAnnotation as u16,
     StaticBlockBody(StaticBlockWithoutBody<'a>) = AncestorType::StaticBlockBody as u16,
+    AccessorPropertyDecorators(AccessorPropertyWithoutDecorators<'a>) =
+        AncestorType::AccessorPropertyDecorators as u16,
     AccessorPropertyKey(AccessorPropertyWithoutKey<'a>) = AncestorType::AccessorPropertyKey as u16,
     AccessorPropertyValue(AccessorPropertyWithoutValue<'a>) =
         AncestorType::AccessorPropertyValue as u16,
-    AccessorPropertyDecorators(AccessorPropertyWithoutDecorators<'a>) =
-        AncestorType::AccessorPropertyDecorators as u16,
     ImportExpressionSource(ImportExpressionWithoutSource<'a>) =
         AncestorType::ImportExpressionSource as u16,
     ImportExpressionArguments(ImportExpressionWithoutArguments<'a>) =
@@ -1254,7 +1254,7 @@ impl<'a> Ancestor<'a> {
 
     #[inline]
     pub fn is_formal_parameter(&self) -> bool {
-        matches!(self, Self::FormalParameterPattern(_) | Self::FormalParameterDecorators(_))
+        matches!(self, Self::FormalParameterDecorators(_) | Self::FormalParameterPattern(_))
     }
 
     #[inline]
@@ -1327,9 +1327,9 @@ impl<'a> Ancestor<'a> {
     pub fn is_accessor_property(&self) -> bool {
         matches!(
             self,
-            Self::AccessorPropertyKey(_)
+            Self::AccessorPropertyDecorators(_)
+                | Self::AccessorPropertyKey(_)
                 | Self::AccessorPropertyValue(_)
-                | Self::AccessorPropertyDecorators(_)
         )
     }
 
@@ -5726,22 +5726,30 @@ impl<'a> FormalParametersWithoutRest<'a> {
 }
 
 pub(crate) const OFFSET_FORMAL_PARAMETER_SPAN: usize = offset_of!(FormalParameter, span);
+pub(crate) const OFFSET_FORMAL_PARAMETER_DECORATORS: usize =
+    offset_of!(FormalParameter, decorators);
 pub(crate) const OFFSET_FORMAL_PARAMETER_PATTERN: usize = offset_of!(FormalParameter, pattern);
 pub(crate) const OFFSET_FORMAL_PARAMETER_ACCESSIBILITY: usize =
     offset_of!(FormalParameter, accessibility);
 pub(crate) const OFFSET_FORMAL_PARAMETER_READONLY: usize = offset_of!(FormalParameter, readonly);
 pub(crate) const OFFSET_FORMAL_PARAMETER_OVERRIDE: usize = offset_of!(FormalParameter, r#override);
-pub(crate) const OFFSET_FORMAL_PARAMETER_DECORATORS: usize =
-    offset_of!(FormalParameter, decorators);
 
 #[repr(transparent)]
 #[derive(Debug)]
-pub struct FormalParameterWithoutPattern<'a>(pub(crate) *const FormalParameter<'a>);
+pub struct FormalParameterWithoutDecorators<'a>(pub(crate) *const FormalParameter<'a>);
 
-impl<'a> FormalParameterWithoutPattern<'a> {
+impl<'a> FormalParameterWithoutDecorators<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn pattern(&self) -> &BindingPattern<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
+                as *const BindingPattern<'a>)
+        }
     }
 
     #[inline]
@@ -5761,31 +5769,23 @@ impl<'a> FormalParameterWithoutPattern<'a> {
     pub fn r#override(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_OVERRIDE) as *const bool) }
     }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
 }
 
 #[repr(transparent)]
 #[derive(Debug)]
-pub struct FormalParameterWithoutDecorators<'a>(pub(crate) *const FormalParameter<'a>);
+pub struct FormalParameterWithoutPattern<'a>(pub(crate) *const FormalParameter<'a>);
 
-impl<'a> FormalParameterWithoutDecorators<'a> {
+impl<'a> FormalParameterWithoutPattern<'a> {
     #[inline]
     pub fn span(&self) -> &Span {
         unsafe { &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_SPAN) as *const Span) }
     }
 
     #[inline]
-    pub fn pattern(&self) -> &BindingPattern<'a> {
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_PATTERN)
-                as *const BindingPattern<'a>)
+            &*((self.0 as *const u8).add(OFFSET_FORMAL_PARAMETER_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
         }
     }
 
@@ -7307,101 +7307,12 @@ impl<'a> StaticBlockWithoutBody<'a> {
 
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_TYPE: usize = offset_of!(AccessorProperty, r#type);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_SPAN: usize = offset_of!(AccessorProperty, span);
+pub(crate) const OFFSET_ACCESSOR_PROPERTY_DECORATORS: usize =
+    offset_of!(AccessorProperty, decorators);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_KEY: usize = offset_of!(AccessorProperty, key);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_VALUE: usize = offset_of!(AccessorProperty, value);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_COMPUTED: usize = offset_of!(AccessorProperty, computed);
 pub(crate) const OFFSET_ACCESSOR_PROPERTY_STATIC: usize = offset_of!(AccessorProperty, r#static);
-pub(crate) const OFFSET_ACCESSOR_PROPERTY_DECORATORS: usize =
-    offset_of!(AccessorProperty, decorators);
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct AccessorPropertyWithoutKey<'a>(pub(crate) *const AccessorProperty<'a>);
-
-impl<'a> AccessorPropertyWithoutKey<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &AccessorPropertyType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
-                as *const AccessorPropertyType)
-        }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn value(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
-                as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct AccessorPropertyWithoutValue<'a>(pub(crate) *const AccessorProperty<'a>);
-
-impl<'a> AccessorPropertyWithoutValue<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &AccessorPropertyType {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
-                as *const AccessorPropertyType)
-        }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn key(&self) -> &PropertyKey<'a> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_KEY) as *const PropertyKey<'a>)
-        }
-    }
-
-    #[inline]
-    pub fn computed(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#static(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
-                as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -7433,6 +7344,95 @@ impl<'a> AccessorPropertyWithoutDecorators<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
                 as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct AccessorPropertyWithoutKey<'a>(pub(crate) *const AccessorProperty<'a>);
+
+impl<'a> AccessorPropertyWithoutKey<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn value(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_VALUE)
+                as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn computed(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_COMPUTED) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#static(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_STATIC) as *const bool) }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct AccessorPropertyWithoutValue<'a>(pub(crate) *const AccessorProperty<'a>);
+
+impl<'a> AccessorPropertyWithoutValue<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &AccessorPropertyType {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_TYPE)
+                as *const AccessorPropertyType)
+        }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+                as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn key(&self) -> &PropertyKey<'a> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ACCESSOR_PROPERTY_KEY) as *const PropertyKey<'a>)
         }
     }
 

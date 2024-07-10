@@ -25,7 +25,7 @@ impl<'a> BoundIdentifier<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Self {
         let symbol_id = ctx.generate_uid(name, scope_id, flags);
-        let name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
+        let name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
         Self { name, symbol_id }
     }
 

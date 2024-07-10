@@ -20,15 +20,15 @@ impl<'a> IsolatedDeclarations<'a> {
 
     pub fn infer_type_from_expression(&self, expr: &Expression<'a>) -> Option<TSType<'a>> {
         match expr {
-            Expression::BooleanLiteral(_) => Some(self.ast.ts_boolean_keyword(SPAN)),
-            Expression::NullLiteral(_) => Some(self.ast.ts_null_keyword(SPAN)),
-            Expression::NumericLiteral(_) => Some(self.ast.ts_number_keyword(SPAN)),
-            Expression::BigIntLiteral(_) => Some(self.ast.ts_bigint_keyword(SPAN)),
+            Expression::BooleanLiteral(_) => Some(self.ast.ts_type_boolean_keyword(SPAN)),
+            Expression::NullLiteral(_) => Some(self.ast.ts_type_null_keyword(SPAN)),
+            Expression::NumericLiteral(_) => Some(self.ast.ts_type_number_keyword(SPAN)),
+            Expression::BigIntLiteral(_) => Some(self.ast.ts_type_big_int_keyword(SPAN)),
             Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => {
-                Some(self.ast.ts_string_keyword(SPAN))
+                Some(self.ast.ts_type_string_keyword(SPAN))
             }
             Expression::Identifier(ident) => match ident.name.as_str() {
-                "undefined" => Some(self.ast.ts_undefined_keyword(SPAN)),
+                "undefined" => Some(self.ast.ts_type_undefined_keyword(SPAN)),
                 _ => None,
             },
             Expression::FunctionExpression(func) => {
@@ -42,7 +42,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::ArrayExpression(expr) => {
                 self.error(array_inferred(expr.span));
-                Some(self.ast.ts_unknown_keyword(expr.span))
+                Some(self.ast.ts_type_unknown_keyword(expr.span))
             }
             Expression::TSAsExpression(expr) => {
                 if expr.type_annotation.is_const_type_reference() {
@@ -53,7 +53,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             Expression::ClassExpression(expr) => {
                 self.error(inferred_type_of_class_expression(expr.span));
-                Some(self.ast.ts_unknown_keyword(SPAN))
+                Some(self.ast.ts_type_unknown_keyword(SPAN))
             }
             Expression::ParenthesizedExpression(expr) => {
                 self.infer_type_from_expression(&expr.expression)
@@ -114,7 +114,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         function.body.as_ref().and_then(|body| {
             FunctionReturnType::infer(self, body)
-                .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
+                .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation))
         })
     }
 
@@ -132,14 +132,14 @@ impl<'a> IsolatedDeclarations<'a> {
 
         if function.expression {
             if let Some(Statement::ExpressionStatement(stmt)) = function.body.statements.first() {
-                return self
-                    .infer_type_from_expression(&stmt.expression)
-                    .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation));
+                return self.infer_type_from_expression(&stmt.expression).map(|type_annotation| {
+                    self.ast.alloc_ts_type_annotation(SPAN, type_annotation)
+                });
             }
         }
 
         FunctionReturnType::infer(self, &function.body)
-            .map(|type_annotation| self.ast.ts_type_annotation(SPAN, type_annotation))
+            .map(|type_annotation| self.ast.alloc_ts_type_annotation(SPAN, type_annotation))
     }
 
     pub fn is_need_to_infer_type_from_expression(expr: &Expression<'a>) -> bool {

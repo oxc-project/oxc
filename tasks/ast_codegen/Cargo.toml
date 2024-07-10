@@ -27,7 +27,9 @@ quote = { workspace = true }
 proc-macro2 = { workspace = true }
 itertools = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 regex = { workspace = true }
 prettyplease = { workspace = true }
 lazy_static = { workspace = true }
 convert_case = { workspace = true }
+bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }

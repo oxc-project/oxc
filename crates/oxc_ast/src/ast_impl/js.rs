@@ -5,8 +5,8 @@ use crate::ast::*;
 
 use std::{cell::Cell, fmt, hash::Hash};
 
-use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_allocator::{Box, FromIn, Vec};
+use oxc_span::{Atom, CompactStr, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     reference::{ReferenceFlag, ReferenceId},
@@ -665,6 +665,15 @@ impl<'a> Statement<'a> {
     }
 }
 
+impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
+    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+        Statement::ExpressionStatement(Box::from_in(
+            ExpressionStatement { span: expression.span(), expression },
+            alloc,
+        ))
+    }
+}
+
 impl<'a> Directive<'a> {
     /// A Use Strict Directive is an ExpressionStatement in a Directive Prologue whose StringLiteral is either of the exact code point sequences "use strict" or 'use strict'.
     /// A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
@@ -1268,6 +1277,29 @@ impl<'a> ClassElement<'a> {
             Self::AccessorProperty(property) => !property.decorators.is_empty(),
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
+    }
+
+    /// Has this property been marked as abstract?
+    ///
+    /// ```ts
+    /// abstract class Foo {    // <-- not considered
+    ///   foo: string;          // <-- false
+    ///   abstract bar: string; // <-- true
+    /// }
+    /// ```
+    pub fn is_abstract(&self) -> bool {
+        match self {
+            Self::MethodDefinition(method) => method.r#type.is_abstract(),
+            Self::AccessorProperty(accessor) => accessor.r#type.is_abstract(),
+            Self::PropertyDefinition(property) => property.r#type.is_abstract(),
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+        }
+    }
+}
+
+impl PropertyDefinitionType {
+    pub fn is_abstract(&self) -> bool {
+        matches!(self, Self::TSAbstractPropertyDefinition)
     }
 }
 

@@ -1,5 +1,5 @@
 use std::{
-    borrow::Borrow,
+    borrow::{Borrow, Cow},
     fmt, hash,
     ops::{Deref, Index},
 };
@@ -9,6 +9,7 @@ use compact_str::CompactString;
 use serde::{Serialize, Serializer};
 
 use crate::Span;
+use oxc_allocator::{Allocator, FromIn};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -55,6 +56,36 @@ impl<'a> Atom<'a> {
     #[inline]
     pub fn to_compact_str(&self) -> CompactStr {
         CompactStr::new(self.as_str())
+    }
+}
+
+impl<'a, 'b> FromIn<'a, &'b Atom<'a>> for Atom<'a> {
+    fn from_in(s: &'b Atom<'a>, _: &'a Allocator) -> Self {
+        Self::from(s.0)
+    }
+}
+
+impl<'a, 'b> FromIn<'a, &'b str> for Atom<'a> {
+    fn from_in(s: &'b str, alloc: &'a Allocator) -> Self {
+        Self::from(oxc_allocator::String::from_str_in(s, alloc).into_bump_str())
+    }
+}
+
+impl<'a> FromIn<'a, String> for Atom<'a> {
+    fn from_in(s: String, alloc: &'a Allocator) -> Self {
+        Self::from_in(s.as_str(), alloc)
+    }
+}
+
+impl<'a> FromIn<'a, &String> for Atom<'a> {
+    fn from_in(s: &String, alloc: &'a Allocator) -> Self {
+        Self::from_in(s.as_str(), alloc)
+    }
+}
+
+impl<'a, 'b> FromIn<'a, Cow<'b, str>> for Atom<'a> {
+    fn from_in(s: Cow<'b, str>, alloc: &'a Allocator) -> Self {
+        Self::from_in(&*s, alloc)
     }
 }
 

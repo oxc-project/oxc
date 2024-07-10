@@ -5,6 +5,12 @@ const asyncFunctionGoo2 = async (): Promise<number> => {
 }
 
 
+class AsyncClassGood {
+  async method(): number {
+    return 42;
+  }
+}
+
 // Need to explicit return type for async functions
 // Incorrect
 async function asyncFunction() {
@@ -13,4 +19,10 @@ async function asyncFunction() {
 
 const asyncFunction2 = async () => {
   return "Hello, World!";
+}
+
+class AsyncClassBad {
+  async method() {
+    return 42;
+  }
 }

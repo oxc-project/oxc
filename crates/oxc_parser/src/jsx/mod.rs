@@ -25,7 +25,12 @@ impl<'a> ParserImpl<'a> {
         let opening_fragment = self.parse_jsx_opening_fragment(span)?;
         let children = self.parse_jsx_children()?;
         let closing_fragment = self.parse_jsx_closing_fragment(in_jsx_child)?;
-        Ok(self.ast.jsx_fragment(self.end_span(span), opening_fragment, closing_fragment, children))
+        Ok(self.ast.alloc_jsx_fragment(
+            self.end_span(span),
+            opening_fragment,
+            closing_fragment,
+            children,
+        ))
     }
 
     /// <>
@@ -57,11 +62,8 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_element(&mut self, in_jsx_child: bool) -> Result<Box<'a, JSXElement<'a>>> {
         let span = self.start_span();
         let opening_element = self.parse_jsx_opening_element(span, in_jsx_child)?;
-        let children = if opening_element.self_closing {
-            self.ast.new_vec()
-        } else {
-            self.parse_jsx_children()?
-        };
+        let children =
+            if opening_element.self_closing { self.ast.vec() } else { self.parse_jsx_children()? };
         let closing_element = if opening_element.self_closing {
             None
         } else {
@@ -75,7 +77,12 @@ impl<'a> ParserImpl<'a> {
             }
             Some(closing_element)
         };
-        Ok(self.ast.jsx_element(self.end_span(span), opening_element, closing_element, children))
+        Ok(self.ast.alloc_jsx_element(
+            self.end_span(span),
+            opening_element,
+            closing_element,
+            children,
+        ))
     }
 
     /// `JSXOpeningElement` :
@@ -97,7 +104,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             self.expect(Kind::RAngle)?;
         }
-        Ok(self.ast.jsx_opening_element(
+        Ok(self.ast.alloc_jsx_opening_element(
             self.end_span(span),
             self_closing,
             name,
@@ -119,7 +126,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             self.expect(Kind::RAngle)?;
         }
-        Ok(self.ast.jsx_closing_element(self.end_span(span), name))
+        Ok(self.ast.alloc_jsx_closing_element(self.end_span(span), name))
     }
 
     /// `JSXElementName` :
@@ -133,11 +140,11 @@ impl<'a> ParserImpl<'a> {
         // <namespace:property />
         if self.eat(Kind::Colon) {
             let property = self.parse_jsx_identifier()?;
-            return Ok(JSXElementName::NamespacedName(self.ast.jsx_namespaced_name(
+            return Ok(self.ast.jsx_element_name_jsx_namespaced_name(
                 self.end_span(span),
                 identifier,
                 property,
-            )));
+            ));
         }
 
         // <member.foo.bar />
@@ -165,8 +172,8 @@ impl<'a> ParserImpl<'a> {
         while self.eat(Kind::Dot) && !self.at(Kind::Eof) {
             // <foo.bar.baz>
             if let Some(prop) = property {
-                let obj = self.ast.jsx_member_expression(span, object, prop);
-                object = JSXMemberExpressionObject::MemberExpression(obj);
+                object =
+                    self.ast.jsx_member_expression_object_jsx_member_expression(span, object, prop);
             }
 
             // <foo.bar>
@@ -175,7 +182,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         if let Some(property) = property {
-            return Ok(self.ast.jsx_member_expression(self.end_span(span), object, property));
+            return Ok(self.ast.alloc_jsx_member_expression(self.end_span(span), object, property));
         }
 
         Err(self.unexpected())
@@ -184,7 +191,7 @@ impl<'a> ParserImpl<'a> {
     /// `JSXChildren` :
     ///   `JSXChild` `JSXChildren_opt`
     fn parse_jsx_children(&mut self) -> Result<Vec<'a, JSXChild<'a>>> {
-        let mut children = self.ast.new_vec();
+        let mut children = self.ast.vec();
         while !self.at(Kind::Eof) {
             if let Some(child) = self.parse_jsx_child()? {
                 children.push(child);
@@ -257,7 +264,7 @@ impl<'a> ParserImpl<'a> {
             expr
         };
 
-        Ok(self.ast.jsx_expression_container(self.end_span(span), expr))
+        Ok(self.ast.alloc_jsx_expression_container(self.end_span(span), expr))
     }
 
     fn parse_jsx_assignment_expression(&mut self) -> Result<Expression<'a>> {
@@ -278,14 +285,14 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Dot3)?;
         let expr = self.parse_jsx_assignment_expression()?;
         self.expect_jsx_child(Kind::RCurly)?;
-        Ok(self.ast.jsx_spread_child(self.end_span(span), expr))
+        Ok(self.ast.alloc_jsx_spread_child(self.end_span(span), expr))
     }
 
     /// `JSXAttributes` :
     ///   `JSXSpreadAttribute` `JSXAttributes_opt`
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> Result<Vec<'a, JSXAttributeItem<'a>>> {
-        let mut attributes = self.ast.new_vec();
+        let mut attributes = self.ast.vec();
         while !matches!(self.cur_kind(), Kind::Eof | Kind::LAngle | Kind::RAngle | Kind::Slash) {
             let attribute = match self.cur_kind() {
                 Kind::LCurly => {
@@ -309,7 +316,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             None
         };
-        Ok(self.ast.jsx_attribute(self.end_span(span), name, value))
+        Ok(self.ast.alloc_jsx_attribute(self.end_span(span), name, value))
     }
 
     /// `JSXSpreadAttribute` :
@@ -320,7 +327,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Dot3)?;
         let argument = self.parse_jsx_assignment_expression()?;
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.jsx_spread_attribute(self.end_span(span), argument))
+        Ok(self.ast.alloc_jsx_spread_attribute(self.end_span(span), argument))
     }
 
     /// `JSXAttributeName` :
@@ -332,11 +339,11 @@ impl<'a> ParserImpl<'a> {
 
         if self.eat(Kind::Colon) {
             let property = self.parse_jsx_identifier()?;
-            return Ok(JSXAttributeName::NamespacedName(self.ast.jsx_namespaced_name(
+            return Ok(self.ast.jsx_attribute_name_jsx_namespaced_name(
                 self.end_span(span),
                 identifier,
                 property,
-            )));
+            ));
         }
 
         Ok(JSXAttributeName::Identifier(self.ast.alloc(identifier)))
@@ -376,14 +383,14 @@ impl<'a> ParserImpl<'a> {
         self.bump_any();
         let span = self.end_span(span);
         let name = span.source_text(self.source_text);
-        Ok(self.ast.jsx_identifier(span, name.into()))
+        Ok(self.ast.jsx_identifier(span, name))
     }
 
     fn parse_jsx_text(&mut self) -> Box<'a, JSXText<'a>> {
         let span = self.start_span();
         let value = Atom::from(self.cur_string());
         self.bump_any();
-        self.ast.jsx_text(self.end_span(span), value)
+        self.ast.alloc_jsx_text(self.end_span(span), value)
     }
 
     fn jsx_element_name_eq(lhs: &JSXElementName<'a>, rhs: &JSXElementName<'a>) -> bool {
