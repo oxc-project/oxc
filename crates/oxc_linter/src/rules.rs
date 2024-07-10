@@ -283,6 +283,7 @@ mod unicorn {
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_spread;
     pub mod no_useless_switch_case;
+    pub mod no_useless_undefined;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
     pub mod numeric_separators_style;
@@ -646,6 +647,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_promise_resolve_reject,
     unicorn::no_useless_spread,
     unicorn::no_useless_switch_case,
+    unicorn::no_useless_undefined,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,

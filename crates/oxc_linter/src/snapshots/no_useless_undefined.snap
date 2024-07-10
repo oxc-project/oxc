@@ -1,0 +1,338 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:24]
+ 1 │ function foo() {return undefined;}
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:19]
+ 1 │ const foo = () => undefined;
+   ·                   ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:27]
+ 1 │ const foo = () => {return undefined;};
+   ·                           ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:30]
+ 1 │ function foo() {return       undefined;}
+   ·                              ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:38]
+ 1 │ function foo() {return /* comment */ undefined;}
+   ·                                      ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:24]
+ 1 │ function* foo() {yield undefined;}
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:40]
+ 1 │ function* foo() {yield                 undefined;}
+   ·                                        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ let a = undefined;
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ let a = undefined, b = 2;
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ var a = undefined;
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ var a = undefined, b = 2;
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ var a = undefined, b = 2, c = undefined;
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:31]
+ 1 │ var a = undefined, b = 2, c = undefined;
+   ·                               ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:5]
+ 1 │ foo(undefined);
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:5]
+ 1 │ foo(undefined, undefined);
+   ·     ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:5]
+ 1 │ foo(undefined,);
+   ·     ──────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:5]
+ 1 │ foo(undefined, undefined,);
+   ·     ─────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:8]
+ 1 │ foo(bar, undefined);
+   ·        ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:8]
+ 1 │ foo(bar, undefined, undefined);
+   ·        ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:19]
+ 1 │ foo(undefined, bar, undefined);
+   ·                   ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:8]
+ 1 │ foo(bar, undefined,);
+   ·        ────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:19]
+ 1 │ foo(undefined, bar, undefined,);
+   ·                   ────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:8]
+ 1 │ foo(bar, undefined, undefined,);
+   ·        ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:19]
+ 1 │ foo(undefined, bar, undefined, undefined,);
+   ·                   ───────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:4:18]
+ 3 │                                     undefined,
+ 4 │ ╭─▶                                 bar,
+ 5 │ │                                   undefined,
+ 6 │ │                                   undefined,
+ 7 │ │                                   undefined,
+ 8 │ ╰─▶                                 undefined,
+ 9 │                                 )
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:14]
+ 1 │ const {foo = undefined} = {};
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:14]
+ 1 │ const [foo = undefined] = [];
+   ·              ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:20]
+ 1 │ function foo(bar = undefined) {}
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:21]
+ 1 │ function foo({bar = undefined}) {}
+   ·                     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:21]
+ 1 │ function foo({bar = undefined} = {}) {}
+   ·                     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:21]
+ 1 │ function foo([bar = undefined]) {}
+   ·                     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:21]
+ 1 │ function foo([bar = undefined] = []) {}
+   ·                     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:8]
+ 1 │ return undefined;
+   ·        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:4:23]
+ 3 │                                 function nested() {
+ 4 │                                     return undefined;
+   ·                                            ─────────
+ 5 │                                 }
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:4:17]
+ 3 │                                 undefined,
+ 4 │ ╭─▶                             bar,
+ 5 │ │                               undefined,
+ 6 │ │                               undefined,
+ 7 │ │                               undefined,
+ 8 │ ╰─▶                             undefined,
+ 9 │                             )
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:21]
+ 1 │ function foo([bar = undefined] = []) {}
+   ·                     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:8]
+ 1 │ foo(bar, undefined, undefined);
+   ·        ──────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ let a = undefined, b = 2;
+   ·         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:7:16]
+ 6 │                                     /* */
+ 7 │                                     undefined
+   ·                                     ─────────
+ 8 │                                     /* */
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:7:16]
+ 6 │                                     /* */
+ 7 │                                     undefined
+   ·                                     ─────────
+ 8 │                                     /* */
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:6:15]
+ 5 │                                 /* */
+ 6 │                                 undefined
+   ·                                 ─────────
+ 7 │                                 /* */
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:10]
+ 1 │ foo.bind(undefined)
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:9]
+ 1 │ bind(foo, undefined)
+   ·         ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:15]
+ 1 │ foo.bind?.(bar, undefined)
+   ·               ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:14]
+ 1 │ foo[bind](bar, undefined)
+   ·              ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:16]
+ 1 │ foo.notBind(bar, undefined)
+   ·                ───────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:24]
+ 1 │ function f(foo: Type = undefined) {}
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:25]
+ 1 │ function f(foo?: Type = undefined) {}
+   ·                         ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:32]
+ 1 │ const f = function(foo: Type = undefined) {}
+   ·                                ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:24]
+ 1 │ const f = (foo: Type = undefined) => {}
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:31]
+ 1 │ const f = {method(foo: Type = undefined){}}
+   ·                               ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:37]
+ 1 │ const f = class {method(foo: Type = undefined){}}
+   ·                                     ─────────
+   ╰────
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`
+   ╭─[no_useless_undefined.tsx:1:18]
+ 1 │ function f(foo = undefined) {}
+   ·                  ─────────
+   ╰────
