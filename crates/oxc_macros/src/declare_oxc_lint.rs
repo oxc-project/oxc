@@ -9,6 +9,8 @@ use syn::{
 pub struct LintRuleMeta {
     name: Ident,
     category: Ident,
+    /// Struct implementing [`JsonSchema`] that describes the rule's config.
+    schema: Option<Ident>,
     documentation: String,
     pub used_in_test: bool,
 }
@@ -32,15 +34,21 @@ impl Parse for LintRuleMeta {
         input.parse::<Token!(,)>()?;
         let category = input.parse()?;
 
+        let schema = if input.peek(Ident) {
+            Some(input.parse()?)
+        } else {
+            None
+        };
+
         // Ignore the rest
         input.parse::<proc_macro2::TokenStream>()?;
 
-        Ok(Self { name: struct_name, category, documentation, used_in_test: false })
+        Ok(Self { name: struct_name, category, schema, documentation, used_in_test: false })
     }
 }
 
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
-    let LintRuleMeta { name, category, documentation, used_in_test } = metadata;
+    let LintRuleMeta { name, category, schema, documentation, used_in_test } = metadata;
     // e.g. NoDebugger to no-debugger
     let canonical_name = name.to_string().to_case(Case::Kebab);
     let category = match category.to_string().as_str() {
@@ -60,6 +68,8 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         Some(quote! { use crate::rule::{RuleCategory, RuleMeta}; })
     };
 
+    let schema = schema.map(|s| quote! { Some(gen.subschema_for::<#s>()) }).unwrap_or_else(|| quote! { None });
+
     let output = quote! {
         #import_statement
 
@@ -70,6 +80,10 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
 
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)
+            }
+            #[allow(unused_variables)]
+            fn schema(gen: &mut schemars::gen::SchemaGenerator) -> Option<schemars::schema::Schema> {
+                #schema
             }
         }
 
