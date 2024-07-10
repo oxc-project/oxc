@@ -205,7 +205,6 @@ impl Oxc {
         if run_options.prettier_format() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
             let printed =
                 Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
@@ -216,7 +215,6 @@ impl Oxc {
         if run_options.prettier_ir() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
