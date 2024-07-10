@@ -1,16 +1,43 @@
 use convert_case::{Case, Casing};
 use proc_macro::TokenStream;
-use quote::quote;
+use quote::{quote, ToTokens};
 use syn::{
     parse::{Parse, ParseStream},
+    token::{SelfType, Token},
     Attribute, Error, Expr, Ident, Lit, LitStr, Meta, Result, Token,
 };
 
+enum IdentOrSelf {
+    Ident(Ident),
+    SelfToken(SelfType),
+}
+impl Parse for IdentOrSelf {
+    fn parse(input: ParseStream<'_>) -> Result<Self> {
+        if input.peek(Token!(Self)) {
+            // input.parse::<Token!(Self)>()?;
+            Ok(Self::SelfToken(input.parse()?))
+        } else {
+            Ok(Self::Ident(input.parse()?))
+        }
+    }
+}
+impl ToTokens for IdentOrSelf {
+    fn to_tokens(&self, tokens: &mut proc_macro2::TokenStream) {
+        match self {
+            Self::Ident(ident) => {
+                ident.to_tokens(tokens);
+            }
+            Self::SelfToken(s) => {
+                s.to_tokens(tokens);
+            }
+        }
+    }
+}
 pub struct LintRuleMeta {
     name: Ident,
     category: Ident,
     /// Struct implementing [`JsonSchema`] that describes the rule's config.
-    schema: Option<Ident>,
+    schema: Option<IdentOrSelf>,
     documentation: String,
     pub used_in_test: bool,
 }
@@ -34,8 +61,16 @@ impl Parse for LintRuleMeta {
         input.parse::<Token!(,)>()?;
         let category = input.parse()?;
 
-        let schema = if input.peek(Ident) {
-            Some(input.parse()?)
+        let schema = if input.peek(Token!(,)) {
+            input.parse::<Token!(,)>()?;
+            // input.peek(Ident).then(|| input.parse()).or_else(||
+            //     input.peek(Token!(Self)).then(|| input.parse())
+            // ).transpose()?
+            if input.peek(Ident) || input.peek(Token!(Self)) {
+                Some(input.parse()?)
+            } else {
+                None
+            }
         } else {
             None
         };
@@ -65,10 +100,19 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let import_statement = if used_in_test {
         None
     } else {
-        Some(quote! { use crate::rule::{RuleCategory, RuleMeta}; })
+        Some(quote! { use crate::rule::{RuleCategory, RuleMeta, RuleSchema}; })
     };
 
-    let schema = schema.map(|s| quote! { Some(gen.subschema_for::<#s>()) }).unwrap_or_else(|| quote! { None });
+    // let schema =
+    //     schema.map_or_else(|| quote! { None }, |s| quote! {
+    //     Some(gen.subschema_for::<#s>()) });
+    let schema_impl = if schema.is_none() {
+        Some(quote! {
+            impl RuleSchema for #name {}
+        })
+    } else {
+        None
+    };
 
     let output = quote! {
         #import_statement
@@ -81,11 +125,9 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
             fn documentation() -> Option<&'static str> {
                 Some(#documentation)
             }
-            #[allow(unused_variables)]
-            fn schema(gen: &mut schemars::gen::SchemaGenerator) -> Option<schemars::schema::Schema> {
-                #schema
-            }
         }
+
+        #schema_impl
 
         impl schemars::JsonSchema for #name {
             #[inline]
@@ -145,3 +187,7 @@ fn parse_attr<'a, const LEN: usize>(
     }
     None
 }
+
+// fn parse_comma() {
+//     input.parse::<Token!(,)>()?;
+// }
