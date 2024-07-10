@@ -1,12 +1,17 @@
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
-use oxc_span::SPAN;
+use oxc_ast::{
+    ast::*, syntax_directed_operations::BoundNames, visit::walk_mut, AstBuilder, Visit, VisitMut,
+};
+use oxc_span::{Atom, Span, SPAN};
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{compressor::ast_util::get_boolean_value, folder::Folder};
 
 /// Remove Dead Code from the AST.
 ///
 /// Terser option: `dead_code: true`.
+///
+/// See `KeepVar` at the end of this file for `var` hoisting logic.
 pub struct RemoveDeadCode<'a> {
     ast: AstBuilder<'a>,
     folder: Folder<'a>,
@@ -35,26 +40,41 @@ impl<'a> RemoveDeadCode<'a> {
 
     /// Removes dead code thats comes after `return` statements after inlining `if` statements
     fn dead_code_elimintation(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        let mut removed = true;
+        // Fold if statements
         for stmt in stmts.iter_mut() {
-            if self.fold_if_statement(stmt) {
-                removed = true;
+            if self.fold_if_statement(stmt) {}
+        }
+
+        // Remove code after `return` and `throw` statements
+        let mut index = None;
+        'outer: for (i, stmt) in stmts.iter().enumerate() {
+            if matches!(stmt, Statement::ReturnStatement(_) | Statement::ThrowStatement(_)) {
+                index.replace(i);
                 break;
             }
-        }
-
-        if !removed {
-            return;
-        }
-
-        let mut index = None;
-        for (i, stmt) in stmts.iter().enumerate() {
-            if matches!(stmt, Statement::ReturnStatement(_)) {
-                index.replace(i);
+            // Double check block statements folded by if statements above
+            if let Statement::BlockStatement(block_stmt) = stmt {
+                for stmt in &block_stmt.body {
+                    if matches!(stmt, Statement::ReturnStatement(_) | Statement::ThrowStatement(_))
+                    {
+                        index.replace(i);
+                        break 'outer;
+                    }
+                }
             }
         }
-        if let Some(index) = index {
-            stmts.drain(index + 1..);
+
+        let Some(index) = index else { return };
+
+        let mut keep_var = KeepVar::new(self.ast);
+
+        for stmt in stmts.iter().skip(index) {
+            keep_var.visit_statement(stmt);
+        }
+
+        stmts.drain(index + 1..);
+        if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+            stmts.push(stmt);
         }
     }
 
@@ -70,7 +90,14 @@ impl<'a> RemoveDeadCode<'a> {
                 *stmt = if let Some(alternate) = &mut if_stmt.alternate {
                     self.ast.move_statement(alternate)
                 } else {
-                    self.ast.statement_empty(SPAN)
+                    // Keep hoisted `vars` from the consequent block.
+                    let mut keep_var = KeepVar::new(self.ast);
+                    keep_var.visit_statement(&if_stmt.consequent);
+                    if let Some(stmt) = keep_var.get_variable_declaration_statement() {
+                        stmt
+                    } else {
+                        self.ast.statement_empty(SPAN)
+                    }
                 };
                 true
             }
@@ -96,5 +123,52 @@ impl<'a> RemoveDeadCode<'a> {
             }
             _ => {}
         }
+    }
+}
+
+struct KeepVar<'a> {
+    ast: AstBuilder<'a>,
+    vars: std::vec::Vec<(Atom<'a>, Span)>,
+}
+
+impl<'a> Visit<'a> for KeepVar<'a> {
+    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
+        if decl.kind.is_var() {
+            decl.id.bound_names(&mut |ident| {
+                self.vars.push((ident.name.clone(), ident.span));
+            });
+        }
+    }
+
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: Option<ScopeFlags>) {
+        /* skip functions */
+    }
+
+    fn visit_class(&mut self, _it: &Class<'a>) {
+        /* skip classes */
+    }
+}
+
+impl<'a> KeepVar<'a> {
+    fn new(ast: AstBuilder<'a>) -> Self {
+        Self { ast, vars: std::vec![] }
+    }
+
+    fn get_variable_declaration_statement(self) -> Option<Statement<'a>> {
+        if self.vars.is_empty() {
+            return None;
+        }
+
+        let kind = VariableDeclarationKind::Var;
+        let decls = self.ast.vec_from_iter(self.vars.into_iter().map(|(name, span)| {
+            let binding_kind = self.ast.binding_pattern_kind_binding_identifier(span, name);
+            let id =
+                self.ast.binding_pattern::<Option<TSTypeAnnotation>>(binding_kind, None, false);
+            self.ast.variable_declarator(span, kind, id, None, false)
+        }));
+
+        let decl = self.ast.variable_declaration(SPAN, kind, decls, false);
+        let stmt = self.ast.statement_declaration(self.ast.declaration_from_variable(decl));
+        Some(stmt)
     }
 }

@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::WhitespaceRemover;
+use oxc_codegen::CodeGenerator;
 use oxc_minifier::RemoveDeadCode;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -12,7 +12,7 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
     if remove_dead_code {
         RemoveDeadCode::new(&allocator).build(program);
     }
-    WhitespaceRemover::new().build(program).source_text
+    CodeGenerator::new().build(program).source_text
 }
 
 pub(crate) fn test(source_text: &str, expected: &str) {
@@ -53,6 +53,18 @@ fn remove_dead_code() {
         "function foo(undefined) { if (!undefined) { } }",
         "function foo(undefined) { if (!undefined) { } }",
     );
+
+    test("if (true) { foo; } if (true) { foo; }", "{ foo; } { foo; }");
+
+    test(
+        "
+        if (true) { foo; return }
+        foo;
+        if (true) { bar; return }
+        bar;
+        ",
+        "{foo; return }",
+    );
 }
 
 // https://github.com/terser/terser/blob/master/test/compress/dead-code.js
@@ -68,12 +80,54 @@ fn remove_dead_code_from_terser() {
                 y();
             }
         }",
-        "
-          function f() {
+        "function f() {
             a();
             b();
             x = 10;
             return;
         }",
+    );
+
+    // NOTE: `if (x)` is changed to `if (true)` because const inlining is not implemented yet.
+    test(
+        r#"function f() {
+            g();
+            x = 10;
+            throw new Error("foo");
+            if (true) {
+                y();
+                var x;
+                function g(){};
+                (function(){
+                    var q;
+                    function y(){};
+                })();
+            }
+        }
+        f();
+        "#,
+        r#"function f() {
+            g();
+            x = 10;
+            throw new Error("foo");
+            var x;
+        }
+        f();
+        "#,
+    );
+
+    test(
+        "if (0) {
+            let foo = 6;
+            const bar = 12;
+            class Baz {};
+            var qux;
+        }
+        console.log(foo, bar, Baz);
+        ",
+        "
+        var qux;
+        console.log(foo, bar, Baz);
+        ",
     );
 }
