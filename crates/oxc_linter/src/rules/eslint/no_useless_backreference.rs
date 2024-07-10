@@ -10,12 +10,13 @@ use std::{collections::HashSet, iter::Peekable};
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessBackreference;
 
+#[allow(clippy::enum_variant_names)]
 enum RegexGroup {
-    RegexCaptureGroup(),
-    RegexNamedCaptureGroup(String),
-    RegexNonCaptureGroup(),
-    RegexLookAheadGroup(),
-    RegexLookBehindGroup(),
+    CaptureGroup(),
+    NamedCaptureGroup(),
+    NonCaptureGroup(),
+    LookAheadGroup(),
+    LookBehindGroup(),
 }
 
 declare_oxc_lint!(
@@ -33,21 +34,22 @@ declare_oxc_lint!(
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
-fn get_name_reference(char: char, iter: &mut Peekable<std::str::Chars<'_>>) -> String {
-    assert!(char == '<');
+// fn get_name_reference(char: char, iter: &mut Peekable<std::str::Chars<'_>>) -> String {
+//     assert!(char == '<');
+//
+//     let mut group_name = String::new();
+//     for char in iter.by_ref() {
+//         // ToDO: backslash?
+//         if char == '>' {
+//             break;
+//         }
+//
+//         group_name.push(char);
+//     }
+//
+//     group_name
+// }
 
-    let mut group_name = String::new();
-    while let Some(char) = iter.next() {
-        // ToDO: backslash?
-        if char == '>' {
-            break;
-        }
-
-        group_name.push(char);
-    }
-
-    return group_name;
-}
 /**
  * get the Regex Group Type, char must be "(".
  *
@@ -65,54 +67,41 @@ fn get_group_type_by_open_bracet(
 ) -> RegexGroup {
     assert!(char == '(');
 
-    let next_char = iter.peek();
+    if let Some(next_char) = iter.peek() {
+        if *next_char == '?' {
+            iter.next(); // pointer is now on ?
 
-    match next_char {
-        Some(next_char) => {
-            if next_char.to_owned() == '?' {
-                iter.next(); // pointer is now on ?
-                let next_char = iter.peek();
+            if let Some(next_char) = iter.peek() {
+                let owned_next_char = next_char.to_owned();
 
-                match next_char {
-                    Some(next_char) => {
-                        let owned_next_char = next_char.to_owned();
+                if owned_next_char == '=' || owned_next_char == '!' {
+                    return RegexGroup::LookAheadGroup();
+                }
 
-                        if owned_next_char == '=' || owned_next_char == '!' {
-                            return RegexGroup::RegexLookAheadGroup();
+                if owned_next_char == ':' {
+                    return RegexGroup::NonCaptureGroup();
+                }
+
+                if owned_next_char == '<' {
+                    iter.next(); // pointer is now on <
+
+                    if let Some(next_char) = iter.peek() {
+                        let owned_char = next_char.to_owned();
+
+                        if owned_char == '=' || owned_char == '!' {
+                            return RegexGroup::LookBehindGroup();
                         }
 
-                        if owned_next_char == ':' {
-                            return RegexGroup::RegexNonCaptureGroup();
-                        }
+                        // let group_name = get_name_reference(owned_next_char, iter);
 
-                        if owned_next_char == '<' {
-                            iter.next(); // pointer is now on <
-                            let next_char = iter.peek();
-
-                            match next_char {
-                                Some(next_char) => {
-                                    let owned_char = next_char.to_owned();
-
-                                    if owned_char == '=' || owned_char == '!' {
-                                        return RegexGroup::RegexLookBehindGroup();
-                                    }
-
-                                    let group_name = get_name_reference(owned_next_char, iter);
-
-                                    return RegexGroup::RegexNamedCaptureGroup(group_name);
-                                }
-                                _ => {}
-                            }
-                        }
+                        return RegexGroup::NamedCaptureGroup();
                     }
-                    _ => {}
-                };
+                }
             }
         }
-        _ => {}
     }
 
-    return RegexGroup::RegexCaptureGroup();
+    RegexGroup::CaptureGroup()
 }
 
 fn get_capture_group_count(chars: &mut Peekable<std::str::Chars<'_>>) -> u32 {
@@ -128,11 +117,8 @@ fn get_capture_group_count(chars: &mut Peekable<std::str::Chars<'_>>) -> u32 {
         if !backslash_started && char == '(' {
             let group_type = get_group_type_by_open_bracet(char, chars);
 
-            match group_type {
-                RegexGroup::RegexCaptureGroup() => {
-                    count += 1;
-                }
-                _ => {}
+            if let RegexGroup::CaptureGroup() = group_type {
+                count += 1;
             }
         }
 
@@ -141,13 +127,13 @@ fn get_capture_group_count(chars: &mut Peekable<std::str::Chars<'_>>) -> u32 {
         }
     }
 
-    return count;
+    count
 }
 
 fn has_string_invalid_back_reference(regex: &str) -> bool {
     let mut chars = regex.chars().peekable();
 
-    return has_peekable_invalid_back_reference(&mut chars);
+    has_peekable_invalid_back_reference(&mut chars)
 }
 
 fn has_peekable_invalid_back_reference(chars: &mut Peekable<std::str::Chars<'_>>) -> bool {
@@ -187,26 +173,21 @@ fn has_peekable_invalid_back_reference(chars: &mut Peekable<std::str::Chars<'_>>
                     let group_type = get_group_type_by_open_bracet(char, chars);
 
                     match group_type {
-                        RegexGroup::RegexNonCaptureGroup() => {}
-                        RegexGroup::RegexLookBehindGroup() => {
+                        RegexGroup::LookBehindGroup() => {
                             inside_look_behind += 1;
                         }
-                        RegexGroup::RegexLookAheadGroup() => {}
-                        RegexGroup::RegexNamedCaptureGroup(_) => {}
-                        RegexGroup::RegexCaptureGroup() => {
+                        RegexGroup::CaptureGroup() => {
                             // ToDo: maybe a counter? before trying to access an hash len
                             group_started.insert(group_started.len());
                         }
+                        _ => {}
                     }
                 }
                 ')' => {
-
                     // TODO: we need to know which group is closing here
                     group_finished.insert(group_started.len());
 
-                    if inside_look_behind > 0 {
-                        inside_look_behind -= 1;
-                    }
+                    inside_look_behind = inside_look_behind.saturating_sub(1);
                 }
 
                 '|' => {
@@ -220,7 +201,10 @@ fn has_peekable_invalid_back_reference(chars: &mut Peekable<std::str::Chars<'_>>
         }
         // starts with a backlash followed by a positive number or an k for named backreference
         // not inside a character class (e. : [abc])
-        else if inside_character_class_count == 0 && inside_look_behind == 0 && (char != '0' && char.is_ascii_digit()) {
+        else if inside_character_class_count == 0
+            && inside_look_behind == 0
+            && (char != '0' && char.is_ascii_digit())
+        {
             let next_char = chars.peek();
             let digit_result: u32; // ToDo: u8, can be only max 99
 
@@ -228,7 +212,7 @@ fn has_peekable_invalid_back_reference(chars: &mut Peekable<std::str::Chars<'_>>
                 Some(next_char) => {
                     // next char is a digit, =>  9 > final number < 100
                     if next_char.is_ascii_digit() {
-                        digit_result = format!("{}{}", char, next_char).parse::<u32>().unwrap();
+                        digit_result = format!("{char}{next_char}").parse::<u32>().unwrap();
                     } else {
                         digit_result = char.to_digit(10).unwrap();
                     }
@@ -237,7 +221,7 @@ fn has_peekable_invalid_back_reference(chars: &mut Peekable<std::str::Chars<'_>>
                     digit_result = char.to_digit(10).unwrap();
                 }
             }
-            
+
             // we are trying to access a capture group and not an octal
             if digit_result <= captures_groups_count {
                 // this capture group did not end
@@ -260,7 +244,7 @@ fn has_peekable_invalid_back_reference(chars: &mut Peekable<std::str::Chars<'_>>
         }
     }
 
-    return false;
+    false
 }
 
 fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
@@ -277,7 +261,7 @@ impl Rule for NoUselessBackreference {
             AstKind::RegExpLiteral(literal)
                 if has_string_invalid_back_reference(&literal.regex.pattern) =>
             {
-                ctx.diagnostic(OxcDiagnostic::warn("no back reference").with_label(literal.span))
+                ctx.diagnostic(OxcDiagnostic::warn("no back reference").with_label(literal.span));
             }
             AstKind::NewExpression(expr) if is_regexp_new_expression(expr) => {
                 let regex: &Argument = &expr.arguments[0];
@@ -292,8 +276,13 @@ impl Rule for NoUselessBackreference {
                             // }
                         }
                     }
-                    Argument::StringLiteral(arg) if has_string_invalid_back_reference(&arg.value) => ctx
-                        .diagnostic(OxcDiagnostic::warn("no back reference").with_label(arg.span)),
+                    Argument::StringLiteral(arg)
+                        if has_string_invalid_back_reference(&arg.value) =>
+                    {
+                        ctx.diagnostic(
+                            OxcDiagnostic::warn("no back reference").with_label(arg.span),
+                        );
+                    }
                     _ => {}
                 };
             }
@@ -301,8 +290,13 @@ impl Rule for NoUselessBackreference {
                 let regex = &expr.arguments[0];
 
                 match regex {
-                    Argument::StringLiteral(arg) if has_string_invalid_back_reference(&arg.value) => ctx
-                        .diagnostic(OxcDiagnostic::warn("no back reference").with_label(arg.span)),
+                    Argument::StringLiteral(arg)
+                        if has_string_invalid_back_reference(&arg.value) =>
+                    {
+                        ctx.diagnostic(
+                            OxcDiagnostic::warn("no back reference").with_label(arg.span),
+                        );
+                    }
                     _ => {}
                 };
             }
@@ -317,15 +311,15 @@ fn test() {
 
     let pass = vec![
         // not a regular expression
-        r#"'\1(a)'"#,
-        r#"regExp('\\1(a)')"#,
-        r#"new Regexp('\\1(a)', 'u')"#,
-        r#"RegExp.foo('\\1(a)', 'u')"#,
-        r#"new foo.RegExp('\\1(a)')"#,
+        r"'\1(a)'",
+        r"regExp('\\1(a)')",
+        r"new Regexp('\\1(a)', 'u')",
+        r"RegExp.foo('\\1(a)', 'u')",
+        r"new foo.RegExp('\\1(a)')",
         // unknown pattern
-        r#"RegExp(p)"#,
-        r#"new RegExp(p, 'u')"#,
-        r#"RegExp('\\1(a)' + suffix)"#,
+        r"RegExp(p)",
+        r"new RegExp(p, 'u')",
+        r"RegExp('\\1(a)' + suffix)",
         // r#"new RegExp(`${prefix}\\\\1(a)"#,
 
         // not the global RegExp
@@ -336,89 +330,89 @@ fn test() {
         // r#"if (foo) { const RegExp = bar; RegExp('\\1(a)'); }"#,
 
         // no capturing groups
-        r#"/(?:)/"#,
-        r#"/(?:a)/"#,
-        r#"new RegExp('')"#,
-        r#"RegExp('(?:a)|(?:b)*')"#,
-        r#"/^ab|[cd].\n$/"#,
+        r"/(?:)/",
+        r"/(?:a)/",
+        r"new RegExp('')",
+        r"RegExp('(?:a)|(?:b)*')",
+        r"/^ab|[cd].\n$/",
         // no backreferences
-        r#"/(a)/"#,
-        r#"RegExp('(a)|(b)')"#,
-        r#"new RegExp('\\n\\d(a)')"#,
-        r#"/\0(a)/"#,
-        r#"/\0(a)/u"#,
-        r#"/(?<=(a))(b)(?=(c))/"#,
-        r#"/(?<!(a))(b)(?!(c))/"#,
-        r#"/(?<foo>a)/"#,
+        r"/(a)/",
+        r"RegExp('(a)|(b)')",
+        r"new RegExp('\\n\\d(a)')",
+        r"/\0(a)/",
+        r"/\0(a)/u",
+        r"/(?<=(a))(b)(?=(c))/",
+        r"/(?<!(a))(b)(?!(c))/",
+        r"/(?<foo>a)/",
         // not really a backreference
-        r#"RegExp('\1(a)')"#,        // string octal escape
-        r#"RegExp('\\\\1(a)')"#,     // escaped backslash
-        r#"/\\1(a)/"#,               // escaped backslash
-        r#"/\1/"#,                   // group 1 doesn't exist, this is a regex octal escape
-        r#"/^\1$/"#,                 // group 1 doesn't exist, this is a regex octal escape
-        r#"/\2(a)/"#,                // group 2 doesn't exist, this is a regex octal escape
-        r#"/\1(?:a)/"#,              // group 1 doesn't exist, this is a regex octal escape
-        r#"/\1(?=a)/"#,              // group 1 doesn't exist, this is a regex octal escape
-        r#"/\1(?!a)/"#,              // group 1 doesn't exist, this is a regex octal escape
-        r#"/^[\1](a)$/"#,            // \N in a character class is a regex octal escape
-        r#"new RegExp('[\\1](a)')"#, // \N in a character class is a regex octal escape
-        r#"/\11(a)/"#,               // regex octal escape \11, regex matches "\x09a"
-        r#"/\k<foo>(a)/"#, // without the 'u' flag and any named groups this isn't a syntax error, matches "k<foo>a"
-        r#"/^(a)\1\2$/"#,  // \1 is a backreference, \2 is an octal escape sequence.
+        r"RegExp('\1(a)')",        // string octal escape
+        r"RegExp('\\\\1(a)')",     // escaped backslash
+        r"/\\1(a)/",               // escaped backslash
+        r"/\1/",                   // group 1 doesn't exist, this is a regex octal escape
+        r"/^\1$/",                 // group 1 doesn't exist, this is a regex octal escape
+        r"/\2(a)/",                // group 2 doesn't exist, this is a regex octal escape
+        r"/\1(?:a)/",              // group 1 doesn't exist, this is a regex octal escape
+        r"/\1(?=a)/",              // group 1 doesn't exist, this is a regex octal escape
+        r"/\1(?!a)/",              // group 1 doesn't exist, this is a regex octal escape
+        r"/^[\1](a)$/",            // \N in a character class is a regex octal escape
+        r"new RegExp('[\\1](a)')", // \N in a character class is a regex octal escape
+        r"/\11(a)/",               // regex octal escape \11, regex matches "\x09a"
+        r"/\k<foo>(a)/", // without the 'u' flag and any named groups this isn't a syntax error, matches "k<foo>a"
+        r"/^(a)\1\2$/",  // \1 is a backreference, \2 is an octal escape sequence.
         // Valid backreferences: correct position, after the group
-        r#"/(a)\1/"#,
-        r#"/(a).\1/"#,
-        r#"RegExp('(a)\\1(b)')"#,
-        r#"/(a)(b)\2(c)/"#,
-        r#"/(?<foo>a)\k<foo>/"#,
-        r#"new RegExp('(.)\\1')"#,
-        r#"RegExp('(a)\\1(?:b)')"#,
-        r#"/(a)b\1/"#,
-        r#"/((a)\2)/"#,
-        r#"/((a)b\2c)/"#,
-        r#"/^(?:(a)\1)$/"#,
-        r#"/^((a)\2)$/"#,
-        r#"/^(((a)\3))|b$/"#,
-        r#"/a(?<foo>(.)b\2)/"#,
-        r#"/(a)?(b)*(\1)(c)/"#,
-        r#"/(a)?(b)*(\2)(c)/"#,
-        r#"/(?<=(a))b\1/"#,
-        r#"/(?<=(?=(a)\1))b/"#,
+        r"/(a)\1/",
+        r"/(a).\1/",
+        r"RegExp('(a)\\1(b)')",
+        r"/(a)(b)\2(c)/",
+        r"/(?<foo>a)\k<foo>/",
+        r"new RegExp('(.)\\1')",
+        r"RegExp('(a)\\1(?:b)')",
+        r"/(a)b\1/",
+        r"/((a)\2)/",
+        r"/((a)b\2c)/",
+        r"/^(?:(a)\1)$/",
+        r"/^((a)\2)$/",
+        r"/^(((a)\3))|b$/",
+        r"/a(?<foo>(.)b\2)/",
+        r"/(a)?(b)*(\1)(c)/",
+        r"/(a)?(b)*(\2)(c)/",
+        r"/(?<=(a))b\1/",
+        r"/(?<=(?=(a)\1))b/",
         // Valid backreferences: correct position before the group when they're both in the same lookbehind
-        r#"/(?<!\1(a))b/"#,
-        r#"/(?<=\1(a))b/"#,
-        r#"/(?<!\1.(a))b/"#,
-        r#"/(?<=\1.(a))b/"#,
-        r#"/(?<=(?:\1.(a)))b/"#,
-        r#"/(?<!(?:\1)((a)))b/"#,
-        r#"/(?<!(?:\2)((a)))b/"#,
-        r#"/(?=(?<=\1(a)))b/"#,
-        r#"/(?=(?<!\1(a)))b/"#,
-        r#"/(.)(?<=\2(a))b/"#,
+        r"/(?<!\1(a))b/",
+        r"/(?<=\1(a))b/",
+        r"/(?<!\1.(a))b/",
+        r"/(?<=\1.(a))b/",
+        r"/(?<=(?:\1.(a)))b/",
+        r"/(?<!(?:\1)((a)))b/",
+        r"/(?<!(?:\2)((a)))b/",
+        r"/(?=(?<=\1(a)))b/",
+        r"/(?=(?<!\1(a)))b/",
+        r"/(.)(?<=\2(a))b/",
         // Valid backreferences: not a reference into another alternative
-        r#"/^(a)\1|b/"#,
-        r#"/^a|(b)\1/"#,
-        r#"/^a|(b|c)\1/"#,
-        r#"/^(a)|(b)\2/"#,
-        r#"/^(?:(a)|(b)\2)$/"#,
-        r#"/^a|(?:.|(b)\1)/"#,
-        r#"/^a|(?:.|(b).(\1))/"#,
-        r#"/^a|(?:.|(?:(b)).(\1))/"#,
-        r#"/^a|(?:.|(?:(b)|c).(\1))/"#,
-        r#"/^a|(?:.|(?:(b)).(\1|c))/"#,
-        r#"/^a|(?:.|(?:(b)|c).(\1|d))/"#,
+        r"/^(a)\1|b/",
+        r"/^a|(b)\1/",
+        r"/^a|(b|c)\1/",
+        r"/^(a)|(b)\2/",
+        r"/^(?:(a)|(b)\2)$/",
+        r"/^a|(?:.|(b)\1)/",
+        r"/^a|(?:.|(b).(\1))/",
+        r"/^a|(?:.|(?:(b)).(\1))/",
+        r"/^a|(?:.|(?:(b)|c).(\1))/",
+        r"/^a|(?:.|(?:(b)).(\1|c))/",
+        r"/^a|(?:.|(?:(b)|c).(\1|d))/",
         // Valid backreferences: not a reference into a negative lookaround (reference from within the same lookaround is allowed)
-        r#"/.(?=(b))\1/"#,
-        r#"/.(?<=(b))\1/"#,
-        r#"/a(?!(b)\1)./"#,
-        r#"/a(?<!\1(b))./"#,
-        r#"/a(?!(b)(\1))./"#,
-        r#"/a(?!(?:(b)\1))./"#,
-        r#"/a(?!(?:(b))\1)./"#,
-        r#"/a(?<!(?:\1)(b))./"#,
-        r#"/a(?<!(?:(?:\1)(b)))./"#,
-        r#"/(?<!(a))(b)(?!(c))\2/"#,
-        r#"/a(?!(b|c)\1)./"#,
+        r"/.(?=(b))\1/",
+        r"/.(?<=(b))\1/",
+        r"/a(?!(b)\1)./",
+        r"/a(?<!\1(b))./",
+        r"/a(?!(b)(\1))./",
+        r"/a(?!(?:(b)\1))./",
+        r"/a(?!(?:(b))\1)./",
+        r"/a(?<!(?:\1)(b))./",
+        r"/a(?<!(?:(?:\1)(b)))./",
+        r"/(?<!(a))(b)(?!(c))\2/",
+        r"/a(?!(b|c)\1)./",
         // ignore regular expressions with syntax errors
         // ToDo: Check if really needed
         // r#"RegExp('\\1(a)[')"#, // \1 would be an error, but the unterminated [ is a syntax error
@@ -429,117 +423,116 @@ fn test() {
         // r#"new RegExp('\\k<foo>(?<foo>a)\\k<bar>')"#, // \k<foo> would be an error, but \k<bar> produces syntax error because group <bar> doesn't exist
 
         // ES2024
-        r#"new RegExp('([[A--B]])\\1', 'v')"#,
-        r#"new RegExp('[[]\\1](a)', 'v')"#, // SyntaxError
+        r"new RegExp('([[A--B]])\\1', 'v')",
+        r"new RegExp('[[]\\1](a)', 'v')", // SyntaxError
         // ES2025
-        r#"/((?<foo>bar)\k<foo>|(?<foo>baz))/"#,
+        r"/((?<foo>bar)\k<foo>|(?<foo>baz))/",
     ];
 
     let fail = vec![
-        r#"/(b)(\2a)/"#,
+        r"/(b)(\2a)/",
         // r#"/\k<foo>(?<foo>bar)/"#,
-        r#"RegExp('(a|bc)|\\1')"#,
-        r#"new RegExp('(?!(?<foo>\\n))\\1')"#,
-        r#"/(?<!(a)\1)b/"#,
+        r"RegExp('(a|bc)|\\1')",
+        r"new RegExp('(?!(?<foo>\\n))\\1')",
+        r"/(?<!(a)\1)b/",
         // nested
-        r#"new RegExp('(\\1)')"#,
-        r#"/^(a\1)$/"#,
-        r#"/^((a)\1)$/"#,
-        r#"new RegExp('^(a\\1b)$')"#,
-        r#"RegExp('^((\\1))$')"#,
-        r#"/((\2))/"#,
-        r#"/a(?<foo>(.)b\1)/"#,
-        r#"/a(?<foo>\k<foo>)b/"#,
-        r#"/^(\1)*$/"#,
-        r#"/^(?:a)(?:((?:\1)))*$/"#,
-        r#"/(?!(\1))/"#,
-        r#"/a|(b\1c)/"#,
-        r#"/(a|(\1))/"#,
-        r#"/(a|(\2))/"#,
-        r#"/(?:a|(\1))/"#,
-        r#"/(a)?(b)*(\3)/"#,
-        r#"/(?<=(a\1))b/"#,
+        r"new RegExp('(\\1)')",
+        r"/^(a\1)$/",
+        r"/^((a)\1)$/",
+        r"new RegExp('^(a\\1b)$')",
+        r"RegExp('^((\\1))$')",
+        r"/((\2))/",
+        r"/a(?<foo>(.)b\1)/",
+        r"/a(?<foo>\k<foo>)b/",
+        r"/^(\1)*$/",
+        r"/^(?:a)(?:((?:\1)))*$/",
+        r"/(?!(\1))/",
+        r"/a|(b\1c)/",
+        r"/(a|(\1))/",
+        r"/(a|(\2))/",
+        r"/(?:a|(\1))/",
+        r"/(a)?(b)*(\3)/",
+        r"/(?<=(a\1))b/",
         // forward
-        r#"/\1(a)/"#,
-        r#"/\1.(a)/"#,
-        r#"/(?:\1)(?:(a))/"#,
-        r#"/(?:\1)(?:((a)))/"#,
-        r#"/(?:\2)(?:((a)))/"#,
-        r#"/(?:\1)(?:((?:a)))/"#,
-        r#"/(\2)(a)/"#,
-        r#"RegExp('(a)\\2(b)')"#,
-        r#"/(?:a)(b)\2(c)/"#,
-        r#"/\k<foo>(?<foo>a)/"#,
-        r#"/(?:a(b)\2)(c)/"#,
-        r#"new RegExp('(a)(b)\\3(c)')"#,
-        r#"/\1(?<=(a))./"#,
-        r#"/\1(?<!(a))./"#,
-        r#"/(?<=\1)(?<=(a))/"#,
-        r#"/(?<!\1)(?<!(a))/"#,
-        r#"/(?=\1(a))./"#,
-        r#"/(?!\1(a))./"#,
+        r"/\1(a)/",
+        r"/\1.(a)/",
+        r"/(?:\1)(?:(a))/",
+        r"/(?:\1)(?:((a)))/",
+        r"/(?:\2)(?:((a)))/",
+        r"/(?:\1)(?:((?:a)))/",
+        r"/(\2)(a)/",
+        r"RegExp('(a)\\2(b)')",
+        r"/(?:a)(b)\2(c)/",
+        r"/\k<foo>(?<foo>a)/",
+        r"/(?:a(b)\2)(c)/",
+        r"new RegExp('(a)(b)\\3(c)')",
+        r"/\1(?<=(a))./",
+        r"/\1(?<!(a))./",
+        r"/(?<=\1)(?<=(a))/",
+        r"/(?<!\1)(?<!(a))/",
+        r"/(?=\1(a))./",
+        r"/(?!\1(a))./",
         // backward in the same lookbehind
-        r#"/(?<=(a)\1)b/"#,
-        r#"/(?<!.(a).\1.)b/"#,
-        r#"/(.)(?<!(b|c)\2)d/"#,
-        r#"/(?<=(?:(a)\1))b/"#,
-        r#"/(?<=(?:(a))\1)b/"#,
-        r#"/(?<=(a)(?:\1))b/"#,
-        r#"/(?<!(?:(a))(?:\1))b/"#,
-        r#"/(?<!(?:(a))(?:\1)|.)b/"#,
-        r#"/.(?!(?<!(a)\1))./"#,
-        r#"/.(?=(?<!(a)\1))./"#,
-        r#"/.(?!(?<=(a)\1))./"#,
-        r#"/.(?=(?<=(a)\1))./"#,
+        r"/(?<=(a)\1)b/",
+        r"/(?<!.(a).\1.)b/",
+        r"/(.)(?<!(b|c)\2)d/",
+        r"/(?<=(?:(a)\1))b/",
+        r"/(?<=(?:(a))\1)b/",
+        r"/(?<=(a)(?:\1))b/",
+        r"/(?<!(?:(a))(?:\1))b/",
+        r"/(?<!(?:(a))(?:\1)|.)b/",
+        r"/.(?!(?<!(a)\1))./",
+        r"/.(?=(?<!(a)\1))./",
+        r"/.(?!(?<=(a)\1))./",
+        r"/.(?=(?<=(a)\1))./",
         // into another alternative
-        r#"/(a)|\1b/"#,
-        r#"/^(?:(a)|\1b)$/"#,
-        r#"/^(?:(a)|b(?:c|\1))$/"#,
-        r#"/^(?:a|b(?:(c)|\1))$/"#,
-        r#"/^(?:(a(?!b))|\1b)+$/"#,
-        r#"/^(?:(?:(a)(?!b))|\1b)+$/"#,
-        r#"/^(?:(a(?=a))|\1b)+$/"#,
-        r#"/^(?:(a)(?=a)|\1b)+$/"#,
-        r#"/.(?:a|(b)).|(?:(\1)|c)./"#,
-        r#"/.(?!(a)|\1)./"#,
-        r#"/.(?<=\1|(a))./"#,
+        r"/(a)|\1b/",
+        r"/^(?:(a)|\1b)$/",
+        r"/^(?:(a)|b(?:c|\1))$/",
+        r"/^(?:a|b(?:(c)|\1))$/",
+        r"/^(?:(a(?!b))|\1b)+$/",
+        r"/^(?:(?:(a)(?!b))|\1b)+$/",
+        r"/^(?:(a(?=a))|\1b)+$/",
+        r"/^(?:(a)(?=a)|\1b)+$/",
+        r"/.(?:a|(b)).|(?:(\1)|c)./",
+        r"/.(?!(a)|\1)./",
+        r"/.(?<=\1|(a))./",
         // into a negative lookaround
-        r#"/a(?!(b)).\1/"#,
-        r#"/(?<!(a))b\1/"#,
-        r#"/(?<!(a))(?:\1)/"#,
-        r#"/.(?<!a|(b)).\1/"#,
-        r#"/.(?!(a)).(?!\1)./"#,
-        r#"/.(?<!(a)).(?<!\1)./"#,
-        r#"/.(?=(?!(a))\1)./"#,
-        r#"/.(?<!\1(?!(a)))/"#,
+        r"/a(?!(b)).\1/",
+        r"/(?<!(a))b\1/",
+        r"/(?<!(a))(?:\1)/",
+        r"/.(?<!a|(b)).\1/",
+        r"/.(?!(a)).(?!\1)./",
+        r"/.(?<!(a)).(?<!\1)./",
+        r"/.(?=(?!(a))\1)./",
+        r"/.(?<!\1(?!(a)))/",
         // valid and invalid
-        r#"/\1(a)(b)\2/"#,
-        r#"/\1(a)\1/"#,
+        r"/\1(a)(b)\2/",
+        r"/\1(a)\1/",
         // multiple invalid
-        r#"/\1(a)\2(b)/"#,
-        r#"/\1.(?<=(a)\1)/"#,
-        r#"/(?!\1(a)).\1/"#,
-        r#"/(a)\2(b)/; RegExp('(\\1)');"#,
+        r"/\1(a)\2(b)/",
+        r"/\1.(?<=(a)\1)/",
+        r"/(?!\1(a)).\1/",
+        r"/(a)\2(b)/; RegExp('(\\1)');",
         // when flags cannot be evaluated, it is assumed that the regex doesn't have 'u' flag set, so this will be a correct regex with a useless backreference
-        r#"RegExp('\\1(a){', flags);"#,
-        r#"const r = RegExp, p = '\\1', s = '(a)'; new r(p + s);"#,
+        r"RegExp('\\1(a){', flags);",
+        r"const r = RegExp, p = '\\1', s = '(a)'; new r(p + s);",
         // ES2024
-        r#"new RegExp('\\1([[A--B]])', 'v')"#,
+        r"new RegExp('\\1([[A--B]])', 'v')",
         // ES2025
-        r#"/\k<foo>((?<foo>bar)|(?<foo>baz))/"#,
-        r#"/((?<foo>bar)|\k<foo>(?<foo>baz))/"#,
-        r#"/\k<foo>((?<foo>bar)|(?<foo>baz)|(?<foo>qux))/"#,
-        r#"/((?<foo>bar)|\k<foo>(?<foo>baz)|(?<foo>qux))/"#,
-        r#"/((?<foo>bar)|\k<foo>|(?<foo>baz))/"#,
-        r#"/((?<foo>bar)|\k<foo>|(?<foo>baz)|(?<foo>qux))/"#,
-        r#"/((?<foo>bar)|(?<foo>baz\k<foo>)|(?<foo>qux\k<foo>))/"#,
-        r#"/(?<=((?<foo>bar)|(?<foo>baz))\k<foo>)/"#,
-        r#"/((?!(?<foo>bar))|(?!(?<foo>baz)))\k<foo>/"#,
+        r"/\k<foo>((?<foo>bar)|(?<foo>baz))/",
+        r"/((?<foo>bar)|\k<foo>(?<foo>baz))/",
+        r"/\k<foo>((?<foo>bar)|(?<foo>baz)|(?<foo>qux))/",
+        r"/((?<foo>bar)|\k<foo>(?<foo>baz)|(?<foo>qux))/",
+        r"/((?<foo>bar)|\k<foo>|(?<foo>baz))/",
+        r"/((?<foo>bar)|\k<foo>|(?<foo>baz)|(?<foo>qux))/",
+        r"/((?<foo>bar)|(?<foo>baz\k<foo>)|(?<foo>qux\k<foo>))/",
+        r"/(?<=((?<foo>bar)|(?<foo>baz))\k<foo>)/",
+        r"/((?!(?<foo>bar))|(?!(?<foo>baz)))\k<foo>/",
     ];
 
     Tester::new(NoUselessBackreference::NAME, pass, fail).test();
 }
-
 
 /*
 Hello,
