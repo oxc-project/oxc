@@ -1,6 +1,10 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, path::PathBuf, sync::Arc};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    sync::Arc,
+};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
@@ -417,7 +421,7 @@ impl<'a> SemanticBuilder<'a> {
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
-    fn enter_scope(&mut self, flags: ScopeFlags) {
+    fn enter_scope(&mut self, flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         let parent_scope_id =
             if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
 
@@ -456,13 +460,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_program(&mut self, program: &Program<'a>) {
         let kind = AstKind::Program(self.alloc(program));
-        self.enter_scope({
-            let mut flags = ScopeFlags::Top;
-            if program.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
+        self.enter_scope(
+            {
+                let mut flags = ScopeFlags::Top;
+                if program.is_strict() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &program.scope_id,
+        );
         program.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -491,7 +498,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
         let kind = AstKind::BlockStatement(self.alloc(stmt));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         stmt.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
 
@@ -759,7 +766,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let is_lexical_declaration =
             stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
@@ -845,7 +852,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
@@ -910,7 +917,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
@@ -1096,7 +1103,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         stmt.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -1343,7 +1350,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
         let kind = AstKind::CatchClause(self.alloc(clause));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &clause.scope_id);
         clause.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         if let Some(param) = &clause.param {
@@ -1356,7 +1363,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
         let kind = AstKind::FinallyClause(self.alloc(clause));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &clause.scope_id);
         clause.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         self.visit_statements(&clause.body);
@@ -1441,13 +1448,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
         let kind = AstKind::Function(self.alloc(func));
-        self.enter_scope({
-            let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
-            if func.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
+        self.enter_scope(
+            {
+                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+                if func.is_strict() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &func.scope_id,
+        );
         func.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -1516,7 +1526,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if is_class_expr {
             // Class expressions create a temporary scope with the class name as its only variable
             // E.g., `let c = class A { foo() { console.log(A) } }`
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &class.scope_id);
             class.scope_id.set(Some(self.current_scope_id));
         }
 
@@ -1545,7 +1555,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
         let kind = AstKind::StaticBlock(self.alloc(block));
-        self.enter_scope(ScopeFlags::ClassStaticBlock);
+        self.enter_scope(ScopeFlags::ClassStaticBlock, &block.scope_id);
         block.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         self.visit_statements(&block.body);
@@ -1555,7 +1565,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
-        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
+        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
         expr.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -1605,7 +1615,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &decl.scope_id);
         decl.scope_id.set(Some(self.current_scope_id));
         for member in &decl.members {
             self.visit_ts_enum_member(member);
@@ -1621,7 +1631,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             TSModuleDeclarationName::Identifier(ident) => self.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => self.visit_string_literal(lit),
         }
-        self.enter_scope(ScopeFlags::TsModuleBlock);
+        self.enter_scope(ScopeFlags::TsModuleBlock, &decl.scope_id);
         decl.scope_id.set(Some(self.current_scope_id));
         match &decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
@@ -1638,7 +1648,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(self.alloc(ty));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &ty.scope_id);
         ty.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         if let Some(constraint) = &ty.constraint {
