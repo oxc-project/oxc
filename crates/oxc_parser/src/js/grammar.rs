@@ -66,7 +66,7 @@ impl<'a> CoverGrammar<'a, Expression<'a>> for SimpleAssignmentTarget<'a> {
 
 impl<'a> CoverGrammar<'a, ArrayExpression<'a>> for ArrayAssignmentTarget<'a> {
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
-        let mut elements = p.ast.new_vec();
+        let mut elements = p.ast.vec();
         let mut rest = None;
 
         let len = expr.elements.len();
@@ -126,7 +126,7 @@ impl<'a> CoverGrammar<'a, AssignmentExpression<'a>> for AssignmentTargetWithDefa
 
 impl<'a> CoverGrammar<'a, ObjectExpression<'a>> for ObjectAssignmentTarget<'a> {
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a>) -> Result<Self> {
-        let mut properties = p.ast.new_vec();
+        let mut properties = p.ast.vec();
         let mut rest = None;
 
         let len = expr.properties.len();

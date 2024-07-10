@@ -54,7 +54,7 @@ impl<'a> TypeScript<'a> {
                     }
 
                     let callee = self.ctx.ast.expression_identifier_reference(SPAN, "require");
-                    let arguments = self.ctx.ast.new_vec_single(Argument::from(
+                    let arguments = self.ctx.ast.vec1(Argument::from(
                         self.ctx.ast.expression_from_string_literal(reference.expression.clone()),
                     ));
                     self.ctx.ast.expression_call(
@@ -66,7 +66,7 @@ impl<'a> TypeScript<'a> {
                     )
                 }
             };
-            self.ctx.ast.new_vec_single(self.ctx.ast.variable_declarator(
+            self.ctx.ast.vec1(self.ctx.ast.variable_declarator(
                 SPAN,
                 kind,
                 binding,

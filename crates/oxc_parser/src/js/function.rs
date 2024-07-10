@@ -89,11 +89,11 @@ impl<'a> ParserImpl<'a> {
         let decorators = self.consume_decorators();
         Ok(self.ast.formal_parameter(
             self.end_span(span),
+            decorators,
             pattern,
             modifiers.accessibility(),
             modifiers.contains_readonly(),
             modifiers.contains_override(),
-            decorators,
         ))
     }
 

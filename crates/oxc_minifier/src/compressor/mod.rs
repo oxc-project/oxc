@@ -125,7 +125,7 @@ impl<'a> Compressor<'a> {
         }
 
         // Reconstruct the stmts array by joining consecutive ranges
-        let mut new_stmts = self.ast.new_vec_with_capacity(stmts.len() - capacity);
+        let mut new_stmts = self.ast.vec_with_capacity(stmts.len() - capacity);
         for (i, stmt) in stmts.drain(..).enumerate() {
             if i > 0 && ranges.iter().any(|range| range.contains(&(i - 1)) && range.contains(&i)) {
                 if let Statement::VariableDeclaration(prev_decl) = new_stmts.last_mut().unwrap() {

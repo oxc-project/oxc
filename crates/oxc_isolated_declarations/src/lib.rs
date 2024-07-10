@@ -56,7 +56,7 @@ impl<'a> IsolatedDeclarations<'a> {
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
         let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
-        let directives = self.ast.new_vec();
+        let directives = self.ast.vec();
         let stmts = self.transform_program(program);
         let program = self.ast.program(SPAN, source_type, directives, None, stmts);
         IsolatedDeclarationsReturn { program, errors: self.take_errors() }
@@ -98,7 +98,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
-        let mut new_ast_stmts = self.ast.new_vec::<Statement<'a>>();
+        let mut new_ast_stmts = self.ast.vec::<Statement<'a>>();
         for stmt in Self::remove_function_overloads_implementation(self.ast.copy(stmts)) {
             if let Some(decl) = stmt.as_declaration() {
                 if let Some(decl) = self.transform_declaration(decl, false) {
@@ -256,7 +256,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
         // 7. Return transformed statements
-        let mut new_ast_stmts = self.ast.new_vec_with_capacity(transformed_indexes.len());
+        let mut new_ast_stmts = self.ast.vec_with_capacity(transformed_indexes.len());
         for (index, stmt) in new_stmts.into_iter().enumerate() {
             match stmt {
                 _ if transformed_indexes.contains(&index) => {
@@ -272,7 +272,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         let variables_declaration = self
                             .transform_variable_declaration_with_new_declarations(
                                 &decl,
-                                self.ast.new_vec_from_iter(
+                                self.ast.vec_from_iter(
                                     declarations
                                         .into_iter()
                                         .enumerate()
@@ -294,7 +294,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         let variable_declaration = self
                             .transform_using_declaration_with_new_declarations(
                                 &decl,
-                                self.ast.new_vec_from_iter(
+                                self.ast.vec_from_iter(
                                     declarations
                                         .into_iter()
                                         .enumerate()
@@ -323,7 +323,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         if need_empty_export_marker {
-            let specifiers = self.ast.new_vec();
+            let specifiers = self.ast.vec();
             let kind = ImportOrExportKind::Value;
             let empty_export =
                 self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, None);

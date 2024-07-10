@@ -42,6 +42,9 @@ fn remove_dead_code() {
     test("!!false ? foo : bar;", "bar");
     test("!!true ? foo : bar;", "foo");
 
+    test("const foo = true ? A : B", "const foo=A");
+    test("const foo = false ? A : B", "const foo=B");
+
     // Shadowed `undefined` as a variable should not be erased.
     test(
         "function foo(undefined) { if (!undefined) { } }",

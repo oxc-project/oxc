@@ -134,7 +134,7 @@ impl<'a> ParserImpl<'a> {
     /// extends `LeftHandSideExpression`[?Yield, ?Await]
     fn parse_extends_clause(&mut self) -> Result<Extends<'a>> {
         self.bump_any(); // bump `extends`
-        let mut extends = self.ast.new_vec();
+        let mut extends = self.ast.vec();
 
         let span = self.start_span();
         let mut first_extends = self.parse_lhs_expression_or_higher()?;
@@ -498,11 +498,11 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.class_element_accessor_property(
             r#type,
             self.end_span(span),
+            decorators,
             key,
             value,
             computed,
             r#static,
-            decorators,
         ))
     }
 }

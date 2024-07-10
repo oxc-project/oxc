@@ -44,20 +44,16 @@ impl<'a> RemoveDeadCode<'a> {
         }
     }
 
-    pub fn remove_conditional(&mut self, stmt: &mut Statement<'a>) {
-        let Statement::ExpressionStatement(expression_stmt) = stmt else { return };
-        let Expression::ConditionalExpression(conditional_expr) = &mut expression_stmt.expression
-        else {
+    pub fn remove_conditional(&mut self, expr: &mut Expression<'a>) {
+        let Expression::ConditionalExpression(conditional_expr) = expr else {
             return;
         };
         match self.test_expression(&mut conditional_expr.test) {
             Some(true) => {
-                expression_stmt.expression =
-                    self.ast.move_expression(&mut conditional_expr.consequent);
+                *expr = self.ast.move_expression(&mut conditional_expr.consequent);
             }
             Some(false) => {
-                expression_stmt.expression =
-                    self.ast.move_expression(&mut conditional_expr.alternate);
+                *expr = self.ast.move_expression(&mut conditional_expr.alternate);
             }
             _ => {}
         }
@@ -67,7 +63,10 @@ impl<'a> RemoveDeadCode<'a> {
 impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.remove_if(stmt);
-        self.remove_conditional(stmt);
         walk_mut::walk_statement(self, stmt);
+    }
+
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        self.remove_conditional(expr);
     }
 }

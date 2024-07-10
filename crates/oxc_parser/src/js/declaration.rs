@@ -56,7 +56,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.bump_any();
 
-        let mut declarations = self.ast.new_vec();
+        let mut declarations = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(decl_ctx, kind)?;
             declarations.push(declaration);
@@ -162,7 +162,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.new_vec();
+        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(
                 VariableDeclarationContext::new(VariableDeclarationParent::Statement),

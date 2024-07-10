@@ -73,12 +73,12 @@ impl<'a> ModuleImports<'a> {
     }
 
     pub fn get_import_statements(&self) -> Vec<'a, Statement<'a>> {
-        self.ast.new_vec_from_iter(self.imports.borrow_mut().drain(..).map(
-            |(import_type, names)| match import_type.kind {
+        self.ast.vec_from_iter(self.imports.borrow_mut().drain(..).map(|(import_type, names)| {
+            match import_type.kind {
                 ImportKind::Import => self.get_named_import(import_type.source, names),
                 ImportKind::Require => self.get_require(import_type.source, names),
-            },
-        ))
+            }
+        }))
     }
 
     fn get_named_import(
@@ -86,7 +86,7 @@ impl<'a> ModuleImports<'a> {
         source: Atom<'a>,
         names: std::vec::Vec<NamedImport<'a>>,
     ) -> Statement<'a> {
-        let specifiers = self.ast.new_vec_from_iter(names.into_iter().map(|name| {
+        let specifiers = self.ast.vec_from_iter(names.into_iter().map(|name| {
             let local = name.local.unwrap_or_else(|| name.imported.clone());
             ImportDeclarationSpecifier::ImportSpecifier(self.ast.alloc(ImportSpecifier {
                 span: SPAN,
@@ -121,7 +121,7 @@ impl<'a> ModuleImports<'a> {
         let callee = self.ast.expression_identifier_reference(SPAN, Atom::from("require"));
         let args = {
             let arg = Argument::from(self.ast.expression_string_literal(SPAN, source));
-            self.ast.new_vec_single(arg)
+            self.ast.vec1(arg)
         };
         let name = names.into_iter().next().unwrap();
         let id = {
@@ -145,7 +145,7 @@ impl<'a> ModuleImports<'a> {
                 false,
             );
             let decl = self.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
-            self.ast.new_vec_single(decl)
+            self.ast.vec1(decl)
         };
         let var_decl = self.ast.declaration_variable(SPAN, var_kind, decl, false);
         self.ast.statement_declaration(var_decl)

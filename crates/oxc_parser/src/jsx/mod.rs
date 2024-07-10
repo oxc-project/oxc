@@ -62,11 +62,8 @@ impl<'a> ParserImpl<'a> {
     fn parse_jsx_element(&mut self, in_jsx_child: bool) -> Result<Box<'a, JSXElement<'a>>> {
         let span = self.start_span();
         let opening_element = self.parse_jsx_opening_element(span, in_jsx_child)?;
-        let children = if opening_element.self_closing {
-            self.ast.new_vec()
-        } else {
-            self.parse_jsx_children()?
-        };
+        let children =
+            if opening_element.self_closing { self.ast.vec() } else { self.parse_jsx_children()? };
         let closing_element = if opening_element.self_closing {
             None
         } else {
@@ -194,7 +191,7 @@ impl<'a> ParserImpl<'a> {
     /// `JSXChildren` :
     ///   `JSXChild` `JSXChildren_opt`
     fn parse_jsx_children(&mut self) -> Result<Vec<'a, JSXChild<'a>>> {
-        let mut children = self.ast.new_vec();
+        let mut children = self.ast.vec();
         while !self.at(Kind::Eof) {
             if let Some(child) = self.parse_jsx_child()? {
                 children.push(child);
@@ -295,7 +292,7 @@ impl<'a> ParserImpl<'a> {
     ///   `JSXSpreadAttribute` `JSXAttributes_opt`
     ///   `JSXAttribute` `JSXAttributes_opt`
     fn parse_jsx_attributes(&mut self) -> Result<Vec<'a, JSXAttributeItem<'a>>> {
-        let mut attributes = self.ast.new_vec();
+        let mut attributes = self.ast.vec();
         while !matches!(self.cur_kind(), Kind::Eof | Kind::LAngle | Kind::RAngle | Kind::Slash) {
             let attribute = match self.cur_kind() {
                 Kind::LCurly => {

@@ -89,8 +89,8 @@ impl<'a> TypeScriptEnum<'a> {
         let id = ast.binding_pattern(kind, Option::<TSTypeAnnotation>::None, false);
 
         // ((Foo) => {
-        let params = ast.formal_parameter(SPAN, id, None, false, false, ast.new_vec());
-        let params = ast.new_vec_single(params);
+        let params = ast.formal_parameter(SPAN, ast.vec(), id, None, false, false);
+        let params = ast.vec1(params);
         let params = ast.alloc_formal_parameters(
             SPAN,
             FormalParameterKind::ArrowFormalParameters,
@@ -101,7 +101,7 @@ impl<'a> TypeScriptEnum<'a> {
         // Foo[Foo["X"] = 0] = "X";
         let is_already_declared = self.enums.contains_key(&enum_name);
         let statements = self.transform_ts_enum_members(&decl.members, enum_name.clone(), ctx);
-        let body = ast.alloc_function_body(decl.span, ast.new_vec(), statements);
+        let body = ast.alloc_function_body(decl.span, ast.vec(), statements);
         let callee = Expression::FunctionExpression(ctx.alloc(Function {
             r#type: FunctionType::FunctionExpression,
             span: SPAN,
@@ -120,8 +120,8 @@ impl<'a> TypeScriptEnum<'a> {
         let var_symbol_id = decl.id.symbol_id.get().unwrap();
         let arguments = if (is_export || is_not_top_scope) && !is_already_declared {
             // }({});
-            let object_expr = ast.expression_object(SPAN, ast.new_vec(), None);
-            ast.new_vec_single(Argument::from(object_expr))
+            let object_expr = ast.expression_object(SPAN, ast.vec(), None);
+            ast.vec1(Argument::from(object_expr))
         } else {
             // }(Foo || {});
             let op = LogicalOperator::Or;
@@ -132,9 +132,9 @@ impl<'a> TypeScriptEnum<'a> {
                 ReferenceFlag::Read,
             );
             let left = ast.expression_from_identifier_reference(left);
-            let right = ast.expression_object(SPAN, ast.new_vec(), None);
+            let right = ast.expression_object(SPAN, ast.vec(), None);
             let expression = ast.expression_logical(SPAN, left, op, right);
-            ast.new_vec_single(Argument::from(expression))
+            ast.vec1(Argument::from(expression))
         };
 
         let call_expression = ast.expression_call(
@@ -170,7 +170,7 @@ impl<'a> TypeScriptEnum<'a> {
             let binding =
                 ast.binding_pattern(binding_pattern_kind, Option::<TSTypeAnnotation>::None, false);
             let decl = ast.variable_declarator(SPAN, kind, binding, Some(call_expression), false);
-            ast.new_vec_single(decl)
+            ast.vec1(decl)
         };
         let variable_declaration = ast.declaration_variable(decl.span, kind, decls, false);
 
@@ -195,7 +195,7 @@ impl<'a> TypeScriptEnum<'a> {
 
         let ast = ctx.ast;
 
-        let mut statements = ast.new_vec();
+        let mut statements = ast.vec();
         let mut prev_constant_value = Some(ConstantValue::Number(-1.0));
         let mut previous_enum_members = self.enums.entry(enum_name.clone()).or_default().clone();
         let mut prev_member_name: Option<Atom<'a>> = None;

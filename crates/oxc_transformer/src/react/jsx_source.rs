@@ -139,7 +139,7 @@ impl<'a> ReactJsxSource<'a> {
             )
         };
 
-        let mut properties = self.ctx.ast.new_vec_with_capacity(3);
+        let mut properties = self.ctx.ast.vec_with_capacity(3);
         properties.push(filename);
         properties.push(line_number);
         properties.push(column_number);
@@ -161,7 +161,7 @@ impl<'a> ReactJsxSource<'a> {
                 .ast
                 .expression_string_literal(SPAN, self.ctx.source_path.to_string_lossy());
             let decl = self.ctx.ast.variable_declarator(SPAN, var_kind, id, Some(init), false);
-            self.ctx.ast.new_vec_single(decl)
+            self.ctx.ast.vec1(decl)
         };
         let var_decl = self.ctx.ast.alloc_variable_declaration(SPAN, var_kind, decl, false);
         Some(Statement::VariableDeclaration(var_decl))

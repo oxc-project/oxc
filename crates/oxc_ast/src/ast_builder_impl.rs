@@ -27,34 +27,34 @@ impl<'a> AstBuilder<'a> {
     }
 
     #[inline]
-    pub fn new_vec<T>(self) -> Vec<'a, T> {
+    pub fn vec<T>(self) -> Vec<'a, T> {
         Vec::new_in(self.allocator)
     }
 
     #[inline]
-    pub fn new_vec_with_capacity<T>(self, capacity: usize) -> Vec<'a, T> {
+    pub fn vec_with_capacity<T>(self, capacity: usize) -> Vec<'a, T> {
         Vec::with_capacity_in(capacity, self.allocator)
     }
 
     #[inline]
-    pub fn new_vec_single<T>(self, value: T) -> Vec<'a, T> {
-        let mut vec = self.new_vec_with_capacity(1);
+    pub fn vec1<T>(self, value: T) -> Vec<'a, T> {
+        let mut vec = self.vec_with_capacity(1);
         vec.push(value);
         vec
     }
 
     #[inline]
-    pub fn new_vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
+    pub fn vec_from_iter<T, I: IntoIterator<Item = T>>(self, iter: I) -> Vec<'a, T> {
         Vec::from_iter_in(iter, self.allocator)
     }
 
     #[inline]
-    pub fn new_str(self, value: &str) -> &'a str {
+    pub fn str(self, value: &str) -> &'a str {
         String::from_str_in(value, self.allocator).into_bump_str()
     }
 
     #[inline]
-    pub fn new_atom(self, value: &str) -> Atom<'a> {
+    pub fn atom(self, value: &str) -> Atom<'a> {
         Atom::from(String::from_str_in(value, self.allocator).into_bump_str())
     }
 
@@ -86,7 +86,7 @@ impl<'a> AstBuilder<'a> {
 
     #[inline]
     pub fn move_statement_vec(self, stmts: &mut Vec<'a, Statement<'a>>) -> Vec<'a, Statement<'a>> {
-        mem::replace(stmts, self.new_vec())
+        mem::replace(stmts, self.vec())
     }
 
     #[inline]
@@ -100,7 +100,7 @@ impl<'a> AstBuilder<'a> {
         let empty_decl = self.variable_declaration(
             Span::default(),
             VariableDeclarationKind::Var,
-            self.new_vec(),
+            self.vec(),
             false,
         );
         let empty_decl = Declaration::VariableDeclaration(self.alloc(empty_decl));
@@ -128,7 +128,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         pattern: BindingPattern<'a>,
     ) -> FormalParameter<'a> {
-        self.formal_parameter(span, pattern, None, false, false, self.new_vec())
+        self.formal_parameter(span, self.vec(), pattern, None, false, false)
     }
 
     #[inline]
@@ -166,7 +166,7 @@ impl<'a> AstBuilder<'a> {
         self.alloc(self.export_named_declaration(
             span,
             Some(declaration),
-            self.new_vec(),
+            self.vec(),
             None,
             ImportOrExportKind::Value,
             None,

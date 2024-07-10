@@ -223,7 +223,7 @@ impl<'a> ParserImpl<'a> {
             self.ast.alloc_formal_parameters(
                 params_span,
                 FormalParameterKind::ArrowFormalParameters,
-                self.ast.new_vec_single(formal_parameter),
+                self.ast.vec1(formal_parameter),
                 Option::<BindingRestElement>::None,
             )
         };
@@ -293,11 +293,7 @@ impl<'a> ParserImpl<'a> {
             let expr = self.parse_assignment_expression_or_higher()?;
             let span = expr.span();
             let expr_stmt = self.ast.statement_expression(span, expr);
-            self.ast.alloc_function_body(
-                span,
-                self.ast.new_vec(),
-                self.ast.new_vec_single(expr_stmt),
-            )
+            self.ast.alloc_function_body(span, self.ast.vec(), self.ast.vec1(expr_stmt))
         } else {
             self.parse_function_body()?
         };

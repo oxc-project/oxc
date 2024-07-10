@@ -698,7 +698,7 @@ impl<'a> Folder<'a> {
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
             let left = self.move_out_expression(&mut logic_expr.left);
             let right = self.move_out_expression(&mut logic_expr.right);
-            let mut vec = self.ast.new_vec_with_capacity(2);
+            let mut vec = self.ast.vec_with_capacity(2);
             vec.push(left);
             vec.push(right);
             let sequence_expr = self.ast.expression_sequence(logic_expr.span, vec);
