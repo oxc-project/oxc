@@ -3829,10 +3829,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut SwitchStatement<'a>,
     ) {
+        visitor.enter_scope(ScopeFlags::empty());
         let kind = AstType::SwitchStatement;
         visitor.enter_node(kind);
         visitor.visit_expression(&mut it.discriminant);
-        visitor.enter_scope(ScopeFlags::empty());
         visitor.visit_switch_cases(&mut it.cases);
         visitor.leave_node(kind);
         visitor.leave_scope();

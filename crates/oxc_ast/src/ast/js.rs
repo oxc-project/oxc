@@ -1246,8 +1246,8 @@ pub struct SwitchStatement<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub discriminant: Expression<'a>,
-    #[scope(enter_before)]
     pub cases: Vec<'a, SwitchCase<'a>>,
+    #[scope(enter_before)]
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

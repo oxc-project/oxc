@@ -3627,10 +3627,10 @@ pub mod walk {
 
     #[inline]
     pub fn walk_switch_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &SwitchStatement<'a>) {
+        visitor.enter_scope(ScopeFlags::empty());
         let kind = AstKind::SwitchStatement(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_expression(&it.discriminant);
-        visitor.enter_scope(ScopeFlags::empty());
         visitor.visit_switch_cases(&it.cases);
         visitor.leave_node(kind);
         visitor.leave_scope();
