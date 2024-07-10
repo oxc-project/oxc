@@ -140,15 +140,6 @@ assertion_line: 216
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
   ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:21]
- 4 │                     afterAll(() => {});
- 5 │                     beforeAll(() => {});
-   ·                     ───────────────────
- 6 │ 
-   ╰────
-  help: "beforeAll" hooks should be before any "afterAll" hooks
-
-  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:10:25]
   9 │                         afterEach(() => {});
  10 │                         beforeEach(() => {});
@@ -156,6 +147,15 @@ assertion_line: 216
  11 │                         afterEach(() => {});
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
+
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:5:21]
+ 4 │                     afterAll(() => {});
+ 5 │                     beforeAll(() => {});
+   ·                     ───────────────────
+ 6 │ 
+   ╰────
+  help: "beforeAll" hooks should be before any "afterAll" hooks
 
   ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:23:29]
@@ -343,15 +343,6 @@ assertion_line: 216
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
   ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-   ╭─[prefer_hooks_in_order.tsx:5:17]
- 4 │                 afterAll(() => {});
- 5 │                 beforeAll(() => {});
-   ·                 ───────────────────
- 6 │ 
-   ╰────
-  help: "beforeAll" hooks should be before any "afterAll" hooks
-
-  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:10:21]
   9 │                     afterEach(() => {});
  10 │                     beforeEach(() => {});
@@ -359,6 +350,15 @@ assertion_line: 216
  11 │                     afterEach(() => {});
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
+
+  ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+   ╭─[prefer_hooks_in_order.tsx:5:17]
+ 4 │                 afterAll(() => {});
+ 5 │                 beforeAll(() => {});
+   ·                 ───────────────────
+ 6 │ 
+   ╰────
+  help: "beforeAll" hooks should be before any "afterAll" hooks
 
   ⚠ eslint-plugin-jest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:23:25]
