@@ -9,7 +9,6 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_index::{index_vec, IndexVec};
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
@@ -66,9 +65,9 @@ pub struct SemanticBuilder<'a> {
     pub nodes: AstNodes<'a>,
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
-    /// NOTE(lucab): lazy vector, always access this through the
-    /// `unresolved_references_by_scope()` helper.
-    unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
+
+    // LIFO stack used to accumulate unresolved refs while traversing scopes.
+    unresolved_references: Vec<UnresolvedReferences>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -112,7 +111,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
-            unresolved_references: index_vec![UnresolvedReferences::default()],
+            unresolved_references: vec![],
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
             build_jsdoc: false,
@@ -167,9 +166,13 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Finalize the builder.
+    ///
+    /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
             let scope_id = self.scope.add_scope(None, ScopeFlags::Top);
+            self.unresolved_references.push(UnresolvedReferences::default());
             program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
@@ -179,8 +182,9 @@ impl<'a> SemanticBuilder<'a> {
                 checker::check_module_record(&self);
             }
         }
-        self.scope.root_unresolved_references =
-            self.unresolved_references.swap_remove(self.scope.root_scope_id());
+
+        debug_assert_eq!(self.unresolved_references.len(), 1);
+        self.scope.root_unresolved_references = self.unresolved_references.pop().unwrap();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -321,11 +325,16 @@ impl<'a> SemanticBuilder<'a> {
         Some(symbol_id)
     }
 
+    /// Declare an unresolved reference in the current scope.
+    ///
+    /// # Panics
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
 
-        self.unresolved_references_by_scope(self.current_scope_id)
+        self.unresolved_references
+            .last_mut()
+            .unwrap()
             .entry(reference_name)
             .or_default()
             .push(reference_id);
@@ -350,10 +359,8 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_references_for_current_scope(&mut self) {
-        let all_references = self
-            .unresolved_references_by_scope(self.current_scope_id)
-            .drain()
-            .collect::<Vec<(_, Vec<_>)>>();
+        let all_references =
+            self.unresolved_references.last_mut().unwrap().drain().collect::<Vec<(_, Vec<_>)>>();
 
         for (name, reference_ids) in all_references {
             self.resolve_reference_ids(name, reference_ids);
@@ -361,19 +368,21 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
-        let parent_scope_id =
-            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
-
         if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
             for reference_id in &reference_ids {
                 self.symbols.references[*reference_id].set_symbol_id(symbol_id);
             }
             self.symbols.resolved_references[symbol_id].extend(reference_ids);
         } else {
-            self.unresolved_references_by_scope(parent_scope_id)
-                .entry(name)
-                .or_default()
-                .extend(reference_ids);
+            let index = if self.scope.get_parent_id(self.current_scope_id).is_some() {
+                // Parent of last item in the stack.
+                self.unresolved_references.len().checked_sub(2).unwrap()
+            } else {
+                // Last (and only) item in the stack.
+                0
+            };
+            let refs = &mut self.unresolved_references[index];
+            refs.entry(name).or_default().extend(reference_ids);
         }
     }
 
@@ -405,14 +414,6 @@ impl<'a> SemanticBuilder<'a> {
             self.symbols.union_flag(symbol_id, SymbolFlags::Export);
         }
     }
-
-    fn unresolved_references_by_scope(&mut self, scope_id: ScopeId) -> &mut UnresolvedReferences {
-        let min_new_len = scope_id + 1;
-        if self.unresolved_references.len() < min_new_len {
-            self.unresolved_references.resize_with(min_new_len.into(), Default::default);
-        }
-        &mut self.unresolved_references[scope_id]
-    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -426,11 +427,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
+        self.unresolved_references.push(UnresolvedReferences::default());
     }
 
     fn leave_scope(&mut self) {
         self.resolve_references_for_current_scope();
         if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
+            self.unresolved_references.pop();
             self.current_scope_id = parent_id;
         }
     }
