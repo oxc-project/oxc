@@ -217,6 +217,16 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_decorators(&mut self, it: &mut Vec<'a, Decorator<'a>>) {
+        walk_decorators(self, it);
+    }
+
+    #[inline]
+    fn visit_decorator(&mut self, it: &mut Decorator<'a>) {
+        walk_decorator(self, it);
+    }
+
+    #[inline]
     fn visit_binding_pattern(&mut self, it: &mut BindingPattern<'a>) {
         walk_binding_pattern(self, it);
     }
@@ -612,16 +622,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_js_doc_unknown_type(&mut self, it: &mut JSDocUnknownType) {
         walk_js_doc_unknown_type(self, it);
-    }
-
-    #[inline]
-    fn visit_decorators(&mut self, it: &mut Vec<'a, Decorator<'a>>) {
-        walk_decorators(self, it);
-    }
-
-    #[inline]
-    fn visit_decorator(&mut self, it: &mut Decorator<'a>) {
-        walk_decorator(self, it);
     }
 
     #[inline]
@@ -1770,8 +1770,23 @@ pub mod walk_mut {
     ) {
         let kind = AstType::FormalParameter;
         visitor.enter_node(kind);
-        visitor.visit_binding_pattern(&mut it.pattern);
         visitor.visit_decorators(&mut it.decorators);
+        visitor.visit_binding_pattern(&mut it.pattern);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_decorators<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Decorator<'a>>) {
+        for el in it.iter_mut() {
+            visitor.visit_decorator(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_decorator<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Decorator<'a>) {
+        let kind = AstType::Decorator;
+        visitor.enter_node(kind);
+        visitor.visit_expression(&mut it.expression);
         visitor.leave_node(kind);
     }
 
@@ -2647,21 +2662,6 @@ pub mod walk_mut {
     }
 
     #[inline]
-    pub fn walk_decorators<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Vec<'a, Decorator<'a>>) {
-        for el in it.iter_mut() {
-            visitor.visit_decorator(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_decorator<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut Decorator<'a>) {
-        let kind = AstType::Decorator;
-        visitor.enter_node(kind);
-        visitor.visit_expression(&mut it.expression);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
     pub fn walk_function_body<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut FunctionBody<'a>) {
         let kind = AstType::FunctionBody;
         visitor.enter_node(kind);
@@ -3186,11 +3186,11 @@ pub mod walk_mut {
         it: &mut AccessorProperty<'a>,
     ) {
         // NOTE: AstType doesn't exists!
+        visitor.visit_decorators(&mut it.decorators);
         visitor.visit_property_key(&mut it.key);
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
         }
-        visitor.visit_decorators(&mut it.decorators);
     }
 
     #[inline]

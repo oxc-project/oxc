@@ -444,11 +444,11 @@ impl<'a> IsolatedDeclarations<'a> {
                     let new_element = self.ast.class_element_accessor_property(
                         property.r#type,
                         property.span,
+                        self.ast.vec(),
                         self.ast.copy(&property.key),
                         None,
                         property.computed,
                         property.r#static,
-                        self.ast.vec(),
                     );
                     elements.push(new_element);
                 }
@@ -525,7 +525,7 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Box<'a, FormalParameters<'a>> {
         let pattern = BindingPattern { kind, type_annotation, optional: false };
         let parameter =
-            self.ast.formal_parameter(SPAN, pattern, None, false, false, self.ast.vec());
+            self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);
         let items = self.ast.vec1(parameter);
         self.ast.alloc_formal_parameters(
             SPAN,

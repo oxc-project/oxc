@@ -89,7 +89,7 @@ impl<'a> TypeScriptEnum<'a> {
         let id = ast.binding_pattern(kind, Option::<TSTypeAnnotation>::None, false);
 
         // ((Foo) => {
-        let params = ast.formal_parameter(SPAN, id, None, false, false, ast.vec());
+        let params = ast.formal_parameter(SPAN, ast.vec(), id, None, false, false);
         let params = ast.vec1(params);
         let params = ast.alloc_formal_parameters(
             SPAN,

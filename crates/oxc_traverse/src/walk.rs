@@ -2335,19 +2335,21 @@ pub(crate) unsafe fn walk_formal_parameter<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_formal_parameter(&mut *node, ctx);
-    ctx.push_stack(Ancestor::FormalParameterPattern(ancestor::FormalParameterWithoutPattern(node)));
-    walk_binding_pattern(
-        traverser,
-        (node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_PATTERN) as *mut BindingPattern,
-        ctx,
-    );
-    ctx.retag_stack(AncestorType::FormalParameterDecorators);
+    ctx.push_stack(Ancestor::FormalParameterDecorators(
+        ancestor::FormalParameterWithoutDecorators(node),
+    ));
     for item in (*((node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_DECORATORS)
         as *mut Vec<Decorator>))
         .iter_mut()
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::FormalParameterPattern);
+    walk_binding_pattern(
+        traverser,
+        (node as *mut u8).add(ancestor::OFFSET_FORMAL_PARAMETER_PATTERN) as *mut BindingPattern,
+        ctx,
+    );
     ctx.pop_stack();
     traverser.exit_formal_parameter(&mut *node, ctx);
 }
@@ -2695,7 +2697,16 @@ pub(crate) unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
     ctx: &mut TraverseCtx<'a>,
 ) {
     traverser.enter_accessor_property(&mut *node, ctx);
-    ctx.push_stack(Ancestor::AccessorPropertyKey(ancestor::AccessorPropertyWithoutKey(node)));
+    ctx.push_stack(Ancestor::AccessorPropertyDecorators(
+        ancestor::AccessorPropertyWithoutDecorators(node),
+    ));
+    for item in (*((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_DECORATORS)
+        as *mut Vec<Decorator>))
+        .iter_mut()
+    {
+        walk_decorator(traverser, item as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::AccessorPropertyKey);
     walk_property_key(
         traverser,
         (node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_KEY) as *mut PropertyKey,
@@ -2706,13 +2717,6 @@ pub(crate) unsafe fn walk_accessor_property<'a, Tr: Traverse<'a>>(
     {
         ctx.retag_stack(AncestorType::AccessorPropertyValue);
         walk_expression(traverser, field as *mut _, ctx);
-    }
-    ctx.retag_stack(AncestorType::AccessorPropertyDecorators);
-    for item in (*((node as *mut u8).add(ancestor::OFFSET_ACCESSOR_PROPERTY_DECORATORS)
-        as *mut Vec<Decorator>))
-        .iter_mut()
-    {
-        walk_decorator(traverser, item as *mut _, ctx);
     }
     ctx.pop_stack();
     traverser.exit_accessor_property(&mut *node, ctx);

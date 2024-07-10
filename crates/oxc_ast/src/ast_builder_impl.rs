@@ -128,7 +128,7 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         pattern: BindingPattern<'a>,
     ) -> FormalParameter<'a> {
-        self.formal_parameter(span, pattern, None, false, false, self.vec())
+        self.formal_parameter(span, self.vec(), pattern, None, false, false)
     }
 
     #[inline]

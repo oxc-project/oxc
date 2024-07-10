@@ -113,7 +113,7 @@ impl<'a> IsolatedDeclarations<'a> {
             );
         }
 
-        Some(self.ast.formal_parameter(param.span, pattern, None, false, false, self.ast.vec()))
+        Some(self.ast.formal_parameter(param.span, self.ast.vec(), pattern, None, false, false))
     }
 
     pub fn transform_formal_parameters(

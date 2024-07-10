@@ -498,11 +498,11 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.class_element_accessor_property(
             r#type,
             self.end_span(span),
+            decorators,
             key,
             value,
             computed,
             r#static,
-            decorators,
         ))
     }
 }

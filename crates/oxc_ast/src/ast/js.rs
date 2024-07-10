@@ -1511,11 +1511,11 @@ pub struct FormalParameters<'a> {
 pub struct FormalParameter<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub pattern: BindingPattern<'a>,
     pub accessibility: Option<TSAccessibility>,
     pub readonly: bool,
     pub r#override: bool,
-    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -1776,11 +1776,11 @@ pub struct AccessorProperty<'a> {
     pub r#type: AccessorPropertyType,
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
+    pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
     pub value: Option<Expression<'a>>,
     pub computed: bool,
     pub r#static: bool,
-    pub decorators: Vec<'a, Decorator<'a>>,
 }
 
 #[visited_node]
