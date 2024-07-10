@@ -1,4 +1,4 @@
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, VisitMut};
 use oxc_span::SPAN;
 
@@ -12,6 +12,17 @@ pub struct RemoveDeadCode<'a> {
     folder: Folder<'a>,
 }
 
+impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
+    fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        self.dead_code_elimintation(stmts);
+        walk_mut::walk_statements(self, stmts);
+    }
+
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        self.fold_conditional_expression(expr);
+    }
+}
+
 impl<'a> RemoveDeadCode<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         let ast = AstBuilder::new(allocator);
@@ -22,16 +33,38 @@ impl<'a> RemoveDeadCode<'a> {
         self.visit_program(program);
     }
 
-    fn test_expression(&mut self, expr: &mut Expression<'a>) -> Option<bool> {
-        self.folder.fold_expression(expr);
-        get_boolean_value(expr)
+    /// Removes dead code thats comes after `return` statements after inlining `if` statements
+    fn dead_code_elimintation(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        let mut removed = true;
+        for stmt in stmts.iter_mut() {
+            if self.fold_if_statement(stmt) {
+                removed = true;
+                break;
+            }
+        }
+
+        if !removed {
+            return;
+        }
+
+        let mut index = None;
+        for (i, stmt) in stmts.iter().enumerate() {
+            if matches!(stmt, Statement::ReturnStatement(_)) {
+                index.replace(i);
+            }
+        }
+        if let Some(index) = index {
+            stmts.drain(index + 1..);
+        }
     }
 
-    pub fn remove_if(&mut self, stmt: &mut Statement<'a>) {
-        let Statement::IfStatement(if_stmt) = stmt else { return };
-        match self.test_expression(&mut if_stmt.test) {
+    #[must_use]
+    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>) -> bool {
+        let Statement::IfStatement(if_stmt) = stmt else { return false };
+        match self.fold_expression_and_get_boolean_value(&mut if_stmt.test) {
             Some(true) => {
                 *stmt = self.ast.move_statement(&mut if_stmt.consequent);
+                true
             }
             Some(false) => {
                 *stmt = if let Some(alternate) = &mut if_stmt.alternate {
@@ -39,16 +72,22 @@ impl<'a> RemoveDeadCode<'a> {
                 } else {
                     self.ast.statement_empty(SPAN)
                 };
+                true
             }
-            _ => {}
+            _ => false,
         }
     }
 
-    pub fn remove_conditional(&mut self, expr: &mut Expression<'a>) {
+    fn fold_expression_and_get_boolean_value(&mut self, expr: &mut Expression<'a>) -> Option<bool> {
+        self.folder.fold_expression(expr);
+        get_boolean_value(expr)
+    }
+
+    fn fold_conditional_expression(&mut self, expr: &mut Expression<'a>) {
         let Expression::ConditionalExpression(conditional_expr) = expr else {
             return;
         };
-        match self.test_expression(&mut conditional_expr.test) {
+        match self.fold_expression_and_get_boolean_value(&mut conditional_expr.test) {
             Some(true) => {
                 *expr = self.ast.move_expression(&mut conditional_expr.consequent);
             }
@@ -57,16 +96,5 @@ impl<'a> RemoveDeadCode<'a> {
             }
             _ => {}
         }
-    }
-}
-
-impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
-    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
-        self.remove_if(stmt);
-        walk_mut::walk_statement(self, stmt);
-    }
-
-    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        self.remove_conditional(expr);
     }
 }
