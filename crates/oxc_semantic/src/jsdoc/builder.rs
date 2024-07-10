@@ -12,6 +12,8 @@ pub struct JSDocBuilder<'a> {
     trivias: Trivias,
     attached_docs: BTreeMap<Span, Vec<JSDoc<'a>>>,
     leading_comments_seen: FxHashSet<u32>,
+    /// End span of the previous successful comment search.
+    previous_span_end: u32,
 }
 
 impl<'a> JSDocBuilder<'a> {
@@ -21,6 +23,7 @@ impl<'a> JSDocBuilder<'a> {
             trivias,
             attached_docs: BTreeMap::default(),
             leading_comments_seen: FxHashSet::default(),
+            previous_span_end: 0,
         }
     }
 
@@ -116,29 +119,29 @@ impl<'a> JSDocBuilder<'a> {
         }
 
         let span = kind.span();
-        let mut leading_comments = vec![];
-        // May be better to set range start for perf?
-        // But once I tried, coverage tests start failing...
-        for comment in self.trivias.comments_range(..span.start) {
+        let comments_range = self.trivias.comments_range(self.previous_span_end..span.start);
+        let comments_len = comments_range.size_hint().1;
+        let mut leading_jsdoc_comments = Vec::with_capacity(comments_len.unwrap_or(0));
+
+        for comment in comments_range {
             if self.leading_comments_seen.contains(&comment.span.start) {
                 continue;
             }
 
-            leading_comments.push(comment);
             self.leading_comments_seen.insert(comment.span.start);
+            if let Some(jsdoc) = self.parse_if_jsdoc_comment(comment.kind, comment.span) {
+                leading_jsdoc_comments.push(jsdoc);
+            }
         }
 
-        let leading_jsdoc_comments = leading_comments
-            .into_iter()
-            .filter_map(|comment| self.parse_if_jsdoc_comment(comment.kind, comment.span))
-            .collect::<Vec<_>>();
-
-        if !leading_jsdoc_comments.is_empty() {
-            self.attached_docs.insert(span, leading_jsdoc_comments);
-            return true;
+        if leading_jsdoc_comments.is_empty() {
+            return false;
         }
 
-        false
+        leading_jsdoc_comments.shrink_to_fit();
+        self.attached_docs.insert(span, leading_jsdoc_comments);
+        self.previous_span_end = span.end;
+        true
     }
 
     fn parse_if_jsdoc_comment(&self, kind: CommentKind, comment_span: Span) -> Option<JSDoc<'a>> {
