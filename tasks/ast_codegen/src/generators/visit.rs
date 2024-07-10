@@ -512,11 +512,9 @@ impl<'a> VisitBuilder<'a> {
     ) -> (TokenStream, /* inline */ bool) {
         let ident = visit_as.unwrap_or_else(|| struct_.ident());
         let scope_attr = struct_.item.attrs.iter().find(|it| it.path().is_ident("scope"));
-        let (scope_enter, scope_leave) = scope_attr
-            .map(parse_as_scope)
-            .transpose()
-            .unwrap()
-            .map_or_else(Default::default, |scope_args| {
+        let scope_events = scope_attr.map(parse_as_scope).transpose().unwrap().map_or_else(
+            Default::default,
+            |scope_args| {
                 let cond = scope_args.r#if.map(|cond| {
                     let cond = cond.to_token_stream().replace_ident("self", &format_ident!("it"));
                     quote!(let scope_events_cond = #cond;)
@@ -551,14 +549,37 @@ impl<'a> VisitBuilder<'a> {
                 let mut enter = cond.as_ref().into_token_stream();
                 enter.extend(maybe_conditional(quote!(visitor.enter_scope(#args);)));
                 let leave = maybe_conditional(quote!(visitor.leave_scope();));
-                (Some(enter), Some(leave))
-            });
-        let mut entered_scope = false;
+                (enter, leave)
+            },
+        );
+
+        let node_events = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
+            (
+                insert!(
+                    "// NOTE: {} doesn't exists!",
+                    if self.is_mut { "AstType" } else { "AstKind" }
+                ),
+                TokenStream::default(),
+            )
+        } else {
+            let kind = self.kind_type(ident);
+            (
+                quote! {
+                    let kind = #kind;
+                    visitor.enter_node(kind);
+                },
+                quote!(visitor.leave_node(kind);),
+            )
+        };
+
+        let mut enter_scope_at = 0;
+        let mut enter_node_at = 0;
         let fields_visits: Vec<TokenStream> = struct_
             .item
             .fields
             .iter()
-            .filter_map(|it| {
+            .enumerate()
+            .filter_map(|(ix, it)| {
                 let ty_res = it.ty.analyze(self.ctx);
                 let typ = ty_res.type_ref?;
                 if !typ.borrow().visitable() {
@@ -574,8 +595,16 @@ impl<'a> VisitBuilder<'a> {
                             _ => panic!("wrong use of `visit_as`!"),
                         }
                     });
-                // TODO: make sure it is `#[scope(enter_before)]`
-                let have_enter_scope = it.attrs.iter().any(|it| it.path().is_ident("scope"));
+
+                let have_enter_scope = it.attrs.iter().any(|it| {
+                    it.path().is_ident("scope")
+                        && it.parse_args_with(Ident::parse).is_ok_and(|id| id == "enter_before")
+                });
+                let have_enter_node = it.attrs.iter().any(|it| {
+                    it.path().is_ident("visit")
+                        && it.parse_args_with(Ident::parse).is_ok_and(|id| id == "enter_before")
+                });
+
                 let args = it.attrs.iter().find(|it| it.meta.path().is_ident("visit_args"));
                 let (args_def, args) = args
                     .map(|it| it.parse_args_with(VisitArgs::parse))
@@ -613,13 +642,29 @@ impl<'a> VisitBuilder<'a> {
                         visitor.#visit(#borrowed_field #(#args)*);
                     },
                 };
+
+                // This comes first because we would prefer the `enter_scope` to be placed on top of `enter_node`
+                #[allow(unreachable_code)]
+                if have_enter_node {
+                    // NOTE: this is disabled intentionally <https://github.com/oxc-project/oxc/pull/4147#issuecomment-2220216905>
+                    unreachable!("`#[visit(enter_before)]` attribute is disabled!");
+                    assert_eq!(enter_node_at, 0);
+                    let node_enter = &node_events.0;
+                    result = quote! {
+                        #node_enter
+                        #result
+                    };
+                    enter_node_at = ix;
+                }
+
                 if have_enter_scope {
-                    assert!(!entered_scope);
+                    assert_eq!(enter_scope_at, 0);
+                    let scope_enter = &scope_events.0;
                     result = quote! {
                         #scope_enter
                         #result
                     };
-                    entered_scope = true;
+                    enter_scope_at = ix;
                 }
 
                 if args_def.is_empty() {
@@ -634,40 +679,34 @@ impl<'a> VisitBuilder<'a> {
             })
             .collect();
 
-        let body = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-            let note = insert!(
-                "// NOTE: {} doesn't exists!",
-                if self.is_mut { "AstType" } else { "AstKind" }
-            );
-            quote! {
-                #note
-                #(#fields_visits)*
-            }
-        } else {
-            let kind = self.kind_type(ident);
-            quote! {
-                let kind = #kind;
-                visitor.enter_node(kind);
-                #(#fields_visits)*
-                visitor.leave_node(kind);
-            }
-        };
+        let body = quote!(#(#fields_visits)*);
 
-        let result = match (scope_enter, scope_leave, entered_scope) {
-            (_, Some(leave), true) => quote! {
-                #body
-                #leave
-            },
-            (Some(enter), Some(leave), false) => quote! {
+        let body = match (node_events, enter_node_at) {
+            ((enter, leave), 0) => quote! {
                 #enter
                 #body
                 #leave
             },
-            _ => body,
+            ((_, leave), _) => quote! {
+                #body
+                #leave
+            },
+        };
+
+        let body = match (scope_events, enter_scope_at) {
+            ((enter, leave), 0) => quote! {
+                #enter
+                #body
+                #leave
+            },
+            ((_, leave), _) => quote! {
+                #body
+                #leave
+            },
         };
 
         // inline if there are 5 or less fields.
-        (result, fields_visits.len() <= 5)
+        (body, fields_visits.len() <= 5)
     }
 
     fn visit_args_fold(
