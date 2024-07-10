@@ -155,7 +155,17 @@ impl Rule for NoUselessUndefined {
             AstKind::IdentifierReference(undefined_literal)
                 if undefined_literal.name == "undefined" =>
             {
-                let Some(parent_node) = ctx.nodes().parent_node(node.id()) else { return };
+                let mut parent_node: &AstNode<'a> = node;
+                while let Some(parent) = ctx.nodes().parent_node(parent_node.id()) {
+                    let parent_kind = parent.kind();
+
+                    if let AstKind::ParenthesizedExpression(_) = parent_kind {
+                        parent_node = parent;
+                    } else {
+                        break;
+                    }
+                }
+                let Some(parent_node) = ctx.nodes().parent_node(parent_node.id()) else { return };
                 let parent_node_kind = parent_node.kind();
 
                 match parent_node_kind {
@@ -552,9 +562,8 @@ fn test() {
         ("function foo([bar = undefined] = []) {}", None),
         ("foo(bar, undefined, undefined);", None),
         ("let a = undefined, b = 2;", None),
-        // TODO: Handle parenthesized undefined
-        /* (
-            r#"
+        (
+            r"
         function foo() {
             return /* */ (
                 /* */
@@ -566,11 +575,11 @@ fn test() {
                 /* */
             ) /* */ ;
         }
-        "#,
+        ",
             None,
         ),
         (
-            r#"
+            r"
         function * foo() {
             yield /* */ (
                 /* */
@@ -582,11 +591,11 @@ fn test() {
                 /* */
             ) /* */ ;
         }
-        "#,
+        ",
             None,
         ),
         (
-            r#"
+            r"
         const foo = () => /* */ (
             /* */
             (
@@ -596,9 +605,9 @@ fn test() {
             )
             /* */
         );
-        "#,
+        ",
             None,
-        ), */
+        ),
         ("foo.bind(undefined)", None),
         ("bind(foo, undefined)", None),
         ("foo.bind?.(bar, undefined)", None),
@@ -645,7 +654,6 @@ fn test() {
         ("function foo({bar = undefined} = {}) {}", "function foo({bar} = {}) {}", None),
         ("function foo([bar = undefined]) {}", "function foo([bar]) {}", None),
         ("function foo([bar = undefined] = []) {}", "function foo([bar] = []) {}", None),
-        // TODO: maybe fix into `x?: string`?
         (
             "function foo(x: string | undefined = undefined) { }",
             "function foo(x: string | undefined) { }",

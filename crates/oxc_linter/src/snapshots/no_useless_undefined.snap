@@ -60,6 +60,33 @@ source: crates/oxc_linter/src/tester.rs
   help: Consider removing `undefined` or using `null` instead.
 
   ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:7:21]
+ 6 │                     /* */
+ 7 │                     undefined
+   ·                     ─────────
+ 8 │                     /* */
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:7:21]
+ 6 │                     /* */
+ 7 │                     undefined
+   ·                     ─────────
+ 8 │                     /* */
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
+   ╭─[no_useless_undefined.tsx:6:17]
+ 5 │                 /* */
+ 6 │                 undefined
+   ·                 ─────────
+ 7 │                 /* */
+   ╰────
+  help: Consider removing `undefined` or using `null` instead.
+
+  ⚠ eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.
    ╭─[no_useless_undefined.tsx:1:10]
  1 │ foo.bind(undefined)
    ·          ─────────
