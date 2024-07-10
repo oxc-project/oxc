@@ -230,8 +230,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                         ),
                         |fixer| {
                             let key = fixer.source_range(first.span);
-                            let params_span = Span::new(first.span.end + 2, tref.span.end - 1);
-                            let params = fixer.source_range(params_span);
+                            let params_span = Span::new(first.span.end + 1, tref.span.end - 1);
+                            let params = fixer.source_range(params_span).trim();
                             let content = format!("{{ [key: {key}]: {params} }}");
                             fixer.replace(tref.span, content)
                         },
@@ -261,6 +261,11 @@ fn test() {
         (
             "type Foo<T> = Record<string, T>;",
             "type Foo<T> = { [key: string]: T };",
+            Some(serde_json::json!(["index-signature"])),
+        ),
+        (
+            "export function getCookies (headers: Headers): Record<string,Østring>",
+            "export function getCookies (headers: Headers): { [key: string]: Østring }",
             Some(serde_json::json!(["index-signature"])),
         ),
     ];
