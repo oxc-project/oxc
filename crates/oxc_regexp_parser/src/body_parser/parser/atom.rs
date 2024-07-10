@@ -2,7 +2,7 @@ use oxc_allocator::Box;
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
 
-use crate::{ast, parser::body_parser::unicode};
+use crate::{ast, body_parser::unicode};
 
 impl<'a> super::parse::PatternParser<'a> {
     // ```

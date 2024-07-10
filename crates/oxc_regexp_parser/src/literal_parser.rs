@@ -2,11 +2,8 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::{OxcDiagnostic, Result};
 
 use crate::{
-    ast,
-    parser::{
-        body_parser::PatternParser, flag_parser::FlagsParser, options::ParserOptions,
-        span::SpanFactory,
-    },
+    ast, body_parser::PatternParser, flag_parser::FlagsParser, options::ParserOptions,
+    span::SpanFactory,
 };
 
 // LiteralParser

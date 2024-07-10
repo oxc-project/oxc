@@ -1,7 +1,7 @@
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
 
-use crate::parser::body_parser::unicode;
+use crate::body_parser::unicode;
 
 impl<'a> super::parse::PatternParser<'a> {
     pub(super) fn consume_fixed_hex_digits(&mut self, len: usize) -> Option<u32> {

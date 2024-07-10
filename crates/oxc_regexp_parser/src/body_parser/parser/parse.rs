@@ -3,11 +3,9 @@ use oxc_diagnostics::{OxcDiagnostic, Result};
 
 use crate::{
     ast,
-    parser::{
-        body_parser::{reader::Reader, state::State, unicode},
-        options::ParserOptions,
-        span::SpanFactory,
-    },
+    body_parser::{reader::Reader, state::State, unicode},
+    options::ParserOptions,
+    span::SpanFactory,
 };
 
 pub struct PatternParser<'a> {

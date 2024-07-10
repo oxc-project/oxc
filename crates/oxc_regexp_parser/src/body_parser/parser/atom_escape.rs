@@ -3,7 +3,7 @@ use oxc_span::Atom as SpanAtom;
 
 use crate::{
     ast,
-    parser::body_parser::{unicode, unicode_property},
+    body_parser::{unicode, unicode_property},
 };
 
 impl<'a> super::parse::PatternParser<'a> {
