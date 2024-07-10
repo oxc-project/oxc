@@ -35,7 +35,7 @@ impl<'a> TypeScript<'a> {
         // Recreate the statements vec for memory efficiency.
         // Inserting the `let` declaration multiple times will reallocate the whole statements vec
         // every time a namespace declaration is encountered.
-        let mut new_stmts = self.ctx.ast.new_vec();
+        let mut new_stmts = self.ctx.ast.vec();
 
         for stmt in self.ctx.ast.move_statement_vec(&mut program.body) {
             match stmt {
@@ -139,7 +139,7 @@ impl<'a> TypeScript<'a> {
         // Reuse `TSModuleDeclaration`'s scope in transformed function
         let scope_id = decl.scope_id.get().unwrap();
         let symbol_id = ctx.generate_uid(&real_name, scope_id, SymbolFlags::FunctionScopedVariable);
-        let name = self.ctx.ast.new_atom(ctx.symbols().get_name(symbol_id));
+        let name = self.ctx.ast.atom(ctx.symbols().get_name(symbol_id));
 
         let directives;
         let namespace_top_level;
@@ -159,12 +159,12 @@ impl<'a> TypeScript<'a> {
                 let export_named_decl =
                     self.ctx.ast.plain_export_named_declaration_declaration(SPAN, declaration);
                 let stmt = Statement::ExportNamedDeclaration(export_named_decl);
-                directives = self.ctx.ast.new_vec();
-                namespace_top_level = self.ctx.ast.new_vec_single(stmt);
+                directives = self.ctx.ast.vec();
+                namespace_top_level = self.ctx.ast.vec1(stmt);
             }
         }
 
-        let mut new_stmts = self.ctx.ast.new_vec();
+        let mut new_stmts = self.ctx.ast.vec();
 
         for stmt in namespace_top_level {
             match stmt {
@@ -282,7 +282,7 @@ impl<'a> TypeScript<'a> {
             let binding =
                 self.ctx.ast.binding_pattern(pattern_kind, Option::<TSTypeAnnotation>::None, false);
             let decl = self.ctx.ast.variable_declarator(SPAN, kind, binding, None, false);
-            self.ctx.ast.new_vec_single(decl)
+            self.ctx.ast.vec1(decl)
         };
         self.ctx.ast.declaration_variable(SPAN, kind, declarations, false)
     }
@@ -308,8 +308,7 @@ impl<'a> TypeScript<'a> {
                 let ident = self.ctx.ast.binding_pattern_kind_binding_identifier(SPAN, arg_name);
                 let pattern =
                     self.ctx.ast.binding_pattern(ident, Option::<TSTypeAnnotation>::None, false);
-                let items =
-                    self.ctx.ast.new_vec_single(self.ctx.ast.plain_formal_parameter(SPAN, pattern));
+                let items = self.ctx.ast.vec1(self.ctx.ast.plain_formal_parameter(SPAN, pattern));
                 self.ctx.ast.formal_parameters(
                     SPAN,
                     FormalParameterKind::FormalParameter,
@@ -357,8 +356,7 @@ impl<'a> TypeScript<'a> {
                         .simple_assignment_target_identifier_reference(SPAN, real_name.clone())
                 };
 
-                let assign_right =
-                    self.ctx.ast.expression_object(SPAN, self.ctx.ast.new_vec(), None);
+                let assign_right = self.ctx.ast.expression_object(SPAN, self.ctx.ast.vec(), None);
                 let op = AssignmentOperator::Assign;
                 let assign_expr = self.ctx.ast.expression_assignment(
                     SPAN,
@@ -388,7 +386,7 @@ impl<'a> TypeScript<'a> {
 
             let op = LogicalOperator::Or;
             let expr = self.ctx.ast.expression_logical(SPAN, logical_left, op, logical_right);
-            self.ctx.ast.new_vec_single(self.ctx.ast.argument_expression(expr))
+            self.ctx.ast.vec1(self.ctx.ast.argument_expression(expr))
         };
 
         let expr = self.ctx.ast.expression_call(
@@ -472,17 +470,17 @@ impl<'a> TypeScript<'a> {
                     );
                 }
             });
-            return self.ctx.ast.new_vec_single(Statement::VariableDeclaration(var_decl));
+            return self.ctx.ast.vec1(Statement::VariableDeclaration(var_decl));
         }
 
         // Now we have pattern in declarators
         // `export const [a] = 1` transforms to `const [a] = 1; N.a = a`
-        let mut assignments = self.ctx.ast.new_vec();
+        let mut assignments = self.ctx.ast.vec();
         var_decl.bound_names(&mut |id| {
             assignments.push(self.create_assignment_statement(name.clone(), id.name.clone()));
         });
 
-        let mut stmts = self.ctx.ast.new_vec_with_capacity(2);
+        let mut stmts = self.ctx.ast.vec_with_capacity(2);
         stmts.push(Statement::VariableDeclaration(var_decl));
         stmts.push(
             self.ctx

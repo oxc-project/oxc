@@ -37,39 +37,42 @@ impl Generator for AstBuilderGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput::One(quote! {
-            #header
-            insert!("#![allow(clippy::default_trait_access, clippy::too_many_arguments, clippy::fn_params_excessive_bools)]");
-            endl!();
+        GeneratorOutput::Stream((
+            "ast_builder",
+            quote! {
+                #header
+                insert!("#![allow(clippy::default_trait_access, clippy::too_many_arguments, clippy::fn_params_excessive_bools)]");
+                endl!();
 
-            use oxc_allocator::{Allocator, Box, IntoIn, Vec};
-            use oxc_span::{Atom, SourceType, Span};
-            use oxc_syntax::{
-                number::{BigintBase, NumberBase},
-                operator::{
-                    AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
-                },
-            };
+                use oxc_allocator::{Allocator, Box, IntoIn, Vec};
+                use oxc_span::{Atom, SourceType, Span};
+                use oxc_syntax::{
+                    number::{BigintBase, NumberBase},
+                    operator::{
+                        AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator, UpdateOperator,
+                    },
+                };
 
-            endl!();
+                endl!();
 
-            #[allow(clippy::wildcard_imports)]
-            use crate::ast::*;
+                #[allow(clippy::wildcard_imports)]
+                use crate::ast::*;
 
-            endl!();
+                endl!();
 
-            /// AST builder for creating AST nodes
-            #[derive(Clone, Copy)]
-            pub struct AstBuilder<'a> {
-                pub allocator: &'a Allocator,
-            }
+                /// AST builder for creating AST nodes
+                #[derive(Clone, Copy)]
+                pub struct AstBuilder<'a> {
+                    pub allocator: &'a Allocator,
+                }
 
-            endl!();
+                endl!();
 
-            impl<'a> AstBuilder<'a> {
-                #(#fns)*
-            }
-        })
+                impl<'a> AstBuilder<'a> {
+                    #(#fns)*
+                }
+            },
+        ))
     }
 }
 

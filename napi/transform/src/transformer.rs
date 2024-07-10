@@ -96,6 +96,8 @@ impl From<ES2015BindingOptions> for ES2015Options {
 pub struct TransformOptions {
     #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
     pub source_type: Option<String>,
+    /// Force jsx parsing,
+    pub jsx: Option<bool>,
     pub typescript: Option<TypeScriptBindingOptions>,
     pub react: Option<ReactBindingOptions>,
     pub es2015: Option<ES2015BindingOptions>,
@@ -145,11 +147,19 @@ pub fn transform(
     let sourcemap = options.as_ref().is_some_and(|x| x.sourcemap.unwrap_or_default());
     let mut errors = vec![];
 
-    let source_type = SourceType::from_path(&filename).unwrap_or_default();
-    let source_type = match options.as_ref().and_then(|options| options.source_type.as_deref()) {
-        Some("script") => source_type.with_script(true),
-        Some("module") => source_type.with_module(true),
-        _ => source_type,
+    let source_type = {
+        let mut source_type = SourceType::from_path(&filename).unwrap_or_default();
+        // Force `script` or `module`
+        match options.as_ref().and_then(|options| options.source_type.as_deref()) {
+            Some("script") => source_type = source_type.with_script(true),
+            Some("module") => source_type = source_type.with_module(true),
+            _ => {}
+        }
+        // Force `jsx`
+        if let Some(jsx) = options.as_ref().and_then(|options| options.jsx.as_ref()) {
+            source_type = source_type.with_jsx(*jsx);
+        }
+        source_type
     };
 
     let allocator = Allocator::default();

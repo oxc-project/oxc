@@ -118,7 +118,7 @@ impl<'a> AutomaticScriptBindings<'a> {
     ) -> BoundIdentifier<'a> {
         let symbol_id =
             ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
-        let variable_name = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
+        let variable_name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(variable_name.clone(), None, symbol_id);
         self.ctx.module_imports.add_require(source, import, front);
@@ -219,7 +219,7 @@ impl<'a> AutomaticModuleBindings<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::FunctionScopedVariable);
-        let local = ctx.ast.new_atom(&ctx.symbols().names[symbol_id]);
+        let local = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
         self.ctx.module_imports.add_import(source, import);
@@ -260,12 +260,12 @@ impl<'a> Pragma<'a> {
                     if property_name.is_empty() || parts.next().is_some() {
                         return Self::invalid(default_property_name, ctx);
                     }
-                    Some(ctx.ast.new_atom(property_name))
+                    Some(ctx.ast.atom(property_name))
                 }
                 None => None,
             };
 
-            let object = ctx.ast.new_atom(object_name);
+            let object = ctx.ast.atom(object_name);
             Self { object, property }
         } else {
             Self::default(default_property_name)
@@ -321,7 +321,7 @@ impl<'a> ReactJsx<'a> {
                             }
                             Ok(source_len) => source_len,
                         };
-                        let jsx_runtime_importer = ctx.ast.new_atom(&format!(
+                        let jsx_runtime_importer = ctx.ast.atom(&format!(
                             "{}/jsx-{}runtime",
                             import_source,
                             if is_development { "dev-" } else { "" }
@@ -497,13 +497,13 @@ impl<'a> ReactJsx<'a> {
         let is_automatic = !is_classic;
         let is_development = self.options.development;
 
-        let mut arguments = self.ast().new_vec();
+        let mut arguments = self.ast().vec();
 
         // The key prop in `<div key={true} />`
         let mut key_prop = None;
 
         // The object properties for the second argument of `React.createElement`
-        let mut properties = self.ast().new_vec();
+        let mut properties = self.ast().vec();
 
         let mut self_attr_span = None;
         let mut source_attr_span = None;
@@ -713,8 +713,7 @@ impl<'a> ReactJsx<'a> {
                 if self.options.throw_if_namespace {
                     self.ctx.error(diagnostics::namespace_does_not_support(namespaced.span));
                 }
-                let name = self.ast().new_atom(&namespaced.to_string());
-                self.ast().expression_string_literal(namespaced.span, name)
+                self.ast().expression_string_literal(namespaced.span, namespaced.to_string())
             }
         }
     }
@@ -884,7 +883,7 @@ impl<'a> ReactJsx<'a> {
                 }
             }
             JSXAttributeName::NamespacedName(namespaced) => {
-                let name = self.ast().new_atom(&namespaced.to_string());
+                let name = self.ast().atom(&namespaced.to_string());
                 let expr = self.ast().expression_string_literal(namespaced.span, name);
                 self.ast().property_key_expression(expr)
             }

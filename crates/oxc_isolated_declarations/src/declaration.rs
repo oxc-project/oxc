@@ -23,7 +23,7 @@ impl<'a> IsolatedDeclarations<'a> {
             None
         } else {
             let declarations =
-                self.ast.new_vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+                self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
                     self.transform_variable_declarator(declarator, check_binding)
                 }));
             Some(self.transform_variable_declaration_with_new_declarations(decl, declarations))
@@ -38,7 +38,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.ast.alloc_variable_declaration(
             decl.span,
             decl.kind,
-            self.ast.new_vec_from_iter(declarations),
+            self.ast.vec_from_iter(declarations),
             self.is_declare(),
         )
     }
@@ -111,7 +111,7 @@ impl<'a> IsolatedDeclarations<'a> {
         check_binding: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
         let declarations =
-            self.ast.new_vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+            self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
                 self.transform_variable_declarator(declarator, check_binding)
             }));
         self.transform_using_declaration_with_new_declarations(decl, declarations)
@@ -138,7 +138,7 @@ impl<'a> IsolatedDeclarations<'a> {
         self.scope.enter_scope(ScopeFlags::TsModuleBlock);
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
-        self.ast.alloc_ts_module_block(SPAN, self.ast.new_vec(), stmts)
+        self.ast.alloc_ts_module_block(SPAN, self.ast.vec(), stmts)
     }
 
     pub fn transform_ts_module_declaration(

@@ -3814,26 +3814,26 @@ impl<'a> AstBuilder<'a> {
     pub fn formal_parameter(
         self,
         span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
         pattern: BindingPattern<'a>,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
         r#override: bool,
-        decorators: Vec<'a, Decorator<'a>>,
     ) -> FormalParameter<'a> {
-        FormalParameter { span, pattern, accessibility, readonly, r#override, decorators }
+        FormalParameter { span, decorators, pattern, accessibility, readonly, r#override }
     }
 
     #[inline]
     pub fn alloc_formal_parameter(
         self,
         span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
         pattern: BindingPattern<'a>,
         accessibility: Option<TSAccessibility>,
         readonly: bool,
         r#override: bool,
-        decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, FormalParameter<'a>> {
-        self.formal_parameter(span, pattern, accessibility, readonly, r#override, decorators)
+        self.formal_parameter(span, decorators, pattern, accessibility, readonly, r#override)
             .into_in(self.allocator)
     }
 
@@ -4131,14 +4131,14 @@ impl<'a> AstBuilder<'a> {
         self,
         r#type: AccessorPropertyType,
         span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
-        decorators: Vec<'a, Decorator<'a>>,
     ) -> ClassElement<'a> {
         ClassElement::AccessorProperty(self.alloc(
-            self.accessor_property(r#type, span, key, value, computed, r#static, decorators),
+            self.accessor_property(r#type, span, decorators, key, value, computed, r#static),
         ))
     }
 
@@ -4510,13 +4510,13 @@ impl<'a> AstBuilder<'a> {
         self,
         r#type: AccessorPropertyType,
         span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
-        decorators: Vec<'a, Decorator<'a>>,
     ) -> AccessorProperty<'a> {
-        AccessorProperty { r#type, span, key, value, computed, r#static, decorators }
+        AccessorProperty { r#type, span, decorators, key, value, computed, r#static }
     }
 
     #[inline]
@@ -4524,13 +4524,13 @@ impl<'a> AstBuilder<'a> {
         self,
         r#type: AccessorPropertyType,
         span: Span,
+        decorators: Vec<'a, Decorator<'a>>,
         key: PropertyKey<'a>,
         value: Option<Expression<'a>>,
         computed: bool,
         r#static: bool,
-        decorators: Vec<'a, Decorator<'a>>,
     ) -> Box<'a, AccessorProperty<'a>> {
-        self.accessor_property(r#type, span, key, value, computed, r#static, decorators)
+        self.accessor_property(r#type, span, decorators, key, value, computed, r#static)
             .into_in(self.allocator)
     }
 

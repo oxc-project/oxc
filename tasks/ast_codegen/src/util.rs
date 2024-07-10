@@ -220,3 +220,10 @@ impl TokenStreamExt for TokenStream {
             .collect()
     }
 }
+
+pub fn write_all_to<S: AsRef<str>>(data: &[u8], path: S) -> std::io::Result<()> {
+    use std::{fs, io::Write};
+    let mut file = fs::File::create(path.as_ref())?;
+    file.write_all(data)?;
+    Ok(())
+}

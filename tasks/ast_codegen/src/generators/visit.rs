@@ -29,6 +29,7 @@ use crate::{
 use super::generated_header;
 
 pub struct VisitGenerator;
+pub struct VisitMutGenerator;
 
 impl Generator for VisitGenerator {
     fn name(&self) -> &'static str {
@@ -36,10 +37,17 @@ impl Generator for VisitGenerator {
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        let visit = (String::from("visit"), generate_visit(ctx));
-        let visit_mut = (String::from("visit_mut"), generate_visit_mut(ctx));
+        GeneratorOutput::Stream(("visit", generate_visit(ctx)))
+    }
+}
 
-        GeneratorOutput::Many(HashMap::from_iter(vec![visit, visit_mut]))
+impl Generator for VisitMutGenerator {
+    fn name(&self) -> &'static str {
+        "VisitMutGenerator"
+    }
+
+    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
+        GeneratorOutput::Stream(("visit_mut", generate_visit_mut(ctx)))
     }
 }
 

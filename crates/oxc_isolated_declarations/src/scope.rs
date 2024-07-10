@@ -38,8 +38,7 @@ pub struct ScopeTree<'a> {
 impl<'a> ScopeTree<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         let ast = AstBuilder::new(allocator);
-        let mut levels = ast.new_vec_with_capacity(1);
-        levels.push(Scope::new(ScopeFlags::Top));
+        let levels = ast.vec1(Scope::new(ScopeFlags::Top));
         Self { levels }
     }
 

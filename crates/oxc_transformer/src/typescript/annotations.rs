@@ -145,7 +145,7 @@ impl<'a> TypeScriptAnnotations<'a> {
         // still considered a module
         if no_modules_remaining && some_modules_deleted {
             let export_decl = ModuleDeclaration::ExportNamedDeclaration(
-                self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.new_vec(), None),
+                self.ctx.ast.plain_export_named_declaration(SPAN, self.ctx.ast.vec(), None),
             );
             program.body.push(self.ctx.ast.statement_module_declaration(export_decl));
         }
@@ -278,8 +278,8 @@ impl<'a> TypeScriptAnnotations<'a> {
                     .get_or_insert_with(|| {
                         self.ctx.ast.alloc_function_body(
                             SPAN,
-                            self.ctx.ast.new_vec(),
-                            self.ctx.ast.new_vec(),
+                            self.ctx.ast.vec(),
+                            self.ctx.ast.vec(),
                         )
                     })
                     .statements
@@ -350,7 +350,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                 matches!(stmt, Statement::ExpressionStatement(stmt) if stmt.expression.is_super_call_expression())
             });
             if has_super_call {
-                let mut new_stmts = self.ctx.ast.new_vec();
+                let mut new_stmts = self.ctx.ast.vec();
                 for stmt in stmts.drain(..) {
                     let is_super_call = matches!(stmt, Statement::ExpressionStatement(ref stmt) if stmt.expression.is_super_call_expression());
                     new_stmts.push(stmt);
@@ -420,11 +420,8 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> Statement<'a> {
         let scope_id = ctx.insert_scope_below_statement(&stmt, ScopeFlags::empty());
-        let block = BlockStatement {
-            span,
-            body: ctx.ast.new_vec_single(stmt),
-            scope_id: Cell::new(Some(scope_id)),
-        };
+        let block =
+            BlockStatement { span, body: ctx.ast.vec1(stmt), scope_id: Cell::new(Some(scope_id)) };
         Statement::BlockStatement(ctx.ast.alloc(block))
     }
 
@@ -457,7 +454,7 @@ impl<'a> TypeScriptAnnotations<'a> {
             let scope_id = ctx.create_scope_child_of_current(ScopeFlags::empty());
             let block = BlockStatement {
                 span: stmt.span(),
-                body: ctx.ast.new_vec(),
+                body: ctx.ast.vec(),
                 scope_id: Cell::new(Some(scope_id)),
             };
             *stmt = Statement::BlockStatement(ctx.ast.alloc(block));

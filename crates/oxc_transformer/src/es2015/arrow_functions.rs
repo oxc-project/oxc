@@ -132,7 +132,7 @@ impl<'a> ArrowFunctions<'a> {
             let stmt = self.ctx.ast.alloc_variable_declaration(
                 SPAN,
                 VariableDeclarationKind::Var,
-                self.ctx.ast.new_vec_single(variable_declarator),
+                self.ctx.ast.vec1(variable_declarator),
                 false,
             );
 
