@@ -6,23 +6,32 @@ mod declare_oxc_lint;
 
 /// Macro used to declare an oxc lint rule
 ///
-/// Every lint declaration consists of 2 parts:
+/// Every lint declaration consists of 2 to 3 parts:
 ///
 /// 1. The documentation
 /// 2. The lint's struct
+/// 3. (optionally) a struct with the rule's config, implementing `JsonSchema`
 ///
 /// # Example
 ///
 /// ```
 /// use oxc_macros::declare_oxc_lint;
+/// use schemars::JsonSchema;
 ///
-/// declare_oxc_lint! {
+/// #[derive(Debug, Default, JsonSchema)]
+/// pub struct NoDebuggerConfig;
+///
+/// #[derive(Debug, Default)]
+/// pub struct NoDebugger;
+///
+/// declare_oxc_lint!(
 ///     /// ### What it does
 ///     /// Checks for usage of the `debugger` statement
 ///     ///
 ///     /// ### Why is this bad?
-///     /// `debugger` statements do not affect functionality when a debugger isn't attached.
-///     /// They're most commonly an accidental debugging leftover.
+///     /// `debugger` statements do not affect functionality when
+///     /// a debugger isn't attached. They're most commonly an
+///     //// accidental debugging leftover.
 ///     ///
 ///     ///
 ///     /// ### Example
@@ -33,8 +42,10 @@ mod declare_oxc_lint;
 ///     /// ```
 ///     ///
 ///     /// ```
-///     pub struct NoDebugger
-/// }
+///     NoDebugger,
+///     correctness,
+///     NoDebuggerConfig
+/// );
 /// ```
 #[proc_macro]
 pub fn declare_oxc_lint(input: TokenStream) -> TokenStream {
