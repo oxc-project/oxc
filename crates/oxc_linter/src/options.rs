@@ -2,6 +2,7 @@ use std::{convert::From, path::PathBuf};
 
 use oxc_diagnostics::{Error, OxcDiagnostic, Severity};
 use rustc_hash::FxHashSet;
+use schemars::{schema::SchemaObject, JsonSchema};
 use serde_json::{Number, Value};
 
 use crate::{
@@ -197,6 +198,45 @@ impl TryFrom<&Number> for AllowWarnDeny {
                 r#"Failed to parse rule severity, expected one of `0`, `1` or `2`, but got {value:?}"#
             ))),
         }
+    }
+}
+
+impl JsonSchema for AllowWarnDeny {
+    fn schema_name() -> String {
+        "AllowWarnDeny".to_string()
+    }
+
+    fn schema_id() -> std::borrow::Cow<'static, str> {
+        "AllowWarnDeny".into()
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        let mut string_schema = <String as JsonSchema>::json_schema(gen).into_object();
+        string_schema.enum_values =
+            Some(vec!["allow".into(), "off".into(), "warn".into(), "error".into(), "deny".into()]);
+        string_schema.metadata().description = Some(
+            r#"Oxlint rule.
+- "allow" or "off": Turn off the rule.
+- "warn": Turn the rule on as a warning (doesn't affect exit code).
+- "error" or "deny": Turn the rule on as an error (will exit with a failure code)."#
+                .to_string(),
+        );
+        let mut int_schema = <u32 as JsonSchema>::json_schema(gen).into_object();
+        int_schema.number().minimum = Some(0.0);
+        int_schema.number().maximum = Some(2.0);
+        int_schema.metadata().description = Some(
+            "Oxlint rule.
+    
+- 0: Turn off the rule.
+- 1: Turn the rule on as a warning (doesn't affect exit code).
+- 2: Turn the rule on as an error (will exit with a failure code)."
+                .to_string(),
+        );
+
+        let mut schema = SchemaObject::default();
+        schema.subschemas().one_of = Some(vec![string_schema.into(), int_schema.into()]);
+
+        schema.into()
     }
 }
 
