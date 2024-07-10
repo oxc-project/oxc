@@ -172,7 +172,7 @@ impl<'a> ParserImpl<'a> {
     /// # Errors
     pub(crate) fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
-            let span = Span::new(self.prev_token_end, self.cur_token().start);
+            let span = Span::new(self.prev_token_end, self.prev_token_end);
             return Err(diagnostics::auto_semicolon_insertion(span));
         }
         if self.at(Kind::Semicolon) {
