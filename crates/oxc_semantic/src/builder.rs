@@ -266,7 +266,6 @@ impl<'a> SemanticBuilder<'a> {
 
     pub fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
-            || self.current_node_flags.contains(NodeFlags::Class)
     }
 
     pub fn set_function_node_flag(&mut self, flag: NodeFlags) {
@@ -447,6 +446,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
 
         let mut flags = flags;
+
+        if !flags.is_strict_mode() && self.current_node_flags.has_class() {
+            // NOTE A class definition is always strict mode code.
+            flags |= ScopeFlags::StrictMode;
+        };
+
         if let Some(parent_scope_id) = parent_scope_id {
             flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
         }
