@@ -157,7 +157,7 @@ pub fn get_array_method_name<'a>(
             //  return function() {}
             // }())
             AstKind::ReturnStatement(_) => {
-                let func_node = get_enclosing_function(parent, ctx).unwrap();
+                let Some(func_node) = get_enclosing_function(parent, ctx) else { break };
                 let func_node = outermost_paren(func_node, ctx);
 
                 // the node that calls func_node
@@ -408,6 +408,7 @@ fn test() {
         ("var every = function() {}", None),
         ("foo[`${every}`](function() {})", None),
         ("foo.every(() => true)", None),
+        ("return function() {}", None),
     ];
 
     let fail = vec![

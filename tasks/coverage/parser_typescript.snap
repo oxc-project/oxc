@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
 Positive Passed: 5272/5283 (99.79%)
-Negative Passed: 1085/4875 (22.26%)
+Negative Passed: 1094/4875 (22.44%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -27,7 +27,6 @@ Expect Syntax Error: "compiler/ParameterList8.ts"
 Expect Syntax Error: "compiler/abstractClassInLocalScopeIsAbstract.ts"
 Expect Syntax Error: "compiler/abstractClassUnionInstantiation.ts"
 Expect Syntax Error: "compiler/abstractPropertyInConstructor.ts"
-Expect Syntax Error: "compiler/abstractPropertyNegative.ts"
 Expect Syntax Error: "compiler/accessInstanceMemberFromStaticMethod01.ts"
 Expect Syntax Error: "compiler/accessStaticMemberFromInstanceMethod01.ts"
 Expect Syntax Error: "compiler/accessorAccidentalCallDiagnostic.ts"
@@ -100,7 +99,6 @@ Expect Syntax Error: "compiler/arrayOfSubtypeIsAssignableToReadonlyArray.ts"
 Expect Syntax Error: "compiler/arrayReferenceWithoutTypeArgs.ts"
 Expect Syntax Error: "compiler/arrayToLocaleStringES5.ts"
 Expect Syntax Error: "compiler/arrowFunctionInConstructorArgument1.ts"
-Expect Syntax Error: "compiler/asiAbstract.ts"
 Expect Syntax Error: "compiler/asiPublicPrivateProtected.ts"
 Expect Syntax Error: "compiler/assignLambdaToNominalSubtypeOfFunction.ts"
 Expect Syntax Error: "compiler/assignToEnum.ts"
@@ -1952,10 +1950,8 @@ Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDe
 Expect Syntax Error: "conformance/async/es6/functionDeclarations/asyncFunctionDeclaration8_es6.ts"
 Expect Syntax Error: "conformance/asyncGenerators/asyncGeneratorParameterEvaluation.ts"
 Expect Syntax Error: "conformance/classes/awaitAndYieldInProperty.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAssignabilityConstructorFunction.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractClinterfaceAssignability.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructorAssignability.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractDeclarations.d.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractExtends.ts"
@@ -1966,9 +1962,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance1.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInheritance2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations1.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMixedWithModifiers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverloads.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractOverrideWithAbstract.ts"
@@ -1976,7 +1969,6 @@ Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSingleLineDecl.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractSuperCalls.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethod1.ts"
-Expect Syntax Error: "conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classAndInterfaceMergeConflictingMembers.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingClassLikeType.ts"
 Expect Syntax Error: "conformance/classes/classDeclarations/classExtendingNonConstructor.ts"
@@ -2118,7 +2110,6 @@ Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOv
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty3.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty4.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty6.ts"
-Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationES2022.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/assignParameterPropertyToPropertyDeclarationESNext.ts"
 Expect Syntax Error: "conformance/classes/propertyMemberDeclarations/autoAccessor1.ts"
@@ -3901,7 +3892,7 @@ Expect to Parse: "conformance/esDecorators/esDecorators-decoratorExpression.1.ts
     ╭─[conformance/esDecorators/esDecorators-decoratorExpression.1.ts:13:12]
  12 │ 
  13 │ { @x?.["y"] class C {} }
-    ·            ─
+    ·            ▲
  14 │ 
     ╰────
   help: Try insert a semicolon here
@@ -3959,7 +3950,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/ClassDeclaration26.ts:2:17]
  1 │ class C {
  2 │     public const var export foo = 10;
-   ·                 ─
+   ·                 ▲
  3 │ 
    ╰────
   help: Try insert a semicolon here
@@ -3968,7 +3959,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/ClassDeclarationWithInvalidConstOnPropertyDeclaration.ts:2:15]
  1 │ class AtomicNumbers {
  2 │   static const H = 1;
-   ·               ─
+   ·               ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -4023,6 +4014,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                                                                                                                                                                                                     ▲
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1253): Abstract properties can only appear within an abstract class.
+    ╭─[compiler/abstractPropertyNegative.ts:15:14]
+ 14 │     readonly ro = "readonly please";
+ 15 │     abstract notAllowed: string;
+    ·              ──────────
+ 16 │     get concreteWithNoBody(): string;
+    ╰────
 
   × Unexpected token
    ╭─[compiler/accessorBodyInTypeContext.ts:2:15]
@@ -4116,7 +4115,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/anonymousModules.ts:1:7]
  1 │ module {
-   ·       ─
+   ·       ▲
  2 │     export var foo = 1;
    ╰────
   help: Try insert a semicolon here
@@ -4184,6 +4183,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·                ┬
    ·                ╰── `=>` expected
  3 │ 
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[compiler/asiAbstract.ts:3:12]
+ 2 │ class NonAbstractClass {
+ 3 │   abstract s();
+   ·            ─
+ 4 │ }
    ╰────
 
   × TS1108: A 'return' statement can only be used within a function body
@@ -4692,7 +4699,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/castOfYield.ts:4:19]
  3 │     // Unlike await, yield is not allowed to appear in a simple unary expression.
  4 │     <number> yield 0;
-   ·                   ─
+   ·                   ▲
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -4722,7 +4729,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/class2.ts:1:35]
  1 │ class foo { constructor() { static f = 3; } }
-   ·                                   ─
+   ·                                   ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4742,7 +4749,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/classExpressionPropertyModifiers.ts:3:11]
  2 │     declare [Symbol.toStringTag] = "uh";
  3 │     export foo = 1;
-   ·           ─
+   ·           ▲
  4 │ }
    ╰────
   help: Try insert a semicolon here
@@ -4783,7 +4790,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/classUpdateTests.ts:93:9]
  92 │     constructor() {
  93 │         public p1 = 0; // ERROR
-    ·               ─
+    ·               ▲
  94 │     }
     ╰────
   help: Try insert a semicolon here
@@ -5331,7 +5338,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/commonMissingSemicolons.ts:2:6]
  1 │ async function myAsyncFunction1() {}
  2 │ asynd function myAsyncFunction2() {}
-   ·      ─
+   ·      ▲
  3 │ sasync function myAsyncFunction3() {}
    ╰────
   help: Try insert a semicolon here
@@ -5617,7 +5624,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/constInClassExpression.ts:2:10]
  1 │ let C = class {
  2 │     const a = 4;
-   ·          ─
+   ·          ▲
  3 │ };
    ╰────
   help: Try insert a semicolon here
@@ -6319,7 +6326,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/enumConflictsWithGlobalIdentifier.ts:5:4]
  4 │ var x = IgnoreRulesSpecific.
  5 │ var y = Position.IgnoreRulesSpecific;
-   ·    ─
+   ·    ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -6337,7 +6344,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/enumMemberResolution.ts:5:4]
  4 │ var x = IgnoreRulesSpecific. // error
  5 │ var y = 1;
-   ·    ─
+   ·    ▲
  6 │ var z = Position2.IgnoreRulesSpecific; // no error
    ╰────
   help: Try insert a semicolon here
@@ -6385,7 +6392,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/errorRecoveryWithDotFollowedByNamespaceKeyword.ts:7:18]
  6 │ 
  7 │         namespace B {
-   ·                  ─
+   ·                  ▲
  8 │             export function baz() { }
    ╰────
   help: Try insert a semicolon here
@@ -6629,7 +6636,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/externModule.ts:1:8]
  1 │ declare module {
-   ·        ─
+   ·        ▲
  2 │     export class XDate {
    ╰────
   help: Try insert a semicolon here
@@ -6647,7 +6654,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/fatarrowfunctionsOptionalArgs.ts:88:22]
  87 │ //multiple levels
  88 │ (a?) => { return a; } ? (b)=>(c)=>81 : (c)=>(d)=>82;
-    ·                      ─
+    ·                      ▲
  89 │ 
     ╰────
   help: Try insert a semicolon here
@@ -6678,7 +6685,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/fatarrowfunctionsOptionalArgsErrors2.ts:1:22]
  1 │ var tt1 = (a, (b, c)) => a+b+c;
-   ·                      ─
+   ·                      ▲
  2 │ var tt2 = ((a), b, c) => a+b+c;
    ╰────
   help: Try insert a semicolon here
@@ -6842,7 +6849,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/illegalModifiersOnClassElements.ts:3:11]
  2 │     declare foo = 1;
  3 │     export bar = 1;
-   ·           ─
+   ·           ▲
  4 │ }
    ╰────
   help: Try insert a semicolon here
@@ -6995,7 +7002,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/innerModExport1.ts:5:11]
  4 │     var non_export_var: number;
  5 │     module {
-   ·           ─
+   ·           ▲
  6 │         var non_export_var = 0;
    ╰────
   help: Try insert a semicolon here
@@ -7004,7 +7011,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/innerModExport2.ts:5:11]
  4 │     var non_export_var: number;
  5 │     module {
-   ·           ─
+   ·           ▲
  6 │         var non_export_var = 0;
    ╰────
   help: Try insert a semicolon here
@@ -7028,7 +7035,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/interfaceNaming1.ts:1:10]
  1 │ interface { }
-   ·          ─
+   ·          ▲
  2 │ interface interface{ }
    ╰────
   help: Try insert a semicolon here
@@ -7338,7 +7345,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/letDeclarations-invalidContexts.ts:3:8]
  2 │ if (true) 
  3 │     let l1 = 0;
-   ·        ─
+   ·        ▲
  4 │ else 
    ╰────
   help: Try insert a semicolon here
@@ -7491,7 +7498,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/letDeclarations-scopes.ts:43:15]
  42 │ if (true) {
  43 │     label: let l = 0;
-    ·               ─
+    ·               ▲
  44 │     n = l;
     ╰────
   help: Try insert a semicolon here
@@ -7500,7 +7507,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/letDeclarations-validContexts.ts:31:15]
  30 │ if (true) {
  31 │     label: let l8 = 0;
-    ·               ─
+    ·               ▲
  32 │ }
     ╰────
   help: Try insert a semicolon here
@@ -7957,7 +7964,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/moduleKeywordRepeatError.ts:3:14]
  2 │ 
  3 │ module.module { }
-   ·              ─
+   ·              ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -7965,7 +7972,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[compiler/moduleProperty1.ts:9:12]
   8 │     var x = 10;  // variable local to this module body
   9 │     private y = x;  // can't use private in modules
-    ·            ─
+    ·            ▲
  10 │     export var z = y;  // property visible to any code
     ╰────
   help: Try insert a semicolon here
@@ -8060,7 +8067,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/nestedGlobalNamespaceInClass.ts:3:11]
  2 │ class C {
  3 │     global x
-   ·           ─
+   ·           ▲
  4 │ }
    ╰────
   help: Try insert a semicolon here
@@ -8656,7 +8663,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/parseInvalidNames.ts:1:10]
  1 │ namespace 100 {}
-   ·          ─
+   ·          ▲
  2 │ interface 100 {}
    ╰────
   help: Try insert a semicolon here
@@ -8819,7 +8826,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/propertyWrappedInTry.ts:3:8]
  2 │ 
  3 │     try {
-   ·        ─
+   ·        ▲
  4 │ 
    ╰────
   help: Try insert a semicolon here
@@ -9286,7 +9293,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/staticClassProps.ts:4:15]
  3 │     public foo() {
  4 │         static z = 1;
-   ·               ─
+   ·               ▲
  5 │     }
    ╰────
   help: Try insert a semicolon here
@@ -9319,7 +9326,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/staticsInConstructorBodies.ts:3:9]
  2 │     constructor() {
  3 │         static p1 = 0; // ERROR
-   ·               ─
+   ·               ▲
  4 │         static m1() {} // ERROR
    ╰────
   help: Try insert a semicolon here
@@ -10095,7 +10102,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/taggedTemplatesWithIncompleteNoSubstitutionTemplate1.ts:5:2]
  4 │ // Incomplete call, not enough parameters.
  5 │ f `123qdawdrqw
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -10110,7 +10117,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/taggedTemplatesWithIncompleteNoSubstitutionTemplate2.ts:5:2]
  4 │ // Incomplete call, not enough parameters, at EOF.
  5 │ f `
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -10427,7 +10434,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[compiler/typeAliasDeclareKeywordNewlines.ts:4:8]
  3 │ // The following is invalid but should declare a type alias named 'T1':
  4 │ declare type /*unexpected newline*/
-   ·        ─
+   ·        ▲
  5 │ T1 = null;
    ╰────
   help: Try insert a semicolon here
@@ -10527,7 +10534,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/unparenthesizedConstructorTypeInUnionOrIntersection.ts:1:23]
  1 │ type U1 = string | new () => void;
-   ·                       ─
+   ·                       ▲
  2 │ type U2 = string | new (foo: number) => void
    ╰────
   help: Try insert a semicolon here
@@ -10569,7 +10576,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/validRegexp.ts:1:23]
  1 │ var x = / [a - z /]$ / i;
-   ·                       ─
+   ·                       ▲
  2 │ var x1 = /[a-z/]$/i;
    ╰────
   help: Try insert a semicolon here
@@ -10647,7 +10654,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath.ts:11:8]
  10 │ 
  11 │ declare module debugger {} // still an error
-    ·        ─
+    ·        ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -10655,7 +10662,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/ambient/ambientModuleDeclarationWithReservedIdentifierInDottedPath2.ts:9:8]
  8 │ 
  9 │ declare namespace debugger {} // still an error
-   ·        ─
+   ·        ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -10831,6 +10838,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es5/asyncModule_es5.ts:1:1]
+ 1 │ async module M {
+   · ─────
+ 2 │ }
+   ╰────
+
   × Expected `(` but found `Identifier`
    ╭─[conformance/async/es5/asyncSetter_es5.ts:2:13]
  1 │ class C {
@@ -10966,6 +10980,13 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'async' modifier cannot be used here.
+   ╭─[conformance/async/es6/asyncModule_es6.ts:1:1]
+ 1 │ async module M {   
+   · ─────
+ 2 │ }
+   ╰────
+
   × Expected `(` but found `Identifier`
    ╭─[conformance/async/es6/asyncSetter_es6.ts:2:13]
  1 │ class C {
@@ -11074,6 +11095,46 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  47 │ }
     ╰────
 
+  × TS(1318): Accessor 'aa' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
+ 2 │    abstract get a();
+ 3 │    abstract get aa() { return 1; } // error
+   ·                 ──
+ 4 │    abstract set b(x: string);
+   ╰────
+
+  × TS(1245): Method 'aa' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:3:17]
+ 2 │    abstract get a();
+ 3 │    abstract get aa() { return 1; } // error
+   ·                 ──
+ 4 │    abstract set b(x: string);
+   ╰────
+
+  × TS(1318): Accessor 'bb' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
+ 4 │    abstract set b(x: string);
+ 5 │    abstract set bb(x: string) {} // error
+   ·                 ──
+ 6 │ }
+   ╰────
+
+  × TS(1245): Method 'bb' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractAccessor.ts:5:17]
+ 4 │    abstract set b(x: string);
+ 5 │    abstract set bb(x: string) {} // error
+   ·                 ──
+ 6 │ }
+   ╰────
+
+  × TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractConstructor.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract constructor() {}
+   ·              ───────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractCrashedOnce.ts:8:5]
  7 │         this.
@@ -11081,6 +11142,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·     ─
  9 │ }
    ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractInstantiations2.ts:50:14]
+ 49 │ class H { // error -- not declared abstract
+ 50 │     abstract baz() : number;
+    ·              ───
+ 51 │ }
+    ╰────
 
   × Unexpected token
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractManyKeywords.ts:3:1]
@@ -11113,6 +11182,62 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                 ╰── It can not be redeclared here
  18 │ 
     ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:2:14]
+ 1 │ class A {
+ 2 │     abstract foo();
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodInNonAbstractClass.ts:6:14]
+ 5 │ class B {
+ 6 │     abstract foo() {}
+   ·              ───
+ 7 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract foo() {}
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractMethodWithImplementation.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract foo() {}
+   ·              ───
+ 3 │ }
+   ╰────
+
+  × TS(1244): Abstract methods can only appear within an abstract class.
+   ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractUsingAbstractMethods2.ts:2:14]
+ 1 │ class A {
+ 2 │     abstract foo();
+   ·              ───
+ 3 │ }
+   ╰────
 
   × 'abstract' modifier cannot be used here.
    ╭─[conformance/classes/classDeclarations/classAbstractKeyword/classAbstractWithInterface.ts:1:1]
@@ -11150,7 +11275,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/classes/classDeclarations/classBody/classBodyWithStatements.ts:2:8]
  1 │ class C {
  2 │     var x = 1;
-   ·        ─
+   ·        ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -12347,7 +12472,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/classes/nestedClassDeclaration.ts:5:10]
  4 │     x: string;
  5 │     class C2 {
-   ·          ─
+   ·          ▲
  6 │     }
    ╰────
   help: Try insert a semicolon here
@@ -12360,6 +12485,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  43 │ }
     ╰────
   help: Remove the duplicate modifier.
+
+  × TS(1267): Property 'p' cannot have an initializer because it is marked abstract.
+   ╭─[conformance/classes/propertyMemberDeclarations/accessorsOverrideProperty7.ts:2:14]
+ 1 │ abstract class A {
+ 2 │     abstract p = 'yep'
+   ·              ─
+ 3 │ }
+   ╰────
 
   × Identifier `accessor` has already been declared
     ╭─[conformance/classes/propertyMemberDeclarations/autoAccessor11.ts:5:12]
@@ -12555,7 +12688,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/decorators/class/accessor/decoratorOnClassAccessor3.ts:4:11]
  3 │ class C {
  4 │     public @dec get accessor() { return 1; }
-   ·           ─
+   ·           ▲
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -12564,7 +12697,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/decorators/class/accessor/decoratorOnClassAccessor6.ts:4:11]
  3 │ class C {
  4 │     public @dec set accessor(value: number) { }
-   ·           ─
+   ·           ▲
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -12582,7 +12715,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/decorators/class/method/decoratorOnClassMethod17.ts:4:17]
  3 │ class Foo {
  4 │     private prop @decorator
-   ·                 ─
+   ·                 ▲
  5 │     foo() {
    ╰────
   help: Try insert a semicolon here
@@ -12591,7 +12724,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/decorators/class/method/decoratorOnClassMethod3.ts:4:11]
  3 │ class C {
  4 │     public @dec method() {}
-   ·           ─
+   ·           ▲
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -12617,7 +12750,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/decorators/class/property/decoratorOnClassProperty3.ts:4:11]
  3 │ class C {
  4 │     public @dec prop;
-   ·           ─
+   ·           ▲
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -13711,7 +13844,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/es6/templates/templateStringInModuleName.ts:1:8]
  1 │ declare module `M1` {
-   ·        ─
+   ·        ▲
  2 │ }
    ╰────
   help: Try insert a semicolon here
@@ -13719,7 +13852,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/es6/templates/templateStringInModuleNameES6.ts:1:8]
  1 │ declare module `M1` {
-   ·        ─
+   ·        ▲
  2 │ }
    ╰────
   help: Try insert a semicolon here
@@ -15704,7 +15837,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/expressions/newOperator/newOperatorErrorCases.ts:26:15]
  25 │ // Construct expression with no parentheses for construct signature with > 0 parameters
  26 │ var b = new C0 32, ''; // Parse error
-    ·               ─
+    ·               ▲
  27 │ 
     ╰────
   help: Try insert a semicolon here
@@ -15980,7 +16113,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/expressions/typeGuards/typeGuardFunctionErrors.ts:17:56]
  16 │ 
  17 │ function hasTypeGuardTypeInsideTypeGuardType(x): x is x is A {
-    ·                                                        ─
+    ·                                                        ▲
  18 │     return true;
     ╰────
   help: Try insert a semicolon here
@@ -15989,7 +16122,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/expressions/typeGuards/typeGuardOfFormThisMember.ts:4:14]
  3 │     export class FileSystemObject {
  4 │         isFSO: this is FileSystemObject;
-   ·                    ─
+   ·                    ▲
  5 │         get isFile(): this is File {
    ╰────
   help: Try insert a semicolon here
@@ -15998,7 +16131,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/expressions/typeGuards/typeGuardOfFormThisMemberErrors.ts:4:14]
  3 │     export class FileSystemObject {
  4 │         isFSO: this is FileSystemObject;
-   ·                    ─
+   ·                    ▲
  5 │         get isFile(): this is File {
    ╰────
   help: Try insert a semicolon here
@@ -16006,14 +16139,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/expressions/typeGuards/typePredicateOnVariableDeclaration01.ts:1:12]
  1 │ var x: this is string;
-   ·            ─
+   ·            ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/expressions/typeGuards/typePredicateOnVariableDeclaration02.ts:1:9]
  1 │ var y: z is number;
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -16070,7 +16203,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/expressions/unaryOperators/deleteOperator/deleteOperatorInvalidOperations.ts:5:19]
  4 │ // operand before delete operator
  5 │ var BOOLEAN1 = ANY delete ;     //expect error
-   ·                   ─
+   ·                   ▲
  6 │ 
    ╰────
   help: Try insert a semicolon here
@@ -16142,7 +16275,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/expressions/unaryOperators/typeofOperator/typeofOperatorInvalidOperations.ts:4:14]
  3 │ // opreand before typeof
  4 │ var ANY = ANY typeof ;    //expect error
-   ·              ─
+   ·              ▲
  5 │ 
    ╰────
   help: Try insert a semicolon here
@@ -16151,7 +16284,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/expressions/unaryOperators/voidOperator/voidOperatorInvalidOperations.ts:4:14]
  3 │ // operand before void
  4 │ var ANY = ANY void ;    //expect error
-   ·              ─
+   ·              ▲
  5 │ 
    ╰────
   help: Try insert a semicolon here
@@ -16432,7 +16565,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/interfaces/interfaceDeclarations/interfacesWithPredefinedTypesAsNames.ts:5:10]
  4 │ interface boolean { }
  5 │ interface void {}
-   ·          ─
+   ·          ▲
  6 │ interface unknown {}
    ╰────
   help: Try insert a semicolon here
@@ -16500,6 +16633,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'public' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:19:5]
+ 18 │ module Y3 {
+ 19 │     public module Module {
+    ·     ──────
+ 20 │         class A { s: string }
+    ╰────
+
+  × 'public' modifier cannot be used here.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:25:5]
  24 │ module Y4 {
  25 │     public enum Color { Blue, Red }
@@ -16556,6 +16697,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╰────
 
   × 'private' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:44:5]
+ 43 │ module YY3 {
+ 44 │     private module Module {
+    ·     ───────
+ 45 │         class A { s: string }
+    ╰────
+
+  × 'private' modifier cannot be used here.
     ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:50:5]
  49 │ module YY4 {
  50 │     private enum Color { Blue, Red }
@@ -16601,6 +16750,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  66 │     static class B extends AA<string> implements I { id: number }
     ·     ──────
  67 │ }
+    ╰────
+
+  × 'static' modifier cannot be used here.
+    ╭─[conformance/internalModules/moduleBody/invalidModuleWithStatementsOfEveryKind.ts:70:5]
+ 69 │ module YYY3 {
+ 70 │     static module Module {
+    ·     ──────
+ 71 │         class A { s: string }
     ╰────
 
   × 'static' modifier cannot be used here.
@@ -16906,7 +17063,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/ArrowFunctionExpressions/parserArrowFunctionExpression2.ts:1:14]
  1 │ a = () => { } || a
-   ·              ─
+   ·              ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -16929,7 +17086,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration3.ts:2:9]
  1 │ class C {
  2 │   export constructor() { }
-   ·         ─
+   ·         ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -17099,7 +17256,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/Blocks/parserErrorRecovery_Block3.ts:4:12]
  3 │ 
  4 │     private b(): boolean {
-   ·            ─
+   ·            ▲
  5 │     }
    ╰────
   help: Try insert a semicolon here
@@ -17108,7 +17265,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement1.ts:5:6]
  4 │ // this as a source unit element.
  5 │ class D {
-   ·      ─
+   ·      ▲
  6 │ }
    ╰────
   help: Try insert a semicolon here
@@ -17117,7 +17274,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/ClassElements/parserErrorRecovery_ClassElement2.ts:4:7]
  3 │ 
  4 │   enum E {
-   ·       ─
+   ·       ▲
  5 │   }
    ╰────
   help: Try insert a semicolon here
@@ -17214,7 +17371,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement5.ts:5:7]
  4 │   }
  5 │   f2() {
-   ·       ─
+   ·       ▲
  6 │   }
    ╰────
   help: Try insert a semicolon here
@@ -17223,7 +17380,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/IfStatements/parserErrorRecoveryIfStatement6.ts:5:9]
  4 │   }
  5 │   public f2() {
-   ·         ─
+   ·         ▲
  6 │   }
    ╰────
   help: Try insert a semicolon here
@@ -17232,7 +17389,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/parser/ecmascript5/ErrorRecovery/IncompleteMemberVariables/parserErrorRecovery_IncompleteMemberVariable2.ts:12:21]
  11 │ 
  12 │         public con:C "hello";
-    ·                     ─
+    ·                     ▲
  13 │         // Constructor
     ╰────
   help: Try insert a semicolon here
@@ -17414,7 +17571,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserErrantAccessibilityModifierInModule1.ts:3:12]
  2 │     var x=10;  // variable local to this module body
  3 │     private y=x;  // property visible only in module
-   ·            ─
+   ·            ▲
  4 │     export var z=y;  // property visible to any code
    ╰────
   help: Try insert a semicolon here
@@ -17422,14 +17579,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserErrantEqualsGreaterThanAfterFunction1.ts:1:13]
  1 │ function f() => 4;
-   ·             ─
+   ·             ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserErrantEqualsGreaterThanAfterFunction2.ts:1:17]
  1 │ function f(p: A) => p;
-   ·                 ─
+   ·                 ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -17444,7 +17601,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserFuzz1.ts:1:8]
  1 │ cla <ss {
-   ·        ─
+   ·        ▲
  2 │   _ static try
    ╰────
   help: Try insert a semicolon here
@@ -17460,7 +17617,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserPublicBreak1.ts:1:7]
  1 │ public break;
-   ·       ─
+   ·       ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -17475,7 +17632,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserUnfinishedTypeNameBeforeKeyword1.ts:2:7]
  1 │ var x: TypeModule1.
  2 │ module TypeModule2 {
-   ·       ─
+   ·       ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -17490,7 +17647,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserUnterminatedGeneric2.ts:2:33]
  1 │ declare module ng {
  2 │     interfaceICompiledExpression {
-   ·                                 ─
+   ·                                 ▲
  3 │         (context: any, locals?: any): any;
    ╰────
   help: Try insert a semicolon here
@@ -17528,14 +17685,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/Expressions/parserPostfixPostfixExpression1.ts:1:4]
  1 │ a++ ++;
-   ·    ─
+   ·    ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/Expressions/parserPostfixUnaryExpression1.ts:1:7]
  1 │ foo ++ ++;
-   ·       ─
+   ·       ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -17695,7 +17852,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration9.ts:2:10]
  1 │ class C {
  2 │    export [x: string]: string;
-   ·          ─
+   ·          ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -17796,7 +17953,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration10.ts:2:11]
  1 │ class C {
  2 │     export get Foo() { }
-   ·           ─
+   ·           ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -17863,7 +18020,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration4.ts:2:11]
  1 │ class C {
  2 │     export Foo() { }
-   ·           ─
+   ·           ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -17937,7 +18094,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration4.ts:2:9]
  1 │ class C {
  2 │   export Foo;
-   ·         ─
+   ·         ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -18053,11 +18210,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × 'protected' modifier cannot be used here.
+   ╭─[conformance/parser/ecmascript5/Protected/Protected2.ts:1:1]
+ 1 │ protected module M {
+   · ─────────
+ 2 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
  1429 │         // Regex for parsing options in the format "@Alpha: Value of any sort"
  1430 │         private optionRegex = /^[\/]{2}\s*@(\w+):\s*(\S*)/gm;  // multiple matches on multiple lines
-      ·                ─
+      ·                ▲
  1431 │ 
       ╰────
   help: Try insert a semicolon here
@@ -18110,7 +18274,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser512325.ts:1:21]
  1 │ var tt = (a, (b, c)) => a+b+c;
-   ·                     ─
+   ·                     ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -18124,7 +18288,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser521128.ts:1:14]
  1 │ module.module { }
-   ·              ─
+   ·              ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -18146,7 +18310,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:6]
  1 │ class Foo2 {
  2 │   var icecream = "chocolate";
-   ·      ─
+   ·      ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -18278,7 +18442,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/SkippedTokens/parserSkippedTokens13.ts:1:9]
  1 │ /regexp/ \ ;
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -18965,7 +19129,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName33.ts:4:11]
  3 │     [e] = 0
  4 │     [e2]() { }
-   ·           ─
+   ·           ▲
  5 │ }
    ╰────
   help: Try insert a semicolon here
@@ -19412,7 +19576,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/statements/VariableStatements/usingDeclarations/awaitUsingDeclarations.6.ts:2:16]
  1 │ {
  2 │     await using {a} = null;
-   ·                ─
+   ·                ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -19494,7 +19658,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/statements/VariableStatements/usingDeclarations/usingDeclarations.6.ts:2:10]
  1 │ {
  2 │     using {a} = null;
-   ·          ─
+   ·          ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -19917,7 +20081,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/statements/labeledStatements/labeledStatementWithLabel.ts:8:11]
  7 │ label: var a = 1;
  8 │ label: let b = 1;
-   ·           ─
+   ·           ▲
  9 │ label: const c = 1;
    ╰────
   help: Try insert a semicolon here
@@ -19951,7 +20115,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/statements/labeledStatements/labeledStatementWithLabel_es2015.ts:8:11]
  7 │ label: var a = 1;
  8 │ label: let b = 1;
-   ·           ─
+   ·           ▲
  9 │ label: const c = 1;
    ╰────
   help: Try insert a semicolon here
@@ -19985,7 +20149,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ╭─[conformance/statements/labeledStatements/labeledStatementWithLabel_strict.ts:9:11]
   8 │ label: var a = 1;
   9 │ label: let b = 1;
-    ·           ─
+    ·           ▲
  10 │ label: const c = 1;
     ╰────
   help: Try insert a semicolon here
@@ -21123,7 +21287,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╭─[conformance/types/typeAliases/reservedNamesInAliases.ts:6:5]
  5 │ type string = I;
  6 │ type void = I;
-   ·     ─
+   ·     ▲
  7 │ type object = I;
    ╰────
   help: Try insert a semicolon here

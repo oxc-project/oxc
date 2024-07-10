@@ -6,6 +6,7 @@
 mod annotation_comment;
 mod context;
 mod gen;
+mod gen_comment;
 mod operator;
 mod sourcemap_builder;
 
@@ -516,13 +517,13 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 }
 
-pub(crate) type MoveCommentMap = FxHashMap<u32, (u32, Comment)>;
+pub(crate) type MoveCommentMap = FxHashMap<u32, Comment>;
 
 // Comment related
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
-    /// This method to avoid rustc borrow checker issue.
+    /// Avoid issue related to rustc borrow checker .
     /// Since if you want to print a range of source code, you need to borrow the source code
-    /// immutable first, and call the [Self::print_str] which is a mutable borrow.
+    /// as immutable first, and call the [Self::print_str] which is a mutable borrow.
     fn print_range_of_source_code(&mut self, range: Range<usize>) {
         self.code.extend_from_slice(self.source_text[range].as_bytes());
     }
@@ -540,15 +541,15 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     ///
     ///  }, b = 10000;
     /// ```
-    fn move_comment(&mut self, position: u32, full_comment_info: (u32, Comment)) {
+    fn move_comment(&mut self, position: u32, full_comment_info: Comment) {
         self.move_comment_map.insert(position, full_comment_info);
     }
 
-    fn try_get_leading_comment(&self, start: u32) -> Option<(&u32, &Comment)> {
+    fn try_get_leading_comment(&self, start: u32) -> Option<&Comment> {
         self.trivias.comments_range(0..start).next_back()
     }
 
-    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<(u32, Comment)> {
+    fn try_take_moved_comment(&mut self, node_start: u32) -> Option<Comment> {
         self.move_comment_map.remove(&node_start)
     }
 }

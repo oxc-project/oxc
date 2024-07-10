@@ -27,6 +27,28 @@ expression: json
     }
   },
   "definitions": {
+    "AllowWarnDeny": {
+      "oneOf": [
+        {
+          "description": "Oxlint rule.\n- \"allow\" or \"off\": Turn off the rule.\n- \"warn\": Turn the rule on as a warning (doesn't affect exit code).\n- \"error\" or \"deny\": Turn the rule on as an error (will exit with a failure code).",
+          "type": "string",
+          "enum": [
+            "allow",
+            "off",
+            "warn",
+            "error",
+            "deny"
+          ]
+        },
+        {
+          "description": "Oxlint rule.\n    \n- 0: Turn off the rule.\n- 1: Turn the rule on as a warning (doesn't affect exit code).\n- 2: Turn the rule on as an error (will exit with a failure code).",
+          "type": "integer",
+          "format": "uint32",
+          "maximum": 2.0,
+          "minimum": 0.0
+        }
+      ]
+    },
     "CustomComponent": {
       "anyOf": [
         {
@@ -70,12 +92,7 @@ expression: json
     "DummyRule": {
       "anyOf": [
         {
-          "type": "integer",
-          "format": "uint",
-          "minimum": 0.0
-        },
-        {
-          "type": "string"
+          "$ref": "#/definitions/AllowWarnDeny"
         },
         {
           "type": "array",

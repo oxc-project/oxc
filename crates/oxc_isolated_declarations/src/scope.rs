@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -5,7 +7,7 @@ use oxc_ast::AstBuilder;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{visit::walk::*, Visit};
 use oxc_span::Atom;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::FxHashSet;
 
 /// Declaration scope.
@@ -38,8 +40,7 @@ pub struct ScopeTree<'a> {
 impl<'a> ScopeTree<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         let ast = AstBuilder::new(allocator);
-        let mut levels = ast.new_vec_with_capacity(1);
-        levels.push(Scope::new(ScopeFlags::Top));
+        let levels = ast.vec1(Scope::new(ScopeFlags::Top));
         Self { levels }
     }
 
@@ -101,7 +102,7 @@ impl<'a> ScopeTree<'a> {
 }
 
 impl<'a> Visit<'a> for ScopeTree<'a> {
-    fn enter_scope(&mut self, flags: ScopeFlags) {
+    fn enter_scope(&mut self, flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         let scope = Scope::new(flags);
         self.levels.push(scope);
     }
@@ -217,7 +218,8 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     /// Because the type parameter is can be used in following nodes
     /// until the end of the function. So we leave the scope in the parent node (Function)
     fn visit_ts_type_parameter_declaration(&mut self, decl: &TSTypeParameterDeclaration<'a>) {
-        self.enter_scope(ScopeFlags::empty());
+        // TODO: doesn't have a scope_id!
+        self.enter_scope(ScopeFlags::empty(), &Cell::default());
         decl.params.iter().for_each(|param| self.visit_ts_type_parameter(param));
         // exit scope in parent AST node
     }
@@ -292,8 +294,9 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     ///             ^^^^^^^^^^^^^^^^^^^^
     /// We need to add both `T` and `K` to the scope
     fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
+        // TODO: doesn't have a scope_id!
+        self.enter_scope(ScopeFlags::empty(), &Cell::default());
         // copy from walk_ts_mapped_type
-        self.enter_scope(ScopeFlags::empty());
         self.visit_ts_type_parameter(&ty.type_parameter);
         if let Some(name) = &ty.name_type {
             self.visit_ts_type(name);
@@ -309,7 +312,8 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     ///                                                  `Item` is a type parameter
     /// We need to add `Item` to the scope
     fn visit_conditional_expression(&mut self, expr: &ConditionalExpression<'a>) {
-        self.enter_scope(ScopeFlags::empty());
+        // TODO: doesn't have a scope_id!
+        self.enter_scope(ScopeFlags::empty(), &Cell::default());
         walk_conditional_expression(self, expr);
         self.leave_scope();
     }

@@ -205,7 +205,6 @@ impl Oxc {
         if run_options.prettier_format() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
             let printed =
                 Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
@@ -216,7 +215,6 @@ impl Oxc {
         if run_options.prettier_ir() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
@@ -340,14 +338,14 @@ impl Oxc {
     fn map_comments(&self, trivias: &Trivias) -> Vec<Comment> {
         trivias
             .comments()
-            .map(|(kind, span)| Comment {
-                r#type: match kind {
+            .map(|comment| Comment {
+                r#type: match comment.kind {
                     CommentKind::SingleLine => CommentType::Line,
                     CommentKind::MultiLine => CommentType::Block,
                 },
-                value: span.source_text(&self.source_text).to_string(),
-                start: span.start,
-                end: span.end,
+                value: comment.span.source_text(&self.source_text).to_string(),
+                start: comment.span.start,
+                end: comment.span.end,
             })
             .collect()
     }

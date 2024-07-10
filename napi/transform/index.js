@@ -310,7 +310,7 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { transform, isolatedDeclaration } = nativeBinding
+const { isolatedDeclaration, transform } = nativeBinding
 
-module.exports.transform = transform
 module.exports.isolatedDeclaration = isolatedDeclaration
+module.exports.transform = transform

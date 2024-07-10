@@ -175,37 +175,40 @@ impl Generator for AstKindGenerator {
 
         let header = generated_header!();
 
-        GeneratorOutput::One(quote! {
-            #header
+        GeneratorOutput::Stream((
+            "ast_kind",
+            quote! {
+                #header
 
-            use crate::ast::*;
-            use oxc_span::{GetSpan, Span};
+                use crate::ast::*;
+                use oxc_span::{GetSpan, Span};
 
-            endl!();
+                endl!();
 
-            #[derive(Debug, Clone, Copy)]
-            pub enum AstType {
-                #(#types),*,
-            }
+                #[derive(Debug, Clone, Copy)]
+                pub enum AstType {
+                    #(#types),*,
+                }
 
-            endl!();
+                endl!();
 
-            /// Untyped AST Node Kind
-            #[derive(Debug, Clone, Copy)]
-            pub enum AstKind<'a> {
-                #(#kinds),*,
-            }
+                /// Untyped AST Node Kind
+                #[derive(Debug, Clone, Copy)]
+                pub enum AstKind<'a> {
+                    #(#kinds),*,
+                }
 
-            endl!();
+                endl!();
 
-            impl<'a> GetSpan for AstKind<'a> {
-                #[allow(clippy::match_same_arms)]
-                fn span(&self) -> Span {
-                    match self {
-                        #(#span_matches),*,
+                impl<'a> GetSpan for AstKind<'a> {
+                    #[allow(clippy::match_same_arms)]
+                    fn span(&self) -> Span {
+                        match self {
+                            #(#span_matches),*,
+                        }
                     }
                 }
-            }
-        })
+            },
+        ))
     }
 }

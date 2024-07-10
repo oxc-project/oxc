@@ -1,13 +1,14 @@
 use std::path::Path;
 
 use napi_derive::napi;
+
 use oxc_allocator::Allocator;
 use oxc_codegen::CodeGenerator;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_transformer::{
-    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, TransformOptions,
-    Transformer, TypeScriptOptions,
+    ArrowFunctionsOptions, ES2015Options, ReactJsxRuntime, ReactOptions, Transformer,
+    TypeScriptOptions,
 };
 
 #[napi(object)]
@@ -92,7 +93,11 @@ impl From<ES2015BindingOptions> for ES2015Options {
 }
 
 #[napi(object)]
-pub struct TransformBindingOptions {
+pub struct TransformOptions {
+    #[napi(ts_type = "'script' | 'module' | 'unambiguous' | undefined")]
+    pub source_type: Option<String>,
+    /// Force jsx parsing,
+    pub jsx: Option<bool>,
     pub typescript: Option<TypeScriptBindingOptions>,
     pub react: Option<ReactBindingOptions>,
     pub es2015: Option<ES2015BindingOptions>,
@@ -104,13 +109,13 @@ pub struct TransformBindingOptions {
     pub sourcemap: Option<bool>,
 }
 
-impl From<TransformBindingOptions> for TransformOptions {
-    fn from(options: TransformBindingOptions) -> Self {
-        TransformOptions {
+impl From<TransformOptions> for oxc_transformer::TransformOptions {
+    fn from(options: TransformOptions) -> Self {
+        Self {
             typescript: options.typescript.map(Into::into).unwrap_or_default(),
             react: options.react.map(Into::into).unwrap_or_default(),
             es2015: options.es2015.map(Into::into).unwrap_or_default(),
-            ..TransformOptions::default()
+            ..Self::default()
         }
     }
 }
@@ -137,13 +142,26 @@ pub struct TransformResult {
 pub fn transform(
     filename: String,
     source_text: String,
-    options: Option<TransformBindingOptions>,
+    options: Option<TransformOptions>,
 ) -> TransformResult {
     let sourcemap = options.as_ref().is_some_and(|x| x.sourcemap.unwrap_or_default());
     let mut errors = vec![];
 
-    let source_path = Path::new(&filename);
-    let source_type = SourceType::from_path(source_path).unwrap_or_default();
+    let source_type = {
+        let mut source_type = SourceType::from_path(&filename).unwrap_or_default();
+        // Force `script` or `module`
+        match options.as_ref().and_then(|options| options.source_type.as_deref()) {
+            Some("script") => source_type = source_type.with_script(true),
+            Some("module") => source_type = source_type.with_module(true),
+            _ => {}
+        }
+        // Force `jsx`
+        if let Some(jsx) = options.as_ref().and_then(|options| options.jsx.as_ref()) {
+            source_type = source_type.with_jsx(*jsx);
+        }
+        source_type
+    };
+
     let allocator = Allocator::default();
     let parser_ret = Parser::new(&allocator, &source_text, source_type).parse();
     if !parser_ret.errors.is_empty() {
@@ -154,7 +172,7 @@ pub fn transform(
     let transform_options = options.map(Into::into).unwrap_or_default();
     let ret = Transformer::new(
         &allocator,
-        source_path,
+        Path::new(&filename),
         source_type,
         &source_text,
         parser_ret.trivias.clone(),
@@ -168,7 +186,7 @@ pub fn transform(
 
     let mut codegen = CodeGenerator::new();
     if sourcemap {
-        codegen = codegen.enable_source_map(source_path.to_string_lossy().as_ref(), &source_text);
+        codegen = codegen.enable_source_map(&filename, &source_text);
     }
     let ret = codegen.build(&program);
 

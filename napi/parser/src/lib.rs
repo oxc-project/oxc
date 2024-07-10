@@ -56,7 +56,7 @@ fn parse<'a>(
     let source_type = options
         .source_filename
         .as_ref()
-        .map(|name| SourceType::from_path(name).unwrap())
+        .and_then(|name| SourceType::from_path(name).ok())
         .unwrap_or_default();
     let source_type = match options.source_type.as_deref() {
         Some("script") => source_type.with_script(true),
@@ -104,14 +104,14 @@ fn parse_with_return<'a>(source_text: &'a str, options: &ParserOptions) -> Parse
     let comments = ret
         .trivias
         .comments()
-        .map(|(kind, span)| Comment {
-            r#type: match kind {
+        .map(|comment| Comment {
+            r#type: match comment.kind {
                 CommentKind::SingleLine => "Line",
                 CommentKind::MultiLine => "Block",
             },
-            value: span.source_text(source_text).to_string(),
-            start: span.start,
-            end: span.end,
+            value: comment.span.source_text(source_text).to_string(),
+            start: comment.span.start,
+            end: comment.span.end,
         })
         .collect::<Vec<Comment>>();
 

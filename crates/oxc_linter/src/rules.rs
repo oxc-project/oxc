@@ -190,6 +190,7 @@ mod jest {
     pub mod prefer_comparison_matcher;
     pub mod prefer_equality_matcher;
     pub mod prefer_expect_resolves;
+    pub mod prefer_hooks_in_order;
     pub mod prefer_hooks_on_top;
     pub mod prefer_jest_mocked;
     pub mod prefer_lowercase_title;
@@ -590,6 +591,7 @@ oxc_macros::declare_all_lint_rules! {
     jest::prefer_comparison_matcher,
     jest::prefer_equality_matcher,
     jest::prefer_expect_resolves,
+    jest::prefer_hooks_in_order,
     jest::prefer_hooks_on_top,
     jest::prefer_jest_mocked,
     jest::prefer_lowercase_title,

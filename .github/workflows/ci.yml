@@ -303,3 +303,38 @@ jobs:
         run: |
           just coverage
           git diff --exit-code
+
+  # NOTE: not putting this behind `optimize_ci` is intentional.
+  ast_changes:
+    name: AST Changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'crates/oxc_ast/src/ast/**'
+              - 'tasks/ast_codegen/src/**'
+
+      - uses: Boshen/setup-rust@main
+        if: steps.filter.outputs.src == 'true'
+        with:
+          components: rustfmt
+          cache-key: codegen
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Check AST Changes
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          cargo run -p oxc_ast_codegen -- --no-fmt
+          # FIXME:
+          # remove the following command and `--no-fmt` flag
+          # for some reason in the CI `cargo fmt` in the `oxc_ast_codegen` doesn't produce formatted code,
+          # Even though it is running succesfully and produces no errors.
+          # It also prints the right results for `cargo fmt --version` so it can find the right binary for sure.
+          cargo fmt
+          echo 'AST changes must be commited to the repo.'
+          git diff --exit-code

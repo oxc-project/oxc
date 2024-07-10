@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -23,7 +25,7 @@ impl<'a> IsolatedDeclarations<'a> {
             None
         } else {
             let declarations =
-                self.ast.new_vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+                self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
                     self.transform_variable_declarator(declarator, check_binding)
                 }));
             Some(self.transform_variable_declaration_with_new_declarations(decl, declarations))
@@ -35,10 +37,10 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &VariableDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.ast.variable_declaration(
+        self.ast.alloc_variable_declaration(
             decl.span,
             decl.kind,
-            self.ast.new_vec_from_iter(declarations),
+            self.ast.vec_from_iter(declarations),
             self.is_declare(),
         )
     }
@@ -85,7 +87,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 }
             }
             if init.is_none() && binding_type.is_none() {
-                binding_type = Some(self.ast.ts_unknown_keyword(SPAN));
+                binding_type = Some(self.ast.ts_type_unknown_keyword(SPAN));
                 if !decl.init.as_ref().is_some_and(Expression::is_function) {
                     self.error(variable_must_have_explicit_type(decl.id.span()));
                 }
@@ -111,7 +113,7 @@ impl<'a> IsolatedDeclarations<'a> {
         check_binding: bool,
     ) -> Box<'a, VariableDeclaration<'a>> {
         let declarations =
-            self.ast.new_vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
+            self.ast.vec_from_iter(decl.declarations.iter().filter_map(|declarator| {
                 self.transform_variable_declarator(declarator, check_binding)
             }));
         self.transform_using_declaration_with_new_declarations(decl, declarations)
@@ -122,7 +124,7 @@ impl<'a> IsolatedDeclarations<'a> {
         decl: &UsingDeclaration<'a>,
         declarations: oxc_allocator::Vec<'a, VariableDeclarator<'a>>,
     ) -> Box<'a, VariableDeclaration<'a>> {
-        self.ast.variable_declaration(
+        self.ast.alloc_variable_declaration(
             decl.span,
             VariableDeclarationKind::Const,
             declarations,
@@ -135,10 +137,11 @@ impl<'a> IsolatedDeclarations<'a> {
         block: &Box<'a, TSModuleBlock<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
         // We need to enter a new scope for the module block, avoid add binding to the parent scope
-        self.scope.enter_scope(ScopeFlags::TsModuleBlock);
+        // TODO: doesn't have a scope_id!
+        self.scope.enter_scope(ScopeFlags::TsModuleBlock, &Cell::default());
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
-        self.ast.ts_module_block(SPAN, self.ast.new_vec(), stmts)
+        self.ast.alloc_ts_module_block(SPAN, self.ast.vec(), stmts)
     }
 
     pub fn transform_ts_module_declaration(
@@ -156,7 +159,7 @@ impl<'a> IsolatedDeclarations<'a> {
         match body {
             TSModuleDeclarationBody::TSModuleDeclaration(decl) => {
                 let inner = self.transform_ts_module_declaration(decl);
-                self.ast.ts_module_declaration(
+                self.ast.alloc_ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleDeclaration(inner)),
@@ -166,7 +169,7 @@ impl<'a> IsolatedDeclarations<'a> {
             }
             TSModuleDeclarationBody::TSModuleBlock(block) => {
                 let body = self.transform_ts_module_block(block);
-                self.ast.ts_module_declaration(
+                self.ast.alloc_ts_module_declaration(
                     decl.span,
                     self.ast.copy(&decl.id),
                     Some(TSModuleDeclarationBody::TSModuleBlock(body)),

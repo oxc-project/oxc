@@ -79,7 +79,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     self.infer_type_from_expression(expr)
                 };
 
-                type_annotations = ts_type.map(|t| self.ast.ts_type_annotation(SPAN, t));
+                type_annotations = ts_type.map(|t| self.ast.alloc_ts_type_annotation(SPAN, t));
             }
 
             if type_annotations.is_none() && value.is_none() {
@@ -87,9 +87,10 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        self.ast.class_property(
+        self.ast.class_element_property_definition(
             property.r#type,
             property.span,
+            self.ast.vec(),
             self.ast.copy(&property.key),
             value,
             property.computed,
@@ -101,7 +102,6 @@ impl<'a> IsolatedDeclarations<'a> {
             property.readonly,
             type_annotations,
             self.transform_accessibility(property.accessibility),
-            self.ast.new_vec(),
         )
     }
 
@@ -113,32 +113,32 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> ClassElement<'a> {
         let function = &definition.value;
 
-        let value = self.ast.function(
+        let value = self.ast.alloc_function(
             FunctionType::TSEmptyBodyFunctionExpression,
             function.span,
             self.ast.copy(&function.id),
-            function.generator,
-            function.r#async,
             false,
+            false,
+            false,
+            self.ast.copy(&function.type_parameters),
             self.ast.copy(&function.this_param),
             params,
-            None,
-            self.ast.copy(&function.type_parameters),
+            Option::<FunctionBody>::None,
             return_type,
         );
 
-        self.ast.class_method(
+        self.ast.class_element_method_definition(
             definition.r#type,
             definition.span,
+            self.ast.vec(),
             self.ast.copy(&definition.key),
-            definition.kind,
             value,
+            definition.kind,
             definition.computed,
             definition.r#static,
             definition.r#override,
             definition.optional,
             self.transform_accessibility(definition.accessibility),
-            self.ast.new_vec(),
         )
     }
 
@@ -150,9 +150,10 @@ impl<'a> IsolatedDeclarations<'a> {
         r#override: bool,
         accessibility: Option<TSAccessibility>,
     ) -> ClassElement<'a> {
-        self.ast.class_property(
+        self.ast.class_element_property_definition(
             r#type,
             SPAN,
+            self.ast.vec(),
             key,
             None,
             false,
@@ -162,9 +163,8 @@ impl<'a> IsolatedDeclarations<'a> {
             false,
             false,
             false,
-            None,
+            Option::<TSTypeAnnotation>::None,
             accessibility,
-            self.ast.new_vec(),
         )
     }
 
@@ -177,10 +177,11 @@ impl<'a> IsolatedDeclarations<'a> {
             // A parameter property may not be declared using a binding pattern.(1187)
             return None;
         };
-        let key = self.ast.property_key_identifier(IdentifierName::new(SPAN, ident_name.clone()));
-        Some(self.ast.class_property(
+        let key = self.ast.property_key_identifier_name(SPAN, ident_name);
+        Some(self.ast.class_element_property_definition(
             PropertyDefinitionType::PropertyDefinition,
             param.span,
+            self.ast.vec(),
             key,
             None,
             false,
@@ -192,7 +193,6 @@ impl<'a> IsolatedDeclarations<'a> {
             param.readonly,
             type_annotation,
             self.transform_accessibility(param.accessibility),
-            self.ast.new_vec(),
         ))
     }
 
@@ -216,20 +216,17 @@ impl<'a> IsolatedDeclarations<'a> {
                 )
             }
             MethodDefinitionKind::Get | MethodDefinitionKind::Constructor => {
-                let params = self.ast.formal_parameters(
+                let params = self.ast.alloc_formal_parameters(
                     SPAN,
                     FormalParameterKind::Signature,
-                    self.ast.new_vec(),
-                    None,
+                    self.ast.vec(),
+                    Option::<BindingRestElement>::None,
                 );
                 self.transform_class_method_definition(method, params, None)
             }
             MethodDefinitionKind::Set => {
                 let params = self.create_formal_parameters(
-                    self.ast.binding_pattern_identifier(BindingIdentifier::new(
-                        SPAN,
-                        self.ast.new_atom("value"),
-                    )),
+                    self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
                     None,
                 );
                 self.transform_class_method_definition(method, params, None)
@@ -242,7 +239,7 @@ impl<'a> IsolatedDeclarations<'a> {
         function: &Function<'a>,
         params: &FormalParameters<'a>,
     ) -> oxc_allocator::Vec<'a, ClassElement<'a>> {
-        let mut elements = self.ast.new_vec();
+        let mut elements = self.ast.vec();
         for (index, param) in function.params.items.iter().enumerate() {
             if param.accessibility.is_some() || param.readonly {
                 let type_annotation = if param.accessibility.is_some_and(|a| a.is_private()) {
@@ -281,7 +278,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 let Some(name) = method.key.static_name() else {
                     continue;
                 };
-                let name = self.ast.new_atom(&name);
+                let name = self.ast.atom(&name);
                 if inferred_accessor_types.contains_key(&name) {
                     // We've inferred that accessor type already
                     continue;
@@ -300,7 +297,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 param.pattern.type_annotation.as_ref().map_or_else(
                                     || {
                                         self.infer_type_from_formal_parameter(param)
-                                            .map(|x| self.ast.ts_type_annotation(SPAN, x))
+                                            .map(|x| self.ast.alloc_ts_type_annotation(SPAN, x))
                                     },
                                     |t| Some(self.ast.copy(t)),
                                 );
@@ -340,7 +337,7 @@ impl<'a> IsolatedDeclarations<'a> {
         }
 
         let mut has_private_key = false;
-        let mut elements = self.ast.new_vec();
+        let mut elements = self.ast.vec();
         let mut is_function_overloads = false;
         for element in &decl.body.body {
             match element {
@@ -376,7 +373,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 self.transform_set_accessor_params(
                                     &function.params,
                                     inferred_accessor_types
-                                        .get(&self.ast.new_atom(&n))
+                                        .get(&self.ast.atom(&n))
                                         .map(|t| self.ast.copy(t)),
                                 )
                             },
@@ -406,7 +403,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         MethodDefinitionKind::Get => {
                             let rt = method.key.static_name().and_then(|name| {
                                 inferred_accessor_types
-                                    .get(&self.ast.new_atom(&name))
+                                    .get(&self.ast.atom(&name))
                                     .map(|t| self.ast.copy(t))
                             });
                             if rt.is_none() {
@@ -444,14 +441,14 @@ impl<'a> IsolatedDeclarations<'a> {
                     }
 
                     // FIXME: missing many fields
-                    let new_element = self.ast.accessor_property(
+                    let new_element = self.ast.class_element_accessor_property(
                         property.r#type,
                         property.span,
+                        self.ast.vec(),
                         self.ast.copy(&property.key),
                         None,
                         property.computed,
                         property.r#static,
-                        self.ast.new_vec(),
                     );
                     elements.push(new_element);
                 }
@@ -463,14 +460,24 @@ impl<'a> IsolatedDeclarations<'a> {
             // <https://github.com/microsoft/TypeScript/blob/64d2eeea7b9c7f1a79edf42cb99f302535136a2e/src/compiler/transformers/declarations.ts#L1699-L1709>
             // When the class has at least one private identifier, create a unique constant identifier to retain the nominal typing behavior
             // Prevents other classes with the same public members from being used in place of the current class
-            let ident = self
-                .ast
-                .property_key_private_identifier(PrivateIdentifier::new(SPAN, "private".into()));
+            let ident = self.ast.property_key_private_identifier(SPAN, "private");
             let r#type = PropertyDefinitionType::PropertyDefinition;
-            let decorators = self.ast.new_vec();
-            let element = self.ast.class_property(
-                r#type, SPAN, ident, None, false, false, false, false, false, false, false, None,
-                None, decorators,
+            let decorators = self.ast.vec();
+            let element = self.ast.class_element_property_definition(
+                r#type,
+                SPAN,
+                decorators,
+                ident,
+                None,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                Option::<TSTypeAnnotation>::None,
+                None,
             );
 
             elements.insert(0, element);
@@ -478,16 +485,16 @@ impl<'a> IsolatedDeclarations<'a> {
 
         let body = self.ast.class_body(decl.body.span, elements);
 
-        Some(self.ast.class(
+        Some(self.ast.alloc_class(
             decl.r#type,
             decl.span,
+            self.ast.vec(),
             self.ast.copy(&decl.id),
             self.ast.copy(&decl.super_class),
             body,
             self.ast.copy(&decl.type_parameters),
             self.ast.copy(&decl.super_type_parameters),
             self.ast.copy(&decl.implements),
-            self.ast.new_vec(),
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
         ))
@@ -501,12 +508,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let items = &params.items;
         if items.first().map_or(true, |item| item.pattern.type_annotation.is_none()) {
             let kind = items.first().map_or_else(
-                || {
-                    self.ast.binding_pattern_identifier(BindingIdentifier::new(
-                        SPAN,
-                        self.ast.new_atom("value"),
-                    ))
-                },
+                || self.ast.binding_pattern_kind_binding_identifier(SPAN, "value"),
                 |item| self.ast.copy(&item.pattern.kind),
             );
 
@@ -523,8 +525,13 @@ impl<'a> IsolatedDeclarations<'a> {
     ) -> Box<'a, FormalParameters<'a>> {
         let pattern = BindingPattern { kind, type_annotation, optional: false };
         let parameter =
-            self.ast.formal_parameter(SPAN, pattern, None, false, false, self.ast.new_vec());
-        let items = self.ast.new_vec_single(parameter);
-        self.ast.formal_parameters(SPAN, FormalParameterKind::Signature, items, None)
+            self.ast.formal_parameter(SPAN, self.ast.vec(), pattern, None, false, false);
+        let items = self.ast.vec1(parameter);
+        self.ast.alloc_formal_parameters(
+            SPAN,
+            FormalParameterKind::Signature,
+            items,
+            Option::<BindingRestElement>::None,
+        )
     }
 }
