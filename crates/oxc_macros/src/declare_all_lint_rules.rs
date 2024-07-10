@@ -87,6 +87,16 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
+            /// Gets a [`schemars::schema::Schema`] for the rule's
+            /// configuration. This will be [`None`] for rules that don't
+            /// specify a config schema.
+            pub fn schema(&self, gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+                match self {
+                    // #(Self::#struct_names(_) => #struct_names::json_schema(gen)),*
+                    #(Self::#struct_names(_) => gen.subschema_for::<#struct_names>()),*
+                }
+            }
+
             pub fn plugin_name(&self) -> &str {
                 match self {
                     #(Self::#struct_names(_) => #plugin_names),*

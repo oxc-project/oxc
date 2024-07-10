@@ -148,6 +148,10 @@ clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
 
+# Re-genenerate the JSON schema for oxlint's config.
+linter-schema:
+  cargo run -p website -- linter-schema-json > npm/oxlint/configuration_schema.json
+
 website path:
   cargo run -p website -- linter-rules > {{path}}/src/docs/guide/usage/linter/generated-rules.md
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md

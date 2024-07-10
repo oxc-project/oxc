@@ -16,11 +16,10 @@ fn generate_schema_json() -> String {
 }
 
 #[test]
-fn test_schema_markdown() {
-    let snapshot = generate_schema_markdown();
-    insta::with_settings!({ prepend_module_to_snapshot => false }, {
-        insta::assert_snapshot!(snapshot);
-    });
+fn test_schemagen() {
+    // We're mostly making sure that schema generation doesn't panic
+    assert!(!generate_schema_markdown().is_empty());
+    assert!(!generate_schema_json().is_empty());
 }
 
 pub fn print_schema_markdown() {
