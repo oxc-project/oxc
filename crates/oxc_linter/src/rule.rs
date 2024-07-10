@@ -5,7 +5,6 @@ use std::{
 };
 
 use oxc_semantic::SymbolId;
-use schemars::{gen::SchemaGenerator, schema::Schema};
 
 use crate::{context::LintContext, AllowWarnDeny, AstNode, RuleEnum};
 
@@ -31,11 +30,6 @@ pub trait RuleMeta {
     const CATEGORY: RuleCategory;
 
     fn documentation() -> Option<&'static str> {
-        None
-    }
-
-    #[allow(unused_variables)]
-    fn schema(gen: &mut SchemaGenerator) -> Option<Schema> {
         None
     }
 }

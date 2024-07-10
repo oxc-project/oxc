@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -21,25 +22,39 @@ pub struct NoCondAssign {
     config: NoCondAssignConfig,
 }
 
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Copy, Eq, PartialEq, JsonSchema)]
 enum NoCondAssignConfig {
+    /// allows assignments in test conditions only if they are enclosed in
+    /// parentheses (for example, to allow reassigning a variable in the test of
+    /// a `while` or `do...while` loop)
+    #[serde(rename = "except-parens")]
     #[default]
     ExceptParens,
+    /// disallows all assignments in test conditions
+    #[serde(rename = "always")]
     Always,
 }
 
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Disallow assignment operators in conditional expressions
     ///
     /// ### Why is this bad?
     ///
+    /// In conditional statements, it is very easy to mistype a comparison
+    /// operator (such as `==`) as an assignment operator (such as `=`).
     ///
     /// ### Example
     /// ```javascript
+    /// // Check the user's job title
+    /// if (user.jobTitle = "manager") {
+    ///     // user.jobTitle is now incorrect
+    /// }
     /// ```
     NoCondAssign,
-    correctness
+    correctness,
+    NoCondAssignConfig
 );
 
 impl Rule for NoCondAssign {

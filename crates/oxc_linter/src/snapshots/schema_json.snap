@@ -169,6 +169,24 @@ expression: json
         }
       }
     },
+    "NoCondAssignConfig": {
+      "oneOf": [
+        {
+          "description": "allows assignments in test conditions only if they are enclosed in parentheses (for example, to allow reassigning a variable in the test of a `while` or `do...while` loop)",
+          "type": "string",
+          "enum": [
+            "except-parens"
+          ]
+        },
+        {
+          "description": "disallows all assignments in test conditions",
+          "type": "string",
+          "enum": [
+            "always"
+          ]
+        }
+      ]
+    },
     "OneOrMany_for_String": {
       "anyOf": [
         {
@@ -3181,7 +3199,7 @@ expression: json
           "markdownDescription": "### What it does\nDisallow comparing against -0\n\n### Why is this bad?\nThe rule should warn against code that tries to compare against -0,\nsince that will not work as intended. That is, code like x === -0 will\npass for both +0 and -0. The author probably intended Object.is(x, -0).\n\n### Example\n```javascript\nif (x === -0) {}\n```\n"
         },
         "no-cond-assign": {
-          "description": "### What it does\n\n\n### Why is this bad?\n\n\n### Example\n```javascript\n```\n",
+          "description": "### What it does\n\nDisallow assignment operators in conditional expressions\n\n### Why is this bad?\n\nIn conditional statements, it is very easy to mistype a comparison\noperator (such as `==`) as an assignment operator (such as `=`).\n\n### Example\n```javascript\n// Check the user's job title\nif (user.jobTitle = \"manager\") {\n    // user.jobTitle is now incorrect\n}\n```\n",
           "anyOf": [
             {
               "$ref": "#/definitions/AllowWarnDeny"
@@ -3199,7 +3217,7 @@ expression: json
               "items": true
             }
           ],
-          "markdownDescription": "### What it does\n\n\n### Why is this bad?\n\n\n### Example\n```javascript\n```\n"
+          "markdownDescription": "### What it does\n\nDisallow assignment operators in conditional expressions\n\n### Why is this bad?\n\nIn conditional statements, it is very easy to mistype a comparison\noperator (such as `==`) as an assignment operator (such as `=`).\n\n### Example\n```javascript\n// Check the user's job title\nif (user.jobTitle = \"manager\") {\n    // user.jobTitle is now incorrect\n}\n```\n"
         },
         "no-console": {
           "description": "### What it does\nDisallows using the global console object.\n\n### Why is this bad?\nIn JavaScript that is designed to be executed in the browser,\nit’s considered a best practice to avoid using methods on console.\nSuch messages are considered to be for debugging purposes and therefore\nnot suitable to ship to the client.\n\n### Example\n```javascript\nconsole.log('here');\n```\n",
@@ -8772,7 +8790,11 @@ expression: json
     },
     "no-cond-assign": {
       "title": "Config for no-cond-assign",
-      "additionalProperties": true
+      "allOf": [
+        {
+          "$ref": "#/definitions/NoCondAssignConfig"
+        }
+      ]
     },
     "no-conditional-expect": {
       "title": "Config for no-conditional-expect",
