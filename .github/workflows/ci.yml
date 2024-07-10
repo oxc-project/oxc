@@ -329,6 +329,12 @@ jobs:
       - name: Check AST Changes
         if: steps.filter.outputs.src == 'true'
         run: |
-          cargo run -p oxc_ast_codegen
+          cargo run -p oxc_ast_codegen -- --no-fmt
+          # FIXME:
+          # remove the following command and `--no-fmt` flag
+          # for some reason in the CI `cargo fmt` in the `oxc_ast_codegen` doesn't produce formatted code,
+          # Even though it is running succesfully and produces no errors.
+          # It also prints the right results for `cargo fmt --version` so it can find the right binary for sure.
+          cargo fmt
           echo 'AST changes must be commited to the repo.'
           git diff --exit-code
