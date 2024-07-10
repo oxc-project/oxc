@@ -305,18 +305,9 @@ jobs:
           git diff --exit-code
 
   # NOTE: not putting this behind `optimize_ci` is intentional.
-  codegen:
-    name: Codegen
+  ast_changes:
+    name: AST Changes
     runs-on: ubuntu-latest
-    env:
-      # https://github.com/mozilla/sccache/blob/main/docs/S3.md
-      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      SCCACHE_BUCKET: ${{ secrets.SCCACHE_BUCKET }}
-      SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_ENDPOINT }}
-      SCCACHE_REGION: auto
-      RUSTC_WRAPPER: ${{ vars.USE_SCCACHE == 'true' && 'sccache' || '' }}
-      CARGO_INCREMENTAL: 0
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -325,7 +316,7 @@ jobs:
         with:
           filters: |
             src:
-              - 'crates/oxc_ast/src/ast/*'
+              - 'crates/oxc_ast/src/ast/**'
               - 'tasks/ast_codegen/src/**'
 
       - uses: Boshen/setup-rust@main
@@ -334,14 +325,10 @@ jobs:
           components: rustfmt
           cache-key: codegen
           save-cache: ${{ github.ref_name == 'main' }}
-          tools: just
 
-      - uses: mozilla-actions/sccache-action@v0.0.5
-
-      - name: Generate
+      - name: Check AST Changes
         if: steps.filter.outputs.src == 'true'
-        run: just codegen
-
-      - name: Diff
-        if: steps.filter.outputs.src == 'true'
-        run: git diff --exit-code
+        run: |
+          cargo run -p oxc_ast_codegen
+          echo 'AST changes must be commited to the repo.'
+          git diff --exit-code
