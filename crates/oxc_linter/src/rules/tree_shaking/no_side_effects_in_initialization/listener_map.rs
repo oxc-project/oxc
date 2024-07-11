@@ -488,7 +488,6 @@ impl<'a> ListenerMap for BindingIdentifier<'a> {
                     }
                 }
             }
-            let symbol_table = ctx.semantic().symbols();
             let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
             node.report_effects_when_called(options);
         }
@@ -578,7 +577,6 @@ impl<'a> ListenerMap for Expression<'a> {
     }
 
     fn report_effects_when_mutated(&self, options: &NodeListenerOptions) {
-        #[allow(clippy::single_match)]
         match self {
             Self::Identifier(ident) => {
                 ident.report_effects_when_mutated(options);
@@ -1135,18 +1133,20 @@ impl<'a> ListenerMap for IdentifierReference<'a> {
 
         let ctx = options.ctx;
         if let Some(symbol_id) = get_symbol_id_of_variable(self, ctx) {
-            let symbol_table = ctx.semantic().symbols();
-            for reference in symbol_table.get_resolved_references(symbol_id) {
-                if reference.is_write() {
-                    let node_id = reference.node_id();
-                    if let Some(expr) = get_write_expr(node_id, ctx) {
-                        expr.report_effects_when_called(options);
+            if options.insert_called_node(symbol_id) {
+                let symbol_table = ctx.semantic().symbols();
+                for reference in symbol_table.get_resolved_references(symbol_id) {
+                    if reference.is_write() {
+                        let node_id = reference.node_id();
+                        if let Some(expr) = get_write_expr(node_id, ctx) {
+                            expr.report_effects_when_called(options);
+                        }
                     }
                 }
+                let symbol_table = ctx.semantic().symbols();
+                let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
+                node.report_effects_when_called(options);
             }
-            let symbol_table = ctx.semantic().symbols();
-            let node = ctx.nodes().get_node(symbol_table.get_declaration(symbol_id));
-            node.report_effects_when_called(options);
         } else {
             ctx.diagnostic(super::call_global(self.name.as_str(), self.span));
         }
