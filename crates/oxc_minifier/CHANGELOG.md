@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.20.0] - 2024-07-11
+
+### Features
+
+- 54cd04a minifier: Implement dce with var hoisting (#4160) (Boshen)
+- 44a894a minifier: Implement return statement dce (#4155) (Boshen)
+
 ## [0.19.0] - 2024-07-09
 
 - b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)
