@@ -2459,6 +2459,12 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
     {
         walk_decorator(traverser, item as *mut _, ctx);
     }
+    if let Some(field) =
+        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_ID) as *mut Option<BindingIdentifier>)
+    {
+        ctx.retag_stack(AncestorType::ClassId);
+        walk_binding_identifier(traverser, field as *mut _, ctx);
+    }
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_CLASS_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -2467,30 +2473,17 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    if let Some(field) =
-        &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_ID) as *mut Option<BindingIdentifier>)
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
     {
-        ctx.retag_stack(AncestorType::ClassId);
-        walk_binding_identifier(traverser, field as *mut _, ctx);
+        ctx.retag_stack(AncestorType::ClassTypeParameters);
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_CLASS) as *mut Option<Expression>)
     {
         ctx.retag_stack(AncestorType::ClassSuperClass);
         walk_expression(traverser, field as *mut _, ctx);
-    }
-    ctx.retag_stack(AncestorType::ClassBody);
-    walk_class_body(
-        traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY) as *mut Box<ClassBody>))
-            as *mut _,
-        ctx,
-    );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::ClassTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
         as *mut Option<Box<TSTypeParameterInstantiation>>)
@@ -2506,6 +2499,13 @@ pub(crate) unsafe fn walk_class<'a, Tr: Traverse<'a>>(
             walk_ts_class_implements(traverser, item as *mut _, ctx);
         }
     }
+    ctx.retag_stack(AncestorType::ClassBody);
+    walk_class_body(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_CLASS_BODY) as *mut Box<ClassBody>))
+            as *mut _,
+        ctx,
+    );
     ctx.pop_stack();
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);

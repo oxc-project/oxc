@@ -490,11 +490,11 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             self.ast.vec(),
             self.ast.copy(&decl.id),
-            self.ast.copy(&decl.super_class),
-            body,
             self.ast.copy(&decl.type_parameters),
+            self.ast.copy(&decl.super_class),
             self.ast.copy(&decl.super_type_parameters),
             self.ast.copy(&decl.implements),
+            body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
         ))

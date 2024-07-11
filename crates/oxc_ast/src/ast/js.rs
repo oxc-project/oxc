@@ -1590,14 +1590,14 @@ pub struct Class<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
-    #[scope(enter_before)]
     pub id: Option<BindingIdentifier<'a>>,
+    #[scope(enter_before)]
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[visit_as(ClassHeritage)]
     pub super_class: Option<Expression<'a>>,
-    pub body: Box<'a, ClassBody<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
+    pub body: Box<'a, ClassBody<'a>>,
     pub r#abstract: bool,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
