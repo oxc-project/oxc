@@ -18,6 +18,20 @@ pub struct Pattern<'a> {
     pub alternatives: Vec<'a, Alternative<'a>>,
 }
 
+/// The flags.
+#[derive(Debug)]
+pub struct Flags {
+    pub span: Span,
+    pub global: bool,
+    pub ignore_case: bool,
+    pub multiline: bool,
+    pub unicode: bool,
+    pub sticky: bool,
+    pub dot_all: bool,
+    pub has_indices: bool,
+    pub unicode_sets: bool,
+}
+
 /// The alternative.
 /// E.g. `a|b`
 #[derive(Debug)]
@@ -30,9 +44,8 @@ pub struct Alternative<'a> {
 #[derive(Debug)]
 pub enum Term<'a> {
     Assertion(Box<'a, Assertion<'a>>),
-    #[allow(clippy::enum_variant_names)]
     Atom(Box<'a, Atom<'a>>),
-    AtomWithQuantifier(Box<'a, Quantifier<'a>>),
+    AtomWithQuantifier(Box<'a, AtomWithQuantifier<'a>>),
 }
 
 /// The assertion.
@@ -112,6 +125,17 @@ pub enum Atom<'a> {
     // LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
 }
 
+/// The quantifier.
+/// E.g. `a?`, `a*`, `a+`, `a{1,2}`, `a??`, `a*?`, `a+?`, `a{1,2}?`
+#[derive(Debug)]
+pub struct AtomWithQuantifier<'a> {
+    pub span: Span,
+    pub min: usize,
+    pub max: Option<usize>, // `None` means `Infinity`
+    pub greedy: bool,
+    pub atom: Atom<'a>,
+}
+
 /// The backreference.
 /// E.g. `\1`, `\k<name>`
 #[derive(Debug)]
@@ -179,8 +203,8 @@ pub struct ClassRangesCharacterClass<'a> {
 pub enum ClassRangesCharacterClassElement<'a> {
     Character(Box<'a, Character>),
     CharacterClassRange(Box<'a, CharacterClassRange>),
-    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet<'a>>),
     EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
+    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet<'a>>),
 }
 
 /// The character class.
@@ -342,29 +366,4 @@ pub enum ClassSubtractionLeft<'a> {
 pub struct NonCapturingGroup<'a> {
     pub span: Span,
     pub alternatives: Vec<'a, Alternative<'a>>,
-}
-
-/// The quantifier.
-/// E.g. `a?`, `a*`, `a+`, `a{1,2}`, `a??`, `a*?`, `a+?`, `a{1,2}?`
-#[derive(Debug)]
-pub struct Quantifier<'a> {
-    pub span: Span,
-    pub min: usize,
-    pub max: Option<usize>, // `None` means `Infinity`
-    pub greedy: bool,
-    pub atom: Atom<'a>,
-}
-
-/// The flags.
-#[derive(Debug)]
-pub struct Flags {
-    pub span: Span,
-    pub global: bool,
-    pub ignore_case: bool,
-    pub multiline: bool,
-    pub unicode: bool,
-    pub sticky: bool,
-    pub dot_all: bool,
-    pub has_indices: bool,
-    pub unicode_sets: bool,
 }

@@ -1,3 +1,4 @@
+use oxc_allocator::Box;
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
 
@@ -7,12 +8,27 @@ use crate::{
 };
 
 impl<'a> super::parse::PatternParser<'a> {
+    pub(super) fn consume_normal_backreference(
+        &mut self,
+        span_start: usize,
+    ) -> Option<ast::Backreference<'a>> {
+        let decimal = self.consume_decimal_escape()?;
+
+        Some(ast::Backreference::NormalBackreference(Box::new_in(
+            ast::NormalBackreference {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                r#ref: decimal,
+            },
+            self.allocator,
+        )))
+    }
+
     // ```
     // DecimalEscape ::
     //   NonZeroDigit DecimalDigits[~Sep]opt [lookahead ∉ DecimalDigit]
     // ```
     // <https://tc39.es/ecma262/#prod-DecimalEscape>
-    pub(super) fn consume_decimal_escape(&mut self) -> Option<usize> {
+    fn consume_decimal_escape(&mut self) -> Option<usize> {
         if unicode::is_non_zero_digit(self.reader.peek()?) {
             let mut value = 0;
 
@@ -40,37 +56,59 @@ impl<'a> super::parse::PatternParser<'a> {
     //   [+UnicodeMode] P{ UnicodePropertyValueExpression }
     // ```
     // <https://tc39.es/ecma262/#prod-CharacterClassEscape>
-    /// Returns: `(kind, negate)`
     pub(super) fn consume_character_class_escape(
         &mut self,
-    ) -> Option<(ast::EscapeCharacterSetKind, bool)> {
-        // NOTE: `mayContainStrings`?
+        span_start: usize,
+    ) -> Option<ast::EscapeCharacterSet> {
         if self.reader.eat('d') {
-            return Some((ast::EscapeCharacterSetKind::Digit, false));
+            return Some(ast::EscapeCharacterSet {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::EscapeCharacterSetKind::Digit,
+                negate: false,
+            });
         }
         if self.reader.eat('D') {
-            return Some((ast::EscapeCharacterSetKind::Digit, true));
+            return Some(ast::EscapeCharacterSet {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::EscapeCharacterSetKind::Digit,
+                negate: true,
+            });
         }
         if self.reader.eat('s') {
-            return Some((ast::EscapeCharacterSetKind::Space, false));
+            return Some(ast::EscapeCharacterSet {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::EscapeCharacterSetKind::Space,
+                negate: false,
+            });
         }
         if self.reader.eat('S') {
-            return Some((ast::EscapeCharacterSetKind::Space, true));
+            return Some(ast::EscapeCharacterSet {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::EscapeCharacterSetKind::Space,
+                negate: true,
+            });
         }
         if self.reader.eat('w') {
-            return Some((ast::EscapeCharacterSetKind::Word, false));
+            return Some(ast::EscapeCharacterSet {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::EscapeCharacterSetKind::Word,
+                negate: false,
+            });
         }
         if self.reader.eat('W') {
-            return Some((ast::EscapeCharacterSetKind::Word, true));
+            return Some(ast::EscapeCharacterSet {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::EscapeCharacterSetKind::Word,
+                negate: true,
+            });
         }
 
         None
     }
-    /// Returns: `((name, value, is_strings_related_unicode_property), negate)`
-    #[allow(clippy::type_complexity)]
     pub(super) fn consume_character_class_escape_unicode(
         &mut self,
-    ) -> Result<Option<((SpanAtom<'a>, Option<SpanAtom<'a>>, bool), bool)>> {
+        span_start: usize,
+    ) -> Result<Option<ast::UnicodePropertyCharacterSet<'a>>> {
         let negate = if self.reader.eat('p') {
             Some(false)
         } else if self.reader.eat('P') {
@@ -87,9 +125,30 @@ impl<'a> super::parse::PatternParser<'a> {
                     if negate && is_strings_related {
                         return Err(OxcDiagnostic::error("Invalid property name"));
                     }
+
                     if self.reader.eat('}') {
-                        // NOTE: `mayContainStrings`?
-                        return Ok(Some(((name, value, negate), is_strings_related)));
+                        let span =
+                            self.span_factory.create(span_start, self.reader.span_position());
+                        return Ok(Some(if is_strings_related {
+                            ast::UnicodePropertyCharacterSet::StringsUnicodePropertyCharacterSet(
+                                Box::new_in(
+                                    ast::StringsUnicodePropertyCharacterSet { span, key: name },
+                                    self.allocator,
+                                ),
+                            )
+                        } else {
+                            ast::UnicodePropertyCharacterSet::CharacterUnicodePropertyCharacterSet(
+                                Box::new_in(
+                                    ast::CharacterUnicodePropertyCharacterSet {
+                                        span,
+                                        key: name,
+                                        value,
+                                        negate,
+                                    },
+                                    self.allocator,
+                                ),
+                            )
+                        }));
                     }
                 }
             }
@@ -195,11 +254,17 @@ impl<'a> super::parse::PatternParser<'a> {
     //   IdentityEscape[?UnicodeMode]
     // ```
     // <https://tc39.es/ecma262/#prod-CharacterEscape>
-    pub(super) fn consume_character_escape(&mut self) -> Result<Option<u32>> {
+    pub(super) fn consume_character_escape(
+        &mut self,
+        span_start: usize,
+    ) -> Result<Option<ast::Character>> {
         // e.g. \n
         if let Some(control_escape) = self.reader.peek().and_then(unicode::map_control_escape) {
             self.reader.advance();
-            return Ok(Some(control_escape));
+            return Ok(Some(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                value: control_escape,
+            }));
         }
 
         // e.g. \cM
@@ -207,7 +272,10 @@ impl<'a> super::parse::PatternParser<'a> {
         if self.reader.eat('c') {
             if let Some(c_ascii_letter) = self.reader.peek().and_then(unicode::map_c_ascii_letter) {
                 self.reader.advance();
-                return Ok(Some(c_ascii_letter));
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    value: c_ascii_letter,
+                }));
             }
             self.reader.rewind(checkpoint);
         }
@@ -217,13 +285,19 @@ impl<'a> super::parse::PatternParser<'a> {
             && self.reader.peek2().map_or(true, |cp| !unicode::is_decimal_digits(cp))
         {
             self.reader.advance();
-            return Ok(Some(0x00));
+            return Ok(Some(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                value: 0x00,
+            }));
         }
 
         // e.g. \x41
         if self.reader.eat('x') {
             if let Some(hex_digits) = self.consume_fixed_hex_digits(2) {
-                return Ok(Some(hex_digits));
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    value: hex_digits,
+                }));
             }
             return Err(OxcDiagnostic::error("Invalid escape"));
         }
@@ -232,12 +306,18 @@ impl<'a> super::parse::PatternParser<'a> {
         if let Some(reg_exp_unicode_escape_sequence) =
             self.consume_reg_exp_unicode_escape_sequence()?
         {
-            return Ok(Some(reg_exp_unicode_escape_sequence));
+            return Ok(Some(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                value: reg_exp_unicode_escape_sequence,
+            }));
         }
 
         // e.g. \.
         if let Some(identity_escape) = self.consume_identity_escape() {
-            return Ok(Some(identity_escape));
+            return Ok(Some(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                value: identity_escape,
+            }));
         }
 
         Ok(None)
@@ -272,13 +352,22 @@ impl<'a> super::parse::PatternParser<'a> {
         None
     }
 
-    pub(super) fn consume_k_group_name(&mut self) -> Result<Option<SpanAtom<'a>>> {
+    pub(super) fn consume_named_backreference(
+        &mut self,
+        span_start: usize,
+    ) -> Result<Option<ast::Backreference<'a>>> {
         if self.reader.eat('k') {
             if let Some(group_name) = self.consume_group_name()? {
                 // TODO: Implement
                 // this._backreferenceNames.add(groupName);
 
-                return Ok(Some(group_name));
+                return Ok(Some(ast::Backreference::NamedBackreference(Box::new_in(
+                    ast::NamedBackreference {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        r#ref: group_name,
+                    },
+                    self.allocator,
+                ))));
             }
 
             return Err(OxcDiagnostic::error("Invalid named reference"));

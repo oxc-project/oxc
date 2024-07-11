@@ -6,6 +6,40 @@ use crate::ast;
 
 impl<'a> super::parse::PatternParser<'a> {
     // ```
+    // ClassContents[UnicodeMode, UnicodeSetsMode] ::
+    //   [empty]
+    //   [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
+    //   [+UnicodeSetsMode] ClassSetExpression
+    // ```
+    // <https://tc39.es/ecma262/#prod-ClassContents>
+    pub(super) fn consume_class_contents(
+        &mut self,
+        span_start: usize,
+        negate: bool,
+    ) -> Result<ast::CharacterClass<'a>> {
+        if !self.state.is_unicode_sets_mode() {
+            return Ok(ast::CharacterClass::ClassRangesCharacterClass(Box::new_in(
+                ast::ClassRangesCharacterClass {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    negate,
+                    elements: self.consume_nonempty_class_ranges()?,
+                },
+                self.allocator,
+            )));
+        }
+
+        Ok(ast::CharacterClass::UnicodeSetsCharacterClass(Box::new_in(
+            ast::UnicodeSetsCharacterClass {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                negate,
+                // TODO: Implement
+                elements: Vec::new_in(self.allocator),
+            },
+            self.allocator,
+        )))
+    }
+
+    // ```
     // NonemptyClassRanges[UnicodeMode] ::
     //   ClassAtom[?UnicodeMode]
     //   ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
@@ -159,50 +193,39 @@ impl<'a> super::parse::PatternParser<'a> {
             ))));
         }
 
-        if let Some((kind, negate)) = self.consume_character_class_escape() {
+        if let Some(escape_character_set) = self.consume_character_class_escape(span_start) {
             return Ok(Some(ast::ClassRangesCharacterClassElement::EscapeCharacterSet(
-                Box::new_in(
-                    ast::EscapeCharacterSet {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
-                        kind,
-                        negate,
-                    },
-                    self.allocator,
-                ),
+                Box::new_in(escape_character_set, self.allocator),
             )));
         }
         if self.state.is_unicode_mode() {
-            if let Some(((name, value, negate), is_strings_related)) =
-                self.consume_character_class_escape_unicode()?
+            if let Some(unicode_property_character_set) =
+                self.consume_character_class_escape_unicode(span_start)?
             {
-                debug_assert!(
-                    !is_strings_related,
-                    "This must be `false`, if `unicode_sets_mode: true`, here should not be passed"
-                );
-
-                let span = self.span_factory.create(span_start, self.reader.span_position());
-                return Ok(Some(
-                    ast::ClassRangesCharacterClassElement::CharacterUnicodePropertyCharacterSet(
-                        Box::new_in(
-                            ast::CharacterUnicodePropertyCharacterSet {
-                                span,
-                                key: name,
-                                value,
-                                negate,
-                            },
-                            self.allocator,
+                match unicode_property_character_set {
+                    ast::UnicodePropertyCharacterSet::CharacterUnicodePropertyCharacterSet(
+                        character_set,
+                    ) => {
+                        return Ok(Some(
+                            ast::ClassRangesCharacterClassElement::CharacterUnicodePropertyCharacterSet(
+                            character_set
                         ),
-                    ),
                 ));
+                    }
+                    // This is `unicode_sets_mode` only pattern.
+                    // If `unicode_sets_mode: true`, this function should not be called at all.
+                    ast::UnicodePropertyCharacterSet::StringsUnicodePropertyCharacterSet(_) => {
+                        return Err(OxcDiagnostic::error(
+                            "Unexpected StringsUnicodePropertyCharacterSet",
+                        ));
+                    }
+                }
             }
         }
 
-        if let Some(character_escape) = self.consume_character_escape()? {
+        if let Some(character) = self.consume_character_escape(span_start)? {
             return Ok(Some(ast::ClassRangesCharacterClassElement::Character(Box::new_in(
-                ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
-                    value: character_escape,
-                },
+                character,
                 self.allocator,
             ))));
         }

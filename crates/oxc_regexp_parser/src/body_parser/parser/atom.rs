@@ -1,4 +1,4 @@
-use oxc_allocator::{Box, Vec};
+use oxc_allocator::Box;
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
 
@@ -59,61 +59,31 @@ impl<'a> super::parse::PatternParser<'a> {
         }
 
         // `DecimalEscape`: \1 means Backreference
-        if let Some(decimal) = self.consume_decimal_escape() {
+        if let Some(normal_backreference) = self.consume_normal_backreference(span_start) {
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
-                ast::Backreference::NormalBackreference(Box::new_in(
-                    ast::NormalBackreference {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
-                        r#ref: decimal,
-                    },
-                    self.allocator,
-                )),
+                normal_backreference,
                 self.allocator,
             ))));
         }
 
         // `CharacterClassEscape`: \d
-        if let Some((kind, negate)) = self.consume_character_class_escape() {
+        if let Some(character_class_escape) = self.consume_character_class_escape(span_start) {
             return Ok(Some(ast::Atom::CharacterSet(Box::new_in(
                 ast::CharacterSet::EscapeCharacterSet(Box::new_in(
-                    ast::EscapeCharacterSet {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
-                        kind,
-                        negate,
-                    },
+                    character_class_escape,
                     self.allocator,
                 )),
                 self.allocator,
             ))));
         }
-        // `CharacterEscape`: \p{}
+        // `CharacterClassEscape`: \p{...}
         if self.state.is_unicode_mode() {
-            if let Some(((name, value, negate), is_strings_related)) =
-                self.consume_character_class_escape_unicode()?
+            if let Some(character_class_escape_unicode) =
+                self.consume_character_class_escape_unicode(span_start)?
             {
-                let span = self.span_factory.create(span_start, self.reader.span_position());
                 return Ok(Some(ast::Atom::CharacterSet(Box::new_in(
                     ast::CharacterSet::UnicodePropertyCharacterSet(Box::new_in(
-                        if is_strings_related {
-                            ast::UnicodePropertyCharacterSet::StringsUnicodePropertyCharacterSet(
-                                Box::new_in(
-                                    ast::StringsUnicodePropertyCharacterSet { span, key: name },
-                                    self.allocator,
-                                ),
-                            )
-                        } else {
-                            ast::UnicodePropertyCharacterSet::CharacterUnicodePropertyCharacterSet(
-                                Box::new_in(
-                                    ast::CharacterUnicodePropertyCharacterSet {
-                                        span,
-                                        key: name,
-                                        value,
-                                        negate,
-                                    },
-                                    self.allocator,
-                                ),
-                            )
-                        },
+                        character_class_escape_unicode,
                         self.allocator,
                     )),
                     self.allocator,
@@ -121,26 +91,15 @@ impl<'a> super::parse::PatternParser<'a> {
             }
         }
 
-        if let Some(cp) = self.consume_character_escape()? {
-            return Ok(Some(ast::Atom::Character(Box::new_in(
-                ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
-                    value: cp,
-                },
-                self.allocator,
-            ))));
+        // `CharacterEscape`: \n, \cM, \0, etc...
+        if let Some(character) = self.consume_character_escape(span_start)? {
+            return Ok(Some(ast::Atom::Character(Box::new_in(character, self.allocator))));
         }
 
         // `k<GroupName>`: \k<name> means Backreference
-        if let Some(r#ref) = self.consume_k_group_name()? {
+        if let Some(named_backreference) = self.consume_named_backreference(span_start)? {
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
-                ast::Backreference::NamedBackreference(Box::new_in(
-                    ast::NamedBackreference {
-                        span: self.span_factory.create(span_start, self.reader.span_position()),
-                        r#ref,
-                    },
-                    self.allocator,
-                )),
+                named_backreference,
                 self.allocator,
             ))));
         }
@@ -160,70 +119,18 @@ impl<'a> super::parse::PatternParser<'a> {
         if self.reader.eat('[') {
             let negate = self.reader.eat('^');
 
-            if self.state.is_unicode_sets_mode() {
-                let contents = self.consume_class_contents_unicode_sets()?;
+            let contents = self.consume_class_contents(span_start, negate)?;
 
-                if self.reader.eat(']') {
-                    return Ok(Some(ast::Atom::CharacterClass(Box::new_in(
-                        ast::CharacterClass::UnicodeSetsCharacterClass(Box::new_in(
-                            ast::UnicodeSetsCharacterClass {
-                                span: self
-                                    .span_factory
-                                    .create(span_start, self.reader.span_position()),
-                                negate,
-                                elements: contents,
-                            },
-                            self.allocator,
-                        )),
-                        self.allocator,
-                    ))));
-                }
-            }
-
-            let contents = self.consume_class_contents()?;
             if self.reader.eat(']') {
-                return Ok(Some(ast::Atom::CharacterClass(Box::new_in(
-                    ast::CharacterClass::ClassRangesCharacterClass(Box::new_in(
-                        ast::ClassRangesCharacterClass {
-                            span: self.span_factory.create(span_start, self.reader.span_position()),
-                            negate,
-                            elements: contents,
-                        },
-                        self.allocator,
-                    )),
-                    self.allocator,
-                ))));
+                // FIXME: Span should be +1 for ']'...
+                // OR, CharacterClass { span, negate, contents }
+                return Ok(Some(ast::Atom::CharacterClass(Box::new_in(contents, self.allocator))));
             }
 
             return Err(OxcDiagnostic::error("Unterminated character class"));
         }
 
         Ok(None)
-    }
-
-    // ```
-    // ClassContents[UnicodeMode, UnicodeSetsMode] ::
-    //   [empty]
-    //   [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
-    //   [+UnicodeSetsMode] ClassSetExpression
-    // ```
-    // <https://tc39.es/ecma262/#prod-ClassContents>
-    pub(super) fn consume_class_contents(
-        &mut self,
-    ) -> Result<Vec<'a, ast::ClassRangesCharacterClassElement<'a>>> {
-        self.consume_nonempty_class_ranges()
-    }
-    pub(super) fn consume_class_contents_unicode_sets(
-        &mut self,
-    ) -> Result<Vec<'a, ast::UnicodeSetsCharacterClassElement<'a>>> {
-        let contents = Vec::new_in(self.allocator);
-
-        // TODO: Implement consume_class_set_expression()
-        if self.reader.eat('👻') {
-            return Err(OxcDiagnostic::error("TODO"));
-        }
-
-        Ok(contents)
     }
 
     // ```
@@ -234,14 +141,14 @@ impl<'a> super::parse::PatternParser<'a> {
 
         if self.reader.eat('(') {
             let group_name = self.consume_group_specifier()?;
-            let alternatives = self.consume_disjunction()?;
+            let disjunction = self.consume_disjunction()?;
 
             if self.reader.eat(')') {
                 return Ok(Some(ast::Atom::CapturingGroup(Box::new_in(
                     ast::CapturingGroup {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         name: group_name,
-                        alternatives,
+                        alternatives: disjunction,
                     },
                     self.allocator,
                 ))));
@@ -282,13 +189,13 @@ impl<'a> super::parse::PatternParser<'a> {
         let span_start = self.reader.span_position();
 
         if self.reader.eat3('(', '?', ':') {
-            let alternatives = self.consume_disjunction()?;
+            let disjunction = self.consume_disjunction()?;
 
             if self.reader.eat(')') {
                 return Ok(Some(ast::Atom::NonCapturingGroup(Box::new_in(
                     ast::NonCapturingGroup {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
-                        alternatives,
+                        alternatives: disjunction,
                     },
                     self.allocator,
                 ))));
