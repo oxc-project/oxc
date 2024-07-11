@@ -16,8 +16,8 @@ pub use self::{
 /// Many Vitest rule are essentially ports of Jest plugin rules with minor modifications.
 /// For these rules, we use the corresponding jest rules with some adjustments for compatibility.
 pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
-    let jest_rules: [&str; 3] =
-        ["consistent_test_it", "no-disabled-tests", "prefer-hooks-in-order"];
+    let jest_rules: [&str; 4] =
+        ["consistent_test_it", "no-disabled-tests", "prefer-hooks-in-order", "valid-expect"];
 
     jest_rules.contains(&rule_name)
 }
