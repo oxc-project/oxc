@@ -2,7 +2,7 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
-Positive Passed: 5272/5283 (99.79%)
+Positive Passed: 5271/5283 (99.77%)
 Negative Passed: 1094/4875 (22.44%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
@@ -3818,6 +3818,19 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
  2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
    ·       ────
    ╰────
+Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
+
+  × Identifier `x` has already been declared
+     ╭─[conformance/async/es6/asyncWithVarShadowing_es6.ts:130:14]
+ 129 │     }
+ 130 │     catch ({ x }) {
+     ·              ┬
+     ·              ╰── `x` has already been declared here
+ 131 │         var x;
+     ·             ┬
+     ·             ╰── It can not be redeclared here
+ 132 │     }
+     ╰────
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
 
   × Classes may not have a static property named prototype

@@ -48,20 +48,16 @@ impl Rule for NoEmpty {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
+                if self.allow_empty_catch
+                    && matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::CatchClause(_)))
+                {
+                    return;
+                }
+
                 if ctx.semantic().trivias().has_comments_between(block.span) {
                     return;
                 }
                 ctx.diagnostic(no_empty_diagnostic("block", block.span));
-            }
-            // The visitor does not visit the `BlockStatement` inside the `CatchClause`.
-            // See `Visit::visit_catch_clause`.
-            AstKind::CatchClause(catch_clause)
-                if !self.allow_empty_catch && catch_clause.body.body.is_empty() =>
-            {
-                if ctx.semantic().trivias().has_comments_between(catch_clause.body.span) {
-                    return;
-                }
-                ctx.diagnostic(no_empty_diagnostic("block", catch_clause.body.span));
             }
             // The visitor does not visit the `BlockStatement` inside the `FinallyClause`.
             // See `Visit::visit_finally_clause`.

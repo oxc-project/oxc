@@ -1348,19 +1348,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
-        let kind = AstKind::CatchClause(self.alloc(clause));
-        self.enter_scope(ScopeFlags::empty(), &clause.scope_id);
-        clause.scope_id.set(Some(self.current_scope_id));
-        self.enter_node(kind);
-        if let Some(param) = &clause.param {
-            self.visit_catch_parameter(param);
-        }
-        self.visit_statements(&clause.body.body);
-        self.leave_node(kind);
-        self.leave_scope();
-    }
-
     fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
         let kind = AstKind::FinallyClause(self.alloc(clause));
         self.enter_scope(ScopeFlags::empty(), &clause.scope_id);
@@ -1825,6 +1812,19 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::YieldExpression(_) => {
                 self.set_function_node_flag(NodeFlags::HasYield);
+            }
+            AstKind::BlockStatement(_) => {
+                if matches!(
+                    self.nodes.parent_kind(self.current_node_id),
+                    Some(AstKind::CatchClause(_))
+                ) {
+                    // Clone the `CatchClause` bindings and add them to the current scope.
+                    // to make it easier to check redeclare errors.
+                    if let Some(parent_scope_id) = self.scope.get_parent_id(self.current_scope_id) {
+                        let bindings = self.scope.get_bindings(parent_scope_id).clone();
+                        self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
+                    }
+                }
             }
             _ => {}
         }
