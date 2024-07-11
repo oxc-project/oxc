@@ -2033,11 +2033,15 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_conditional_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConditionalType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        let kind = AstKind::TSConditionalType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_ts_type(&it.check_type);
         visitor.visit_ts_type(&it.extends_type);
         visitor.visit_ts_type(&it.true_type);
         visitor.visit_ts_type(&it.false_type);
+        visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -2073,7 +2077,6 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeParameter<'a>) {
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstKind::TSTypeParameter(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&it.name);
@@ -2084,7 +2087,6 @@ pub mod walk {
             visitor.visit_ts_type(default);
         }
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     #[inline]
@@ -2265,7 +2267,9 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_mapped_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSMappedType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        let kind = AstKind::TSMappedType(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_ts_type_parameter(&it.type_parameter);
         if let Some(name_type) = &it.name_type {
             visitor.visit_ts_type(name_type);
@@ -2273,6 +2277,8 @@ pub mod walk {
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type(type_annotation);
         }
+        visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -2436,7 +2442,9 @@ pub mod walk {
         visitor: &mut V,
         it: &TSConstructSignatureDeclaration<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        let kind = AstKind::TSConstructSignatureDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
@@ -2444,10 +2452,13 @@ pub mod walk {
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
     pub fn walk_ts_method_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSMethodSignature<'a>) {
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstKind::TSMethodSignature(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_property_key(&it.key);
@@ -2462,6 +2473,7 @@ pub mod walk {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -3764,11 +3776,13 @@ pub mod walk {
         let kind = AstKind::TSTypeAliasDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_ts_type(&it.type_annotation);
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -3779,6 +3793,7 @@ pub mod walk {
         let kind = AstKind::TSInterfaceDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(extends) = &it.extends {
             visitor.visit_ts_interface_heritages(extends);
         }
@@ -3787,6 +3802,7 @@ pub mod walk {
         }
         visitor.visit_ts_interface_body(&it.body);
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]

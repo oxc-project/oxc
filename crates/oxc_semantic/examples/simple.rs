@@ -17,7 +17,7 @@ fn main() -> std::io::Result<()> {
     let path = Path::new(&name);
     let source_text = Arc::new(std::fs::read_to_string(path)?);
     let allocator = Allocator::default();
-    let source_type = SourceType::from_path(path).unwrap();
+    let source_type = SourceType::from_path(path).unwrap().with_always_strict(false);
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
 
     let program = allocator.alloc(ret.program);
@@ -31,7 +31,7 @@ fn main() -> std::io::Result<()> {
         let error_message: String = semantic
             .errors
             .into_iter()
-            .map(|error| error.with_source_code(Arc::clone(&source_text)).to_string())
+            .map(|error| format!("{:?}", error.with_source_code(Arc::clone(&source_text))))
             .join("\n\n");
 
         println!("Semantic analysis failed:\n\n{error_message}",);

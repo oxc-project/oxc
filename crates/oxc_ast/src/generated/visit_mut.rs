@@ -2088,11 +2088,15 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConditionalType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        let kind = AstType::TSConditionalType;
+        visitor.enter_node(kind);
         visitor.visit_ts_type(&mut it.check_type);
         visitor.visit_ts_type(&mut it.extends_type);
         visitor.visit_ts_type(&mut it.true_type);
         visitor.visit_ts_type(&mut it.false_type);
+        visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -2134,7 +2138,6 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSTypeParameter<'a>,
     ) {
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstType::TSTypeParameter;
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&mut it.name);
@@ -2145,7 +2148,6 @@ pub mod walk_mut {
             visitor.visit_ts_type(default);
         }
         visitor.leave_node(kind);
-        visitor.leave_scope();
     }
 
     #[inline]
@@ -2341,7 +2343,9 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_mapped_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSMappedType<'a>) {
-        // NOTE: AstType doesn't exists!
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        let kind = AstType::TSMappedType;
+        visitor.enter_node(kind);
         visitor.visit_ts_type_parameter(&mut it.type_parameter);
         if let Some(name_type) = &mut it.name_type {
             visitor.visit_ts_type(name_type);
@@ -2349,6 +2353,8 @@ pub mod walk_mut {
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type(type_annotation);
         }
+        visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -2524,7 +2530,9 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConstructSignatureDeclaration<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        let kind = AstType::TSConstructSignatureDeclaration;
+        visitor.enter_node(kind);
         visitor.visit_formal_parameters(&mut it.params);
         if let Some(return_type) = &mut it.return_type {
             visitor.visit_ts_type_annotation(return_type);
@@ -2532,6 +2540,8 @@ pub mod walk_mut {
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -2539,6 +2549,7 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSMethodSignature<'a>,
     ) {
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstType::TSMethodSignature;
         visitor.enter_node(kind);
         visitor.visit_property_key(&mut it.key);
@@ -2553,6 +2564,7 @@ pub mod walk_mut {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -3969,11 +3981,13 @@ pub mod walk_mut {
         let kind = AstType::TSTypeAliasDeclaration;
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&mut it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_ts_type(&mut it.type_annotation);
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]
@@ -3984,6 +3998,7 @@ pub mod walk_mut {
         let kind = AstType::TSInterfaceDeclaration;
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&mut it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(extends) = &mut it.extends {
             visitor.visit_ts_interface_heritages(extends);
         }
@@ -3992,6 +4007,7 @@ pub mod walk_mut {
         }
         visitor.visit_ts_interface_body(&mut it.body);
         visitor.leave_node(kind);
+        visitor.leave_scope();
     }
 
     #[inline]

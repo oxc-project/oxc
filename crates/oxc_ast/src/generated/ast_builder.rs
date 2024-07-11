@@ -6062,7 +6062,14 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> TSConditionalType<'a> {
-        TSConditionalType { span, check_type, extends_type, true_type, false_type }
+        TSConditionalType {
+            span,
+            check_type,
+            extends_type,
+            true_type,
+            false_type,
+            scope_id: Default::default(),
+        }
     }
 
     #[inline]
@@ -6542,16 +6549,7 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
-        TSTypeParameter {
-            span,
-            name,
-            constraint,
-            default,
-            r#in,
-            out,
-            r#const,
-            scope_id: Default::default(),
-        }
+        TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
     }
 
     #[inline]
@@ -6605,6 +6603,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters: type_parameters.into_in(self.allocator),
             type_annotation,
             declare,
+            scope_id: Default::default(),
         }
     }
 
@@ -6675,6 +6674,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters: type_parameters.into_in(self.allocator),
             body: body.into_in(self.allocator),
             declare,
+            scope_id: Default::default(),
         }
     }
 
@@ -7013,6 +7013,7 @@ impl<'a> AstBuilder<'a> {
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -7066,6 +7067,7 @@ impl<'a> AstBuilder<'a> {
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -7678,6 +7680,7 @@ impl<'a> AstBuilder<'a> {
             type_annotation,
             optional,
             readonly,
+            scope_id: Default::default(),
         }
     }
 

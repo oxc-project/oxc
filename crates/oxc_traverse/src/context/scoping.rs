@@ -582,8 +582,4 @@ impl<'a> Visit<'a> for ChildScopeCollector {
     fn visit_ts_module_declaration(&mut self, decl: &TSModuleDeclaration<'a>) {
         self.scope_ids.push(decl.scope_id.get().unwrap());
     }
-
-    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
-        self.scope_ids.push(ty.scope_id.get().unwrap());
-    }
 }

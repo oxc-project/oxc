@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
 Positive Passed: 5271/5283 (99.77%)
-Negative Passed: 1094/4875 (22.44%)
+Negative Passed: 1095/4875 (22.46%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -3466,7 +3466,6 @@ Expect Syntax Error: "conformance/types/literal/templateLiteralTypes5.ts"
 Expect Syntax Error: "conformance/types/literal/templateLiteralTypes7.ts"
 Expect Syntax Error: "conformance/types/literal/templateLiteralTypesPatterns.ts"
 Expect Syntax Error: "conformance/types/literal/templateLiteralTypesPatternsPrefixSuffixAssignability.ts"
-Expect Syntax Error: "conformance/types/localTypes/localTypes4.ts"
 Expect Syntax Error: "conformance/types/mapped/mappedTypeAsClauseRelationships.ts"
 Expect Syntax Error: "conformance/types/mapped/mappedTypeAsClauses.ts"
 Expect Syntax Error: "conformance/types/mapped/mappedTypeConstraints2.ts"
@@ -20263,6 +20262,18 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·       ╰── `from` expected
  2 │ const a = import<string, number>
    ╰────
+
+  × Identifier `T` has already been declared
+    ╭─[conformance/types/localTypes/localTypes4.ts:18:16]
+ 17 │     // Type parameters and top-level local types are in same declaration space
+ 18 │     function f<T>() {
+    ·                ┬
+    ·                ╰── It can not be redeclared here
+ 19 │         interface T { }
+    ·                   ┬
+    ·                   ╰── `T` has already been declared here
+ 20 │         return undefined;
+    ╰────
 
   × Expected `}` but found `Identifier`
     ╭─[conformance/types/mapped/mappedTypeProperties.ts:9:5]
