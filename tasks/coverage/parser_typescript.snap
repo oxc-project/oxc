@@ -9415,6 +9415,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  11 │     function baz<implements, protected>() { }
     ╰────
 
+  × The keyword 'implements' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:11:18]
+ 10 │     function bar(private, implements, let) { }
+ 11 │     function baz<implements, protected>() { }
+    ·                  ──────────
+ 12 │     function barn(cb: (private, public, package) => void) { }
+    ╰────
+
+  × The keyword 'protected' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:11:30]
+ 10 │     function bar(private, implements, let) { }
+ 11 │     function baz<implements, protected>() { }
+    ·                              ─────────
+ 12 │     function barn(cb: (private, public, package) => void) { }
+    ╰────
+
   × The keyword 'private' is reserved
     ╭─[compiler/strictModeReservedWord.ts:12:24]
  11 │     function baz<implements, protected>() { }
@@ -9701,6 +9717,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  15 │         var z = function let() { };
     ·                          ───
  16 │     }
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[compiler/strictModeReservedWordInClassDeclaration.ts:21:9]
+ 20 │ 
+ 21 │ class D<public, private>{ }
+    ·         ──────
+ 22 │ 
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[compiler/strictModeReservedWordInClassDeclaration.ts:21:17]
+ 20 │ 
+ 21 │ class D<public, private>{ }
+    ·                 ───────
+ 22 │ 
     ╰────
 
   × The keyword 'package' is reserved
