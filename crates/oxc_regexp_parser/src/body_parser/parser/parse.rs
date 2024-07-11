@@ -44,13 +44,13 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Pattern>
     fn consume_pattern(&mut self) -> Result<ast::Pattern<'a>> {
-        let span_start = self.reader.span_position();
         // TODO: Define state, use later somewhere
         // this._groupSpecifiers.clear();
         // TODO: Define state, use later here
         // this._backreferenceNames.clear();
 
-        let alternatives = self.consume_disjunction()?;
+        let span_start = self.reader.span_position();
+        let disjunction = self.consume_disjunction()?;
 
         if self.reader.peek().is_some() {
             if self.reader.eat(')') {
@@ -73,7 +73,7 @@ impl<'a> PatternParser<'a> {
 
         let pattern = ast::Pattern {
             span: self.span_factory.create(span_start, self.reader.span_position()),
-            alternatives,
+            alternatives: disjunction,
         };
 
         // TODO: Implement, finalize backreferences with captured groups
@@ -89,19 +89,21 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Disjunction>
     pub(super) fn consume_disjunction(&mut self) -> Result<Vec<'a, ast::Alternative<'a>>> {
-        let mut alternatives = Vec::new_in(self.allocator);
+        let mut disjunction = Vec::new_in(self.allocator);
 
         // TODO: Implement
         // this._groupSpecifiers.enterDisjunction();
 
         let mut i: usize = 0;
         loop {
-            alternatives.push(self.consume_alternative(i)?);
+            disjunction.push(self.consume_alternative(i)?);
 
-            if !self.reader.eat('|') {
-                break;
+            if self.reader.eat('|') {
+                i += 1;
+                continue;
             }
-            i += 1;
+
+            break;
         }
 
         if self.reader.eat('{') {
@@ -111,7 +113,7 @@ impl<'a> PatternParser<'a> {
         // TODO: Implement
         // this._groupSpecifiers.leaveDisjunction();
 
-        Ok(alternatives)
+        Ok(disjunction)
     }
 
     // ```
@@ -121,26 +123,20 @@ impl<'a> PatternParser<'a> {
     // ```
     // <https://tc39.es/ecma262/#prod-Alternative>
     fn consume_alternative(&mut self, i: usize) -> Result<ast::Alternative<'a>> {
-        let span_start = self.reader.span_position();
-
         // TODO: Implement
         let _ = i;
         // this._groupSpecifiers.enterAlternative(i);
 
-        let mut elements = Vec::new_in(self.allocator);
-        loop {
-            if self.reader.peek().is_none() {
-                break;
-            }
-            let Some(term) = self.consume_term()? else {
-                break;
-            };
-            elements.push(term);
+        let span_start = self.reader.span_position();
+
+        let mut terms = Vec::new_in(self.allocator);
+        while let Some(term) = self.consume_term()? {
+            terms.push(term);
         }
 
         Ok(ast::Alternative {
             span: self.span_factory.create(span_start, self.reader.span_position()),
-            terms: elements,
+            terms,
         })
     }
 
@@ -307,19 +303,12 @@ impl<'a> PatternParser<'a> {
         if let Some(atom) = self.consume_character_class()? {
             return Ok(Some(atom));
         }
-
         // In the spec, (named) capturing group and non-capturing group are defined in that order.
-        // If `:` is not valid as a `GroupSpecifier`, why is it not defined in reverse order...?
-        // Anyway, if we don't look ahead here, we will get a syntax error.
-        let checkpoint = self.reader.checkpoint();
-        if !self.reader.eat3('(', '?', ':') {
-            if let Some(atom) = self.consume_capturing_group()? {
-                return Ok(Some(atom));
-            }
-        }
-        self.reader.rewind(checkpoint);
-
+        // But if `?:` is not valid as a `GroupSpecifier`, why is it not defined in reverse order...?
         if let Some(atom) = self.consume_non_capturing_group()? {
+            return Ok(Some(atom));
+        }
+        if let Some(atom) = self.consume_capturing_group()? {
             return Ok(Some(atom));
         }
 

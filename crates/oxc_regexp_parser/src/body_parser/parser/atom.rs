@@ -13,10 +13,7 @@ impl<'a> super::parse::PatternParser<'a> {
     pub(super) fn consume_pattern_character(&mut self) -> Option<ast::Atom<'a>> {
         let span_start = self.reader.span_position();
 
-        let cp = self.reader.peek()?;
-        if unicode::is_syntax_character(cp) {
-            return None;
-        }
+        let cp = self.reader.peek().filter(|&cp| !unicode::is_syntax_character(cp))?;
         self.reader.advance();
 
         Some(ast::Atom::Character(Box::new_in(
@@ -30,6 +27,7 @@ impl<'a> super::parse::PatternParser<'a> {
 
     pub(super) fn consume_dot(&mut self) -> Option<ast::Atom<'a>> {
         let span_start = self.reader.span_position();
+
         if !self.reader.eat('.') {
             return None;
         }
@@ -55,18 +53,17 @@ impl<'a> super::parse::PatternParser<'a> {
     // <https://tc39.es/ecma262/#prod-AtomEscape>
     pub(super) fn consume_atom_escape(&mut self) -> Result<Option<ast::Atom<'a>>> {
         let span_start = self.reader.span_position();
+
         if !self.reader.eat('\\') {
             return Ok(None);
         }
 
         // `DecimalEscape`: \1 means Backreference
         if let Some(decimal) = self.consume_decimal_escape() {
-            let span_end = self.reader.span_position();
-
             return Ok(Some(ast::Atom::Backreference(Box::new_in(
                 ast::Backreference::NormalBackreference(Box::new_in(
                     ast::NormalBackreference {
-                        span: self.span_factory.create(span_start, span_end),
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
                         r#ref: decimal,
                     },
                     self.allocator,
@@ -75,6 +72,7 @@ impl<'a> super::parse::PatternParser<'a> {
             ))));
         }
 
+        // `CharacterClassEscape`: \d
         if let Some((kind, negate)) = self.consume_character_class_escape() {
             return Ok(Some(ast::Atom::CharacterSet(Box::new_in(
                 ast::CharacterSet::EscapeCharacterSet(Box::new_in(
@@ -88,6 +86,7 @@ impl<'a> super::parse::PatternParser<'a> {
                 self.allocator,
             ))));
         }
+        // `CharacterEscape`: \p{}
         if self.state.is_unicode_mode() {
             if let Some(((name, value, negate), is_strings_related)) =
                 self.consume_character_class_escape_unicode()?
