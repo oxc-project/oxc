@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_ast::{
     ast::{
         ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
@@ -6,7 +8,7 @@ use oxc_ast::{
     AstBuilder, Visit,
 };
 use oxc_span::{Atom, GetSpan, SPAN};
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{diagnostics::type_containing_private_name, IsolatedDeclarations};
 
@@ -114,7 +116,7 @@ impl<'a> FunctionReturnType<'a> {
 }
 
 impl<'a> Visit<'a> for FunctionReturnType<'a> {
-    fn enter_scope(&mut self, _flags: ScopeFlags) {
+    fn enter_scope(&mut self, _flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.scope_depth += 1;
     }
 

@@ -7,6 +7,7 @@ mod reporter;
 mod service;
 
 use std::{
+    borrow::Cow,
     fmt::{self, Display},
     ops::Deref,
 };
@@ -42,9 +43,9 @@ impl Deref for OxcDiagnostic {
 
 #[derive(Debug, Clone)]
 pub struct OxcDiagnosticInner {
-    pub message: String,
+    pub message: Cow<'static, str>,
     pub labels: Option<Vec<LabeledSpan>>,
-    pub help: Option<String>,
+    pub help: Option<Cow<'static, str>>,
     pub severity: Severity,
 }
 
@@ -76,7 +77,7 @@ impl Diagnostic for OxcDiagnostic {
 
 impl OxcDiagnostic {
     #[must_use]
-    pub fn error<T: Into<String>>(message: T) -> Self {
+    pub fn error<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
             inner: Box::new(OxcDiagnosticInner {
                 message: message.into(),
@@ -88,7 +89,7 @@ impl OxcDiagnostic {
     }
 
     #[must_use]
-    pub fn warn<T: Into<String>>(message: T) -> Self {
+    pub fn warn<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
             inner: Box::new(OxcDiagnosticInner {
                 message: message.into(),
@@ -106,7 +107,7 @@ impl OxcDiagnostic {
     }
 
     #[must_use]
-    pub fn with_help<T: Into<String>>(mut self, help: T) -> Self {
+    pub fn with_help<T: Into<Cow<'static, str>>>(mut self, help: T) -> Self {
         self.inner.help = Some(help.into());
         self
     }

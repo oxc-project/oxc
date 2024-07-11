@@ -22,23 +22,24 @@ use oxc_tasks_common::{project_root, TestFile, TestFiles};
 /// # Panics
 /// # Errors
 pub fn run() -> Result<(), io::Error> {
-    let files = TestFiles::new();
+    let files = TestFiles::minifier();
 
     let path = project_root().join("tasks/minsize/minsize.snap");
 
     let mut out = String::new();
     out.push_str(&format!(
-        "{:width$} -> {:width$} -> {:width$}\n",
+        "{:width$} | {:width$} | {:width$}\n",
         "Original",
         "Minified",
         "Gzip",
         width = 10
     ));
+    out.push('\n');
 
     for file in files.files() {
         let minified = minify_twice(file);
         let s = format!(
-            "{:width$} -> {:width$} -> {:width$} {:width$}\n\n",
+            "{:width$} | {:width$} | {:width$} {:width$}\n\n",
             format_size(file.source_text.len(), DECIMAL),
             format_size(minified.len(), DECIMAL),
             format_size(gzip_size(&minified), DECIMAL),

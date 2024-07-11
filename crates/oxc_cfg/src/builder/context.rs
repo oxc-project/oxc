@@ -130,9 +130,12 @@ impl<'a, 'c> QueryCtx<'a, 'c> {
 
         self.resolve_ctx(ctx);
 
-        // mark the upper label continue jump point the same as ours,
+        // mark the upper label continue jump point the same as ours if it isn't already assigned,
+        // NOTE: if it is already assigned there's a resolution before this context.
         if let Some(jmp) = continue_jmp {
-            if let Some(label_ctx) = self.0.immediate_labeled_ctx() {
+            if let Some(label_ctx @ RefCtxCursor(Ctx { continue_jmp: None, .. })) =
+                self.0.immediate_labeled_ctx()
+            {
                 label_ctx.mark_continue(jmp);
             }
         }
