@@ -99,11 +99,11 @@ impl<'a> ParserImpl<'a> {
             self.end_span(start_span),
             decorators,
             id,
-            super_class,
-            body,
             type_parameters,
+            super_class,
             super_type_parameters,
             implements,
+            body,
             modifiers.contains_abstract(),
             modifiers.contains_declare(),
         ))

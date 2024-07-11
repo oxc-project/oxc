@@ -796,6 +796,16 @@ pub trait VisitMut<'a>: Sized {
     }
 
     #[inline]
+    fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
+        walk_ts_class_implementses(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_class_implements(&mut self, it: &mut TSClassImplements<'a>) {
+        walk_ts_class_implements(self, it);
+    }
+
+    #[inline]
     fn visit_class_body(&mut self, it: &mut ClassBody<'a>) {
         walk_class_body(self, it);
     }
@@ -833,16 +843,6 @@ pub trait VisitMut<'a>: Sized {
     #[inline]
     fn visit_accessor_property(&mut self, it: &mut AccessorProperty<'a>) {
         walk_accessor_property(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_class_implementses(&mut self, it: &mut Vec<'a, TSClassImplements<'a>>) {
-        walk_ts_class_implementses(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_class_implements(&mut self, it: &mut TSClassImplements<'a>) {
-        walk_ts_class_implements(self, it);
     }
 
     #[inline]
@@ -3049,16 +3049,15 @@ pub mod walk_mut {
         let kind = AstType::Class;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
-        visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(id) = &mut it.id {
             visitor.visit_binding_identifier(id);
         }
-        if let Some(super_class) = &mut it.super_class {
-            visitor.visit_class_heritage(super_class);
-        }
-        visitor.visit_class_body(&mut it.body);
+        visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(super_class) = &mut it.super_class {
+            visitor.visit_class_heritage(super_class);
         }
         if let Some(super_type_parameters) = &mut it.super_type_parameters {
             visitor.visit_ts_type_parameter_instantiation(super_type_parameters);
@@ -3066,6 +3065,7 @@ pub mod walk_mut {
         if let Some(implements) = &mut it.implements {
             visitor.visit_ts_class_implementses(implements);
         }
+        visitor.visit_class_body(&mut it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
     }
@@ -3074,6 +3074,30 @@ pub mod walk_mut {
         let kind = AstType::ClassHeritage;
         visitor.enter_node(kind);
         visitor.visit_expression(it);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut Vec<'a, TSClassImplements<'a>>,
+    ) {
+        for el in it.iter_mut() {
+            visitor.visit_ts_class_implements(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_ts_class_implements<'a, V: VisitMut<'a>>(
+        visitor: &mut V,
+        it: &mut TSClassImplements<'a>,
+    ) {
+        let kind = AstType::TSClassImplements;
+        visitor.enter_node(kind);
+        visitor.visit_ts_type_name(&mut it.expression);
+        if let Some(type_parameters) = &mut it.type_parameters {
+            visitor.visit_ts_type_parameter_instantiation(type_parameters);
+        }
         visitor.leave_node(kind);
     }
 
@@ -3203,30 +3227,6 @@ pub mod walk_mut {
         if let Some(value) = &mut it.value {
             visitor.visit_expression(value);
         }
-    }
-
-    #[inline]
-    pub fn walk_ts_class_implementses<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut Vec<'a, TSClassImplements<'a>>,
-    ) {
-        for el in it.iter_mut() {
-            visitor.visit_ts_class_implements(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_ts_class_implements<'a, V: VisitMut<'a>>(
-        visitor: &mut V,
-        it: &mut TSClassImplements<'a>,
-    ) {
-        let kind = AstType::TSClassImplements;
-        visitor.enter_node(kind);
-        visitor.visit_ts_type_name(&mut it.expression);
-        if let Some(type_parameters) = &mut it.type_parameters {
-            visitor.visit_ts_type_parameter_instantiation(type_parameters);
-        }
-        visitor.leave_node(kind);
     }
 
     #[inline]
