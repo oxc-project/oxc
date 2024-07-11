@@ -133,6 +133,10 @@ fn for_stmt() {
     test("for (;;i++) {}", "for (;; i++) {}\n");
 
     test("for (using x = 1;;) {}", "for (using x = 1;;) {}\n");
+    test(
+        "for (var a = 1 || (2 in {}) in { x: 1 }) count++;",
+        "for (var a = 1 || (2 in {}) in {x: 1}) count++;\n",
+    );
 }
 
 #[test]

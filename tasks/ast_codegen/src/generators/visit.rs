@@ -37,7 +37,7 @@ impl Generator for VisitGenerator {
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit", generate_visit(ctx)))
+        GeneratorOutput::Stream(("visit", generate_visit::<false>(ctx)))
     }
 }
 
@@ -47,11 +47,11 @@ impl Generator for VisitMutGenerator {
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit_mut", generate_visit_mut(ctx)))
+        GeneratorOutput::Stream(("visit_mut", generate_visit::<true>(ctx)))
     }
 }
 
-static CLIPPY_ALLOW: &str = "\
+const CLIPPY_ALLOW: &str = "\
     unused_variables,\
     clippy::extra_unused_type_parameters,\
     clippy::explicit_iter_loop,\
@@ -59,7 +59,7 @@ static CLIPPY_ALLOW: &str = "\
     clippy::semicolon_if_nothing_returned,\
     clippy::match_wildcard_for_single_variants";
 
-fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
+fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
     let header = generated_header!();
     // we evaluate it outside of quote to take advantage of expression evaluation
     // otherwise the `\n\` wouldn't work!
@@ -71,41 +71,18 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
         //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
     "};
 
-    let (visits, walks) = VisitBuilder::new(ctx, false).build();
+    let (visits, walks) = VisitBuilder::new(ctx, MUT).build();
     let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
 
-    quote! {
-        #header
-        #file_docs
-        #clippy_attr
+    let walk_mod = if MUT { quote!(walk_mut) } else { quote!(walk) };
+    let trait_name = if MUT { quote!(VisitMut) } else { quote!(Visit) };
+    let ast_kind_type = if MUT { quote!(AstType) } else { quote!(AstKind) };
+    let ast_kind_life = if MUT { TokenStream::default() } else { quote!(<'a>) };
 
-        endl!();
-
-        use oxc_allocator::Vec;
-        use oxc_syntax::scope::ScopeFlags;
-
-        endl!();
-
-        use crate::{ast::*, ast_kind::AstKind};
-
-        endl!();
-
-        use walk::*;
-
-        endl!();
-
-        /// Syntax tree traversal
-        pub trait Visit<'a>: Sized {
-            fn enter_node(&mut self, kind: AstKind<'a>) {}
-            fn leave_node(&mut self, kind: AstKind<'a>) {}
-
-            endl!();
-
-            fn enter_scope(&mut self, flags: ScopeFlags) {}
-            fn leave_scope(&mut self) {}
-
-            endl!();
-
+    let may_alloc = if MUT {
+        TokenStream::default()
+    } else {
+        quote! {
             #[inline]
             fn alloc<T>(&self, t: &T) -> &'a T {
                 insert!("// SAFETY:");
@@ -116,35 +93,8 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
                     std::mem::transmute(t)
                 }
             }
-
-            #(#visits)*
         }
-
-        endl!();
-
-        pub mod walk {
-            use super::*;
-
-            #(#walks)*
-
-        }
-    }
-}
-
-fn generate_visit_mut(ctx: &CodegenCtx) -> TokenStream {
-    let header = generated_header!();
-    // we evaluate it outside of quote to take advantage of expression evaluation
-    // otherwise the `\n\` wouldn't work!
-    let file_docs = insert! {"\
-        //! Visitor Pattern\n\
-        //!\n\
-        //! See:\n\
-        //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)\n\
-        //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
-    "};
-
-    let (visits, walks) = VisitBuilder::new(ctx, true).build();
-    let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
+    };
 
     quote! {
         #header
@@ -153,37 +103,43 @@ fn generate_visit_mut(ctx: &CodegenCtx) -> TokenStream {
 
         endl!();
 
+        use std::cell::Cell;
+
+        endl!();
+
         use oxc_allocator::Vec;
-        use oxc_syntax::scope::ScopeFlags;
+        use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         endl!();
 
-        use crate::{ast::*, ast_kind::AstType};
+        use crate::{ast::*, ast_kind::#ast_kind_type};
 
         endl!();
 
-        use walk_mut::*;
+        use #walk_mod::*;
 
         endl!();
 
-        /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
-        pub trait VisitMut<'a>: Sized {
-            fn enter_node(&mut self, ty: AstType) {}
-            fn leave_node(&mut self, ty: AstType) {}
+        /// Syntax tree traversal
+        pub trait #trait_name <'a>: Sized {
+            fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
+            fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
 
             endl!();
 
-            fn enter_scope(&mut self, flags: ScopeFlags) {}
+            fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
             fn leave_scope(&mut self) {}
 
             endl!();
+
+            #may_alloc
 
             #(#visits)*
         }
 
         endl!();
 
-        pub mod walk_mut {
+        pub mod #walk_mod {
             use super::*;
 
             #(#walks)*
@@ -533,7 +489,7 @@ impl<'a> VisitBuilder<'a> {
                 let flags = scope_args
                     .flags
                     .map_or_else(|| quote!(ScopeFlags::empty()), |it| it.to_token_stream());
-                let args = if let Some(strict_if) = scope_args.strict_if {
+                let flags = if let Some(strict_if) = scope_args.strict_if {
                     let strict_if =
                         strict_if.to_token_stream().replace_ident("self", &format_ident!("it"));
                     quote! {{
@@ -547,7 +503,7 @@ impl<'a> VisitBuilder<'a> {
                     flags
                 };
                 let mut enter = cond.as_ref().into_token_stream();
-                enter.extend(maybe_conditional(quote!(visitor.enter_scope(#args);)));
+                enter.extend(maybe_conditional(quote!(visitor.enter_scope(#flags, &it.scope_id);)));
                 let leave = maybe_conditional(quote!(visitor.leave_scope();));
                 (enter, leave)
             },

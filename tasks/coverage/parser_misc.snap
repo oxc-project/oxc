@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 23/23 (100.00%)
-Positive Passed: 23/23 (100.00%)
-Negative Passed: 11/11 (100.00%)
+AST Parsed     : 24/24 (100.00%)
+Positive Passed: 24/24 (100.00%)
+Negative Passed: 12/12 (100.00%)
 
   × Unexpected token
    ╭─[fail/oxc-169.js:2:1]
@@ -158,6 +158,13 @@ Negative Passed: 11/11 (100.00%)
    ·     ──────
  9 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[fail/oxc-4111-1.js:1:35]
+ 1 │ funtransientction as longciiConÞr>ol(cde) {
+   ·                                  ▲
+   ╰────
+  help: Try insert a semicolon here
 
   × The keyword 'let' is reserved
    ╭─[fail/oxc.js:1:1]
