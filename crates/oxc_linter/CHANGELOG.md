@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.6.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Features
+
+- fb549e1 linter: Add vitest/no-focused-tests rule (#4178) (mysteryven)
+- 6c49007 linter: Add fixer for @typescript-eslint/consistent-type-imports (#3984) (mysteryven)
+- 278c3e9 linter: Add fixer for jsx-a11y/aria-props (#4176) (DonIsaac)
+- 2188144 linter: Eslint-plugin-jest/prefer-hooks-in-order (#4052) (cinchen)
+- cc58614 linter: Better schemas for allow/warn/deny (#4150) (DonIsaac)
+- c5b4be0 linter: Add fixer for prefer-node-protocol (#4129) (DonIsaac)
+- 7ec0c0b linter/eslint: Implement no-label-var (#4087) (Jelle van der Waa)
+
+### Bug Fixes
+
+- ed4c54c eslint/radix: Detect yield Number.parseInt variant (#4110) (Jelle van der Waa)
+- e9ad03b linter: Fixer for no-debugger creates incorrect code (#4184) (DonIsaac)
+- bd69571 linter: Fix top level return panic in eslint/array_callback_return (#4167) (Boshen)
+- c8f5664 linter: Fix panic with unicode in unicorn/prefer_dom_node_dataset (#4166) (Boshen)
+- f2b3273 linter: Fix fixer panic in typescript/consistent_indexed_object_style (#4165) (Boshen)
+- 2334515 linter: Panic in `get_enclosing_function` (#4121) (DonIsaac)
+- 1b91d40 linter: Incorrect fixer for `no-unused-labels` (#4123) (Don Isaac)
+- 1729249 linter: Incorrect fix in `no-single-promise-in-promise-methods` rule; (#4094) (DonIsaac)
+- cc7e893 linter/tree-shaking: Avoid recursive function stackoverflow (#4191) (mysteryven)
+- 28eeee0 parser: Fix asi error diagnostic pointing at invalid text causing crash (#4163) (Boshen)
+- 0f02608 semantic: Bind `TSImportEqualsDeclaration`s (#4100) (Don Isaac)
+
+### Performance
+
+- ddfa343 diagnostic: Use `Cow<'static, str>` over `String` (#4175) (DonIsaac)
+
+### Refactor
+
+- 2687ebc react: Use find_binding helper for finding React binding (#4108) (Jelle van der Waa)
+
 ## [0.5.3] - 2024-07-07
 
 ### Features
