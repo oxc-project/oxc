@@ -135,12 +135,12 @@ impl PreferExpectResolves {
             call_expr.span.end,
         );
 
-        formatter.print_str(b"await");
+        formatter.print_str("await");
         formatter.print_hard_space();
-        formatter.print_str(jest_expect_fn_call.local.as_bytes());
-        formatter.print(b'(');
+        formatter.print_str(&jest_expect_fn_call.local);
+        formatter.print_char(b'(');
         formatter.print_str(fixer.source_range(arg_span));
-        formatter.print_str(b".resolves");
+        formatter.print_str(".resolves");
         fixer.replace(call_expr.span, formatter)
     }
 }

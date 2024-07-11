@@ -175,13 +175,15 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     /// Push a single character into the buffer
-    pub fn print(&mut self, ch: u8) {
+    #[inline]
+    pub fn print_char(&mut self, ch: u8) {
         self.code.push(ch);
     }
 
     /// Push a single character into the buffer
-    pub fn print_str<T: AsRef<[u8]>>(&mut self, s: T) {
-        self.code.extend_from_slice(s.as_ref());
+    #[inline]
+    pub fn print_str(&mut self, s: &str) {
+        self.code.extend(s.as_bytes());
     }
 }
 
@@ -198,30 +200,30 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     #[inline]
     fn print_soft_space(&mut self) {
         if !MINIFY {
-            self.print(b' ');
+            self.print_char(b' ');
         }
     }
 
     #[inline]
     pub fn print_hard_space(&mut self) {
-        self.print(b' ');
+        self.print_char(b' ');
     }
 
     #[inline]
     fn print_soft_newline(&mut self) {
         if !MINIFY {
-            self.print(b'\n');
+            self.print_char(b'\n');
         }
     }
 
     #[inline]
     fn print_semicolon(&mut self) {
-        self.print(b';');
+        self.print_char(b';');
     }
 
     #[inline]
     fn print_comma(&mut self) {
-        self.print(b',');
+        self.print_char(b',');
     }
 
     #[inline]
@@ -273,7 +275,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         if MINIFY {
             self.needs_semicolon = true;
         } else {
-            self.print_str(b";\n");
+            self.print_str(";\n");
         }
     }
 
@@ -287,17 +289,17 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     fn print_ellipsis(&mut self) {
-        self.print_str(b"...");
+        self.print_str("...");
     }
 
     #[inline]
     pub fn print_colon(&mut self) {
-        self.print(b':');
+        self.print_char(b':');
     }
 
     #[inline]
     fn print_equal(&mut self) {
-        self.print(b'=');
+        self.print_char(b'=');
     }
 
     fn print_sequence<T: Gen<MINIFY>>(&mut self, items: &[T], ctx: Context) {
@@ -309,7 +311,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
         self.add_source_mapping(span.start);
-        self.print(b'{');
+        self.print_char(b'{');
         if !single_line {
             self.print_soft_newline();
             self.indent();
@@ -320,12 +322,12 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             self.print_indent();
         }
         self.add_source_mapping(span.end);
-        self.print(b'}');
+        self.print_char(b'}');
     }
 
     fn print_block_start(&mut self, position: u32) {
         self.add_source_mapping(position);
-        self.print(b'{');
+        self.print_char(b'{');
         self.print_soft_newline();
         self.indent();
     }
@@ -334,7 +336,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.dedent();
         self.print_indent();
         self.add_source_mapping(position);
-        self.print(b'}');
+        self.print_char(b'}');
     }
 
     fn print_body(&mut self, stmt: &Statement<'_>, need_space: bool, ctx: Context) {
@@ -400,12 +402,12 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         // if let Some(mangler) = &self.mangler {
         // if let Some(symbol_id) = symbol_id {
         // let name = mangler.get_symbol_name(symbol_id);
-        // self.print_str(name.clone().as_bytes());
+        // self.print_str(name.clone());
         // return;
         // }
         // }
         self.add_source_mapping_for_name(span, fallback);
-        self.print_str(fallback.as_bytes());
+        self.print_str(fallback);
     }
 
     fn print_space_before_operator(&mut self, next: Operator) {
@@ -454,9 +456,9 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     #[inline]
     fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
         let quote = Self::choose_quote(s);
-        self.print(quote as u8);
+        self.print_char(quote as u8);
         f(self, quote);
-        self.print(quote as u8);
+        self.print_char(quote as u8);
     }
 
     fn print_directives_and_statements(
