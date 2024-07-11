@@ -12,11 +12,11 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, get_test_plugin_name, parse_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
+        JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, TestPluginName,
     },
 };
 
-fn consistent_method(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+fn consistent_method(x0: TestPluginName, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
     ))
@@ -24,7 +24,12 @@ fn consistent_method(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic
     .with_label(span0)
 }
 
-fn consistent_method_within_describe(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+fn consistent_method_within_describe(
+    x0: TestPluginName,
+    x1: &str,
+    x2: &str,
+    span0: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
     ))
@@ -211,7 +216,7 @@ impl ConsistentTestIt {
     fn run<'a>(
         &self,
         describe_nesting_hash: &mut FxHashMap<ScopeId, i32>,
-        plugin_name: &str,
+        plugin_name: TestPluginName,
         possible_jest_node: &PossibleJestNode<'a, '_>,
         ctx: &LintContext<'a>,
     ) {
