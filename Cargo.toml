@@ -81,6 +81,7 @@ oxc_codegen               = { version = "0.20.0", path = "crates/oxc_codegen" }
 oxc_diagnostics           = { version = "0.20.0", path = "crates/oxc_diagnostics" }
 oxc_index                 = { version = "0.20.0", path = "crates/oxc_index" }
 oxc_minifier              = { version = "0.20.0", path = "crates/oxc_minifier" }
+oxc_mangler               = { version = "0.20.0", path = "crates/oxc_mangler" }
 oxc_parser                = { version = "0.20.0", path = "crates/oxc_parser" }
 oxc_semantic              = { version = "0.20.0", path = "crates/oxc_semantic" }
 oxc_span                  = { version = "0.20.0", path = "crates/oxc_span" }

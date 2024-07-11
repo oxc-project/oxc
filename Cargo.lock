@@ -1396,6 +1396,7 @@ dependencies = [
  "once_cell",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_mangler",
  "oxc_parser",
  "oxc_sourcemap",
  "oxc_span",
@@ -1551,18 +1552,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_mangler"
+version = "0.20.0"
+dependencies = [
+ "itertools 0.13.0",
+ "oxc_ast",
+ "oxc_index",
+ "oxc_semantic",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_minifier"
 version = "0.20.0"
 dependencies = [
  "insta",
- "itertools 0.13.0",
  "num-bigint",
  "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
- "oxc_index",
+ "oxc_mangler",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",

@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{CompactStr, GetSpan};
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
@@ -1081,16 +1081,18 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        // if let Some(mangler) = &p.mangler {
-        // if let Some(reference_id) = self.reference_id.get() {
-        // if let Some(name) = mangler.get_reference_name(reference_id) {
-        // p.print_str(name.clone().as_str());
-        // return;
-        // }
-        // }
-        // }
+        if let Some(mangler) = &p.mangler {
+            if let Some(reference_id) = self.reference_id.get() {
+                if let Some(name) = mangler.get_reference_name(reference_id) {
+                    let name = CompactStr::new(name);
+                    p.add_source_mapping_for_name(self.span, &name);
+                    p.print_str(&name);
+                    return;
+                }
+            }
+        }
         p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(self.name.as_str());
+        p.print_str(&self.name);
     }
 }
 

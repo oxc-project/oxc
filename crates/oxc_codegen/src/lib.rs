@@ -12,18 +12,20 @@ mod sourcemap_builder;
 
 use std::{borrow::Cow, ops::Range};
 
+use rustc_hash::FxHashMap;
+
 use oxc_ast::{
     ast::{BlockStatement, Directive, Expression, Program, Statement},
     Comment, Trivias,
 };
-use oxc_span::Span;
+use oxc_mangler::Mangler;
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
     symbol::SymbolId,
 };
-use rustc_hash::FxHashMap;
 
 pub use crate::{
     context::Context,
@@ -54,6 +56,8 @@ pub struct Codegen<'a, const MINIFY: bool> {
     source_text: &'a str,
 
     trivias: Trivias,
+
+    mangler: Option<Mangler>,
 
     /// Output Code
     code: Vec<u8>,
@@ -111,6 +115,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             comment_options: CommentOptions::default(),
             source_text: "",
             trivias: Trivias::default(),
+            mangler: None,
             code: vec![],
             needs_semicolon: false,
             need_space_before_dot: 0,
@@ -125,6 +130,15 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             sourcemap_builder: None,
             move_comment_map: MoveCommentMap::default(),
         }
+    }
+
+    /// Initialize the output code buffer to reduce memory reallocation.
+    /// Minification will reduce by at least half of the original size.
+    #[must_use]
+    pub fn with_capacity(mut self, source_text_len: usize) -> Self {
+        let capacity = if MINIFY { source_text_len / 2 } else { source_text_len };
+        self.code = Vec::with_capacity(capacity);
+        self
     }
 
     #[must_use]
@@ -148,12 +162,9 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self
     }
 
-    /// Initialize the output code buffer to reduce memory reallocation.
-    /// Minification will reduce by at least half of the original size.
     #[must_use]
-    pub fn with_capacity(mut self, source_text_len: usize) -> Self {
-        let capacity = if MINIFY { source_text_len / 2 } else { source_text_len };
-        self.code = Vec::with_capacity(capacity);
+    pub fn with_mangler(mut self, mangler: Option<Mangler>) -> Self {
+        self.mangler = mangler;
         self
     }
 
@@ -180,7 +191,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.code.push(ch);
     }
 
-    /// Push a single character into the buffer
+    /// Push str into the buffer
     #[inline]
     pub fn print_str(&mut self, s: &str) {
         self.code.extend(s.as_bytes());
@@ -398,14 +409,16 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     #[allow(clippy::needless_pass_by_value)]
-    fn print_symbol(&mut self, span: Span, _symbol_id: Option<SymbolId>, fallback: &str) {
-        // if let Some(mangler) = &self.mangler {
-        // if let Some(symbol_id) = symbol_id {
-        // let name = mangler.get_symbol_name(symbol_id);
-        // self.print_str(name.clone());
-        // return;
-        // }
-        // }
+    fn print_symbol(&mut self, span: Span, symbol_id: Option<SymbolId>, fallback: &str) {
+        if let Some(mangler) = &self.mangler {
+            if let Some(symbol_id) = symbol_id {
+                let name = mangler.get_symbol_name(symbol_id);
+                let name = CompactStr::new(name);
+                self.add_source_mapping_for_name(span, &name);
+                self.print_str(&name);
+                return;
+            }
+        }
         self.add_source_mapping_for_name(span, fallback);
         self.print_str(fallback);
     }

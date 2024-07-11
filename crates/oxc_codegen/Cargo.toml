@@ -25,10 +25,13 @@ oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_syntax    = { workspace = true }
 oxc_sourcemap = { workspace = true }
-bitflags      = { workspace = true }
-once_cell     = { workspace = true }
-daachorse     = { workspace = true }
-rustc-hash    = { workspace = true }
+oxc_mangler   = { workspace = true }
+
+bitflags   = { workspace = true }
+once_cell  = { workspace = true }
+daachorse  = { workspace = true }
+rustc-hash = { workspace = true }
+
 [dev-dependencies]
 oxc_parser = { workspace = true }
 base64     = { workspace = true }
