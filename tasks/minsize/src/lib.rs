@@ -1,5 +1,6 @@
 #![allow(clippy::print_stdout, clippy::print_stderr)]
 use std::{
+    collections::HashMap,
     fs::File,
     io::{self, Write},
 };
@@ -26,12 +27,28 @@ pub fn run() -> Result<(), io::Error> {
 
     let path = project_root().join("tasks/minsize/minsize.snap");
 
+    let targets = HashMap::<&str, &str>::from_iter([
+        ("react.development.js", "8.54 kB"),
+        ("moment.js", "19.33 kB"),
+        ("jquery.js", "31.95 kB"),
+        ("vue.js", "44.37 kB"),
+        ("lodash.js", "26.20 kB"),
+        ("d3.js", "90.80 kB"),
+        ("bundle.min.js", "126.71 kB"),
+        ("three.js", "163.73 kB"),
+        ("victory.js", "181.07 kB"),
+        ("echarts.js", "331.56 kB"),
+        ("antd.js", "488.28 kB"),
+        ("typescript.js", "915.50 kB"),
+    ]);
+
     let mut out = String::new();
     out.push_str(&format!(
-        "{:width$} | {:width$} | {:width$}\n",
+        "{:width$} | {:width$} | {:width$} | {:width$}\n",
         "Original",
         "Minified",
         "Gzip",
+        "esbuild",
         width = 10
     ));
     out.push('\n');
@@ -39,10 +56,11 @@ pub fn run() -> Result<(), io::Error> {
     for file in files.files() {
         let minified = minify_twice(file);
         let s = format!(
-            "{:width$} | {:width$} | {:width$} {:width$}\n\n",
+            "{:width$} | {:width$} | {:width$} | {:width$} | {:width$}\n\n",
             format_size(file.source_text.len(), DECIMAL),
             format_size(minified.len(), DECIMAL),
             format_size(gzip_size(&minified), DECIMAL),
+            targets[file.file_name.as_str()],
             &file.file_name,
             width = 10
         );
