@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
 ---
   ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
    ╭─[no_focused_tests.tsx:1:1]
@@ -124,5 +125,89 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_focused_tests.tsx:1:1]
  1 │ fit.each`table`()
    · ─────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only("test", () => {});
+   · ─────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ describe.only("test", () => {});
+   · ───────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.only("test", () => {});
+   · ───────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only.each([])("test", () => {});
+   · ──────────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.only.each``("test", () => {});
+   · ──────────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only.each``("test", () => {});
+   · ────────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only("test", () => {});
+   · ─────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ describe.only("test", () => {});
+   · ───────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.only("test", () => {});
+   · ───────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only.each([])("test", () => {});
+   · ──────────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ test.only.each``("test", () => {});
+   · ──────────────────────────────────
+   ╰────
+  help: Remove focus from test.
+
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
+   ╭─[no_focused_tests.tsx:1:1]
+ 1 │ it.only.each``("test", () => {});
+   · ────────────────────────────────
    ╰────
   help: Remove focus from test.
