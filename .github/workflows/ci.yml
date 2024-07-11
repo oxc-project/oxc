@@ -76,6 +76,7 @@ jobs:
       - run: cargo ck
       - run: cargo test --no-run
       - run: cargo test
+      - run: git diff --exit-code # Must commit everything
 
   test-windows:
     needs: optimize_ci
