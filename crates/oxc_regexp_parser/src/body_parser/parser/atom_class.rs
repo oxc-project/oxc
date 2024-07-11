@@ -1,44 +1,9 @@
 use oxc_allocator::{Box, Vec};
 use oxc_diagnostics::{OxcDiagnostic, Result};
-// use oxc_span::Atom as SpanAtom;
 
 use crate::ast;
 
 impl<'a> super::parse::PatternParser<'a> {
-    // ```
-    // ClassContents[UnicodeMode, UnicodeSetsMode] ::
-    //   [empty]
-    //   [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
-    //   [+UnicodeSetsMode] ClassSetExpression
-    // ```
-    // <https://tc39.es/ecma262/#prod-ClassContents>
-    pub(super) fn consume_class_contents(
-        &mut self,
-        span_start: usize,
-        negate: bool,
-    ) -> Result<ast::CharacterClass<'a>> {
-        if !self.state.is_unicode_sets_mode() {
-            return Ok(ast::CharacterClass::ClassRangesCharacterClass(Box::new_in(
-                ast::ClassRangesCharacterClass {
-                    span: self.span_factory.create(span_start, self.reader.span_position()),
-                    negate,
-                    elements: self.consume_nonempty_class_ranges()?,
-                },
-                self.allocator,
-            )));
-        }
-
-        Ok(ast::CharacterClass::UnicodeSetsCharacterClass(Box::new_in(
-            ast::UnicodeSetsCharacterClass {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
-                negate,
-                // TODO: Implement
-                elements: Vec::new_in(self.allocator),
-            },
-            self.allocator,
-        )))
-    }
-
     // ```
     // NonemptyClassRanges[UnicodeMode] ::
     //   ClassAtom[?UnicodeMode]
@@ -51,57 +16,54 @@ impl<'a> super::parse::PatternParser<'a> {
     ) -> Result<Vec<'a, ast::ClassRangesCharacterClassElement<'a>>> {
         let mut contents = Vec::new_in(self.allocator);
 
+        // NOTE: This implementation may not reflect the spec correctly.
+        // `ClassAtom`(= `NonemptyClassRanges`) and `NonemptyClassRangesNoDash` should be distinguished?
+        // But `regexpp` also handles them in the same way.
         loop {
             let range_span_start = self.reader.span_position();
 
             let Some(first_class_atom) = self.consume_class_atom()? else {
-                // If there is no more characters, break the loop
+                // If there is no more characters, break the loop to return `[empty]`
                 break;
             };
 
             let span_start = self.reader.span_position();
-            let Some(cp) = self.reader.peek().filter(|&cp| cp == '-' as u32) else {
-                // If there is no `-`, push the character as a single `ClassAtom`
-                contents.push(first_class_atom);
-                // Then continue to find the next `Non`
-                continue;
-            };
-            self.reader.advance();
+            if self.reader.eat('-') {
+                let Some(second_class_atom) = self.consume_class_atom()? else {
+                    contents.push(ast::ClassRangesCharacterClassElement::Character(Box::new_in(
+                        ast::Character {
+                            span: self.span_factory.create(span_start, self.reader.span_position()),
+                            value: '-' as u32,
+                        },
+                        self.allocator,
+                    )));
+                    // If `-` found but there is no more characters, push `-` as a character and break
+                    break;
+                };
 
-            let dash_character = ast::Character {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
-                value: cp,
-            };
-
-            let Some(second_class_atom) = self.consume_class_atom()? else {
-                // If there is no range end character, push `-` as a single `ClassAtom`
-                contents.push(ast::ClassRangesCharacterClassElement::Character(Box::new_in(
-                    dash_character,
-                    self.allocator,
-                )));
-                continue;
-            };
-
-            match (first_class_atom, second_class_atom) {
-                (
-                    ast::ClassRangesCharacterClassElement::Character(min_character),
-                    ast::ClassRangesCharacterClassElement::Character(max_character),
-                ) => {
-                    contents.push(ast::ClassRangesCharacterClassElement::CharacterClassRange(
-                        Box::new_in(
-                            ast::CharacterClassRange {
-                                span: self
-                                    .span_factory
-                                    .create(range_span_start, self.reader.span_position()),
-                                min: min_character.unbox(),
-                                max: max_character.unbox(),
-                            },
-                            self.allocator,
-                        ),
-                    ));
-                }
-                _ => {
-                    return Err(OxcDiagnostic::error("Invalid character class range"));
+                match (first_class_atom, second_class_atom) {
+                    (
+                        ast::ClassRangesCharacterClassElement::Character(min_character),
+                        ast::ClassRangesCharacterClassElement::Character(max_character),
+                    ) => {
+                        contents.push(ast::ClassRangesCharacterClassElement::CharacterClassRange(
+                            Box::new_in(
+                                ast::CharacterClassRange {
+                                    span: self
+                                        .span_factory
+                                        .create(range_span_start, self.reader.span_position()),
+                                    min: min_character.unbox(),
+                                    max: max_character.unbox(),
+                                },
+                                self.allocator,
+                            ),
+                        ));
+                        // If `-` and 2 characters found, push the range and continue
+                        continue;
+                    }
+                    _ => {
+                        return Err(OxcDiagnostic::error("Invalid character class range"));
+                    }
                 }
             }
         }
@@ -115,19 +77,45 @@ impl<'a> super::parse::PatternParser<'a> {
     //   ClassAtomNoDash[?UnicodeMode]
     // ```
     // <https://tc39.es/ecma262/#prod-ClassAtom>
-    // ```
-    // ClassAtomNoDash[UnicodeMode] ::
-    //   SourceCharacter but not one of \ or ] or -
-    //   \ ClassEscape[?UnicodeMode]
-    // ```
-    // <https://tc39.es/ecma262/#prod-ClassAtomNoDash>
     fn consume_class_atom(&mut self) -> Result<Option<ast::ClassRangesCharacterClassElement<'a>>> {
         let Some(cp) = self.reader.peek() else {
             return Ok(None);
         };
 
         let span_start = self.reader.span_position();
+        if cp == '-' as u32 {
+            self.reader.advance();
 
+            return Ok(Some(ast::ClassRangesCharacterClassElement::Character(Box::new_in(
+                ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    value: cp,
+                },
+                self.allocator,
+            ))));
+        }
+
+        if let Some(class_atom_no_dash) = self.consume_class_atom_no_dash()? {
+            return Ok(Some(class_atom_no_dash));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ClassAtomNoDash[UnicodeMode] ::
+    //   SourceCharacter but not one of \ or ] or -
+    //   \ ClassEscape[?UnicodeMode]
+    // ```
+    // <https://tc39.es/ecma262/#prod-ClassAtomNoDash>
+    fn consume_class_atom_no_dash(
+        &mut self,
+    ) -> Result<Option<ast::ClassRangesCharacterClassElement<'a>>> {
+        let Some(cp) = self.reader.peek() else {
+            return Ok(None);
+        };
+
+        let span_start = self.reader.span_position();
         if cp != '\\' as u32 && cp != ']' as u32 && cp != '-' as u32 {
             self.reader.advance();
 
@@ -140,8 +128,9 @@ impl<'a> super::parse::PatternParser<'a> {
             ))));
         }
 
+        let span_start = self.reader.span_position();
         if self.reader.eat('\\') {
-            if let Some(class_escape) = self.consume_class_escape()? {
+            if let Some(class_escape) = self.consume_class_escape(span_start)? {
                 return Ok(Some(class_escape));
             }
 
@@ -161,13 +150,11 @@ impl<'a> super::parse::PatternParser<'a> {
     // <https://tc39.es/ecma262/#prod-ClassEscape>
     fn consume_class_escape(
         &mut self,
+        span_start: usize,
     ) -> Result<Option<ast::ClassRangesCharacterClassElement<'a>>> {
         let Some(cp) = self.reader.peek() else {
             return Ok(None);
         };
-
-        // TODO: `span_start` as args?
-        let span_start = self.reader.span_position() - 1; // -1 for `\`
 
         if cp == 'b' as u32 {
             self.reader.advance();

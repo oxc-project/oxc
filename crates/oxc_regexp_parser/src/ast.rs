@@ -116,13 +116,10 @@ pub struct LookbehindAssertion<'a> {
 pub enum Atom<'a> {
     Character(Box<'a, Character>),
     CharacterSet(Box<'a, CharacterSet<'a>>),
-    CharacterClass(Box<'a, CharacterClass<'a>>),
-    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
     Backreference(Box<'a, Backreference<'a>>),
+    CharacterClass(Box<'a, CharacterClass<'a>>),
     CapturingGroup(Box<'a, CapturingGroup<'a>>),
     NonCapturingGroup(Box<'a, NonCapturingGroup<'a>>),
-    // NOTE: Is this really necessary?
-    // LookaheadAssertion(Box<'a, LookaheadAssertion<'a>>),
 }
 
 /// The quantifier.
@@ -144,20 +141,18 @@ pub enum Backreference<'a> {
     NamedBackreference(Box<'a, NamedBackreference<'a>>),
 }
 
+/// E.g. `\1`
 #[derive(Debug)]
 pub struct NormalBackreference {
     pub span: Span,
     pub r#ref: usize, // 1 for \1
-                      // NOTE: How to handle this...?
-                      // pub resolved: CapturingGroup<'a>,
 }
 
+/// E.g. `\k<name>`
 #[derive(Debug)]
 pub struct NamedBackreference<'a> {
     pub span: Span,
     pub r#ref: SpanAtom<'a>, // name for \k<name>
-                             // NOTE: How to handle this...?
-                             // pub resolved: Vec<'a, CapturingGroup<'a>>,
 }
 
 /// The capturing group.
@@ -167,8 +162,14 @@ pub struct CapturingGroup<'a> {
     pub span: Span,
     pub name: Option<SpanAtom<'a>>,
     pub alternatives: Vec<'a, Alternative<'a>>,
-    // NOTE: How to handle this...?
-    // pub references: Vec<'a, Backreference<'a>>,
+}
+
+/// The non-capturing group.
+/// E.g. `(?:ab)`
+#[derive(Debug)]
+pub struct NonCapturingGroup<'a> {
+    pub span: Span,
+    pub alternatives: Vec<'a, Alternative<'a>>,
 }
 
 /// The character.
@@ -180,86 +181,6 @@ pub struct Character {
     pub value: u32,
 }
 
-/// The character class.
-/// E.g. `[ab]`, `[^ab]`
-#[derive(Debug)]
-pub enum CharacterClass<'a> {
-    ClassRangesCharacterClass(Box<'a, ClassRangesCharacterClass<'a>>),
-    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
-}
-
-/// The character class used in legacy (neither `u` nor `v` flag) and Unicode mode (`u` flag).
-///
-/// This character class is guaranteed to NOT contain strings.
-/// In Unicode sets mode (`v` flag), [`UnicodeSetsCharacterClass`] is used.
-#[derive(Debug)]
-pub struct ClassRangesCharacterClass<'a> {
-    pub span: Span,
-    pub negate: bool,
-    pub elements: Vec<'a, ClassRangesCharacterClassElement<'a>>,
-}
-
-#[derive(Debug)]
-pub enum ClassRangesCharacterClassElement<'a> {
-    Character(Box<'a, Character>),
-    CharacterClassRange(Box<'a, CharacterClassRange>),
-    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
-    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet<'a>>),
-}
-
-/// The character class.
-/// E.g. `[a-b]`
-#[derive(Debug)]
-pub struct CharacterClassRange {
-    pub span: Span,
-    pub min: Character,
-    pub max: Character,
-}
-
-/// The character class string disjunction.
-/// E.g. `\q{a|b}`
-#[derive(Debug)]
-pub struct ClassStringDisjunction<'a> {
-    pub span: Span,
-    pub alternatives: Vec<'a, StringAlternative<'a>>,
-}
-
-/// Only used for `\q{alt}`([`ClassStringDisjunction`]).
-#[derive(Debug)]
-pub struct StringAlternative<'a> {
-    pub span: Span,
-    pub elements: Vec<'a, Character>,
-}
-
-#[derive(Debug)]
-pub struct CharacterUnicodePropertyCharacterSet<'a> {
-    pub span: Span,
-    pub key: SpanAtom<'a>,
-    pub value: Option<SpanAtom<'a>>,
-    pub negate: bool,
-}
-
-/// The character class used in Unicode sets mode (`v` flag).
-///
-/// This character class may contain strings.
-#[derive(Debug)]
-pub struct UnicodeSetsCharacterClass<'a> {
-    pub span: Span,
-    pub negate: bool,
-    pub elements: Vec<'a, UnicodeSetsCharacterClassElement<'a>>,
-}
-
-#[derive(Debug)]
-pub enum UnicodeSetsCharacterClassElement<'a> {
-    Character(Box<'a, Character>),
-    CharacterClassRange(Box<'a, CharacterClassRange>),
-    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
-    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
-    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
-    UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
-    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
-}
-
 /// The character set.
 #[derive(Debug)]
 #[allow(clippy::enum_variant_names)]
@@ -269,6 +190,7 @@ pub enum CharacterSet<'a> {
     UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
 }
 
+/// Any = `.`
 #[derive(Debug)]
 pub struct AnyCharacterSet {
     pub span: Span,
@@ -298,11 +220,90 @@ pub enum UnicodePropertyCharacterSet<'a> {
     StringsUnicodePropertyCharacterSet(Box<'a, StringsUnicodePropertyCharacterSet<'a>>),
 }
 
-/// The unicode property escape with property of strings.
+#[derive(Debug)]
+pub struct CharacterUnicodePropertyCharacterSet<'a> {
+    pub span: Span,
+    pub key: SpanAtom<'a>,
+    pub value: Option<SpanAtom<'a>>,
+    pub negate: bool,
+}
+
+/// The unicode property escape with property of strings. (`v` flag only)
 #[derive(Debug)]
 pub struct StringsUnicodePropertyCharacterSet<'a> {
     pub span: Span,
     pub key: SpanAtom<'a>,
+}
+
+/// The character class.
+/// E.g. `[ab]`, `[^ab]`
+#[derive(Debug)]
+pub enum CharacterClass<'a> {
+    ClassRangesCharacterClass(Box<'a, ClassRangesCharacterClass<'a>>),
+    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
+}
+
+/// The character class used in non Unicode sets mode (`v` flag).
+#[derive(Debug)]
+pub struct ClassRangesCharacterClass<'a> {
+    pub span: Span,
+    pub negate: bool,
+    pub elements: Vec<'a, ClassRangesCharacterClassElement<'a>>,
+}
+
+#[derive(Debug)]
+pub enum ClassRangesCharacterClassElement<'a> {
+    Character(Box<'a, Character>),
+    CharacterClassRange(Box<'a, CharacterClassRange>),
+    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
+    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet<'a>>),
+}
+
+/// The character class.
+/// E.g. `[a-b]`
+#[derive(Debug)]
+pub struct CharacterClassRange {
+    pub span: Span,
+    pub min: Character,
+    pub max: Character,
+}
+
+// TODO: Lines below are not yet finalized.
+
+/// The character class used in Unicode sets mode (`v` flag).
+#[derive(Debug)]
+pub struct UnicodeSetsCharacterClass<'a> {
+    pub span: Span,
+    pub negate: bool,
+    pub elements: Vec<'a, UnicodeSetsCharacterClassElement<'a>>,
+}
+
+#[derive(Debug)]
+pub enum UnicodeSetsCharacterClassElement<'a> {
+    Character(Box<'a, Character>),
+    CharacterClassRange(Box<'a, CharacterClassRange>),
+    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
+    CharacterUnicodePropertyCharacterSet(Box<'a, CharacterUnicodePropertyCharacterSet<'a>>),
+    // Above are same as `ClassRangesCharacterClassElement`
+    StringsUnicodePropertyCharacterSet(Box<'a, StringsUnicodePropertyCharacterSet<'a>>),
+    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
+    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
+    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
+}
+
+/// The character class string disjunction.
+/// E.g. `\q{a|b}`
+#[derive(Debug)]
+pub struct ClassStringDisjunction<'a> {
+    pub span: Span,
+    pub alternatives: Vec<'a, StringAlternative<'a>>,
+}
+
+/// Only used for `\q{alt}`([`ClassStringDisjunction`]).
+#[derive(Debug)]
+pub struct StringAlternative<'a> {
+    pub span: Span,
+    pub elements: Vec<'a, Character>,
 }
 
 /// The expression character class.
@@ -318,16 +319,6 @@ pub struct ExpressionCharacterClass<'a> {
 pub enum ExpressionCharacterClassExpr<'a> {
     ClassIntersection(Box<'a, ClassIntersection<'a>>),
     ClassSubtraction(Box<'a, ClassSubtraction<'a>>),
-}
-
-#[derive(Debug)]
-pub enum ClassSetOperand<'a> {
-    Character(Box<'a, Character>),
-    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
-    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
-    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
-    UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
-    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
 }
 
 /// The character class intersection.
@@ -360,10 +351,12 @@ pub enum ClassSubtractionLeft<'a> {
     ClassSubtraction(Box<'a, ClassSubtraction<'a>>),
 }
 
-/// The non-capturing group.
-/// E.g. `(?:ab)`
 #[derive(Debug)]
-pub struct NonCapturingGroup<'a> {
-    pub span: Span,
-    pub alternatives: Vec<'a, Alternative<'a>>,
+pub enum ClassSetOperand<'a> {
+    Character(Box<'a, Character>),
+    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
+    EscapeCharacterSet(Box<'a, EscapeCharacterSet>),
+    ExpressionCharacterClass(Box<'a, ExpressionCharacterClass<'a>>),
+    UnicodePropertyCharacterSet(Box<'a, UnicodePropertyCharacterSet<'a>>),
+    UnicodeSetsCharacterClass(Box<'a, UnicodeSetsCharacterClass<'a>>),
 }
