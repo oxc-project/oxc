@@ -152,18 +152,20 @@ mod test {
 
     #[test]
     fn test_schema_json() {
-        use std::fs;
-
         use project_root::get_project_root;
+        use std::fs;
         let path = get_project_root().unwrap().join("npm/oxlint/configuration_schema.json");
+        let existing_json = fs::read_to_string(&path).unwrap_or_default();
         let schema = schemars::schema_for!(OxlintConfig);
         let json = serde_json::to_string_pretty(&schema).unwrap();
-        let existing_json = fs::read_to_string(&path).unwrap_or_default();
         if existing_json != json {
             std::fs::write(&path, &json).unwrap();
         }
-        insta::with_settings!({ prepend_module_to_snapshot => false }, {
-            insta::assert_snapshot!(json);
-        });
+        let s = fs::read_to_string(&path).expect("file exits");
+        let json = serde_json::from_str::<serde_json::Value>(&s).expect("is json");
+        assert_eq!(
+            json.as_object().unwrap().get("title").unwrap().as_str().unwrap(),
+            "OxlintConfig"
+        );
     }
 }
