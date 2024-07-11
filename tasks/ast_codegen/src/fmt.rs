@@ -59,14 +59,7 @@ pub fn pprint(input: &TokenStream) -> String {
     result
 }
 
-/// Runs cargo fmt in the `root` path.
-pub fn cargo_fmt(root: &str) -> std::io::Result<()> {
-    let mut cmd = Command::new("cargo");
-    cmd.arg("fmt")
-        .stdin(Stdio::inherit())
-        .stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .current_dir(root);
-    cmd.spawn()?;
-    Ok(())
+/// Runs cargo fmt.
+pub fn cargo_fmt() {
+    Command::new("cargo").arg("fmt").status().unwrap();
 }
