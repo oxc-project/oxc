@@ -125,6 +125,14 @@ fn new_expr() {
 }
 
 #[test]
+fn access_property() {
+    test(
+        "export default class Foo { @x @y accessor #aDef = 1 }",
+        "export default class Foo {\n\taccessor #aDef=1;\n}\n",
+    );
+}
+
+#[test]
 fn for_stmt() {
     test("for (let x = 0; x < 10; x++) {}", "for (let x = 0; x < 10; x++) {}\n");
     test("for (;;) {}", "for (;;) {}\n");

@@ -2491,7 +2491,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
             p.print_equal();
             value.gen_expr(p, Precedence::Assign, Context::default());
         }
-        p.print_semicolon();
     }
 }
 
