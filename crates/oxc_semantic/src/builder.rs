@@ -363,31 +363,30 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_references_for_current_scope(&mut self) {
-        let all_references =
-            self.unresolved_references.last_mut().unwrap().drain().collect::<Vec<(_, Vec<_>)>>();
+        // Pop-filter-push current level of unresolved references.
+        let mut remaining_refs = self.unresolved_references.pop().unwrap();
 
-        for (name, reference_ids) in all_references {
-            self.resolve_reference_ids(name, reference_ids);
-        }
-    }
-
-    fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
-        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
-            for reference_id in &reference_ids {
-                self.symbols.references[*reference_id].set_symbol_id(symbol_id);
-            }
-            self.symbols.resolved_references[symbol_id].extend(reference_ids);
-        } else {
-            let index = if self.scope.get_parent_id(self.current_scope_id).is_some() {
-                // Parent of last item in the stack.
-                self.unresolved_references.len().checked_sub(2).unwrap()
+        let is_root_scope = self.current_scope_id == self.scope.root_scope_id();
+        remaining_refs.retain(|name, reference_ids| {
+            // Try to resolve a reference.
+            // If unresolved, try to transfer it to parent scope (if any).
+            // Otherwise, keep it in the current map.
+            if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
+                for reference_id in &*reference_ids {
+                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                }
+                self.symbols.resolved_references[symbol_id].append(reference_ids);
+                false
+            } else if !is_root_scope {
+                let parent_refs = self.unresolved_references.last_mut().unwrap();
+                parent_refs.entry(name.clone()).or_default().append(reference_ids);
+                false
             } else {
-                // Last (and only) item in the stack.
-                0
-            };
-            let refs = &mut self.unresolved_references[index];
-            refs.entry(name).or_default().extend(reference_ids);
-        }
+                true
+            }
+        });
+
+        self.unresolved_references.push(remaining_refs);
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
