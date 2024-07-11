@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Features
+
+- 67fe75e ast, ast_codegen: Pass the `scope_id` to the `enter_scope` event. (#4168) (rzvxa)
+
+### Bug Fixes
+
+- 48947a2 ast: Put `decorators` before everything else. (#4143) (rzvxa)
+
+### Documentation
+
+- bdcc298 ast: Update the note regarding the `ast_codegen` markers. (#4149) (rzvxa)
+
+### Refactor
+
+
 ## [0.19.0] - 2024-07-09
 
 - b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)
