@@ -25,10 +25,8 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 /// This function assumes `s` has had all numeric separators (`_`) removed.
 /// Parsing will fail if this assumption is violated.
 fn parse_int_without_underscores(s: &str, kind: Kind) -> Result<f64, &'static str> {
-    if kind == Kind::Decimal {
-        return parse_float_without_underscores(s);
-    }
     match kind {
+        Kind::Decimal => parse_float_without_underscores(s),
         Kind::Binary => Ok(parse_binary(&s[2..])),
         Kind::Octal => {
             let s = if s.starts_with("0o") || s.starts_with("0O") {
@@ -49,6 +47,17 @@ fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
+/// b'0' is 0x30 and b'1' is 0x31.
+///
+/// So we can convert from binary digit to its value with `c & 1`.
+/// This is produces more compact assembly than `c - b'0'`.
+///
+/// <https://godbolt.org/z/1vvrK78jf>
+const fn binary_byte_to_value(c: u8) -> u8 {
+    debug_assert!(c == b'0' || c == b'1');
+    c & 1
+}
+
 /// NOTE: bit shifting here is is safe and much faster than f64::mul_add.
 /// It's safe because we're sure this number is an integer - if it wasn't, it
 /// would be a [`Kind::Float`] instead. It's fast because shifting usually takes
@@ -57,98 +66,146 @@ fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
 /// these numbers are usually not long. On x84_64, FMUL has a latency of 4 clock
 /// cycles, which doesn't include addition. Some platorms support mul + add in a
 /// single instruction, but many others do not.
+///
+/// Unfortunately, this approach has the chance to overflow for excessively
+/// large numbers. In such cases, we fall back to mul_add. Note that right now
+/// we consider leading zeros as part of that length. Right now it doesn't seem
+/// worth it performance-wise to check and strip them. Further experimentation
+/// could be useful.
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_binary(s: &str) -> f64 {
-    // b'0' is 0x30 and b'1' is 0x31.
-    // So we can convert from binary digit to its value with `c & 1`.
-    // This is produces more compact assembly than `c - b'0'`.
-    // https://godbolt.org/z/1vvrK78jf
-    const fn byte_to_value(c: u8) -> u8 {
-        debug_assert!(c == b'0' || c == b'1');
-        c & 1
-    }
-    #[cfg(test)]
-    {
-        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
-        static_assertions::const_assert_eq!(byte_to_value(b'1'), 1);
-    }
+    /// binary literals longer than this many characters have the chance to
+    /// overflow a u64, forcing us to take the slow path.
+    const MAX_FAST_BINARY_LEN: usize = 64;
 
     debug_assert!(!s.is_empty());
+    debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
+
+    if s.len() > MAX_FAST_BINARY_LEN {
+        return parse_binary_slow(s);
+    }
 
     let mut result = 0_u64;
     for c in s.as_bytes() {
         result <<= 1;
-        result |= byte_to_value(*c) as u64;
+        result |= binary_byte_to_value(*c) as u64;
     }
     result as f64
+}
+
+#[cold]
+#[inline(never)]
+fn parse_binary_slow(s: &str) -> f64 {
+    let mut result = 0_f64;
+    for c in s.as_bytes() {
+        let value = f64::from(binary_byte_to_value(*c));
+        result = result.mul_add(2.0, value);
+    }
+
+    result
+}
+
+// ==================================== OCTAL ====================================
+
+/// b'0' is 0x30 and b'7' is 0x37.
+///
+/// So we can convert from any octal digit to its value with `c & 7`.
+/// This is produces more compact assembly than `c - b'0'`.
+///
+/// <https://godbolt.org/z/9rYTsMoMM>
+const fn octal_byte_to_value(c: u8) -> u8 {
+    debug_assert!(c >= b'0' && c <= b'7');
+    c & 7
 }
 
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal(s: &str) -> f64 {
-    // b'0' is 0x30 and b'7' is 0x37.
-    // So we can convert from any octal digit to its value with `c & 7`.
-    // This is produces more compact assembly than `c - b'0'`.
-    // https://godbolt.org/z/9rYTsMoMM
-    const fn byte_to_value(c: u8) -> u8 {
-        debug_assert!(c >= b'0' && c <= b'7');
-        c & 7
-    }
-    #[cfg(test)]
-    {
-        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
-        static_assertions::const_assert_eq!(byte_to_value(b'7'), 7);
-    }
+    /// Numeric strings longer than this have the chance to overflow u64.
+    const MAX_FAST_OCTAL_LEN: usize = 21;
 
     debug_assert!(!s.is_empty());
+    debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
+    if s.len() > MAX_FAST_OCTAL_LEN {
+        return parse_octal_slow(s);
+    }
 
     let mut result = 0_u64;
     for c in s.as_bytes() {
+        let n = octal_byte_to_value(*c);
         result <<= 3;
-        result |= byte_to_value(*c) as u64;
+        result |= n as u64;
     }
     result as f64
 }
 
+#[cold]
+#[inline(never)]
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
-fn parse_hex(s: &str) -> f64 {
-    // b'0' is 0x30 and b'9' is 0x39.
-    // b'A' is 0x41 and b'F' is 0x46.
-    // b'a' is 0x61 and b'f' is 0x66.
-    // So we can convert from a digit to its value with `c & 15`,
-    // and from `A-F` or `a-f` to its value with `(c & 15) + 9`.
-    // We could use `(c & 7) + 9` for `A-F`, but we use `(c & 15) + 9`
-    // so that both branches share the same `c & 15` operation.
-    // This is produces more slightly more assembly than explicitly matching all possibilities,
-    // but only because compiler unrolls the loop.
-    // https://godbolt.org/z/5fsdv8rGo
-    const fn byte_to_value(c: u8) -> u8 {
-        debug_assert!(
-            (c >= b'0' && c <= b'9') || (c >= b'A' && c <= b'F') || (c >= b'a' && c <= b'f')
-        );
-        if c < b'A' {
-            c & 15 // 0-9
-        } else {
-            (c & 15) + 9 // A-F or a-f
-        }
-    }
-    #[cfg(test)]
-    {
-        static_assertions::const_assert_eq!(byte_to_value(b'0'), 0);
-        static_assertions::const_assert_eq!(byte_to_value(b'9'), 9);
-        static_assertions::const_assert_eq!(byte_to_value(b'A'), 10);
-        static_assertions::const_assert_eq!(byte_to_value(b'F'), 15);
-        static_assertions::const_assert_eq!(byte_to_value(b'a'), 10);
-        static_assertions::const_assert_eq!(byte_to_value(b'f'), 15);
+fn parse_octal_slow(s: &str) -> f64 {
+    let mut result = 0_f64;
+    for c in s.as_bytes() {
+        let value = f64::from(octal_byte_to_value(*c));
+        result = result.mul_add(8.0, value);
     }
 
+    result
+}
+
+// ==================================== HEX ====================================
+
+/// - b'0' is 0x30 and b'9' is 0x39.
+/// - b'A' is 0x41 and b'F' is 0x46.
+/// - b'a' is 0x61 and b'f' is 0x66.
+///
+/// So we can convert from a digit to its value with `c & 15`,
+/// and from `A-F` or `a-f` to its value with `(c & 15) + 9`.
+/// We could use `(c & 7) + 9` for `A-F`, but we use `(c & 15) + 9`
+/// so that both branches share the same `c & 15` operation.
+///
+/// This is produces more slightly more assembly than explicitly matching all possibilities,
+/// but only because compiler unrolls the loop.
+///
+/// <https://godbolt.org/z/5fsdv8rGo>
+const fn hex_byte_to_value(c: u8) -> u8 {
+    debug_assert!((c >= b'0' && c <= b'9') || (c >= b'A' && c <= b'F') || (c >= b'a' && c <= b'f'));
+    if c < b'A' {
+        c & 15 // 0-9
+    } else {
+        (c & 15) + 9 // A-F or a-f
+    }
+}
+
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+fn parse_hex(s: &str) -> f64 {
+    /// Hex strings longer than this have the chance to overflow u64.
+    const MAX_FAST_HEX_LEN: usize = 16;
+
     debug_assert!(!s.is_empty());
+    debug_assert!(!s.starts_with("0x"));
+
+    if s.len() > MAX_FAST_HEX_LEN {
+        return parse_hex_slow(s);
+    }
 
     let mut result = 0_u64;
     for c in s.as_bytes() {
+        let n = hex_byte_to_value(*c);
         result <<= 4;
-        result |= byte_to_value(*c) as u64;
+        result |= n as u64;
     }
     result as f64
+}
+
+#[cold]
+#[inline(never)]
+fn parse_hex_slow(s: &str) -> f64 {
+    let mut result = 0_f64;
+    for c in s.as_bytes() {
+        let value = f64::from(hex_byte_to_value(*c));
+        result = result.mul_add(16.0, value);
+    }
+
+    result
 }
 
 pub fn parse_big_int(s: &str, kind: Kind, has_sep: bool) -> Result<BigInt, &'static str> {
@@ -181,8 +238,9 @@ fn parse_big_int_without_underscores(s: &str, kind: Kind) -> Result<BigInt, &'st
 #[cfg(test)]
 #[allow(clippy::unreadable_literal, clippy::mixed_case_hex_literals)]
 mod test {
-
-    use super::{parse_float, parse_int, Kind};
+    use super::{
+        binary_byte_to_value, hex_byte_to_value, octal_byte_to_value, parse_float, parse_int, Kind,
+    };
 
     #[allow(clippy::cast_precision_loss)]
     fn assert_all_ints_eq<I>(test_cases: I, kind: Kind, has_sep: bool)
@@ -212,10 +270,52 @@ mod test {
         }
     }
 
+    // octal
+    static_assertions::const_assert_eq!(octal_byte_to_value(b'0'), 0);
+    static_assertions::const_assert_eq!(octal_byte_to_value(b'7'), 7);
+
+    // hex
+    static_assertions::const_assert_eq!(hex_byte_to_value(b'0'), 0);
+    static_assertions::const_assert_eq!(hex_byte_to_value(b'9'), 9);
+    static_assertions::const_assert_eq!(hex_byte_to_value(b'A'), 10);
+    static_assertions::const_assert_eq!(hex_byte_to_value(b'F'), 15);
+    static_assertions::const_assert_eq!(hex_byte_to_value(b'a'), 10);
+    static_assertions::const_assert_eq!(hex_byte_to_value(b'f'), 15);
+
+    // binary
+    static_assertions::const_assert_eq!(binary_byte_to_value(b'0'), 0);
+    static_assertions::const_assert_eq!(binary_byte_to_value(b'1'), 1);
+
     #[test]
-    #[allow(clippy::excessive_precision)]
+    #[allow(clippy::excessive_precision, clippy::cast_precision_loss)]
     fn test_int_precision() {
         assert_eq!(parse_int("9007199254740991", Kind::Decimal, false), Ok(9007199254740991.0));
+        assert_eq!(
+            parse_int("0x10000000000000000", Kind::Hex, false),
+            Ok(0x10000000000000000_i128 as f64)
+        );
+        assert_eq!(
+            parse_int("0o40000000000000000", Kind::Octal, false),
+            Ok(0o40000000000000000_i128 as f64)
+        );
+        assert_eq!(
+            parse_int(
+                "0b00010000000000000000000000000000000000000000000000000000000000000000",
+                Kind::Binary,
+                false
+            ),
+            Ok(0b00010000000000000000000000000000000000000000000000000000000000000000_i128 as f64)
+        );
+    }
+
+    #[test]
+    #[allow(clippy::excessive_precision)]
+    fn test_large_number_of_leading_zeros() {
+        assert_all_ints_eq(
+            vec![("000000000000000000000000000000000000000000000000000000001", 1)],
+            Kind::Decimal,
+            false,
+        );
     }
 
     #[test]

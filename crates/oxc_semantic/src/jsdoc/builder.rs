@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use oxc_ast::{AstKind, CommentKind, Trivias};
+use oxc_ast::{AstKind, Comment, Trivias};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
@@ -32,7 +32,7 @@ impl<'a> JSDocBuilder<'a> {
             .trivias
             .comments()
             .filter(|comment| !self.leading_comments_seen.contains(&comment.span.start))
-            .filter_map(|comment| self.parse_if_jsdoc_comment(comment.kind, comment.span))
+            .filter_map(|comment| self.parse_if_jsdoc_comment(comment))
             .collect::<Vec<_>>();
 
         JSDocFinder::new(self.attached_docs, not_attached_docs)
@@ -129,7 +129,7 @@ impl<'a> JSDocBuilder<'a> {
             }
 
             self.leading_comments_seen.insert(comment.span.start);
-            if let Some(jsdoc) = self.parse_if_jsdoc_comment(comment.kind, comment.span) {
+            if let Some(jsdoc) = self.parse_if_jsdoc_comment(comment) {
                 leading_jsdoc_comments.push(jsdoc);
             }
         }
@@ -144,20 +144,20 @@ impl<'a> JSDocBuilder<'a> {
         true
     }
 
-    fn parse_if_jsdoc_comment(&self, kind: CommentKind, comment_span: Span) -> Option<JSDoc<'a>> {
-        if !kind.is_multi_line() {
+    fn parse_if_jsdoc_comment(&self, comment: &Comment) -> Option<JSDoc<'a>> {
+        if !comment.kind.is_multi_line() {
             return None;
         }
 
         // Inside of marker: /*CONTENT*/ => CONTENT
-        let comment_content = comment_span.source_text(self.source_text);
+        let comment_content = comment.span.source_text(self.source_text);
         // Should start with "*"
         if !comment_content.starts_with('*') {
             return None;
         }
 
         // Remove the very first `*`
-        let jsdoc_span = Span::new(comment_span.start + 1, comment_span.end);
+        let jsdoc_span = Span::new(comment.span.start + 1, comment.span.end);
         Some(JSDoc::new(&comment_content[1..], jsdoc_span))
     }
 }

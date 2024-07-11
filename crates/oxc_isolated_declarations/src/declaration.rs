@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::Box;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -135,7 +137,8 @@ impl<'a> IsolatedDeclarations<'a> {
         block: &Box<'a, TSModuleBlock<'a>>,
     ) -> Box<'a, TSModuleBlock<'a>> {
         // We need to enter a new scope for the module block, avoid add binding to the parent scope
-        self.scope.enter_scope(ScopeFlags::TsModuleBlock);
+        // TODO: doesn't have a scope_id!
+        self.scope.enter_scope(ScopeFlags::TsModuleBlock, &Cell::default());
         let stmts = self.transform_statements_on_demand(&block.body);
         self.scope.leave_scope();
         self.ast.alloc_ts_module_block(SPAN, self.ast.vec(), stmts)

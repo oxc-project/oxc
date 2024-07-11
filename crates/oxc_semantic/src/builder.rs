@@ -1,6 +1,10 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, path::PathBuf, sync::Arc};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    sync::Arc,
+};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
@@ -9,7 +13,6 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_index::{index_vec, IndexVec};
 use oxc_span::{CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
@@ -66,9 +69,9 @@ pub struct SemanticBuilder<'a> {
     pub nodes: AstNodes<'a>,
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
-    /// NOTE(lucab): lazy vector, always access this through the
-    /// `unresolved_references_by_scope()` helper.
-    unresolved_references: IndexVec<ScopeId, UnresolvedReferences>,
+
+    // LIFO stack used to accumulate unresolved refs while traversing scopes.
+    unresolved_references: Vec<UnresolvedReferences>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -112,7 +115,7 @@ impl<'a> SemanticBuilder<'a> {
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
-            unresolved_references: index_vec![UnresolvedReferences::default()],
+            unresolved_references: vec![],
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
             build_jsdoc: false,
@@ -167,9 +170,13 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Finalize the builder.
+    ///
+    /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
             let scope_id = self.scope.add_scope(None, ScopeFlags::Top);
+            self.unresolved_references.push(UnresolvedReferences::default());
             program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
@@ -179,8 +186,9 @@ impl<'a> SemanticBuilder<'a> {
                 checker::check_module_record(&self);
             }
         }
-        self.scope.root_unresolved_references =
-            self.unresolved_references.swap_remove(self.scope.root_scope_id());
+
+        debug_assert_eq!(self.unresolved_references.len(), 1);
+        self.scope.root_unresolved_references = self.unresolved_references.pop().unwrap();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -321,11 +329,16 @@ impl<'a> SemanticBuilder<'a> {
         Some(symbol_id)
     }
 
+    /// Declare an unresolved reference in the current scope.
+    ///
+    /// # Panics
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
 
-        self.unresolved_references_by_scope(self.current_scope_id)
+        self.unresolved_references
+            .last_mut()
+            .unwrap()
             .entry(reference_name)
             .or_default()
             .push(reference_id);
@@ -350,10 +363,8 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_references_for_current_scope(&mut self) {
-        let all_references = self
-            .unresolved_references_by_scope(self.current_scope_id)
-            .drain()
-            .collect::<Vec<(_, Vec<_>)>>();
+        let all_references =
+            self.unresolved_references.last_mut().unwrap().drain().collect::<Vec<(_, Vec<_>)>>();
 
         for (name, reference_ids) in all_references {
             self.resolve_reference_ids(name, reference_ids);
@@ -361,19 +372,21 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
-        let parent_scope_id =
-            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
-
         if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
             for reference_id in &reference_ids {
                 self.symbols.references[*reference_id].set_symbol_id(symbol_id);
             }
             self.symbols.resolved_references[symbol_id].extend(reference_ids);
         } else {
-            self.unresolved_references_by_scope(parent_scope_id)
-                .entry(name)
-                .or_default()
-                .extend(reference_ids);
+            let index = if self.scope.get_parent_id(self.current_scope_id).is_some() {
+                // Parent of last item in the stack.
+                self.unresolved_references.len().checked_sub(2).unwrap()
+            } else {
+                // Last (and only) item in the stack.
+                0
+            };
+            let refs = &mut self.unresolved_references[index];
+            refs.entry(name).or_default().extend(reference_ids);
         }
     }
 
@@ -405,18 +418,10 @@ impl<'a> SemanticBuilder<'a> {
             self.symbols.union_flag(symbol_id, SymbolFlags::Export);
         }
     }
-
-    fn unresolved_references_by_scope(&mut self, scope_id: ScopeId) -> &mut UnresolvedReferences {
-        let min_new_len = scope_id + 1;
-        if self.unresolved_references.len() < min_new_len {
-            self.unresolved_references.resize_with(min_new_len.into(), Default::default);
-        }
-        &mut self.unresolved_references[scope_id]
-    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
-    fn enter_scope(&mut self, flags: ScopeFlags) {
+    fn enter_scope(&mut self, flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         let parent_scope_id =
             if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
 
@@ -426,11 +431,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
+        self.unresolved_references.push(UnresolvedReferences::default());
     }
 
     fn leave_scope(&mut self) {
         self.resolve_references_for_current_scope();
         if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
+            self.unresolved_references.pop();
             self.current_scope_id = parent_id;
         }
     }
@@ -453,13 +460,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_program(&mut self, program: &Program<'a>) {
         let kind = AstKind::Program(self.alloc(program));
-        self.enter_scope({
-            let mut flags = ScopeFlags::Top;
-            if program.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
+        self.enter_scope(
+            {
+                let mut flags = ScopeFlags::Top;
+                if program.is_strict() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &program.scope_id,
+        );
         program.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -488,7 +498,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
         let kind = AstKind::BlockStatement(self.alloc(stmt));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         stmt.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
 
@@ -756,7 +766,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let is_lexical_declaration =
             stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
@@ -842,7 +852,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
@@ -907,7 +917,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
             stmt.scope_id.set(Some(self.current_scope_id));
         }
         self.enter_node(kind);
@@ -1093,7 +1103,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         stmt.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -1340,7 +1350,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_catch_clause(&mut self, clause: &CatchClause<'a>) {
         let kind = AstKind::CatchClause(self.alloc(clause));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &clause.scope_id);
         clause.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         if let Some(param) = &clause.param {
@@ -1353,7 +1363,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_finally_clause(&mut self, clause: &BlockStatement<'a>) {
         let kind = AstKind::FinallyClause(self.alloc(clause));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &clause.scope_id);
         clause.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         self.visit_statements(&clause.body);
@@ -1438,13 +1448,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
         let kind = AstKind::Function(self.alloc(func));
-        self.enter_scope({
-            let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
-            if func.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
+        self.enter_scope(
+            {
+                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+                if func.is_strict() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &func.scope_id,
+        );
         func.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -1513,7 +1526,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if is_class_expr {
             // Class expressions create a temporary scope with the class name as its only variable
             // E.g., `let c = class A { foo() { console.log(A) } }`
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &class.scope_id);
             class.scope_id.set(Some(self.current_scope_id));
         }
 
@@ -1542,7 +1555,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
         let kind = AstKind::StaticBlock(self.alloc(block));
-        self.enter_scope(ScopeFlags::ClassStaticBlock);
+        self.enter_scope(ScopeFlags::ClassStaticBlock, &block.scope_id);
         block.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         self.visit_statements(&block.body);
@@ -1552,7 +1565,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
-        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
+        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
         expr.scope_id.set(Some(self.current_scope_id));
 
         /* cfg */
@@ -1602,7 +1615,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::TSEnumDeclaration(self.alloc(decl));
         self.enter_node(kind);
         self.visit_binding_identifier(&decl.id);
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &decl.scope_id);
         decl.scope_id.set(Some(self.current_scope_id));
         for member in &decl.members {
             self.visit_ts_enum_member(member);
@@ -1618,7 +1631,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             TSModuleDeclarationName::Identifier(ident) => self.visit_identifier_name(ident),
             TSModuleDeclarationName::StringLiteral(lit) => self.visit_string_literal(lit),
         }
-        self.enter_scope(ScopeFlags::TsModuleBlock);
+        self.enter_scope(ScopeFlags::TsModuleBlock, &decl.scope_id);
         decl.scope_id.set(Some(self.current_scope_id));
         match &decl.body {
             Some(TSModuleDeclarationBody::TSModuleDeclaration(decl)) => {
@@ -1635,7 +1648,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
         let kind = AstKind::TSTypeParameter(self.alloc(ty));
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &ty.scope_id);
         ty.scope_id.set(Some(self.current_scope_id));
         self.enter_node(kind);
         if let Some(constraint) = &ty.constraint {

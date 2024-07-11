@@ -37,7 +37,7 @@ impl Generator for VisitGenerator {
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit", generate_visit(ctx)))
+        GeneratorOutput::Stream(("visit", generate_visit::<false>(ctx)))
     }
 }
 
@@ -47,11 +47,11 @@ impl Generator for VisitMutGenerator {
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit_mut", generate_visit_mut(ctx)))
+        GeneratorOutput::Stream(("visit_mut", generate_visit::<true>(ctx)))
     }
 }
 
-static CLIPPY_ALLOW: &str = "\
+const CLIPPY_ALLOW: &str = "\
     unused_variables,\
     clippy::extra_unused_type_parameters,\
     clippy::explicit_iter_loop,\
@@ -59,7 +59,7 @@ static CLIPPY_ALLOW: &str = "\
     clippy::semicolon_if_nothing_returned,\
     clippy::match_wildcard_for_single_variants";
 
-fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
+fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
     let header = generated_header!();
     // we evaluate it outside of quote to take advantage of expression evaluation
     // otherwise the `\n\` wouldn't work!
@@ -71,41 +71,18 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
         //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
     "};
 
-    let (visits, walks) = VisitBuilder::new(ctx, false).build();
+    let (visits, walks) = VisitBuilder::new(ctx, MUT).build();
     let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
 
-    quote! {
-        #header
-        #file_docs
-        #clippy_attr
+    let walk_mod = if MUT { quote!(walk_mut) } else { quote!(walk) };
+    let trait_name = if MUT { quote!(VisitMut) } else { quote!(Visit) };
+    let ast_kind_type = if MUT { quote!(AstType) } else { quote!(AstKind) };
+    let ast_kind_life = if MUT { TokenStream::default() } else { quote!(<'a>) };
 
-        endl!();
-
-        use oxc_allocator::Vec;
-        use oxc_syntax::scope::ScopeFlags;
-
-        endl!();
-
-        use crate::{ast::*, ast_kind::AstKind};
-
-        endl!();
-
-        use walk::*;
-
-        endl!();
-
-        /// Syntax tree traversal
-        pub trait Visit<'a>: Sized {
-            fn enter_node(&mut self, kind: AstKind<'a>) {}
-            fn leave_node(&mut self, kind: AstKind<'a>) {}
-
-            endl!();
-
-            fn enter_scope(&mut self, flags: ScopeFlags) {}
-            fn leave_scope(&mut self) {}
-
-            endl!();
-
+    let may_alloc = if MUT {
+        TokenStream::default()
+    } else {
+        quote! {
             #[inline]
             fn alloc<T>(&self, t: &T) -> &'a T {
                 insert!("// SAFETY:");
@@ -116,35 +93,8 @@ fn generate_visit(ctx: &CodegenCtx) -> TokenStream {
                     std::mem::transmute(t)
                 }
             }
-
-            #(#visits)*
         }
-
-        endl!();
-
-        pub mod walk {
-            use super::*;
-
-            #(#walks)*
-
-        }
-    }
-}
-
-fn generate_visit_mut(ctx: &CodegenCtx) -> TokenStream {
-    let header = generated_header!();
-    // we evaluate it outside of quote to take advantage of expression evaluation
-    // otherwise the `\n\` wouldn't work!
-    let file_docs = insert! {"\
-        //! Visitor Pattern\n\
-        //!\n\
-        //! See:\n\
-        //! * [visitor pattern](https://rust-unofficial.github.io/patterns/patterns/behavioural/visitor.html)\n\
-        //! * [rustc visitor](https://github.com/rust-lang/rust/blob/master/compiler/rustc_ast/src/visit.rs)\n\
-    "};
-
-    let (visits, walks) = VisitBuilder::new(ctx, true).build();
-    let clippy_attr = insert!("#![allow({})]", CLIPPY_ALLOW);
+    };
 
     quote! {
         #header
@@ -153,37 +103,43 @@ fn generate_visit_mut(ctx: &CodegenCtx) -> TokenStream {
 
         endl!();
 
+        use std::cell::Cell;
+
+        endl!();
+
         use oxc_allocator::Vec;
-        use oxc_syntax::scope::ScopeFlags;
+        use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
         endl!();
 
-        use crate::{ast::*, ast_kind::AstType};
+        use crate::{ast::*, ast_kind::#ast_kind_type};
 
         endl!();
 
-        use walk_mut::*;
+        use #walk_mod::*;
 
         endl!();
 
-        /// Syntax tree traversal to mutate an exclusive borrow of a syntax tree in place.
-        pub trait VisitMut<'a>: Sized {
-            fn enter_node(&mut self, ty: AstType) {}
-            fn leave_node(&mut self, ty: AstType) {}
+        /// Syntax tree traversal
+        pub trait #trait_name <'a>: Sized {
+            fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
+            fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
 
             endl!();
 
-            fn enter_scope(&mut self, flags: ScopeFlags) {}
+            fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
             fn leave_scope(&mut self) {}
 
             endl!();
+
+            #may_alloc
 
             #(#visits)*
         }
 
         endl!();
 
-        pub mod walk_mut {
+        pub mod #walk_mod {
             use super::*;
 
             #(#walks)*
@@ -512,11 +468,9 @@ impl<'a> VisitBuilder<'a> {
     ) -> (TokenStream, /* inline */ bool) {
         let ident = visit_as.unwrap_or_else(|| struct_.ident());
         let scope_attr = struct_.item.attrs.iter().find(|it| it.path().is_ident("scope"));
-        let (scope_enter, scope_leave) = scope_attr
-            .map(parse_as_scope)
-            .transpose()
-            .unwrap()
-            .map_or_else(Default::default, |scope_args| {
+        let scope_events = scope_attr.map(parse_as_scope).transpose().unwrap().map_or_else(
+            Default::default,
+            |scope_args| {
                 let cond = scope_args.r#if.map(|cond| {
                     let cond = cond.to_token_stream().replace_ident("self", &format_ident!("it"));
                     quote!(let scope_events_cond = #cond;)
@@ -535,7 +489,7 @@ impl<'a> VisitBuilder<'a> {
                 let flags = scope_args
                     .flags
                     .map_or_else(|| quote!(ScopeFlags::empty()), |it| it.to_token_stream());
-                let args = if let Some(strict_if) = scope_args.strict_if {
+                let flags = if let Some(strict_if) = scope_args.strict_if {
                     let strict_if =
                         strict_if.to_token_stream().replace_ident("self", &format_ident!("it"));
                     quote! {{
@@ -549,16 +503,39 @@ impl<'a> VisitBuilder<'a> {
                     flags
                 };
                 let mut enter = cond.as_ref().into_token_stream();
-                enter.extend(maybe_conditional(quote!(visitor.enter_scope(#args);)));
+                enter.extend(maybe_conditional(quote!(visitor.enter_scope(#flags, &it.scope_id);)));
                 let leave = maybe_conditional(quote!(visitor.leave_scope();));
-                (Some(enter), Some(leave))
-            });
-        let mut entered_scope = false;
+                (enter, leave)
+            },
+        );
+
+        let node_events = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
+            (
+                insert!(
+                    "// NOTE: {} doesn't exists!",
+                    if self.is_mut { "AstType" } else { "AstKind" }
+                ),
+                TokenStream::default(),
+            )
+        } else {
+            let kind = self.kind_type(ident);
+            (
+                quote! {
+                    let kind = #kind;
+                    visitor.enter_node(kind);
+                },
+                quote!(visitor.leave_node(kind);),
+            )
+        };
+
+        let mut enter_scope_at = 0;
+        let mut enter_node_at = 0;
         let fields_visits: Vec<TokenStream> = struct_
             .item
             .fields
             .iter()
-            .filter_map(|it| {
+            .enumerate()
+            .filter_map(|(ix, it)| {
                 let ty_res = it.ty.analyze(self.ctx);
                 let typ = ty_res.type_ref?;
                 if !typ.borrow().visitable() {
@@ -574,8 +551,16 @@ impl<'a> VisitBuilder<'a> {
                             _ => panic!("wrong use of `visit_as`!"),
                         }
                     });
-                // TODO: make sure it is `#[scope(enter_before)]`
-                let have_enter_scope = it.attrs.iter().any(|it| it.path().is_ident("scope"));
+
+                let have_enter_scope = it.attrs.iter().any(|it| {
+                    it.path().is_ident("scope")
+                        && it.parse_args_with(Ident::parse).is_ok_and(|id| id == "enter_before")
+                });
+                let have_enter_node = it.attrs.iter().any(|it| {
+                    it.path().is_ident("visit")
+                        && it.parse_args_with(Ident::parse).is_ok_and(|id| id == "enter_before")
+                });
+
                 let args = it.attrs.iter().find(|it| it.meta.path().is_ident("visit_args"));
                 let (args_def, args) = args
                     .map(|it| it.parse_args_with(VisitArgs::parse))
@@ -613,13 +598,29 @@ impl<'a> VisitBuilder<'a> {
                         visitor.#visit(#borrowed_field #(#args)*);
                     },
                 };
+
+                // This comes first because we would prefer the `enter_scope` to be placed on top of `enter_node`
+                #[allow(unreachable_code)]
+                if have_enter_node {
+                    // NOTE: this is disabled intentionally <https://github.com/oxc-project/oxc/pull/4147#issuecomment-2220216905>
+                    unreachable!("`#[visit(enter_before)]` attribute is disabled!");
+                    assert_eq!(enter_node_at, 0);
+                    let node_enter = &node_events.0;
+                    result = quote! {
+                        #node_enter
+                        #result
+                    };
+                    enter_node_at = ix;
+                }
+
                 if have_enter_scope {
-                    assert!(!entered_scope);
+                    assert_eq!(enter_scope_at, 0);
+                    let scope_enter = &scope_events.0;
                     result = quote! {
                         #scope_enter
                         #result
                     };
-                    entered_scope = true;
+                    enter_scope_at = ix;
                 }
 
                 if args_def.is_empty() {
@@ -634,40 +635,34 @@ impl<'a> VisitBuilder<'a> {
             })
             .collect();
 
-        let body = if KIND_BLACK_LIST.contains(&ident.to_string().as_str()) {
-            let note = insert!(
-                "// NOTE: {} doesn't exists!",
-                if self.is_mut { "AstType" } else { "AstKind" }
-            );
-            quote! {
-                #note
-                #(#fields_visits)*
-            }
-        } else {
-            let kind = self.kind_type(ident);
-            quote! {
-                let kind = #kind;
-                visitor.enter_node(kind);
-                #(#fields_visits)*
-                visitor.leave_node(kind);
-            }
-        };
+        let body = quote!(#(#fields_visits)*);
 
-        let result = match (scope_enter, scope_leave, entered_scope) {
-            (_, Some(leave), true) => quote! {
-                #body
-                #leave
-            },
-            (Some(enter), Some(leave), false) => quote! {
+        let body = match (node_events, enter_node_at) {
+            ((enter, leave), 0) => quote! {
                 #enter
                 #body
                 #leave
             },
-            _ => body,
+            ((_, leave), _) => quote! {
+                #body
+                #leave
+            },
+        };
+
+        let body = match (scope_events, enter_scope_at) {
+            ((enter, leave), 0) => quote! {
+                #enter
+                #body
+                #leave
+            },
+            ((_, leave), _) => quote! {
+                #body
+                #leave
+            },
         };
 
         // inline if there are 5 or less fields.
-        (result, fields_visits.len() <= 5)
+        (body, fields_visits.len() <= 5)
     }
 
     fn visit_args_fold(
