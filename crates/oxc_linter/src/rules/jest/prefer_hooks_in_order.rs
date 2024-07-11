@@ -10,11 +10,11 @@ use crate::{
     rule::Rule,
     utils::{
         get_test_plugin_name, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedJestFnCallNew, PossibleJestNode,
+        ParsedJestFnCallNew, PossibleJestNode, TestPluginName,
     },
 };
 
-fn reorder_hooks(x0: &str, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+fn reorder_hooks(x0: TestPluginName, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
         "{x0}(prefer-hooks-in-order): Prefer having hooks in a consistent order.",
     ))
