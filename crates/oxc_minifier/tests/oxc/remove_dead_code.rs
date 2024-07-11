@@ -22,7 +22,7 @@ pub(crate) fn test(source_text: &str, expected: &str) {
 }
 
 #[test]
-fn remove_dead_code() {
+fn dce_if_statement() {
     test("if (true) { foo }", "{ foo }");
     test("if (true) { foo } else { bar }", "{ foo }");
     test("if (false) { foo } else { bar }", "{ bar }");
@@ -30,23 +30,14 @@ fn remove_dead_code() {
     test("if (!false) { foo }", "{ foo }");
     test("if (!true) { foo } else { bar }", "{ bar }");
 
+    test("if (!false && xxx) { foo }", "if (xxx) { foo; }");
+    test("if (!true && yyy) { foo } else { bar }", "{ bar }");
+
     test("if ('production' == 'production') { foo } else { bar }", "{ foo }");
     test("if ('development' == 'production') { foo } else { bar }", "{ bar }");
 
     test("if ('production' === 'production') { foo } else { bar }", "{ foo }");
     test("if ('development' === 'production') { foo } else { bar }", "{ bar }");
-
-    test("false ? foo : bar;", "bar");
-    test("true ? foo : bar;", "foo");
-
-    test("!true ? foo : bar;", "bar");
-    test("!false ? foo : bar;", "foo");
-
-    test("!!false ? foo : bar;", "bar");
-    test("!!true ? foo : bar;", "foo");
-
-    test("const foo = true ? A : B", "const foo = A");
-    test("const foo = false ? A : B", "const foo = B");
 
     // Shadowed `undefined` as a variable should not be erased.
     test(
@@ -67,9 +58,33 @@ fn remove_dead_code() {
     );
 }
 
+#[test]
+fn dce_conditional_expression() {
+    test("false ? foo : bar;", "bar");
+    test("true ? foo : bar;", "foo");
+
+    test("!true ? foo : bar;", "bar");
+    test("!false ? foo : bar;", "foo");
+
+    test("!!false ? foo : bar;", "bar");
+    test("!!true ? foo : bar;", "foo");
+
+    test("const foo = true ? A : B", "const foo = A");
+    test("const foo = false ? A : B", "const foo = B");
+}
+
+#[test]
+fn dce_logical_expression() {
+    test("false && bar()", "false");
+    test("true && bar()", "bar()");
+
+    test("const foo = false && bar()", "const foo = false");
+    test("const foo = true && bar()", "const foo = bar()");
+}
+
 // https://github.com/terser/terser/blob/master/test/compress/dead-code.js
 #[test]
-fn remove_dead_code_from_terser() {
+fn dce_from_terser() {
     test(
         "function f() {
             a();

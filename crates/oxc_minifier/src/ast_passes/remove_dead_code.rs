@@ -25,6 +25,7 @@ impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.fold_conditional_expression(expr);
+        self.fold_logical_expression(expr);
     }
 }
 
@@ -122,6 +123,15 @@ impl<'a> RemoveDeadCode<'a> {
                 *expr = self.ast.move_expression(&mut conditional_expr.alternate);
             }
             _ => {}
+        }
+    }
+
+    fn fold_logical_expression(&mut self, expr: &mut Expression<'a>) {
+        let Expression::LogicalExpression(logical_expr) = expr else {
+            return;
+        };
+        if let Some(e) = self.folder.try_fold_logical_expression(logical_expr) {
+            *expr = e;
         }
     }
 }
