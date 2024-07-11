@@ -7,14 +7,14 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestGeneralFnKind,
-        KnownMemberExpressionProperty, ParsedGeneralJestFnCall, PossibleJestNode,
+        collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
+        JestGeneralFnKind, KnownMemberExpressionProperty, ParsedGeneralJestFnCall,
+        PossibleJestNode,
     },
 };
 
-fn no_test_prefixes_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-jest(no-test-prefixes): Use {x0:?} instead."))
-        .with_label(span1)
+fn no_test_prefixes_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x0}(no-test-prefixes): Use {x1:?} instead.")).with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -41,6 +41,17 @@ declare_oxc_lint!(
     /// xit('foo'); // invalid
     /// xtest('foo'); // invalid
     /// xdescribe('foo'); // invalid
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-test-prefixes.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-test-prefixes": "error"
+    ///   }
+    /// }
     /// ```
     NoTestPrefixes,
     style
@@ -84,10 +95,12 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     };
 
     let preferred_node_name = get_preferred_node_names(&jest_fn_call);
+    let plugin_name = get_test_plugin_name(ctx);
 
-    ctx.diagnostic_with_fix(no_test_prefixes_diagnostic(&preferred_node_name, span), |fixer| {
-        fixer.replace(span, preferred_node_name)
-    });
+    ctx.diagnostic_with_fix(
+        no_test_prefixes_diagnostic(plugin_name, &preferred_node_name, span),
+        |fixer| fixer.replace(span, preferred_node_name),
+    );
 }
 
 fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> String {
@@ -112,7 +125,7 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> String {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("describe('foo', function () {})", None),
         ("it('foo', function () {})", None),
         ("it.concurrent('foo', function () {})", None),
@@ -132,7 +145,7 @@ fn test() {
         ("[1,2,3].forEach()", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("fdescribe('foo', function () {})", None),
         ("xdescribe.each([])('foo', function () {})", None),
         ("fit('foo', function () {})", None),
@@ -166,5 +179,35 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTestPrefixes::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        ("describe(\"foo\", function () {})", None),
+        ("it(\"foo\", function () {})", None),
+        ("it.concurrent(\"foo\", function () {})", None),
+        ("test(\"foo\", function () {})", None),
+        ("test.concurrent(\"foo\", function () {})", None),
+        ("describe.only(\"foo\", function () {})", None),
+        ("it.only(\"foo\", function () {})", None),
+        ("it.each()(\"foo\", function () {})", None),
+    ];
+
+    let fail_vitest = vec![
+        ("fdescribe(\"foo\", function () {})", None),
+        ("xdescribe.each([])(\"foo\", function () {})", None),
+        ("fit(\"foo\", function () {})", None),
+        ("xdescribe(\"foo\", function () {})", None),
+        ("xit(\"foo\", function () {})", None),
+        ("xtest(\"foo\", function () {})", None),
+        ("xit.each``(\"foo\", function () {})", None),
+        ("xtest.each``(\"foo\", function () {})", None),
+        ("xit.each([])(\"foo\", function () {})", None),
+        ("xtest.each([])(\"foo\", function () {})", None),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
+    Tester::new(NoTestPrefixes::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }
