@@ -304,9 +304,9 @@ impl<'a> PatternParser<'a> {
         if let Some(atom) = self.consume_atom_escape()? {
             return Ok(Some(atom));
         }
-
-        // TODO: Implement
-        // self.consume_character_class()
+        if let Some(atom) = self.consume_character_class()? {
+            return Ok(Some(atom));
+        }
 
         // In the spec, (named) capturing group and non-capturing group are defined in that order.
         // If `:` is not valid as a `GroupSpecifier`, why is it not defined in reverse order...?

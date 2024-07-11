@@ -1,4 +1,4 @@
-use oxc_allocator::Box;
+use oxc_allocator::{Box, Vec};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
 
@@ -147,6 +147,84 @@ impl<'a> super::parse::PatternParser<'a> {
         }
 
         Err(OxcDiagnostic::error("Invalid escape"))
+    }
+
+    // ```
+    // CharacterClass[UnicodeMode, UnicodeSetsMode] ::
+    //   [ [lookahead ≠ ^] ClassContents[?UnicodeMode, ?UnicodeSetsMode] ]
+    //   [^ ClassContents[?UnicodeMode, ?UnicodeSetsMode] ]
+    // ```
+    // <https://tc39.es/ecma262/#prod-CharacterClass>
+    pub(super) fn consume_character_class(&mut self) -> Result<Option<ast::Atom<'a>>> {
+        let span_start = self.reader.span_position();
+
+        if self.reader.eat('[') {
+            let negate = self.reader.eat('^');
+
+            if self.state.is_unicode_sets_mode() {
+                let contents = self.consume_class_contents_unicode_sets()?;
+
+                if self.reader.eat(']') {
+                    return Ok(Some(ast::Atom::CharacterClass(Box::new_in(
+                        ast::CharacterClass::UnicodeSetsCharacterClass(Box::new_in(
+                            ast::UnicodeSetsCharacterClass {
+                                span: self
+                                    .span_factory
+                                    .create(span_start, self.reader.span_position()),
+                                negate,
+                                elements: contents,
+                            },
+                            self.allocator,
+                        )),
+                        self.allocator,
+                    ))));
+                }
+            }
+
+            let contents = self.consume_class_contents()?;
+            if self.reader.eat(']') {
+                return Ok(Some(ast::Atom::CharacterClass(Box::new_in(
+                    ast::CharacterClass::ClassRangesCharacterClass(Box::new_in(
+                        ast::ClassRangesCharacterClass {
+                            span: self.span_factory.create(span_start, self.reader.span_position()),
+                            negate,
+                            elements: contents,
+                        },
+                        self.allocator,
+                    )),
+                    self.allocator,
+                ))));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated character class"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ClassContents[UnicodeMode, UnicodeSetsMode] ::
+    //   [empty]
+    //   [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
+    //   [+UnicodeSetsMode] ClassSetExpression
+    // ```
+    // <https://tc39.es/ecma262/#prod-ClassContents>
+    pub(super) fn consume_class_contents(
+        &mut self,
+    ) -> Result<Vec<'a, ast::ClassRangesCharacterClassElement<'a>>> {
+        self.consume_nonempty_class_ranges()
+    }
+    pub(super) fn consume_class_contents_unicode_sets(
+        &mut self,
+    ) -> Result<Vec<'a, ast::UnicodeSetsCharacterClassElement<'a>>> {
+        let contents = Vec::new_in(self.allocator);
+
+        // TODO: Implement consume_class_set_expression()
+        if self.reader.eat('👻') {
+            return Err(OxcDiagnostic::error("TODO"));
+        }
+
+        Ok(contents)
     }
 
     // ```

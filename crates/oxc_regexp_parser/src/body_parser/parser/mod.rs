@@ -1,4 +1,5 @@
 mod atom;
+mod atom_class;
 mod atom_escape;
 /// Main entry point for `PatternParser`
 /// All others are just split files to `impl PatternParser`
