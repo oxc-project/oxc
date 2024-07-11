@@ -137,7 +137,7 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {
-        if GLOBALS["builtin"].contains_key("var") {
+        if GLOBALS["builtin"].contains_key(var) {
             return true;
         }
         for env in self.env().iter() {
