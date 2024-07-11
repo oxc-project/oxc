@@ -48,7 +48,7 @@ declare_oxc_lint!(
     /// let foo;
     /// ```
     NoUselessUndefined,
-    correctness,
+    pedantic,
 );
 
 // Create a static set for all function names
