@@ -347,13 +347,17 @@ impl<'a> SemanticBuilder<'a> {
     ///
     /// # Panics
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
-        let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
+        let reference_name = self.symbols.get_reference(reference_id).name();
 
-        self.unresolved_references[self.current_scope_depth]
-            .entry(reference_name)
-            .or_default()
-            .push(reference_id);
+        let current_unresolved_references =
+            &mut self.unresolved_references[self.current_scope_depth];
+        if let Some(reference_ids) = current_unresolved_references.get_mut(reference_name) {
+            reference_ids.push(reference_id);
+        } else {
+            current_unresolved_references.insert(reference_name.clone(), vec![reference_id]);
+        }
+
         reference_id
     }
 
