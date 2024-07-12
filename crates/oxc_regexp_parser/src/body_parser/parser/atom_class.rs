@@ -30,6 +30,7 @@ impl<'a> super::parse::PatternParser<'a> {
             let span_start = self.reader.span_position();
             if self.reader.eat('-') {
                 let Some(second_class_atom) = self.consume_class_atom()? else {
+                    contents.push(first_class_atom);
                     contents.push(ast::ClassRangesCharacterClassElement::Character(Box::new_in(
                         ast::Character {
                             span: self.span_factory.create(span_start, self.reader.span_position()),
@@ -37,8 +38,9 @@ impl<'a> super::parse::PatternParser<'a> {
                         },
                         self.allocator,
                     )));
-                    // If `-` found but there is no more characters, push `-` as a character and break
-                    break;
+                    // If `-` found but there is no more characters,
+                    // push first atom and `-` as a character and continue
+                    continue;
                 };
 
                 match (first_class_atom, second_class_atom) {
@@ -66,6 +68,9 @@ impl<'a> super::parse::PatternParser<'a> {
                     }
                 }
             }
+
+            // If `-` not found, push the character and continue
+            contents.push(first_class_atom);
         }
 
         Ok(contents)
