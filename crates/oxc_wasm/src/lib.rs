@@ -311,10 +311,10 @@ impl Oxc {
                 if !bindings.is_empty() {
                     scope_text.push_str(&format!("{binding_space}Bindings: {{"));
                 }
-                bindings.iter().for_each(|(name, symbol_id)| {
+                for (name, symbol_id) in bindings {
                     let symbol_flag = semantic.symbols().get_flag(*symbol_id);
                     scope_text.push_str(&format!("\n{binding_space}  {name} ({symbol_flag:?})",));
-                });
+                }
                 if !bindings.is_empty() {
                     scope_text.push_str(&format!("\n{binding_space}}}\n"));
                 }

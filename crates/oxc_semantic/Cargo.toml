@@ -27,7 +27,6 @@ oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 oxc_allocator   = { workspace = true }
 
-indexmap   = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
 serde      = { workspace = true, features = ["derive"], optional = true }
@@ -39,7 +38,6 @@ wasm-bindgen = { workspace = true, optional = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
-indexmap   = { workspace = true }
 insta      = { workspace = true, features = ["glob"] }
 phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }

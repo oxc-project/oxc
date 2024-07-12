@@ -1,16 +1,11 @@
-use std::hash::BuildHasherDefault;
-
-use indexmap::IndexMap;
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
-use rustc_hash::{FxHashMap, FxHasher};
+use rustc_hash::FxHashMap;
 
 use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
 
-type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
-
-type Bindings = FxIndexMap<CompactStr, SymbolId>;
+type Bindings = FxHashMap<CompactStr, SymbolId>;
 pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
 
 /// Scope Tree
@@ -145,7 +140,7 @@ impl ScopeTree {
     }
 
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
-        self.bindings[scope_id].get(name).is_some()
+        self.bindings[scope_id].contains_key(name)
     }
 
     pub fn get_binding(&self, scope_id: ScopeId, name: &str) -> Option<SymbolId> {
@@ -203,6 +198,6 @@ impl ScopeTree {
     }
 
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
-        self.bindings[scope_id].shift_remove(name);
+        self.bindings[scope_id].remove(name);
     }
 }

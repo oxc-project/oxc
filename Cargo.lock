@@ -1704,7 +1704,6 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.20.0"
 dependencies = [
- "indexmap",
  "insta",
  "itertools 0.13.0",
  "oxc_allocator",
