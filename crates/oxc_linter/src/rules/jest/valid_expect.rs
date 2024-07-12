@@ -11,12 +11,12 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, get_test_plugin_name, parse_expect_jest_fn_call,
-        ExpectError, PossibleJestNode,
+        ExpectError, PossibleJestNode, TestPluginName,
     },
     AstNode,
 };
 
-fn valid_expect_diagnostic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+fn valid_expect_diagnostic(x0: TestPluginName, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{x0}(valid-expect): {x1:?}"))
         .with_help(format!("{x2:?}"))
         .with_label(span3)
