@@ -48,7 +48,7 @@ impl TempUnresolvedReferences {
         let hash = IdentifierHash::new(&name);
         let entry = self.inner.entry(
             hash.0,
-            |entry| entry.hash == hash && entry.name.as_ref() == name,
+            |entry| entry.hash == hash && entry.name == name,
             |entry| entry.hash.0,
         );
         match entry {
@@ -69,7 +69,7 @@ impl TempUnresolvedReferences {
     ) {
         let entry = self.inner.entry(
             hash.0,
-            |entry| entry.hash == hash && entry.name.as_ref() == name,
+            |entry| entry.hash == hash && entry.name == name,
             |entry| entry.hash.0,
         );
         match entry {
