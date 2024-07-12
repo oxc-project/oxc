@@ -191,7 +191,7 @@ ignored = ["napi", "oxc_transform_napi", "prettyplease"]
 [profile.dev]
 # Disabling debug info speeds up local and CI builds,
 # and we don't rely on it for debugging that much.
-# debug = false
+debug = false
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
