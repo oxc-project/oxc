@@ -74,15 +74,9 @@ impl Rule for NoConfusingNonNullAssertion {
                         binary_expr.span,
                     ));
                 } else {
-                    ctx.diagnostic_with_fix(
-                        wrap_up_no_confusing_non_null_assertion_diagnostic(binary_expr.span),
-                        |fixer| {
-                            vec![
-                                fixer.insert_text_before(&binary_expr.left, "("),
-                                fixer.insert_text_after(&binary_expr.left, ")"),
-                            ]
-                        },
-                    );
+                    ctx.diagnostic(wrap_up_no_confusing_non_null_assertion_diagnostic(
+                        binary_expr.span,
+                    ));
                 }
             }
             AstKind::AssignmentExpression(assignment_expr) => {
@@ -115,10 +109,10 @@ fn test() {
         "(obj = new new OuterObj().InnerObj).Name! = c;",
         "(a=b)! =c;",
     ];
-    let fix = vec![
-        // source, expected, rule_config?
-        ("f = 1 + d! == 2", "f = (1 + d!) == 2", None),
-        // ("f =  d! == 2", "f = d == 2", None), TODO: Add suggest remove bang
-    ];
-    Tester::new(NoConfusingNonNullAssertion::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    // let fix = vec![
+    //     // source, expected, rule_config?
+    //     // ("f = 1 + d! == 2", "f = (1 + d!) == 2", None), TODO: Add suggest or the weird ;() fix
+    //     // ("f =  d! == 2", "f = d == 2", None), TODO: Add suggest remove bang
+    // ];
+    Tester::new(NoConfusingNonNullAssertion::NAME, pass, fail).test_and_snapshot();
 }
