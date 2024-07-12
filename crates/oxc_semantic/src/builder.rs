@@ -389,8 +389,10 @@ impl<'a> SemanticBuilder<'a> {
                     self.symbols.references[*reference_id].set_symbol_id(symbol_id);
                 }
                 self.symbols.resolved_references[symbol_id].extend(reference_ids);
+            } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                parent_reference_ids.extend(reference_ids);
             } else {
-                parent_refs.entry(name).or_default().extend(reference_ids);
+                parent_refs.insert(name, reference_ids);
             }
         }
     }
