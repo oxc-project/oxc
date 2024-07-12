@@ -16,14 +16,12 @@ pub(crate) fn minify(
     source_type: SourceType,
     options: MinifierOptions,
 ) -> String {
+    const OPTIONS: CodegenOptions = CodegenOptions::new().with_single_quotes();
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     Minifier::new(options).build(&allocator, program);
-    WhitespaceRemover::new()
-        .with_options(CodegenOptions { single_quote: true })
-        .build(program)
-        .source_text
+    WhitespaceRemover::new().with_options(OPTIONS).build(program).source_text
 }
 
 pub(crate) fn test(source_text: &str, expected: &str) {

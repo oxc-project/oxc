@@ -220,7 +220,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
 
     #[allow(clippy::unused_self)]
     pub fn codegen(self) -> CodeGenerator<'a> {
-        CodeGenerator::new().with_options(CodegenOptions { single_quote: true })
+        CodeGenerator::new().with_options(CodegenOptions::default().with_single_quotes())
     }
 
     #[allow(clippy::unused_self)]

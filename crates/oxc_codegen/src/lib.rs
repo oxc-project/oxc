@@ -8,6 +8,7 @@ mod context;
 mod gen;
 mod gen_comment;
 mod operator;
+mod options;
 mod sourcemap_builder;
 
 use std::{borrow::Cow, ops::Range};
@@ -30,6 +31,7 @@ use oxc_syntax::{
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
+    options::{CodegenOptions, CommentOptions, Indent, IndentIter},
 };
 use crate::{operator::Operator, sourcemap_builder::SourcemapBuilder};
 
@@ -39,23 +41,13 @@ pub type CodeGenerator<'a> = Codegen<'a, false>;
 /// Code generator with whitespace removal.
 pub type WhitespaceRemover<'a> = Codegen<'a, true>;
 
-#[derive(Default, Clone, Copy)]
-pub struct CodegenOptions {
-    /// Use single quotes instead of double quotes.
-    pub single_quote: bool,
-}
-
-#[derive(Default, Clone, Copy)]
-pub struct CommentOptions {
-    /// Enable preserve annotate comments, like `/* #__PURE__ */` and `/* #__NO_SIDE_EFFECTS__ */`.
-    pub preserve_annotate_comments: bool,
-}
-
+#[must_use]
 pub struct CodegenReturn {
     pub source_text: String,
     pub source_map: Option<oxc_sourcemap::SourceMap>,
 }
 
+#[must_use]
 pub struct Codegen<'a, const MINIFY: bool> {
     options: CodegenOptions,
     comment_options: CommentOptions,
@@ -120,7 +112,6 @@ impl<'a, const MINIFY: bool> From<Codegen<'a, MINIFY>> for Cow<'a, str> {
 
 // Public APIs
 impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
-    #[must_use]
     pub fn new() -> Self {
         Self {
             options: CodegenOptions::default(),
@@ -148,21 +139,19 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     /// Initialize the output code buffer to reduce memory reallocation.
     /// Minification will reduce by at least half of the original size.
-    #[must_use]
+
     pub fn with_capacity(mut self, source_text_len: usize) -> Self {
         let capacity = if MINIFY { source_text_len / 2 } else { source_text_len };
         self.code = Vec::with_capacity(capacity);
         self
     }
 
-    #[must_use]
     pub fn with_options(mut self, options: CodegenOptions) -> Self {
         self.options = options;
         self.quote = if options.single_quote { b'\'' } else { b'"' };
         self
     }
 
-    #[must_use]
     pub fn enable_comment(
         mut self,
         source_text: &'a str,
@@ -175,7 +164,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self
     }
 
-    #[must_use]
     pub fn enable_source_map(mut self, source_name: &str, source_text: &str) -> Self {
         let mut sourcemap_builder = SourcemapBuilder::default();
         sourcemap_builder.with_name_and_source(source_name, source_text);
@@ -183,13 +171,11 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self
     }
 
-    #[must_use]
     pub fn with_mangler(mut self, mangler: Option<Mangler>) -> Self {
         self.mangler = mangler;
         self
     }
 
-    #[must_use]
     pub fn build(mut self, program: &Program<'_>) -> CodegenReturn {
         program.gen(&mut self, Context::default());
         let source_text = self.into_source_text();
@@ -197,7 +183,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         CodegenReturn { source_text, source_map }
     }
 
-    #[must_use]
     pub fn into_source_text(&mut self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked` are met.
         #[allow(unsafe_code)]
@@ -299,7 +284,9 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             self.print_next_indent_as_space = false;
             return;
         }
-        self.code.extend(std::iter::repeat(b'\t').take(self.indent as usize));
+        let indent_chars =
+            std::iter::repeat(self.options.indent.into_iter()).take(self.indent as usize).flatten();
+        self.code.extend(indent_chars);
     }
 
     #[inline]

@@ -13,7 +13,7 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
         RemoveDeadCode::new(&allocator).build(program);
     }
     CodeGenerator::new()
-        .with_options(CodegenOptions { single_quote: true })
+        .with_options(CodegenOptions::new().with_single_quotes())
         .build(program)
         .source_text
 }

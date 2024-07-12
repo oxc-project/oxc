@@ -5,16 +5,14 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefinesConfig) {
+    const OPTIONS: CodegenOptions = CodegenOptions::new().with_single_quotes();
     let minified = {
         let source_type = SourceType::default();
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         let program = allocator.alloc(ret.program);
         ReplaceGlobalDefines::new(&allocator, config).build(program);
-        WhitespaceRemover::new()
-            .with_options(CodegenOptions { single_quote: true })
-            .build(program)
-            .source_text
+        WhitespaceRemover::new().with_options(OPTIONS).build(program).source_text
     };
     assert_eq!(minified, expected, "for source {source_text}");
 }
