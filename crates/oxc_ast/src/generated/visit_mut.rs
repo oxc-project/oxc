@@ -3897,7 +3897,7 @@ pub mod walk_mut {
     pub fn walk_catch_clause<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut CatchClause<'a>) {
         let kind = AstType::CatchClause;
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
+        visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
         if let Some(param) = &mut it.param {
             visitor.visit_catch_parameter(param);
         }

@@ -9482,19 +9482,6 @@ Expect to Parse: "conformance/types/typeRelationships/typeAndMemberIdentity/obje
  22 │ 
     ╰────
 
-  × Identifier `e` has already been declared
-    ╭─[compiler/redeclareParameterInCatchBlock.ts:27:9]
- 26 │ 
- 27 │ } catch(e) {
-    ·         ┬
-    ·         ╰── `e` has already been declared here
- 28 │     function test() {
- 29 │         let e;
-    ·             ┬
-    ·             ╰── It can not be redeclared here
- 30 │     }
-    ╰────
-
   × Unexpected flag a in regular expression literal
    ╭─[compiler/regularExpressionScanning.ts:3:12]
  2 │     // Flags

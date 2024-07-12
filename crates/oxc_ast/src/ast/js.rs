@@ -1300,7 +1300,7 @@ pub struct TryStatement<'a> {
 }
 
 #[visited_node]
-#[scope]
+#[scope(flags(ScopeFlags::CatchClause))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
