@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
 ---
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
     ╭─[no_confusing_set_timeout.tsx:10:17]
@@ -35,7 +36,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ───────────────
  11 │             
     ╰────
-  help: Do not call `jest.setTimeout` multiple times, as only the last call will have an effect
+  help: `jest.setTimeout` should be placed before any other jest methods
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
     ╭─[no_confusing_set_timeout.tsx:10:17]
@@ -44,7 +45,7 @@ source: crates/oxc_linter/src/tester.rs
     ·                 ───────────────
  11 │             
     ╰────
-  help: `jest.setTimeout` should be placed before any other jest methods
+  help: Do not call `jest.setTimeout` multiple times, as only the last call will have an effect
 
   ⚠ eslint-plugin-jest(no-confusing-set-timeout)
    ╭─[no_confusing_set_timeout.tsx:3:21]
