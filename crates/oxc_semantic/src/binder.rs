@@ -93,7 +93,9 @@ impl<'a> Binder for Class<'a> {
                     SymbolFlags::ClassExcludes,
                 )
             } else {
-                builder.declare_symbol(ident.span, &ident.name, SymbolFlags::Class)
+                let symbol_id = builder.declare_symbol(ident.span, &ident.name, SymbolFlags::Class);
+                builder.symbols.set_declaration_symbol(symbol_id, builder.current_node_id);
+                symbol_id
             };
             ident.symbol_id.set(Some(symbol_id));
         }
@@ -154,6 +156,7 @@ impl<'a> Binder for Function<'a> {
                 // 5. Perform ! funcEnv.CreateImmutableBinding(name, false).
                 let symbol_id =
                     builder.declare_symbol(ident.span, &ident.name, SymbolFlags::Function);
+                builder.symbols.set_declaration_symbol(symbol_id, builder.current_node_id);
                 ident.symbol_id.set(Some(symbol_id));
             }
         }

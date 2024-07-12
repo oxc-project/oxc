@@ -138,9 +138,7 @@ impl SymbolTable {
         _ = self.flags.push(flag);
         _ = self.scope_ids.push(scope_id);
         _ = self.resolved_references.push(vec![]);
-        let symbol_id = self.redeclare_variables.push(vec![]);
-        self.declaration_symbol.insert(declaration, symbol_id);
-        symbol_id
+        self.redeclare_variables.push(vec![])
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
@@ -178,6 +176,10 @@ impl SymbolTable {
         self.resolved_references[symbol_id]
             .iter()
             .map(|reference_id| &self.references[*reference_id])
+    }
+
+    pub fn set_declaration_symbol(&mut self, symbol_id: SymbolId, declaration: AstNodeId) {
+        self.declaration_symbol.insert(declaration, symbol_id);
     }
 
     /// Determine whether evaluating the specific input `node` is a consequenceless reference. ie.
