@@ -2,14 +2,20 @@ use std::borrow::Cow;
 
 use oxc_codegen::Codegen;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{GetSpan, Span, SPAN};
 
 use crate::LintContext;
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct Fix<'a> {
     pub content: Cow<'a, str>,
     pub span: Span,
+}
+
+impl Default for Fix<'_> {
+    fn default() -> Self {
+        Self::empty()
+    }
 }
 
 impl<'a> Fix<'a> {
@@ -20,10 +26,21 @@ impl<'a> Fix<'a> {
     pub fn new<T: Into<Cow<'a, str>>>(content: T, span: Span) -> Self {
         Self { content: content.into(), span }
     }
+
+    /// Creates a [`Fix`] that doesn't change the source code.
+    #[inline]
+    pub const fn empty() -> Self {
+        Self { content: Cow::Borrowed(""), span: SPAN }
+    }
 }
 
+#[derive(Debug, Default)]
 pub enum CompositeFix<'a> {
+    /// No fixes
+    #[default]
+    None,
     Single(Fix<'a>),
+    /// Several fixes that will be merged into one, in order.
     Multiple(Vec<Fix<'a>>),
 }
 
@@ -33,9 +50,22 @@ impl<'a> From<Fix<'a>> for CompositeFix<'a> {
     }
 }
 
+impl<'a> From<Option<Fix<'a>>> for CompositeFix<'a> {
+    fn from(fix: Option<Fix<'a>>) -> Self {
+        match fix {
+            Some(fix) => CompositeFix::Single(fix),
+            None => CompositeFix::None,
+        }
+    }
+}
+
 impl<'a> From<Vec<Fix<'a>>> for CompositeFix<'a> {
     fn from(fixes: Vec<Fix<'a>>) -> Self {
-        CompositeFix::Multiple(fixes)
+        if fixes.is_empty() {
+            CompositeFix::None
+        } else {
+            CompositeFix::Multiple(fixes)
+        }
     }
 }
 
@@ -46,19 +76,21 @@ impl<'a> CompositeFix<'a> {
         match self {
             CompositeFix::Single(fix) => fix,
             CompositeFix::Multiple(fixes) => Self::merge_fixes(fixes, source_text),
+            CompositeFix::None => Fix::empty(),
         }
     }
-    // Merges multiple fixes to one, returns an `Fix::default`(which will not fix anything) if:
-    // 1. `fixes` is empty
-    // 2. contains overlapped ranges
-    // 3. contains negative ranges (span.start > span.end)
-    // <https://github.com/eslint/eslint/blob/main/lib/linter/report-translator.js#L147-L179>
+    /// Merges multiple fixes to one, returns an `Fix::default`(which will not fix anything) if:
+    ///
+    /// 1. `fixes` is empty
+    /// 2. contains overlapped ranges
+    /// 3. contains negative ranges (span.start > span.end)
+    ///
+    /// <https://github.com/eslint/eslint/blob/main/lib/linter/report-translator.js#L147-L179>
     fn merge_fixes(fixes: Vec<Fix<'a>>, source_text: &str) -> Fix<'a> {
         let mut fixes = fixes;
-        let empty_fix = Fix::default();
         if fixes.is_empty() {
             // Do nothing
-            return empty_fix;
+            return Fix::empty();
         }
         if fixes.len() == 1 {
             return fixes.pop().unwrap();
@@ -77,7 +109,7 @@ impl<'a> CompositeFix<'a> {
             // negative range or overlapping ranges is invalid
             if span.start > span.end {
                 debug_assert!(false, "Negative range is invalid: {span:?}");
-                return empty_fix;
+                return Fix::empty();
             }
             if last_pos > span.start {
                 debug_assert!(
@@ -85,14 +117,15 @@ impl<'a> CompositeFix<'a> {
                     "Fix must not be overlapped, last_pos: {}, span.start: {}",
                     last_pos, span.start
                 );
-                return empty_fix;
+                return Fix::empty();
             }
 
             let Some(before) = source_text.get((last_pos) as usize..span.start as usize) else {
                 debug_assert!(false, "Invalid range: {}, {}", last_pos, span.start);
-                return empty_fix;
+                return Fix::empty();
             };
 
+            output.reserve(before.len() + content.len());
             output.push_str(before);
             output.push_str(content);
             last_pos = span.end;
@@ -100,10 +133,11 @@ impl<'a> CompositeFix<'a> {
 
         let Some(after) = source_text.get(last_pos as usize..end as usize) else {
             debug_assert!(false, "Invalid range: {:?}", last_pos as usize..end as usize);
-            return empty_fix;
+            return Fix::empty();
         };
 
         output.push_str(after);
+        output.shrink_to_fit();
         Fix::new(output, Span::new(start, end))
     }
 }
@@ -121,6 +155,8 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
         Self { ctx }
     }
 
+    /// Get a snippet of source text covered by the given [`Span`]. For details,
+    /// see [`Span::source_text`].
     pub fn source_range(self, span: Span) -> &'a str {
         self.ctx.source_range(span)
     }
@@ -185,6 +221,11 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     #[allow(clippy::unused_self)]
     pub fn codegen(self) -> Codegen<'a, false> {
         Codegen::<false>::new()
+    }
+
+    #[allow(clippy::unused_self)]
+    pub fn noop(self) -> Fix<'a> {
+        Fix::empty()
     }
 }
 

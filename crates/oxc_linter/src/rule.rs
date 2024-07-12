@@ -100,7 +100,7 @@ impl fmt::Display for RuleCategory {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct RuleWithSeverity {
     pub rule: RuleEnum,
     pub severity: AllowWarnDeny,
