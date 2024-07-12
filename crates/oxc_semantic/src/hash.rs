@@ -1,4 +1,3 @@
-use std::hash::Hash;
 use std::hash::Hasher;
 
 use hashbrown::hash_table::{Drain, Entry, HashTable};
@@ -14,9 +13,8 @@ pub struct IdentifierHash(u64);
 impl IdentifierHash {
     fn new(name: &str) -> Self {
         let mut hasher = FxHasher::default();
-        name.hash(&mut hasher);
-        let hash = hasher.finish();
-        Self(hash)
+        hasher.write(name.as_bytes());
+        Self(hasher.finish())
     }
 }
 
