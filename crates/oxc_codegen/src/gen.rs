@@ -2238,9 +2238,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
             Self::Fragment(fragment) => fragment.gen(p, ctx),
             Self::Element(el) => el.gen(p, ctx),
             Self::StringLiteral(lit) => {
-                p.print_char(b'"');
+                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
+                p.print_char(quote);
                 p.print_str(&lit.value);
-                p.print_char(b'"');
+                p.print_char(quote);
             }
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),
         }
