@@ -21,12 +21,13 @@ use crate::{
     checker,
     class::ClassTableBuilder,
     diagnostics::redeclaration,
+    hash::TempUnresolvedReferences,
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
-    scope::{ScopeFlags, ScopeId, ScopeTree, UnresolvedReferences},
+    scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     JSDocFinder, Semantic,
 };
@@ -74,10 +75,10 @@ pub struct SemanticBuilder<'a> {
     pub symbols: SymbolTable,
 
     // Stack used to accumulate unresolved refs while traversing scopes.
-    // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal
+    // Indexed by scope depth. We recycle `TempUnresolvedReferences` instances during traversal
     // to reduce allocations, so the stack grows to maximum scope depth, but never shrinks.
     // See: <https://github.com/oxc-project/oxc/issues/4169>
-    unresolved_references: Vec<UnresolvedReferences>,
+    unresolved_references: Vec<TempUnresolvedReferences>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -198,11 +199,14 @@ impl<'a> SemanticBuilder<'a> {
             if self.check_syntax_error {
                 checker::check_module_record(&self);
             }
-        }
 
-        debug_assert_eq!(self.current_scope_depth, 0);
-        self.scope.root_unresolved_references =
-            self.unresolved_references.into_iter().next().unwrap();
+            // Convert remaining unresolved references to a standard hash map
+            debug_assert_eq!(self.current_scope_depth, 0);
+            let mut unresolved_references = self.unresolved_references.into_iter().next().unwrap();
+            for line in unresolved_references.drain() {
+                self.scope.root_unresolved_references.insert(line.name, line.reference_ids);
+            }
+        }
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -339,10 +343,7 @@ impl<'a> SemanticBuilder<'a> {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
 
-        self.unresolved_references[self.current_scope_depth]
-            .entry(reference_name)
-            .or_default()
-            .push(reference_id);
+        self.unresolved_references[self.current_scope_depth].insert(reference_name, reference_id);
         reference_id
     }
 
@@ -370,18 +371,16 @@ impl<'a> SemanticBuilder<'a> {
         let current_refs = iter.next().unwrap();
 
         let bindings = self.scope.get_bindings(self.current_scope_id);
-        for (name, reference_ids) in current_refs.drain() {
+        for line in current_refs.drain() {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
-            if let Some(symbol_id) = bindings.get(&name).copied() {
-                for reference_id in &reference_ids {
+            if let Some(symbol_id) = bindings.get(&line.name).copied() {
+                for reference_id in &line.reference_ids {
                     self.symbols.references[*reference_id].set_symbol_id(symbol_id);
                 }
-                self.symbols.resolved_references[symbol_id].extend(reference_ids);
-            } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
-                parent_reference_ids.extend(reference_ids);
+                self.symbols.resolved_references[symbol_id].extend(line.reference_ids);
             } else {
-                parent_refs.insert(name, reference_ids);
+                parent_refs.extend(line.name, line.hash, line.reference_ids);
             }
         }
     }
@@ -442,7 +441,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         // `self.unresolved_references[self.current_scope_depth]` is initialized
         self.current_scope_depth += 1;
         if self.unresolved_references.len() <= self.current_scope_depth {
-            self.unresolved_references.push(UnresolvedReferences::default());
+            self.unresolved_references.push(TempUnresolvedReferences::default());
         }
     }
 

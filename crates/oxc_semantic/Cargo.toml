@@ -27,6 +27,7 @@ oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 oxc_allocator   = { workspace = true }
 
+hashbrown  = { workspace = true }
 indexmap   = { workspace = true }
 phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }

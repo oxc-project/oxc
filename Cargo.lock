@@ -1704,6 +1704,7 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.20.0"
 dependencies = [
+ "hashbrown",
  "indexmap",
  "insta",
  "itertools 0.13.0",

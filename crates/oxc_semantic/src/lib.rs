@@ -3,6 +3,7 @@ mod builder;
 mod checker;
 mod class;
 mod diagnostics;
+mod hash;
 mod jsdoc;
 mod label;
 mod module_record;
