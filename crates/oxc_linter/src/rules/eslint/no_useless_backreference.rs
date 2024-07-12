@@ -11,13 +11,20 @@ use std::iter::Peekable;
 pub struct NoUselessBackreference;
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum RegexGroup {
     CaptureGroup(u8),
     NamedCaptureGroup(),
     NonCaptureGroup(),
     LookAheadGroup(),
     LookBehindGroup(),
+}
+
+#[derive(Debug, Clone)]
+struct CaptureGroupContext {
+    current_counter: u8,
+    finished_groups: Vec<u8>, // ToDo refactor tu enum because of name,
+    all_groups: Vec<RegexGroup>,
 }
 
 declare_oxc_lint!(
@@ -37,17 +44,17 @@ declare_oxc_lint!(
 
 // fn get_name_reference(char: char, iter: &mut Peekable<std::str::Chars<'_>>) -> String {
 //     assert!(char == '<');
-// 
+//
 //     let mut group_name = String::new();
 //     for char in iter.by_ref() {
 //         // ToDO: backslash?
 //         if char == '>' {
 //             break;
 //         }
-// 
+//
 //         group_name.push(char);
 //     }
-// 
+//
 //     group_name
 // }
 
@@ -106,19 +113,18 @@ fn get_regex_group_by_open_bracet(
     RegexGroup::CaptureGroup(group_counter)
 }
 
-fn get_regex_groups(chars: &mut Peekable<std::str::Chars<'_>>, group_count: u8) -> Vec<RegexGroup> {
+fn get_regex_groups(
+    chars: &mut Peekable<std::str::Chars<'_>>,
+    group_count: u8,
+    with_alternatives: bool,
+) -> Vec<RegexGroup> {
     let mut backslash_started = false;
-    let mut alternative_found = false;
     let mut inside_group: u8 = 0;
     let mut inside_character_class_count: u8 = 0;
     let mut result: Vec<RegexGroup> = vec![];
     let mut counter = group_count;
 
     while let Some(char) = chars.next() {
-        if alternative_found {
-            break;
-        }
-
         if char == '\\' {
             backslash_started = !backslash_started;
             continue;
@@ -133,11 +139,17 @@ fn get_regex_groups(chars: &mut Peekable<std::str::Chars<'_>>, group_count: u8) 
                     inside_character_class_count -= 1;
                 }
                 '(' => {
-                    let group_type = get_regex_group_by_open_bracet(char, chars,  counter);
+                    let group_type = get_regex_group_by_open_bracet(char, chars, counter);
                     result.push(group_type);
 
                     inside_group += 1;
-                    counter += 1;
+
+                    match group_type {
+                        RegexGroup::CaptureGroup(_) => {
+                            counter += 1;
+                        },
+                        _ => {}
+                    }
                 }
                 ')' => {
                     if inside_group == 0 {
@@ -145,9 +157,13 @@ fn get_regex_groups(chars: &mut Peekable<std::str::Chars<'_>>, group_count: u8) 
                     }
                     inside_group -= 1;
                 }
-                '|' if inside_group == 0 && inside_character_class_count == 0 => {
-                    // ToDO: maybe in a alternative there are more capture groups!
-                    alternative_found = true;
+                '|' if inside_character_class_count == 0 => {
+                    if with_alternatives {
+                        let mut sub_results = get_regex_groups(chars, counter, true);
+                        result.append(&mut sub_results);
+                    } else {
+                        return result;
+                    }
                 }
                 _ => {}
             }
@@ -163,19 +179,27 @@ fn get_regex_groups(chars: &mut Peekable<std::str::Chars<'_>>, group_count: u8) 
 
 fn has_string_invalid_back_reference(regex: &str) -> bool {
     let mut chars = regex.chars().peekable();
+    let mut cloned_chars = chars.clone();
 
     println!("regex: {regex}");
-    has_peekable_invalid_back_reference(&mut chars, &mut 1)
+
+    has_peekable_invalid_back_reference(
+        &mut chars,
+        &mut CaptureGroupContext {
+            current_counter: 1,
+            finished_groups: vec![],
+            all_groups: get_regex_groups(&mut cloned_chars, 1, true),
+        },
+    )
 }
 
 fn has_peekable_invalid_back_reference(
     chars: &mut Peekable<std::str::Chars<'_>>,
-    capture_group_current_digit: &mut u8,
+    context: &mut CaptureGroupContext,
 ) -> bool {
-    let mut cloned_chars: Peekable<std::str::Chars> = chars.clone();
-    let all_groups = get_regex_groups(&mut cloned_chars, *capture_group_current_digit);
     let capture_group_count = u8::try_from(
-        all_groups
+        context
+            .all_groups
             .iter()
             .filter_map(|group| match group {
                 RegexGroup::CaptureGroup(i) => Some(i),
@@ -187,19 +211,14 @@ fn has_peekable_invalid_back_reference(
     .unwrap();
 
     let mut backslash_started = false;
-
     let mut open_groups: Vec<RegexGroup> = vec![];
-
     let mut inside_character_class_count: u8 = 0;
     let mut inside_look_behind: u8 = 0;
     let mut inside_look_ahead: u8 = 0;
-    let mut capture_group_finished: Vec<u8>;
+    let current_found_group: Vec<RegexGroup> =
+        get_regex_groups(&mut chars.clone(), context.current_counter, false);
 
-    if capture_group_count == 0 {
-        capture_group_finished = vec![];
-    } else {
-        capture_group_finished = (1..*capture_group_current_digit).collect();
-    }
+    println!("context: {:?}", context);
 
     while let Some(char) = chars.next() {
         println!("{char}");
@@ -219,7 +238,8 @@ fn has_peekable_invalid_back_reference(
                 }
                 '(' => {
                     // pointer can be moved!
-                    let group_type = get_regex_group_by_open_bracet(char, chars, *capture_group_current_digit);
+                    let group_type =
+                        get_regex_group_by_open_bracet(char, chars, context.current_counter);
 
                     open_groups.push(group_type.clone());
 
@@ -231,7 +251,7 @@ fn has_peekable_invalid_back_reference(
                             inside_look_ahead += 1;
                         }
                         RegexGroup::CaptureGroup(_) => {
-                            *capture_group_current_digit += 1;
+                            context.current_counter += 1;
                         }
                         _ => {}
                     }
@@ -246,7 +266,7 @@ fn has_peekable_invalid_back_reference(
                                 inside_look_ahead = inside_look_behind.saturating_sub(1);
                             }
                             RegexGroup::CaptureGroup(identifier) => {
-                                capture_group_finished.push(identifier);
+                                context.finished_groups.push(identifier);
                             }
                             _ => {}
                         }
@@ -263,16 +283,16 @@ fn has_peekable_invalid_back_reference(
                 '|' if inside_character_class_count == 0 => {
                     println!(
                         "alternative
-                        capture_group_finished:  {:?}
+                        context:  {:?}
                         inside_look_behind: {inside_look_behind}
                         open_groups: {:?}",
-                        capture_group_finished, open_groups
+                        context, open_groups
                     );
 
                     if open_groups.is_empty() {
-                        return has_peekable_invalid_back_reference(chars, capture_group_current_digit);
+                        return has_peekable_invalid_back_reference(chars, context);
                     } else {
-                        let result = has_peekable_invalid_back_reference(chars, capture_group_current_digit);
+                        let result = has_peekable_invalid_back_reference(chars, context);
 
                         if result {
                             return true;
@@ -288,15 +308,15 @@ fn has_peekable_invalid_back_reference(
                                         inside_look_ahead = inside_look_behind.saturating_sub(1);
                                     }
                                     RegexGroup::CaptureGroup(idendifier) => {
-                                        capture_group_finished.push(idendifier);
+                                        context.finished_groups.push(idendifier);
                                     }
                                     _ => {}
                                 }
                             } else {
-                                println!("closing parent found sinide |");
+                                println!("closing parent found inside |");
                                 // we found a closing group of a parent regex
                                 // this can happen when the parent group has an alternative
-        
+
                                 // TODO: parent need to know which one is closing
                                 return false;
                             }
@@ -327,21 +347,25 @@ fn has_peekable_invalid_back_reference(
                 "backreference
                 digit_result:  {digit_result}
                 capture_group_count: {capture_group_count}
-                capture_group_current_digit: {capture_group_current_digit}
+                context: {:?}
                 inside_look_behind: {inside_look_behind}
                 inside_look_ahead: {inside_look_ahead}
-                capture_group_finished: {:?}
                 open_groups: {:?}
-                all_groups: {:?}",
-                capture_group_finished, open_groups, all_groups
+                current_found_group: {:?}",
+                context, open_groups, current_found_group
             );
 
             // we are trying to access a capture group and not an octal
             if digit_result <= capture_group_count {
                 // this capture group did not end
 
-                // capture group did not finished in this regex, but maybe one
-                if inside_look_behind == 0 && !capture_group_finished.contains(&digit_result) {
+                // not inside look behind: ToDo: check für better
+                // the group needs to be finished
+                // the group should be in this current alternative
+                if inside_look_behind == 0
+                    && !context.finished_groups.contains(&digit_result)
+                    && current_found_group.contains(&RegexGroup::CaptureGroup(digit_result))
+                {
                     // not in look behind, so this in invalid
                     return true;
                 }
