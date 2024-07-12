@@ -1,0 +1,59 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
+---
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! == b;
+   · ───────
+   ╰────
+  help: Unnecessary non-null assertion (!) in equal test
+
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! === b", which looks very similar to not equal "a !=== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! === b;
+   · ────────
+   ╰────
+  help: Unnecessary non-null assertion (!) in equal test
+
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a + b! == c;
+   · ───────────
+   ╰────
+  help: Unnecessary non-null assertion (!) in equal test
+
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (obj = new new OuterObj().InnerObj).Name! == c;
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Unnecessary non-null assertion (!) in equal test
+
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! == b", which looks very similar to not equal "a !== b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (a==b)! ==c;
+   · ───────────
+   ╰────
+  help: Unnecessary non-null assertion (!) in equal test
+
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! = b", which looks very similar to not equal "a != b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ a! = b;
+   · ──────
+   ╰────
+  help: Wrap left-hand side in parentheses to avoid putting non-null assertion "!" and "=" together.
+
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! = b", which looks very similar to not equal "a != b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (obj = new new OuterObj().InnerObj).Name! = c;
+   · ─────────────────────────────────────────────
+   ╰────
+  help: Wrap left-hand side in parentheses to avoid putting non-null assertion "!" and "=" together.
+
+  ⚠ Confusing combinations of non-null assertion and equal test like "a! = b", which looks very similar to not equal "a != b".
+   ╭─[no_confusing_non_null_assertion.tsx:1:1]
+ 1 │ (a=b)! =c;
+   · ─────────
+   ╰────
+  help: Wrap left-hand side in parentheses to avoid putting non-null assertion "!" and "=" together.

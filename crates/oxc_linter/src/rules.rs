@@ -134,6 +134,7 @@ mod typescript {
     pub mod consistent_type_definitions;
     pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
+    pub mod no_confusing_non_null_assertion;
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
     pub mod no_empty_interface;
@@ -561,6 +562,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::explicit_function_return_type,
     typescript::no_non_null_assertion,
     typescript::no_non_null_asserted_nullish_coalescing,
+    typescript::no_confusing_non_null_assertion,
     typescript::no_dynamic_delete,
     jest::consistent_test_it,
     jest::expect_expect,
