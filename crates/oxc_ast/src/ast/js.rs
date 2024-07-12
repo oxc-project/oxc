@@ -1581,7 +1581,7 @@ pub struct YieldExpression<'a> {
 
 /// Class Definitions
 #[visited_node]
-#[scope(flags(ScopeFlags::StrictMode))]
+#[scope(flags(ScopeFlags::StrictMode | ScopeFlags::Class))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]

@@ -7,7 +7,6 @@ pub use oxc_syntax::{
     scope::ScopeId,
     symbol::{SymbolFlags, SymbolId},
 };
-use rustc_hash::FxHashMap;
 
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -37,7 +36,6 @@ pub struct SymbolTable {
     pub scope_ids: IndexVec<SymbolId, Option<ScopeId>>,
     /// Pointer to the AST Node where this symbol is declared
     pub declarations: IndexVec<SymbolId, AstNodeId>,
-    pub declaration_symbol: FxHashMap<AstNodeId, SymbolId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
     pub references: IndexVec<ReferenceId, Reference>,
     pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
@@ -66,13 +64,19 @@ impl SymbolTable {
             .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
     }
 
-    pub fn get_symbol_id_from_declaration(&self, declaration: AstNodeId) -> Option<SymbolId> {
-        self.declaration_symbol.get(&declaration).copied()
-    }
-
     pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
         self.names.iter_enumerated().find_map(|(symbol, inner_name)| {
             if inner_name.as_str() == name {
+                Some(symbol)
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn get_symbol_id_from_declaration(&self, declaration: AstNodeId) -> Option<SymbolId> {
+        self.declarations.iter_enumerated().find_map(|(symbol, inner_declaration)| {
+            if *inner_declaration == declaration {
                 Some(symbol)
             } else {
                 None
@@ -176,10 +180,6 @@ impl SymbolTable {
         self.resolved_references[symbol_id]
             .iter()
             .map(|reference_id| &self.references[*reference_id])
-    }
-
-    pub fn set_declaration_symbol(&mut self, symbol_id: SymbolId, declaration: AstNodeId) {
-        self.declaration_symbol.insert(declaration, symbol_id);
     }
 
     /// Determine whether evaluating the specific input `node` is a consequenceless reference. ie.

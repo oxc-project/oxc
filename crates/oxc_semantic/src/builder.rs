@@ -381,6 +381,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_references_for_current_scope(&mut self) {
+        let current_scope_flags = self.current_scope_flags();
         // `iter_mut` to get mut references to 2 entries of `unresolved_references` simultaneously
         let mut iter = self.unresolved_references.iter_mut();
         let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
@@ -391,18 +392,24 @@ impl<'a> SemanticBuilder<'a> {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
             if let Some(symbol_id) = bindings.get(&name).copied().or_else(|| {
-                self.symbols.get_symbol_id_from_declaration(self.current_node_id).and_then(
-                    |symbol_id| {
-                        let flag = self.symbols.get_flag(symbol_id);
-                        if (flag.is_class() || flag.is_function())
-                            && self.symbols.get_name(symbol_id) == name
+                // If the current node is a class or function expression,
+                // Try to get the symbol by binding name
+                // and check if it's the same name with the reference.
+                if current_scope_flags.is_class() || current_scope_flags.is_function() {
+                    let kind = self.nodes.kind(self.current_node_id);
+                    if matches!(kind, AstKind::Function(func) if func.id.is_some() && func.is_expression())
+                        || matches!(kind, AstKind::Class(class) if class.id.is_some() && class.is_expression())
+                    {
+                        if let Some(symbol_id) =
+                            self.symbols.get_symbol_id_from_declaration(self.current_node_id)
                         {
-                            Some(symbol_id)
-                        } else {
-                            None
+                            if self.symbols.get_name(symbol_id) == name {
+                                return Some(symbol_id);
+                            }
                         }
-                    },
-                )
+                    }
+                }
+                None
             }) {
                 for reference_id in &reference_ids {
                     self.symbols.references[*reference_id].set_symbol_id(symbol_id);
@@ -1598,6 +1605,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_node_flags |= NodeFlags::Class;
                 class.bind(self);
                 self.current_symbol_flags -= SymbolFlags::Export;
+                self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ClassBody(body) => {

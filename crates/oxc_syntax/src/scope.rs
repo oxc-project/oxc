@@ -24,6 +24,7 @@ bitflags! {
         const GetAccessor      = 1 << 7;
         const SetAccessor      = 1 << 8;
         const CatchClause      = 1 << 9;
+        const Class            = 1 << 10;
         const Var = Self::Top.bits() | Self::Function.bits() | Self::ClassStaticBlock.bits() | Self::TsModuleBlock.bits();
         const Modifiers = Self::Constructor.bits() | Self::GetAccessor.bits() | Self::SetAccessor.bits();
     }
@@ -85,5 +86,9 @@ impl ScopeFlags {
 
     pub fn is_catch_clause(&self) -> bool {
         self.contains(Self::CatchClause)
+    }
+
+    pub fn is_class(&self) -> bool {
+        self.contains(Self::Class)
     }
 }
