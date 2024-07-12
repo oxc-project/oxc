@@ -393,7 +393,7 @@ impl<'a> SemanticBuilder<'a> {
                 parent_refs
                     .entry(name)
                     .and_modify(|existing| existing.extend(&reference_ids))
-                    .or_insert(reference_ids);
+                    .or_insert_with(|| reference_ids);
             }
         }
     }
