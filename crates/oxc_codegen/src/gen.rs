@@ -65,7 +65,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Directive<'a> {
         // A Use Strict Directive may not contain an EscapeSequence or LineContinuation.
         // So here should print original `directive` value, the `expression` value is escaped str.
         // See https://github.com/babel/babel/blob/main/packages/babel-generator/src/generators/base.ts#L64
-        p.wrap_quote(self.directive.as_str(), |p, _| {
+        p.wrap_quote(|p, _| {
             p.print_str(self.directive.as_str());
         });
         p.print_semicolon_after_statement();
@@ -1268,7 +1268,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for RegExpLiteral<'a> {
     }
 }
 
-fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<{ MINIFY }>) {
+fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: u8, p: &mut Codegen<{ MINIFY }>) {
     let mut chars = s.chars().peekable();
 
     while let Some(c) = chars.next() {
@@ -1308,21 +1308,21 @@ fn print_unquoted_str<const MINIFY: bool>(s: &str, quote: char, p: &mut Codegen<
                 p.print_str("\\\\");
             }
             '\'' => {
-                if quote == '\'' {
+                if quote == b'\'' {
                     p.print_str("\\'");
                 } else {
                     p.print_str("'");
                 }
             }
             '\"' => {
-                if quote == '"' {
+                if quote == b'"' {
                     p.print_str("\\\"");
                 } else {
                     p.print_str("\"");
                 }
             }
             '`' => {
-                if quote == '`' {
+                if quote == b'`' {
                     p.print_str("\\`");
                 } else {
                     p.print_str("`");
@@ -1354,7 +1354,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for StringLiteral<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         let s = self.value.as_str();
-        p.wrap_quote(s, |p, quote| {
+        p.wrap_quote(|p, quote| {
             print_unquoted_str(s, quote, p);
         });
     }
@@ -2239,7 +2239,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
             Self::Element(el) => el.gen(p, ctx),
             Self::StringLiteral(lit) => {
                 p.print_char(b'"');
-                print_unquoted_str(&lit.value, '"', p);
+                print_unquoted_str(&lit.value, b'"', p);
                 p.print_char(b'"');
             }
             Self::ExpressionContainer(expr_container) => expr_container.gen(p, ctx),

@@ -20,8 +20,10 @@ pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
         "consistent-test-it",
         "no-disabled-tests",
         "no-focused-tests",
+        "no-test-prefixes",
         "prefer-hooks-in-order",
         "valid-describe-callback",
+        "valid-expect",
     ];
 
     jest_rules.contains(&rule_name)

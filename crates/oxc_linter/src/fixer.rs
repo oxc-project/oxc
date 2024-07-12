@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-use oxc_codegen::Codegen;
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span, SPAN};
 
@@ -219,8 +219,8 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     #[allow(clippy::unused_self)]
-    pub fn codegen(self) -> Codegen<'a, false> {
-        Codegen::<false>::new()
+    pub fn codegen(self) -> CodeGenerator<'a> {
+        CodeGenerator::new().with_options(CodegenOptions { single_quote: true })
     }
 
     #[allow(clippy::unused_self)]
