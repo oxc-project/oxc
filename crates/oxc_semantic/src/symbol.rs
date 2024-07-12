@@ -136,10 +136,12 @@ impl SymbolTable {
         self.redeclare_variables[symbol_id].push(span);
     }
 
+    #[inline]
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
         self.references.push(reference)
     }
 
+    #[inline]
     pub fn get_reference(&self, reference_id: ReferenceId) -> &Reference {
         &self.references[reference_id]
     }
