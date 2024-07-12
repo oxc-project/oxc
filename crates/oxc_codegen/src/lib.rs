@@ -97,6 +97,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     /// the first element of value is the start of the comment
     /// the second element of value includes the end of the comment and comment kind.
     move_comment_map: MoveCommentMap,
+    latest_consumed_comment_end: u32,
 }
 
 impl<'a, const MINIFY: bool> Default for Codegen<'a, MINIFY> {
@@ -141,6 +142,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             quote: b'"',
             sourcemap_builder: None,
             move_comment_map: MoveCommentMap::default(),
+            latest_consumed_comment_end: 0,
         }
     }
 

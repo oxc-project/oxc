@@ -34,6 +34,23 @@ pub fn get_leading_annotate_comment<const MINIFY: bool>(
 }
 
 pub fn print_comment<const MINIFY: bool>(comment: Comment, p: &mut Codegen<{ MINIFY }>) {
+    // Avoid multiple ast node share the same comment, e.g.
+    // ```js
+    // /*#__PURE__*/
+    // Object.getOwnPropertyNames(Symbol)
+    // // ios10.x Object.getOwnPropertyNames(Symbol) can enumerate 'arguments' and 'caller'
+    // // but accessing them on Symbol leads to TypeError because Symbol is a strict mode
+    // // function
+    //   .filter(key => key !== 'arguments' && key !== 'caller')
+    //   .map(key => (Symbol)[key])
+    //   .filter(isSymbol),
+    // ```
+    // in this example, `Object.getOwnPropertyNames(Symbol)` and `Object.getOwnPropertyNames(Symbol).filter()`, `Object.getOwnPropertyNames(Symbol).filter().map()`
+    // share the same leading comment. since they both are call expr and has same span start, we need to avoid print the same comment multiple times.
+    if p.latest_consumed_comment_end >= comment.span.end {
+        return;
+    }
+    p.latest_consumed_comment_end = comment.span.end;
     match comment.kind {
         CommentKind::SingleLine => {
             p.print_str("//");
