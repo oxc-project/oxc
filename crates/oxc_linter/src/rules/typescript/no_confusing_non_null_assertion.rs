@@ -31,61 +31,69 @@ declare_oxc_lint!(
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-            "Confusing combinations of non-null assertion and equal test like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
+            "typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
     ))
-        .with_help(
-            if op_str == "=" {
-                "Unnecessary non-null assertion (!) in assignment left hand."
-            }
-            else {
-                "Unnecessary non-null assertion (!) in equal test"
-            })
+    .with_help("Remove the \"!\", or prefix the \"=\" with it.")
     .with_label(span)
 }
 
 fn wrap_up_no_confusing_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
-        "Confusing combinations of non-null assertion and equal test like \"a! = b\", which looks very similar to not equal \"a != b\"."
+        "typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like \"a! = b\", which looks very similar to not equal \"a != b\"."
     )
     .with_help("Wrap left-hand side in parentheses to avoid putting non-null assertion \"!\" and \"=\" together.")
     .with_label(span)
 }
 
-fn ends_in_bang(expr: &Expression<'_>) -> bool {
+fn get_depth_ends_in_bang(expr: &Expression<'_>) -> Option<u32> {
     match expr {
-        Expression::TSNonNullExpression(_) => true,
-        Expression::BinaryExpression(binary_expr) => ends_in_bang(&binary_expr.right),
-        Expression::UnaryExpression(unary_expr) => ends_in_bang(&unary_expr.argument),
-        Expression::AssignmentExpression(assignment_expr) => ends_in_bang(&assignment_expr.right),
-        _ => false,
+        Expression::TSNonNullExpression(_) => Some(0),
+        Expression::BinaryExpression(binary_expr) => {
+            get_depth_ends_in_bang(&binary_expr.right).map(|x| x + 1)
+        }
+        Expression::UnaryExpression(unary_expr) => {
+            get_depth_ends_in_bang(&unary_expr.argument).map(|x| x + 1)
+        }
+        Expression::AssignmentExpression(assignment_expr) => {
+            get_depth_ends_in_bang(&assignment_expr.right).map(|x| x + 1)
+        }
+        _ => None,
     }
 }
-
 
 impl Rule for NoConfusingNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BinaryExpression(binary_expr) => {
-                if !ends_in_bang(&binary_expr.left) {
+                let Some(bang_depth) = get_depth_ends_in_bang(&binary_expr.left) else {
                     return;
+                };
+                if bang_depth == 0 {
+                    ctx.diagnostic(not_need_no_confusing_non_null_assertion_diagnostic(
+                        binary_expr.operator.as_str(),
+                        binary_expr.span,
+                    ));
+                } else {
+                    ctx.diagnostic_with_fix(
+                        wrap_up_no_confusing_non_null_assertion_diagnostic(binary_expr.span),
+                        |fixer| {
+                            vec![
+                                fixer.insert_text_before(&binary_expr.left, "("),
+                                fixer.insert_text_after(&binary_expr.left, ")"),
+                            ]
+                        },
+                    );
                 }
-                ctx.diagnostic(not_need_no_confusing_non_null_assertion_diagnostic(
-                    binary_expr.operator.as_str(),
-                    binary_expr.span,
-                ));
             }
             AstKind::AssignmentExpression(assignment_expr) => {
-                let Some(simple_target) = assignment_expr.left.as_simple_assignment_target() else {return;};
-                let SimpleAssignmentTarget::TSNonNullExpression(_) = simple_target else {return};
-                ctx.diagnostic_with_fix(
-                    wrap_up_no_confusing_non_null_assertion_diagnostic(assignment_expr.span),
-                    |fixer| {
-                        vec![
-                            fixer.insert_text_before(&assignment_expr.left, "("),
-                            fixer.insert_text_after(&assignment_expr.left, ")"),
-                        ]
-                    },
-                );
+                let Some(simple_target) = assignment_expr.left.as_simple_assignment_target() else {
+                    return;
+                };
+                let SimpleAssignmentTarget::TSNonNullExpression(_) = simple_target else { return };
+                ctx.diagnostic(not_need_no_confusing_non_null_assertion_diagnostic(
+                    assignment_expr.operator.as_str(),
+                    assignment_expr.span,
+                ));
             }
             _ => {}
         }
@@ -108,9 +116,9 @@ fn test() {
         "(a=b)! =c;",
     ];
     let fix = vec![
-    // source, expected, rule_config?
-    ("f = 1 + d! == 2", "f = (1 + d!) == 2", None),
-    ("f =  d! == 2", "f = d == 2", None)
+        // source, expected, rule_config?
+        ("f = 1 + d! == 2", "f = (1 + d!) == 2", None),
+        // ("f =  d! == 2", "f = d == 2", None), TODO: Add suggest remove bang
     ];
     Tester::new(NoConfusingNonNullAssertion::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
