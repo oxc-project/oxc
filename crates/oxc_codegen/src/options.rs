@@ -317,7 +317,7 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "Cannot create an Indent with zero spaces")]
     fn zero_spaces() {
         let _ = Indent::spaces(0);
     }
