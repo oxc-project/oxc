@@ -23,6 +23,7 @@ bb4: {
 	statement
 	statement
 	statement
+	statement
 }
 
 bb5: {
@@ -55,7 +56,7 @@ digraph {
     1 [ label = "TryStatement" ]
     2 [ label = "" ]
     3 [ label = "BlockStatement" ]
-    4 [ label = "LabeledStatement\nBlockStatement\nIfStatement" ]
+    4 [ label = "BlockStatement\nLabeledStatement\nBlockStatement\nIfStatement" ]
     5 [ label = "Condition(IdentifierReference(condition))" ]
     6 [ label = "BlockStatement\nbreak <LABEL>" ]
     7 [ label = "unreachable" ]

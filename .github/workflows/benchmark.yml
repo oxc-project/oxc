@@ -58,7 +58,7 @@ jobs:
           - isolated_declarations
           - semantic
           - minifier
-          - codegen_sourcemap
+          - codegen
           - sourcemap
 
     steps:

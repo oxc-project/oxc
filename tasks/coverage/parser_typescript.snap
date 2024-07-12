@@ -2,7 +2,7 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
-Positive Passed: 5272/5283 (99.79%)
+Positive Passed: 5271/5283 (99.77%)
 Negative Passed: 1094/4875 (22.44%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
@@ -3818,6 +3818,19 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
  2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
    ·       ────
    ╰────
+Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
+
+  × Identifier `x` has already been declared
+     ╭─[conformance/async/es6/asyncWithVarShadowing_es6.ts:130:14]
+ 129 │     }
+ 130 │     catch ({ x }) {
+     ·              ┬
+     ·              ╰── `x` has already been declared here
+ 131 │         var x;
+     ·             ┬
+     ·             ╰── It can not be redeclared here
+ 132 │     }
+     ╰────
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
 
   × Classes may not have a static property named prototype
@@ -9402,6 +9415,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  11 │     function baz<implements, protected>() { }
     ╰────
 
+  × The keyword 'implements' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:11:18]
+ 10 │     function bar(private, implements, let) { }
+ 11 │     function baz<implements, protected>() { }
+    ·                  ──────────
+ 12 │     function barn(cb: (private, public, package) => void) { }
+    ╰────
+
+  × The keyword 'protected' is reserved
+    ╭─[compiler/strictModeReservedWord.ts:11:30]
+ 10 │     function bar(private, implements, let) { }
+ 11 │     function baz<implements, protected>() { }
+    ·                              ─────────
+ 12 │     function barn(cb: (private, public, package) => void) { }
+    ╰────
+
   × The keyword 'private' is reserved
     ╭─[compiler/strictModeReservedWord.ts:12:24]
  11 │     function baz<implements, protected>() { }
@@ -9688,6 +9717,22 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  15 │         var z = function let() { };
     ·                          ───
  16 │     }
+    ╰────
+
+  × The keyword 'public' is reserved
+    ╭─[compiler/strictModeReservedWordInClassDeclaration.ts:21:9]
+ 20 │ 
+ 21 │ class D<public, private>{ }
+    ·         ──────
+ 22 │ 
+    ╰────
+
+  × The keyword 'private' is reserved
+    ╭─[compiler/strictModeReservedWordInClassDeclaration.ts:21:17]
+ 20 │ 
+ 21 │ class D<public, private>{ }
+    ·                 ───────
+ 22 │ 
     ╰────
 
   × The keyword 'package' is reserved

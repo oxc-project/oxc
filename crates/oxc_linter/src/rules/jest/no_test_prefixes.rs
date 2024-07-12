@@ -9,11 +9,11 @@ use crate::{
     utils::{
         collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
         JestGeneralFnKind, KnownMemberExpressionProperty, ParsedGeneralJestFnCall,
-        PossibleJestNode,
+        PossibleJestNode, TestPluginName,
     },
 };
 
-fn no_test_prefixes_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+fn no_test_prefixes_diagnostic(x0: TestPluginName, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{x0}(no-test-prefixes): Use {x1:?} instead.")).with_label(span2)
 }
 

@@ -62,13 +62,6 @@ impl Rule for EmptyBraceSpaces {
             AstKind::BlockStatement(block_stmt) => {
                 remove_empty_braces_spaces(ctx, block_stmt.body.is_empty(), block_stmt.span);
             }
-            AstKind::CatchClause(catch_clause) => {
-                remove_empty_braces_spaces(
-                    ctx,
-                    catch_clause.body.body.is_empty(),
-                    catch_clause.body.span,
-                );
-            }
             AstKind::FinallyClause(finally_clause) => {
                 remove_empty_braces_spaces(
                     ctx,

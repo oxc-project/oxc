@@ -8,7 +8,7 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, TestPluginName,
     },
 };
 
@@ -63,7 +63,12 @@ declare_oxc_lint!(
     correctness
 );
 
-fn no_disabled_tests_diagnostic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+fn no_disabled_tests_diagnostic(
+    x0: TestPluginName,
+    x1: &str,
+    x2: &str,
+    span3: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{x0}(no-disabled-tests): {x1:?}"))
         .with_help(format!("{x2:?}"))
         .with_label(span3)
@@ -103,7 +108,7 @@ impl Rule for NoDisabledTests {
 
 fn run<'a>(
     possible_jest_node: &PossibleJestNode<'a, '_>,
-    plugin_name: &str,
+    plugin_name: TestPluginName,
     ctx: &LintContext<'a>,
 ) {
     let node = possible_jest_node.node;

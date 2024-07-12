@@ -40,11 +40,11 @@ fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: 
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
-    Minifier::new(options).build(&allocator, program);
+    let ret = Minifier::new(options).build(&allocator, program);
     if whitespace {
-        WhitespaceRemover::new().build(program)
+        CodeGenerator::new().with_mangler(ret.mangler).build(program)
     } else {
-        CodeGenerator::new().build(program)
+        WhitespaceRemover::new().with_mangler(ret.mangler).build(program)
     }
     .source_text
 }

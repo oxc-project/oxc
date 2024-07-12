@@ -503,6 +503,25 @@ fn test() {
         "function* x(){yield ext}; x()",
         // Supports TypeScript nodes
         "interface Blub {}",
+        "
+        function a() {
+            a 
+        }
+        function b() {
+            b
+        }
+        export {
+            a,
+            b
+        }
+        ",
+        "
+        const Comp = () => {
+          <div>
+            <Comp />
+          </div>
+        }
+        ",
     ];
 
     let fail = vec![
@@ -788,6 +807,16 @@ fn test() {
         "function* x(){yield ext()}; x()",
         // YieldExpression when called
         "function* x(){yield ext()}; x()",
+        "
+        function f() {
+          try {
+            f();
+          } catch(e) {
+            a.map(v => v + 1);
+          }
+        }
+        f();
+        ",
     ];
 
     // test options

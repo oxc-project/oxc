@@ -77,19 +77,19 @@ impl Rule for SwitchCaseBraces {
                                     let mut formatter = fixer.codegen();
 
                                     if let Some(case_test) = &case.test {
-                                        formatter.print_str(b"case ");
+                                        formatter.print_str("case ");
                                         formatter.print_expression(case_test);
                                     } else {
-                                        formatter.print_str(b"default");
+                                        formatter.print_str("default");
                                     }
 
                                     formatter.print_colon();
                                     formatter.print_hard_space();
-                                    formatter.print(b'{');
+                                    formatter.print_char(b'{');
                                     case.consequent
                                         .iter()
                                         .for_each(|x| x.gen(&mut formatter, Context::default()));
-                                    formatter.print(b'}');
+                                    formatter.print_char(b'}');
 
                                     formatter.into_source_text()
                                 };

@@ -16,6 +16,7 @@ mod pure_functions;
 
 pub struct NodeListenerOptions<'a, 'b> {
     pub checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
+    pub checked_called_nodes: RefCell<FxHashSet<SymbolId>>,
     pub ctx: &'b LintContext<'a>,
     pub has_valid_this: Cell<bool>,
     pub called_with_new: Cell<bool>,
@@ -27,6 +28,7 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
     pub fn new(ctx: &'b LintContext<'a>) -> Self {
         Self {
             checked_mutated_nodes: RefCell::new(FxHashSet::default()),
+            checked_called_nodes: RefCell::new(FxHashSet::default()),
             ctx,
             has_valid_this: Cell::new(false),
             called_with_new: Cell::new(false),
@@ -45,6 +47,10 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
 
     pub fn insert_mutated_node(&self, symbol_id: SymbolId) -> bool {
         self.checked_mutated_nodes.borrow_mut().insert(symbol_id)
+    }
+
+    pub fn insert_called_node(&self, symbol_id: SymbolId) -> bool {
+        self.checked_called_nodes.borrow_mut().insert(symbol_id)
     }
 }
 

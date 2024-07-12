@@ -245,7 +245,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     }
 
     if !cli_options.no_fmt {
-        cargo_fmt(".")?;
+        cargo_fmt();
     }
 
     if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
