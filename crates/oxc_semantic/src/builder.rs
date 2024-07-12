@@ -1793,7 +1793,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn add_current_node_id_to_current_scope(&mut self) {
-        self.scope.add_node_id(self.current_scope_id, self.current_node_id);
+        self.scope.set_node_id(self.current_scope_id, self.current_node_id);
     }
 
     fn make_all_namespaces_valuelike(&mut self) {
