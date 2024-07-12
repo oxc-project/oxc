@@ -40,6 +40,12 @@ pub type CodeGenerator<'a> = Codegen<'a, false>;
 pub type WhitespaceRemover<'a> = Codegen<'a, true>;
 
 #[derive(Default, Clone, Copy)]
+pub struct CodegenOptions {
+    /// Use single quotes instead of double quotes.
+    pub single_quote: bool,
+}
+
+#[derive(Default, Clone, Copy)]
 pub struct CommentOptions {
     /// Enable preserve annotate comments, like `/* #__PURE__ */` and `/* #__NO_SIDE_EFFECTS__ */`.
     pub preserve_annotate_comments: bool,
@@ -51,6 +57,7 @@ pub struct CodegenReturn {
 }
 
 pub struct Codegen<'a, const MINIFY: bool> {
+    options: CodegenOptions,
     comment_options: CommentOptions,
 
     source_text: &'a str,
@@ -79,6 +86,9 @@ pub struct Codegen<'a, const MINIFY: bool> {
 
     /// Track the current indentation level
     indent: u32,
+
+    /// Fast path for [CodegenOptions::single_quote]
+    quote: u8,
 
     // Builders
     sourcemap_builder: Option<SourcemapBuilder>,
@@ -112,6 +122,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     #[must_use]
     pub fn new() -> Self {
         Self {
+            options: CodegenOptions::default(),
             comment_options: CommentOptions::default(),
             source_text: "",
             trivias: Trivias::default(),
@@ -127,6 +138,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             start_of_arrow_expr: 0,
             start_of_default_export: 0,
             indent: 0,
+            quote: b'"',
             sourcemap_builder: None,
             move_comment_map: MoveCommentMap::default(),
         }
@@ -138,6 +150,13 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     pub fn with_capacity(mut self, source_text_len: usize) -> Self {
         let capacity = if MINIFY { source_text_len / 2 } else { source_text_len };
         self.code = Vec::with_capacity(capacity);
+        self
+    }
+
+    #[must_use]
+    pub fn with_options(mut self, options: CodegenOptions) -> Self {
+        self.options = options;
+        self.quote = if options.single_quote { b'\'' } else { b'"' };
         self
     }
 
@@ -467,11 +486,10 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     }
 
     #[inline]
-    fn wrap_quote<F: FnMut(&mut Self, char)>(&mut self, s: &str, mut f: F) {
-        let quote = Self::choose_quote(s);
-        self.print_char(quote as u8);
-        f(self, quote);
-        self.print_char(quote as u8);
+    fn wrap_quote<F: FnMut(&mut Self, u8)>(&mut self, mut f: F) {
+        self.print_char(self.quote);
+        f(self, self.quote);
+        self.print_char(self.quote);
     }
 
     fn print_directives_and_statements(
@@ -510,24 +528,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     fn add_source_mapping_for_name(&mut self, span: Span, name: &str) {
         if let Some(sourcemap_builder) = self.sourcemap_builder.as_mut() {
             sourcemap_builder.add_source_mapping_for_name(&self.code, span, name);
-        }
-    }
-
-    fn choose_quote(s: &str) -> char {
-        let mut single_cost = 0;
-        let mut double_cost = 0;
-        for c in s.chars() {
-            match c {
-                '\'' => single_cost += 1,
-                '"' => double_cost += 1,
-                _ => {}
-            }
-        }
-
-        if single_cost > double_cost {
-            '"'
-        } else {
-            '\''
         }
     }
 }

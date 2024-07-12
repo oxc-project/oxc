@@ -1,25 +1,29 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CommentOptions};
+use oxc_codegen::{CodeGenerator, CodegenOptions, CommentOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
-fn test(source_text: &str, expected: &str) {
+fn check(source_text: &str, expected: &str, source_type: SourceType) {
     let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let result = CodeGenerator::new().build(&ret.program).source_text;
+    let result = CodeGenerator::new()
+        .with_options(CodegenOptions { single_quote: true })
+        .build(&ret.program)
+        .source_text;
     assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
 }
 
+fn test(source_text: &str, expected: &str) {
+    let source_type = SourceType::default().with_module(true);
+    check(source_text, expected, source_type);
+}
+
 fn test_ts(source_text: &str, expected: &str, is_typescript_definition: bool) {
-    let allocator = Allocator::default();
     let source_type = SourceType::default()
         .with_typescript(true)
         .with_typescript_definition(is_typescript_definition)
         .with_module(true);
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let result = CodeGenerator::new().build(&ret.program).source_text;
-    assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
+    check(source_text, expected, source_type);
 }
 
 #[test]
@@ -30,7 +34,7 @@ fn string() {
     test("let x = '\t'", "let x = '\t';\n");
     test(r"let x = '\v'", "let x = '\\v';\n");
     test("let x = '\\n'", "let x = '\\n';\n");
-    test("let x = '\\''", "let x = \"'\";\n");
+    test("let x = '\\''", "let x = '\\'';\n");
     test("let x = '\\\"'", "let x = '\"';\n");
     // test( "let x = '\\'''", "let x = `''`;\n");
     test("let x = '\\\\'", "let x = '\\\\';\n");
