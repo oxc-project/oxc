@@ -421,6 +421,18 @@ const staticCacheMap = /*#__PURE__*/ new WeakMap()
 ",
         "const staticCacheMap = /*#__PURE__*/ new WeakMap();\n",
     );
+
+    test_comment_helper(
+        r"
+const builtInSymbols = new Set(
+  /*#__PURE__*/
+  Object.getOwnPropertyNames(Symbol)
+    .filter(key => key !== 'arguments' && key !== 'caller')
+)
+
+",
+        "const builtInSymbols = new Set(/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).filter((key) => key !== \"arguments\" && key !== \"caller\"));\n",
+    );
 }
 
 #[test]
