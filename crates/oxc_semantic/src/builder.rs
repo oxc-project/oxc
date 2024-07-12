@@ -380,10 +380,11 @@ impl<'a> SemanticBuilder<'a> {
         let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
         let current_refs = iter.next().unwrap();
 
+        let bindings = self.scope.get_bindings(self.current_scope_id);
         for (name, reference_ids) in current_refs.drain() {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
-            if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
+            if let Some(symbol_id) = bindings.get(&name).copied() {
                 for reference_id in &reference_ids {
                     self.symbols.references[*reference_id].set_symbol_id(symbol_id);
                 }
