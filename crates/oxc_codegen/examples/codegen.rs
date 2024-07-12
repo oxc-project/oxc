@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
+use oxc_codegen::{CodeGenerator, WhitespaceRemover};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -29,14 +29,7 @@ fn main() -> std::io::Result<()> {
     println!("Original:");
     println!("{source_text}");
 
-    let printed = CodeGenerator::new()
-        .enable_comment(
-            &source_text,
-            ret.trivias,
-            CommentOptions { preserve_annotate_comments: true },
-        )
-        .build(&ret.program)
-        .source_text;
+    let printed = CodeGenerator::new().build(&ret.program).source_text;
     println!("Printed:");
     println!("{printed}");
 
