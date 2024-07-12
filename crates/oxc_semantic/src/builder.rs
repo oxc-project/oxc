@@ -2,7 +2,6 @@
 
 use std::{
     cell::{Cell, RefCell},
-    collections::hash_map::Entry as HashMapEntry,
     path::PathBuf,
     sync::Arc,
 };
@@ -391,15 +390,10 @@ impl<'a> SemanticBuilder<'a> {
                 }
                 self.symbols.resolved_references[symbol_id].extend(reference_ids);
             } else {
-                // Use `Entry` API to avoid hashing `name` twice
-                match parent_refs.entry(name) {
-                    HashMapEntry::Occupied(mut entry) => {
-                        entry.get_mut().extend(reference_ids);
-                    }
-                    HashMapEntry::Vacant(entry) => {
-                        entry.insert(reference_ids);
-                    }
-                }
+                parent_refs
+                    .entry(name)
+                    .and_modify(|existing| existing.extend(&reference_ids))
+                    .or_insert(reference_ids);
             }
         }
     }
