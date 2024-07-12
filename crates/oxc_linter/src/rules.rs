@@ -75,6 +75,7 @@ mod eslint {
     pub mod no_inner_declarations;
     pub mod no_irregular_whitespace;
     pub mod no_iterator;
+    pub mod no_label_var;
     pub mod no_loss_of_precision;
     pub mod no_multi_str;
     pub mod no_new;
@@ -284,6 +285,7 @@ mod unicorn {
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_spread;
     pub mod no_useless_switch_case;
+    pub mod no_useless_undefined;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
     pub mod numeric_separators_style;
@@ -452,6 +454,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_case_declarations,
     eslint::no_class_assign,
     eslint::no_multi_str,
+    eslint::no_label_var,
     eslint::require_await,
     eslint::no_compare_neg_zero,
     eslint::no_cond_assign,
@@ -648,6 +651,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_promise_resolve_reject,
     unicorn::no_useless_spread,
     unicorn::no_useless_switch_case,
+    unicorn::no_useless_undefined,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,

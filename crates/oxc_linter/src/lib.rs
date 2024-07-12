@@ -49,6 +49,7 @@ fn size_asserts() {
     assert_eq_size!(RuleEnum, [u8; 16]);
 }
 
+#[derive(Debug)]
 pub struct Linter {
     rules: Vec<RuleWithSeverity>,
     options: LintOptions,
@@ -83,6 +84,7 @@ impl Linter {
         self
     }
 
+    /// Enable/disable automatic code fixes.
     #[must_use]
     pub fn with_fix(mut self, yes: bool) -> Self {
         self.options.fix = yes;

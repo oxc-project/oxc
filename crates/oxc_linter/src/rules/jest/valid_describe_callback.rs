@@ -11,11 +11,11 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, PossibleJestNode,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, TestPluginName,
     },
 };
 
-fn valid_describe_callback_diagnostic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+fn valid_describe_callback_diagnostic(x0: TestPluginName, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("{x0}(valid-describe-callback): {x1:?}"))
         .with_help(format!("{x2:?}"))
         .with_label(span3)

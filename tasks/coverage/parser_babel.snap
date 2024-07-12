@@ -563,7 +563,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/create-parenthesized-expressions/invalid-pattern-in-rest-binding/input.js:1:11]
  1 │ ([...(a)]) => {}
-   ·           ─
+   ·           ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -1380,14 +1380,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/388/input.js:1:6]
  1 │ { set 1 }
-   ·      ─
+   ·      ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/389/input.js:1:6]
  1 │ { get 2 }
-   ·      ─
+   ·      ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -1491,7 +1491,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/405/input.js:1:2]
  1 │ a b;
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -1505,14 +1505,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/407/input.js:1:2]
  1 │ a if;
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/408/input.js:1:2]
  1 │ a class;
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -2321,56 +2321,56 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens/input.js:1:18]
  1 │ var foo = ((foo)) => {};
-   ·                  ─
+   ·                  ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-2/input.js:1:9]
  1 │ (a, (b)) => 42
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-array-pattern/input.js:1:8]
  1 │ ([(a)]) => {}
-   ·        ─
+   ·        ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-array-pattern-2/input.js:1:22]
  1 │ ([ [(a)] = [] ] = []) => {}
-   ·                      ─
+   ·                      ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-array-pattern-3/input.js:1:19]
  1 │ ([(a) = [] ] = []) => {}
-   ·                   ─
+   ·                   ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-object-pattern/input.js:1:20]
  1 │ ({ a: (foo) } = {}) => {}
-   ·                    ─
+   ·                    ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/inner-parens-object-pattern-member/input.js:1:24]
  1 │ ({ a: (foo.qux) } = {}) => {}
-   ·                        ─
+   ·                        ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/invalid-arrow-before-in/input.js:1:9]
  1 │ () => {} in x
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -2385,7 +2385,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/no-binary-left/input.js:1:9]
  1 │ () => {} || true
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -2405,7 +2405,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/arrow-functions/no-ternary-test/input.js:1:9]
  1 │ () => {} ? 1 : 2;
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -2447,7 +2447,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/class-methods/disallow-computed-async-identifier/input.js:2:10]
  1 │ class A {
  2 │   [async] a() {}
-   ·          ─
+   ·          ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2456,7 +2456,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/class-methods/disallow-computed-async-string/input.js:2:12]
  1 │ class A {
  2 │   ["async"] a() {}
-   ·            ─
+   ·            ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2465,7 +2465,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/class-methods/disallow-computed-get-identifier/input.js:2:8]
  1 │ class A {
  2 │   [get] a() {}
-   ·        ─
+   ·        ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2474,7 +2474,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/class-methods/disallow-computed-get-string/input.js:2:10]
  1 │ class A {
  2 │   ["get"] a() {}
-   ·          ─
+   ·          ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2493,7 +2493,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/class-methods/disallow-literal-async/input.js:2:10]
  1 │ class A {
  2 │   "async" a() {}
-   ·          ─
+   ·          ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2502,7 +2502,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/class-methods/disallow-literal-get/input.js:2:8]
  1 │ class A {
  2 │   "get" a() {}
-   ·        ─
+   ·        ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -2742,7 +2742,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/let/invalid-escape/input.js:1:9]
  1 │ le\u0074 x = 5
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -3350,7 +3350,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/modules/export-default-variable-declaration2/input.js:1:19]
  1 │ export default let Foo = () => {
-   ·                   ─
+   ·                   ▲
  2 │     return `<div class="bar">Hola</div>`;
    ╰────
   help: Try insert a semicolon here
@@ -3517,7 +3517,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/statements/label-invalid-let/input.js:1:9]
  1 │ foo: let bar;
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -3732,7 +3732,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/uncategorised/224/input.js:2:4]
  1 │ x 
  2 │  is y
-   ·    ─
+   ·    ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -3740,7 +3740,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/uncategorised/225/input.js:2:6]
  1 │ x 
  2 │  isnt y
-   ·      ─
+   ·      ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -3889,14 +3889,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/251/input.js:1:5]
  1 │ (10) => 00
-   ·     ─
+   ·     ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/252/input.js:1:9]
  1 │ (10, 20) => 00
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4011,7 +4011,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/284/input.js:1:8]
  1 │ ([ 5 ]) => {}
-   ·        ─
+   ·        ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4071,7 +4071,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/298/input.js:1:21]
  1 │ ({ get test() { } }) => 42
-   ·                     ─
+   ·                     ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4109,7 +4109,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/328/input.js:1:11]
  1 │ if (1) let x = 10;
-   ·           ─
+   ·           ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4271,7 +4271,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/37/input.js:1:8]
  1 │ ([a.a]) => 42
-   ·        ─
+   ·        ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4390,7 +4390,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2015/uncategorised/395/input.js:1:8]
  1 │ ([a.a]) => 42
-   ·        ─
+   ·        ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4546,7 +4546,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2015/yield/parameter-name-arrow-inside-generator-2/input.js:2:13]
  1 │ function* fn() {
  2 │   (yield fn) => {};
-   ·             ─
+   ·             ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -4709,14 +4709,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2016/simple-parameter-list/async-arrow-function-after-binary-operator/input.js:1:12]
  1 │ 3 + async() => 2
-   ·            ─
+   ·            ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2016/simple-parameter-list/async-arrow-function-after-unary-operator/input.js:1:16]
  1 │ delete async () => 3;
-   ·                ─
+   ·                ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4787,49 +4787,49 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-array-pattern-nested/input.js:1:28]
  1 │ async ([ [(a)] = [] ] = []) => {};
-   ·                            ─
+   ·                            ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-array-pattern-nested-2/input.js:1:24]
  1 │ async ([(a) = []] = []) => {}
-   ·                        ─
+   ·                        ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-binding-identifier/input.js:1:24]
  1 │ var foo = async ((foo)) => {};
-   ·                        ─
+   ·                        ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-binding-member-expression/input.js:1:26]
  1 │ async ([(a.b) = []] = []) => {}
-   ·                          ─
+   ·                          ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-binding-pattern/input.js:1:26]
  1 │ var foo = async ([(foo)]) => {};
-   ·                          ─
+   ·                          ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-rest-array/input.js:1:29]
  1 │ var foo = async ([...(foo)]) => {};
-   ·                             ─
+   ·                             ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-arrow/parenthesized-rest-object/input.js:1:29]
  1 │ var foo = async ({...(foo)}) => {};
-   ·                             ─
+   ·                             ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4859,7 +4859,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2017/async-functions/10/input.js:2:4]
  1 │ var x = async
  2 │ (x) => x + 1;
-   ·    ─
+   ·    ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -4923,7 +4923,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/async-function-and-non-bmp-character/input.js:1:6]
  1 │ async function𝐬 f() {}
-   ·      ─
+   ·      ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -5014,7 +5014,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/export-invalid/input.js:1:21]
  1 │ export default async functionX () {}
-   ·                     ─
+   ·                     ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -5022,7 +5022,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[es2017/async-functions/invalid-await-with-object-exp-in-function/input.js:2:8]
  1 │ function foo() {
  2 │   await { foo };
-   ·        ─
+   ·        ▲
  3 │ }
    ╰────
   help: Try insert a semicolon here
@@ -5149,21 +5149,21 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/invalid-parens-async-arrow/input.js:1:11]
  1 │ (async)(a) => {}
-   ·           ─
+   ·           ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/invalid-parens-async-func/input.js:1:8]
  1 │ (async) function x (a) {}
-   ·        ─
+   ·        ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[es2017/async-functions/multiple-await-in-async-arrow-params/input.js:1:41]
  1 │ async ({ x = [ await ], y = { await } }) => {}
-   ·                                         ─
+   ·                                         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -7053,7 +7053,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-arrow-function/non-arrow-param-followed-by-arrow/input.js:1:6]
  1 │ ((a)) => 0
-   ·      ─
+   ·      ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -7073,7 +7073,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-arrow-function/object-binding-pattern-invalid-method-in-pattern/input.js:1:14]
  1 │ ({get a(){}}) => 0;
-   ·              ─
+   ·              ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -7155,7 +7155,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-export-declaration/invalid-export-default/input.js:1:20]
  1 │ export default from "foo"
-   ·                    ─
+   ·                    ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -7175,7 +7175,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-export-declaration/invalid-export-default-token/input.js:1:17]
  1 │ export {default} +
-   ·                 ─
+   ·                 ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -7463,7 +7463,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/es2015-import-declaration/invalid-import-module-specifier/input.js:1:18]
  1 │ export {foo} from bar
-   ·                  ─
+   ·                  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -8434,7 +8434,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0065/input.js:1:2]
  1 │ i #= 42
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -8470,14 +8470,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0071/input.js:1:6]
  1 │ { set 1 }
-   ·      ─
+   ·      ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0072/input.js:1:6]
  1 │ { get 2 }
-   ·      ─
+   ·      ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -8626,14 +8626,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0098/input.js:1:5]
  1 │ (10) => 00
-   ·     ─
+   ·     ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0099/input.js:1:9]
  1 │ (10, 20) => 00
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -8659,7 +8659,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0112/input.js:1:2]
  1 │ a b;
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -8673,14 +8673,14 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0114/input.js:1:2]
  1 │ a if;
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0115/input.js:1:2]
  1 │ a enum;
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -8847,7 +8847,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0141/input.js:1:13]
  1 │ if(true) let a = 1;
-   ·             ─
+   ·             ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -9573,7 +9573,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0257/input.js:1:16]
  1 │ 'use strict'; a package
-   ·                ─
+   ·                ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -9678,7 +9678,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0275/input.js:1:11]
  1 │ class A {a static(){}}
-   ·           ─
+   ·           ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -9852,7 +9852,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/arrow-function/async-arrow-function-after-binary-operator/input.ts:1:20]
  1 │ 4 + async<number>() => 2 
-   ·                    ─
+   ·                    ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -9889,28 +9889,28 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-async-parameter-as/input.ts:1:15]
  1 │ async (a as T) => {};
-   ·               ─
+   ·               ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-async-parameter-assertion/input.ts:1:14]
  1 │ async (<T> a) => {};
-   ·              ─
+   ·              ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-parameter-as/input.ts:1:9]
  1 │ (a as T) => {};
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/arrow-parameter-assertion/input.ts:1:8]
  1 │ (<T> a) => {};
-   ·        ─
+   ·        ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -9955,7 +9955,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/cast/null-assertion-invalid-arrow-param/input.ts:1:5]
  1 │ (a!) => b;
-   ·     ─
+   ·     ▲
  2 │ (a! = b) => c;
    ╰────
   help: Try insert a semicolon here
@@ -10073,7 +10073,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/class/declare-new-line-abstract/input.ts:1:8]
  1 │ declare abstract
-   ·        ─
+   ·        ▲
  2 │ class A {}
    ╰────
   help: Try insert a semicolon here
@@ -10182,7 +10182,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/class/optional-async-error/input.js:3:11]
  2 │ class A extends B {
  3 │     async? method(val: string): Promise<void>;
-   ·           ─
+   ·           ▲
  4 │ }
    ╰────
   help: Try insert a semicolon here
@@ -10409,7 +10409,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/declare-new-line/input.ts:1:8]
  1 │ declare interface
-   ·        ─
+   ·        ▲
  2 │ I
    ╰────
   help: Try insert a semicolon here
@@ -10464,7 +10464,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/interface/invalid-abstract-interface/input.ts:1:9]
  1 │ abstract interface
-   ·         ─
+   ·         ▲
  2 │ Foo {}
    ╰────
   help: Try insert a semicolon here
@@ -10480,7 +10480,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/interface/new-line-error/input.ts:2:2]
  1 │ interface
  2 │ F {}
-   ·  ─
+   ·  ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -10494,7 +10494,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/module-namespace/module-declare-new-line/input.ts:6:8]
  5 │ 
  6 │ declare module
-   ·        ─
+   ·        ▲
  7 │ 'bar'
    ╰────
   help: Try insert a semicolon here
@@ -10503,7 +10503,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/module-namespace/module-new-line-error/input.ts:2:4]
  1 │ module
  2 │ Foo {}
-   ·    ─
+   ·    ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -10511,7 +10511,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/module-namespace/namespace-declare-new-line/input.ts:6:8]
  5 │ 
  6 │ declare namespace
-   ·        ─
+   ·        ▲
  7 │ barbar
    ╰────
   help: Try insert a semicolon here
@@ -10520,7 +10520,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╭─[typescript/module-namespace/namespace-new-line-error/input.ts:2:4]
  1 │ namespace
  2 │ Foo {}
-   ·    ─
+   ·    ▲
    ╰────
   help: Try insert a semicolon here
 
@@ -10807,7 +10807,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/type-alias/declare-new-line/input.ts:1:8]
  1 │ declare type
-   ·        ─
+   ·        ▲
  2 │ T = number
    ╰────
   help: Try insert a semicolon here
@@ -10815,7 +10815,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/type-arguments/new-without-arguments-missing-semicolon/input.ts:1:9]
  1 │ new A<T> if (0);
-   ·         ─
+   ·         ▲
    ╰────
   help: Try insert a semicolon here
 

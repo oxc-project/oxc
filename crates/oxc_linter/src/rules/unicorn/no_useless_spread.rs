@@ -224,18 +224,18 @@ fn diagnose_array_in_array_spread<'a>(
             // [ ...[a, b, c], ...[d, e, f] ] -> [a, b, c, d, e, f]
             ctx.diagnostic_with_fix(diagnostic, |fixer| {
                 let mut codegen = fixer.codegen();
-                codegen.print(b'[');
+                codegen.print_char(b'[');
                 let elements =
                     spreads.iter().flat_map(|arr| arr.elements.iter()).collect::<Vec<_>>();
                 let n = elements.len();
                 for (i, el) in elements.into_iter().enumerate() {
                     codegen.print_expression(el.to_expression());
                     if i < n - 1 {
-                        codegen.print(b',');
+                        codegen.print_char(b',');
                         codegen.print_hard_space();
                     }
                 }
-                codegen.print(b']');
+                codegen.print_char(b']');
                 fixer.replace(outer_array.span, codegen)
             });
         }

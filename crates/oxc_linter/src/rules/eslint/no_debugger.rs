@@ -35,7 +35,28 @@ impl Rule for NoDebugger {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::DebuggerStatement(stmt) = node.kind() {
             ctx.diagnostic_with_fix(no_debugger_diagnostic(stmt.span), |fixer| {
-                fixer.delete(&stmt.span)
+                let Some(parent) = ctx
+                    .nodes()
+                    .iter_parents(node.id())
+                    .skip(1)
+                    .find(|p| !matches!(p.kind(), AstKind::ParenthesizedExpression(_)))
+                else {
+                    return fixer.delete(&stmt.span);
+                };
+
+                // For statements like `if (foo) debugger;`, we can't just
+                // delete the `debugger` statement; we need to replace it with an empty block.
+                match parent.kind() {
+                    AstKind::IfStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForOfStatement(_) => return fixer.replace(stmt.span, "{}"),
+                    // NOTE: no need to check for
+                    // AstKind::ArrowFunctionExpression because
+                    // `const x = () => debugger` is a parse error
+                    _ => fixer.delete(&stmt.span),
+                }
             });
         }
     }
@@ -48,6 +69,14 @@ fn test() {
     let pass = vec![("var test = { debugger: 1 }; test.debugger;", None)];
 
     let fail = vec![("if (foo) debugger", None)];
+    let fix = vec![
+        ("let x; debugger; let y;", "let x;  let y;", None),
+        ("if (foo) debugger", "if (foo) {}", None),
+        ("for (;;) debugger", "for (;;) {}", None),
+        ("while (i > 0) debugger", "while (i > 0) {}", None),
+        ("if (foo) { debugger; }", "if (foo) {  }", None),
+        ("if (foo) { debugger }", "if (foo) {  }", None),
+    ];
 
-    Tester::new(NoDebugger::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDebugger::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

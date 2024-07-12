@@ -90,12 +90,9 @@ impl<'a> Folder<'a> {
                 UnaryOperator::Void => self.try_reduce_void(unary_expr),
                 _ => None,
             },
-            Expression::LogicalExpression(logic_expr) => match logic_expr.operator {
-                LogicalOperator::And | LogicalOperator::Or => {
-                    self.try_fold_and_or(logic_expr.operator, logic_expr)
-                }
-                LogicalOperator::Coalesce => None,
-            },
+            Expression::LogicalExpression(logic_expr) => {
+                self.try_fold_logical_expression(logic_expr)
+            }
             _ => None,
         };
         if let Some(folded_expr) = folded_expr {
@@ -672,39 +669,41 @@ impl<'a> Folder<'a> {
         None
     }
 
+    /// Try to fold a AND / OR node.
+    ///
     /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/09094b551915a6487a980a783831cba58b5739d1/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L587)
-    /// Try to fold a AND/OR node.
-    fn try_fold_and_or(
+    pub fn try_fold_logical_expression(
         &mut self,
-        op: LogicalOperator,
-        logic_expr: &mut LogicalExpression<'a>,
+        logical_expr: &mut LogicalExpression<'a>,
     ) -> Option<Expression<'a>> {
-        let boolean_value = get_boolean_value(&logic_expr.left);
-
-        if let Some(boolean_value) = boolean_value {
+        let op = logical_expr.operator;
+        if !matches!(op, LogicalOperator::And | LogicalOperator::Or) {
+            return None;
+        }
+        if let Some(boolean_value) = get_boolean_value(&logical_expr.left) {
             // (TRUE || x) => TRUE (also, (3 || x) => 3)
             // (FALSE && x) => FALSE
             if (boolean_value && op == LogicalOperator::Or)
                 || (!boolean_value && op == LogicalOperator::And)
             {
-                return Some(self.move_out_expression(&mut logic_expr.left));
-            } else if !logic_expr.left.may_have_side_effects() {
+                return Some(self.move_out_expression(&mut logical_expr.left));
+            } else if !logical_expr.left.may_have_side_effects() {
                 // (FALSE || x) => x
                 // (TRUE && x) => x
-                return Some(self.move_out_expression(&mut logic_expr.right));
+                return Some(self.move_out_expression(&mut logical_expr.right));
             }
             // Left side may have side effects, but we know its boolean value.
             // e.g. true_with_sideeffects || foo() => true_with_sideeffects, foo()
             // or: false_with_sideeffects && foo() => false_with_sideeffects, foo()
-            let left = self.move_out_expression(&mut logic_expr.left);
-            let right = self.move_out_expression(&mut logic_expr.right);
+            let left = self.move_out_expression(&mut logical_expr.left);
+            let right = self.move_out_expression(&mut logical_expr.right);
             let mut vec = self.ast.vec_with_capacity(2);
             vec.push(left);
             vec.push(right);
-            let sequence_expr = self.ast.expression_sequence(logic_expr.span, vec);
+            let sequence_expr = self.ast.expression_sequence(logical_expr.span, vec);
             return Some(sequence_expr);
-        } else if let Expression::LogicalExpression(left_child) = &mut logic_expr.left {
-            if left_child.operator == logic_expr.operator {
+        } else if let Expression::LogicalExpression(left_child) = &mut logical_expr.left {
+            if left_child.operator == logical_expr.operator {
                 let left_child_right_boolean = get_boolean_value(&left_child.right);
                 let left_child_op = left_child.operator;
                 if let Some(right_boolean) = left_child_right_boolean {
@@ -715,9 +714,9 @@ impl<'a> Folder<'a> {
                             || right_boolean && left_child_op == LogicalOperator::And
                         {
                             let left = self.move_out_expression(&mut left_child.left);
-                            let right = self.move_out_expression(&mut logic_expr.right);
+                            let right = self.move_out_expression(&mut logical_expr.right);
                             let logic_expr = self.ast.expression_logical(
-                                logic_expr.span,
+                                logical_expr.span,
                                 left,
                                 left_child_op,
                                 right,

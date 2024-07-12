@@ -141,9 +141,9 @@ impl NoUntypedMockFactory {
                 ),
                 |fixer| {
                     let mut content = fixer.codegen();
-                    content.print_str(b"<typeof import('");
-                    content.print_str(string_literal.value.as_bytes());
-                    content.print_str(b"')>(");
+                    content.print_str("<typeof import('");
+                    content.print_str(string_literal.value.as_str());
+                    content.print_str("')>(");
                     let span = Span::sized(string_literal.span.start - 1, 1);
 
                     fixer.replace(span, content)

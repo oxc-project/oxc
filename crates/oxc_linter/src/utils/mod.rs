@@ -16,9 +16,10 @@ pub use self::{
 /// Many Vitest rule are essentially ports of Jest plugin rules with minor modifications.
 /// For these rules, we use the corresponding jest rules with some adjustments for compatibility.
 pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
-    let jest_rules: [&str; 4] = [
-        "consistent_test_it",
+    let jest_rules: &[&str] = &[
+        "consistent-test-it",
         "no-disabled-tests",
+        "no-focused-tests",
         "prefer-hooks-in-order",
         "valid-describe-callback",
     ];
@@ -26,11 +27,26 @@ pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
     jest_rules.contains(&rule_name)
 }
 
-pub fn get_test_plugin_name(ctx: &LintContext) -> &'static str {
+#[derive(Clone, Copy)]
+pub enum TestPluginName {
+    Jest,
+    Vitest,
+}
+
+impl std::fmt::Display for TestPluginName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TestPluginName::Jest => write!(f, "eslint-plugin-jest"),
+            TestPluginName::Vitest => write!(f, "eslint-plugin-vitest"),
+        }
+    }
+}
+
+pub fn get_test_plugin_name(ctx: &LintContext) -> TestPluginName {
     if is_using_vitest(ctx) {
-        "eslint-plugin-vitest"
+        TestPluginName::Vitest
     } else {
-        "eslint-plugin-jest"
+        TestPluginName::Jest
     }
 }
 

@@ -167,9 +167,9 @@ impl PreferMockPromiseShorthand {
     ) -> String {
         let mut content = fixer.codegen();
         content.print_str(prefer_name);
-        content.print(b'(');
+        content.print_char(b'(');
         if call_expr.arguments.is_empty() {
-            content.print_str(b"undefined");
+            content.print_str("undefined");
         } else {
             for argument in &call_expr.arguments {
                 if let Some(expr) = argument.as_expression() {
