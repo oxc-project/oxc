@@ -34,7 +34,6 @@ pub fn get_leading_annotate_comment<const MINIFY: bool>(
 }
 
 pub fn print_comment<const MINIFY: bool>(comment: Comment, p: &mut Codegen<{ MINIFY }>) {
-    // Avoid multiple ast node share the same comment, e.g.
     // ```js
     // /*#__PURE__*/
     // Object.getOwnPropertyNames(Symbol)
