@@ -440,6 +440,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
+        // TODO: replace node-based check with scope-based
+        if !flags.is_top()
+            && matches!(self.nodes.parent_kind(self.current_node_id), Some(AstKind::CatchClause(_)))
+        {
+            // Clone the `CatchClause` bindings and add them to the current scope.
+            // to make it easier to check redeclare errors.
+            if let Some(parent_scope_id) = parent_scope_id {
+                let bindings = self.scope.get_bindings(parent_scope_id).clone();
+                self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
+            }
+        }
+
         // Increment scope depth, and ensure stack is large enough that
         // `self.unresolved_references[self.current_scope_depth]` is initialized
         self.current_scope_depth += 1;
@@ -1705,19 +1717,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::YieldExpression(_) => {
                 self.set_function_node_flag(NodeFlags::HasYield);
-            }
-            AstKind::BlockStatement(_) => {
-                if matches!(
-                    self.nodes.parent_kind(self.current_node_id),
-                    Some(AstKind::CatchClause(_))
-                ) {
-                    // Clone the `CatchClause` bindings and add them to the current scope.
-                    // to make it easier to check redeclare errors.
-                    if let Some(parent_scope_id) = self.scope.get_parent_id(self.current_scope_id) {
-                        let bindings = self.scope.get_bindings(parent_scope_id).clone();
-                        self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
-                    }
-                }
             }
             _ => {}
         }

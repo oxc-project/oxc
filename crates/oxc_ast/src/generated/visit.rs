@@ -1352,6 +1352,8 @@ pub mod walk {
 
     #[inline]
     pub fn walk_program<'a, V: Visit<'a>>(visitor: &mut V, it: &Program<'a>) {
+        let kind = AstKind::Program(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::Top;
@@ -1363,15 +1365,13 @@ pub mod walk {
             },
             &it.scope_id,
         );
-        let kind = AstKind::Program(visitor.alloc(it));
-        visitor.enter_node(kind);
         visitor.visit_directives(&it.directives);
         if let Some(hashbang) = &it.hashbang {
             visitor.visit_hashbang(hashbang);
         }
         visitor.visit_statements(&it.body);
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1439,12 +1439,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_block_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &BlockStatement<'a>) {
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstKind::BlockStatement(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_statements(&it.body);
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -1705,6 +1705,8 @@ pub mod walk {
         visitor: &mut V,
         it: &ArrowFunctionExpression<'a>,
     ) {
+        let kind = AstKind::ArrowFunctionExpression(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.enter_scope(
             {
                 let mut flags = ScopeFlags::Function | ScopeFlags::Arrow;
@@ -1715,8 +1717,6 @@ pub mod walk {
             },
             &it.scope_id,
         );
-        let kind = AstKind::ArrowFunctionExpression(visitor.alloc(it));
-        visitor.enter_node(kind);
         visitor.visit_formal_parameters(&it.params);
         visitor.visit_function_body(&it.body);
         if let Some(type_parameters) = &it.type_parameters {
@@ -1725,8 +1725,8 @@ pub mod walk {
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2073,9 +2073,9 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeParameter<'a>) {
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstKind::TSTypeParameter(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_binding_identifier(&it.name);
         if let Some(constraint) = &it.constraint {
             visitor.visit_ts_type(constraint);
@@ -2083,8 +2083,8 @@ pub mod walk {
         if let Some(default) = &it.default {
             visitor.visit_ts_type(default);
         }
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2942,8 +2942,8 @@ pub mod walk {
         if let Some(implements) = &it.implements {
             visitor.visit_ts_class_implementses(implements);
         }
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     pub fn walk_class_heritage<'a, V: Visit<'a>>(visitor: &mut V, it: &Expression<'a>) {
@@ -2981,12 +2981,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_static_block<'a, V: Visit<'a>>(visitor: &mut V, it: &StaticBlock<'a>) {
-        visitor.enter_scope(ScopeFlags::ClassStaticBlock, &it.scope_id);
         let kind = AstKind::StaticBlock(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::ClassStaticBlock, &it.scope_id);
         visitor.visit_statements(&it.body);
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3012,6 +3012,8 @@ pub mod walk {
         it: &Function<'a>,
         flags: Option<ScopeFlags>,
     ) {
+        let kind = AstKind::Function(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.enter_scope(
             {
                 let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
@@ -3022,8 +3024,6 @@ pub mod walk {
             },
             &it.scope_id,
         );
-        let kind = AstKind::Function(visitor.alloc(it));
-        visitor.enter_node(kind);
         if let Some(id) = &it.id {
             visitor.visit_binding_identifier(id);
         }
@@ -3040,8 +3040,8 @@ pub mod walk {
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3483,19 +3483,19 @@ pub mod walk {
 
     #[inline]
     pub fn walk_for_in_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &ForInStatement<'a>) {
+        let kind = AstKind::ForInStatement(visitor.alloc(it));
+        visitor.enter_node(kind);
         let scope_events_cond = it.left.is_lexical_declaration();
         if scope_events_cond {
             visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         }
-        let kind = AstKind::ForInStatement(visitor.alloc(it));
-        visitor.enter_node(kind);
         visitor.visit_for_statement_left(&it.left);
         visitor.visit_expression(&it.right);
         visitor.visit_statement(&it.body);
-        visitor.leave_node(kind);
         if scope_events_cond {
             visitor.leave_scope();
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3554,30 +3554,30 @@ pub mod walk {
 
     #[inline]
     pub fn walk_for_of_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &ForOfStatement<'a>) {
+        let kind = AstKind::ForOfStatement(visitor.alloc(it));
+        visitor.enter_node(kind);
         let scope_events_cond = it.left.is_lexical_declaration();
         if scope_events_cond {
             visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         }
-        let kind = AstKind::ForOfStatement(visitor.alloc(it));
-        visitor.enter_node(kind);
         visitor.visit_for_statement_left(&it.left);
         visitor.visit_expression(&it.right);
         visitor.visit_statement(&it.body);
-        visitor.leave_node(kind);
         if scope_events_cond {
             visitor.leave_scope();
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_for_statement<'a, V: Visit<'a>>(visitor: &mut V, it: &ForStatement<'a>) {
+        let kind = AstKind::ForStatement(visitor.alloc(it));
+        visitor.enter_node(kind);
         let scope_events_cond =
             it.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
         if scope_events_cond {
             visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         }
-        let kind = AstKind::ForStatement(visitor.alloc(it));
-        visitor.enter_node(kind);
         if let Some(init) = &it.init {
             visitor.visit_for_statement_init(init);
         }
@@ -3588,10 +3588,10 @@ pub mod walk {
             visitor.visit_expression(update);
         }
         visitor.visit_statement(&it.body);
-        visitor.leave_node(kind);
         if scope_events_cond {
             visitor.leave_scope();
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3644,8 +3644,8 @@ pub mod walk {
         visitor.visit_expression(&it.discriminant);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_switch_cases(&it.cases);
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3690,15 +3690,15 @@ pub mod walk {
 
     #[inline]
     pub fn walk_catch_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &CatchClause<'a>) {
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstKind::CatchClause(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(param) = &it.param {
             visitor.visit_catch_parameter(param);
         }
         visitor.visit_block_statement(&it.body);
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3711,12 +3711,12 @@ pub mod walk {
 
     #[inline]
     pub fn walk_finally_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &BlockStatement<'a>) {
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         let kind = AstKind::FinallyClause(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_statements(&it.body);
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3826,8 +3826,8 @@ pub mod walk {
         visitor.visit_binding_identifier(&it.id);
         visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_enum_members(&it.members);
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -3879,8 +3879,8 @@ pub mod walk {
         if let Some(body) = &it.body {
             visitor.visit_ts_module_declaration_body(body);
         }
-        visitor.leave_node(kind);
         visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
