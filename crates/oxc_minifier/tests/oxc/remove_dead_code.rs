@@ -1,5 +1,5 @@
 use oxc_allocator::Allocator;
-use oxc_codegen::CodeGenerator;
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::RemoveDeadCode;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -12,7 +12,10 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
     if remove_dead_code {
         RemoveDeadCode::new(&allocator).build(program);
     }
-    CodeGenerator::new().build(program).source_text
+    CodeGenerator::new()
+        .with_options(CodegenOptions { single_quote: true })
+        .build(program)
+        .source_text
 }
 
 pub(crate) fn test(source_text: &str, expected: &str) {

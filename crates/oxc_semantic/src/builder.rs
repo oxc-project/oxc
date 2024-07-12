@@ -56,6 +56,9 @@ pub struct SemanticBuilder<'a> {
     pub current_node_flags: NodeFlags,
     pub current_symbol_flags: SymbolFlags,
     pub current_scope_id: ScopeId,
+    /// Current scope depth.
+    /// 0 is global scope. 1 is `Program`. Incremented on entering a scope, and decremented on exit.
+    pub current_scope_depth: usize,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
     pub function_stack: Vec<AstNodeId>,
     // To make a namespace/module value like
@@ -70,7 +73,10 @@ pub struct SemanticBuilder<'a> {
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
 
-    // LIFO stack used to accumulate unresolved refs while traversing scopes.
+    // Stack used to accumulate unresolved refs while traversing scopes.
+    // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal
+    // to reduce allocations, so the stack grows to maximum scope depth, but never shrinks.
+    // See: <https://github.com/oxc-project/oxc/issues/4169>
     unresolved_references: Vec<UnresolvedReferences>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
@@ -99,6 +105,13 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
+        // Most programs will have at least 1 place where scope depth reaches 16,
+        // so initialize `unresolved_references` with this length, to reduce reallocations as it grows.
+        // This is just an estimate of a good initial size, but certainly better than
+        // `Vec`'s default initial capacity of 4.
+        let mut unresolved_references = vec![];
+        unresolved_references.resize_with(16, Default::default);
+
         let trivias = Trivias::default();
         Self {
             source_text,
@@ -110,12 +123,13 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
+            current_scope_depth: 0,
             function_stack: vec![],
             namespace_stack: vec![],
             nodes: AstNodes::default(),
             scope,
             symbols: SymbolTable::default(),
-            unresolved_references: vec![],
+            unresolved_references,
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
             build_jsdoc: false,
@@ -176,7 +190,6 @@ impl<'a> SemanticBuilder<'a> {
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
             let scope_id = self.scope.add_scope(None, ScopeFlags::Top);
-            self.unresolved_references.push(UnresolvedReferences::default());
             program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
@@ -187,8 +200,9 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
-        debug_assert_eq!(self.unresolved_references.len(), 1);
-        self.scope.root_unresolved_references = self.unresolved_references.pop().unwrap();
+        debug_assert_eq!(self.current_scope_depth, 0);
+        self.scope.root_unresolved_references =
+            self.unresolved_references.into_iter().next().unwrap();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -336,9 +350,7 @@ impl<'a> SemanticBuilder<'a> {
         let reference_name = reference.name().clone();
         let reference_id = self.symbols.create_reference(reference);
 
-        self.unresolved_references
-            .last_mut()
-            .unwrap()
+        self.unresolved_references[self.current_scope_depth]
             .entry(reference_name)
             .or_default()
             .push(reference_id);
@@ -363,30 +375,26 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn resolve_references_for_current_scope(&mut self) {
-        // Pop-filter-push current level of unresolved references.
-        let mut remaining_refs = self.unresolved_references.pop().unwrap();
+        // `iter_mut` to get mut references to 2 entries of `unresolved_references` simultaneously
+        let mut iter = self.unresolved_references.iter_mut();
+        let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
+        let current_refs = iter.next().unwrap();
 
-        let is_root_scope = self.current_scope_id == self.scope.root_scope_id();
-        remaining_refs.retain(|name, reference_ids| {
+        let bindings = self.scope.get_bindings(self.current_scope_id);
+        for (name, reference_ids) in current_refs.drain() {
             // Try to resolve a reference.
-            // If unresolved, try to transfer it to parent scope (if any).
-            // Otherwise, keep it in the current map.
-            if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
-                for reference_id in &*reference_ids {
+            // If unresolved, transfer it to parent scope's unresolved references.
+            if let Some(symbol_id) = bindings.get(&name).copied() {
+                for reference_id in &reference_ids {
                     self.symbols.references[*reference_id].set_symbol_id(symbol_id);
                 }
-                self.symbols.resolved_references[symbol_id].append(reference_ids);
-                false
-            } else if !is_root_scope {
-                let parent_refs = self.unresolved_references.last_mut().unwrap();
-                parent_refs.entry(name.clone()).or_default().append(reference_ids);
-                false
+                self.symbols.resolved_references[symbol_id].extend(reference_ids);
+            } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                parent_reference_ids.extend(reference_ids);
             } else {
-                true
+                parent_refs.insert(name, reference_ids);
             }
-        });
-
-        self.unresolved_references.push(remaining_refs);
+        }
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
@@ -431,15 +439,30 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
         scope_id.set(Some(self.current_scope_id));
-        self.unresolved_references.push(UnresolvedReferences::default());
+
+        if let Some(parent_scope_id) = parent_scope_id {
+            if self.scope.get_flags(parent_scope_id).is_catch_clause() {
+                // Clone the `CatchClause` bindings and add them to the current scope.
+                // to make it easier to check redeclare errors.
+                let bindings = self.scope.get_bindings(parent_scope_id).clone();
+                self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
+            }
+        }
+
+        // Increment scope depth, and ensure stack is large enough that
+        // `self.unresolved_references[self.current_scope_depth]` is initialized
+        self.current_scope_depth += 1;
+        if self.unresolved_references.len() <= self.current_scope_depth {
+            self.unresolved_references.push(UnresolvedReferences::default());
+        }
     }
 
     fn leave_scope(&mut self) {
         self.resolve_references_for_current_scope();
         if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
-            self.unresolved_references.pop();
             self.current_scope_id = parent_id;
         }
+        self.current_scope_depth -= 1;
     }
 
     // Setup all the context for the binder.
@@ -1692,19 +1715,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::YieldExpression(_) => {
                 self.set_function_node_flag(NodeFlags::HasYield);
             }
-            AstKind::BlockStatement(_) => {
-                if matches!(
-                    self.nodes.parent_kind(self.current_node_id),
-                    Some(AstKind::CatchClause(_))
-                ) {
-                    // Clone the `CatchClause` bindings and add them to the current scope.
-                    // to make it easier to check redeclare errors.
-                    if let Some(parent_scope_id) = self.scope.get_parent_id(self.current_scope_id) {
-                        let bindings = self.scope.get_bindings(parent_scope_id).clone();
-                        self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
-                    }
-                }
-            }
             _ => {}
         }
     }
@@ -1783,7 +1793,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn add_current_node_id_to_current_scope(&mut self) {
-        self.scope.add_node_id(self.current_scope_id, self.current_node_id);
+        self.scope.set_node_id(self.current_scope_id, self.current_node_id);
     }
 
     fn make_all_namespaces_valuelike(&mut self) {
