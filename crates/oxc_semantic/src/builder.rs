@@ -203,9 +203,8 @@ impl<'a> SemanticBuilder<'a> {
             // Convert remaining unresolved references to a standard hash map
             debug_assert_eq!(self.current_scope_depth, 0);
             let mut unresolved_references = self.unresolved_references.into_iter().next().unwrap();
-            for line in unresolved_references.drain() {
-                self.scope.root_unresolved_references.insert(line.name, line.reference_ids);
-            }
+            self.scope.root_unresolved_references =
+                unresolved_references.drain().map(|line| (line.name, line.reference_ids)).collect();
         }
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
