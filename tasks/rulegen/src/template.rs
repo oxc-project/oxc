@@ -42,6 +42,7 @@ impl<'a> Template<'a> {
             RuleKind::JSDoc => Path::new("crates/oxc_linter/src/rules/jsdoc"),
             RuleKind::Node => Path::new("crates/oxc_linter/src/rules/node"),
             RuleKind::TreeShaking => Path::new("crates/oxc_linter/src/rules/tree_shaking"),
+            RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
         };
 
         std::fs::create_dir_all(path)?;
