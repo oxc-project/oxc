@@ -49,7 +49,7 @@ impl TempUnresolvedReferences {
         let entry = self.inner.entry(
             hash.0,
             |line| line.hash == hash && line.name == name,
-            |entry| entry.hash.0,
+            |line: &Line| line.hash.0,
         );
         match entry {
             Entry::Occupied(mut entry) => {
