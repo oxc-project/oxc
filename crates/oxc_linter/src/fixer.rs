@@ -316,7 +316,7 @@ impl<'a> Fixer<'a> {
             if start > end {
                 return;
             }
-            if i64::from(start) <= last_pos {
+            if i64::from(start) < last_pos {
                 return;
             }
 
@@ -558,14 +558,13 @@ mod test {
     }
 
     #[test]
-    fn apply_one_fix_when_the_start_the_same_as_the_previous_end() {
+    fn apply_two_fix_when_the_start_the_same_as_the_previous_end() {
         let result = get_fix_result(vec![
             create_message(remove_start(), Some(REMOVE_START)),
             create_message(replace_id(), Some(REPLACE_ID)),
         ]);
-        assert_eq!(result.fixed_code, TEST_CODE.replace("var ", ""));
-        assert_eq!(result.messages.len(), 1);
-        assert_eq!(result.messages[0].error.to_string(), "foo");
+        assert_eq!(result.fixed_code, TEST_CODE.replace("var answer", "foo"));
+        assert_eq!(result.messages.len(), 0);
         assert!(result.fixed);
     }
 
