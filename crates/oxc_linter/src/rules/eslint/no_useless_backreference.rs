@@ -81,23 +81,19 @@ fn get_regex_group_by_open_bracet(
             iter.next(); // pointer is now on ?
 
             if let Some(next_char) = iter.peek() {
-                let owned_next_char = next_char.to_owned();
-
-                if owned_next_char == '=' || owned_next_char == '!' {
+                if *next_char == '=' || *next_char == '!' {
                     return RegexGroup::LookAheadGroup();
                 }
 
-                if owned_next_char == ':' {
+                if *next_char == ':' {
                     return RegexGroup::NonCaptureGroup();
                 }
 
-                if owned_next_char == '<' {
+                if *next_char == '<' {
                     iter.next(); // pointer is now on <
 
                     if let Some(next_char) = iter.peek() {
-                        let owned_char = next_char.to_owned();
-
-                        if owned_char == '=' || owned_char == '!' {
+                        if *next_char == '=' || *next_char == '!' {
                             return RegexGroup::LookBehindGroup();
                         }
 
@@ -144,11 +140,8 @@ fn get_regex_groups(
 
                     inside_group += 1;
 
-                    match group_type {
-                        RegexGroup::CaptureGroup(_) => {
+                    if let RegexGroup::CaptureGroup(_) = group_type {
                             counter += 1;
-                        },
-                        _ => {}
                     }
                 }
                 ')' => {
@@ -181,7 +174,7 @@ fn has_string_invalid_back_reference(regex: &str) -> bool {
     let mut chars = regex.chars().peekable();
     let mut cloned_chars = chars.clone();
 
-    println!("regex: {regex}");
+    // println!("regex: {regex}");
 
     has_peekable_invalid_back_reference(
         &mut chars,
@@ -214,14 +207,15 @@ fn has_peekable_invalid_back_reference(
     let mut open_groups: Vec<RegexGroup> = vec![];
     let mut inside_character_class_count: u8 = 0;
     let mut inside_look_behind: u8 = 0;
-    let mut inside_look_ahead: u8 = 0;
+    let mut _inside_look_ahead: u8 = 0;
     let current_found_group: Vec<RegexGroup> =
         get_regex_groups(&mut chars.clone(), context.current_counter, false);
 
-    println!("context: {:?}", context);
+    // println!("context: {context:?}");
 
     while let Some(char) = chars.next() {
-        println!("{char}");
+        // println!("{char}");
+
         // check for backslash
         if char == '\\' {
             backslash_started = !backslash_started;
@@ -241,14 +235,14 @@ fn has_peekable_invalid_back_reference(
                     let group_type =
                         get_regex_group_by_open_bracet(char, chars, context.current_counter);
 
-                    open_groups.push(group_type.clone());
+                    open_groups.push(group_type);
 
                     match group_type {
                         RegexGroup::LookBehindGroup() => {
                             inside_look_behind += 1;
                         }
                         RegexGroup::LookAheadGroup() => {
-                            inside_look_ahead += 1;
+                            _inside_look_ahead += 1;
                         }
                         RegexGroup::CaptureGroup(_) => {
                             context.current_counter += 1;
@@ -263,7 +257,7 @@ fn has_peekable_invalid_back_reference(
                                 inside_look_behind = inside_look_behind.saturating_sub(1);
                             }
                             RegexGroup::LookAheadGroup() => {
-                                inside_look_ahead = inside_look_behind.saturating_sub(1);
+                                _inside_look_ahead = inside_look_behind.saturating_sub(1);
                             }
                             RegexGroup::CaptureGroup(identifier) => {
                                 context.finished_groups.push(identifier);
@@ -271,56 +265,53 @@ fn has_peekable_invalid_back_reference(
                             _ => {}
                         }
                     } else {
-                        println!("closing parent found inside )");
                         // we found a closing group of a parent regex
                         // this can happen when the parent group has an alternative
 
-                        // TODO: parent need to know which one is closing
+                        // println!("closing parent found inside )");
                         return false;
                     }
                 }
 
                 '|' if inside_character_class_count == 0 => {
-                    println!(
-                        "alternative
-                        context:  {:?}
-                        inside_look_behind: {inside_look_behind}
-                        open_groups: {:?}",
-                        context, open_groups
-                    );
+                    // println!(
+                    //     "alternative
+                    //     context:  {context:?}
+                    //     inside_look_behind: {inside_look_behind}
+                    //     open_groups: {open_groups:?}"
+                    // );
 
                     if open_groups.is_empty() {
                         return has_peekable_invalid_back_reference(chars, context);
-                    } else {
-                        let result = has_peekable_invalid_back_reference(chars, context);
+                    }
 
-                        if result {
-                            return true;
-                        } else {
-                            // the alternative did put the pointer to ")", we need to close the group now
-                            // TODO: refactor
-                            if let Some(group_type) = open_groups.pop() {
-                                match group_type {
-                                    RegexGroup::LookBehindGroup() => {
-                                        inside_look_behind = inside_look_behind.saturating_sub(1);
-                                    }
-                                    RegexGroup::LookAheadGroup() => {
-                                        inside_look_ahead = inside_look_behind.saturating_sub(1);
-                                    }
-                                    RegexGroup::CaptureGroup(idendifier) => {
-                                        context.finished_groups.push(idendifier);
-                                    }
-                                    _ => {}
-                                }
-                            } else {
-                                println!("closing parent found inside |");
-                                // we found a closing group of a parent regex
-                                // this can happen when the parent group has an alternative
+                    // we are iterating until we find the closing group
+                    let result = has_peekable_invalid_back_reference(chars, context);
 
-                                // TODO: parent need to know which one is closing
-                                return false;
+                    if result {
+                        return true;
+                    }
+
+                    // the alternative did put the pointer to ")", we need to close the group now
+                    if let Some(group_type) = open_groups.pop() {
+                        match group_type {
+                            RegexGroup::LookBehindGroup() => {
+                                inside_look_behind = inside_look_behind.saturating_sub(1);
                             }
+                            RegexGroup::LookAheadGroup() => {
+                                _inside_look_ahead = inside_look_behind.saturating_sub(1);
+                            }
+                            RegexGroup::CaptureGroup(idendifier) => {
+                                context.finished_groups.push(idendifier);
+                            }
+                            _ => {}
                         }
+                    } else {
+                        // we found a closing group of a parent regex
+                        // this can happen when the parent group has an alternative
+
+                        // println!("closing parent found inside |");
+                        return false;
                     }
                 }
                 _ => {}
@@ -343,44 +334,47 @@ fn has_peekable_invalid_back_reference(
                 digit_result = format!("{char}").parse::<u8>().unwrap();
             }
 
-            println!(
-                "backreference
-                digit_result:  {digit_result}
-                capture_group_count: {capture_group_count}
-                context: {:?}
-                inside_look_behind: {inside_look_behind}
-                inside_look_ahead: {inside_look_ahead}
-                open_groups: {:?}
-                current_found_group: {:?}",
-                context, open_groups, current_found_group
-            );
+            // println!(
+            //     "backreference
+            //     digit_result:  {digit_result}
+            //     capture_group_count: {capture_group_count}
+            //     context: {context:?}
+            //     inside_look_behind: {inside_look_behind}
+            //     _inside_look_ahead: {_inside_look_ahead}
+            //     open_groups: {open_groups:?}
+            //     current_found_group: {current_found_group:?}",
+            // );
 
             // we are trying to access a capture group and not an octal
             if digit_result <= capture_group_count {
                 // this capture group did not end
 
                 // not inside look behind: ToDo: check für better
-                // the group needs to be finished
-                // the group should be in this current alternative
-                if inside_look_behind == 0
-                    && !context.finished_groups.contains(&digit_result)
-                    && current_found_group.contains(&RegexGroup::CaptureGroup(digit_result))
-                {
-                    // not in look behind, so this in invalid
+                // the group needs to be finished and not currently open
+                // cant be open
+                if open_groups.contains(&RegexGroup::CaptureGroup(digit_result)) {
+                    return true;
+                // needs to be found in this alternative
+                } else if !current_found_group.contains(&RegexGroup::CaptureGroup(digit_result)) {
+                    return true;
+                // there is a reference but we dont know from where
+                } else if inside_look_behind == 0 && !context.finished_groups.contains(&digit_result) {
                     return true;
                 }
+            
                 // not a group of a previous alternative
                 // else if capture_group_start_count >= digit_result {
                 //     return true;
                 // }
             }
-        } else if inside_character_class_count == 0 && char == '<' {
-            // let group_name = get_name_reference(char,  chars);
-            //
-            // if !named_group_finished.contains(&group_name) {
-            //     return true;
-            // }
-        }
+        } 
+        // else if inside_character_class_count == 0 && char == '<' {
+        //     let group_name = get_name_reference(char,  chars);
+        //     
+        //     if !named_group_finished.contains(&group_name) {
+        //         return true;
+        //     }
+        // }
 
         if char != '\\' {
             backslash_started = false;
@@ -616,18 +610,18 @@ fn test() {
         r"/(?=\1(a))./",
         r"/(?!\1(a))./",
         // backward in the same lookbehind
-        // r"/(?<=(a)\1)b/",
-        // r"/(?<!.(a).\1.)b/",
-        // r"/(.)(?<!(b|c)\2)d/",
-        // r"/(?<=(?:(a)\1))b/",
-        // r"/(?<=(?:(a))\1)b/",
-        // r"/(?<=(a)(?:\1))b/",
-        // r"/(?<!(?:(a))(?:\1))b/",
-        // r"/(?<!(?:(a))(?:\1)|.)b/",
-        // r"/.(?!(?<!(a)\1))./",
-        // r"/.(?=(?<!(a)\1))./",
-        // r"/.(?!(?<=(a)\1))./",
-        // r"/.(?=(?<=(a)\1))./",
+        r"/(?<=(a)\1)b/",
+        r"/(?<!.(a).\1.)b/",
+        r"/(.)(?<!(b|c)\2)d/",
+        r"/(?<=(?:(a)\1))b/",
+        r"/(?<=(?:(a))\1)b/",
+        r"/(?<=(a)(?:\1))b/",
+        r"/(?<!(?:(a))(?:\1))b/",
+        r"/(?<!(?:(a))(?:\1)|.)b/",
+        r"/.(?!(?<!(a)\1))./",
+        r"/.(?=(?<!(a)\1))./",
+        r"/.(?!(?<=(a)\1))./",
+        r"/.(?=(?<=(a)\1))./",
         // into another alternative
         r"/(a)|\1b/",
         r"/^(?:(a)|\1b)$/",
