@@ -1,6 +1,6 @@
 use std::hash::Hasher;
 
-use hashbrown::hash_table::{Drain, Entry, HashTable};
+use hashbrown::hash_table::{Drain, HashTable};
 use rustc_hash::FxHasher;
 
 use oxc_span::CompactStr;
@@ -46,18 +46,14 @@ impl TempUnresolvedReferences {
 
     pub fn insert(&mut self, name: CompactStr, reference_id: ReferenceId) {
         let hash = IdentifierHash::new(&name);
-        let entry = self.inner.entry(
-            hash.0,
-            |line| line.hash == hash && line.name == name,
-            |line: &Line| line.hash.0,
-        );
-        match entry {
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().reference_ids.push(reference_id);
-            }
-            Entry::Vacant(entry) => {
-                entry.insert(Line { name, hash, reference_ids: vec![reference_id] });
-            }
+        if let Some(line) = self.inner.find_mut(hash.0, |line| line.name == name) {
+            line.reference_ids.push(reference_id);
+        } else {
+            self.inner.insert_unique(
+                hash.0,
+                Line { name, hash, reference_ids: vec![reference_id] },
+                |line| line.hash.0,
+            );
         }
     }
 
@@ -67,18 +63,11 @@ impl TempUnresolvedReferences {
         hash: IdentifierHash,
         reference_ids: Vec<ReferenceId>,
     ) {
-        let entry = self.inner.entry(
-            hash.0,
-            |line| line.hash == hash && line.name == name,
-            |line| line.hash.0,
-        );
-        match entry {
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().reference_ids.extend(reference_ids);
-            }
-            Entry::Vacant(entry) => {
-                entry.insert(Line { name, hash, reference_ids });
-            }
+        if let Some(line) = self.inner.find_mut(hash.0, |line| line.name == name) {
+            line.reference_ids.extend(reference_ids);
+        } else {
+            self.inner
+                .insert_unique(hash.0, Line { name, hash, reference_ids }, |line| line.hash.0);
         }
     }
 
