@@ -444,6 +444,7 @@ mod tree_shaking {
 mod promise {
     pub mod avoid_new;
     pub mod no_new_statics;
+    pub mod no_return_in_finally;
     pub mod param_names;
     pub mod valid_params;
 }
@@ -857,6 +858,7 @@ oxc_macros::declare_all_lint_rules! {
     promise::no_new_statics,
     promise::param_names,
     promise::valid_params,
+    promise::no_return_in_finally,
     vitest::no_import_node_test,
     vitest::prefer_to_be_falsy,
     vitest::prefer_to_be_truthy,
