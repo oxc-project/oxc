@@ -24,7 +24,7 @@ use crate::{
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
-    node::{AstNode, AstNodeId, AstNodes, NodeFlags},
+    node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId, ScopeTree, UnresolvedReferences},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
@@ -229,28 +229,17 @@ impl<'a> SemanticBuilder<'a> {
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
-
         if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
 
-        let ast_node = AstNode::new(
+        self.current_node_id = self.nodes.add_node(
             kind,
             self.current_scope_id,
+            self.current_node_id,
             control_flow!(|self, cfg| cfg.current_node_ix),
             flags,
         );
-        self.current_node_id = if matches!(kind, AstKind::Program(_)) {
-            let id = self.nodes.add_node(ast_node, None);
-            #[allow(unsafe_code)]
-            // SAFETY: `ast_node` is a `Program` and hence the root of the tree.
-            unsafe {
-                self.nodes.set_root(&ast_node);
-            }
-            id
-        } else {
-            self.nodes.add_node(ast_node, Some(self.current_node_id))
-        };
         self.record_ast_node();
     }
 
