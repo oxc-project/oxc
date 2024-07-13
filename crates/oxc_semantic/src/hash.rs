@@ -33,14 +33,14 @@ impl TempUnresolvedReferences {
     #[allow(dead_code)]
     pub fn get(&self, name: &str, hash: IdentifierHash) -> Option<&Vec<ReferenceId>> {
         self.inner
-            .find(hash.0, |entry| entry.hash == hash && entry.name.as_ref() == name)
+            .find(hash.0, |line| line.hash == hash && line.name.as_ref() == name)
             .map(|entry| &entry.reference_ids)
     }
 
     #[allow(dead_code)]
     pub fn get_mut(&mut self, name: &str, hash: IdentifierHash) -> Option<&mut Vec<ReferenceId>> {
         self.inner
-            .find_mut(hash.0, |entry| entry.hash == hash && entry.name.as_ref() == name)
+            .find_mut(hash.0, |line| line.hash == hash && line.name.as_ref() == name)
             .map(|entry| &mut entry.reference_ids)
     }
 
@@ -48,7 +48,7 @@ impl TempUnresolvedReferences {
         let hash = IdentifierHash::new(&name);
         let entry = self.inner.entry(
             hash.0,
-            |entry| entry.hash == hash && entry.name == name,
+            |line| line.hash == hash && line.name == name,
             |entry| entry.hash.0,
         );
         match entry {
@@ -69,8 +69,8 @@ impl TempUnresolvedReferences {
     ) {
         let entry = self.inner.entry(
             hash.0,
-            |entry| entry.hash == hash && entry.name == name,
-            |entry| entry.hash.0,
+            |line| line.hash == hash && line.name == name,
+            |line| line.hash.0,
         );
         match entry {
             Entry::Occupied(mut entry) => {
