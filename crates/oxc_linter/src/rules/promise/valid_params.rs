@@ -1,7 +1,5 @@
-use oxc_ast::{
-    ast::{CallExpression, Expression},
-    AstKind,
-};
+use crate::ast_util::is_promise;
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -32,37 +30,6 @@ declare_oxc_lint!(
     ValidParams,
     correctness,
 );
-
-fn is_promise(call_expr: &CallExpression) -> bool {
-    let Some(member_expr) = call_expr.callee.get_member_expr() else {
-        return false;
-    };
-
-    let Some(prop_name) = member_expr.static_property_name() else {
-        return false;
-    };
-
-    // hello.then(), hello.catch(), hello.finally()
-    if matches!(prop_name, "then" | "catch" | "finally") {
-        return true;
-    }
-
-    // foo().then(foo => {}), needed?
-    if let Expression::CallExpression(inner_call_expr) = member_expr.object() {
-        return is_promise(inner_call_expr);
-    }
-
-    if member_expr.object().is_specific_id("Promise")
-        && matches!(
-            prop_name,
-            "resolve" | "reject" | "all" | "allSettled" | "race" | "any" | "withResolvers"
-        )
-    {
-        return true;
-    }
-
-    false
-}
 
 impl Rule for ValidParams {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
