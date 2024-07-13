@@ -1745,7 +1745,7 @@ impl<'a> SemanticBuilder<'a> {
                 self.function_stack.pop();
             }
             AstKind::FormalParameters(parameters) => {
-                if parameters.has_parameter() {
+                if parameters.kind != FormalParameterKind::Signature && parameters.has_parameter() {
                     // `function foo({bar: identifier_reference}) {}`
                     //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved
                     //                                          after all parameters have been declared
