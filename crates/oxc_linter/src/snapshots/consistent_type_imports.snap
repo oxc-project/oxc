@@ -616,3 +616,23 @@ source: crates/oxc_linter/src/tester.rs
    ·               ───────────────────────────────
  4 │               function test(foo: Foo) {}
    ╰────
+
+  ⚠ typescript-eslint(consistent-type-imports): Imports Config, OnEvent, and URLHelper are only used as type.
+    ╭─[consistent_type_imports.tsx:5:13]
+  4 │                 } from '../../../fundamentals';
+  5 │ ╭─▶             import {
+  6 │ │                 Config,
+  7 │ │                 OnEvent,
+  8 │ │                 StorageProviderFactory,
+  9 │ │                 URLHelper,
+ 10 │ ╰─▶             } from '../../../fundamentals';
+ 11 │     
+    ╰────
+
+  ⚠ typescript-eslint(consistent-type-imports): Imports DefineParallelPluginResult are only used as type.
+   ╭─[consistent_type_imports.tsx:5:13]
+ 4 │             } from './plugin'
+ 5 │             import { defineParallelPlugin,DefineParallelPluginResult } from './plugin'
+   ·             ──────────────────────────────────────────────────────────────────────────
+ 6 │ 
+   ╰────

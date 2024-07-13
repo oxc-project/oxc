@@ -526,7 +526,7 @@ fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
     let close_brace = try_find_char(import_text, '}')?;
 
     let first_non_whitespace_before_close_brace =
-        import_text[..close_brace as usize].chars().rev().find(|c| c.is_whitespace());
+        import_text[..close_brace as usize].chars().rev().find(|c| !c.is_whitespace());
 
     let span =
         Span::new(import_decl.span().start + close_brace, import_decl.span().start + close_brace);
@@ -907,8 +907,15 @@ fn fix_remove_type_specifier_from_import_specifier<'a>(
 fn test() {
     use crate::tester::Tester;
 
-    fn remove_prefix_space(str: &str) -> String {
-        str.lines().map(str::trim).collect::<Vec<_>>().join("\n")
+    fn remove_common_prefix_space(str: &str) -> String {
+        let first_content_line = str.lines().find(|line| line.trim() != "").unwrap();
+        let prefix_space =
+            first_content_line.chars().take_while(|c| c.is_whitespace()).collect::<String>();
+
+        str.lines()
+            .map(|line| line.strip_prefix(&prefix_space).unwrap_or(line).to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     let pass = vec![
@@ -2177,6 +2184,38 @@ fn test() {
         //     ",
         //     None,
         // ),
+        (
+            "
+            import type {
+              StorageProvider,
+            } from '../../../fundamentals';
+            import {
+              Config,
+              OnEvent,
+              StorageProviderFactory,
+              URLHelper,
+            } from '../../../fundamentals';
+
+            type A = StorageProvider
+            type B = Config
+            type C = OnEvent
+            type D = URLHelper
+            ",
+            None,
+        ),
+        (
+            "
+            import type {
+              TransformResult,
+            } from './plugin'
+            import { defineParallelPlugin,DefineParallelPluginResult } from './plugin'
+
+            type A = TransformResult;
+            type B = DefineParallelPluginResult;
+            const c = defineParallelPlugin()
+            ",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -2189,7 +2228,7 @@ fn test() {
               foo: Foo;
             }
             function fn(a: Foo): Foo {}
-            ",
+                      ",
             "
             import type Foo from 'foo';
             let foo: Foo;
@@ -3258,6 +3297,64 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+            import type {
+              StorageProvider,
+            } from '../../../fundamentals';
+            import {
+              Config,
+              OnEvent,
+              StorageProviderFactory,
+              URLHelper,
+            } from '../../../fundamentals';
+
+            type A = StorageProvider
+            type B = Config
+            type C = OnEvent
+            type D = URLHelper
+            ",
+            "
+            import type {
+              StorageProvider,
+
+              Config,
+              OnEvent,
+              URLHelper} from '../../../fundamentals';
+            import {
+              StorageProviderFactory
+            } from '../../../fundamentals';
+
+            type A = StorageProvider
+            type B = Config
+            type C = OnEvent
+            type D = URLHelper
+            ",
+            None,
+        ),
+        (
+            "
+            import type {
+              TransformResult,
+            } from './plugin'
+            import { defineParallelPlugin, DefineParallelPluginResult } from './plugin'
+
+            type A = TransformResult;
+            type B = DefineParallelPluginResult;
+            const c = defineParallelPlugin()
+            ",
+            "
+            import type {
+              TransformResult,
+             DefineParallelPluginResult } from './plugin'
+            import { defineParallelPlugin } from './plugin'
+
+            type A = TransformResult;
+            type B = DefineParallelPluginResult;
+            const c = defineParallelPlugin()
+            ",
+            None,
+        ),
     ];
 
     // To format fix code.
@@ -3267,7 +3364,7 @@ fn test() {
     // '\n'`, so let's remove the prefix space.
     let fix = fix
         .into_iter()
-        .map(|(a, b, c)| (remove_prefix_space(a), remove_prefix_space(b), c))
+        .map(|(a, b, c)| (remove_common_prefix_space(a), remove_common_prefix_space(b), c))
         .collect::<Vec<_>>();
 
     Tester::new(ConsistentTypeImports::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
