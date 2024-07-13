@@ -1608,6 +1608,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_ast",
  "oxc_diagnostics",
+ "oxc_regexp_parser",
  "oxc_span",
  "oxc_syntax",
  "rustc-hash",

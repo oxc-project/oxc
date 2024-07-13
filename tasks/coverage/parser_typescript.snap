@@ -2,8 +2,8 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 5279/5283 (99.92%)
-Positive Passed: 5272/5283 (99.79%)
-Negative Passed: 1094/4875 (22.44%)
+Positive Passed: 5254/5283 (99.45%)
+Negative Passed: 1134/4875 (23.26%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -324,7 +324,6 @@ Expect Syntax Error: "compiler/collisionArgumentsFunctionExpressions.ts"
 Expect Syntax Error: "compiler/collisionExportsRequireAndFunction.ts"
 Expect Syntax Error: "compiler/collisionExportsRequireAndInternalModuleAlias.ts"
 Expect Syntax Error: "compiler/commaOperator1.ts"
-Expect Syntax Error: "compiler/commaOperatorLeftSideUnused.ts"
 Expect Syntax Error: "compiler/commentOnImportStatement1.ts"
 Expect Syntax Error: "compiler/commentOnImportStatement2.ts"
 Expect Syntax Error: "compiler/commentOnImportStatement3.ts"
@@ -521,8 +520,6 @@ Expect Syntax Error: "compiler/divergentAccessorsTypes6.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes8.ts"
 Expect Syntax Error: "compiler/divergentAccessorsVisibility1.ts"
 Expect Syntax Error: "compiler/doNotElaborateAssignabilityToTypeParameters.ts"
-Expect Syntax Error: "compiler/doYouNeedToChangeYourTargetLibraryES2015.ts"
-Expect Syntax Error: "compiler/doYouNeedToChangeYourTargetLibraryES2016Plus.ts"
 Expect Syntax Error: "compiler/doubleUnderStringLiteralAssignability.ts"
 Expect Syntax Error: "compiler/downlevelLetConst12.ts"
 Expect Syntax Error: "compiler/downlevelLetConst16.ts"
@@ -691,10 +688,8 @@ Expect Syntax Error: "compiler/fakeInfinity1.ts"
 Expect Syntax Error: "compiler/fallFromLastCase2.ts"
 Expect Syntax Error: "compiler/fatarrowfunctionsOptionalArgsErrors4.ts"
 Expect Syntax Error: "compiler/findLast.ts"
-Expect Syntax Error: "compiler/firstMatchRegExpMatchArray.ts"
 Expect Syntax Error: "compiler/fixTypeParameterInSignatureWithRestParameters.ts"
 Expect Syntax Error: "compiler/fixingTypeParametersRepeatedly2.ts"
-Expect Syntax Error: "compiler/flatArrayNoExcessiveStackDepth.ts"
 Expect Syntax Error: "compiler/forIn.ts"
 Expect Syntax Error: "compiler/forIn2.ts"
 Expect Syntax Error: "compiler/forInStatement2.ts"
@@ -1394,7 +1389,6 @@ Expect Syntax Error: "compiler/prettyFileWithErrorsAndTabs.ts"
 Expect Syntax Error: "compiler/primaryExpressionMods.ts"
 Expect Syntax Error: "compiler/primitiveConstraints1.ts"
 Expect Syntax Error: "compiler/primitiveConstraints2.ts"
-Expect Syntax Error: "compiler/primitiveMembers.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsClassName.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsInterfaceName.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsInterfaceNameGeneric.ts"
@@ -1489,10 +1483,7 @@ Expect Syntax Error: "compiler/recursiveTypeParameterConstraintReferenceLacksTyp
 Expect Syntax Error: "compiler/recursiveTypeRelations.ts"
 Expect Syntax Error: "compiler/recursivelyExpandingUnionNoStackoverflow.ts"
 Expect Syntax Error: "compiler/redefineArray.ts"
-Expect Syntax Error: "compiler/regExpWithOpenBracketInCharClass.ts"
-Expect Syntax Error: "compiler/regularExpressionAnnexB.ts"
 Expect Syntax Error: "compiler/regularExpressionGroupNameSuggestions.ts"
-Expect Syntax Error: "compiler/regularExpressionUnicodePropertyValueExpressionSuggestions.ts"
 Expect Syntax Error: "compiler/relationComplexityError.ts"
 Expect Syntax Error: "compiler/relationalOperatorComparable.ts"
 Expect Syntax Error: "compiler/renamingDestructuredPropertyInFunctionType.ts"
@@ -1791,7 +1782,6 @@ Expect Syntax Error: "compiler/unusedFunctionsinNamespaces4.ts"
 Expect Syntax Error: "compiler/unusedFunctionsinNamespaces5.ts"
 Expect Syntax Error: "compiler/unusedFunctionsinNamespaces6.ts"
 Expect Syntax Error: "compiler/unusedGetterInClass.ts"
-Expect Syntax Error: "compiler/unusedIdentifiersConsolidated1.ts"
 Expect Syntax Error: "compiler/unusedImports10.ts"
 Expect Syntax Error: "compiler/unusedInterfaceinNamespace1.ts"
 Expect Syntax Error: "compiler/unusedInterfaceinNamespace2.ts"
@@ -1883,9 +1873,6 @@ Expect Syntax Error: "compiler/unusedVariablesinForLoop2.ts"
 Expect Syntax Error: "compiler/unusedVariablesinForLoop3.ts"
 Expect Syntax Error: "compiler/unusedVariablesinForLoop4.ts"
 Expect Syntax Error: "compiler/unusedVariablesinModules1.ts"
-Expect Syntax Error: "compiler/unusedVariablesinNamespaces1.ts"
-Expect Syntax Error: "compiler/unusedVariablesinNamespaces2.ts"
-Expect Syntax Error: "compiler/unusedVariablesinNamespaces3.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_classDecorators.1.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_destructuring.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_jsx.tsx"
@@ -2156,7 +2143,6 @@ Expect Syntax Error: "conformance/controlFlow/controlFlowNullishCoalesce.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowOptionalChain.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowOptionalChain3.tsx"
 Expect Syntax Error: "conformance/controlFlow/controlFlowTypeofObject.ts"
-Expect Syntax Error: "conformance/controlFlow/controlFlowWhileStatement.ts"
 Expect Syntax Error: "conformance/controlFlow/definiteAssignmentAssertions.ts"
 Expect Syntax Error: "conformance/controlFlow/dependentDestructuredVariables.ts"
 Expect Syntax Error: "conformance/controlFlow/exhaustiveSwitchStatements1.ts"
@@ -2502,25 +2488,6 @@ Expect Syntax Error: "conformance/es6/templates/templateStringWithEmbeddedInstan
 Expect Syntax Error: "conformance/es6/templates/templateStringWithEmbeddedInstanceOfES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringsWithTypeErrorInFunctionExpressionsInSubstitutionExpression.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringsWithTypeErrorInFunctionExpressionsInSubstitutionExpressionES6.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions01.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions02.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions03.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions04.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions05.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions06.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions07.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions08.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions09.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions10.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions11.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions12.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions13.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions14.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions15.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions16.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions17.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions18.ts"
-Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions19.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression10_es6.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression11_es6.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression1_es6.ts"
@@ -2754,7 +2721,6 @@ Expect Syntax Error: "conformance/externalModules/typeOnly/exportSpecifiers_js.t
 Expect Syntax Error: "conformance/externalModules/typeOnly/preserveValueImports_module.ts"
 Expect Syntax Error: "conformance/externalModules/verbatimModuleSyntaxCompat.ts"
 Expect Syntax Error: "conformance/externalModules/verbatimModuleSyntaxInternalImportEquals.ts"
-Expect Syntax Error: "conformance/fixSignatureCaching.ts"
 Expect Syntax Error: "conformance/functions/functionImplementationErrors.ts"
 Expect Syntax Error: "conformance/functions/functionImplementations.ts"
 Expect Syntax Error: "conformance/functions/functionNameConflicts.ts"
@@ -3162,9 +3128,7 @@ Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser50961
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509693.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509698.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser536727.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser579071.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression4.ts"
@@ -3370,7 +3334,6 @@ Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclaration
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithImportHelpers.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/invalidSwitchBreakStatement.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/switchBreakStatements.ts"
-Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatements.ts"
 Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts"
 Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatementsDestructuring.ts"
 Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatementsDestructuring2.ts"
@@ -3399,7 +3362,6 @@ Expect Syntax Error: "conformance/statements/for-ofStatements/ES5For-ofTypeCheck
 Expect Syntax Error: "conformance/statements/for-ofStatements/ES5For-ofTypeCheck9.ts"
 Expect Syntax Error: "conformance/statements/forStatements/forStatementsMultipleInvalidDecl.ts"
 Expect Syntax Error: "conformance/statements/returnStatements/invalidReturnStatements.ts"
-Expect Syntax Error: "conformance/statements/switchStatements/switchStatements.ts"
 Expect Syntax Error: "conformance/types/any/anyAsConstructor.ts"
 Expect Syntax Error: "conformance/types/any/anyAsGenericFunctionCall.ts"
 Expect Syntax Error: "conformance/types/any/assignAnyToEveryType.ts"
@@ -3492,7 +3454,6 @@ Expect Syntax Error: "conformance/types/members/objectTypeWithConstructSignature
 Expect Syntax Error: "conformance/types/members/objectTypeWithConstructSignatureHidingMembersOfFunctionAssignmentCompat.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithStringAndNumberIndexSignatureToAny.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithStringIndexerHidingObjectIndexer.ts"
-Expect Syntax Error: "conformance/types/members/objectTypeWithStringNamedNumericProperty.ts"
 Expect Syntax Error: "conformance/types/members/typesWithPrivateConstructor.ts"
 Expect Syntax Error: "conformance/types/members/typesWithProtectedConstructor.ts"
 Expect Syntax Error: "conformance/types/members/typesWithPublicConstructor.ts"
@@ -3707,7 +3668,6 @@ Expect Syntax Error: "conformance/types/typeRelationships/recursiveTypes/objectT
 Expect Syntax Error: "conformance/types/typeRelationships/recursiveTypes/recursiveTypeReferences1.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/recursiveTypes/recursiveTypeReferences2.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/enumIsNotASubtypeOfAnythingButNumber.ts"
-Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameter.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints4.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithRecursiveConstraints.ts"
@@ -3785,6 +3745,13 @@ Expect Syntax Error: "conformance/types/unknown/unknownControlFlow.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownType1.ts"
 Expect Syntax Error: "conformance/types/unknown/unknownType2.ts"
 Expect Syntax Error: "conformance/types/witness/witness.ts"
+Expect to Parse: "compiler/bestChoiceType.ts"
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
 Expect to Parse: "compiler/bom-utf16be.ts"
 
   × Invalid Character `￾`
@@ -3792,6 +3759,20 @@ Expect to Parse: "compiler/bom-utf16be.ts"
  1 │ ￾瘀愀爀 砀㴀㄀　㬀ഀ਀
    · ─
    ╰────
+Expect to Parse: "compiler/castExpressionParentheses.ts"
+
+  × Incomplete quantifier
+Expect to Parse: "compiler/controlFlowPropertyDeclarations.ts"
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 
   × 'with' statements are not allowed
@@ -3801,6 +3782,15 @@ Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
     · ────
  24 │     const enum H {}
     ╰────
+Expect to Parse: "compiler/overloadResolutionOverNonCTLambdas.ts"
+
+  × Incomplete quantifier
+Expect to Parse: "compiler/regexMatchAll-esnext.ts"
+
+  × Incomplete quantifier
+Expect to Parse: "compiler/regexMatchAll.ts"
+
+  × Incomplete quantifier
 Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
 
   × Unexpected token
@@ -3810,6 +3800,9 @@ Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
     ·       ───
  19 │     }
     ╰────
+Expect to Parse: "compiler/stringMatchAll.ts"
+
+  × Incomplete quantifier
 Expect to Parse: "compiler/withStatementInternalComments.ts"
 
   × 'with' statements are not allowed
@@ -3867,6 +3860,20 @@ Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyN
      ·                ─────────
  291 │         prototype() {} // ok
      ╰────
+Expect to Parse: "conformance/controlFlow/controlFlowDoWhileStatement.ts"
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+Expect to Parse: "conformance/controlFlow/controlFlowForInStatement.ts"
+
+  × Incomplete quantifier
+Expect to Parse: "conformance/controlFlow/controlFlowIfStatement.ts"
+
+  × Incomplete quantifier
+Expect to Parse: "conformance/controlFlow/typeGuardsNestedAssignments.ts"
+
+  × Incomplete quantifier
 Expect to Parse: "conformance/es2022/arbitraryModuleNamespaceIdentifiers/arbitraryModuleNamespaceIdentifiers_module.ts"
 
   × Expected `,` but found `string`
@@ -3896,6 +3903,9 @@ Expect to Parse: "conformance/esDecorators/esDecorators-decoratorExpression.1.ts
  14 │ 
     ╰────
   help: Try insert a semicolon here
+Expect to Parse: "conformance/expressions/assignmentOperator/assignmentTypeNarrowing.ts"
+
+  × Incomplete quantifier
 Expect to Parse: "conformance/externalModules/topLevelAwait.2.ts"
 
   × Cannot use `await` as an identifier in an async context
@@ -3927,6 +3937,12 @@ Expect to Parse: "conformance/externalModules/topLevelAwait.3.ts"
  4 │ declare class C extends await {}
    ·                         ─────
    ╰────
+Expect to Parse: "conformance/parser/ecmascript5/Fuzz/parser768531.ts"
+
+  × Incomplete quantifier
+Expect to Parse: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts"
+
+  × Invalid character class range
 Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
 
   × Identifier `orbitol` has already been declared
@@ -3939,6 +3955,28 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·        ╰── It can not be redeclared here
  3 │ orbitol.toExponential()
    ╰────
+Expect to Parse: "conformance/statements/ifDoWhileStatements/ifDoWhileStatements.ts"
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+Expect to Parse: "conformance/statements/throwStatements/throwStatements.ts"
+
+  × Incomplete quantifier
+Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/nullIsSubtypeOfEverythingButUndefined.ts"
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints2.ts"
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[compiler/ArrowFunctionExpression1.ts:1:10]
@@ -5334,6 +5372,8 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  47 │     }
     ╰────
 
+  × Incomplete quantifier
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/commonMissingSemicolons.ts:2:6]
  1 │ async function myAsyncFunction1() {}
@@ -5874,6 +5914,20 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·                            ╰── `=>` expected
  12 │ 
     ╰────
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
 
   × Unexpected token
    ╭─[compiler/dontShowCompilerGeneratedMembers.ts:3:6]
@@ -6714,6 +6768,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  3 │ return0; 
    · ──────
    ╰────
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
 
   × Expected `;` but found `)`
     ╭─[compiler/for.ts:29:6]
@@ -8806,6 +8864,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  1 │ if (true) {
    ╰────
 
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
   × 'export' modifier cannot be used here.
      ╭─[compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
@@ -8889,6 +8951,80 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·               ╰── `x` has already been declared here
  22 │ 
     ╰────
+
+  × Lone quantifier brackets
+
+  × Lone quantifier brackets
+
+  × Lone quantifier brackets
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
 
   × Unexpected flag a in regular expression literal
    ╭─[compiler/regularExpressionScanning.ts:3:12]
@@ -8978,6 +9114,84 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  4 │     // Pattern modifiers
    ╰────
 
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[compiler/regularExpressionScanning.ts:3:2]
  2 │     // Flags
@@ -8985,6 +9199,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·     ─────────────────────
  4 │     // Pattern modifiers
    ╰────
+
+  × Invalid escape
+
+  × Invalid group
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/regularExpressionWithNonBMPFlags.ts:7:63]
@@ -10564,6 +10782,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    · ──
    ╰────
 
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
   × Expected `;` but found `)`
     ╭─[compiler/unusedLocalsAndParameters.ts:83:14]
  82 │ 
@@ -10572,6 +10794,16 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
     ·              ╰── `;` expected
  84 │     z(x);
     ╰────
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/validRegexp.ts:1:23]
@@ -12675,6 +12907,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  164 │     get p2(): asserts this is string;
      ╰────
 
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
   × Expected `,` but found `!`
    ╭─[conformance/controlFlow/definiteAssignmentAssertionsWithObjectShortHand.ts:2:16]
  1 │ const a: string | undefined = 'ff';
@@ -13972,6 +14208,44 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·               ╰── `(` expected
  2 │     // Once this is supported, yield *must* be parenthesized.
    ╰────
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
+
+  × Invalid unicode escape
 
   × Invalid escape sequence
    ╭─[conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings07.ts:3:10]
@@ -16430,6 +16704,14 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  12 │ }
     ╰────
 
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
   × A rest parameter must be last in a parameter list
     ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
   8 │ //Function overload signature with rest param followed by non-optional parameter
@@ -18217,6 +18499,30 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  2 │ }
    ╰────
 
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
  1429 │         // Regex for parsing options in the format "@Alpha: Value of any sort"
@@ -18306,6 +18612,8 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·         ──
    ╰────
 
+  × Unterminated group
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:6]
  1 │ class Foo2 {
@@ -18338,6 +18646,8 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  5 │ }
    ╰────
 
+  × Lone quantifier brackets
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser645086_1.ts:1:13]
  1 │ var v = /[]/]/
@@ -18345,12 +18655,26 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ╰────
   help: Try insert a semicolon here
 
+  × Lone quantifier brackets
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser645086_2.ts:1:14]
  1 │ var v = /[^]/]/
    ·              ▲
    ╰────
   help: Try insert a semicolon here
+
+  × Nothing to repeat
+
+  × Nothing to repeat
+
+  × Nothing to repeat
+
+  × Nothing to repeat
+
+  × Nothing to repeat
+
+  × Nothing to repeat
 
   × Unexpected flag a in regular expression literal
    ╭─[conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:17]
@@ -20038,6 +20362,8 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  38 │ }
     ╰────
 
+  × Incomplete quantifier
+
   × Unexpected token
    ╭─[conformance/statements/for-ofStatements/ES5For-of12.ts:1:6]
  1 │ for ([""] of [[""]]) { }
@@ -20153,6 +20479,10 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
  10 │ label: const c = 1;
     ╰────
   help: Try insert a semicolon here
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
 
   × Unexpected token
    ╭─[conformance/statements/throwStatements/invalidThrowStatement.ts:1:6]
@@ -20275,6 +20605,8 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·       ╰── It can not be redeclared here
  9 │ }
    ╰────
+
+  × Incomplete quantifier
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
@@ -21354,3 +21686,7 @@ Expect to Parse: "conformance/salsa/plainJSRedeclare3.ts"
    ·            ──
  2 │ type T2<out out> = T2 // Error: circularly references 
    ╰────
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier

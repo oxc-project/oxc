@@ -191,7 +191,7 @@ impl<'a> ParserImpl<'a> {
             }
             Kind::LParen => self.parse_parenthesized_expression(span),
             Kind::Slash | Kind::SlashEq => {
-                let literal = self.parse_literal_regexp();
+                let literal = self.parse_literal_regexp()?;
                 Ok(self.ast.expression_from_reg_exp_literal(literal))
             }
             // JSXElement, JSXFragment
@@ -337,20 +337,27 @@ impl<'a> ParserImpl<'a> {
         Ok(self.ast.big_int_literal(self.end_span(span), raw, base))
     }
 
-    pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
+    pub(crate) fn parse_literal_regexp(&mut self) -> Result<RegExpLiteral<'a>> {
+        use oxc_regexp_parser::{ParserOptions, PatternParser};
         let span = self.start_span();
 
         // split out pattern
         let (pattern_end, flags) = self.read_regex();
         let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
         let pattern = &self.source_text[pattern_start as usize..pattern_end as usize];
+        if let Err(diagnostic) =
+            PatternParser::new(&self.ast.allocator, self.source_text, ParserOptions::default())
+                .parse()
+        {
+            self.error(diagnostic);
+        }
 
         self.bump_any();
-        self.ast.reg_exp_literal(
+        Ok(self.ast.reg_exp_literal(
             self.end_span(span),
             EmptyObject,
             RegExp { pattern: self.ast.atom(pattern), flags },
-        )
+        ))
     }
 
     pub(crate) fn parse_literal_string(&mut self) -> Result<StringLiteral<'a>> {

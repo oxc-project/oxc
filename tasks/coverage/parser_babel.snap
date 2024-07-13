@@ -2,7 +2,7 @@ commit: 12619ffe
 
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
-Positive Passed: 2083/2101 (99.14%)
+Positive Passed: 2059/2101 (98.00%)
 Negative Passed: 1380/1501 (91.94%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -125,6 +125,21 @@ Expect Syntax Error: "typescript/types/read-only-4/input.ts"
 Expect Syntax Error: "typescript/types/tuple-labeled-invalid-optional/input.ts"
 Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
+Expect to Parse: "core/categorized/04-regex/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/categorized/05-regex/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/categorized/07-regex/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/categorized/labeled-block-statement-regex/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/categorized/regex-after-block/input.js"
+
+  × Incomplete quantifier
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
 
   × Unexpected new.target expression
@@ -142,6 +157,69 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
    ·                 ──────────
    ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
+Expect to Parse: "core/regression/2591/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/328/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/330/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/331/input.js"
+
+  × Nothing to repeat
+Expect to Parse: "core/uncategorised/332/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/336/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/337/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/340/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/341/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "core/uncategorised/541/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "es2015/for-of/brackets-const/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "es2015/for-of/brackets-let/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "es2015/for-of/brackets-var/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "es2015/generators/yield-regex/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "es2015/uncategorised/317/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "es2015/yield/asi2/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "es2015/yield/regexp/input.js"
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+
+  × Incomplete quantifier
+Expect to Parse: "es2017/async-functions/context-regex-after-statement/input.js"
+
+  × Incomplete quantifier
+Expect to Parse: "esprima/expression-primary-literal-regular-expression/u-flag-valid-range/input.js"
+
+  × Invalid unicode escape
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expected `<` but found `EOF`
@@ -1241,6 +1319,8 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ var x = /[a-z]/\ux
    ·                 ─
    ╰────
+
+  × Invalid unicode escape
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[core/uncategorised/366/input.js:1:16]
@@ -8240,6 +8320,8 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                 ─
    ╰────
 
+  × Invalid unicode escape
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0041/input.js:1:16]
  1 │ var x = /[a-z]/\ux
@@ -8252,6 +8334,8 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  1 │ var x = /[a-z\n]/\ux
    ·                   ─
    ╰────
+
+  × Invalid unicode escape
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[esprima/invalid-syntax/migrated_0042/input.js:1:18]
