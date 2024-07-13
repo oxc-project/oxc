@@ -111,7 +111,7 @@ impl<'a> SemanticBuilder<'a> {
         // This is just an estimate of a good initial size, but certainly better than
         // `Vec`'s default initial capacity of 4.
         let mut unresolved_references = vec![];
-        unresolved_references.resize_with(16, Default::default);
+        unresolved_references.resize_with(16, TempUnresolvedReferences::default);
 
         let trivias = Trivias::default();
         Self {
