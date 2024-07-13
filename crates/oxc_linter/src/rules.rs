@@ -434,6 +434,7 @@ mod tree_shaking {
 
 mod promise {
     pub mod avoid_new;
+    pub mod no_new_statics;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -827,4 +828,5 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::require_yields,
     tree_shaking::no_side_effects_in_initialization,
     promise::avoid_new,
+    promise::no_new_statics,
 }
