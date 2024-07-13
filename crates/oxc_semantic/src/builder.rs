@@ -27,7 +27,7 @@ use crate::{
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
-    scope::{ScopeFlags, ScopeId, ScopeTree, UnresolvedReferences},
+    scope::{ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     JSDocFinder, Semantic,
 };
@@ -199,6 +199,12 @@ impl<'a> SemanticBuilder<'a> {
             if self.check_syntax_error {
                 checker::check_module_record(&self);
             }
+
+            // Convert remaining unresolved references to a standard hash map
+            debug_assert_eq!(self.current_scope_depth, 0);
+            let mut unresolved_references = self.unresolved_references.into_iter().next().unwrap();
+            self.scope.root_unresolved_references =
+                unresolved_references.drain().map(|line| (line.name, line.reference_ids)).collect();
         }
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
@@ -365,7 +371,8 @@ impl<'a> SemanticBuilder<'a> {
 
         let bindings = self.scope.get_bindings(self.current_scope_id);
         for line in current_refs.drain() {
-            // Try to resolve reference. If unresolved, transfer it to parent scope's unresolved references.
+            // Try to resolve a reference.
+            // If unresolved, transfer it to parent scope's unresolved references.
             if let Some(symbol_id) = bindings.get(&line.name).copied() {
                 for reference_id in &line.reference_ids {
                     self.symbols.references[*reference_id].set_symbol_id(symbol_id);
@@ -375,25 +382,6 @@ impl<'a> SemanticBuilder<'a> {
                 parent_refs.extend(line.name, line.hash, line.reference_ids);
             }
         }
-    }
-
-    fn resolve_references_for_root_scope(&mut self) {
-        let mut root_unresolved_references = UnresolvedReferences::default();
-
-        let bindings = self.scope.get_bindings(self.current_scope_id);
-        for line in self.unresolved_references[self.current_scope_depth].drain() {
-            // Try to resolve reference. If unresolved, transfer it to root unresolved references.
-            if let Some(symbol_id) = bindings.get(&line.name).copied() {
-                for reference_id in &line.reference_ids {
-                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
-                }
-                self.symbols.resolved_references[symbol_id].extend(line.reference_ids);
-            } else {
-                root_unresolved_references.insert(line.name, line.reference_ids);
-            }
-        }
-
-        self.scope.root_unresolved_references = root_unresolved_references;
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
@@ -457,13 +445,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn leave_scope(&mut self) {
+        self.resolve_references_for_current_scope();
         if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
-            self.resolve_references_for_current_scope();
             self.current_scope_id = parent_id;
-            self.current_scope_depth -= 1;
-        } else {
-            self.resolve_references_for_root_scope();
         }
+        self.current_scope_depth -= 1;
     }
 
     // Setup all the context for the binder.
