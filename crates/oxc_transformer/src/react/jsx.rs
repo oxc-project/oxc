@@ -947,7 +947,7 @@ impl<'a> ReactJsx<'a> {
     /// * See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>
     /// Code adapted from <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617C1-L635>
     fn decode_entities(s: &str) -> String {
-        let mut buffer = vec![];
+        let mut buffer = String::new();
         let mut chars = s.char_indices();
         let mut prev = 0;
         while let Some((i, c)) = chars.next() {
@@ -961,21 +961,38 @@ impl<'a> ReactJsx<'a> {
                     }
                 }
                 if let Some(end) = end {
-                    let word = &s[start + 1..end];
-                    buffer.extend_from_slice(s[prev..start].as_bytes());
+                    buffer.push_str(&s[prev..start]);
                     prev = end + 1;
-                    if let Some(c) = XML_ENTITIES.get(word) {
-                        buffer.extend_from_slice(c.to_string().as_bytes());
+                    let word = &s[start + 1..end];
+                    if let Some(decimal) = word.strip_prefix('#') {
+                        if let Some(hex) = decimal.strip_prefix('x') {
+                            if let Some(c) =
+                                u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+                            {
+                                // &x0123;
+                                buffer.push(c);
+                                continue;
+                            }
+                        } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32)
+                        {
+                            // &#0123;
+                            buffer.push(c);
+                            continue;
+                        }
+                    } else if let Some(c) = XML_ENTITIES.get(word) {
+                        // &quote;
+                        buffer.push(*c);
+                        continue;
                     }
+                    // fallback
+                    buffer.push('&');
+                    buffer.push_str(word);
+                    buffer.push(';');
                 }
             }
         }
-        buffer.extend_from_slice(s[prev..].as_bytes());
-        #[allow(unsafe_code)]
-        // SAFETY: The buffer is constructed from valid utf chars.
-        unsafe {
-            String::from_utf8_unchecked(buffer)
-        }
+        buffer.push_str(&s[prev..]);
+        buffer
     }
 }
 
