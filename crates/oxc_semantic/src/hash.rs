@@ -32,25 +32,19 @@ pub struct TempUnresolvedReferences {
 impl TempUnresolvedReferences {
     #[allow(dead_code)]
     pub fn get(&self, name: &str, hash: IdentifierHash) -> Option<&Vec<ReferenceId>> {
-        self.inner
-            .find(hash.0, |line| line.hash == hash && line.name.as_ref() == name)
-            .map(|entry| &entry.reference_ids)
+        self.inner.find(hash.0, |line| line.name.as_ref() == name).map(|entry| &entry.reference_ids)
     }
 
     #[allow(dead_code)]
     pub fn get_mut(&mut self, name: &str, hash: IdentifierHash) -> Option<&mut Vec<ReferenceId>> {
         self.inner
-            .find_mut(hash.0, |line| line.hash == hash && line.name.as_ref() == name)
+            .find_mut(hash.0, |line| line.name.as_ref() == name)
             .map(|entry| &mut entry.reference_ids)
     }
 
     pub fn insert(&mut self, name: CompactStr, reference_id: ReferenceId) {
         let hash = IdentifierHash::new(&name);
-        let entry = self.inner.entry(
-            hash.0,
-            |line| line.hash == hash && line.name == name,
-            |entry| entry.hash.0,
-        );
+        let entry = self.inner.entry(hash.0, |line| line.name == name, |entry| entry.hash.0);
         match entry {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().reference_ids.push(reference_id);
@@ -67,11 +61,7 @@ impl TempUnresolvedReferences {
         hash: IdentifierHash,
         reference_ids: Vec<ReferenceId>,
     ) {
-        let entry = self.inner.entry(
-            hash.0,
-            |line| line.hash == hash && line.name == name,
-            |line| line.hash.0,
-        );
+        let entry = self.inner.entry(hash.0, |line| line.name == name, |line| line.hash.0);
         match entry {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().reference_ids.extend(reference_ids);
