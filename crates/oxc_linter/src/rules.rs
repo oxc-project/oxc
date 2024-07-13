@@ -436,6 +436,7 @@ mod promise {
     pub mod avoid_new;
     pub mod no_new_statics;
     pub mod param_names;
+    pub mod valid_params;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -831,4 +832,5 @@ oxc_macros::declare_all_lint_rules! {
     promise::avoid_new,
     promise::no_new_statics,
     promise::param_names,
+    promise::valid_params,
 }
