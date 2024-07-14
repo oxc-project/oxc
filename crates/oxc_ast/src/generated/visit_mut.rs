@@ -3049,10 +3049,10 @@ pub mod walk_mut {
         let kind = AstType::Class;
         visitor.enter_node(kind);
         visitor.visit_decorators(&mut it.decorators);
-        visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(id) = &mut it.id {
             visitor.visit_binding_identifier(id);
         }
+        visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }

@@ -137,15 +137,8 @@ pub fn check_identifier<'a>(name: &str, span: Span, node: &AstNode<'a>, ctx: &Se
         if ctx.source_type.is_module() {
             return ctx.error(reserved_keyword(name, span));
         }
-
         // It is a Syntax Error if ClassStaticBlockStatementList Contains await is true.
-        if (matches!(ctx.nodes.parent_kind(node.id()), Some(AstKind::Class(_)))
-            && ctx
-                .scope
-                .get_parent_id(node.scope_id())
-                .is_some_and(|id| ctx.scope.get_flags(id).is_class_static_block()))
-            || ctx.current_scope_flags().is_class_static_block()
-        {
+        if ctx.scope.get_flags(node.scope_id()).is_class_static_block() {
             return ctx.error(class_static_block_await(span));
         }
     }

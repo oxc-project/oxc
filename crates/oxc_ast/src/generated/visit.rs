@@ -2925,10 +2925,10 @@ pub mod walk {
         let kind = AstKind::Class(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_decorators(&it.decorators);
-        visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(id) = &it.id {
             visitor.visit_binding_identifier(id);
         }
+        visitor.enter_scope(ScopeFlags::StrictMode, &it.scope_id);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
