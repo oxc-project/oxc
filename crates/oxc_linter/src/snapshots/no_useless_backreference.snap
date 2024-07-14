@@ -8,6 +8,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\k<foo>(?<foo>bar)/
+   ·  ───────
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:27]
+ 1 │ new RegExp('(?!(?<foo>\\n))\\1')
+   ·                           ──
+   ╰────
+
+  ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:14]
  1 │ new RegExp('(\\1)')
    ·              ──
@@ -41,6 +53,18 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_backreference.tsx:1:4]
  1 │ /((\2))/
    ·    ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ /a(?<foo>(.)b\1)/
+   ·              ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:10]
+ 1 │ /a(?<foo>\k<foo>)b/
+   ·          ───────
    ╰────
 
   ⚠ no back reference
@@ -143,6 +167,12 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_backreference.tsx:1:10]
  1 │ /(?:a)(b)\2(c)/
    ·          ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\k<foo>(?<foo>a)/
+   ·  ───────
    ╰────
 
   ⚠ no back reference

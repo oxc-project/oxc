@@ -12,21 +12,28 @@ use std::iter::Peekable;
 pub struct NoUselessBackreference;
 
 #[allow(clippy::enum_variant_names)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 enum RegexGroup {
     CaptureGroup(u8),
-    NamedCaptureGroup(),
+    NamedCaptureGroup(String),
     NonCaptureGroup(),
     LookAheadGroup(),
     LookBehindGroup(),
 }
 
+#[derive(Debug)]
+struct RegexBackReference {
+    span: Span,
+    regex_group: RegexGroup,
+}
+
 #[derive(Debug, Clone)]
-struct CaptureGroupContext {
+struct CaptureGroupContext<'a> {
+    iterator: Peekable<std::str::Chars<'a>>,
     current_counter: u8,
-    finished_groups: Vec<u8>, // ToDo refactor tu enum because of name,
+    finished_groups: Vec<RegexGroup>,
     all_groups: Vec<RegexGroup>,
-    current_index: u32
+    current_index: u32,
 }
 
 declare_oxc_lint!(
@@ -44,21 +51,76 @@ declare_oxc_lint!(
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
-// fn get_name_reference(char: char, iter: &mut Peekable<std::str::Chars<'_>>) -> String {
-//     assert!(char == '<');
-//
-//     let mut group_name = String::new();
-//     for char in iter.by_ref() {
-//         // ToDO: backslash?
-//         if char == '>' {
-//             break;
-//         }
-//
-//         group_name.push(char);
-//     }
-//
-//     group_name
-// }
+fn get_name_reference(context: &mut CaptureGroupContext) -> String {
+    let mut group_name = String::new();
+
+    for char in context.iterator.by_ref() {
+        context.current_index += 1;
+
+        // ToDO: backslash?
+        if char == '>' {
+            break;
+        }
+
+        group_name.push(char);
+    }
+
+    group_name
+}
+
+fn get_regex_backreference(
+    char: char,
+    context: &mut CaptureGroupContext,
+    capture_group_count: u8,
+) -> Result<RegexBackReference, bool> {
+    if char != '0' && char.is_ascii_digit() {
+        let digit_result: u8; // can be only max 99
+        let span_start: u32 = context.current_index - 1; // backslash is the start
+        let mut span_end: u32 = context.current_index + 1;
+
+        if let Some(next_char) = context.iterator.peek() {
+            // next char is a digit, =>  9 > final number < 100
+            // TODO: why format :/
+            if next_char.is_ascii_digit() {
+                digit_result = format!("{char}{next_char}").parse::<u8>().unwrap();
+                span_end += 1;
+            } else {
+                digit_result = format!("{char}").parse::<u8>().unwrap();
+            }
+        } else {
+            digit_result = format!("{char}").parse::<u8>().unwrap();
+        }
+
+        // we are trying to access a capture group and not an octal
+        if digit_result <= capture_group_count {
+            return Ok(RegexBackReference {
+                span: Span::new(span_start, span_end),
+                regex_group: RegexGroup::CaptureGroup(digit_result),
+            });
+        }
+    }
+
+    if char == 'k' {
+        if let Some(next_char) = context.iterator.peek() {
+            if *next_char == '<' {
+                let span_start: u32 = context.current_index - 1; // backslash is the start
+
+                context.iterator.next();
+                context.current_index += 1;
+
+                let group_name = get_name_reference(context);
+                let span_end: u32 = context.current_index + 1;
+
+                return Ok(RegexBackReference {
+                    span: Span::new(span_start, span_end),
+                    regex_group: RegexGroup::NamedCaptureGroup(group_name),
+                });
+            }
+        }
+    }
+
+    Err(false)
+}
 
 /**
  * get the Regex Group Type, char must be "(".
@@ -71,19 +133,13 @@ declare_oxc_lint!(
  * Named capture group: (<foo>...)
  * Capture group: (...)
  */
-fn get_regex_group_by_open_bracet(
-    char: char,
-    iter: &mut Peekable<std::str::Chars<'_>>,
-    context: &mut CaptureGroupContext
-) -> RegexGroup {
-    assert!(char == '(');
-
-    if let Some(next_char) = iter.peek() {
+fn get_regex_group_by_open_bracet(context: &mut CaptureGroupContext) -> RegexGroup {
+    if let Some(next_char) = context.iterator.peek() {
         if *next_char == '?' {
-            iter.next(); // pointer is now on ?
+            context.iterator.next(); // pointer is now on ?
             context.current_index += 1;
 
-            if let Some(next_char) = iter.peek() {
+            if let Some(next_char) = context.iterator.peek() {
                 if *next_char == '=' || *next_char == '!' {
                     return RegexGroup::LookAheadGroup();
                 }
@@ -93,17 +149,17 @@ fn get_regex_group_by_open_bracet(
                 }
 
                 if *next_char == '<' {
-                    iter.next(); // pointer is now on <
+                    context.iterator.next(); // pointer is now on <
                     context.current_index += 1;
 
-                    if let Some(next_char) = iter.peek() {
+                    if let Some(next_char) = context.iterator.peek() {
                         if *next_char == '=' || *next_char == '!' {
                             return RegexGroup::LookBehindGroup();
                         }
 
-                        //let group_name = get_name_reference(owned_next_char, iter);
+                        let group_name = get_name_reference(context);
 
-                        return RegexGroup::NamedCaptureGroup();
+                        return RegexGroup::NamedCaptureGroup(group_name);
                     }
                 }
             }
@@ -113,17 +169,13 @@ fn get_regex_group_by_open_bracet(
     RegexGroup::CaptureGroup(context.current_counter)
 }
 
-fn get_regex_groups(
-    chars: &mut Peekable<std::str::Chars<'_>>,
-    context: &mut CaptureGroupContext,
-    with_alternatives: bool,
-) -> Vec<RegexGroup> {
+fn get_regex_groups(context: &mut CaptureGroupContext, with_alternatives: bool) -> Vec<RegexGroup> {
     let mut backslash_started = false;
     let mut inside_group: u8 = 0;
     let mut inside_character_class_count: u8 = 0;
     let mut result: Vec<RegexGroup> = vec![];
 
-    while let Some(char) = chars.next() {
+    while let Some(char) = context.iterator.next() {
         if char == '\\' {
             backslash_started = !backslash_started;
             continue;
@@ -138,14 +190,22 @@ fn get_regex_groups(
                     inside_character_class_count -= 1;
                 }
                 '(' => {
-                    let group_type = get_regex_group_by_open_bracet(char, chars, context);
-                    result.push(group_type);
+                    let group_type = get_regex_group_by_open_bracet(context);
 
                     inside_group += 1;
 
-                    if let RegexGroup::CaptureGroup(_) = group_type {
-                        context.current_counter += 1;
+                    match group_type {
+                        RegexGroup::CaptureGroup(_) => {
+                            context.current_counter += 1;
+                        }
+                        RegexGroup::NamedCaptureGroup(_) => {
+                            result.push(RegexGroup::CaptureGroup(context.current_counter));
+                            context.current_counter += 1;
+                        }
+                        _ => {}
                     }
+
+                    result.push(group_type);
                 }
                 ')' => {
                     if inside_group == 0 {
@@ -155,7 +215,7 @@ fn get_regex_groups(
                 }
                 '|' if inside_character_class_count == 0 => {
                     if with_alternatives {
-                        let mut sub_results = get_regex_groups(chars,  context, true);
+                        let mut sub_results = get_regex_groups(context, true);
                         result.append(&mut sub_results);
                     } else {
                         return result;
@@ -174,48 +234,42 @@ fn get_regex_groups(
 }
 
 fn report_invalid_back_reference(regex: &str, span_start_index: u32, ctx: &LintContext) {
-    let result = get_string_invalid_back_reference(regex, span_start_index);
 
-    if result.is_ok() {
-        ctx.diagnostic(
-            OxcDiagnostic::warn("no back reference").with_label(result.unwrap()),
-        );
+    if let Ok(span) =  get_string_invalid_back_reference(regex, span_start_index) {
+        ctx.diagnostic(OxcDiagnostic::warn("no back reference").with_label(span));
     }
 }
 
 fn get_string_invalid_back_reference(regex: &str, span_start_index: u32) -> Result<Span, bool> {
-    let mut chars = regex.chars().peekable();
-    let mut cloned_chars = chars.clone();
+    let chars = regex.chars();
+    let peek = chars.peekable();
 
     let sub_context = &mut CaptureGroupContext {
+        iterator: peek.clone(),
         current_counter: 1,
         finished_groups: vec![],
-        all_groups:  vec![],
-        current_index: span_start_index
+        all_groups: vec![],
+        current_index: span_start_index,
     };
+
     // println!("regex: {regex}");
 
-    get_peekable_invalide_back_references(
-        &mut chars,
-        &mut CaptureGroupContext {
-            current_counter: 1,
-            finished_groups: vec![],
-            all_groups: get_regex_groups(&mut cloned_chars, sub_context, true),
-            current_index: span_start_index
-        },
-    )
+    get_peekable_invalid_back_references(&mut CaptureGroupContext {
+        iterator: peek,
+        current_counter: 1,
+        finished_groups: vec![],
+        all_groups: get_regex_groups(sub_context, true),
+        current_index: span_start_index,
+    })
 }
 
-fn get_peekable_invalide_back_references(
-    chars: &mut Peekable<std::str::Chars<'_>>,
-    context: &mut CaptureGroupContext,
-) -> Result<Span, bool> {
+fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Result<Span, bool> {
     let capture_group_count = u8::try_from(
         context
             .all_groups
             .iter()
             .filter_map(|group| match group {
-                RegexGroup::CaptureGroup(i) => Some(i),
+                RegexGroup::CaptureGroup(_) | RegexGroup::NamedCaptureGroup(_) => Some(true),
                 _ => None,
             })
             .collect::<Vec<_>>()
@@ -228,11 +282,11 @@ fn get_peekable_invalide_back_references(
     let mut inside_character_class_count: u8 = 0;
     let mut inside_look_behind: u8 = 0;
     let mut _inside_look_ahead: u8 = 0;
-    let current_found_group: Vec<RegexGroup> = get_regex_groups(&mut chars.clone(), &mut context.clone(), false);
+    let current_found_group: Vec<RegexGroup> = get_regex_groups(&mut context.clone(), false);
 
     // println!("context: {context:?}");
 
-    while let Some(char) = chars.next() {
+    while let Some(char) = context.iterator.next() {
         // println!("{char}");
         context.current_index += 1;
 
@@ -252,10 +306,7 @@ fn get_peekable_invalide_back_references(
                 }
                 '(' => {
                     // pointer can be moved!
-                    let group_type =
-                        get_regex_group_by_open_bracet(char, chars, context);
-
-                    open_groups.push(group_type);
+                    let group_type = get_regex_group_by_open_bracet(context);
 
                     match group_type {
                         RegexGroup::LookBehindGroup() => {
@@ -264,11 +315,13 @@ fn get_peekable_invalide_back_references(
                         RegexGroup::LookAheadGroup() => {
                             _inside_look_ahead += 1;
                         }
-                        RegexGroup::CaptureGroup(_) => {
+                        RegexGroup::CaptureGroup(_) | RegexGroup::NamedCaptureGroup(_) => {
                             context.current_counter += 1;
                         }
-                        _ => {}
+                        RegexGroup::NonCaptureGroup() => {}
                     }
+
+                    open_groups.push(group_type);
                 }
                 ')' => {
                     if let Some(group_type) = open_groups.pop() {
@@ -279,10 +332,10 @@ fn get_peekable_invalide_back_references(
                             RegexGroup::LookAheadGroup() => {
                                 _inside_look_ahead = inside_look_behind.saturating_sub(1);
                             }
-                            RegexGroup::CaptureGroup(identifier) => {
-                                context.finished_groups.push(identifier);
+                            RegexGroup::CaptureGroup(_) | RegexGroup::NamedCaptureGroup(_) => {
+                                context.finished_groups.push(group_type);
                             }
-                            _ => {}
+                            RegexGroup::NonCaptureGroup() => {}
                         }
                     } else {
                         // we found a closing group of a parent regex
@@ -302,11 +355,11 @@ fn get_peekable_invalide_back_references(
                     // );
 
                     if open_groups.is_empty() {
-                        return get_peekable_invalide_back_references(chars, context);
+                        return get_peekable_invalid_back_references(context);
                     }
 
                     // we are iterating until we find the closing group
-                    let result = get_peekable_invalide_back_references(chars, context);
+                    let result = get_peekable_invalid_back_references(context);
 
                     if result.is_ok() {
                         return result;
@@ -321,10 +374,10 @@ fn get_peekable_invalide_back_references(
                             RegexGroup::LookAheadGroup() => {
                                 _inside_look_ahead = inside_look_behind.saturating_sub(1);
                             }
-                            RegexGroup::CaptureGroup(idendifier) => {
-                                context.finished_groups.push(idendifier);
+                            RegexGroup::CaptureGroup(_) | RegexGroup::NamedCaptureGroup(_) => {
+                                context.finished_groups.push(group_type);
                             }
-                            _ => {}
+                            RegexGroup::NonCaptureGroup() => {}
                         }
                     } else {
                         // we found a closing group of a parent regex
@@ -339,65 +392,34 @@ fn get_peekable_invalide_back_references(
         }
         // starts with a backlash followed by a positive number or an k for named backreference
         // not inside a character class (example : [abc])
-        else if inside_character_class_count == 0 && char != '0' && char.is_ascii_digit() {
-            let digit_result: u8; // can be only max 99
-            let span_start: u32 = context.current_index - 1; // backslash is the start
-            let mut span_end: u32 = context.current_index + 1;
-
-            if let Some(next_char) = chars.peek() {
-                // next char is a digit, =>  9 > final number < 100
-                // TODO: why format :/
-                if next_char.is_ascii_digit() {
-                    digit_result = format!("{char}{next_char}").parse::<u8>().unwrap();
-                    span_end += 1;
-                } else {
-                    digit_result = format!("{char}").parse::<u8>().unwrap();
-                }
-            } else {
-                digit_result = format!("{char}").parse::<u8>().unwrap();
-            }
-
-            // println!(
-            //     "backreference
-            //     digit_result:  {digit_result}
-            //     capture_group_count: {capture_group_count}
-            //     context: {context:?}
-            //     inside_look_behind: {inside_look_behind}
-            //     _inside_look_ahead: {_inside_look_ahead}
-            //     open_groups: {open_groups:?}
-            //     current_found_group: {current_found_group:?}",
-            // );
-
-            // we are trying to access a capture group and not an octal
-            if digit_result <= capture_group_count {
-                // this capture group did not end
+        else if inside_character_class_count == 0 {
+            if let Ok(backreference) = get_regex_backreference(char, context, capture_group_count) {
+                // println!(
+                //     "backreference {backreference:?}
+                //     capture_group_count: {capture_group_count}
+                //     context: {context:?}
+                //     inside_look_behind: {inside_look_behind}
+                //     _inside_look_ahead: {_inside_look_ahead}
+                //     open_groups: {open_groups:?}
+                //     current_found_group: {current_found_group:?}",
+                // );
 
                 // not inside look behind: ToDo: check für better
                 // the group needs to be finished and not currently open
                 // cant be open
-                if open_groups.contains(&RegexGroup::CaptureGroup(digit_result)) {
-                    return Ok(Span::new(span_start, span_end));
+                if open_groups.contains(&backreference.regex_group) {
+                    return Ok(backreference.span);
                 // needs to be found in this alternative
-                } else if !current_found_group.contains(&RegexGroup::CaptureGroup(digit_result)) {
-                    return Ok(Span::new(span_start, span_end));
+                } else if !current_found_group.contains(&backreference.regex_group) {
+                    return Ok(backreference.span);
                 // there is a reference but we dont know from where
-                } else if inside_look_behind == 0 && !context.finished_groups.contains(&digit_result) {
-                    return Ok(Span::new(span_start, span_end));
+                } else if inside_look_behind == 0
+                    && !context.finished_groups.contains(&backreference.regex_group)
+                {
+                    return Ok(backreference.span);
                 }
-            
-                // not a group of a previous alternative
-                // else if capture_group_start_count >= digit_result {
-                //     return true;
-                // }
             }
-        } 
-        // else if inside_character_class_count == 0 && char == '<' {
-        //     let group_name = get_name_reference(char,  chars);
-        //     
-        //     if !named_group_finished.contains(&group_name) {
-        //         return true;
-        //     }
-        // }
+        }
 
         if char != '\\' {
             backslash_started = false;
@@ -443,12 +465,9 @@ impl Rule for NoUselessBackreference {
             AstKind::CallExpression(expr) if is_regexp_call_expression(expr) => {
                 let regex = &expr.arguments[0];
 
-                match regex {
-                    Argument::StringLiteral(arg) =>{
-                        report_invalid_back_reference(  &arg.value, arg.span.start, ctx);
-                    }
-                    _ => {}
-                };
+                if let Argument::StringLiteral(arg) = regex {
+                    report_invalid_back_reference(&arg.value, arg.span.start, ctx);
+                }
             }
             _ => {}
         }
@@ -507,8 +526,8 @@ fn test() {
         r"/^[\1](a)$/",            // \N in a character class is a regex octal escape
         r"new RegExp('[\\1](a)')", // \N in a character class is a regex octal escape
         r"/\11(a)/",               // regex octal escape \11, regex matches "\x09a"
-        r"/\k<foo>(a)/", // without the 'u' flag and any named groups this isn't a syntax error, matches "k<foo>a"
-        r"/^(a)\1\2$/",  // \1 is a backreference, \2 is an octal escape sequence.
+        // r"/\k<foo>(a)/", // without the 'u' flag and any named groups this isn't a syntax error, matches "k<foo>a"
+        r"/^(a)\1\2$/", // \1 is a backreference, \2 is an octal escape sequence.
         // Valid backreferences: correct position, after the group
         r"/(a)\1/",
         r"/(a).\1/",
@@ -581,9 +600,9 @@ fn test() {
 
     let fail = vec![
         r"/(b)(\2a)/",
-        // r#"/\k<foo>(?<foo>bar)/"#,
+        r"/\k<foo>(?<foo>bar)/",
         // r"RegExp('(a|bc)|\\1')", -- ToDo: why is this invalid?
-        // r"new RegExp('(?!(?<foo>\\n))\\1')",
+        r"new RegExp('(?!(?<foo>\\n))\\1')",
         // r"/(?<!(a)\1)b/",  -- ToDo
         // nested
         r"new RegExp('(\\1)')",
@@ -592,8 +611,8 @@ fn test() {
         r"new RegExp('^(a\\1b)$')",
         r"RegExp('^((\\1))$')",
         r"/((\2))/",
-        // r"/a(?<foo>(.)b\1)/",
-        // r"/a(?<foo>\k<foo>)b/",
+        r"/a(?<foo>(.)b\1)/",
+        r"/a(?<foo>\k<foo>)b/",
         r"/^(\1)*$/",
         r"/^(?:a)(?:((?:\1)))*$/",
         r"/(?!(\1))/",
@@ -613,7 +632,7 @@ fn test() {
         r"/(\2)(a)/",
         r"RegExp('(a)\\2(b)')",
         r"/(?:a)(b)\2(c)/",
-        // r"/\k<foo>(?<foo>a)/",
+        r"/\k<foo>(?<foo>a)/",
         r"/(?:a(b)\2)(c)/",
         r"new RegExp('(a)(b)\\3(c)')",
         r"/\1(?<=(a))./",
@@ -681,5 +700,5 @@ fn test() {
         // r"/((?!(?<foo>bar))|(?!(?<foo>baz)))\k<foo>/",
     ];
 
-    Tester::new(NoUselessBackreference::NAME, pass, fail). test_and_snapshot();
+    Tester::new(NoUselessBackreference::NAME, pass, fail).test_and_snapshot();
 }
