@@ -35,3 +35,4 @@ rustc-hash = { workspace = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 base64     = { workspace = true }
+pico-args  = { workspace = true }

@@ -1065,17 +1065,19 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
+        p.print_char(b'(');
         self.expression.gen_expr(p, precedence, ctx);
         p.print_str(" as ");
         self.type_annotation.gen(p, ctx);
+        p.print_char(b')');
     }
 }
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.print_str("(");
+        // p.print_str("(");
         self.expression.gen_expr(p, precedence, ctx);
-        p.print_str(")");
+        // p.print_str(")");
     }
 }
 
@@ -1382,7 +1384,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for MemberExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ComputedMemberExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, Precedence::Postfix, ctx);
+        self.object.gen_expr(p, self.precedence(), ctx);
         if self.optional {
             p.print_str("?.");
         }
@@ -1394,7 +1396,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ComputedMemberExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for StaticMemberExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, Precedence::Postfix, ctx);
+        self.object.gen_expr(p, self.precedence(), ctx);
         if self.optional {
             p.print_char(b'?');
         } else if p.need_space_before_dot == p.code_len() {
@@ -1408,7 +1410,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for StaticMemberExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, Precedence::Postfix, ctx);
+        self.object.gen_expr(p, self.precedence(), ctx);
         if self.optional {
             p.print_str("?");
         }

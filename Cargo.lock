@@ -1402,6 +1402,7 @@ dependencies = [
  "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
+ "pico-args",
  "rustc-hash",
 ]
 
