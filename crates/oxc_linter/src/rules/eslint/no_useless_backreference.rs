@@ -26,7 +26,7 @@ struct CaptureGroupContext {
     current_counter: u8,
     finished_groups: Vec<u8>, // ToDo refactor tu enum because of name,
     all_groups: Vec<RegexGroup>,
-    span_start_index: u32
+    current_index: u32
 }
 
 declare_oxc_lint!(
@@ -74,13 +74,14 @@ declare_oxc_lint!(
 fn get_regex_group_by_open_bracet(
     char: char,
     iter: &mut Peekable<std::str::Chars<'_>>,
-    group_counter: u8,
+    context: &mut CaptureGroupContext
 ) -> RegexGroup {
     assert!(char == '(');
 
     if let Some(next_char) = iter.peek() {
         if *next_char == '?' {
             iter.next(); // pointer is now on ?
+            context.current_index += 1;
 
             if let Some(next_char) = iter.peek() {
                 if *next_char == '=' || *next_char == '!' {
@@ -93,6 +94,7 @@ fn get_regex_group_by_open_bracet(
 
                 if *next_char == '<' {
                     iter.next(); // pointer is now on <
+                    context.current_index += 1;
 
                     if let Some(next_char) = iter.peek() {
                         if *next_char == '=' || *next_char == '!' {
@@ -108,19 +110,18 @@ fn get_regex_group_by_open_bracet(
         }
     }
 
-    RegexGroup::CaptureGroup(group_counter)
+    RegexGroup::CaptureGroup(context.current_counter)
 }
 
 fn get_regex_groups(
     chars: &mut Peekable<std::str::Chars<'_>>,
-    group_count: u8,
+    context: &mut CaptureGroupContext,
     with_alternatives: bool,
 ) -> Vec<RegexGroup> {
     let mut backslash_started = false;
     let mut inside_group: u8 = 0;
     let mut inside_character_class_count: u8 = 0;
     let mut result: Vec<RegexGroup> = vec![];
-    let mut counter = group_count;
 
     while let Some(char) = chars.next() {
         if char == '\\' {
@@ -137,13 +138,13 @@ fn get_regex_groups(
                     inside_character_class_count -= 1;
                 }
                 '(' => {
-                    let group_type = get_regex_group_by_open_bracet(char, chars, counter);
+                    let group_type = get_regex_group_by_open_bracet(char, chars, context);
                     result.push(group_type);
 
                     inside_group += 1;
 
                     if let RegexGroup::CaptureGroup(_) = group_type {
-                            counter += 1;
+                        context.current_counter += 1;
                     }
                 }
                 ')' => {
@@ -154,7 +155,7 @@ fn get_regex_groups(
                 }
                 '|' if inside_character_class_count == 0 => {
                     if with_alternatives {
-                        let mut sub_results = get_regex_groups(chars, counter, true);
+                        let mut sub_results = get_regex_groups(chars,  context, true);
                         result.append(&mut sub_results);
                     } else {
                         return result;
@@ -186,6 +187,12 @@ fn get_string_invalid_back_reference(regex: &str, span_start_index: u32) -> Resu
     let mut chars = regex.chars().peekable();
     let mut cloned_chars = chars.clone();
 
+    let sub_context = &mut CaptureGroupContext {
+        current_counter: 1,
+        finished_groups: vec![],
+        all_groups:  vec![],
+        current_index: span_start_index
+    };
     // println!("regex: {regex}");
 
     get_peekable_invalide_back_references(
@@ -193,8 +200,8 @@ fn get_string_invalid_back_reference(regex: &str, span_start_index: u32) -> Resu
         &mut CaptureGroupContext {
             current_counter: 1,
             finished_groups: vec![],
-            all_groups: get_regex_groups(&mut cloned_chars, 1, true),
-            span_start_index: span_start_index
+            all_groups: get_regex_groups(&mut cloned_chars, sub_context, true),
+            current_index: span_start_index
         },
     )
 }
@@ -221,14 +228,13 @@ fn get_peekable_invalide_back_references(
     let mut inside_character_class_count: u8 = 0;
     let mut inside_look_behind: u8 = 0;
     let mut _inside_look_ahead: u8 = 0;
-    let current_found_group: Vec<RegexGroup> =
-        get_regex_groups(&mut chars.clone(), context.current_counter, false);
+    let current_found_group: Vec<RegexGroup> = get_regex_groups(&mut chars.clone(), &mut context.clone(), false);
 
     // println!("context: {context:?}");
 
     while let Some(char) = chars.next() {
         // println!("{char}");
-        context.span_start_index += 1;
+        context.current_index += 1;
 
         // check for backslash
         if char == '\\' {
@@ -247,7 +253,7 @@ fn get_peekable_invalide_back_references(
                 '(' => {
                     // pointer can be moved!
                     let group_type =
-                        get_regex_group_by_open_bracet(char, chars, context.current_counter);
+                        get_regex_group_by_open_bracet(char, chars, context);
 
                     open_groups.push(group_type);
 
@@ -335,7 +341,8 @@ fn get_peekable_invalide_back_references(
         // not inside a character class (example : [abc])
         else if inside_character_class_count == 0 && char != '0' && char.is_ascii_digit() {
             let digit_result: u8; // can be only max 99
-            let mut span_end: u32 = context.span_start_index + 1;
+            let span_start: u32 = context.current_index - 1; // backslash is the start
+            let mut span_end: u32 = context.current_index + 1;
 
             if let Some(next_char) = chars.peek() {
                 // next char is a digit, =>  9 > final number < 100
@@ -369,13 +376,13 @@ fn get_peekable_invalide_back_references(
                 // the group needs to be finished and not currently open
                 // cant be open
                 if open_groups.contains(&RegexGroup::CaptureGroup(digit_result)) {
-                    return Ok(Span::new(context.span_start_index - 1, span_end));
+                    return Ok(Span::new(span_start, span_end));
                 // needs to be found in this alternative
                 } else if !current_found_group.contains(&RegexGroup::CaptureGroup(digit_result)) {
-                    return Ok(Span::new(context.span_start_index - 1, span_end));
+                    return Ok(Span::new(span_start, span_end));
                 // there is a reference but we dont know from where
                 } else if inside_look_behind == 0 && !context.finished_groups.contains(&digit_result) {
-                    return Ok(Span::new(context.span_start_index - 1, span_end));
+                    return Ok(Span::new(span_start, span_end));
                 }
             
                 // not a group of a previous alternative

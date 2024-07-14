@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-assertion_line: 216
 ---
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:6]
@@ -51,15 +50,15 @@ assertion_line: 216
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:12]
+   ╭─[no_useless_backreference.tsx:1:15]
  1 │ /^(?:a)(?:((?:\1)))*$/
-   ·            ──
+   ·               ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:5]
+   ╭─[no_useless_backreference.tsx:1:6]
  1 │ /(?!(\1))/
-   ·     ──
+   ·      ──
    ╰────
 
   ⚠ no back reference
@@ -81,9 +80,9 @@ assertion_line: 216
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:7]
+   ╭─[no_useless_backreference.tsx:1:8]
  1 │ /(?:a|(\1))/
-   ·       ──
+   ·        ──
    ╰────
 
   ⚠ no back reference
@@ -105,27 +104,27 @@ assertion_line: 216
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:4]
+   ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?:\1)(?:(a))/
-   ·    ──
+   ·     ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:4]
+   ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?:\1)(?:((a)))/
-   ·    ──
+   ·     ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:4]
+   ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?:\2)(?:((a)))/
-   ·    ──
+   ·     ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:4]
+   ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?:\1)(?:((?:a)))/
-   ·    ──
+   ·     ──
    ╰────
 
   ⚠ no back reference
@@ -141,15 +140,15 @@ assertion_line: 216
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:9]
+   ╭─[no_useless_backreference.tsx:1:10]
  1 │ /(?:a)(b)\2(c)/
-   ·         ──
+   ·          ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:8]
+   ╭─[no_useless_backreference.tsx:1:9]
  1 │ /(?:a(b)\2)(c)/
-   ·        ──
+   ·         ──
    ╰────
 
   ⚠ no back reference
@@ -171,15 +170,15 @@ assertion_line: 216
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:4]
+   ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?=\1(a))./
-   ·    ──
+   ·     ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:4]
+   ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?!\1(a))./
-   ·    ──
+   ·     ──
    ╰────
 
   ⚠ no back reference
@@ -189,63 +188,63 @@ assertion_line: 216
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:9]
+   ╭─[no_useless_backreference.tsx:1:10]
  1 │ /^(?:(a)|\1b)$/
-   ·         ──
+   ·          ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:14]
+   ╭─[no_useless_backreference.tsx:1:16]
  1 │ /^(?:(a)|b(?:c|\1))$/
-   ·              ──
+   ·                ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:14]
+   ╭─[no_useless_backreference.tsx:1:16]
  1 │ /^(?:a|b(?:(c)|\1))$/
-   ·              ──
+   ·                ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:13]
+   ╭─[no_useless_backreference.tsx:1:15]
  1 │ /^(?:(a(?!b))|\1b)+$/
-   ·             ──
+   ·               ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:16]
+   ╭─[no_useless_backreference.tsx:1:19]
  1 │ /^(?:(?:(a)(?!b))|\1b)+$/
-   ·                ──
+   ·                   ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:13]
+   ╭─[no_useless_backreference.tsx:1:15]
  1 │ /^(?:(a(?=a))|\1b)+$/
-   ·             ──
+   ·               ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:13]
+   ╭─[no_useless_backreference.tsx:1:15]
  1 │ /^(?:(a)(?=a)|\1b)+$/
-   ·             ──
+   ·               ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:16]
+   ╭─[no_useless_backreference.tsx:1:18]
  1 │ /.(?:a|(b)).|(?:(\1)|c)./
-   ·                ──
+   ·                  ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:9]
+   ╭─[no_useless_backreference.tsx:1:10]
  1 │ /.(?!(a)|\1)./
-   ·         ──
+   ·          ──
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:5]
+   ╭─[no_useless_backreference.tsx:1:7]
  1 │ /.(?<=\1|(a))./
-   ·     ──
+   ·       ──
    ╰────
 
   ⚠ no back reference
@@ -273,9 +272,9 @@ assertion_line: 216
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:4]
+   ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?!\1(a)).\1/
-   ·    ──
+   ·     ──
    ╰────
 
   ⚠ no back reference
