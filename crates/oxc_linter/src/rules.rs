@@ -439,6 +439,7 @@ mod promise {
     pub mod no_return_in_finally;
     pub mod no_return_wrap;
     pub mod param_names;
+    pub mod prefer_await_to_then;
     pub mod valid_params;
 }
 
@@ -839,4 +840,5 @@ oxc_macros::declare_all_lint_rules! {
     promise::no_return_in_finally,
     promise::no_return_wrap,
     promise::no_promise_in_callback,
+    promise::prefer_await_to_then,
 }
