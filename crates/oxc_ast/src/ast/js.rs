@@ -1439,7 +1439,7 @@ pub struct BindingRestElement<'a> {
 #[scope(
     // TODO: `ScopeFlags::Function` is not correct if this is a `MethodDefinition`
     flags(flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function),
-    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())),
+    strict_if(self.is_strict()),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1470,8 +1470,8 @@ pub struct Function<'a> {
     /// ```
     pub this_param: Option<TSThisParameter<'a>>,
     pub params: Box<'a, FormalParameters<'a>>,
-    pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 

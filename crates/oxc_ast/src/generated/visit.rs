@@ -3038,7 +3038,7 @@ pub mod walk {
         visitor.enter_scope(
             {
                 let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
-                if it.body.as_ref().is_some_and(|body| body.has_use_strict_directive()) {
+                if it.is_strict() {
                     flags |= ScopeFlags::StrictMode;
                 }
                 flags
@@ -3055,11 +3055,11 @@ pub mod walk {
             visitor.visit_ts_this_parameter(this_param);
         }
         visitor.visit_formal_parameters(&it.params);
-        if let Some(body) = &it.body {
-            visitor.visit_function_body(body);
-        }
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
+        }
+        if let Some(body) = &it.body {
+            visitor.visit_function_body(body);
         }
         visitor.leave_scope();
         visitor.leave_node(kind);

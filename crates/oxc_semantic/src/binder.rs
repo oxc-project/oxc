@@ -106,8 +106,9 @@ fn function_as_var(flags: ScopeFlags, source_type: SourceType) -> bool {
 impl<'a> Binder for Function<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
         let current_scope_id = builder.current_scope_id;
+        let scope_flags = builder.current_scope_flags();
         if let Some(ident) = &self.id {
-            if !builder.current_scope_flags().is_strict_mode()
+            if !scope_flags.is_strict_mode()
                 && matches!(
                     builder.nodes.parent_kind(builder.current_node_id),
                     Some(AstKind::IfStatement(_))
@@ -118,12 +119,10 @@ impl<'a> Binder for Function<'a> {
             } else if self.r#type == FunctionType::FunctionDeclaration {
                 // The visitor is already inside the function scope,
                 // retrieve the parent scope for the function id to bind to.
-                let parent_scope_id = builder.scope.get_parent_id(current_scope_id).unwrap();
-                let parent_flags = builder.scope.get_flags(parent_scope_id);
 
                 let (includes, excludes) =
-                    if (parent_flags.is_strict_mode() || self.r#async || self.generator)
-                        && !function_as_var(parent_flags, builder.source_type)
+                    if (scope_flags.is_strict_mode() || self.r#async || self.generator)
+                        && !function_as_var(scope_flags, builder.source_type)
                     {
                         (
                             SymbolFlags::Function | SymbolFlags::BlockScopedVariable,
@@ -136,13 +135,7 @@ impl<'a> Binder for Function<'a> {
                         )
                     };
 
-                let symbol_id = builder.declare_symbol_on_scope(
-                    ident.span,
-                    &ident.name,
-                    parent_scope_id,
-                    includes,
-                    excludes,
-                );
+                let symbol_id = builder.declare_symbol(ident.span, &ident.name, includes, excludes);
                 ident.symbol_id.set(Some(symbol_id));
             } else if self.r#type == FunctionType::FunctionExpression {
                 // https://tc39.es/ecma262/#sec-runtime-semantics-instantiateordinaryfunctionexpression
@@ -158,7 +151,6 @@ impl<'a> Binder for Function<'a> {
         }
 
         // bind scope flags: Constructor | GetAccessor | SetAccessor
-        debug_assert!(builder.current_scope_flags().contains(ScopeFlags::Function));
         if let Some(kind) = builder.nodes.parent_kind(builder.current_node_id) {
             match kind {
                 AstKind::MethodDefinition(def) => {

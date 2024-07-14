@@ -20872,10 +20872,10 @@ Expect to Parse: "conformance/types/typeRelationships/typeAndMemberIdentity/obje
  17 │     // Type parameters and top-level local types are in same declaration space
  18 │     function f<T>() {
     ·                ┬
-    ·                ╰── It can not be redeclared here
+    ·                ╰── `T` has already been declared here
  19 │         interface T { }
     ·                   ┬
-    ·                   ╰── `T` has already been declared here
+    ·                   ╰── It can not be redeclared here
  20 │         return undefined;
     ╰────
 

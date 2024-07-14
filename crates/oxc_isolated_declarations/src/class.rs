@@ -123,8 +123,8 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&function.type_parameters),
             self.ast.copy(&function.this_param),
             params,
-            Option::<FunctionBody>::None,
             return_type,
+            Option::<FunctionBody>::None,
         );
 
         self.ast.class_element_method_definition(

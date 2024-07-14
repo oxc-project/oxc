@@ -209,6 +209,14 @@ source: crates/oxc_linter/src/tester.rs
   help: The `Function` type accepts any function-like value
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+   ╭─[ban_types.tsx:5:24]
+ 4 │ 
+ 5 │           arg(): Array<String> {
+   ·                        ──────
+ 6 │             const foo: String = 1 as String;
+   ╰────
+
+  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:6:24]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
@@ -222,14 +230,6 @@ source: crates/oxc_linter/src/tester.rs
  6 │             const foo: String = 1 as String;
    ·                                      ──────
  7 │           }
-   ╰────
-
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:5:24]
- 4 │ 
- 5 │           arg(): Array<String> {
-   ·                        ──────
- 6 │             const foo: String = 1 as String;
    ╰────
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type

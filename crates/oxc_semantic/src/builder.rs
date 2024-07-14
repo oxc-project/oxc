@@ -414,13 +414,21 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn bind_class_expression(&mut self) {
-        if let AstKind::Class(class) = self.nodes.kind(self.current_node_id) {
-            if class.is_expression() {
-                // We must to bind class expression when enter BindingIdentifier,
-                // because we should add binding to current scope
-                class.bind(self);
+    fn bind_function_or_class_expression(&mut self) {
+        match self.nodes.kind(self.current_node_id) {
+            AstKind::Class(class) => {
+                if class.is_expression() {
+                    // We need to bind class expression in the class scope,
+                    class.bind(self);
+                }
             }
+            AstKind::Function(func) => {
+                if func.is_expression() {
+                    // We need to bind function expression in the function scope,
+                    func.bind(self);
+                }
+            }
+            _ => {}
         }
     }
 }
@@ -461,8 +469,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         if !flags.is_top() {
-            self.bind_class_expression();
+            self.bind_function_or_class_expression();
         }
+
+        self.add_current_node_id_to_current_scope();
     }
 
     fn leave_scope(&mut self) {
@@ -1408,18 +1418,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     }
 
     fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
-        let kind = AstKind::Function(self.alloc(func));
-        self.enter_scope(
-            {
-                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
-                if func.is_strict() {
-                    flags |= ScopeFlags::StrictMode;
-                }
-                flags
-            },
-            &func.scope_id,
-        );
-
         /* cfg */
         let (before_function_graph_ix, error_harness, function_graph_ix) =
             control_flow!(|self, cfg| {
@@ -1434,7 +1432,22 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         // We add a new basic block to the cfg before entering the node
         // so that the correct cfg_ix is associated with the ast node.
+        let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+        self.enter_scope(
+            {
+                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+                if func.is_strict() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &func.scope_id,
+        );
+
+        if let Some(id) = &func.id {
+            self.visit_binding_identifier(id);
+        }
 
         /* cfg */
         control_flow!(|self, cfg| cfg.add_edge(
@@ -1444,10 +1457,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         ));
         /* cfg */
 
-        if let Some(ident) = &func.id {
-            self.visit_binding_identifier(ident);
+        if let Some(type_parameters) = &func.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(this_param) = &func.this_param {
+            self.visit_ts_this_parameter(this_param);
         }
         self.visit_formal_parameters(&func.params);
+        if let Some(return_type) = &func.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
         if let Some(body) = &func.body {
             self.visit_function_body(body);
         }
@@ -1462,20 +1481,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if let Some(parameters) = &func.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
-        if let Some(annotation) = &func.return_type {
-            self.visit_ts_type_annotation(annotation);
-        }
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
-        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
-
         /* cfg */
         let (current_node_ix, error_harness, function_graph_ix) = control_flow!(|self, cfg| {
             let current_node_ix = cfg.current_node_ix;
@@ -1489,7 +1499,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         // We add a new basic block to the cfg before entering the node
         // so that the correct cfg_ix is associated with the ast node.
+        let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
+        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
 
         self.visit_formal_parameters(&expr.params);
 
@@ -1582,14 +1594,14 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::StaticBlock(_) => self.label_builder.enter_function_or_static_block(),
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
-                func.bind(self);
+                if func.is_declaration() {
+                    func.bind(self);
+                }
                 self.label_builder.enter_function_or_static_block();
-                self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.push(self.current_node_id);
-                self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::Class(class) => {

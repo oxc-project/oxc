@@ -181,8 +181,8 @@ impl<'a> ParserImpl<'a> {
             type_parameters,
             this_param,
             params,
-            body,
             return_type,
+            body,
         ))
     }
 

@@ -2287,17 +2287,17 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
             as *mut Box<FormalParameters>)) as *mut _,
         ctx,
     );
-    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY)
-        as *mut Option<Box<FunctionBody>>)
-    {
-        ctx.retag_stack(AncestorType::FunctionBody);
-        walk_function_body(traverser, (&mut **field) as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_RETURN_TYPE)
         as *mut Option<Box<TSTypeAnnotation>>)
     {
         ctx.retag_stack(AncestorType::FunctionReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
+    }
+    if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_BODY)
+        as *mut Option<Box<FunctionBody>>)
+    {
+        ctx.retag_stack(AncestorType::FunctionBody);
+        walk_function_body(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack();
     traverser.exit_function(&mut *node, ctx);

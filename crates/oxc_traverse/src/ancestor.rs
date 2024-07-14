@@ -143,8 +143,8 @@ pub(crate) enum AncestorType {
     FunctionTypeParameters = 111,
     FunctionThisParam = 112,
     FunctionParams = 113,
-    FunctionBody = 114,
-    FunctionReturnType = 115,
+    FunctionReturnType = 114,
+    FunctionBody = 115,
     FormalParametersItems = 116,
     FormalParametersRest = 117,
     FormalParameterDecorators = 118,
@@ -531,8 +531,8 @@ pub enum Ancestor<'a> {
         AncestorType::FunctionTypeParameters as u16,
     FunctionThisParam(FunctionWithoutThisParam<'a>) = AncestorType::FunctionThisParam as u16,
     FunctionParams(FunctionWithoutParams<'a>) = AncestorType::FunctionParams as u16,
-    FunctionBody(FunctionWithoutBody<'a>) = AncestorType::FunctionBody as u16,
     FunctionReturnType(FunctionWithoutReturnType<'a>) = AncestorType::FunctionReturnType as u16,
+    FunctionBody(FunctionWithoutBody<'a>) = AncestorType::FunctionBody as u16,
     FormalParametersItems(FormalParametersWithoutItems<'a>) =
         AncestorType::FormalParametersItems as u16,
     FormalParametersRest(FormalParametersWithoutRest<'a>) =
@@ -1242,8 +1242,8 @@ impl<'a> Ancestor<'a> {
                 | Self::FunctionTypeParameters(_)
                 | Self::FunctionThisParam(_)
                 | Self::FunctionParams(_)
-                | Self::FunctionBody(_)
                 | Self::FunctionReturnType(_)
+                | Self::FunctionBody(_)
         )
     }
 
@@ -5194,8 +5194,8 @@ pub(crate) const OFFSET_FUNCTION_DECLARE: usize = offset_of!(Function, declare);
 pub(crate) const OFFSET_FUNCTION_TYPE_PARAMETERS: usize = offset_of!(Function, type_parameters);
 pub(crate) const OFFSET_FUNCTION_THIS_PARAM: usize = offset_of!(Function, this_param);
 pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
-pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
+pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
 
 #[repr(transparent)]
@@ -5253,18 +5253,18 @@ impl<'a> FunctionWithoutId<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
-                as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
         }
     }
 
@@ -5331,18 +5331,18 @@ impl<'a> FunctionWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
-                as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
         }
     }
 
@@ -5409,18 +5409,18 @@ impl<'a> FunctionWithoutThisParam<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
-                as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
         }
     }
 
@@ -5487,96 +5487,18 @@ impl<'a> FunctionWithoutParams<'a> {
     }
 
     #[inline]
+    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
                 as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct FunctionWithoutBody<'a>(pub(crate) *const Function<'a>);
-
-impl<'a> FunctionWithoutBody<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
-                as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn generator(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#async(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(&self) -> &Option<TSThisParameter<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(&self) -> &Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
@@ -5655,6 +5577,84 @@ impl<'a> FunctionWithoutReturnType<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
                 as *const Option<Box<'a, FunctionBody<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct FunctionWithoutBody<'a>(pub(crate) *const Function<'a>);
+
+impl<'a> FunctionWithoutBody<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
+                as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn generator(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(&self) -> &Option<TSThisParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
+                as *const Option<TSThisParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(&self) -> &Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 

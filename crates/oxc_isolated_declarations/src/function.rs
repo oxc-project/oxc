@@ -37,8 +37,8 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.ast.copy(&func.type_parameters),
                 self.ast.copy(&func.this_param),
                 params,
-                Option::<FunctionBody>::None,
                 return_type,
+                Option::<FunctionBody>::None,
             ))
         }
     }

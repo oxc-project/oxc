@@ -150,8 +150,8 @@ impl<'a> AstBuilder<'a> {
             Option::<TSTypeParameterDeclaration>::None,
             None,
             params,
-            body,
             Option::<TSTypeAnnotation>::None,
+            body,
         ))
     }
 
