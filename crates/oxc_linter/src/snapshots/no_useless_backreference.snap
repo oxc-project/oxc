@@ -212,6 +212,78 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:9]
+ 1 │ /(?<=(a)\1)b/
+   ·         ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:11]
+ 1 │ /(?<!.(a).\1.)b/
+   ·           ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ /(.)(?<!(b|c)\2)d/
+   ·              ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ /(?<=(?:(a)\1))b/
+   ·            ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /(?<=(?:(a))\1)b/
+   ·             ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:12]
+ 1 │ /(?<=(a)(?:\1))b/
+   ·            ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /(?<!(?:(a))(?:\1))b/
+   ·                ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /(?<!(?:(a))(?:\1)|.)b/
+   ·                ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?!(?<!(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?=(?<!(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?!(?<=(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /.(?=(?<=(a)\1))./
+   ·             ──
+   ╰────
+
+  ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:6]
  1 │ /(a)|\1b/
    ·      ──
@@ -329,4 +401,28 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_useless_backreference.tsx:1:13]
  1 │ new RegExp('\\1([[A--B]])', 'v')
    ·             ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:2]
+ 1 │ /\k<foo>((?<foo>bar)|(?<foo>baz)|(?<foo>qux))/
+   ·  ───────
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /((?<foo>bar)|\k<foo>|(?<foo>baz))/
+   ·               ───────
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:15]
+ 1 │ /((?<foo>bar)|\k<foo>|(?<foo>baz)|(?<foo>qux))/
+   ·               ───────
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:25]
+ 1 │ /((?<foo>bar)|(?<foo>baz\k<foo>)|(?<foo>qux\k<foo>))/
+   ·                         ───────
    ╰────
