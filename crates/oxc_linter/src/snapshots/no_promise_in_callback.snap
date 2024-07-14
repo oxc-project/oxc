@@ -1,0 +1,68 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:19]
+ 1 │ a(function(err) { doThing().then(a) })
+   ·                   ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:32]
+ 1 │ a(function(error, zup, supa) { doThing().then(a) })
+   ·                                ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:21]
+ 1 │ a(function(error) { doThing().then(a) })
+   ·                     ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:16]
+ 1 │ a((error) => { doThing().then(a) })
+   ·                ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:14]
+ 1 │ a((error) => doThing().then(a))
+   ·              ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:20]
+ 1 │ a((err, data) => { doThing().then(a) })
+   ·                    ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:18]
+ 1 │ a((err, data) => doThing().then(a))
+   ·                  ─────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:19]
+ 1 │ function x(err) { Promise.all() }
+   ·                   ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:19]
+ 1 │ function x(err) { Promise.allSettled() }
+   ·                   ────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:19]
+ 1 │ function x(err) { Promise.any() }
+   ·                   ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-promise-in-callback): Avoid using promises inside of callbacks
+   ╭─[no_promise_in_callback.tsx:1:18]
+ 1 │ let x = (err) => doThingWith(err).then(a)
+   ·                  ────────────────────────
+   ╰────
