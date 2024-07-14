@@ -17,8 +17,9 @@ include                = ["/src"]
 workspace = true
 
 [[bin]]
-name = "oxc_language_server"
-test = false
+name    = "oxc_language_server"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_allocator   = { workspace = true }

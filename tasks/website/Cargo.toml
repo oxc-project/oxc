@@ -9,8 +9,9 @@ license.workspace = true
 workspace = true
 
 [[bin]]
-name = "website"
-test = false
+name    = "website"
+test    = false
+doctest = false
 
 [lib]
 doctest = false
