@@ -1539,8 +1539,17 @@ impl<'a> SemanticBuilder<'a> {
         /* cfg */
 
         match kind {
-            AstKind::ExportDefaultDeclaration(_) => {
-                self.current_symbol_flags |= SymbolFlags::Export;
+            AstKind::ExportDefaultDeclaration(decl) => {
+                // Only if the declaration has an id, we mark it as an export
+                if match &decl.declaration {
+                    ExportDefaultDeclarationKind::FunctionDeclaration(ref func) => {
+                        func.id.is_some()
+                    }
+                    ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
+                    _ => true,
+                } {
+                    self.current_symbol_flags |= SymbolFlags::Export;
+                }
             }
             AstKind::ExportNamedDeclaration(decl) => {
                 self.current_symbol_flags |= SymbolFlags::Export;
@@ -1588,7 +1597,6 @@ impl<'a> SemanticBuilder<'a> {
                 if class.is_declaration() {
                     class.bind(self);
                 }
-                self.current_symbol_flags -= SymbolFlags::Export;
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ClassBody(body) => {
@@ -1607,9 +1615,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::BindingRestElement(element) => {
                 element.bind(self);
-            }
-            AstKind::FormalParameters(_) => {
-                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::FormalParameter(param) => {
                 param.bind(self);
@@ -1699,11 +1704,10 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
             }
-            AstKind::ExportDefaultDeclaration(_) => {
+            AstKind::BindingIdentifier(_) => {
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::ExportNamedDeclaration(decl) => {
-                self.current_symbol_flags -= SymbolFlags::Export;
                 if decl.export_kind.is_type() {
                     self.current_reference_flag -= ReferenceFlag::Type;
                 }
