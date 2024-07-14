@@ -23,7 +23,7 @@ doctest = false
 oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
-oxc_syntax    = { workspace = true }
+oxc_syntax    = { workspace = true, features = ["to_js_string"] }
 oxc_sourcemap = { workspace = true }
 oxc_mangler   = { workspace = true }
 

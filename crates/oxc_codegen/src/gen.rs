@@ -1184,8 +1184,10 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
 }
 
 // TODO: refactor this with less allocations
+// <https://github.com/evanw/esbuild/blob/360d47230813e67d0312ad754cad2b6ee09b151b/internal/js_printer/js_printer.go#L3472>
 fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIFY }>) -> String {
-    let mut result = value.to_string();
+    use oxc_syntax::number::ToJsString;
+    let mut result = value.to_js_string();
     let chars = result.as_bytes();
     let len = chars.len();
     let dot = chars.iter().position(|&c| c == b'.');
