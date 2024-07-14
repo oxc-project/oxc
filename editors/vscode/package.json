@@ -104,7 +104,7 @@
     }
   },
   "scripts": {
-    "preinstall": "[ -f icon.png ] || curl https://raw.githubusercontent.com/Boshen/oxc-assets/main/logo-square-min.png --output icon.png",
+    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
     "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap",
     "watch": "pnpm run compile --watch",

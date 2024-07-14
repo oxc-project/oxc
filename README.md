@@ -1,5 +1,5 @@
 <p align="center">
-  <img alt="OXC Logo" src="https://raw.githubusercontent.com/oxc-project/oxc-assets/main/preview-universal.png" width="700">
+  <img alt="OXC Logo" src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/preview-universal.png" width="700">
 </p>
 
 <div align="center">
@@ -43,7 +43,7 @@ npx oxlint@latest
 To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4800+ files in 0.7 seconds.
 
 <p float="left" align="left">
-  <img src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/linter-screenshot.png" width="60%">
+  <img src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/linter-screenshot.png" width="60%">
 </p>
 
 ## ⚡️ Performance
@@ -230,7 +230,7 @@ This project was incubated with the assistance of these exceptional mentors and 
 Special thanks go to
 
 * [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
-* [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/Boshen/oxc-assets).
+* [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
 
 ## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
 
