@@ -370,15 +370,23 @@ impl<'a> SemanticBuilder<'a> {
         let current_refs = iter.next().unwrap();
 
         let bindings = self.scope.get_bindings(self.current_scope_id);
-        for line in current_refs.drain() {
-            // Try to resolve a reference.
-            // If unresolved, transfer it to parent scope's unresolved references.
-            if let Some(symbol_id) = bindings.get(&line.name).copied() {
-                for reference_id in &line.reference_ids {
-                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+        if !bindings.is_empty() {
+            for line in current_refs.drain() {
+                // Try to resolve a reference.
+                // If unresolved, transfer it to parent scope's unresolved references.
+                if let Some(symbol_id) = bindings.get(&line.name).copied() {
+                    for reference_id in &line.reference_ids {
+                        self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                    }
+                    self.symbols.resolved_references[symbol_id].extend(line.reference_ids);
+                } else {
+                    parent_refs.extend(line.name, line.hash, line.reference_ids);
                 }
-                self.symbols.resolved_references[symbol_id].extend(line.reference_ids);
-            } else {
+            }
+        } else if parent_refs.is_empty() {
+            std::mem::swap(current_refs, parent_refs);
+        } else {
+            for line in current_refs.drain() {
                 parent_refs.extend(line.name, line.hash, line.reference_ids);
             }
         }

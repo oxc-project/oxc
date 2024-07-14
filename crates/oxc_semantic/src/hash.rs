@@ -44,6 +44,11 @@ impl TempUnresolvedReferences {
             .map(|entry| &mut entry.reference_ids)
     }
 
+    #[inline]
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
     pub fn insert(&mut self, name: CompactStr, reference_id: ReferenceId) {
         let hash = IdentifierHash::new(&name);
         if let Some(line) = self.inner.find_mut(hash.0, |line| line.name == name) {
