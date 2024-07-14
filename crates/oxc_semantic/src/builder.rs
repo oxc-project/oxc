@@ -369,6 +369,8 @@ impl<'a> SemanticBuilder<'a> {
         let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
         let current_refs = iter.next().unwrap();
 
+        // Dummy comment to run benchmarks again
+
         let bindings = self.scope.get_bindings(self.current_scope_id);
         if !bindings.is_empty() {
             // Try to resolve references in current scope.
