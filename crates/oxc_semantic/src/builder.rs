@@ -414,6 +414,16 @@ impl<'a> SemanticBuilder<'a> {
             self.symbols.union_flag(symbol_id, SymbolFlags::Export);
         }
     }
+
+    fn bind_class_expression(&mut self) {
+        if let AstKind::Class(class) = self.nodes.kind(self.current_node_id) {
+            if class.is_expression() {
+                // We must to bind class expression when enter BindingIdentifier,
+                // because we should add binding to current scope
+                class.bind(self);
+            }
+        }
+    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -443,6 +453,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_scope_depth += 1;
         if self.unresolved_references.len() <= self.current_scope_depth {
             self.unresolved_references.push(UnresolvedReferences::default());
+        }
+
+        if !flags.is_top() {
+            self.bind_class_expression();
         }
     }
 
@@ -1453,46 +1467,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_scope();
     }
 
-    fn visit_class(&mut self, class: &Class<'a>) {
-        // Class level decorators are transpiled as functions outside of the class taking the class
-        // itself as argument. They should be visited before class is entered. E.g., they inherit
-        // strict mode from the enclosing scope rather than from class.
-        for decorator in &class.decorators {
-            self.visit_decorator(decorator);
-        }
-        let kind = AstKind::Class(self.alloc(class));
-
-        // FIXME(don): Should we enter a scope when visiting class declarations?
-        let is_class_expr = class.r#type == ClassType::ClassExpression;
-        if is_class_expr {
-            // Class expressions create a temporary scope with the class name as its only variable
-            // E.g., `let c = class A { foo() { console.log(A) } }`
-            self.enter_scope(ScopeFlags::empty(), &class.scope_id);
-        }
-
-        self.enter_node(kind);
-
-        if let Some(id) = &class.id {
-            self.visit_binding_identifier(id);
-        }
-        if let Some(parameters) = &class.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
-
-        if let Some(super_class) = &class.super_class {
-            self.visit_class_heritage(super_class);
-        }
-        if let Some(super_parameters) = &class.super_type_parameters {
-            self.visit_ts_type_parameter_instantiation(super_parameters);
-        }
-        self.visit_class_body(&class.body);
-
-        self.leave_node(kind);
-        if is_class_expr {
-            self.leave_scope();
-        }
-    }
-
     fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
@@ -1606,7 +1580,9 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
-                class.bind(self);
+                if class.is_declaration() {
+                    class.bind(self);
+                }
                 self.current_symbol_flags -= SymbolFlags::Export;
                 self.make_all_namespaces_valuelike();
             }
