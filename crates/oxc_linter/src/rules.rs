@@ -434,6 +434,7 @@ mod tree_shaking {
 
 mod promise {
     pub mod avoid_new;
+    pub mod catch_or_return;
     pub mod no_callback_in_promise;
     pub mod no_new_statics;
     pub mod no_promise_in_callback;
@@ -843,4 +844,5 @@ oxc_macros::declare_all_lint_rules! {
     promise::no_promise_in_callback,
     promise::prefer_await_to_then,
     promise::no_callback_in_promise,
+    promise::catch_or_return,
 }
