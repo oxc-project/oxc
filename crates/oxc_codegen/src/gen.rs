@@ -10,11 +10,7 @@ use oxc_syntax::{
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{
-    annotation_comment::{gen_comment, get_leading_annotate_comment},
-    gen_comment::GenComment,
-    Codegen, Context, Operator,
-};
+use crate::{Codegen, Context, Operator};
 
 pub trait Gen<const MINIFY: bool> {
     fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
@@ -586,7 +582,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclaration<'a> {
             if let Some(declarator) = self.declarations.first() {
                 if let Some(ref init) = declarator.init {
                     if let Some(leading_annotate_comment) =
-                        get_leading_annotate_comment(self.span.start, p)
+                        p.get_leading_annotate_comment(self.span.start)
                     {
                         p.move_comment(init.span().start, leading_annotate_comment);
                     }
@@ -620,7 +616,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.gen_comment(p, ctx);
+        p.gen_comment(self.span.start);
         let n = p.code_len();
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
@@ -850,7 +846,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
         if p.comment_options.preserve_annotate_comments {
             match &self.declaration {
                 Some(Declaration::FunctionDeclaration(_)) => {
-                    gen_comment(self.span.start, p);
+                    p.gen_comment(self.span.start);
                 }
                 Some(Declaration::VariableDeclaration(var_decl))
                     if matches!(var_decl.kind, VariableDeclarationKind::Const) =>
@@ -858,7 +854,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportNamedDeclaration<'a> {
                     if let Some(declarator) = var_decl.declarations.first() {
                         if let Some(ref init) = declarator.init {
                             if let Some(leading_annotate_comment) =
-                                get_leading_annotate_comment(self.span.start, p)
+                                p.get_leading_annotate_comment(self.span.start)
                             {
                                 p.move_comment(init.span().start, leading_annotate_comment);
                             }
@@ -1425,7 +1421,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let wrap = precedence > self.precedence() || ctx.has_forbid_call();
         let ctx = ctx.and_forbid_call(false);
-        self.gen_comment(p, ctx);
+        p.gen_comment(self.span.start);
         p.wrap(wrap, |p| {
             p.add_source_mapping(self.span.start);
             self.callee.gen_expr(p, self.precedence(), ctx);
@@ -1596,7 +1592,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.wrap(precedence > Precedence::Assign, |p| {
-            self.gen_comment(p, ctx);
+            p.gen_comment(self.span.start);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
                 p.print_str("async");
@@ -2055,7 +2051,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        self.gen_comment(p, ctx);
+        p.gen_comment(self.span.start);
         p.wrap(precedence > self.precedence(), |p| {
             p.add_source_mapping(self.span.start);
             p.print_str("new ");

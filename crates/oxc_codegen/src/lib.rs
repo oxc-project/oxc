@@ -6,7 +6,6 @@
 mod annotation_comment;
 mod context;
 mod gen;
-mod gen_comment;
 mod operator;
 mod sourcemap_builder;
 
