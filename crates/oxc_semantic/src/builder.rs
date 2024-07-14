@@ -369,10 +369,13 @@ impl<'a> SemanticBuilder<'a> {
         let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
         let current_refs = iter.next().unwrap();
 
-        // Dummy comment to run benchmarks again
-
         let bindings = self.scope.get_bindings(self.current_scope_id);
-        if !bindings.is_empty() {
+        if bindings.is_empty() && parent_refs.is_empty() {
+            // Current scope has no bindings, and parent scope has no unresolved references.
+            // Move up unresolved references to parent scope in bulk.
+            // This is fast path for e.g. `function f(cond) { if (cond) { doStuff(); } }`.
+            mem::swap(current_refs, parent_refs);
+        } else {
             // Try to resolve references in current scope.
             // Transfer unresolved references to parent scope's unresolved references.
             for (name, reference_ids) in current_refs.drain() {
@@ -382,18 +385,6 @@ impl<'a> SemanticBuilder<'a> {
                     }
                     self.symbols.resolved_references[symbol_id].extend(reference_ids);
                 } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
-                    parent_reference_ids.extend(reference_ids);
-                } else {
-                    parent_refs.insert(name, reference_ids);
-                }
-            }
-        } else if parent_refs.is_empty() {
-            // Fast path for when parent scope has no unresolved references. Move them all up in bulk.
-            mem::swap(current_refs, parent_refs);
-        } else {
-            // Combine current unresolved references into parent scopes's unresolved references.
-            for (name, reference_ids) in current_refs.drain() {
-                if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
                     parent_reference_ids.extend(reference_ids);
                 } else {
                     parent_refs.insert(name, reference_ids);
