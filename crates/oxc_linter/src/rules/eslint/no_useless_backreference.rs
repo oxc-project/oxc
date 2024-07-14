@@ -259,12 +259,12 @@ fn handle_closing_bracet(
             RegexGroup::LookBehindGroup() => {
                 look_behind_context.inside_counter -= 1;
 
-                println!(
-                    "
-                    context: {context:?}
-                    look_behind_context: {look_behind_context:?}
-                "
-                );
+                // println!(
+                //     "
+                //     context: {context:?}
+                //     look_behind_context: {look_behind_context:?}
+                // "
+                // );
 
                 if look_behind_context.inside_counter == 0 {
                     let mut found_groups: Vec<RegexGroup> = vec![];
@@ -455,15 +455,15 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
         // not inside a character class (example : [abc])
         else if inside_character_class_count == 0 {
             if let Ok(backreference) = get_regex_backreference(char, context, capture_group_count) {
-                println!(
-                    "backreference {backreference:?}
-                    capture_group_count: {capture_group_count}
-                    context: {context:?}
-                    look_behind_context: {look_behind_context:?}
-                    _inside_look_ahead: {inside_look_ahead}
-                    open_groups: {open_groups:?}
-                    current_found_group: {current_found_group:?}",
-                );
+                // println!(
+                //     "backreference {backreference:?}
+                //     capture_group_count: {capture_group_count}
+                //     context: {context:?}
+                //     look_behind_context: {look_behind_context:?}
+                //     inside_look_ahead: {inside_look_ahead}
+                //     open_groups: {open_groups:?}
+                //     current_found_group: {current_found_group:?}",
+                // );
 
                 if look_behind_context.inside_counter != 0 {
                     look_behind_context
@@ -670,7 +670,7 @@ fn test() {
         r"/\k<foo>(?<foo>bar)/",
         // r"RegExp('(a|bc)|\\1')", -- ToDo: why is this invalid?
         r"new RegExp('(?!(?<foo>\\n))\\1')",
-        // r"/(?<!(a)\1)b/",  -- ToDo
+        r"/(?<!(a)\1)b/",
         // nested
         r"new RegExp('(\\1)')",
         r"/^(a\1)$/",
@@ -688,7 +688,7 @@ fn test() {
         r"/(a|(\2))/",
         r"/(?:a|(\1))/",
         r"/(a)?(b)*(\3)/",
-        // r"/(?<=(a\1))b/", -- ToDo
+        r"/(?<=(a\1))b/",
         // forward
         r"/\1(a)/",
         r"/\1.(a)/",
@@ -756,14 +756,14 @@ fn test() {
         // ES2024
         r"new RegExp('\\1([[A--B]])', 'v')",
         // ES2025
-        // r"/\k<foo>((?<foo>bar)|(?<foo>baz))/",
+        r"/\k<foo>((?<foo>bar)|(?<foo>baz))/",
         // r"/((?<foo>bar)|\k<foo>(?<foo>baz))/",
         r"/\k<foo>((?<foo>bar)|(?<foo>baz)|(?<foo>qux))/",
         // r"/((?<foo>bar)|\k<foo>(?<foo>baz)|(?<foo>qux))/",
         r"/((?<foo>bar)|\k<foo>|(?<foo>baz))/",
         r"/((?<foo>bar)|\k<foo>|(?<foo>baz)|(?<foo>qux))/",
         r"/((?<foo>bar)|(?<foo>baz\k<foo>)|(?<foo>qux\k<foo>))/",
-        // r"/(?<=((?<foo>bar)|(?<foo>baz))\k<foo>)/",
+        r"/(?<=((?<foo>bar)|(?<foo>baz))\k<foo>)/",
         // r"/((?!(?<foo>bar))|(?!(?<foo>baz)))\k<foo>/",
     ];
 
