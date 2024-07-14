@@ -41,6 +41,13 @@ fn main() -> std::io::Result<()> {
     if twice {
         println!("Second time:");
         let ret = Parser::new(&allocator, &printed, source_type).parse();
+        if !ret.errors.is_empty() {
+            for error in ret.errors {
+                let error = error.with_source_code(source_text.to_string());
+                println!("{error:?}");
+            }
+            return Ok(());
+        }
         let printed = CodeGenerator::new().build(&ret.program).source_text;
         println!("{printed}");
     }

@@ -1062,7 +1062,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for Expression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         p.print_char(b'(');
+        p.print_char(b'(');
         self.expression.gen_expr(p, precedence, ctx);
+        p.print_char(b')');
         p.print_str(" as ");
         self.type_annotation.gen(p, ctx);
         p.print_char(b')');
@@ -1071,9 +1073,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSAsExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        // p.print_str("(");
         self.expression.gen_expr(p, precedence, ctx);
-        // p.print_str(")");
     }
 }
 
