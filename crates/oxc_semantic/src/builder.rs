@@ -2,6 +2,7 @@
 
 use std::{
     cell::{Cell, RefCell},
+    mem,
     path::PathBuf,
     sync::Arc,
 };
@@ -369,18 +370,32 @@ impl<'a> SemanticBuilder<'a> {
         let current_refs = iter.next().unwrap();
 
         let bindings = self.scope.get_bindings(self.current_scope_id);
-        for (name, reference_ids) in current_refs.drain() {
-            // Try to resolve a reference.
-            // If unresolved, transfer it to parent scope's unresolved references.
-            if let Some(symbol_id) = bindings.get(&name).copied() {
-                for reference_id in &reference_ids {
-                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+        if !bindings.is_empty() {
+            // Try to resolve references in current scope.
+            // Transfer unresolved references to parent scope's unresolved references.
+            for (name, reference_ids) in current_refs.drain() {
+                if let Some(symbol_id) = bindings.get(&name).copied() {
+                    for reference_id in &reference_ids {
+                        self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                    }
+                    self.symbols.resolved_references[symbol_id].extend(reference_ids);
+                } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                    parent_reference_ids.extend(reference_ids);
+                } else {
+                    parent_refs.insert(name, reference_ids);
                 }
-                self.symbols.resolved_references[symbol_id].extend(reference_ids);
-            } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
-                parent_reference_ids.extend(reference_ids);
-            } else {
-                parent_refs.insert(name, reference_ids);
+            }
+        } else if parent_refs.is_empty() {
+            // Fast path for when parent scope has no unresolved references. Move them all up in bulk.
+            mem::swap(current_refs, parent_refs);
+        } else {
+            // Combine current unresolved references into parent scopes's unresolved references.
+            for (name, reference_ids) in current_refs.drain() {
+                if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                    parent_reference_ids.extend(reference_ids);
+                } else {
+                    parent_refs.insert(name, reference_ids);
+                }
             }
         }
     }
