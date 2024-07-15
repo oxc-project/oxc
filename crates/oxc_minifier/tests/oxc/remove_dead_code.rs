@@ -62,6 +62,12 @@ fn dce_if_statement() {
         ",
         "{foo; return }",
     );
+
+    // nested expression
+    test(
+        "const a = { fn: function() { if (true) { foo; } } }",
+        "const a = { fn: function() { { foo; } } }",
+    );
 }
 
 #[test]
