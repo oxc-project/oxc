@@ -118,7 +118,7 @@ impl<'a> AutomaticScriptBindings<'a> {
     ) -> BoundIdentifier<'a> {
         let symbol_id =
             ctx.generate_uid_in_root_scope(variable_name, SymbolFlags::FunctionScopedVariable);
-        let variable_name = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
+        let variable_name = ctx.ast.atom(ctx.symbols().name(symbol_id));
 
         let import = NamedImport::new(variable_name.clone(), None, symbol_id);
         self.ctx.module_imports.add_require(source, import, front);
@@ -219,7 +219,7 @@ impl<'a> AutomaticModuleBindings<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
         let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::FunctionScopedVariable);
-        let local = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
+        let local = ctx.ast.atom(ctx.symbols().name(symbol_id));
 
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);
         self.ctx.module_imports.add_import(source, import);

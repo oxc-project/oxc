@@ -393,7 +393,7 @@ impl<'a> SemanticBuilder<'a> {
                 for reference_id in &reference_ids {
                     self.symbols.references[*reference_id].set_symbol_id(symbol_id);
                 }
-                self.symbols.resolved_references[symbol_id].extend(reference_ids);
+                self.symbols.extend_reference_ids(symbol_id, reference_ids);
             } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
                 parent_reference_ids.extend(reference_ids);
             } else {

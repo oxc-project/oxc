@@ -270,7 +270,7 @@ impl TraverseScoping {
         let reference =
             Reference::new_with_symbol_id(SPAN, name, AstNodeId::dummy(), symbol_id, flag);
         let reference_id = self.symbols.create_reference(reference);
-        self.symbols.resolved_references[symbol_id].push(reference_id);
+        self.symbols.get_resolved_reference_ids_mut(symbol_id).push(reference_id);
         reference_id
     }
 
@@ -448,7 +448,7 @@ impl TraverseScoping {
 
     fn name_is_unique(&self, name: &str) -> bool {
         // Check if any bindings in program with this name
-        if self.symbols.names.iter().any(|n| n.as_str() == name) {
+        if self.symbols.names().any(|n| n.as_str() == name) {
             return false;
         }
 

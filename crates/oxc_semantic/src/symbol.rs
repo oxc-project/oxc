@@ -23,26 +23,54 @@ const TS_APPEND_CONTENT: &'static str = r#"
 export type IndexVec<I, T> = Array<T>;
 "#;
 
+#[derive(Debug)]
+#[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
+pub struct Symbol {
+    pub span: Span,
+    pub name: CompactStr,
+    pub flag: SymbolFlags,
+    pub scope_id: ScopeId,
+    /// Pointer to the AST Node where this symbol is declared
+    pub declaration: AstNodeId,
+    pub resolved_references: Vec<ReferenceId>,
+    pub redeclare_variables: Vec<Span>,
+}
+
+impl Symbol {
+    pub fn new(span: Span, name: CompactStr, flag: SymbolFlags, scope_id: ScopeId) -> Self {
+        Self {
+            span,
+            name,
+            flag,
+            scope_id,
+            declaration: AstNodeId::dummy(),
+            resolved_references: Vec::new(),
+            redeclare_variables: Vec::new(),
+        }
+    }
+
+    pub fn extend_reference_ids(&mut self, reference_ids: Vec<ReferenceId>) {
+        self.resolved_references.extend(reference_ids);
+    }
+
+    pub fn add_redeclare_variable(&mut self, span: Span) {
+        self.redeclare_variables.push(span);
+    }
+}
+
 /// Symbol Table
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
-    pub spans: IndexVec<SymbolId, Span>,
-    pub names: IndexVec<SymbolId, CompactStr>,
-    pub flags: IndexVec<SymbolId, SymbolFlags>,
-    pub scope_ids: IndexVec<SymbolId, ScopeId>,
-    /// Pointer to the AST Node where this symbol is declared
-    pub declarations: IndexVec<SymbolId, AstNodeId>,
-    pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
+    symbols: IndexVec<SymbolId, Symbol>,
     pub references: IndexVec<ReferenceId, Reference>,
-    pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
 }
 
 impl SymbolTable {
     pub fn len(&self) -> usize {
-        self.spans.len()
+        self.symbols.len()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -50,23 +78,35 @@ impl SymbolTable {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
+        self.symbols.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
     pub fn iter_rev(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.spans.iter_enumerated().rev().map(|(symbol_id, _)| symbol_id)
+        self.symbols.iter_enumerated().rev().map(|(symbol_id, _)| symbol_id)
+    }
+
+    pub fn names(&self) -> impl Iterator<Item = &CompactStr> {
+        self.symbols.iter().map(|symbol| &symbol.name)
+    }
+
+    pub fn name(&self, symbol_id: SymbolId) -> &CompactStr {
+        &self.symbols[symbol_id].name
     }
 
     pub fn get_symbol_id_from_span(&self, span: &Span) -> Option<SymbolId> {
-        self.spans
-            .iter_enumerated()
-            .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
+        self.symbols.iter_enumerated().find_map(|(symbol_id, symbol)| {
+            if symbol.span == *span {
+                Some(symbol_id)
+            } else {
+                None
+            }
+        })
     }
 
     pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
-        self.names.iter_enumerated().find_map(|(symbol, inner_name)| {
-            if inner_name.as_str() == name {
-                Some(symbol)
+        self.symbols.iter_enumerated().find_map(|(symbol_id, symbol)| {
+            if symbol.name.as_str() == name {
+                Some(symbol_id)
             } else {
                 None
             }
@@ -74,31 +114,31 @@ impl SymbolTable {
     }
 
     pub fn get_span(&self, symbol_id: SymbolId) -> Span {
-        self.spans[symbol_id]
+        self.symbols[symbol_id].span
     }
 
     pub fn get_name(&self, symbol_id: SymbolId) -> &str {
-        &self.names[symbol_id]
+        &self.symbols[symbol_id].name
     }
 
     pub fn set_name(&mut self, symbol_id: SymbolId, name: CompactStr) {
-        self.names[symbol_id] = name;
+        self.symbols[symbol_id].name = name;
     }
 
     pub fn get_flag(&self, symbol_id: SymbolId) -> SymbolFlags {
-        self.flags[symbol_id]
+        self.symbols[symbol_id].flag
     }
 
     pub fn get_redeclare_variables(&self, symbol_id: SymbolId) -> &Vec<Span> {
-        &self.redeclare_variables[symbol_id]
+        &self.symbols[symbol_id].redeclare_variables
     }
 
     pub fn union_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
-        self.flags[symbol_id] |= includes;
+        self.symbols[symbol_id].flag |= includes;
     }
 
     pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
-        self.scope_ids[symbol_id]
+        self.symbols[symbol_id].scope_id
     }
 
     pub fn get_scope_id_from_span(&self, span: &Span) -> Option<ScopeId> {
@@ -110,7 +150,7 @@ impl SymbolTable {
     }
 
     pub fn get_declaration(&self, symbol_id: SymbolId) -> AstNodeId {
-        self.declarations[symbol_id]
+        self.symbols[symbol_id].declaration
     }
 
     pub fn create_symbol(
@@ -120,20 +160,17 @@ impl SymbolTable {
         flag: SymbolFlags,
         scope_id: ScopeId,
     ) -> SymbolId {
-        _ = self.spans.push(span);
-        _ = self.names.push(name);
-        _ = self.flags.push(flag);
-        _ = self.scope_ids.push(scope_id);
-        _ = self.resolved_references.push(vec![]);
-        self.redeclare_variables.push(vec![])
+        self.symbols.push(Symbol::new(span, name, flag, scope_id))
     }
 
     pub fn add_declaration(&mut self, node_id: AstNodeId) {
-        self.declarations.push(node_id);
+        if let Some(symbol) = self.symbols.last_mut() {
+            symbol.declaration = node_id;
+        }
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.redeclare_variables[symbol_id].push(span);
+        self.symbols[symbol_id].add_redeclare_variable(span);
     }
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
@@ -157,14 +194,22 @@ impl SymbolTable {
     }
 
     pub fn get_resolved_reference_ids(&self, symbol_id: SymbolId) -> &Vec<ReferenceId> {
-        &self.resolved_references[symbol_id]
+        &self.symbols[symbol_id].resolved_references
+    }
+    pub fn get_resolved_reference_ids_mut(&mut self, symbol_id: SymbolId) -> &mut Vec<ReferenceId> {
+        &mut self.symbols[symbol_id].resolved_references
+    }
+
+    pub fn extend_reference_ids(&mut self, symbol_id: SymbolId, reference_ids: Vec<ReferenceId>) {
+        self.symbols[symbol_id].extend_reference_ids(reference_ids);
     }
 
     pub fn get_resolved_references(
         &self,
         symbol_id: SymbolId,
     ) -> impl Iterator<Item = &Reference> + '_ {
-        self.resolved_references[symbol_id]
+        self.symbols[symbol_id]
+            .resolved_references
             .iter()
             .map(|reference_id| &self.references[*reference_id])
     }
