@@ -1,7 +1,7 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::{AstNodeId, SymbolId};
+use oxc_semantic::{AstNodeId, Symbol};
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use phf::phf_set;
@@ -50,12 +50,11 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
     phf_set!("defineProperty", "deleteProperty", "set", "setPrototypeOf");
 
 impl Rule for NoImportAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flag(symbol_id).is_import_binding() {
-            let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+        if symbol.flag.is_import_binding() {
+            let kind = ctx.nodes().kind(symbol.declaration);
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));
-            for reference in symbol_table.get_resolved_references(symbol_id) {
+            for reference in ctx.symbols().get_references_from_ids(&symbol.resolved_references) {
                 if is_namespace_specifier {
                     let Some(parent_node) = ctx.nodes().parent_node(reference.node_id()) else {
                         return;

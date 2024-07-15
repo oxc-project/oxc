@@ -1,6 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::Symbol;
 use oxc_span::Span;
 
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
@@ -44,27 +45,26 @@ fn check_and_diagnostic(s: &str, span: Span, ctx: &LintContext) {
 }
 
 impl Rule for NoShadowRestrictedNames {
-    fn run_once(&self, ctx: &LintContext<'_>) {
-        ctx.symbols().iter().for_each(|symbol| {
-            if symbol.name == "undefined" {
-                // Allow to declare `undefined` variable but not allow to assign value to it.
-                let node_id = symbol.declaration;
-                if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
-                    if declarator.init.is_none()
-                        && symbol.resolved_references.iter().all(|reference_id| {
-                            !ctx.symbols().get_reference(*reference_id).is_write()
-                        })
-                    {
-                        return;
-                    }
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+        if symbol.name == "undefined" {
+            // Allow to declare `undefined` variable but not allow to assign value to it.
+            let node_id = symbol.declaration;
+            if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
+                if declarator.init.is_none()
+                    && ctx
+                        .symbols()
+                        .get_references_from_ids(&symbol.resolved_references)
+                        .all(|reference| !reference.is_write())
+                {
+                    return;
                 }
             }
+        }
 
-            check_and_diagnostic(&symbol.name, symbol.span, ctx);
-            for span in &symbol.redeclare_variables {
-                check_and_diagnostic(&symbol.name, *span, ctx);
-            }
-        });
+        check_and_diagnostic(&symbol.name, symbol.span, ctx);
+        for span in &symbol.redeclare_variables {
+            check_and_diagnostic(&symbol.name, *span, ctx);
+        }
     }
 }
 

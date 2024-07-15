@@ -4,7 +4,7 @@ use std::{
     ops::Deref,
 };
 
-use oxc_semantic::SymbolId;
+use oxc_semantic::Symbol;
 
 use crate::{context::LintContext, AllowWarnDeny, AstNode, RuleEnum};
 
@@ -18,7 +18,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
     fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
 
     /// Visit each symbol
-    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_>) {}
+    fn run_on_symbol(&self, _symbol: &Symbol, _ctx: &LintContext<'_>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
     fn run_once(&self, _ctx: &LintContext) {}

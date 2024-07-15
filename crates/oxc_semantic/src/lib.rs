@@ -32,7 +32,7 @@ use rustc_hash::FxHashSet;
 pub use crate::{
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
-    symbol::SymbolTable,
+    symbol::{Symbol, SymbolTable},
 };
 
 pub struct Semantic<'a> {

@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Reference;
+use oxc_semantic::{Reference, Symbol};
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -40,26 +40,25 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateHead {
-    fn run_on_symbol(&self, symbol_id: oxc_semantic::SymbolId, ctx: &LintContext<'_>) {
-        let symbols = ctx.symbols();
-        let name = symbols.get_name(symbol_id);
-        if name != "Head" {
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+        if symbol.name != "Head" {
             return;
         }
 
-        let flag = symbols.get_flag(symbol_id);
+        let flag = symbol.flag;
         if !flag.is_import_binding() {
             return;
         }
 
-        let scope_id = symbols.get_scope_id(symbol_id);
+        let scope_id = symbol.scope_id;
         if scope_id != ctx.scopes().root_scope_id() {
             return;
         }
 
         let nodes = ctx.nodes();
-        let labels = symbols
-            .get_resolved_references(symbol_id)
+        let labels = ctx
+            .symbols()
+            .get_references_from_ids(&symbol.resolved_references)
             .filter(|r| r.is_read())
             .filter(|r| {
                 let kind = nodes.ancestors(r.node_id()).nth(2).map(|node_id| nodes.kind(node_id));

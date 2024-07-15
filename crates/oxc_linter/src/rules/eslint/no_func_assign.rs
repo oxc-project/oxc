@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::Symbol;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -32,14 +32,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoFuncAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
-        let decl = symbol_table.get_declaration(symbol_id);
-        if let AstKind::Function(_) = ctx.nodes().kind(decl) {
-            for reference in symbol_table.get_resolved_references(symbol_id) {
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+        if let AstKind::Function(_) = ctx.nodes().kind(symbol.declaration) {
+            for reference in ctx.symbols().get_references_from_ids(&symbol.resolved_references) {
                 if reference.is_write() {
                     ctx.diagnostic(no_func_assign_diagnostic(
-                        symbol_table.get_name(symbol_id),
+                        symbol.name.as_str(),
                         reference.span(),
                     ));
                 }

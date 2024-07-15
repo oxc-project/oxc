@@ -1,6 +1,6 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::Symbol;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -36,10 +36,9 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flag(symbol_id).is_catch_variable() {
-            for reference in symbol_table.get_resolved_references(symbol_id) {
+    fn run_on_symbol(&self, symbol: &Symbol, ctx: &LintContext<'_>) {
+        if symbol.flag.is_catch_variable() {
+            for reference in ctx.symbols().get_references_from_ids(&symbol.resolved_references) {
                 if reference.is_write() {
                     ctx.diagnostic(no_ex_assign_diagnostic(reference.span()));
                 }

@@ -222,6 +222,13 @@ impl SymbolTable {
             .map(|reference_id| &self.references[*reference_id])
     }
 
+    pub fn get_references_from_ids<'a>(
+        &'a self,
+        reference_ids: &'a [ReferenceId],
+    ) -> impl Iterator<Item = &Reference> + '_ {
+        reference_ids.iter().map(|id| &self.references[*id])
+    }
+
     /// Determine whether evaluating the specific input `node` is a consequenceless reference. ie.
     /// evaluating it won't result in potentially arbitrary code from being ran. The following are
     /// allowed and determined not to cause side effects:
