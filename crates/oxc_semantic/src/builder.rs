@@ -189,7 +189,7 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scope.add_scope(None, ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, AstNodeId::dummy(), ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
@@ -449,7 +449,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
         }
 
-        self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
+        self.current_scope_id = self.scope.add_scope(parent_scope_id, self.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
         if let Some(parent_scope_id) = parent_scope_id {
@@ -471,8 +471,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if !flags.is_top() {
             self.bind_function_or_class_expression();
         }
-
-        self.add_current_node_id_to_current_scope();
     }
 
     fn leave_scope(&mut self) {
@@ -501,6 +499,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_program(&mut self, program: &Program<'a>) {
         let kind = AstKind::Program(self.alloc(program));
+        /* cfg */
+        let error_harness = control_flow!(|self, cfg| {
+            let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+            let _program_basic_block = cfg.new_basic_block_normal();
+            error_harness
+        });
+        /* cfg - must be above directives as directives are in cfg */
+
+        self.enter_node(kind);
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::Top;
@@ -511,16 +518,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             },
             &program.scope_id,
         );
-
-        /* cfg */
-        let error_harness = control_flow!(|self, cfg| {
-            let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
-            let _program_basic_block = cfg.new_basic_block_normal();
-            error_harness
-        });
-        /* cfg - must be above directives as directives are in cfg */
-
-        self.enter_node(kind);
 
         for directive in &program.directives {
             self.visit_directive(directive);
@@ -1776,10 +1773,6 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
-    }
-
-    fn add_current_node_id_to_current_scope(&mut self) {
-        self.scope.set_node_id(self.current_scope_id, self.current_node_id);
     }
 
     fn make_all_namespaces_valuelike(&mut self) {

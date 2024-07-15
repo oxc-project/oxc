@@ -179,12 +179,17 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
-    pub fn add_scope(&mut self, parent_id: Option<ScopeId>, flags: ScopeFlags) -> ScopeId {
+    pub fn add_scope(
+        &mut self,
+        parent_id: Option<ScopeId>,
+        node_id: AstNodeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);
         _ = self.child_ids.push(vec![]);
         _ = self.flags.push(flags);
         _ = self.bindings.push(Bindings::default());
-        _ = self.node_ids.push(AstNodeId::dummy());
+        _ = self.node_ids.push(node_id);
 
         // Set this scope as child of parent scope.
         if let Some(parent_id) = parent_id {
@@ -192,10 +197,6 @@ impl ScopeTree {
         }
 
         scope_id
-    }
-
-    pub(crate) fn set_node_id(&mut self, scope_id: ScopeId, node_id: AstNodeId) {
-        self.node_ids[scope_id] = node_id;
     }
 
     pub fn add_binding(&mut self, scope_id: ScopeId, name: CompactStr, symbol_id: SymbolId) {
