@@ -374,6 +374,36 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:11]
+ 1 │ /a(?!(b)).\1/
+   ·           ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:11]
+ 1 │ /(?<!(a))b\1/
+   ·           ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:13]
+ 1 │ /(?<!(a))(?:\1)/
+   ·             ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:14]
+ 1 │ /.(?<!a|(b)).\1/
+   ·              ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ /.(?<!(a)).(?<!\1)./
+   ·                ──
+   ╰────
+
+  ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:2]
  1 │ /\1(a)(b)\2/
    ·  ──

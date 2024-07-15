@@ -11,41 +11,50 @@ use std::iter::Peekable;
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessBackreference;
 
-#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Clone, PartialEq)]
 enum RegexGroup {
-    CaptureGroup(u8),
-    NamedCaptureGroup(String),
-    NonCaptureGroup(),
-    LookAheadGroup(),
-    LookBehindGroup(),
+    Capture(u8),          // u8 = the number identifier
+    NamedCapture(String), // String = the name identifier, there is also always a number identifier
+    NonCapture(),
+    LookAhead(bool),  // positive or negative look ahead
+    LookBehind(bool), // positive or negative look behind
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 struct RegexBackReference {
     span: Span,
     regex_group: RegexGroup,
 }
 
-#[derive(Debug)]
-enum LookBehindReference {
+#[derive(Debug, PartialEq)]
+enum LookGroupReference {
     BackReference(RegexBackReference),
     RegexGroup(RegexGroup),
 }
 
 #[derive(Debug)]
-struct LookBehindContext {
+struct LookGroupContext {
     inside_counter: u8,
-    timeline: Vec<LookBehindReference>,
+    timeline: Vec<LookGroupReference>,
 }
 
 #[derive(Debug, Clone)]
 struct CaptureGroupContext<'a> {
+    // the current capture group counter
+    // this will be always the next capture group we will finish
     current_counter: u8,
     finished_groups: Vec<RegexGroup>,
+
+    // calling groups inside a negative looking group is forbidden
+    inside_negative_count: u8,
+    disallowed_groups: Vec<RegexGroup>,
+
+    // the current span (start) index
+    // ToDo: can be inside the iterator
     current_index: u32,
 
     iterator: Peekable<std::str::Chars<'a>>, // ToDO: check if this is also the ToDo item of the next line
+
     // ToDo: this never change but we are mutating the complete struct
     all_groups: &'a Vec<RegexGroup>,
     unicode_mode: bool,
@@ -110,7 +119,7 @@ fn get_regex_backreference(
         if digit_result <= capture_group_count {
             return Ok(RegexBackReference {
                 span: Span::new(span_start, span_end),
-                regex_group: RegexGroup::CaptureGroup(digit_result),
+                regex_group: RegexGroup::Capture(digit_result),
             });
         }
     }
@@ -128,7 +137,7 @@ fn get_regex_backreference(
 
                 return Ok(RegexBackReference {
                     span: Span::new(span_start, span_end),
-                    regex_group: RegexGroup::NamedCaptureGroup(group_name),
+                    regex_group: RegexGroup::NamedCapture(group_name),
                 });
             }
         }
@@ -156,11 +165,11 @@ fn get_regex_group_by_open_bracet(context: &mut CaptureGroupContext) -> RegexGro
 
             if let Some(next_char) = context.iterator.peek() {
                 if *next_char == '=' || *next_char == '!' {
-                    return RegexGroup::LookAheadGroup();
+                    return RegexGroup::LookAhead(*next_char != '!');
                 }
 
                 if *next_char == ':' {
-                    return RegexGroup::NonCaptureGroup();
+                    return RegexGroup::NonCapture();
                 }
 
                 if *next_char == '<' {
@@ -169,19 +178,19 @@ fn get_regex_group_by_open_bracet(context: &mut CaptureGroupContext) -> RegexGro
 
                     if let Some(next_char) = context.iterator.peek() {
                         if *next_char == '=' || *next_char == '!' {
-                            return RegexGroup::LookBehindGroup();
+                            return RegexGroup::LookBehind(*next_char != '!');
                         }
 
                         let group_name = get_name_reference(context);
 
-                        return RegexGroup::NamedCaptureGroup(group_name);
+                        return RegexGroup::NamedCapture(group_name);
                     }
                 }
             }
         }
     }
 
-    RegexGroup::CaptureGroup(context.current_counter)
+    RegexGroup::Capture(context.current_counter)
 }
 
 fn get_regex_groups(context: &mut CaptureGroupContext, with_alternatives: bool) -> Vec<RegexGroup> {
@@ -210,11 +219,11 @@ fn get_regex_groups(context: &mut CaptureGroupContext, with_alternatives: bool) 
                     inside_group += 1;
 
                     match group_type {
-                        RegexGroup::CaptureGroup(_) => {
+                        RegexGroup::Capture(_) => {
                             context.current_counter += 1;
                         }
-                        RegexGroup::NamedCaptureGroup(_) => {
-                            result.push(RegexGroup::CaptureGroup(context.current_counter));
+                        RegexGroup::NamedCapture(_) => {
+                            result.push(RegexGroup::Capture(context.current_counter));
                             context.current_counter += 1;
                         }
                         _ => {}
@@ -251,16 +260,63 @@ fn get_regex_groups(context: &mut CaptureGroupContext, with_alternatives: bool) 
     result
 }
 
+fn handle_look_group_closing(
+    context: &mut CaptureGroupContext,
+    group_context: &mut LookGroupContext,
+    is_positive: bool,
+) -> Result<Span, bool> {
+    let mut found_groups: Vec<RegexGroup> = vec![];
+
+    // println!(
+    //     "
+    //     context: {context:?}
+    //     group_context: {group_context:?}
+    //     is_positive: {is_positive}
+    // "
+    // );
+
+    for reference in &group_context.timeline {
+        match reference {
+            LookGroupReference::RegexGroup(regex_group) => {
+                found_groups.push(regex_group.to_owned());
+
+                if !is_positive {
+                    context.disallowed_groups.push(regex_group.to_owned());
+                }
+            }
+            LookGroupReference::BackReference(reference) => {
+                // it is defined in this looko behind
+                if found_groups.contains(&reference.regex_group) {
+                    return Ok(reference.span);
+                }
+
+                // we did not find it already
+                if !context.finished_groups.contains(&reference.regex_group) {
+                    return Ok(reference.span);
+                }
+            }
+        }
+    }
+
+    group_context.timeline.clear();
+
+    Err(false)
+}
+
 fn handle_closing_bracet(
     context: &mut CaptureGroupContext,
     open_groups: &mut Vec<RegexGroup>,
-    look_behind_context: &mut LookBehindContext,
-    inside_look_ahead: &mut u8,
+    look_behind_context: &mut LookGroupContext,
+    look_ahead_context: &mut LookGroupContext,
 ) -> Result<Span, bool> {
     if let Some(group_type) = open_groups.pop() {
         match group_type {
-            RegexGroup::LookBehindGroup() => {
+            RegexGroup::LookBehind(is_positive) => {
                 look_behind_context.inside_counter -= 1;
+
+                if !is_positive {
+                    context.inside_negative_count -= 1;
+                }
 
                 // println!(
                 //     "
@@ -270,38 +326,43 @@ fn handle_closing_bracet(
                 // );
 
                 if look_behind_context.inside_counter == 0 {
-                    let mut found_groups: Vec<RegexGroup> = vec![];
-
-                    for lookbehind_reference in &look_behind_context.timeline {
-                        match lookbehind_reference {
-                            LookBehindReference::RegexGroup(regex_group) => {
-                                // we dont capture any useless groups for this check
-                                found_groups.push(regex_group.to_owned());
-                            }
-                            LookBehindReference::BackReference(reference) => {
-                                // it is defined in this looko behind
-                                if found_groups.contains(&reference.regex_group) {
-                                    return Ok(reference.span);
-                                }
-
-                                // we did not find it already
-                                if !context.finished_groups.contains(&reference.regex_group) {
-                                    return Ok(reference.span);
-                                }
-                            }
-                        }
+                    if let Ok(span) =
+                        handle_look_group_closing(context, look_behind_context, is_positive)
+                    {
+                        return Ok(span);
                     }
-
-                    look_behind_context.timeline.clear();
                 }
             }
-            RegexGroup::LookAheadGroup() => {
-                *inside_look_ahead -= 1;
-            }
-            RegexGroup::CaptureGroup(_) | RegexGroup::NamedCaptureGroup(_) => {
+            RegexGroup::Capture(_) | RegexGroup::NamedCapture(_) => {
+                if context.inside_negative_count != 0
+                    && !look_behind_context
+                        .timeline
+                        .contains(&LookGroupReference::RegexGroup(group_type.clone()))
+                    && !look_behind_context
+                        .timeline
+                        .contains(&LookGroupReference::RegexGroup(group_type.clone()))
+                {
+                    context.disallowed_groups.push(group_type.clone());
+                }
+
                 context.finished_groups.push(group_type);
             }
-            RegexGroup::NonCaptureGroup() => {}
+            RegexGroup::LookAhead(is_positive) => {
+                look_ahead_context.inside_counter -= 1;
+
+                if !is_positive {
+                    context.inside_negative_count -= 1;
+                }
+
+                if look_ahead_context.inside_counter == 0 {
+                    if let Ok(span) =
+                        handle_look_group_closing(context, look_behind_context, is_positive)
+                    {
+                        return Ok(span);
+                    }
+                }
+            }
+            RegexGroup::NonCapture() => {}
         }
 
         return Err(true);
@@ -336,6 +397,10 @@ fn get_invalid_back_reference_by_regex(
         iterator: peek.clone(),
         current_counter: 1,
         finished_groups: vec![],
+
+        inside_negative_count: 0,
+        disallowed_groups: vec![],
+
         current_index: span_start_index,
 
         all_groups: &vec![],
@@ -348,6 +413,10 @@ fn get_invalid_back_reference_by_regex(
         iterator: peek,
         current_counter: 1,
         finished_groups: vec![],
+
+        inside_negative_count: 0,
+        disallowed_groups: vec![],
+
         current_index: span_start_index,
 
         all_groups: &get_regex_groups(sub_context, true),
@@ -361,7 +430,7 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
             .all_groups
             .iter()
             .filter_map(|group| match group {
-                RegexGroup::CaptureGroup(_) | RegexGroup::NamedCaptureGroup(_) => Some(true),
+                RegexGroup::Capture(_) | RegexGroup::NamedCapture(_) => Some(true),
                 _ => None,
             })
             .collect::<Vec<_>>()
@@ -372,10 +441,9 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
     let mut backslash_started = false;
     let mut open_groups: Vec<RegexGroup> = vec![]; // ToDo: we do not care about open groups, we need to check if there is a (in)valid finished group
     let mut inside_character_class_count: u8 = 0;
-    let mut inside_look_ahead: u8 = 0;
     let current_found_group: Vec<RegexGroup> = get_regex_groups(&mut context.clone(), false);
-
-    let mut look_behind_context = LookBehindContext { inside_counter: 0, timeline: vec![] };
+    let mut look_behind_context = LookGroupContext { inside_counter: 0, timeline: vec![] };
+    let mut look_ahead_context = LookGroupContext { inside_counter: 0, timeline: vec![] };
 
     // println!("context: {context:?}");
 
@@ -402,22 +470,36 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                     let group_type = get_regex_group_by_open_bracet(context);
 
                     match group_type {
-                        RegexGroup::LookBehindGroup() => {
+                        RegexGroup::LookBehind(is_positive) => {
                             look_behind_context.inside_counter += 1;
+
+                            if !is_positive {
+                                context.inside_negative_count += 1;
+                            }
                         }
-                        RegexGroup::LookAheadGroup() => {
-                            inside_look_ahead += 1;
-                        }
-                        RegexGroup::CaptureGroup(_) | RegexGroup::NamedCaptureGroup(_) => {
+                        RegexGroup::Capture(_) | RegexGroup::NamedCapture(_) => {
                             context.current_counter += 1;
 
                             if look_behind_context.inside_counter != 0 {
                                 look_behind_context
                                     .timeline
-                                    .push(LookBehindReference::RegexGroup(group_type.clone()));
+                                    .push(LookGroupReference::RegexGroup(group_type.clone()));
+                            }
+
+                            if look_ahead_context.inside_counter != 0 {
+                                look_ahead_context
+                                    .timeline
+                                    .push(LookGroupReference::RegexGroup(group_type.clone()));
                             }
                         }
-                        RegexGroup::NonCaptureGroup() => {}
+                        RegexGroup::LookAhead(is_positive) => {
+                            look_ahead_context.inside_counter += 1;
+
+                            if !is_positive {
+                                context.inside_negative_count += 1;
+                            }
+                        }
+                        RegexGroup::NonCapture() => {}
                     }
 
                     open_groups.push(group_type);
@@ -427,7 +509,7 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                         context,
                         &mut open_groups,
                         &mut look_behind_context,
-                        &mut inside_look_ahead,
+                        &mut look_ahead_context,
                     );
 
                     if let Ok(span) = result {
@@ -461,7 +543,7 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                         context,
                         &mut open_groups,
                         &mut look_behind_context,
-                        &mut inside_look_ahead,
+                        &mut look_ahead_context,
                     );
 
                     if let Ok(span) = result {
@@ -482,7 +564,7 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                 //     capture_group_count: {capture_group_count}
                 //     context: {context:?}
                 //     look_behind_context: {look_behind_context:?}
-                //     inside_look_ahead: {inside_look_ahead}
+                //     look_ahead_context: {look_ahead_context:?}
                 //     open_groups: {open_groups:?}
                 //     current_found_group: {current_found_group:?}",
                 // );
@@ -490,13 +572,19 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                 if look_behind_context.inside_counter != 0 {
                     look_behind_context
                         .timeline
-                        .push(LookBehindReference::BackReference(backreference.clone()));
+                        .push(LookGroupReference::BackReference(backreference.clone()));
+                }
+
+                if look_ahead_context.inside_counter != 0 {
+                    look_ahead_context
+                        .timeline
+                        .push(LookGroupReference::BackReference(backreference.clone()));
                 }
 
                 let mut ignore_named_caputures = false;
 
                 match backreference.regex_group {
-                    RegexGroup::NamedCaptureGroup(_)
+                    RegexGroup::NamedCapture(_)
                         if !context.unicode_mode
                             && !context.all_groups.contains(&backreference.regex_group) =>
                     {
@@ -505,6 +593,7 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                     _ => {}
                 }
 
+                // in unicode mode we dont really care if the name does not exists
                 if !ignore_named_caputures {
                     // cant be open
                     if open_groups.contains(&backreference.regex_group) {
@@ -515,6 +604,10 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                     // there is a reference but we dont know from where
                     } else if !context.finished_groups.contains(&backreference.regex_group)
                         && look_behind_context.inside_counter == 0
+                    {
+                        return Ok(backreference.span);
+                    } else if context.disallowed_groups.contains(&backreference.regex_group)
+                        && look_ahead_context.inside_counter == 0
                     {
                         return Ok(backreference.span);
                     }
@@ -773,12 +866,12 @@ fn test() {
         r"/.(?!(a)|\1)./",
         r"/.(?<=\1|(a))./",
         // into a negative lookaround
-        // r"/a(?!(b)).\1/",
-        // r"/(?<!(a))b\1/",
-        // r"/(?<!(a))(?:\1)/",
-        // r"/.(?<!a|(b)).\1/",
+        r"/a(?!(b)).\1/",
+        r"/(?<!(a))b\1/",
+        r"/(?<!(a))(?:\1)/",
+        r"/.(?<!a|(b)).\1/",
         // r"/.(?!(a)).(?!\1)./",
-        // r"/.(?<!(a)).(?<!\1)./",
+        r"/.(?<!(a)).(?<!\1)./",
         // r"/.(?=(?!(a))\1)./",
         // r"/.(?<!\1(?!(a)))/",
         // valid and invalid
