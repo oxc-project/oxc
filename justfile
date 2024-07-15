@@ -22,6 +22,7 @@ ready:
   just test
   just lint
   just doc
+  just ast
   cargo shear
   git status
 
@@ -153,5 +154,6 @@ website path:
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
 
-codegen:
+# sync ast changes
+ast:
     cargo run -p oxc_ast_codegen

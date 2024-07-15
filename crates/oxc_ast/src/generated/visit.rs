@@ -38,7 +38,6 @@ pub trait Visit<'a>: Sized {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-
         unsafe { std::mem::transmute(t) }
     }
 
