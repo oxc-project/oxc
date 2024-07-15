@@ -414,7 +414,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         let kind = self.cur_kind();
 
-        if matches!(self.cur_kind(), Kind::Const) && permit_const_as_modifier {
+        if matches!(self.cur_kind(), Kind::Const) {
+            if !permit_const_as_modifier {
+                return None;
+            }
+
             // We need to ensure that any subsequent modifiers appear on the same line
             // so that when 'const' is a standalone declaration, we don't issue
             // an error.
