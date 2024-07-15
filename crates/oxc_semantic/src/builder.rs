@@ -478,11 +478,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     // Setup all the context for the binder.
     // The order is important here.
+    #[inline(always)]
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
         self.enter_kind(kind);
     }
 
+    #[inline(always)]
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
             let node = self.nodes.get_node(self.current_node_id);
@@ -1562,6 +1564,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 }
 
 impl<'a> SemanticBuilder<'a> {
+    #[inline(always)]
     fn enter_kind(&mut self, kind: AstKind<'a>) {
         /* cfg */
         control_flow!(self, |cfg| {
@@ -1735,6 +1738,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    #[inline(always)]
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
