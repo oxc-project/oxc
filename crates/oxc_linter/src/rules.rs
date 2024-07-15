@@ -478,6 +478,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_empty_function,
     eslint::no_empty_pattern,
     eslint::no_empty_static_block,
+    eslint::no_else_return,
     eslint::no_eval,
     eslint::no_ex_assign,
     eslint::no_extra_boolean_cast,

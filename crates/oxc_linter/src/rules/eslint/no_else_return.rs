@@ -1,9 +1,11 @@
+use std::any::Any;
+
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 use oxc_ast::{
-  ast::{IfStatement, Statement}, AstKind
+  ast::{BlockStatement, IfStatement, Statement}, AstKind
 };
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -34,12 +36,77 @@ declare_oxc_lint!(
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
-fn check_if_without_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
+fn check_for_return(node: &Statement) -> bool {
+  match node {
+    Statement::ReturnStatement(_) => true,
+    _ => false
+  }
+}
+
+fn naive_has_return(node: &Statement) -> bool {
+  match node {
+    Statement::BlockStatement(block) => {
+      let last_child = block.body.last();
+      match last_child {
+        Some(node) => check_for_return(node),
+        None => false
+      }
+    },
+    node => check_for_return(node)
+  }
+}
+
+fn check_for_return_or_if(node: &Statement) -> bool {
+  match node {
+    Statement::ReturnStatement(_) => true,
+    Statement::IfStatement(if_stmt) => {
+      let Some(alternate) = &if_stmt.alternate else {
+        return false;
+      };
+      naive_has_return(&alternate) && naive_has_return(&if_stmt.consequent)
+    }
+    _ => false
+  }
 
 }
 
+fn always_returns(stmt: &Statement) -> bool {
+  match stmt {
+    Statement::BlockStatement(block) => block.body.iter().any(check_for_return_or_if),
+    node => check_for_return_or_if(node)
+  }
+}
+
 fn check_if_with_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
-  
+  let Some(alternate) = &if_stmt.alternate else {
+    return;
+  };
+
+  if always_returns(&if_stmt.consequent) {
+    println!("111");
+  }
+}
+
+fn check_if_without_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
+  let mut consequents: Vec<&Statement> = Vec::new();
+  let mut current_node = if_stmt;
+
+  loop {
+    let Some(alternate) = &current_node.alternate else {
+      return;
+    };
+    consequents.push(&current_node.consequent);
+    match alternate {
+      Statement::IfStatement(if_stmt) => {
+        current_node = if_stmt;
+      },
+      _ => break,
+    }
+  }
+
+  if consequents.iter().all(|stmt| always_returns(stmt)) {
+    println!("111")
+  }
 }
 
 impl Rule for NoElseReturn {
@@ -51,11 +118,11 @@ impl Rule for NoElseReturn {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-      let AstKind::IfStatement(if_stmt)= node.kind() else {
+      let AstKind::IfStatement(if_stmt) = node.kind() else {
         return;
       };
 
-      if (self.allow_else_if) {
+      if self.allow_else_if {
         check_if_with_else(if_stmt, ctx);
       } else {
         check_if_without_else(if_stmt, ctx);
