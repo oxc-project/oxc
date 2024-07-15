@@ -57,16 +57,13 @@ impl Rule for NoRedeclare {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let symbol_table = ctx.semantic().symbols();
-
-        for symbol_id in ctx.symbols().iter() {
-            let decl = symbol_table.get_declaration(symbol_id);
-            let symbol_name = symbol_table.get_name(symbol_id);
+        for symbol in ctx.symbols().iter() {
+            let decl = symbol.declaration;
             match ctx.nodes().kind(decl) {
                 AstKind::VariableDeclarator(var) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
-                        if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                        if symbol.name == ident.name.as_str() {
+                            for span in &symbol.redeclare_variables {
                                 self.report_diagnostic(ctx, *span, ident);
                             }
                         }
@@ -74,8 +71,8 @@ impl Rule for NoRedeclare {
                 }
                 AstKind::FormalParameter(param) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
-                        if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                        if symbol.name == ident.name.as_str() {
+                            for span in &symbol.redeclare_variables {
                                 self.report_diagnostic(ctx, *span, ident);
                             }
                         }

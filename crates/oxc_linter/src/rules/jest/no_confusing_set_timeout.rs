@@ -94,7 +94,7 @@ impl Rule for NoConfusingSetTimeout {
             collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
         }
 
-        for reference_ids in &symbol_table.resolved_references {
+        for reference_ids in symbol_table.resolved_references() {
             collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
         }
 
@@ -108,7 +108,7 @@ impl Rule for NoConfusingSetTimeout {
             );
         }
 
-        for reference_id_list in &symbol_table.resolved_references {
+        for reference_id_list in symbol_table.resolved_references() {
             handle_jest_set_time_out(
                 ctx,
                 reference_id_list,

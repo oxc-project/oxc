@@ -77,7 +77,11 @@ impl SymbolTable {
         self.len() == 0
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = SymbolId> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = &Symbol> + '_ {
+        self.symbols.iter()
+    }
+
+    pub fn symbol_ids(&self) -> impl Iterator<Item = SymbolId> + '_ {
         self.symbols.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
@@ -87,6 +91,10 @@ impl SymbolTable {
 
     pub fn names(&self) -> impl Iterator<Item = &CompactStr> {
         self.symbols.iter().map(|symbol| &symbol.name)
+    }
+
+    pub fn resolved_references(&self) -> impl Iterator<Item = &Vec<ReferenceId>> {
+        self.symbols.iter().map(|symbol| &symbol.resolved_references)
     }
 
     pub fn name(&self, symbol_id: SymbolId) -> &CompactStr {

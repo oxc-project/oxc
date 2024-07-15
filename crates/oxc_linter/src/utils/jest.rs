@@ -195,21 +195,20 @@ fn collect_ids_referenced_to_import<'a>(
     ctx: &LintContext<'a>,
 ) -> Vec<(ReferenceId, Option<&'a str>)> {
     ctx.symbols()
-        .resolved_references
-        .iter_enumerated()
-        .filter_map(|(symbol_id, reference_ids)| {
-            if ctx.symbols().get_flag(symbol_id).is_import_binding() {
-                let id = ctx.symbols().get_declaration(symbol_id);
+        .iter()
+        .filter_map(|symbol| {
+            if symbol.flag.is_import_binding() {
+                let id = symbol.declaration;
                 let Some(AstKind::ImportDeclaration(import_decl)) = ctx.nodes().parent_kind(id)
                 else {
                     return None;
                 };
-                let name = ctx.symbols().get_name(symbol_id);
+                let name = &symbol.name;
 
                 if matches!(import_decl.source.value.as_str(), "@jest/globals" | "vitest") {
                     let original = find_original_name(import_decl, name);
                     let mut ret = vec![];
-                    for reference_id in reference_ids {
+                    for reference_id in &symbol.resolved_references {
                         ret.push((*reference_id, original));
                     }
 

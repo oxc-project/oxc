@@ -45,27 +45,24 @@ fn check_and_diagnostic(s: &str, span: Span, ctx: &LintContext) {
 
 impl Rule for NoShadowRestrictedNames {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        ctx.symbols().iter().for_each(|symbol_id| {
-            let name = ctx.symbols().get_name(symbol_id);
-
-            if name == "undefined" {
+        ctx.symbols().iter().for_each(|symbol| {
+            if symbol.name == "undefined" {
                 // Allow to declare `undefined` variable but not allow to assign value to it.
-                let node_id = ctx.semantic().symbols().get_declaration(symbol_id);
+                let node_id = symbol.declaration;
                 if let AstKind::VariableDeclarator(declarator) = ctx.nodes().kind(node_id) {
                     if declarator.init.is_none()
-                        && ctx
-                            .symbols()
-                            .get_resolved_references(symbol_id)
-                            .all(|reference| !reference.is_write())
+                        && symbol.resolved_references.iter().all(|reference_id| {
+                            !ctx.symbols().get_reference(*reference_id).is_write()
+                        })
                     {
                         return;
                     }
                 }
             }
 
-            check_and_diagnostic(name, ctx.symbols().get_span(symbol_id), ctx);
-            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
-                check_and_diagnostic(name, *span, ctx);
+            check_and_diagnostic(&symbol.name, symbol.span, ctx);
+            for span in &symbol.redeclare_variables {
+                check_and_diagnostic(&symbol.name, *span, ctx);
             }
         });
     }
