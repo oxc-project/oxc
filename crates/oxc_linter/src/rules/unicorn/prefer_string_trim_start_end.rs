@@ -69,8 +69,8 @@ impl Rule for PreferStringTrimStartEnd {
 
         ctx.diagnostic(prefer_string_trim_start_end_diagnostic(
             span,
-            name.as_str(),
             get_replacement(name.as_str()),
+            name.as_str(),
         ));
     }
 }
