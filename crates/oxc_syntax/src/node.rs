@@ -2,7 +2,7 @@ use bitflags::bitflags;
 use oxc_index::define_index_type;
 
 define_index_type! {
-    pub struct AstNodeId = usize;
+    pub struct AstNodeId = u32;
 }
 
 impl AstNodeId {
