@@ -92,7 +92,7 @@ pub struct SemanticBuilder<'a> {
 
     pub class_table_builder: ClassTableBuilder,
 
-    ast_nodes_records: Vec<Vec<AstNodeId>>,
+    ast_node_records: Vec<AstNodeId>,
 }
 
 pub struct SemanticBuilderReturn<'a> {
@@ -137,7 +137,7 @@ impl<'a> SemanticBuilder<'a> {
             check_syntax_error: false,
             cfg: None,
             class_table_builder: ClassTableBuilder::new(),
-            ast_nodes_records: Vec::new(),
+            ast_node_records: Vec::new(),
         }
     }
 
@@ -250,16 +250,19 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn record_ast_nodes(&mut self) {
-        self.ast_nodes_records.push(Vec::new());
+        self.ast_node_records.push(AstNodeId::dummy());
     }
 
-    fn retrieve_recorded_ast_nodes(&mut self) -> Vec<AstNodeId> {
-        self.ast_nodes_records.pop().expect("there is no ast nodes record to stop.")
+    #[allow(clippy::unnecessary_wraps)]
+    fn retrieve_recorded_ast_node(&mut self) -> Option<AstNodeId> {
+        Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
     }
 
     fn record_ast_node(&mut self) {
-        if let Some(records) = self.ast_nodes_records.last_mut() {
-            records.push(self.current_node_id);
+        if let Some(record) = self.ast_node_records.last_mut() {
+            if *record == AstNodeId::dummy() {
+                *record = self.current_node_id;
+            }
         }
     }
 
@@ -599,7 +602,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.record_ast_nodes();
         self.visit_expression(&stmt.test);
-        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        let test_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
         control_flow!(|self, cfg| {
@@ -718,7 +721,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.record_ast_nodes();
         self.visit_expression(&expr.test);
-        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        let test_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (after_condition_graph_ix, before_consequent_expr_graph_ix) =
@@ -793,7 +796,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(test) = &stmt.test {
             self.record_ast_nodes();
             self.visit_expression(test);
-            let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+            let test_node = self.retrieve_recorded_ast_node();
 
             /* cfg */
             control_flow!(|self, cfg| cfg.append_condition_to(test_graph_ix, test_node));
@@ -859,7 +862,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.record_ast_nodes();
         self.visit_expression(&stmt.right);
-        let right_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        let right_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
@@ -923,7 +926,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.record_ast_nodes();
         self.visit_expression(&stmt.right);
-        let right_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        let right_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
@@ -980,7 +983,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.record_ast_nodes();
         self.visit_expression(&stmt.test);
-        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        let test_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
         let (after_test_graph_ix, before_consequent_stmt_graph_ix) = control_flow!(|self, cfg| {
@@ -1172,7 +1175,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(expr) = &case.test {
             self.record_ast_nodes();
             self.visit_expression(expr);
-            let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+            let test_node = self.retrieve_recorded_ast_node();
             control_flow!(|self, cfg| cfg.append_condition_to(cfg.current_node_ix, test_node));
         }
 
@@ -1350,7 +1353,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         self.record_ast_nodes();
         self.visit_expression(&stmt.test);
-        let test_node = self.retrieve_recorded_ast_nodes().into_iter().next();
+        let test_node = self.retrieve_recorded_ast_node();
 
         /* cfg - body basic block */
         let body_graph_ix = control_flow!(|self, cfg| {
