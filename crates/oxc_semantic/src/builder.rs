@@ -249,12 +249,14 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    #[inline]
     fn record_ast_nodes(&mut self) {
         if self.cfg.is_some() {
             self.ast_node_records.push(AstNodeId::dummy());
         }
     }
 
+    #[inline]
     #[allow(clippy::unnecessary_wraps)]
     fn retrieve_recorded_ast_node(&mut self) -> Option<AstNodeId> {
         if self.cfg.is_some() {
@@ -264,6 +266,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    #[inline]
     fn record_ast_node(&mut self) {
         if self.cfg.is_some() {
             if let Some(record) = self.ast_node_records.last_mut() {
