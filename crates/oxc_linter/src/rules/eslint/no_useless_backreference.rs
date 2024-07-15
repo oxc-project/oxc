@@ -32,14 +32,25 @@ enum LookGroupReference {
     RegexGroup(RegexGroup),
 }
 
+#[derive(Debug, PartialEq)]
+enum LookGroupDirection {
+    Forward(),
+    Backward(),
+}
+
 #[derive(Debug)]
 struct LookGroupContext {
+    direction: LookGroupDirection,
     inside_counter: u8,
     timeline: Vec<LookGroupReference>,
 }
 
 #[derive(Debug, Clone)]
 struct CaptureGroupContext<'a> {
+    // because we need to escape the escape in a js string, we need to check if the original regex was a string,
+    // /(a)\1/ vs new Regex("(a)\\1")
+    escaped_char_escaped: bool,
+
     // the current capture group counter
     // this will be always the next capture group we will finish
     current_counter: u8,
@@ -97,9 +108,14 @@ fn get_regex_backreference(
     context: &mut CaptureGroupContext,
     capture_group_count: u8,
 ) -> Result<RegexBackReference, bool> {
+    let span_start: u32 = if context.escaped_char_escaped {
+        context.current_index - 2 // two backslash at the start
+    } else {
+        context.current_index - 1 // backslash at the start
+    };
+
     if char != '0' && char.is_ascii_digit() {
         let digit_result: u8; // can be only max 99
-        let span_start: u32 = context.current_index - 1; // backslash is the start
         let mut span_end: u32 = context.current_index + 1;
 
         if let Some(next_char) = context.iterator.peek() {
@@ -272,6 +288,7 @@ fn handle_look_group_closing(
     //     context: {context:?}
     //     group_context: {group_context:?}
     //     is_positive: {is_positive}
+    //     found_groups: {found_groups:?}
     // "
     // );
 
@@ -285,13 +302,26 @@ fn handle_look_group_closing(
                 }
             }
             LookGroupReference::BackReference(reference) => {
-                // it is defined in this looko behind
-                if found_groups.contains(&reference.regex_group) {
+                // it is defined in this look behind
+                if found_groups.contains(&reference.regex_group)
+                    && group_context.direction == LookGroupDirection::Backward()
+                {
+                    return Ok(reference.span);
+                }
+
+                // it is not defined in a look ahead
+                if !found_groups.contains(&reference.regex_group)
+                    && group_context.direction == LookGroupDirection::Forward()
+                {
                     return Ok(reference.span);
                 }
 
                 // we did not find it already
                 if !context.finished_groups.contains(&reference.regex_group) {
+                    return Ok(reference.span);
+                }
+
+                if context.disallowed_groups.contains(&reference.regex_group) {
                     return Ok(reference.span);
                 }
             }
@@ -376,17 +406,24 @@ fn handle_closing_bracet(
 
 fn report_invalid_back_reference(
     regex: &str,
+    escaped_char_escaped: bool,
     unicode_mode: bool,
     span_start_index: u32,
     ctx: &LintContext,
 ) {
-    if let Ok(span) = get_invalid_back_reference_by_regex(regex, unicode_mode, span_start_index) {
+    if let Ok(span) = get_invalid_back_reference_by_regex(
+        regex,
+        escaped_char_escaped,
+        unicode_mode,
+        span_start_index,
+    ) {
         ctx.diagnostic(OxcDiagnostic::warn("no back reference").with_label(span));
     }
 }
 
 fn get_invalid_back_reference_by_regex(
     regex: &str,
+    escaped_char_escaped: bool,
     unicode_mode: bool,
     span_start_index: u32,
 ) -> Result<Span, bool> {
@@ -394,6 +431,8 @@ fn get_invalid_back_reference_by_regex(
     let peek: Peekable<std::str::Chars> = chars.peekable();
 
     let sub_context = &mut CaptureGroupContext {
+        escaped_char_escaped,
+
         iterator: peek.clone(),
         current_counter: 1,
         finished_groups: vec![],
@@ -406,10 +445,11 @@ fn get_invalid_back_reference_by_regex(
         all_groups: &vec![],
         unicode_mode,
     };
+    let all_groups = get_regex_groups(sub_context, true);
 
-    // println!("regex: {regex}");
 
     get_peekable_invalid_back_references(&mut CaptureGroupContext {
+        escaped_char_escaped,
         iterator: peek,
         current_counter: 1,
         finished_groups: vec![],
@@ -419,7 +459,7 @@ fn get_invalid_back_reference_by_regex(
 
         current_index: span_start_index,
 
-        all_groups: &get_regex_groups(sub_context, true),
+        all_groups: &all_groups,
         unicode_mode,
     })
 }
@@ -439,21 +479,33 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
     .unwrap();
 
     let mut backslash_started = false;
-    let mut open_groups: Vec<RegexGroup> = vec![]; // ToDo: we do not care about open groups, we need to check if there is a (in)valid finished group
+    // to know which groups is closed, we are tracking the open groups and pop() from it
+    let mut open_groups: Vec<RegexGroup> = vec![];
     let mut inside_character_class_count: u8 = 0;
     let current_found_group: Vec<RegexGroup> = get_regex_groups(&mut context.clone(), false);
-    let mut look_behind_context = LookGroupContext { inside_counter: 0, timeline: vec![] };
-    let mut look_ahead_context = LookGroupContext { inside_counter: 0, timeline: vec![] };
+    let mut look_behind_context = LookGroupContext {
+        inside_counter: 0,
+        timeline: vec![],
+        direction: LookGroupDirection::Backward(),
+    };
+    let mut look_ahead_context = LookGroupContext {
+        inside_counter: 0,
+        timeline: vec![],
+        direction: LookGroupDirection::Forward(),
+    };
 
     // println!("context: {context:?}");
 
     while let Some(char) = context.iterator.next() {
-        // println!("{char}");
         context.current_index += 1;
-
+        
         // check for backslash
         if char == '\\' {
             backslash_started = !backslash_started;
+
+            if context.escaped_char_escaped {
+                context.current_index += 1;
+            }
             continue;
         }
 
@@ -631,12 +683,35 @@ fn is_regexp_call_expression(expr: &CallExpression<'_>) -> bool {
     expr.callee.is_specific_id("RegExp") && expr.arguments.len() > 0
 }
 
+// fn get_regex_expression(expr: &str) -> (String, Vec<char>) {
+//     let mut flags: Vec<char> = vec![];
+//
+//     let iterator = expr.chars().rev();
+//     let mut delimiter: char;
+//
+//     while let Some(char) = iterator.next() {
+//         // check for /, ", and other delimiters
+//         if !char.is_alphabetic() {
+//             delimiter = char;
+//             break;
+//         }
+//
+//         flags.push(char);
+//     }
+//
+//     return (
+//         delimiter,
+//         flags
+//     }
+// }
+
 impl Rule for NoUselessBackreference {
     fn run(&self, node: &AstNode, ctx: &LintContext) {
         match node.kind() {
             AstKind::RegExpLiteral(literal) => {
                 report_invalid_back_reference(
                     &literal.regex.pattern,
+                    false,
                     literal.regex.flags.contains(RegExpFlags::U),
                     literal.span.start,
                     ctx,
@@ -656,7 +731,7 @@ impl Rule for NoUselessBackreference {
                         }
                     }
                     Argument::StringLiteral(arg) => {
-                        report_invalid_back_reference(&arg.value, false, arg.span.start, ctx);
+                        report_invalid_back_reference(&arg.value, true, false, arg.span.start, ctx);
                     }
                     _ => {}
                 };
@@ -665,7 +740,7 @@ impl Rule for NoUselessBackreference {
                 let regex = &expr.arguments[0];
 
                 if let Argument::StringLiteral(arg) = regex {
-                    report_invalid_back_reference(&arg.value, false, arg.span.start, ctx);
+                    report_invalid_back_reference(&arg.value, true, false, arg.span.start, ctx);
                 }
             }
             _ => {}
@@ -782,7 +857,8 @@ fn test() {
         r"/(?<!(a))(b)(?!(c))\2/",
         r"/a(?!(b|c)\1)./",
         // ignore regular expressions with syntax errors
-        // ToDo: Implement u flag check
+        // oxc: we dont check for syntax error, we are linting here
+
         // r#"RegExp('\\1(a)[')"#, // \1 would be an error, but the unterminated [ is a syntax error
         // r#"new RegExp('\\1(a){', 'u')"#, // \1 would be an error, but the unterminated { is a syntax error because of the 'u' flag
         // r#"new RegExp('\\1(a)\\2', 'ug')"#, // \1 would be an error, but \2 is syntax error because of the 'u' flag
@@ -800,7 +876,7 @@ fn test() {
     let fail = vec![
         r"/(b)(\2a)/",
         r"/\k<foo>(?<foo>bar)/",
-        // r"RegExp('(a|bc)|\\1')", -- ToDo: why is this invalid?
+        r"RegExp('(a|bc)|\\1')",
         r"new RegExp('(?!(?<foo>\\n))\\1')",
         r"/(?<!(a)\1)b/",
         // nested

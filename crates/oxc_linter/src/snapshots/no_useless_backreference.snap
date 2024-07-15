@@ -14,9 +14,15 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ no back reference
-   ╭─[no_useless_backreference.tsx:1:27]
+   ╭─[no_useless_backreference.tsx:1:16]
+ 1 │ RegExp('(a|bc)|\\1')
+   ·                ───
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:28]
  1 │ new RegExp('(?!(?<foo>\\n))\\1')
-   ·                           ──
+   ·                            ───
    ╰────
 
   ⚠ no back reference
@@ -28,7 +34,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:14]
  1 │ new RegExp('(\\1)')
-   ·              ──
+   ·              ───
    ╰────
 
   ⚠ no back reference
@@ -46,13 +52,13 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:16]
  1 │ new RegExp('^(a\\1b)$')
-   ·                ──
+   ·                ───
    ╰────
 
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:12]
  1 │ RegExp('^((\\1))$')
-   ·            ──
+   ·            ───
    ╰────
 
   ⚠ no back reference
@@ -172,7 +178,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:12]
  1 │ RegExp('(a)\\2(b)')
-   ·            ──
+   ·            ───
    ╰────
 
   ⚠ no back reference
@@ -196,7 +202,7 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:19]
  1 │ new RegExp('(a)(b)\\3(c)')
-   ·                   ──
+   ·                   ───
    ╰────
 
   ⚠ no back reference
@@ -442,19 +448,19 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:22]
  1 │ /(a)\2(b)/; RegExp('(\\1)');
-   ·                      ──
+   ·                      ───
    ╰────
 
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:9]
  1 │ RegExp('\\1(a){', flags);
-   ·         ──
+   ·         ───
    ╰────
 
   ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:13]
  1 │ new RegExp('\\1([[A--B]])', 'v')
-   ·             ──
+   ·             ───
    ╰────
 
   ⚠ no back reference
