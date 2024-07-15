@@ -1,10 +1,12 @@
-//! Parsing utilities for converting Javascript numbers to Rust f64
-//! code copied from [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
+//! Parsing utilities for converting Javascript numbers to Rust f64.
+//! Code copied originally from
+//! [jsparagus](https://github.com/mozilla-spidermonkey/jsparagus/blob/master/crates/parser/src/numeric_value.rs)
+//! but iterated on since.
 
 use std::borrow::Cow;
 
 use num_bigint::BigInt;
-use num_traits::Num as _;
+use num_traits::Num;
 
 use super::kind::Kind;
 
@@ -26,7 +28,7 @@ pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
 /// Parsing will fail if this assumption is violated.
 fn parse_int_without_underscores(s: &str, kind: Kind) -> Result<f64, &'static str> {
     match kind {
-        Kind::Decimal => parse_float_without_underscores(s),
+        Kind::Decimal => Ok(parse_decimal(s)),
         Kind::Binary => Ok(parse_binary(&s[2..])),
         Kind::Octal => {
             let s = if s.starts_with("0o") || s.starts_with("0O") {
@@ -47,12 +49,65 @@ fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
+// ==================================== DECIMAL ====================================
+
+/// b'0' is 0x30 and b'9' is 0x39.
+///
+/// So we can convert from any decimal digit to its value with `c & 15`.
+/// This is produces more compact assembly than `c - b'0'`.
+///
+/// <https://godbolt.org/z/WMarz15sq>
+#[inline]
+const fn decimal_byte_to_value(c: u8) -> u8 {
+    debug_assert!(c >= b'0' && c <= b'9');
+    c & 15
+}
+
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+fn parse_decimal(s: &str) -> f64 {
+    /// Numeric strings longer than this have the chance to overflow u64.
+    /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
+    const MAX_FAST_DECIMAL_LEN: usize = 19;
+
+    debug_assert!(!s.is_empty());
+    if s.len() > MAX_FAST_DECIMAL_LEN {
+        return parse_decimal_slow(s);
+    }
+
+    let mut result = 0_u64;
+    for c in s.as_bytes() {
+        // The latency of the multiplication can be hidden by issuing it
+        // before the result is needed to improve performance on
+        // modern out-of-order CPU as multiplication here is slower
+        // than the other instructions, we can get the end result faster
+        // doing multiplication first and let the CPU spends other cycles
+        // doing other computation and get multiplication result later.
+        result *= 10;
+        let n = decimal_byte_to_value(*c);
+        result += n as u64;
+    }
+    result as f64
+}
+
+#[cold]
+#[inline(never)]
+fn parse_decimal_slow(s: &str) -> f64 {
+    // NB: Cannot use the `mul_add` loop method that `parse_binary_slow` etc use here,
+    // as it produces an imprecise result.
+    // For the others it's fine, presumably because multiply by a power of 2
+    // just increments f64's exponent. But multiplying by 10 is more complex.
+    s.parse::<f64>().unwrap()
+}
+
+// ==================================== BINARY ====================================
+
 /// b'0' is 0x30 and b'1' is 0x31.
 ///
 /// So we can convert from binary digit to its value with `c & 1`.
 /// This is produces more compact assembly than `c - b'0'`.
 ///
 /// <https://godbolt.org/z/1vvrK78jf>
+#[inline]
 const fn binary_byte_to_value(c: u8) -> u8 {
     debug_assert!(c == b'0' || c == b'1');
     c & 1
@@ -113,6 +168,7 @@ fn parse_binary_slow(s: &str) -> f64 {
 /// This is produces more compact assembly than `c - b'0'`.
 ///
 /// <https://godbolt.org/z/9rYTsMoMM>
+#[inline]
 const fn octal_byte_to_value(c: u8) -> u8 {
     debug_assert!(c >= b'0' && c <= b'7');
     c & 7
@@ -166,6 +222,7 @@ fn parse_octal_slow(s: &str) -> f64 {
 /// but only because compiler unrolls the loop.
 ///
 /// <https://godbolt.org/z/5fsdv8rGo>
+#[inline]
 const fn hex_byte_to_value(c: u8) -> u8 {
     debug_assert!((c >= b'0' && c <= b'9') || (c >= b'A' && c <= b'F') || (c >= b'a' && c <= b'f'));
     if c < b'A' {
@@ -208,6 +265,8 @@ fn parse_hex_slow(s: &str) -> f64 {
     result
 }
 
+// ==================================== BIGINT ====================================
+
 pub fn parse_big_int(s: &str, kind: Kind, has_sep: bool) -> Result<BigInt, &'static str> {
     let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
     debug_assert!(!s.contains('_'));
@@ -238,9 +297,7 @@ fn parse_big_int_without_underscores(s: &str, kind: Kind) -> Result<BigInt, &'st
 #[cfg(test)]
 #[allow(clippy::unreadable_literal, clippy::mixed_case_hex_literals)]
 mod test {
-    use super::{
-        binary_byte_to_value, hex_byte_to_value, octal_byte_to_value, parse_float, parse_int, Kind,
-    };
+    use super::*;
 
     #[allow(clippy::cast_precision_loss)]
     fn assert_all_ints_eq<I>(test_cases: I, kind: Kind, has_sep: bool)
@@ -270,6 +327,10 @@ mod test {
         }
     }
 
+    // decimal
+    static_assertions::const_assert_eq!(decimal_byte_to_value(b'0'), 0);
+    static_assertions::const_assert_eq!(decimal_byte_to_value(b'9'), 9);
+
     // binary
     static_assertions::const_assert_eq!(binary_byte_to_value(b'0'), 0);
     static_assertions::const_assert_eq!(binary_byte_to_value(b'1'), 1);
@@ -293,6 +354,11 @@ mod test {
             // 18446744073709551616 = 1 << 64
             parse_int("18446744073709551616", Kind::Decimal, false),
             Ok(18446744073709551616_i128 as f64)
+        );
+        // This tests for imprecision which results from using `mul_add` loop
+        assert_eq!(
+            parse_int("12300000000000000000000000", Kind::Decimal, false),
+            Ok(12300000000000000000000000_i128 as f64)
         );
         assert_eq!(
             // 0x10000000000000000 = 1 << 64
