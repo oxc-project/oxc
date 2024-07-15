@@ -275,6 +275,7 @@ impl<'a> SemanticBuilder<'a> {
                 *record = self.current_node_id;
             }
         }
+        // Dummy comment to re-run benchmark. TODO Remove me.
     }
 
     pub fn current_scope_flags(&self) -> ScopeFlags {
