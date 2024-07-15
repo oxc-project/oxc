@@ -279,14 +279,20 @@ fn handle_closing_bracet(
                                 found_groups.push(regex_group.to_owned());
                             }
                             LookBehindReference::BackReference(reference) => {
+                                // it is defined in this looko behind
                                 if found_groups.contains(&reference.regex_group) {
+                                    return Ok(reference.span);
+                                }
+
+                                // we did not find it already
+                                if !context.finished_groups.contains(&reference.regex_group) {
                                     return Ok(reference.span);
                                 }
                             }
                         }
                     }
 
-                    // look_behind_context.timeline.clear();
+                    look_behind_context.timeline.clear();
                 }
             }
             RegexGroup::LookAheadGroup() => {
@@ -737,8 +743,8 @@ fn test() {
         r"new RegExp('(a)(b)\\3(c)')",
         r"/\1(?<=(a))./",
         r"/\1(?<!(a))./",
-        // r"/(?<=\1)(?<=(a))/",
-        // r"/(?<!\1)(?<!(a))/",
+        r"/(?<=\1)(?<=(a))/",
+        r"/(?<!\1)(?<!(a))/",
         r"/(?=\1(a))./",
         r"/(?!\1(a))./",
         // backward in the same lookbehind

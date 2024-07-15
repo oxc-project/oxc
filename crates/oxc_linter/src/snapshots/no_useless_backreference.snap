@@ -212,6 +212,18 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(?<=\1)(?<=(a))/
+   ·      ──
+   ╰────
+
+  ⚠ no back reference
+   ╭─[no_useless_backreference.tsx:1:6]
+ 1 │ /(?<!\1)(?<!(a))/
+   ·      ──
+   ╰────
+
+  ⚠ no back reference
    ╭─[no_useless_backreference.tsx:1:5]
  1 │ /(?=\1(a))./
    ·     ──
