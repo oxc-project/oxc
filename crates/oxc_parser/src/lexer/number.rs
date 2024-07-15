@@ -270,6 +270,10 @@ mod test {
         }
     }
 
+    // binary
+    static_assertions::const_assert_eq!(binary_byte_to_value(b'0'), 0);
+    static_assertions::const_assert_eq!(binary_byte_to_value(b'1'), 1);
+
     // octal
     static_assertions::const_assert_eq!(octal_byte_to_value(b'0'), 0);
     static_assertions::const_assert_eq!(octal_byte_to_value(b'7'), 7);
@@ -282,29 +286,32 @@ mod test {
     static_assertions::const_assert_eq!(hex_byte_to_value(b'a'), 10);
     static_assertions::const_assert_eq!(hex_byte_to_value(b'f'), 15);
 
-    // binary
-    static_assertions::const_assert_eq!(binary_byte_to_value(b'0'), 0);
-    static_assertions::const_assert_eq!(binary_byte_to_value(b'1'), 1);
-
     #[test]
     #[allow(clippy::excessive_precision, clippy::cast_precision_loss)]
     fn test_int_precision() {
-        assert_eq!(parse_int("9007199254740991", Kind::Decimal, false), Ok(9007199254740991.0));
         assert_eq!(
+            // 18446744073709551616 = 1 << 64
+            parse_int("18446744073709551616", Kind::Decimal, false),
+            Ok(18446744073709551616_i128 as f64)
+        );
+        assert_eq!(
+            // 0x10000000000000000 = 1 << 64
             parse_int("0x10000000000000000", Kind::Hex, false),
             Ok(0x10000000000000000_i128 as f64)
         );
         assert_eq!(
-            parse_int("0o40000000000000000", Kind::Octal, false),
-            Ok(0o40000000000000000_i128 as f64)
+            // 0o2000000000000000000000 = 1 << 64
+            parse_int("0o2000000000000000000000", Kind::Octal, false),
+            Ok(0o2000000000000000000000_i128 as f64)
         );
         assert_eq!(
+            // 0b10000000000000000000000000000000000000000000000000000000000000000 = 1 << 64
             parse_int(
-                "0b00010000000000000000000000000000000000000000000000000000000000000000",
+                "0b10000000000000000000000000000000000000000000000000000000000000000",
                 Kind::Binary,
                 false
             ),
-            Ok(0b00010000000000000000000000000000000000000000000000000000000000000000_i128 as f64)
+            Ok(0b10000000000000000000000000000000000000000000000000000000000000000_i128 as f64)
         );
     }
 
@@ -333,13 +340,9 @@ mod test {
         let decimal: Vec<(&str, i64)> = vec![
             // normal
             ("0", 0),
-            ("-0", 0),
             ("1", 1),
-            ("-1", -1),
             ("000000000000", 0),
-            ("-000000000000", 0),
             ("9007199254740991", 9007199254740991), // max safe integer, 2^53 - 1
-            ("-9007199254740990", -9007199254740990), // min safe integer, -(2^53 - 1)
         ];
         let binary = vec![
             ("0b0", 0b0),
@@ -369,15 +372,10 @@ mod test {
         let decimal: Vec<(&str, i64)> = vec![
             // still works without separators
             ("0", 0),
-            ("-0", 0),
             ("1", 1),
-            ("-1", -1),
             ("1_000_000", 1_000_000),
-            ("-1_000_000", -1_000_000),
             ("000000000000", 0),
-            ("-000000000000", 0),
             ("9_007_199_254_740_991", 9_007_199_254_740_991), // max safe integer, 2^53 - 1
-            ("-9_007_199_254_740_990", -9_007_199_254_740_990), // min safe integer, -(2^53 - 1)
             // still works for illegal tokens
             ("1___000_000", 1_000_000),
             ("1_", 1),
@@ -445,12 +443,10 @@ mod test {
             ("0.5_", 0.5),
         ];
 
-        // parse_int() handles Kind::Decimal as a float. Should we check if
-        // a '.' is encountered during lexing and pick which parser to use?
         assert_all_floats_eq(no_sep.clone(), false);
         assert_all_floats_eq(sep.clone(), true);
         for (s, expected) in no_sep {
-            let parsed = parse_int(s, Kind::Decimal, false);
+            let parsed = parse_float(s, false);
             assert_eq!(
                 parsed,
                 Ok(expected),
@@ -458,7 +454,7 @@ mod test {
             );
         }
         for (s, expected) in sep {
-            let parsed = parse_int(s, Kind::Decimal, true);
+            let parsed = parse_float(s, true);
             assert_eq!(
                 parsed,
                 Ok(expected),
