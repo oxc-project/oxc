@@ -268,11 +268,11 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     fn record_ast_node(&mut self) {
-        if self.cfg.is_some() {
-            if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == AstNodeId::dummy() {
-                    *record = self.current_node_id;
-                }
+        // NB: If CFG is disabled, `ast_node_records` is always empty, so this is skipped.
+        // No need for a `if self.cfg.is_some()` guard.
+        if let Some(record) = self.ast_node_records.last_mut() {
+            if *record == AstNodeId::dummy() {
+                *record = self.current_node_id;
             }
         }
     }
