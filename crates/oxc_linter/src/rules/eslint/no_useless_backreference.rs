@@ -1,6 +1,6 @@
 use crate::{context::LintContext, rule::Rule, AstNode};
 use oxc_ast::{
-    ast::{Argument, CallExpression, NewExpression},
+    ast::{Argument, CallExpression, NewExpression, RegExpFlags},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -41,11 +41,14 @@ struct LookBehindContext {
 
 #[derive(Debug, Clone)]
 struct CaptureGroupContext<'a> {
-    iterator: Peekable<std::str::Chars<'a>>,
     current_counter: u8,
     finished_groups: Vec<RegexGroup>,
-    all_groups: Vec<RegexGroup>,
     current_index: u32,
+
+    iterator: Peekable<std::str::Chars<'a>>, // ToDO: check if this is also the ToDo item of the next line
+    // ToDo: this never change but we are mutating the complete struct
+    all_groups: &'a Vec<RegexGroup>,
+    unicode_mode: bool,
 }
 
 declare_oxc_lint!(
@@ -304,22 +307,33 @@ fn handle_closing_bracet(
     Err(false)
 }
 
-fn report_invalid_back_reference(regex: &str, span_start_index: u32, ctx: &LintContext) {
-    if let Ok(span) = get_string_invalid_back_reference(regex, span_start_index) {
+fn report_invalid_back_reference(
+    regex: &str,
+    unicode_mode: bool,
+    span_start_index: u32,
+    ctx: &LintContext,
+) {
+    if let Ok(span) = get_invalid_back_reference_by_regex(regex, unicode_mode, span_start_index) {
         ctx.diagnostic(OxcDiagnostic::warn("no back reference").with_label(span));
     }
 }
 
-fn get_string_invalid_back_reference(regex: &str, span_start_index: u32) -> Result<Span, bool> {
+fn get_invalid_back_reference_by_regex(
+    regex: &str,
+    unicode_mode: bool,
+    span_start_index: u32,
+) -> Result<Span, bool> {
     let chars = regex.chars();
-    let peek = chars.peekable();
+    let peek: Peekable<std::str::Chars> = chars.peekable();
 
     let sub_context = &mut CaptureGroupContext {
         iterator: peek.clone(),
         current_counter: 1,
         finished_groups: vec![],
-        all_groups: vec![],
         current_index: span_start_index,
+
+        all_groups: &vec![],
+        unicode_mode,
     };
 
     // println!("regex: {regex}");
@@ -328,8 +342,10 @@ fn get_string_invalid_back_reference(regex: &str, span_start_index: u32) -> Resu
         iterator: peek,
         current_counter: 1,
         finished_groups: vec![],
-        all_groups: get_regex_groups(sub_context, true),
         current_index: span_start_index,
+
+        all_groups: &get_regex_groups(sub_context, true),
+        unicode_mode,
     })
 }
 
@@ -348,7 +364,7 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
     .unwrap();
 
     let mut backslash_started = false;
-    let mut open_groups: Vec<RegexGroup> = vec![];
+    let mut open_groups: Vec<RegexGroup> = vec![]; // ToDo: we do not care about open groups, we need to check if there is a (in)valid finished group
     let mut inside_character_class_count: u8 = 0;
     let mut inside_look_ahead: u8 = 0;
     let current_found_group: Vec<RegexGroup> = get_regex_groups(&mut context.clone(), false);
@@ -471,19 +487,31 @@ fn get_peekable_invalid_back_references(context: &mut CaptureGroupContext) -> Re
                         .push(LookBehindReference::BackReference(backreference.clone()));
                 }
 
-                // not inside look behind: ToDo: check für better
-                // the group needs to be finished and not currently open
-                // cant be open
-                if open_groups.contains(&backreference.regex_group) {
-                    return Ok(backreference.span);
-                // needs to be found in this alternative
-                } else if !current_found_group.contains(&backreference.regex_group) {
-                    return Ok(backreference.span);
-                // there is a reference but we dont know from where
-                } else if !context.finished_groups.contains(&backreference.regex_group)
-                    && look_behind_context.inside_counter == 0
-                {
-                    return Ok(backreference.span);
+                let mut ignore_named_caputures = false;
+
+                match backreference.regex_group {
+                    RegexGroup::NamedCaptureGroup(_)
+                        if !context.unicode_mode
+                            && !context.all_groups.contains(&backreference.regex_group) =>
+                    {
+                        ignore_named_caputures = true;
+                    }
+                    _ => {}
+                }
+
+                if !ignore_named_caputures {
+                    // cant be open
+                    if open_groups.contains(&backreference.regex_group) {
+                        return Ok(backreference.span);
+                    // needs to be found in this alternative
+                    } else if !current_found_group.contains(&backreference.regex_group) {
+                        return Ok(backreference.span);
+                    // there is a reference but we dont know from where
+                    } else if !context.finished_groups.contains(&backreference.regex_group)
+                        && look_behind_context.inside_counter == 0
+                    {
+                        return Ok(backreference.span);
+                    }
                 }
             }
         }
@@ -508,7 +536,12 @@ impl Rule for NoUselessBackreference {
     fn run(&self, node: &AstNode, ctx: &LintContext) {
         match node.kind() {
             AstKind::RegExpLiteral(literal) => {
-                report_invalid_back_reference(&literal.regex.pattern, literal.span.start, ctx);
+                report_invalid_back_reference(
+                    &literal.regex.pattern,
+                    literal.regex.flags.contains(RegExpFlags::U),
+                    literal.span.start,
+                    ctx,
+                );
             }
             AstKind::NewExpression(expr) if is_regexp_new_expression(expr) => {
                 let regex: &Argument = &expr.arguments[0];
@@ -524,7 +557,7 @@ impl Rule for NoUselessBackreference {
                         }
                     }
                     Argument::StringLiteral(arg) => {
-                        report_invalid_back_reference(&arg.value, arg.span.start, ctx);
+                        report_invalid_back_reference(&arg.value, false, arg.span.start, ctx);
                     }
                     _ => {}
                 };
@@ -533,7 +566,7 @@ impl Rule for NoUselessBackreference {
                 let regex = &expr.arguments[0];
 
                 if let Argument::StringLiteral(arg) = regex {
-                    report_invalid_back_reference(&arg.value, arg.span.start, ctx);
+                    report_invalid_back_reference(&arg.value, false, arg.span.start, ctx);
                 }
             }
             _ => {}
@@ -593,8 +626,8 @@ fn test() {
         r"/^[\1](a)$/",            // \N in a character class is a regex octal escape
         r"new RegExp('[\\1](a)')", // \N in a character class is a regex octal escape
         r"/\11(a)/",               // regex octal escape \11, regex matches "\x09a"
-        // r"/\k<foo>(a)/", // without the 'u' flag and any named groups this isn't a syntax error, matches "k<foo>a"
-        r"/^(a)\1\2$/", // \1 is a backreference, \2 is an octal escape sequence.
+        r"/\k<foo>(a)/", // without the 'u' flag and any named groups this isn't a syntax error, matches "k<foo>a"
+        r"/^(a)\1\2$/",  // \1 is a backreference, \2 is an octal escape sequence.
         // Valid backreferences: correct position, after the group
         r"/(a)\1/",
         r"/(a).\1/",
@@ -613,7 +646,7 @@ fn test() {
         r"/(a)?(b)*(\1)(c)/",
         r"/(a)?(b)*(\2)(c)/",
         r"/(?<=(a))b\1/",
-        // r"/(?<=(?=(a)\1))b/",
+        // r"/(?<=(?=(a)\1))b/", -- ToDo
         // Valid backreferences: correct position before the group when they're both in the same lookbehind
         r"/(?<!\1(a))b/",
         r"/(?<=\1(a))b/",
