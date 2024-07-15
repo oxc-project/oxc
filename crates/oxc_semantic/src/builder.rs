@@ -250,18 +250,26 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     fn record_ast_nodes(&mut self) {
-        self.ast_node_records.push(AstNodeId::dummy());
+        if self.cfg.is_some() {
+            self.ast_node_records.push(AstNodeId::dummy());
+        }
     }
 
     #[allow(clippy::unnecessary_wraps)]
     fn retrieve_recorded_ast_node(&mut self) -> Option<AstNodeId> {
-        Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
+        if self.cfg.is_some() {
+            Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
+        } else {
+            None
+        }
     }
 
     fn record_ast_node(&mut self) {
-        if let Some(record) = self.ast_node_records.last_mut() {
-            if *record == AstNodeId::dummy() {
-                *record = self.current_node_id;
+        if self.cfg.is_some() {
+            if let Some(record) = self.ast_node_records.last_mut() {
+                if *record == AstNodeId::dummy() {
+                    *record = self.current_node_id;
+                }
             }
         }
     }
