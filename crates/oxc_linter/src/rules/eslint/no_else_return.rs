@@ -1,29 +1,66 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-
+use serde_json::Value;
+use oxc_ast::{
+  ast::{IfStatement, Statement}, AstKind
+};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
-pub struct NoElseReturn;
+pub struct NoElseReturn {
+  allow_else_if: bool
+}
 
 declare_oxc_lint!(
     /// ### What it does
-    ///
+    /// Disallow `else` blocks after `return` statements in `if` statements
     ///
     /// ### Why is this bad?
-    ///
+    /// If an if block contains a return statement, the else block becomes unnecessary. Its contents can be placed outside of the block.
     ///
     /// ### Example
     /// ```javascript
+    /// function foo() {
+    ///   if (x) {
+    ///     return y;
+    ///   } else {
+    ///     return z;
+    ///   }
+    /// }
     /// ```
     NoElseReturn,
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
+fn check_if_without_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
+
+}
+
+fn check_if_with_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
+  
+}
+
 impl Rule for NoElseReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {}
+    fn from_configuration(value: serde_json::Value) -> Self {
+      let config = value.get(0);
+      Self {
+        allow_else_if: config.and_then(Value::as_bool).unwrap_or(true),
+      }
+    }
+
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+      let AstKind::IfStatement(if_stmt)= node.kind() else {
+        return;
+      };
+
+      if (self.allow_else_if) {
+        check_if_with_else(if_stmt, ctx);
+      } else {
+        check_if_without_else(if_stmt, ctx);
+      }
+	}
 }
 
 #[test]
