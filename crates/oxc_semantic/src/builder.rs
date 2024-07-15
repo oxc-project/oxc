@@ -268,6 +268,9 @@ impl<'a> SemanticBuilder<'a> {
 
     #[inline]
     fn record_ast_node(&mut self) {
+        // The `self.cfg.is_some()` check here could be removed, since `ast_node_records` is empty
+        // if CFG is disabled. But benchmarks showed removing the extra check is a perf regression.
+        // <https://github.com/oxc-project/oxc/pull/4273>
         if self.cfg.is_some() {
             if let Some(record) = self.ast_node_records.last_mut() {
                 if *record == AstNodeId::dummy() {
