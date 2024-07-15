@@ -11,25 +11,14 @@ use num_traits::Num;
 use super::kind::Kind;
 
 pub fn parse_int(s: &str, kind: Kind, has_sep: bool) -> Result<f64, &'static str> {
-    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
-    debug_assert!(!s.contains('_'));
-
-    parse_int_without_underscores(&s, kind)
-}
-
-pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
-    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
-    debug_assert!(!s.contains('_'));
-
-    parse_float_without_underscores(&s)
-}
-
-/// This function assumes `s` has had all numeric separators (`_`) removed.
-/// Parsing will fail if this assumption is violated.
-fn parse_int_without_underscores(s: &str, kind: Kind) -> Result<f64, &'static str> {
     match kind {
-        Kind::Decimal => Ok(parse_decimal(s)),
-        Kind::Binary => Ok(parse_binary(&s[2..])),
+        Kind::Decimal => {
+            Ok(if has_sep { parse_decimal_with_underscores(s) } else { parse_decimal(s) })
+        }
+        Kind::Binary => {
+            let s = &s[2..];
+            Ok(if has_sep { parse_binary_with_underscores(s) } else { parse_binary(s) })
+        }
         Kind::Octal => {
             // Octals always begin with `0`. Trim off leading `0`, `0o` or `0O`.
             let second_byte = s.as_bytes()[1];
@@ -40,16 +29,19 @@ fn parse_int_without_underscores(s: &str, kind: Kind) -> Result<f64, &'static st
             } else {
                 &s[1..] // legacy octal
             };
-            Ok(parse_octal(s))
+            Ok(if has_sep { parse_octal_with_underscores(s) } else { parse_octal(s) })
         }
-        Kind::Hex => Ok(parse_hex(&s[2..])),
+        Kind::Hex => {
+            let s = &s[2..];
+            Ok(if has_sep { parse_hex_with_underscores(s) } else { parse_hex(s) })
+        }
         _ => unreachable!(),
     }
 }
 
-/// This function assumes `s` has had all numeric separators (`_`) removed.
-/// Parsing will fail if this assumption is violated.
-fn parse_float_without_underscores(s: &str) -> Result<f64, &'static str> {
+pub fn parse_float(s: &str, has_sep: bool) -> Result<f64, &'static str> {
+    let s = if has_sep { Cow::Owned(s.replace('_', "")) } else { Cow::Borrowed(s) };
+    debug_assert!(!s.contains('_'));
     s.parse::<f64>().map_err(|_| "invalid float")
 }
 
@@ -89,6 +81,28 @@ fn parse_decimal(s: &str) -> f64 {
         result *= 10;
         let n = decimal_byte_to_value(*c);
         result += n as u64;
+    }
+    result as f64
+}
+
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+fn parse_decimal_with_underscores(s: &str) -> f64 {
+    /// Numeric strings longer than this have the chance to overflow u64.
+    /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
+    const MAX_FAST_DECIMAL_LEN: usize = 19;
+
+    debug_assert!(!s.is_empty());
+    if s.len() > MAX_FAST_DECIMAL_LEN {
+        return parse_decimal_slow(&s.replace('_', ""));
+    }
+
+    let mut result = 0_u64;
+    for c in s.as_bytes() {
+        if *c != b'_' {
+            result *= 10;
+            let n = decimal_byte_to_value(*c);
+            result += n as u64;
+        }
     }
     result as f64
 }
@@ -160,7 +174,42 @@ fn parse_binary_slow(s: &str) -> f64 {
         let value = f64::from(binary_byte_to_value(*c));
         result = result.mul_add(2.0, value);
     }
+    result
+}
 
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+fn parse_binary_with_underscores(s: &str) -> f64 {
+    /// binary literals longer than this many characters have the chance to
+    /// overflow a u64, forcing us to take the slow path.
+    const MAX_FAST_BINARY_LEN: usize = 64;
+
+    debug_assert!(!s.is_empty());
+    debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
+
+    if s.len() > MAX_FAST_BINARY_LEN {
+        return parse_binary_with_underscores_slow(s);
+    }
+
+    let mut result = 0_u64;
+    for c in s.as_bytes() {
+        if *c != b'_' {
+            result <<= 1;
+            result |= binary_byte_to_value(*c) as u64;
+        }
+    }
+    result as f64
+}
+
+#[cold]
+#[inline(never)]
+fn parse_binary_with_underscores_slow(s: &str) -> f64 {
+    let mut result = 0_f64;
+    for c in s.as_bytes() {
+        if *c != b'_' {
+            let value = f64::from(binary_byte_to_value(*c));
+            result = result.mul_add(2.0, value);
+        }
+    }
     result
 }
 
@@ -207,7 +256,42 @@ fn parse_octal_slow(s: &str) -> f64 {
         let value = f64::from(octal_byte_to_value(*c));
         result = result.mul_add(8.0, value);
     }
+    result
+}
 
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+fn parse_octal_with_underscores(s: &str) -> f64 {
+    /// Numeric strings longer than this have the chance to overflow u64.
+    const MAX_FAST_OCTAL_LEN: usize = 21;
+
+    debug_assert!(!s.is_empty());
+    debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
+    if s.len() > MAX_FAST_OCTAL_LEN {
+        return parse_octal_with_underscores_slow(s);
+    }
+
+    let mut result = 0_u64;
+    for c in s.as_bytes() {
+        if *c != b'_' {
+            let n = octal_byte_to_value(*c);
+            result <<= 3;
+            result |= n as u64;
+        }
+    }
+    result as f64
+}
+
+#[cold]
+#[inline(never)]
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+fn parse_octal_with_underscores_slow(s: &str) -> f64 {
+    let mut result = 0_f64;
+    for c in s.as_bytes() {
+        if *c != b'_' {
+            let value = f64::from(octal_byte_to_value(*c));
+            result = result.mul_add(8.0, value);
+        }
+    }
     result
 }
 
@@ -265,7 +349,42 @@ fn parse_hex_slow(s: &str) -> f64 {
         let value = f64::from(hex_byte_to_value(*c));
         result = result.mul_add(16.0, value);
     }
+    result
+}
 
+#[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
+fn parse_hex_with_underscores(s: &str) -> f64 {
+    /// Hex strings longer than this have the chance to overflow u64.
+    const MAX_FAST_HEX_LEN: usize = 16;
+
+    debug_assert!(!s.is_empty());
+    debug_assert!(!s.starts_with("0x"));
+
+    if s.len() > MAX_FAST_HEX_LEN {
+        return parse_hex_with_underscores_slow(s);
+    }
+
+    let mut result = 0_u64;
+    for c in s.as_bytes() {
+        if *c != b'_' {
+            let n = hex_byte_to_value(*c);
+            result <<= 4;
+            result |= n as u64;
+        }
+    }
+    result as f64
+}
+
+#[cold]
+#[inline(never)]
+fn parse_hex_with_underscores_slow(s: &str) -> f64 {
+    let mut result = 0_f64;
+    for c in s.as_bytes() {
+        if *c != b'_' {
+            let value = f64::from(hex_byte_to_value(*c));
+            result = result.mul_add(16.0, value);
+        }
+    }
     result
 }
 
