@@ -31,10 +31,14 @@ fn parse_int_without_underscores(s: &str, kind: Kind) -> Result<f64, &'static st
         Kind::Decimal => Ok(parse_decimal(s)),
         Kind::Binary => Ok(parse_binary(&s[2..])),
         Kind::Octal => {
-            let s = if s.starts_with("0o") || s.starts_with("0O") {
-                &s[2..]
+            // Octals always begin with `0`. Trim off leading `0`, `0o` or `0O`.
+            let second_byte = s.as_bytes()[1];
+            let s = if second_byte == b'o' || second_byte == b'O' {
+                // SAFETY: We just checked that 2nd byte is ASCII, so slicing off 2 bytes
+                // must be in bounds and on a UTF-8 character boundary.
+                unsafe { s.get_unchecked(2..) }
             } else {
-                s // legacy octal
+                &s[1..] // legacy octal
             };
             Ok(parse_octal(s))
         }
