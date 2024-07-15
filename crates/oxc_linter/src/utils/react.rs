@@ -298,7 +298,7 @@ pub fn is_react_hook(expr: &Expression) -> bool {
         match_member_expression!(Expression) => {
             // SAFETY: We already have checked that `expr` is a member expression using the
             // `match_member_expression` macro.
-            #[allow(unsafe_code)]
+
             let expr = unsafe { expr.as_member_expression().unwrap_unchecked() };
             let MemberExpression::StaticMemberExpression(static_expr) = expr else { return false };
 

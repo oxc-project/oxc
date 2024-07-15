@@ -14,10 +14,8 @@ impl Idx for SymbolId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
         // SAFETY: + 1 is always non-zero.
-        #[allow(unsafe_code)]
-        unsafe {
-            Self(NonZeroU32::new_unchecked(idx as u32 + 1))
-        }
+
+        unsafe { Self(NonZeroU32::new_unchecked(idx as u32 + 1)) }
     }
 
     fn index(self) -> usize {

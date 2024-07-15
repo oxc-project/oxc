@@ -107,12 +107,9 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn cfg(&self) -> &ControlFlowGraph {
-        #[allow(unsafe_code)]
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
         // assert the existence of control flow so it should always be `Some`.
-        unsafe {
-            self.semantic().cfg().unwrap_unchecked()
-        }
+        unsafe { self.semantic().cfg().unwrap_unchecked() }
     }
 
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {

@@ -88,7 +88,7 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
                 insert!("// SAFETY:");
                 insert!("// This should be safe as long as `src` is an reference from the allocator.");
                 insert!("// But honestly, I'm not really sure if this is safe.");
-                #[allow(unsafe_code)]
+
                 unsafe {
                     std::mem::transmute(t)
                 }

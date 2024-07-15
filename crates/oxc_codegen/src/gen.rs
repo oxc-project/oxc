@@ -1189,10 +1189,8 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        #[allow(unsafe_code)]
-        unsafe {
-            String::from_utf8_unchecked(num.to_vec())
-        }
+
+        unsafe { String::from_utf8_unchecked(num.to_vec()) }
     };
 
     if dot == Some(1) && chars[0] == b'0' {

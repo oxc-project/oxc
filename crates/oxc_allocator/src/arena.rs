@@ -24,7 +24,6 @@ use crate::Allocator;
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<'alloc, T> Box<'alloc, T> {
-    #[allow(unsafe_code)]
     pub fn unbox(self) -> T {
         // SAFETY:
         // This pointer read is safe because the reference `self.0` is
@@ -54,7 +53,6 @@ impl<'alloc, T> Box<'alloc, T> {
 impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
     type Target = T;
 
-    #[allow(unsafe_code)]
     fn deref(&self) -> &T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_ref() }
@@ -62,7 +60,6 @@ impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
 }
 
 impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
-    #[allow(unsafe_code)]
     fn deref_mut(&mut self) -> &mut T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_mut() }
