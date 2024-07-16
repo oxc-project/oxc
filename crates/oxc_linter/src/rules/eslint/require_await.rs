@@ -105,7 +105,7 @@ impl<'a> Visit<'a> for AwaitFinder {
 
     fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {}
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 }
 
 #[test]

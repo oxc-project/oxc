@@ -836,7 +836,7 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_function(&mut self, it: &Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
         walk_function(self, it, flags);
     }
 
@@ -1509,7 +1509,7 @@ pub mod walk {
             Expression::ClassExpression(it) => visitor.visit_class(it),
             Expression::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
             Expression::FunctionExpression(it) => {
-                let flags = None;
+                let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
             Expression::ImportExpression(it) => visitor.visit_import_expression(it),
@@ -3014,27 +3014,23 @@ pub mod walk {
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
         {
-            let flags = Some(match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::empty(),
-            });
+            let flags = match it.kind {
+                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
+                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
+                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
+                MethodDefinitionKind::Method => ScopeFlags::Function,
+            };
             visitor.visit_function(&it.value, flags);
         }
         visitor.leave_node(kind);
     }
 
-    pub fn walk_function<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &Function<'a>,
-        flags: Option<ScopeFlags>,
-    ) {
+    pub fn walk_function<'a, V: Visit<'a>>(visitor: &mut V, it: &Function<'a>, flags: ScopeFlags) {
         let kind = AstKind::Function(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.enter_scope(
             {
-                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+                let mut flags = flags;
                 if it.is_strict() {
                     flags |= ScopeFlags::StrictMode;
                 }
@@ -3738,7 +3734,7 @@ pub mod walk {
         match it {
             Declaration::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
             Declaration::FunctionDeclaration(it) => {
-                let flags = None;
+                let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
             Declaration::ClassDeclaration(it) => visitor.visit_class(it),
@@ -4119,7 +4115,7 @@ pub mod walk {
     ) {
         match it {
             ExportDefaultDeclarationKind::FunctionDeclaration(it) => {
-                let flags = None;
+                let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),

@@ -1441,7 +1441,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         /* cfg */
         let (before_function_graph_ix, error_harness, function_graph_ix) =
             control_flow!(self, |cfg| {
@@ -1460,7 +1460,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.enter_scope(
             {
-                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+                let mut flags = flags;
                 if func.is_strict() {
                     flags |= ScopeFlags::StrictMode;
                 }

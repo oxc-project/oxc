@@ -549,7 +549,7 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.scope_ids.push(clause.scope_id.get().unwrap());
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, _flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, func: &Function<'a>, _flags: ScopeFlags) {
         self.scope_ids.push(func.scope_id.get().unwrap());
     }
 

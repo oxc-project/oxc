@@ -231,7 +231,7 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         walk_function(self, func, flags);
         if func.type_parameters.is_some() {
             self.leave_scope();

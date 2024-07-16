@@ -151,7 +151,7 @@ impl<'a> Visit<'a> for KeepVar<'a> {
         }
     }
 
-    fn visit_function(&mut self, _it: &Function<'a>, _flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
         /* skip functions */
     }
 
