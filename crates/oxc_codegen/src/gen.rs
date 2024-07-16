@@ -1419,8 +1419,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let wrap = precedence > self.precedence() || ctx.has_forbid_call();
         let ctx = ctx.and_forbid_call(false);
-        p.gen_comment(self.span.start);
         p.wrap(wrap, |p| {
+            p.gen_comment(self.span.start);
             p.add_source_mapping(self.span.start);
             self.callee.gen_expr(p, self.precedence(), ctx);
             if self.optional {
@@ -2049,8 +2049,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.gen_comment(self.span.start);
         p.wrap(precedence > self.precedence(), |p| {
+            p.gen_comment(self.span.start);
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
             self.callee.gen_expr(p, Precedence::NewWithoutArgs, ctx.and_forbid_call(true));

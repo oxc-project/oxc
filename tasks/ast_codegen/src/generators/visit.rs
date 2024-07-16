@@ -254,7 +254,7 @@ impl<'a> VisitBuilder<'a> {
 
         let as_param_type = self.with_ref_pat(&as_type);
         let (extra_params, extra_args) = if ident == "Function" {
-            (quote!(, flags: Option<ScopeFlags>,), quote!(, flags))
+            (quote!(, flags: ScopeFlags,), quote!(, flags))
         } else {
             (TokenStream::default(), TokenStream::default())
         };

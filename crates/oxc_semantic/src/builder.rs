@@ -430,24 +430,6 @@ impl<'a> SemanticBuilder<'a> {
             self.symbols.union_flag(symbol_id, SymbolFlags::Export);
         }
     }
-
-    fn bind_function_or_class_expression(&mut self) {
-        match self.nodes.kind(self.current_node_id) {
-            AstKind::Class(class) => {
-                if class.is_expression() {
-                    // We need to bind class expression in the class scope,
-                    class.bind(self);
-                }
-            }
-            AstKind::Function(func) => {
-                if func.is_expression() {
-                    // We need to bind function expression in the function scope,
-                    func.bind(self);
-                }
-            }
-            _ => {}
-        }
-    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -483,10 +465,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_scope_depth += 1;
         if self.unresolved_references.len() <= self.current_scope_depth {
             self.unresolved_references.push(UnresolvedReferences::default());
-        }
-
-        if !flags.is_top() {
-            self.bind_function_or_class_expression();
         }
     }
 
@@ -567,6 +545,39 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             .append_break(node_id, stmt.label.as_ref().map(|it| it.name.as_str())));
         /* cfg */
 
+        self.leave_node(kind);
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        let kind = AstKind::Class(self.alloc(class));
+        self.enter_node(kind);
+
+        self.visit_decorators(&class.decorators);
+        if let Some(id) = &class.id {
+            self.visit_binding_identifier(id);
+        }
+
+        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
+        if class.is_expression() {
+            // We need to bind class expression in the class scope
+            class.bind(self);
+        }
+
+        if let Some(type_parameters) = &class.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(super_class) = &class.super_class {
+            self.visit_class_heritage(super_class);
+        }
+        if let Some(super_type_parameters) = &class.super_type_parameters {
+            self.visit_ts_type_parameter_instantiation(super_type_parameters);
+        }
+        if let Some(implements) = &class.implements {
+            self.visit_ts_class_implementses(implements);
+        }
+        self.visit_class_body(&class.body);
+
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -1430,7 +1441,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         /* cfg */
         let (before_function_graph_ix, error_harness, function_graph_ix) =
             control_flow!(self, |cfg| {
@@ -1449,7 +1460,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.enter_scope(
             {
-                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+                let mut flags = flags;
                 if func.is_strict() {
                     flags |= ScopeFlags::StrictMode;
                 }
@@ -1457,6 +1468,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             },
             &func.scope_id,
         );
+
+        if func.is_expression() {
+            // We need to bind function expression in the function scope
+            func.bind(self);
+        }
 
         if let Some(id) = &func.id {
             self.visit_binding_identifier(id);
