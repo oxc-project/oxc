@@ -67,6 +67,17 @@ declare_oxc_lint!(
     /// });
     /// test('should assert something', () => {});
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/expect-expect.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/expect-expect": "error"
+    ///   }
+    /// }
+    /// ```
     ExpectExpect,
     correctness
 );
