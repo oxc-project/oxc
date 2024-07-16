@@ -10,8 +10,8 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 use super::{
-    meta::{Baseline, BaselineFile, CompilerSettings, TestCaseContent, TestUnitData},
-    TESTS_ROOT,
+    meta::{Baseline, BaselineFile},
+    TypeScriptCase, TESTS_ROOT,
 };
 use crate::{
     project_root,
@@ -61,42 +61,36 @@ enum TranspileKind {
 }
 
 pub struct TypeScriptTranspileCase {
-    path: PathBuf,
-    code: String,
-    units: Vec<TestUnitData>,
-    settings: CompilerSettings,
-    test_result: TestResult,
+    base: TypeScriptCase,
 }
 
 impl Case for TypeScriptTranspileCase {
     fn new(path: PathBuf, code: String) -> Self {
-        let TestCaseContent { tests, settings, .. } =
-            TestCaseContent::make_units_from_test(&path, &code);
-        Self { path, code, units: tests, settings, test_result: TestResult::ToBeRun }
+        Self { base: TypeScriptCase::new(path, code) }
     }
 
     fn code(&self) -> &str {
-        &self.code
+        self.base.code()
     }
 
     fn path(&self) -> &Path {
-        &self.path
+        self.base.path()
     }
 
     fn test_result(&self) -> &TestResult {
-        &self.test_result
+        self.base.test_result()
     }
 
     fn skip_test_case(&self) -> bool {
-        !self.settings.declaration
+        !self.base.settings.declaration
     }
 
     fn run(&mut self) {
         // if !self.settings.emit_declaration_only {
         // self.run_kind(TranspileKind::Module);
         // }
-        if self.settings.declaration {
-            self.test_result = self.compare(TranspileKind::Declaration);
+        if self.base.settings.declaration {
+            self.base.result = self.compare(TranspileKind::Declaration);
         }
     }
 }
@@ -104,7 +98,7 @@ impl Case for TypeScriptTranspileCase {
 impl TypeScriptTranspileCase {
     fn compare(&self, kind: TranspileKind) -> TestResult {
         // get expected text by reading its .d.ts file
-        let filename = change_extension(self.path.to_str().unwrap());
+        let filename = change_extension(self.path().to_str().unwrap());
         let path =
             project_root().join(TESTS_ROOT).join("baselines/reference/transpile").join(filename);
         let expected = BaselineFile::parse(&path);
@@ -130,7 +124,8 @@ impl TypeScriptTranspileCase {
                     },
                 );
                 if !matched {
-                    let snapshot = format!("\n#### {:?} ####\n{}", self.path, baseline.snapshot());
+                    let snapshot =
+                        format!("\n#### {:?} ####\n{}", self.path(), baseline.snapshot());
                     return TestResult::CorrectError(snapshot, false);
                 }
             }
@@ -142,7 +137,7 @@ impl TypeScriptTranspileCase {
     fn run_kind(&self, _kind: TranspileKind) -> BaselineFile {
         let mut files = vec![];
 
-        for unit in &self.units {
+        for unit in &self.base.units {
             let mut baseline = Baseline {
                 name: unit.name.clone(),
                 original: unit.content.clone(),
@@ -152,8 +147,8 @@ impl TypeScriptTranspileCase {
             files.push(baseline);
         }
 
-        for unit in &self.units {
-            let (source_text, errors) = transpile(&self.path, &unit.content);
+        for unit in &self.base.units {
+            let (source_text, errors) = transpile(self.path(), &unit.content);
             let baseline = Baseline {
                 name: change_extension(&unit.name),
                 original: unit.content.clone(),

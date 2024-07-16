@@ -25,7 +25,7 @@ use walkdir::WalkDir;
 
 use crate::{project_root, AppArgs};
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TestResult {
     ToBeRun,
     Passed,

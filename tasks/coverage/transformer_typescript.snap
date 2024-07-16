@@ -1,6 +1,9 @@
 commit: d8086f14
 
 transformer_typescript Summary:
-AST Parsed     : 5283/5283 (100.00%)
-Positive Passed: 5282/5283 (99.98%)
+AST Parsed     : 6456/6456 (100.00%)
+Positive Passed: 6452/6456 (99.94%)
+Mismatch: "compiler/constEnumNamespaceReferenceCausesNoImport2.ts"
 Mismatch: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
+Mismatch: "conformance/externalModules/typeOnly/exportDeclaration.ts"
+Mismatch: "conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx"
