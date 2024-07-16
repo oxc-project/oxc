@@ -28,21 +28,7 @@ env:
   RUSTFLAGS: "-D warnings"
 
 jobs:
-  optimize_ci:
-    name: Graphite Optimize CI
-    runs-on: ubuntu-latest
-    outputs:
-      skip: ${{ steps.check_skip.outputs.skip }}
-    steps:
-      - uses: withgraphite/graphite-ci-action@main
-        id: check_skip
-        with:
-          graphite_token: ${{ secrets.GRAPHITE_TOKEN }}
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-
   test:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Test
     strategy:
       fail-fast: false
@@ -66,8 +52,6 @@ jobs:
       - run: git diff --exit-code # Must commit everything
 
   test-windows:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Test (windows-latest)
     runs-on: windows-latest
     steps:
@@ -113,8 +97,6 @@ jobs:
           cargo ck
 
   wasm:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Check Wasm
     runs-on: ubuntu-latest
     steps:
@@ -139,8 +121,6 @@ jobs:
         run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
 
   typos:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
@@ -150,8 +130,6 @@ jobs:
           files: .
 
   deny:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Cargo Deny
     runs-on: ubuntu-latest
     steps:
@@ -174,8 +152,6 @@ jobs:
         run: cargo deny check
 
   unused-deps:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Check Unused Dependencies
     runs-on: ubuntu-latest
     steps:
@@ -200,8 +176,6 @@ jobs:
         if: steps.filter.outputs.src == 'true'
 
   format:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Format
     runs-on: ubuntu-latest
     steps:
@@ -213,8 +187,6 @@ jobs:
       - run: cargo fmt --all -- --check
 
   lint:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Clippy
     runs-on: ubuntu-latest
     steps:
@@ -226,8 +198,6 @@ jobs:
       - run: cargo lint -- -D warnings
 
   doc:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Doc
     runs-on: ubuntu-latest
     steps:
@@ -239,8 +209,6 @@ jobs:
       - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   conformance:
-    needs: optimize_ci
-    if: needs.optimize_ci.outputs.skip == 'false'
     name: Conformance
     runs-on: ubuntu-latest
     steps:
@@ -281,7 +249,6 @@ jobs:
           just coverage
           git diff --exit-code
 
-  # NOTE: not putting this behind `optimize_ci` is intentional.
   ast_changes:
     name: AST Changes
     runs-on: ubuntu-latest
