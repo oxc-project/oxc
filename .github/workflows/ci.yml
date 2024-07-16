@@ -36,8 +36,11 @@ jobs:
         include:
           # - os: windows-latest # See `test-windows` job below
           - os: ubuntu-latest
-          - os: macos-14
+            trigger: true
+          - os: macos-latest
+            trigger: ${{ github.ref_name == 'main' }} # `main` branch only because we don't have macos specific instructions
     runs-on: ${{ matrix.os }}
+    if: ${{ matrix.trigger }}
     steps:
       - uses: taiki-e/checkout-action@v1
       - uses: Boshen/setup-rust@main
@@ -54,6 +57,7 @@ jobs:
   test-windows:
     name: Test (windows-latest)
     runs-on: windows-latest
+    if: ${{ github.ref_name == 'main' }} # `main` branch only because we don't have windows specific instructions
     steps:
       - uses: taiki-e/checkout-action@v1
       # Unsung heros of the internet, who led me here to speed up window's slowness:
