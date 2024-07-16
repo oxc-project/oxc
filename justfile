@@ -156,4 +156,5 @@ website path:
 
 # sync ast changes
 ast:
-    cargo run -p oxc_ast_codegen
+  cargo run -p oxc_ast_codegen
+  just check
