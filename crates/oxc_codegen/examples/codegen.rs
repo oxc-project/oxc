@@ -2,7 +2,7 @@
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, WhitespaceRemover};
+use oxc_codegen::{CodeGenerator, CommentOptions, WhitespaceRemover};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -35,7 +35,14 @@ fn main() -> std::io::Result<()> {
     println!("{source_text}");
 
     println!("First time:");
-    let printed = CodeGenerator::new().build(&ret.program).source_text;
+    let printed = CodeGenerator::new()
+        .enable_comment(
+            &source_text,
+            ret.trivias.clone(),
+            CommentOptions { preserve_annotate_comments: true },
+        )
+        .build(&ret.program)
+        .source_text;
     println!("{printed}");
 
     if twice {
@@ -48,7 +55,14 @@ fn main() -> std::io::Result<()> {
             }
             return Ok(());
         }
-        let printed = CodeGenerator::new().build(&ret.program).source_text;
+        let printed = CodeGenerator::new()
+            .enable_comment(
+                &source_text,
+                ret.trivias.clone(),
+                CommentOptions { preserve_annotate_comments: true },
+            )
+            .build(&ret.program)
+            .source_text;
         println!("{printed}");
     }
 

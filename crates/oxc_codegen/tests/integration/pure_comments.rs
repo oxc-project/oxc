@@ -200,4 +200,11 @@ const builtInSymbols = new Set(
 ",
         "const builtInSymbols = new Set(/*#__PURE__*/ (Object.getOwnPropertyNames(Symbol)).filter((key) => key !== \"arguments\" && key !== \"caller\"));\n",
     );
+
+    test_comment_helper(
+        "(/* @__PURE__ */ new Foo()).bar();\n",
+        "(/* @__PURE__ */ new Foo()).bar();\n",
+    );
+
+    test_comment_helper("(/* @__PURE__ */ Foo()).bar();\n", "(/* @__PURE__ */ Foo()).bar();\n");
 }
