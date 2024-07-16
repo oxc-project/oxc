@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
 ---
   ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
    ╭─[expect_expect.tsx:1:1]
@@ -125,5 +126,98 @@ source: crates/oxc_linter/src/tester.rs
  2 │             test("event emitters bound to CLS context", function(t) {
    ·             ────
  3 │                 t.test("emitter with newListener that removes handler", function(t) {
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should fail", () => {});
+   · ──
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should fail", myTest); function myTest() {}
+   · ──
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test("should fail", () => {});
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ afterEach(() => {});
+   · ─────────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should fail", () => { somePromise.then(() => {}); });
+   · ──
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test("should fail", () => { foo(true).toBe(true); })
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ it("should also fail",() => expectSaga(mySaga).returns());
+   · ──
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request.get().foo().expect(456));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request.get().foo().bar().expect(456));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => tester.request(123));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request(123));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-jest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:1:1]
+ 1 │ test('should fail', () => request(123));
+   · ────
+   ╰────
+  help: Add assertion(s) in this Test
+
+  ⚠ eslint-plugin-vitest(expect-expect): Test has no assertions
+   ╭─[expect_expect.tsx:4:17]
+ 3 │ 
+ 4 │                 checkThat('this passes', () => {
+   ·                 ─────────
+ 5 │                     // ...
    ╰────
   help: Add assertion(s) in this Test

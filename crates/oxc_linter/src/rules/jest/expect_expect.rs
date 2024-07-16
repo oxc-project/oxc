@@ -13,13 +13,13 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, is_type_of_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, PossibleJestNode,
+        collect_possible_jest_call_node, get_node_name, get_test_plugin_name,
+        is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode, TestPluginName,
     },
 };
 
-fn expect_expect_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(expect-expect): Test has no assertions")
+fn expect_expect_diagnostic(x0: TestPluginName, span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x0}(expect-expect): Test has no assertions"))
         .with_help("Add assertion(s) in this Test")
         .with_label(span0)
 }
@@ -134,8 +134,10 @@ fn run<'a>(
             let has_assert_function =
                 check_arguments(call_expr, &rule.assert_function_names, &mut visited, ctx);
 
+            let plugin_name = get_test_plugin_name(ctx);
+
             if !has_assert_function {
-                ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
+                ctx.diagnostic(expect_expect_diagnostic(plugin_name, call_expr.callee.span()));
             }
         }
     }
@@ -271,7 +273,7 @@ fn convert_pattern(pattern: &str) -> String {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("it.todo('will test something eventually')", None),
         ("test.todo('will test something eventually')", None),
         ("['x']();", None),
@@ -330,8 +332,8 @@ fn test() {
         (
             "
             theoretically('the number {input} is correctly translated to string', theories, theory => {
-            const output = NumberToLongString(theory.input);
-            expect(output).toBe(theory.expected);
+                const output = NumberToLongString(theory.input);
+                expect(output).toBe(theory.expected);
             })
             ",
             Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
@@ -394,7 +396,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("it(\"should fail\", () => {});", None),
         ("it(\"should fail\", myTest); function myTest() {}", None),
         ("test(\"should fail\", () => {});", None),
@@ -486,5 +488,250 @@ fn test() {
         ),
     ];
 
-    Tester::new(ExpectExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        // Note: it's conflict with jest rule. In jest rule, it should fail.
+        // ("test.skip(\"skipped test\", () => {})", None),
+        ("it.todo(\"will test something eventually\")", None),
+        ("test.todo(\"will test something eventually\")", None),
+        ("['x']();", None),
+        ("it(\"should pass\", () => expect(true).toBeDefined())", None),
+        ("test(\"should pass\", () => expect(true).toBeDefined())", None),
+        ("it(\"should pass\", () => somePromise().then(() => expect(true).toBeDefined()))", None),
+        ("it(\"should pass\", myTest); function myTest() { expect(true).toBeDefined() }", None),
+        (
+            "
+                test('should pass', () => {
+                    expect(true).toBeDefined();
+                    foo(true).toBe(true);
+                });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }]))
+        ),
+        (
+            "
+                import { bench } from 'vitest'
+
+                bench('normal sorting', () => {
+                    const x = [1, 5, 4, 2, 3]
+                    x.sort((a, b) => {
+                        return a - b
+                    })
+                }, { time: 1000 })
+            ",
+            None,
+        ),
+        (
+            "it(\"should return undefined\", () => expectSaga(mySaga).returns());",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expectSaga"] }])),
+        ),
+        (
+            "test('verifies expect method call', () => expect$(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect\\$"] }])),
+        ),
+        (
+            "test('verifies expect method call', () => new Foo().expect(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["Foo.expect"] }])),
+        ),
+        (
+            "
+                test('verifies deep expect method call', () => {
+                    tester.foo().expect(123);
+                });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.expect"] }])),
+        ),
+        (
+            "
+                    test('verifies chained expect method call', () => {
+                        tester
+                            .foo()
+                            .bar()
+                            .expect(456);
+                    });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.bar.expect"] }])),
+        ),
+        (
+            "
+                test(\"verifies the function call\", () => {
+                    td.verify(someFunctionCall())
+                })
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["td.verify"] }])),
+        ),
+        (
+            "it(\"should pass\", () => expect(true).toBeDefined())",
+            Some(serde_json::json!([{
+                "assertFunctionNames": "undefined",
+                "additionalTestBlockFunctions": "undefined",
+            }])),
+        ),
+        (
+            "
+                theoretically('the number {input} is correctly translated to string', theories, theory => {
+                    const output = NumberToLongString(theory.input);
+                    expect(output).toBe(theory.expected);
+                })
+            ",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
+        ),
+        (
+            "test('should pass *', () => expect404ToBeLoaded());",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect*"] }])),
+        ),
+        (
+            "test('should pass *', () => expect.toHaveStatus404());",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect.**"] }])),
+        ),
+        (
+            "test('should pass', () => tester.foo().expect(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["tester.*.expect"] }])),
+        ),
+        (
+            "test('should pass **', () => tester.foo().expect(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["**"] }])),
+        ),
+        (
+            "test('should pass *', () => tester.foo().expect(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["*"] }])),
+        ),
+        (
+            "test('should pass', () => tester.foo().expect(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["tester.**"] }])),
+        ),
+        (
+            "test('should pass', () => tester.foo().expect(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["tester.*"] }])),
+        ),
+        (
+            "test('should pass', () => tester.foo().bar().expectIt(456));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["tester.**.expect*"] }])),
+        ),
+        (
+            "test('should pass', () => request.get().foo().expect(456));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["request.**.expect"] }])),
+        ),
+        (
+            "test('should pass', () => request.get().foo().expect(456));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["request.**.e*e*t"] }])),
+        ),
+        (
+            "
+                import { test } from 'vitest';
+
+                test('should pass', () => {
+                    expect(true).toBeDefined();
+                    foo(true).toBe(true);
+                });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
+        ),
+        (
+            "
+                import { test as checkThat } from 'vitest';
+
+                checkThat('this passes', () => {
+                    expect(true).toBeDefined();
+                    foo(true).toBe(true);
+                });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
+        ),
+        (
+            "
+                const { test } = require('vitest');
+
+                test('verifies chained expect method call', () => {
+                    tester
+                    .foo()
+                    .bar()
+                    .expect(456);
+                });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["tester.foo.bar.expect"] }])),
+        ),
+        (
+            "
+                it(\"should pass with 'typecheck' enabled\", () => {
+                    expectTypeOf({ a: 1 }).toEqualTypeOf<{ a: number }>()
+                });
+            ",
+            None
+        ),
+    ];
+
+    let fail_vitest = vec![
+        ("it(\"should fail\", () => {});", None),
+        ("it(\"should fail\", myTest); function myTest() {}", None),
+        ("test(\"should fail\", () => {});", None),
+        (
+            "afterEach(() => {});",
+            Some(serde_json::json!([{ "additionalTestBlockFunctions": ["afterEach"] }])),
+        ),
+        // Todo: currently it's not support
+        // (
+        //     "
+        //         theoretically('the number {input} is correctly translated to string', theories, theory => {
+        //             const output = NumberToLongString(theory.input);
+        //         })
+        //     ",
+        //     Some(serde_json::json!([{ "additionalTestBlockFunctions": ["theoretically"] }])),
+        // ),
+        ("it(\"should fail\", () => { somePromise.then(() => {}); });", None),
+        (
+            "test(\"should fail\", () => { foo(true).toBe(true); })",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect"] }])),
+        ),
+        (
+            "it(\"should also fail\",() => expectSaga(mySaga).returns());",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect"] }])),
+        ),
+        (
+            "test('should fail', () => request.get().foo().expect(456));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["request.*.expect"] }])),
+        ),
+        (
+            "test('should fail', () => request.get().foo().bar().expect(456));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["request.foo**.expect"] }])),
+        ),
+        (
+            "test('should fail', () => tester.request(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["request.*"] }])),
+        ),
+        (
+            "test('should fail', () => request(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["request.*"] }])),
+        ),
+        (
+            "test('should fail', () => request(123));",
+            Some(serde_json::json!([{ "assertFunctionNames": ["request.**"] }])),
+        ),
+        (
+            "
+                import { test as checkThat } from 'vitest';
+
+                checkThat('this passes', () => {
+                    // ...
+                });
+            ",
+            Some(serde_json::json!([{ "assertFunctionNames": ["expect", "foo"] }])),
+        ),
+        // Todo: currently we couldn't support ignore the typecheck option.
+        // (
+        //     "
+        //         it(\"should fail without 'typecheck' enabled\", () => {
+        //             expectTypeOf({ a: 1 }).toEqualTypeOf<{ a: number }>()
+        //         });
+        //     ",
+        //     None,
+        // ),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
+    Tester::new(ExpectExpect::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }
