@@ -51,13 +51,13 @@ declare_oxc_lint!(
     /// expect(a).toThrowError();
     /// ```
     ///
-    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-alias-method.md),
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-alias-methods.md),
     /// to use it, add the following configuration to your `.eslintrc.json`:
     ///
     /// ```json
     /// {
     ///   "rules": {
-    ///      "vitest/no-alias-method": "error"
+    ///      "vitest/no-alias-methods": "error"
     ///   }
     /// }
     /// ```
