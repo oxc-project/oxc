@@ -151,28 +151,16 @@ impl<'a> Binder for Function<'a> {
             }
         }
 
-        // bind scope flags: Constructor | GetAccessor | SetAccessor
-        if let Some(kind) = builder.nodes.parent_kind(builder.current_node_id) {
-            match kind {
-                AstKind::MethodDefinition(def) => {
-                    let flag = builder.scope.get_flags_mut(current_scope_id);
-                    *flag |= match def.kind {
-                        MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-                        MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-                        MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-                        MethodDefinitionKind::Method => ScopeFlags::empty(),
-                    };
-                }
-                AstKind::ObjectProperty(prop) => {
-                    let flag = builder.scope.get_flags_mut(current_scope_id);
-                    *flag |= match prop.kind {
-                        PropertyKind::Get => ScopeFlags::GetAccessor,
-                        PropertyKind::Set => ScopeFlags::SetAccessor,
-                        PropertyKind::Init => ScopeFlags::empty(),
-                    };
-                }
-                _ => {}
-            }
+        // Bind scope flags: GetAccessor | SetAccessor
+        if let Some(AstKind::ObjectProperty(prop)) =
+            builder.nodes.parent_kind(builder.current_node_id)
+        {
+            let flag = builder.scope.get_flags_mut(current_scope_id);
+            match prop.kind {
+                PropertyKind::Get => *flag |= ScopeFlags::GetAccessor,
+                PropertyKind::Set => *flag |= ScopeFlags::SetAccessor,
+                PropertyKind::Init => {}
+            };
         }
     }
 }
