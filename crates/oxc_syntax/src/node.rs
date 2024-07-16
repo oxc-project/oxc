@@ -6,10 +6,7 @@ define_index_type! {
 }
 
 impl AstNodeId {
-    #[inline]
-    pub fn dummy() -> Self {
-        Self::new(0)
-    }
+    pub const DUMMY: Self = AstNodeId::from_raw_unchecked(0);
 }
 
 #[cfg(feature = "serialize")]

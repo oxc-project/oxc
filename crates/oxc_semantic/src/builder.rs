@@ -189,7 +189,7 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scope.add_scope(None, AstNodeId::dummy(), ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
@@ -252,7 +252,7 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     fn record_ast_nodes(&mut self) {
         if self.cfg.is_some() {
-            self.ast_node_records.push(AstNodeId::dummy());
+            self.ast_node_records.push(AstNodeId::DUMMY);
         }
     }
 
@@ -273,7 +273,7 @@ impl<'a> SemanticBuilder<'a> {
         // <https://github.com/oxc-project/oxc/pull/4273>
         if self.cfg.is_some() {
             if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == AstNodeId::dummy() {
+                if *record == AstNodeId::DUMMY {
                     *record = self.current_node_id;
                 }
             }
