@@ -1,8 +1,6 @@
-use std::any::Any;
-
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Atom, GetSpan, Span};
 use serde_json::Value;
 use oxc_ast::{
   ast::{BlockStatement, IfStatement, Statement}, AstKind
@@ -35,6 +33,12 @@ declare_oxc_lint!(
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
+
+fn no_else_return_diagnostic(span0: Span) -> OxcDiagnostic {
+  OxcDiagnostic::warn("eslint(no-empty-function): Disallow empty functions")
+      .with_help("Unexpected empty function block")
+      .with_label(span0)
+}
 
 fn check_for_return(node: &Statement) -> bool {
   match node {
@@ -83,19 +87,21 @@ fn check_if_with_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
   };
 
   if always_returns(&if_stmt.consequent) {
-    println!("111");
+    ctx.diagnostic(no_else_return_diagnostic(alternate.span()));
   }
 }
 
 fn check_if_without_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
   let mut consequents: Vec<&Statement> = Vec::new();
   let mut current_node = if_stmt;
+  let mut last_alternate: &Statement;
 
   loop {
     let Some(alternate) = &current_node.alternate else {
       return;
     };
     consequents.push(&current_node.consequent);
+    last_alternate = alternate;
     match alternate {
       Statement::IfStatement(if_stmt) => {
         current_node = if_stmt;
@@ -104,29 +110,53 @@ fn check_if_without_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
     }
   }
 
+  
   if consequents.iter().all(|stmt| always_returns(stmt)) {
-    println!("111")
+    ctx.diagnostic(no_else_return_diagnostic(last_alternate.span()));
+  }
+}
+
+fn is_in_statement_list_parents(node: &AstNode) -> bool{
+  match node.kind() {
+    AstKind::Program(_) => true,
+    AstKind::BlockStatement(_) => true,
+    AstKind::StaticBlock(_) => true,
+    AstKind::SwitchCase(_) => true,
+    AstKind::FunctionBody(_) => true,
+    _ => false
   }
 }
 
 impl Rule for NoElseReturn {
-    fn from_configuration(value: serde_json::Value) -> Self {
-      let config = value.get(0);
-      Self {
-        allow_else_if: config.and_then(Value::as_bool).unwrap_or(true),
-      }
+  fn from_configuration(value: serde_json::Value) -> Self {
+    let Some(value) = value.get(0) else { 
+      return Self {
+        allow_else_if: true
+      } 
+    };
+    Self {
+      allow_else_if: value.get("allowElseIf").and_then(serde_json::Value::as_bool).unwrap_or(true),
+    }
+  }
+
+  fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    let AstKind::IfStatement(if_stmt) = node.kind() else {
+      return;
+    };
+
+    let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
+      return;
+    };
+
+    if !is_in_statement_list_parents(parent_node) {
+      return;
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-      let AstKind::IfStatement(if_stmt) = node.kind() else {
-        return;
-      };
-
-      if self.allow_else_if {
-        check_if_with_else(if_stmt, ctx);
-      } else {
-        check_if_without_else(if_stmt, ctx);
-      }
+    if self.allow_else_if { 
+      check_if_without_else(if_stmt, ctx);
+    } else {
+      check_if_with_else(if_stmt, ctx);
+    }
 	}
 }
 
