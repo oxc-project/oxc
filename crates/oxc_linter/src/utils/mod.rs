@@ -18,6 +18,7 @@ pub use self::{
 pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
     let jest_rules: &[&str] = &[
         "consistent-test-it",
+        "no-alias-methods",
         "no-disabled-tests",
         "no-focused-tests",
         "no-test-prefixes",
