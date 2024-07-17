@@ -99,14 +99,6 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_class_body(body);
     }
 
-    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        self.annotations.transform_import_declaration(decl);
-    }
-
-    pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        self.annotations.transform_export_named_declaration(decl);
-    }
-
     pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
         self.annotations.transform_ts_module_declaration(decl);
     }
