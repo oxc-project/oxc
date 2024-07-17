@@ -30,7 +30,7 @@ pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
     jest_rules.contains(&rule_name)
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub enum TestPluginName {
     Jest,
     Vitest,

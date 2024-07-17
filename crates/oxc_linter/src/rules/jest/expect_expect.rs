@@ -122,6 +122,7 @@ fn run<'a>(
 ) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
+        let plugin_name = get_test_plugin_name(ctx);
         let name = get_node_name(&call_expr.callee);
         if is_type_of_jest_fn_call(
             call_expr,
@@ -137,6 +138,9 @@ fn run<'a>(
                 if property_name == "todo" {
                     return;
                 }
+                if property_name == "skip" && plugin_name.eq(&TestPluginName::Vitest) {
+                    return;
+                }
             }
 
             // Record visited nodes to avoid infinite loop.
@@ -144,8 +148,6 @@ fn run<'a>(
 
             let has_assert_function =
                 check_arguments(call_expr, &rule.assert_function_names, &mut visited, ctx);
-
-            let plugin_name = get_test_plugin_name(ctx);
 
             if !has_assert_function {
                 ctx.diagnostic(expect_expect_diagnostic(plugin_name, call_expr.callee.span()));
@@ -500,8 +502,13 @@ fn test() {
     ];
 
     let pass_vitest = vec![
-        // Note: it's conflict with jest rule. In jest rule, it should fail.
-        // ("test.skip(\"skipped test\", () => {})", None),
+        (
+            "
+                import { test } from 'vitest';
+                test.skip(\"skipped test\", () => {})
+            ",
+            None,
+        ),
         ("it.todo(\"will test something eventually\")", None),
         ("test.todo(\"will test something eventually\")", None),
         ("['x']();", None),
