@@ -100,6 +100,32 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
+#[derive(Default)]
+pub struct Collect {
+    node: u32,
+    scope: u32,
+    symbol: u32,
+    reference: u32,
+}
+
+impl<'a> Visit<'a> for Collect {
+    fn enter_node(&mut self, _: AstKind<'a>) {
+        self.node += 1;
+    }
+    fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
+        self.scope += 1;
+    }
+    fn visit_binding_identifier(&mut self, _: &BindingIdentifier<'a>) {
+        self.symbol += 1;
+    }
+    fn visit_identifier_reference(&mut self, _: &IdentifierReference<'a>) {
+        self.reference += 1;
+    }
+    fn visit_jsx_identifier(&mut self, _: &JSXIdentifier<'a>) {
+        self.reference += 1;
+    }
+}
+
 impl<'a> SemanticBuilder<'a> {
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
         let scope = ScopeTree::default();
@@ -192,6 +218,7 @@ impl<'a> SemanticBuilder<'a> {
             let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
+            Collect::default().visit_program(program);
             self.visit_program(program);
 
             // Checking syntax error on module record requires scope information from the previous AST pass
