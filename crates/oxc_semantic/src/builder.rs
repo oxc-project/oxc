@@ -102,6 +102,8 @@ pub struct SemanticBuilderReturn<'a> {
 
 impl<'a> SemanticBuilder<'a> {
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
+        // Initialize scope tree with a capacity of 1/256th of the source text length. The bitwise
+        // or of two ensures there's at least 2 slot even for small programs.
         let scope = ScopeTree::with_capacity(source_text.len() >> 8 | 2);
         let current_scope_id = scope.root_scope_id();
 
@@ -125,6 +127,7 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             current_scope_depth: 0,
             function_stack: Vec::with_capacity(4),
+            // Most TS modules are not nested, and those that are are usually only 1 level deep.
             namespace_stack: Vec::with_capacity(2),
             nodes: AstNodes::with_capacity(source_text.len() >> 4),
             scope,
@@ -163,6 +166,7 @@ impl<'a> SemanticBuilder<'a> {
     #[must_use]
     pub fn with_cfg(mut self, cfg: bool) -> Self {
         self.cfg = if cfg { Some(ControlFlowGraphBuilder::default()) } else { None };
+        self.ast_node_records.reserve(self.source_text.len() >> 8);
         self
     }
 
@@ -205,12 +209,6 @@ impl<'a> SemanticBuilder<'a> {
             self.unresolved_references.into_iter().next().unwrap();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
-
-        if self.shrink_after_build {
-            self.nodes.shrink_to_fit();
-            self.scope.shrink_to_fit();
-            self.symbols.shrink_to_fit();
-        }
 
         let semantic = Semantic {
             source_text: self.source_text,
