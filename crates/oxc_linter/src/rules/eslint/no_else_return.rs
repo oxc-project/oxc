@@ -1,11 +1,12 @@
+use itertools::Itertools;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::{ScopeId, ScopeTree};
 use oxc_span::{Atom, GetSpan, Span};
-use serde_json::Value;
 use oxc_ast::{
   ast::{BlockStatement, IfStatement, Statement}, AstKind
 };
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::{Fix, RuleFixer}, rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoElseReturn {
@@ -34,10 +35,49 @@ declare_oxc_lint!(
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
 );
 
-fn no_else_return_diagnostic(span0: Span) -> OxcDiagnostic {
-  OxcDiagnostic::warn("eslint(no-empty-function): Disallow empty functions")
-      .with_help("Unexpected empty function block")
-      .with_label(span0)
+fn is_safe_from_name_collisions<'a>(ctx: &LintContext<'a>, stmt: &Statement, parent_scope_id: ScopeId) -> bool {
+  let scopes: &ScopeTree = ctx.scopes();
+
+  
+  match stmt {
+    Statement::BlockStatement(block) => {
+      let block_scope_id = block.scope_id.get().unwrap();
+
+      let bindings = scopes.get_bindings(block_scope_id);
+      let parent_bindings: Vec<_> = scopes.get_bindings(parent_scope_id)
+        .iter()
+        .filter(|(_, symbol_id)| {
+          bindings.iter().find(|(_, bindings_symbol_id)| symbol_id == bindings_symbol_id).is_none()
+        })
+        .collect();
+        
+      if bindings.iter().any(|(name, _)| {
+        parent_bindings.iter().any(|(parent_name, _)| name == parent_name)
+      }) {
+        return false;
+      }
+      
+      true
+    },
+    Statement::FunctionDeclaration(_) => false,
+    _ => true
+  }
+}
+
+fn no_else_return_diagnostic(stmt: &Statement) -> OxcDiagnostic{
+  OxcDiagnostic::warn("eslint(no-else-return): Disallow `else` blocks after `return` statements in `if` statements")
+      .with_label(stmt.span())
+}
+
+fn no_else_return_diagnostic_fix<'a>(ctx: &LintContext<'a>, stmt: &Statement, parent_scope_id: ScopeId) {
+  if !is_safe_from_name_collisions(ctx, stmt, parent_scope_id) {
+    return ctx.diagnostic(no_else_return_diagnostic(stmt));
+  };
+  ctx.diagnostic_with_fix(
+    no_else_return_diagnostic(stmt),
+    |fixer| {      
+      fixer.replace(Span::new(0,0), "")
+  })
 }
 
 fn check_for_return(node: &Statement) -> bool {
@@ -81,17 +121,17 @@ fn always_returns(stmt: &Statement) -> bool {
   }
 }
 
-fn check_if_with_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
+fn check_if_with_else<'a>(ctx: &LintContext<'a>, if_stmt: &IfStatement<'a>,  parent_scope_id: ScopeId) {
   let Some(alternate) = &if_stmt.alternate else {
     return;
   };
 
   if always_returns(&if_stmt.consequent) {
-    ctx.diagnostic(no_else_return_diagnostic(alternate.span()));
+    no_else_return_diagnostic_fix(ctx, alternate, parent_scope_id);
   }
 }
 
-fn check_if_without_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
+fn check_if_without_else<'a>(ctx: &LintContext<'a>, if_stmt: &IfStatement<'a>, parent_scope_id: ScopeId) {
   let mut consequents: Vec<&Statement> = Vec::new();
   let mut current_node = if_stmt;
   let mut last_alternate: &Statement;
@@ -112,7 +152,7 @@ fn check_if_without_else<'a>(if_stmt: &IfStatement<'a>, ctx: &LintContext<'a>) {
 
   
   if consequents.iter().all(|stmt| always_returns(stmt)) {
-    ctx.diagnostic(no_else_return_diagnostic(last_alternate.span()));
+    no_else_return_diagnostic_fix(ctx, last_alternate, parent_scope_id);
   }
 }
 
@@ -148,14 +188,17 @@ impl Rule for NoElseReturn {
       return;
     };
 
+    let parent_scope_id = parent_node.scope_id();
+    // println!("{:?}", ctx.source_range(parent_node.kind().span()));
+
     if !is_in_statement_list_parents(parent_node) {
       return;
     }
 
     if self.allow_else_if { 
-      check_if_without_else(if_stmt, ctx);
+      check_if_without_else(ctx, if_stmt, parent_scope_id);
     } else {
-      check_if_with_else(if_stmt, ctx);
+      check_if_with_else(ctx, if_stmt, parent_scope_id);
     }
 	}
 }
