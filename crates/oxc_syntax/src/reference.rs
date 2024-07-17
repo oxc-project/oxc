@@ -99,6 +99,10 @@ impl ReferenceFlag {
         self.contains(Self::Type)
     }
 
+    pub const fn is_type_only(self) -> bool {
+        matches!(self, Self::Type)
+    }
+
     pub const fn is_value(&self) -> bool {
         self.intersects(Self::Value)
     }

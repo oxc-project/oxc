@@ -95,7 +95,11 @@ impl SymbolFlags {
     }
 
     pub fn is_type(&self) -> bool {
-        self.intersects(Self::Type | Self::TypeImport | Self::Import)
+        self.intersects(Self::Type | Self::TypeImport)
+    }
+
+    pub fn is_can_be_referenced_by_type(&self) -> bool {
+        self.is_type() || self.contains(Self::Import)
     }
 
     pub fn is_value(&self) -> bool {

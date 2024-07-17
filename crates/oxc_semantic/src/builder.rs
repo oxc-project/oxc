@@ -399,9 +399,15 @@ impl<'a> SemanticBuilder<'a> {
                 resolved_references.reserve(references.len());
 
                 references.retain(|(id, flag)| {
-                    if flag.is_type() && symbol_flag.is_type()
+                    if flag.is_type() && symbol_flag.is_can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.is_value()
                     {
+                        // The non type-only ExportSpecifier can reference a type,
+                        // If the reference is not a type, remove the type flag from the reference
+                        if !symbol_flag.is_type() && !flag.is_type_only() {
+                            *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                        }
+
                         self.symbols.references[*id].set_symbol_id(symbol_id);
                         resolved_references.push(*id);
                         false
@@ -1619,11 +1625,12 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flag = ReferenceFlag::Type;
                 }
             }
-            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
-                self.current_reference_flag = ReferenceFlag::Type;
-            }
-            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
-                self.current_reference_flag = ReferenceFlag::Type;
+            AstKind::ExportSpecifier(s) => {
+                if self.current_reference_flag.is_type() || s.export_kind.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Type;
+                } else {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
+                }
             }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
@@ -1708,9 +1715,6 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
-            }
-            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
-                self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::TSInterfaceHeritage(_) => {
                 self.current_reference_flag = ReferenceFlag::Type;
@@ -1798,16 +1802,10 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::BindingIdentifier(_) => {
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
-            AstKind::ExportNamedDeclaration(decl) => {
-                if decl.export_kind.is_type() {
-                    self.current_reference_flag -= ReferenceFlag::Type;
+            AstKind::ExportSpecifier(_) => {
+                if !self.current_reference_flag.is_type_only() {
+                    self.current_reference_flag = ReferenceFlag::empty();
                 }
-            }
-            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
-                self.current_reference_flag -= ReferenceFlag::Type;
-            }
-            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
-                self.current_reference_flag -= ReferenceFlag::Type;
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
             AstKind::StaticBlock(_) => {
@@ -1851,7 +1849,9 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
             }
-            AstKind::MemberExpression(_) | AstKind::TSTypeQuery(_) => {
+            AstKind::MemberExpression(_)
+            | AstKind::TSTypeQuery(_)
+            | AstKind::ExportNamedDeclaration(_) => {
                 self.current_reference_flag = ReferenceFlag::empty();
             }
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,

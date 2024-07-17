@@ -22,7 +22,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/export/named3-t
         "id": 0,
         "name": "V",
         "node": "TSTypeAliasDeclaration",
-        "references": []
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read | Type)",
+            "id": 0,
+            "name": "V",
+            "node_id": 8
+          }
+        ]
       }
     ]
   }
