@@ -73,7 +73,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "id": 0,
         "name": "foo",
         "node": "Function(foo)",
-        "references": []
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "foo",
+            "node_id": 29
+          }
+        ]
       },
       {
         "flag": "SymbolFlags(Export | TypeAlias)",

@@ -279,3 +279,16 @@ fn test_type_used_as_value() {
     .has_number_of_reads(0)
     .test();
 }
+
+#[test]
+fn test_type_query() {
+    SemanticTester::ts(
+        "
+    type T = number;
+    let x: typeof T;
+    ",
+    )
+    .has_some_symbol("T")
+    .has_number_of_reads(0)
+    .test();
+}

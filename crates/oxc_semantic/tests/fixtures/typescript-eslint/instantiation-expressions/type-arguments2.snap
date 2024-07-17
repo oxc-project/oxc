@@ -78,6 +78,12 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "flag": "ReferenceFlag(Read)",
             "id": 0,
             "name": "makeBox",
+            "node_id": 27
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 1,
+            "name": "makeBox",
             "node_id": 36
           }
         ]

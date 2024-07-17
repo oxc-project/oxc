@@ -22,7 +22,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "id": 0,
         "name": "arg",
         "node": "VariableDeclarator",
-        "references": []
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "arg",
+            "node_id": 15
+          }
+        ]
       },
       {
         "flag": "SymbolFlags(TypeAlias)",

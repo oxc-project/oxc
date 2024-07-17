@@ -1714,8 +1714,14 @@ impl<'a> SemanticBuilder<'a> {
             }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
-                    Some(AstKind::TSModuleReference(_)) => {
+                    Some(
+                        // type A = typeof a;
+                        //          ^^^^^^^^
+                        AstKind::TSTypeQuery(_)
                         // import A = a;
+                        //            ^
+                        | AstKind::TSModuleReference(_)
+                    ) => {
                         self.current_reference_flag = ReferenceFlag::Read;
                     }
                     Some(AstKind::TSQualifiedName(_)) => {

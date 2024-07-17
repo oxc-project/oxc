@@ -29,7 +29,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "id": 0,
         "name": "x",
         "node": "VariableDeclarator",
-        "references": []
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "x",
+            "node_id": 9
+          }
+        ]
       },
       {
         "flag": "SymbolFlags(TypeAlias)",

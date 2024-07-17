@@ -22,14 +22,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/type-def
         "id": 0,
         "name": "foo",
         "node": "ImportDefaultSpecifier",
-        "references": [
-          {
-            "flag": "ReferenceFlag(Type)",
-            "id": 0,
-            "name": "foo",
-            "node_id": 10
-          }
-        ]
+        "references": []
       },
       {
         "flag": "SymbolFlags(TypeAlias)",
