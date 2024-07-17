@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 472/927
+Passed: 473/927
 
 # All Passed:
 * babel-preset-react
@@ -445,7 +445,7 @@ Passed: 472/927
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (128/151)
+# babel-plugin-transform-typescript (129/151)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/mix-references/input.ts
@@ -453,7 +453,6 @@ Passed: 472/927
 * exports/declared-types/input.ts
 * exports/interface/input.ts
 * imports/elide-typeof/input.ts
-* imports/elision-locations/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-4/input.ts

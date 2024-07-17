@@ -292,3 +292,16 @@ fn test_type_query() {
     .has_number_of_reads(0)
     .test();
 }
+
+#[test]
+fn test_ts_interface_heritage() {
+    SemanticTester::ts(
+        "
+        type Heritage = { x: number; y: string; };
+        interface A extends (Heritage.x) {}
+    ",
+    )
+    .has_some_symbol("Heritage")
+    .has_number_of_references(1)
+    .test();
+}

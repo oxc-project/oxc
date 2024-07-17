@@ -1712,6 +1712,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
+            AstKind::TSInterfaceHeritage(_) => {
+                self.current_reference_flag = ReferenceFlag::Type;
+            }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
@@ -1740,7 +1743,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.reference_jsx_identifier(ident);
             }
             AstKind::UpdateExpression(_) => {
-                if self.is_not_expression_statement_parent() {
+                if !self.current_reference_flag.is_type()
+                    && self.is_not_expression_statement_parent()
+                {
                     self.current_reference_flag |= ReferenceFlag::Read;
                 }
                 self.current_reference_flag |= ReferenceFlag::Write;
@@ -1753,7 +1758,9 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::MemberExpression(_) => {
-                self.current_reference_flag = ReferenceFlag::Read;
+                if !self.current_reference_flag.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Read;
+                }
             }
             AstKind::AssignmentTarget(_) => {
                 self.current_reference_flag |= ReferenceFlag::Write;

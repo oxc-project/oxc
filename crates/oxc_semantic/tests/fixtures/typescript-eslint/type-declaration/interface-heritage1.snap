@@ -29,7 +29,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "id": 0,
         "name": "Parent",
         "node": "TSInterfaceDeclaration",
-        "references": []
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 0,
+            "name": "Parent",
+            "node_id": 6
+          }
+        ]
       },
       {
         "flag": "SymbolFlags(Interface)",
