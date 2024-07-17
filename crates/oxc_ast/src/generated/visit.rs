@@ -27,10 +27,14 @@ use walk::*;
 
 /// Syntax tree traversal
 pub trait Visit<'a>: Sized {
+    #[inline]
     fn enter_node(&mut self, kind: AstKind<'a>) {}
+    #[inline]
     fn leave_node(&mut self, kind: AstKind<'a>) {}
 
+    #[inline]
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
+    #[inline]
     fn leave_scope(&mut self) {}
 
     #[inline]
