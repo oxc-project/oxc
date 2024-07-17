@@ -114,10 +114,6 @@ impl<'a> SemanticBuilder<'a> {
         let mut unresolved_references = vec![];
         unresolved_references.resize_with(16, Default::default);
 
-        // Most TS modules are not nested, and those that are are usually only 1 level deep.
-        let namespace_stack =
-            if source_type.is_typescript() { Vec::with_capacity(2) } else { Vec::new() };
-
         let trivias = Trivias::default();
         Self {
             source_text,
@@ -131,8 +127,9 @@ impl<'a> SemanticBuilder<'a> {
             current_scope_id,
             current_scope_depth: 0,
             function_stack: Vec::with_capacity(4),
-            namespace_stack,
-            nodes: AstNodes::with_capacity(source_text.len() >> 8 | 2),
+            // Most TS modules are not nested, and those that are are usually only 1 level deep.
+            namespace_stack: Vec::with_capacity(2),
+            nodes: AstNodes::with_capacity(source_text.len() >> 4),
             scope,
             symbols: SymbolTable::with_capacity(8),
             unresolved_references,

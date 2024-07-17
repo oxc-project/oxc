@@ -39,7 +39,7 @@ impl ScopeTree {
             node_ids: IndexVec::with_capacity(capacity),
             flags: IndexVec::with_capacity(capacity),
             bindings: IndexVec::with_capacity(capacity),
-            root_unresolved_references: UnresolvedReferences::default(),
+            root_unresolved_references: Default::default(),
         }
     }
 
