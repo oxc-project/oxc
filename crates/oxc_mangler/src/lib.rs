@@ -63,9 +63,18 @@ impl Mangler {
 ///     }
 /// }
 /// ```
-pub struct ManglerBuilder;
+#[derive(Debug, Default)]
+pub struct ManglerBuilder {
+    debug: bool,
+}
 
 impl ManglerBuilder {
+    #[must_use]
+    pub fn debug(mut self, yes: bool) -> Self {
+        self.debug = yes;
+        self
+    }
+
     #[must_use]
     pub fn build<'a>(self, program: &'a Program<'a>) -> Mangler {
         let semantic_ret = SemanticBuilder::new("", program.source_type).build(program);
@@ -119,10 +128,11 @@ impl ManglerBuilder {
 
         let mut names = Vec::with_capacity(total_number_of_slots);
 
+        let generate_name = if self.debug { debug_name } else { base54 };
         let mut count = 0;
         for _ in 0..total_number_of_slots {
             names.push(loop {
-                let name = base54(count);
+                let name = generate_name(count);
                 count += 1;
                 // Do not mangle keywords and unresolved references
                 if !is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name) {
@@ -235,4 +245,8 @@ fn base54(n: usize) -> CompactStr {
         num /= base;
     }
     CompactStr::new(&ret)
+}
+
+fn debug_name(n: usize) -> CompactStr {
+    CompactStr::from(format!("slot_{n}"))
 }
