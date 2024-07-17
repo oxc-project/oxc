@@ -432,6 +432,19 @@ mod tree_shaking {
     pub mod no_side_effects_in_initialization;
 }
 
+mod promise {
+    pub mod avoid_new;
+    pub mod catch_or_return;
+    pub mod no_callback_in_promise;
+    pub mod no_new_statics;
+    pub mod no_promise_in_callback;
+    pub mod no_return_in_finally;
+    pub mod no_return_wrap;
+    pub mod param_names;
+    pub mod prefer_await_to_then;
+    pub mod valid_params;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
@@ -822,4 +835,14 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::require_returns_type,
     jsdoc::require_yields,
     tree_shaking::no_side_effects_in_initialization,
+    promise::avoid_new,
+    promise::no_new_statics,
+    promise::param_names,
+    promise::valid_params,
+    promise::no_return_in_finally,
+    promise::no_return_wrap,
+    promise::no_promise_in_callback,
+    promise::prefer_await_to_then,
+    promise::no_callback_in_promise,
+    promise::catch_or_return,
 }

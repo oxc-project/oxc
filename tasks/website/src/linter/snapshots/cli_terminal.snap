@@ -40,6 +40,7 @@ Enable Plugins
         --nextjs-plugin       Enable the Next.js plugin and detect Next.js problems
         --react-perf-plugin   Enable the React performance plugin and detect rendering performance
                               problems
+        --promise-plugin      Enable the promise plugin and detect promise usage problems
 
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in

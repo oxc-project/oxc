@@ -403,3 +403,34 @@ pub fn is_function_node(node: &AstNode) -> bool {
         _ => false,
     }
 }
+
+pub fn is_promise(call_expr: &CallExpression) -> bool {
+    let Some(member_expr) = call_expr.callee.get_member_expr() else {
+        return false;
+    };
+
+    let Some(prop_name) = member_expr.static_property_name() else {
+        return false;
+    };
+
+    // hello.then(), hello.catch(), hello.finally()
+    if matches!(prop_name, "then" | "catch" | "finally") {
+        return true;
+    }
+
+    // foo().then(foo => {}), needed?
+    if let Expression::CallExpression(inner_call_expr) = member_expr.object() {
+        return is_promise(inner_call_expr);
+    }
+
+    if member_expr.object().is_specific_id("Promise")
+        && matches!(
+            prop_name,
+            "resolve" | "reject" | "all" | "allSettled" | "race" | "any" | "withResolvers"
+        )
+    {
+        return true;
+    }
+
+    false
+}

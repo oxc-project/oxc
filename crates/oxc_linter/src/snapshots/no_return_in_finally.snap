@@ -1,0 +1,26 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(no-return-in-finally): Disallow return statements in finally
+   ╭─[no_return_in_finally.tsx:1:36]
+ 1 │ Promise.resolve(1).finally(() => { return 2 })
+   ·                                    ────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-return-in-finally): Disallow return statements in finally
+   ╭─[no_return_in_finally.tsx:1:35]
+ 1 │ Promise.reject(0).finally(() => { return 2 })
+   ·                                   ────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-return-in-finally): Disallow return statements in finally
+   ╭─[no_return_in_finally.tsx:1:27]
+ 1 │ myPromise.finally(() => { return 2 });
+   ·                           ────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(no-return-in-finally): Disallow return statements in finally
+   ╭─[no_return_in_finally.tsx:1:42]
+ 1 │ Promise.resolve(1).finally(function () { return 2 })
+   ·                                          ────────
+   ╰────

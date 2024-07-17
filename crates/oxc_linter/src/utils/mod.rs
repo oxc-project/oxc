@@ -1,6 +1,7 @@
 mod jest;
 mod jsdoc;
 mod nextjs;
+mod promise;
 mod react;
 mod react_perf;
 mod tree_shaking;
@@ -9,7 +10,7 @@ mod unicorn;
 use crate::LintContext;
 
 pub use self::{
-    jest::*, jsdoc::*, nextjs::*, react::*, react_perf::*, tree_shaking::*, unicorn::*,
+    jest::*, jsdoc::*, nextjs::*, promise::*, react::*, react_perf::*, tree_shaking::*, unicorn::*,
 };
 
 /// Check if the Jest rule is adapted to Vitest.

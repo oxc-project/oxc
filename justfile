@@ -145,6 +145,9 @@ new-react-perf-rule name:
 new-n-rule name:
     cargo run -p rulegen {{name}} n
 
+new-promise-rule name:
+    cargo run -p rulegen {{name}} promise
+
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
