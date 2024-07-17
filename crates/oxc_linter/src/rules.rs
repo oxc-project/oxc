@@ -21,6 +21,7 @@ mod import {
     pub mod no_named_as_default_member;
     pub mod no_self_import;
     // pub mod no_unused_modules;
+    pub mod no_webpack_loader_syntax;
 }
 
 mod eslint {
@@ -741,6 +742,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_unused_modules,
     import::no_duplicates,
     import::no_default_export,
+    import::no_webpack_loader_syntax,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
