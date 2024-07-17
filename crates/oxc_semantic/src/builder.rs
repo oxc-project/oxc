@@ -101,20 +101,27 @@ pub struct SemanticBuilderReturn<'a> {
 }
 
 #[derive(Default)]
-pub struct Collect {
-    node: u32,
-    scope: u32,
-    symbol: u32,
-    reference: u32,
+pub struct Collector {
+    node: usize,
+    scope: usize,
+    symbol: usize,
+    reference: usize,
 }
 
-impl<'a> Visit<'a> for Collect {
+impl<'a> Visit<'a> for Collector {
+    #[inline]
     fn enter_node(&mut self, _: AstKind<'a>) {
         self.node += 1;
     }
+    #[inline]
     fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.scope += 1;
     }
+    #[inline]
+    fn leave_node(&mut self, _: AstKind<'a>) {}
+    #[inline]
+    fn leave_scope(&mut self) {}
+
     fn visit_binding_identifier(&mut self, _: &BindingIdentifier<'a>) {
         self.symbol += 1;
     }
@@ -218,7 +225,11 @@ impl<'a> SemanticBuilder<'a> {
             let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
-            Collect::default().visit_program(program);
+            let mut collector = Collector::default();
+            collector.visit_program(program);
+            self.nodes.reserve(collector.node);
+            self.scope.reserve(collector.scope);
+            self.symbols.reserve(collector.symbol, collector.reference);
             self.visit_program(program);
 
             // Checking syntax error on module record requires scope information from the previous AST pass
