@@ -48,7 +48,7 @@ impl Rule for NoMocksImport {
             return;
         };
 
-        for reference_id in require_reference_ids {
+        for (reference_id, _) in require_reference_ids {
             let reference = ctx.symbols().get_reference(*reference_id);
             let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
                 return;

@@ -3,15 +3,17 @@ use std::hash::BuildHasherDefault;
 use indexmap::IndexMap;
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
+use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
-use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
+use crate::{symbol::SymbolId, AstNodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
-pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
+pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
+pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
 
 /// Scope Tree
 ///
@@ -90,6 +92,12 @@ impl ScopeTree {
         &self.root_unresolved_references
     }
 
+    pub fn root_unresolved_references_ids(
+        &self,
+    ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
+        self.root_unresolved_references.values().map(|v| v.iter().map(|(id, _)| *id))
+    }
+
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
         self.flags[scope_id]
     }
@@ -140,8 +148,12 @@ impl ScopeTree {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId) {
-        self.root_unresolved_references.entry(name).or_default().push(reference_id);
+    pub fn add_root_unresolved_reference(
+        &mut self,
+        name: CompactStr,
+        reference: UnresolvedReference,
+    ) {
+        self.root_unresolved_references.entry(name).or_default().push(reference);
     }
 
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {

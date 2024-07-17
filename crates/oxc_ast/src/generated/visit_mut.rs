@@ -2088,11 +2088,15 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConditionalType<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::TSConditionalType;
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type(&mut it.check_type);
         visitor.visit_ts_type(&mut it.extends_type);
         visitor.visit_ts_type(&mut it.true_type);
         visitor.visit_ts_type(&mut it.false_type);
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2136,7 +2140,6 @@ pub mod walk_mut {
     ) {
         let kind = AstType::TSTypeParameter;
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_binding_identifier(&mut it.name);
         if let Some(constraint) = &mut it.constraint {
             visitor.visit_ts_type(constraint);
@@ -2144,7 +2147,6 @@ pub mod walk_mut {
         if let Some(default) = &mut it.default {
             visitor.visit_ts_type(default);
         }
-        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -2341,7 +2343,9 @@ pub mod walk_mut {
 
     #[inline]
     pub fn walk_ts_mapped_type<'a, V: VisitMut<'a>>(visitor: &mut V, it: &mut TSMappedType<'a>) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::TSMappedType;
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type_parameter(&mut it.type_parameter);
         if let Some(name_type) = &mut it.name_type {
             visitor.visit_ts_type(name_type);
@@ -2349,6 +2353,8 @@ pub mod walk_mut {
         if let Some(type_annotation) = &mut it.type_annotation {
             visitor.visit_ts_type(type_annotation);
         }
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2524,7 +2530,9 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSConstructSignatureDeclaration<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::TSConstructSignatureDeclaration;
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_formal_parameters(&mut it.params);
         if let Some(return_type) = &mut it.return_type {
             visitor.visit_ts_type_annotation(return_type);
@@ -2532,6 +2540,8 @@ pub mod walk_mut {
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2541,6 +2551,7 @@ pub mod walk_mut {
     ) {
         let kind = AstType::TSMethodSignature;
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_property_key(&mut it.key);
         if let Some(this_param) = &mut it.this_param {
             visitor.visit_ts_this_parameter(this_param);
@@ -2552,6 +2563,7 @@ pub mod walk_mut {
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3969,10 +3981,12 @@ pub mod walk_mut {
         let kind = AstType::TSTypeAliasDeclaration;
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&mut it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &mut it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_ts_type(&mut it.type_annotation);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3984,6 +3998,7 @@ pub mod walk_mut {
         let kind = AstType::TSInterfaceDeclaration;
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&mut it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(extends) = &mut it.extends {
             visitor.visit_ts_interface_heritages(extends);
         }
@@ -3991,6 +4006,7 @@ pub mod walk_mut {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_ts_interface_body(&mut it.body);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -4150,6 +4166,8 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSModuleReference<'a>,
     ) {
+        let kind = AstType::TSModuleReference;
+        visitor.enter_node(kind);
         match it {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
@@ -4158,6 +4176,7 @@ pub mod walk_mut {
                 visitor.visit_ts_type_name(it.to_ts_type_name_mut())
             }
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]

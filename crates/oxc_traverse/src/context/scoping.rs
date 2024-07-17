@@ -121,7 +121,7 @@ impl TraverseScoping {
     /// `flags` provided are amended to inherit from parent scope's flags.
     pub fn create_scope_child_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
         let flags = self.scopes.get_new_scope_flags(flags, self.current_scope_id);
-        self.scopes.add_scope(Some(self.current_scope_id), AstNodeId::dummy(), flags)
+        self.scopes.add_scope(Some(self.current_scope_id), AstNodeId::DUMMY, flags)
     }
 
     /// Insert a scope into scope tree below a statement.
@@ -268,7 +268,7 @@ impl TraverseScoping {
         flag: ReferenceFlag,
     ) -> ReferenceId {
         let reference =
-            Reference::new_with_symbol_id(SPAN, name, AstNodeId::dummy(), symbol_id, flag);
+            Reference::new_with_symbol_id(SPAN, name, AstNodeId::DUMMY, symbol_id, flag);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.resolved_references[symbol_id].push(reference_id);
         reference_id
@@ -297,9 +297,9 @@ impl TraverseScoping {
         name: CompactStr,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new(SPAN, name.clone(), AstNodeId::dummy(), flag);
+        let reference = Reference::new(SPAN, name.clone(), AstNodeId::DUMMY, flag);
         let reference_id = self.symbols.create_reference(reference);
-        self.scopes.add_root_unresolved_reference(name, reference_id);
+        self.scopes.add_root_unresolved_reference(name, (reference_id, flag));
         reference_id
     }
 
@@ -577,7 +577,15 @@ impl<'a> Visit<'a> for ChildScopeCollector {
         self.scope_ids.push(decl.scope_id.get().unwrap());
     }
 
-    fn visit_ts_type_parameter(&mut self, ty: &TSTypeParameter<'a>) {
-        self.scope_ids.push(ty.scope_id.get().unwrap());
+    fn visit_ts_interface_declaration(&mut self, it: &TSInterfaceDeclaration<'a>) {
+        self.scope_ids.push(it.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_mapped_type(&mut self, it: &TSMappedType<'a>) {
+        self.scope_ids.push(it.scope_id.get().unwrap());
+    }
+
+    fn visit_ts_conditional_type(&mut self, it: &TSConditionalType<'a>) {
+        self.scope_ids.push(it.scope_id.get().unwrap());
     }
 }

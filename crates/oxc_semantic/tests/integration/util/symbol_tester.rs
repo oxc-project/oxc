@@ -1,7 +1,8 @@
 use std::rc::Rc;
 
 use oxc_diagnostics::{Error, OxcDiagnostic};
-use oxc_semantic::{Reference, ScopeFlags, Semantic, SymbolFlags, SymbolId};
+use oxc_semantic::{Reference, ScopeFlags, ScopeId, Semantic, SymbolFlags, SymbolId};
+use oxc_span::CompactStr;
 
 use super::{Expect, SemanticTester};
 
@@ -69,6 +70,27 @@ impl<'a> SymbolTester<'a> {
     /// Get inner resources without consuming `self`
     pub fn inner(&self) -> (Rc<Semantic<'a>>, SymbolId) {
         (Rc::clone(&self.semantic), *self.test_result.as_ref().unwrap())
+    }
+
+    pub(super) fn new_first_binding(
+        parent: &'a SemanticTester,
+        semantic: Semantic<'a>,
+        target: &str,
+    ) -> Self {
+        let symbols_with_target_name: Option<(ScopeId, SymbolId, &CompactStr)> =
+            semantic.scopes().iter_bindings().find(|(_, _, name)| name.as_str() == target);
+
+        let data = match symbols_with_target_name {
+            Some((_, symbol_id, _)) => Ok(symbol_id),
+            None => Err(OxcDiagnostic::error(format!("Could not find declaration for {target}"))),
+        };
+
+        SymbolTester {
+            parent,
+            semantic: Rc::new(semantic),
+            target_symbol_name: target.to_string(),
+            test_result: data,
+        }
     }
 
     /// Checks if the resolved symbol contains all flags in `flags`, using [`SymbolFlags::contains()`]
