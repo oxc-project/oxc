@@ -45,6 +45,8 @@ bitflags! {
         const Write = 1 << 1;
         // Used in type definitions.
         const Type = 1 << 2;
+        // Used in `typeof xx`
+        const TSTypeQuery = 1 << 3;
         const Value = Self::Read.bits() | Self::Write.bits();
     }
 }
@@ -85,6 +87,11 @@ impl ReferenceFlag {
     /// The identifier is both read from and written to, e.g `a += 1`.
     pub fn is_read_write(&self) -> bool {
         self.contains(Self::Read | Self::Write)
+    }
+
+    /// The identifier is used in a type referenced
+    pub fn is_ts_type_query(&self) -> bool {
+        self.contains(Self::TSTypeQuery)
     }
 
     /// The identifier is used in a type definition.

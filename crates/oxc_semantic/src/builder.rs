@@ -1715,15 +1715,17 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSInterfaceHeritage(_) => {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
+            AstKind::TSTypeQuery(_) => {
+                // type A = typeof a;
+                //          ^^^^^^^^
+                self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
-                        // type A = typeof a;
-                        //          ^^^^^^^^
-                        AstKind::TSTypeQuery(_)
                         // import A = a;
                         //            ^
-                        | AstKind::TSModuleReference(_)
+                        AstKind::TSModuleReference(_),
                     ) => {
                         self.current_reference_flag = ReferenceFlag::Read;
                     }
@@ -1732,7 +1734,9 @@ impl<'a> SemanticBuilder<'a> {
                         //            ^^^ Keep the current reference flag
                     }
                     _ => {
-                        self.current_reference_flag = ReferenceFlag::Type;
+                        if !self.current_reference_flag.is_ts_type_query() {
+                            self.current_reference_flag = ReferenceFlag::Type;
+                        }
                     }
                 }
             }
@@ -1847,7 +1851,9 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
             }
-            AstKind::MemberExpression(_) => self.current_reference_flag = ReferenceFlag::empty(),
+            AstKind::MemberExpression(_) | AstKind::TSTypeQuery(_) => {
+                self.current_reference_flag = ReferenceFlag::empty();
+            }
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
@@ -1873,10 +1879,10 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
-        if self.current_reference_flag.is_write() || self.current_reference_flag.is_type() {
-            self.current_reference_flag
-        } else {
+        if self.current_reference_flag.is_empty() {
             ReferenceFlag::Read
+        } else {
+            self.current_reference_flag
         }
     }
 

@@ -52,14 +52,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
             "id": 4,
             "name": "T",
             "node": "TSTypeParameter",
-            "references": [
-              {
-                "flag": "ReferenceFlag(Type)",
-                "id": 0,
-                "name": "T",
-                "node_id": 33
-              }
-            ]
+            "references": []
           }
         ]
       }
@@ -75,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "node": "Function(foo)",
         "references": [
           {
-            "flag": "ReferenceFlag(Read)",
+            "flag": "ReferenceFlag(Read | TSTypeQuery)",
             "id": 0,
             "name": "foo",
             "node_id": 29

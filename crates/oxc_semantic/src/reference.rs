@@ -80,6 +80,6 @@ impl Reference {
     }
 
     pub fn is_type(&self) -> bool {
-        self.flag.is_type()
+        self.flag.is_type() || self.flag.is_ts_type_query()
     }
 }

@@ -10,7 +10,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
@@ -309,23 +309,7 @@ fn is_only_has_type_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
     if peekable_iter.peek().is_none() {
         return false;
     }
-    peekable_iter.all(|reference| {
-        if reference.is_type() {
-            return true;
-        } else if reference.is_read() {
-            for node in ctx.nodes().iter_parents(reference.node_id()).skip(1) {
-                return match node.kind() {
-                    // CASE 1:
-                    // `type T = typeof foo` will create a value reference because "foo" must be a value type
-                    // however this value reference is safe to use with type-only imports
-                    AstKind::TSTypeQuery(_) => true,
-                    AstKind::TSTypeName(_) | AstKind::TSQualifiedName(_) => continue,
-                    _ => false,
-                };
-            }
-        }
-        false
-    })
+    peekable_iter.all(Reference::is_type)
 }
 
 struct FixOptions<'a, 'b> {
