@@ -189,7 +189,7 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scope.add_scope(None, AstNodeId::dummy(), ScopeFlags::Top);
+            let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
             self.visit_program(program);
@@ -252,7 +252,7 @@ impl<'a> SemanticBuilder<'a> {
     #[inline]
     fn record_ast_nodes(&mut self) {
         if self.cfg.is_some() {
-            self.ast_node_records.push(AstNodeId::dummy());
+            self.ast_node_records.push(AstNodeId::DUMMY);
         }
     }
 
@@ -273,7 +273,7 @@ impl<'a> SemanticBuilder<'a> {
         // <https://github.com/oxc-project/oxc/pull/4273>
         if self.cfg.is_some() {
             if let Some(record) = self.ast_node_records.last_mut() {
-                if *record == AstNodeId::dummy() {
+                if *record == AstNodeId::DUMMY {
                     *record = self.current_node_id;
                 }
             }
@@ -353,12 +353,13 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
+        let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
         self.unresolved_references[self.current_scope_depth]
             .entry(reference_name)
             .or_default()
-            .push(reference_id);
+            .push((reference_id, reference_flag));
         reference_id
     }
 
@@ -385,19 +386,45 @@ impl<'a> SemanticBuilder<'a> {
         let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
         let current_refs = iter.next().unwrap();
 
-        let bindings = self.scope.get_bindings(self.current_scope_id);
-        for (name, reference_ids) in current_refs.drain() {
+        for (name, mut references) in current_refs.drain() {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
+            let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(&name).copied() {
-                for reference_id in &reference_ids {
-                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                let symbol_flag = self.symbols.get_flag(symbol_id);
+
+                let resolved_references: &mut Vec<_> =
+                    self.symbols.resolved_references[symbol_id].as_mut();
+                // Reserve space for all references to avoid reallocations.
+                resolved_references.reserve(references.len());
+
+                references.retain(|(id, flag)| {
+                    if flag.is_type() && symbol_flag.is_can_be_referenced_by_type()
+                        || flag.is_value() && symbol_flag.is_value()
+                    {
+                        // The non type-only ExportSpecifier can reference a type,
+                        // If the reference is not a type, remove the type flag from the reference
+                        if !symbol_flag.is_type() && !flag.is_type_only() {
+                            *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                        }
+
+                        self.symbols.references[*id].set_symbol_id(symbol_id);
+                        resolved_references.push(*id);
+                        false
+                    } else {
+                        true
+                    }
+                });
+
+                if references.is_empty() {
+                    continue;
                 }
-                self.symbols.resolved_references[symbol_id].extend(reference_ids);
-            } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
-                parent_reference_ids.extend(reference_ids);
+            }
+
+            if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                parent_reference_ids.extend(references);
             } else {
-                parent_refs.insert(name, reference_ids);
+                parent_refs.insert(name, references);
             }
         }
     }
@@ -1598,11 +1625,12 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flag = ReferenceFlag::Type;
                 }
             }
-            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
-                self.current_reference_flag = ReferenceFlag::Type;
-            }
-            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
-                self.current_reference_flag = ReferenceFlag::Type;
+            AstKind::ExportSpecifier(s) => {
+                if self.current_reference_flag.is_type() || s.export_kind.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Type;
+                } else {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
+                }
             }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
@@ -1688,11 +1716,33 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
             }
-            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
+            AstKind::TSInterfaceHeritage(_) => {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
+            AstKind::TSTypeQuery(_) => {
+                // type A = typeof a;
+                //          ^^^^^^^^
+                self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
             AstKind::TSTypeName(_) => {
-                self.current_reference_flag = ReferenceFlag::Type;
+                match self.nodes.parent_kind(self.current_node_id) {
+                    Some(
+                        // import A = a;
+                        //            ^
+                        AstKind::TSModuleReference(_),
+                    ) => {
+                        self.current_reference_flag = ReferenceFlag::Read;
+                    }
+                    Some(AstKind::TSQualifiedName(_)) => {
+                        // import A = a.b
+                        //            ^^^ Keep the current reference flag
+                    }
+                    _ => {
+                        if !self.current_reference_flag.is_ts_type_query() {
+                            self.current_reference_flag = ReferenceFlag::Type;
+                        }
+                    }
+                }
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -1701,7 +1751,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.reference_jsx_identifier(ident);
             }
             AstKind::UpdateExpression(_) => {
-                if self.is_not_expression_statement_parent() {
+                if !self.current_reference_flag.is_type()
+                    && self.is_not_expression_statement_parent()
+                {
                     self.current_reference_flag |= ReferenceFlag::Read;
                 }
                 self.current_reference_flag |= ReferenceFlag::Write;
@@ -1714,7 +1766,9 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::MemberExpression(_) => {
-                self.current_reference_flag = ReferenceFlag::Read;
+                if !self.current_reference_flag.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Read;
+                }
             }
             AstKind::AssignmentTarget(_) => {
                 self.current_reference_flag |= ReferenceFlag::Write;
@@ -1748,16 +1802,10 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::BindingIdentifier(_) => {
                 self.current_symbol_flags -= SymbolFlags::Export;
             }
-            AstKind::ExportNamedDeclaration(decl) => {
-                if decl.export_kind.is_type() {
-                    self.current_reference_flag -= ReferenceFlag::Type;
+            AstKind::ExportSpecifier(_) => {
+                if !self.current_reference_flag.is_type_only() {
+                    self.current_reference_flag = ReferenceFlag::empty();
                 }
-            }
-            AstKind::ExportAllDeclaration(s) if s.export_kind.is_type() => {
-                self.current_reference_flag -= ReferenceFlag::Type;
-            }
-            AstKind::ExportSpecifier(s) if s.export_kind.is_type() => {
-                self.current_reference_flag -= ReferenceFlag::Type;
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
             AstKind::StaticBlock(_) => {
@@ -1801,7 +1849,11 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
             }
-            AstKind::MemberExpression(_) => self.current_reference_flag = ReferenceFlag::empty(),
+            AstKind::MemberExpression(_)
+            | AstKind::TSTypeQuery(_)
+            | AstKind::ExportNamedDeclaration(_) => {
+                self.current_reference_flag = ReferenceFlag::empty();
+            }
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
@@ -1827,10 +1879,10 @@ impl<'a> SemanticBuilder<'a> {
 
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
-        if self.current_reference_flag.is_write() || self.current_reference_flag.is_type() {
-            self.current_reference_flag
-        } else {
+        if self.current_reference_flag.is_empty() {
             ReferenceFlag::Read
+        } else {
+            self.current_reference_flag
         }
     }
 

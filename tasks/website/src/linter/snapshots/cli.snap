@@ -66,6 +66,8 @@ Arguments:
   Enable the Next.js plugin and detect Next.js problems
 - **`    --react-perf-plugin`** &mdash; 
   Enable the React performance plugin and detect rendering performance problems
+- **`    --promise-plugin`** &mdash; 
+  Enable the promise plugin and detect promise usage problems
 
 
 

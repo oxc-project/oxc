@@ -43,6 +43,7 @@ indexmap   = { workspace = true }
 insta      = { workspace = true, features = ["glob"] }
 phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
+serde_json = { workspace = true }
 
 [features]
 default   = []

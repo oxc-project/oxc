@@ -10,7 +10,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
@@ -309,7 +309,7 @@ fn is_only_has_type_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
     if peekable_iter.peek().is_none() {
         return false;
     }
-    peekable_iter.all(oxc_semantic::Reference::is_type)
+    peekable_iter.all(Reference::is_type)
 }
 
 struct FixOptions<'a, 'b> {
@@ -1155,7 +1155,7 @@ fn test() {
         (
             "
               import Type from 'foo';
-              
+
               export { Type }; // is a value export
               export default Type; // is a value export
             ",
@@ -1164,7 +1164,7 @@ fn test() {
         (
             "
               import type Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1174,7 +1174,7 @@ fn test() {
         (
             "
               import { Type } from 'foo';
-        
+
               export { Type }; // is a value export
               export default Type; // is a value export
             ",
@@ -1183,7 +1183,7 @@ fn test() {
         (
             "
               import type { Type } from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1193,7 +1193,7 @@ fn test() {
         (
             "
               import * as Type from 'foo';
-        
+
               export { Type }; // is a value export
               export default Type; // is a value export
             ",
@@ -1202,7 +1202,7 @@ fn test() {
         (
             "
               import type * as Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1212,7 +1212,7 @@ fn test() {
         (
             "
               import Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1222,7 +1222,7 @@ fn test() {
         (
             "
               import { Type } from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1232,7 +1232,7 @@ fn test() {
         (
             "
               import * as Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1282,7 +1282,7 @@ fn test() {
         (
             "
               import type * as constants from './constants';
-        
+
               export type Y = {
                 [constants.X]: ReadonlyArray<string>;
               };
@@ -1796,7 +1796,7 @@ fn test() {
         (
             "
               import Type from 'foo';
-        
+
               export type { Type }; // is a type-only export
             ",
             None,
@@ -1804,7 +1804,7 @@ fn test() {
         (
             "
               import { Type } from 'foo';
-        
+
               export type { Type }; // is a type-only export
             ",
             None,
@@ -1812,7 +1812,7 @@ fn test() {
         (
             "
               import * as Type from 'foo';
-        
+
               export type { Type }; // is a type-only export
             ",
             None,
@@ -1820,7 +1820,7 @@ fn test() {
         (
             "
               import type Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1830,7 +1830,7 @@ fn test() {
         (
             "
               import type { Type } from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1840,7 +1840,7 @@ fn test() {
         (
             "
               import type * as Type from 'foo';
-              
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1853,7 +1853,7 @@ fn test() {
               import type // comment
               DefType from 'foo';
               import type /*comment*/ { Type } from 'foo';
-              
+
               type T = { a: AllType; b: DefType; c: Type };
             ",
             Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
@@ -1933,7 +1933,7 @@ fn test() {
         (
             "
               import { A, B } from 'foo';
-              
+
               let foo: A;
               B();
             ",
@@ -2028,7 +2028,7 @@ fn test() {
             "
               import { A, B, C } from 'foo';
               import type { D } from 'deez';
-              
+
               const foo: A = B();
               let bar: C;
               let baz: D;
@@ -2132,7 +2132,7 @@ fn test() {
                 class A {
                   @deco
                   get foo() {}
-              
+
                   set foo(value: Foo) {}
                 }
             ",
@@ -2144,7 +2144,7 @@ fn test() {
                 class A {
                   @deco
                   get foo() {}
-              
+
                   set ['foo'](value: Foo) {}
                 }
             ",
@@ -2660,12 +2660,12 @@ fn test() {
         (
             "
             import Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             "
             import type Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             None,
@@ -2673,12 +2673,12 @@ fn test() {
         (
             "
             import { Type } from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             "
             import type { Type } from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             None,
@@ -2686,12 +2686,12 @@ fn test() {
         (
             "
             import * as Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             "
             import type * as Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             None,
@@ -2699,14 +2699,14 @@ fn test() {
         (
             "
             import type Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
                       ",
             "
             import Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
@@ -2716,14 +2716,14 @@ fn test() {
         (
             "
             import type { Type } from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
                       ",
             "
             import { Type } from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
@@ -2733,14 +2733,14 @@ fn test() {
         (
             "
             import type * as Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
                       ",
             "
             import * as Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
@@ -2753,7 +2753,7 @@ fn test() {
             import type // comment
             DefType from 'foo';
             import type /*comment*/ { Type } from 'foo';
-            
+
             type T = { a: AllType; b: DefType; c: Type };
                       ",
             "
@@ -2761,7 +2761,7 @@ fn test() {
             import // comment
             DefType from 'foo';
             import /*comment*/ { Type } from 'foo';
-            
+
             type T = { a: AllType; b: DefType; c: Type };
                       ",
             Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
@@ -2890,13 +2890,13 @@ fn test() {
         (
             "
             import { A, B } from 'foo';
-            
+
             let foo: A;
             B();
                       ",
             "
             import { type A, B } from 'foo';
-            
+
             let foo: A;
             B();
                       ",
@@ -3036,7 +3036,7 @@ fn test() {
             "
             import { A, B, C } from 'foo';
             import type { D } from 'deez';
-            
+
             const foo: A = B();
             let bar: C;
             let baz: D;
@@ -3044,7 +3044,7 @@ fn test() {
             "
             import { type A, B, type C } from 'foo';
             import type { D } from 'deez';
-            
+
             const foo: A = B();
             let bar: C;
             let baz: D;

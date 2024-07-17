@@ -26,3 +26,9 @@ oxc_ast      = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_index    = { workspace = true }
 itertools    = { workspace = true }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }
+oxc_parser    = { workspace = true }
+oxc_codegen   = { workspace = true }
+pico-args     = { workspace = true }

@@ -1,0 +1,65 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/static-with-constructor.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(f)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | ClassStaticBlock)",
+            "id": 3,
+            "node": "StaticBlock",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "id": 4,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(A)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "f",
+        "node": "Function(f)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "f",
+            "node_id": 17
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "A",
+        "node": "Class(A)",
+        "references": []
+      }
+    ]
+  }
+]
