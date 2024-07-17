@@ -27,8 +27,9 @@ fn main() -> std::io::Result<()> {
     println!("{printed}");
 
     if twice {
-        let printed = mangler(&printed, source_type, debug);
-        println!("{printed}");
+        let printed2 = mangler(&printed, source_type, debug);
+        println!("{printed2}");
+        println!("same = {}", printed == printed2);
     }
 
     Ok(())

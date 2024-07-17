@@ -77,8 +77,7 @@ impl ManglerBuilder {
 
     #[must_use]
     pub fn build<'a>(self, program: &'a Program<'a>) -> Mangler {
-        let semantic_ret = SemanticBuilder::new("", program.source_type).build(program);
-        let semantic = semantic_ret.semantic;
+        let semantic = SemanticBuilder::new("", program.source_type).build(program).semantic;
 
         // Mangle the symbol table by computing slots from the scope tree.
         // A slot is the occurrence index of a binding identifier inside a scope.
@@ -96,6 +95,7 @@ impl ManglerBuilder {
         // Walk the scope tree and compute the slot number for each scope
         for scope_id in scope_tree.descendants_from_root() {
             let bindings = scope_tree.get_bindings(scope_id);
+
             // The current slot number is continued by the maximum slot from the parent scope
             let parent_max_slot = scope_tree
                 .get_parent_id(scope_id)
@@ -103,10 +103,28 @@ impl ManglerBuilder {
 
             let mut slot = parent_max_slot;
 
-            // `bindings` are stored in order, traverse and increment slot
-            for symbol_id in bindings.values() {
-                slots[*symbol_id] = slot;
-                slot += 1;
+            if !bindings.is_empty() {
+                let mut parent_bindings = None;
+
+                // `bindings` are stored in order, traverse and increment slot
+                for symbol_id in bindings.values() {
+                    // omit var hoisting because var symbols are added to every parent scope
+                    if symbol_table.get_flag(*symbol_id).is_function_scoped_declaration()
+                        && parent_bindings.is_none()
+                    {
+                        parent_bindings = scope_tree
+                            .get_parent_id(scope_id)
+                            .map(|parent_scope_id| scope_tree.get_bindings(parent_scope_id));
+                    }
+                    if let Some(parent_bindings) = &parent_bindings {
+                        if parent_bindings.values().contains(symbol_id) {
+                            continue;
+                        }
+                    }
+
+                    slots[*symbol_id] = slot;
+                    slot += 1;
+                }
             }
 
             max_slot_for_scope[scope_id.index()] = slot;
@@ -119,12 +137,8 @@ impl ManglerBuilder {
         let frequencies =
             Self::tally_slot_frequencies(&symbol_table, total_number_of_slots, &slots);
 
-        let unresolved_references = scope_tree
-            .root_unresolved_references()
-            .keys()
-            // It is unlike to get a 5 letter mangled identifier, which is a lot of slots.
-            // .filter(|name| name.len() < 5)
-            .collect::<Vec<_>>();
+        let unresolved_references =
+            scope_tree.root_unresolved_references().keys().collect::<Vec<_>>();
 
         let mut names = Vec::with_capacity(total_number_of_slots);
 
@@ -195,7 +209,9 @@ impl ManglerBuilder {
     ) -> Vec<SlotFrequency> {
         let mut frequencies = vec![SlotFrequency::default(); total_number_of_slots];
         for (symbol_id, slot) in slots.iter_enumerated() {
-            if !symbol_table.get_flag(symbol_id).is_variable() {
+            let symbol_flag = symbol_table.get_flag(symbol_id);
+            // omit renaming `export { x }`
+            if !symbol_flag.is_variable() || symbol_flag.is_export() {
                 continue;
             }
             let index = *slot;
