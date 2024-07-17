@@ -131,7 +131,8 @@ fn collect_jest_reference_id(
 
     for reference_id in reference_id_list {
         let reference = symbol_table.get_reference(reference_id);
-        if !is_jest_call(reference.name()) {
+
+        if !is_jest_call(ctx.semantic().reference_name(reference)) {
             continue;
         }
         let Some(parent_node) = nodes.parent_node(reference.node_id()) else {
@@ -162,7 +163,7 @@ fn handle_jest_set_time_out<'a>(
             continue;
         };
 
-        if !is_jest_call(reference.name()) {
+        if !is_jest_call(ctx.semantic().reference_name(reference)) {
             if is_jest_fn_call(parent_node, id_to_jest_node_map, ctx) {
                 for (jest_reference_id, span) in jest_reference_id_list {
                     if jest_reference_id > &reference_id {

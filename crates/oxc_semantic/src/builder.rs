@@ -351,13 +351,12 @@ impl<'a> SemanticBuilder<'a> {
     /// Declare an unresolved reference in the current scope.
     ///
     /// # Panics
-    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
-        let reference_name = reference.name().clone();
+    pub fn declare_reference(&mut self, name: &str, reference: Reference) -> ReferenceId {
         let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
         self.unresolved_references[self.current_scope_depth]
-            .entry(reference_name)
+            .entry(CompactStr::from(name))
             .or_default()
             .push((reference_id, reference_flag));
         reference_id
@@ -1897,9 +1896,8 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference) {
         let flag = self.resolve_reference_usages();
-        let name = ident.name.to_compact_str();
-        let reference = Reference::new(ident.span, name, self.current_node_id, flag);
-        let reference_id = self.declare_reference(reference);
+        let reference = Reference::new(ident.span, self.current_node_id, flag);
+        let reference_id = self.declare_reference(&ident.name, reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1922,13 +1920,8 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(
-            ident.span,
-            ident.name.to_compact_str(),
-            self.current_node_id,
-            ReferenceFlag::read(),
-        );
-        self.declare_reference(reference);
+        let reference = Reference::new(ident.span, self.current_node_id, ReferenceFlag::read());
+        self.declare_reference(&ident.name, reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {
