@@ -58,6 +58,9 @@ const TREE_SHAKING_PATH: &str =
 const PROMISE_TEST_PATH: &str =
     "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/__tests__";
 
+const IMPORT_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/import-js/eslint-plugin-import/main/tests/src/rules";
+
 struct TestCase {
     source_text: String,
     code: Option<String>,
@@ -574,6 +577,7 @@ pub enum RuleKind {
     Node,
     TreeShaking,
     Promise,
+    Import,
 }
 
 impl RuleKind {
@@ -591,6 +595,7 @@ impl RuleKind {
             "n" => Self::Node,
             "tree-shaking" => Self::TreeShaking,
             "promise" => Self::Promise,
+            "import" => Self::Import,
             _ => Self::ESLint,
         }
     }
@@ -612,6 +617,7 @@ impl Display for RuleKind {
             Self::Node => write!(f, "eslint-plugin-n"),
             Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
             Self::Promise => write!(f, "eslint-plugin-promise"),
+            Self::Import => write!(f, "eslint-plugin-import"),
         }
     }
 }
@@ -639,6 +645,7 @@ fn main() {
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
         RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Import => format!("{IMPORT_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
 
