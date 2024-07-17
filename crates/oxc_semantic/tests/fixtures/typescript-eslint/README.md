@@ -1,0 +1,1 @@
+These fixtures were copied from https://github.com/typescript-eslint/typescript-eslint/tree/a5b652da1ebb09ecbca8f4b032bf05ebc0e03dc9/packages/scope-manager/tests/fixtures. We used them to test out semantic [ScopeTree](../../src/scope.rs) and [SymbolTable](../../src/symbol.rs)

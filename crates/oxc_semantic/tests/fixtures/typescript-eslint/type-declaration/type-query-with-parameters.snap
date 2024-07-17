@@ -1,0 +1,87 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/type-query-with-parameters.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(foo)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "T",
+            "node": "TSTypeParameter",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 12
+              }
+            ]
+          },
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "y",
+            "node": "FormalParameter",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "id": 0,
+                "name": "y",
+                "node_id": 19
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 4,
+            "name": "T",
+            "node": "TSTypeParameter",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 33
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "foo",
+        "node": "Function(foo)",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(Export | TypeAlias)",
+        "id": 3,
+        "name": "Foo",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,50 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expression/extends.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(A)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(<anonymous>)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "A",
+        "node": "Class(A)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "A",
+            "node_id": 9
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "B",
+        "node": "VariableDeclarator",
+        "references": []
+      }
+    ]
+  }
+]
