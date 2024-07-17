@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-17
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- e3e663b mangler: Initialize crate and integrate into minifier (#4197) (Boshen)
+
+### Bug Fixes
+
+- bf3d8d3 codegen: Print annotation comment inside parens for new and call expressions (#4290) (Boshen)
+- 084ab76 codegen: Use `ryu-js` for f64 to string (Boshen)
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- c65198f codegen: Choose the right quote for jsx attribute string (#4236) (Boshen)
+- be82c28 codegen: Print `JSXAttributeValue::StringLiteral` directly (#4231) (Boshen)
+- 3df9e69 mangler: No shorthand `BindingProperty`; handle var hoisting and export variables (#4319) (Boshen)
+- 66b455a oxc_codegen: Avoid print same pure comments multiple time (#4230) (IWANABETHATGUY)- 1c117eb Avoid print extra semicolon after accessor property (#4199) (IWANABETHATGUY)
+
+### Refactor
+
+- d1c4be0 codegen: Clean up annotation_comment (Boshen)
+- 06197b8 codegen: Separate tests (Boshen)
+- aa22073 codegen: Improve print API (#4196) (Boshen)
+
 ## [0.20.0] - 2024-07-11
 
 - 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)

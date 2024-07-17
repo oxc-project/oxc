@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-17
+
+### Features
+
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+
+### Bug Fixes
+
+- 9a87e41 parser: Avoid crashing on invalid const modifier (#4267) (lucab)
+- 641a78b parser: Fix tests for number parsing (#4254) (overlookmotel)
+
+### Performance
+
+- a8dc4f3 parser: Speed up parsing numbers with `_` separators (#4259) (overlookmotel)
+- b94540d parser: Speed up parsing octal literals (#4258) (overlookmotel)
+- a7b328c parser: Faster parsing decimal numbers (#4257) (overlookmotel)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+
 ## [0.20.0] - 2024-07-11
 
 - 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
