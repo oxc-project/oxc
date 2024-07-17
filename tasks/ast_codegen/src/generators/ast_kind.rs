@@ -8,7 +8,7 @@ use super::generated_header;
 
 pub struct AstKindGenerator;
 
-pub const BLACK_LIST: [&str; 69] = [
+pub const BLACK_LIST: [&str; 66] = [
     "Expression",
     "ObjectPropertyKind",
     "TemplateElement",
@@ -41,7 +41,6 @@ pub const BLACK_LIST: [&str; 69] = [
     "TSEnumMemberName",
     "TSLiteral",
     "TSType",
-    "TSConditionalType",
     "TSTypeOperator",
     "TSArrayType",
     "TSTupleType",
@@ -52,7 +51,6 @@ pub const BLACK_LIST: [&str; 69] = [
     "TSSignature",
     "TSIndexSignature",
     "TSCallSignatureDeclaration",
-    "TSConstructSignatureDeclaration",
     "TSIndexSignatureName",
     "TSTypePredicate",
     "TSTypePredicateName",
@@ -64,7 +62,6 @@ pub const BLACK_LIST: [&str; 69] = [
     "TSImportAttributeName",
     "TSFunctionType",
     "TSConstructorType",
-    "TSMappedType",
     "TSModuleReference",
     "TSExportAssignment",
     "TSNamespaceExportDeclaration",
