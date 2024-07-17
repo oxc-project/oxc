@@ -237,3 +237,45 @@ fn test_ts_infer_type() {
     // type C is not referenced
     tester.has_symbol("C").has_number_of_references(0).test();
 }
+
+#[test]
+fn test_value_used_as_type() {
+    // Type annotations (or any type reference) do not resolve to value symbols
+    SemanticTester::ts(
+        "
+    const x = 1;
+    function foo(a: x) { }
+    ",
+    )
+    .has_root_symbol("x")
+    .intersects_flags(SymbolFlags::Value)
+    .has_number_of_references(0)
+    .test();
+
+    // T is a value that gets shadowed by a type. When `T` is referenced within
+    // a value context, the root `const T` should be the symbol recoreded in the
+    // reference.
+    let tester = SemanticTester::ts(
+        "
+const T = 1;
+function foo<T extends number>(a: T) {
+    return a + T;
+}
+",
+    );
+
+    tester.has_root_symbol("T").has_number_of_reads(1).test();
+}
+
+#[test]
+fn test_type_used_as_value() {
+    SemanticTester::ts(
+        "
+    type T = number;
+    let x = T;
+    ",
+    )
+    .has_some_symbol("T")
+    .has_number_of_reads(0)
+    .test();
+}

@@ -353,12 +353,13 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
         let reference_name = reference.name().clone();
+        let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
         self.unresolved_references[self.current_scope_depth]
             .entry(reference_name)
             .or_default()
-            .push(reference_id);
+            .push((reference_id, reference_flag));
         reference_id
     }
 
@@ -385,19 +386,39 @@ impl<'a> SemanticBuilder<'a> {
         let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
         let current_refs = iter.next().unwrap();
 
-        let bindings = self.scope.get_bindings(self.current_scope_id);
-        for (name, reference_ids) in current_refs.drain() {
+        for (name, mut references) in current_refs.drain() {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
+            let bindings = self.scope.get_bindings(self.current_scope_id);
             if let Some(symbol_id) = bindings.get(&name).copied() {
-                for reference_id in &reference_ids {
-                    self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                let symbol_flag = self.symbols.get_flag(symbol_id);
+
+                let resolved_references: &mut Vec<_> =
+                    self.symbols.resolved_references[symbol_id].as_mut();
+                // Reserve space for all references to avoid reallocations.
+                resolved_references.reserve(references.len());
+
+                references.retain(|(id, flag)| {
+                    if flag.is_type() && symbol_flag.is_type()
+                        || flag.is_value() && symbol_flag.is_value()
+                    {
+                        self.symbols.references[*id].set_symbol_id(symbol_id);
+                        resolved_references.push(*id);
+                        false
+                    } else {
+                        true
+                    }
+                });
+
+                if references.is_empty() {
+                    continue;
                 }
-                self.symbols.resolved_references[symbol_id].extend(reference_ids);
-            } else if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
-                parent_reference_ids.extend(reference_ids);
+            }
+
+            if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                parent_reference_ids.extend(references);
             } else {
-                parent_refs.insert(name, reference_ids);
+                parent_refs.insert(name, references);
             }
         }
     }
@@ -1692,7 +1713,19 @@ impl<'a> SemanticBuilder<'a> {
                 self.current_reference_flag = ReferenceFlag::Type;
             }
             AstKind::TSTypeName(_) => {
-                self.current_reference_flag = ReferenceFlag::Type;
+                match self.nodes.parent_kind(self.current_node_id) {
+                    Some(AstKind::TSModuleReference(_)) => {
+                        // import A = a;
+                        self.current_reference_flag = ReferenceFlag::Read;
+                    }
+                    Some(AstKind::TSQualifiedName(_)) => {
+                        // import A = a.b
+                        //            ^^^ Keep the current reference flag
+                    }
+                    _ => {
+                        self.current_reference_flag = ReferenceFlag::Type;
+                    }
+                }
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);

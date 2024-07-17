@@ -32,7 +32,7 @@ export type ReferenceFlag = {
     Read: 0b1,
     Write: 0b10,
     Type: 0b100,
-    ReadWrite: 0b11
+    Value: 0b11
 }
 "#;
 
@@ -45,7 +45,7 @@ bitflags! {
         const Write = 1 << 1;
         // Used in type definitions.
         const Type = 1 << 2;
-        const ReadWrite = Self::Read.bits() | Self::Write.bits();
+        const Value = Self::Read.bits() | Self::Write.bits();
     }
 }
 
@@ -59,7 +59,7 @@ impl ReferenceFlag {
     }
 
     pub const fn read_write() -> Self {
-        Self::ReadWrite
+        Self::Value
     }
 
     /// The identifier is read from. It may also be written to.
@@ -83,12 +83,16 @@ impl ReferenceFlag {
     }
 
     /// The identifier is both read from and written to, e.g `a += 1`.
-    pub const fn is_read_write(&self) -> bool {
-        self.contains(Self::ReadWrite)
+    pub fn is_read_write(&self) -> bool {
+        self.contains(Self::Read | Self::Write)
     }
 
     /// The identifier is used in a type definition.
     pub const fn is_type(&self) -> bool {
         self.contains(Self::Type)
+    }
+
+    pub const fn is_value(&self) -> bool {
+        self.intersects(Self::Value)
     }
 }

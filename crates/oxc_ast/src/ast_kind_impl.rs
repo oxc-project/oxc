@@ -348,6 +348,7 @@ impl<'a> AstKind<'a> {
             Self::TSConditionalType(_) => "TSConditionalType".into(),
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
+            Self::TSModuleReference(_) => "TSModuleReference".into(),
         }
     }
 }

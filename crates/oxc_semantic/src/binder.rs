@@ -251,11 +251,24 @@ impl<'a> Binder for CatchParameter<'a> {
     }
 }
 
-fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut SemanticBuilder) {
+fn declare_symbol_for_import_specifier(
+    ident: &BindingIdentifier,
+    is_type: bool,
+    builder: &mut SemanticBuilder,
+) {
+    let includes = if is_type
+        || builder.nodes.parent_kind(builder.current_node_id).is_some_and(
+            |decl| matches!(decl, AstKind::ImportDeclaration(decl) if decl.import_kind.is_type()),
+        ) {
+        SymbolFlags::TypeImport
+    } else {
+        SymbolFlags::Import
+    };
+
     let symbol_id = builder.declare_symbol(
         ident.span,
         &ident.name,
-        SymbolFlags::ImportBinding,
+        includes,
         SymbolFlags::ImportBindingExcludes,
     );
     ident.symbol_id.set(Some(symbol_id));
@@ -263,25 +276,25 @@ fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut 
 
 impl<'a> Binder for ImportSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.local, builder);
+        declare_symbol_for_import_specifier(&self.local, self.import_kind.is_type(), builder);
     }
 }
 
 impl<'a> Binder for ImportDefaultSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.local, builder);
+        declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
 impl<'a> Binder for ImportNamespaceSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.local, builder);
+        declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
 impl<'a> Binder for TSImportEqualsDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.id, builder);
+        declare_symbol_for_import_specifier(&self.id, false, builder);
     }
 }
 

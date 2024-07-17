@@ -3939,6 +3939,8 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_module_reference<'a, V: Visit<'a>>(visitor: &mut V, it: &TSModuleReference<'a>) {
+        let kind = AstKind::TSModuleReference(visitor.alloc(it));
+        visitor.enter_node(kind);
         match it {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
@@ -3947,6 +3949,7 @@ pub mod walk {
                 visitor.visit_ts_type_name(it.to_ts_type_name())
             }
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
