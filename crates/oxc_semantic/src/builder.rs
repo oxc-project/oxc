@@ -102,7 +102,7 @@ pub struct SemanticBuilderReturn<'a> {
 
 impl<'a> SemanticBuilder<'a> {
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
-        let scope = ScopeTree::default();
+        let scope = ScopeTree::with_capacity(source_text.len() >> 8 | 2);
         let current_scope_id = scope.root_scope_id();
 
         // Most programs will have at least 1 place where scope depth reaches 16,
@@ -124,11 +124,11 @@ impl<'a> SemanticBuilder<'a> {
             current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
             current_scope_depth: 0,
-            function_stack: vec![],
-            namespace_stack: vec![],
-            nodes: AstNodes::default(),
+            function_stack: Vec::with_capacity(4),
+            namespace_stack: Vec::with_capacity(2),
+            nodes: AstNodes::with_capacity(source_text.len() >> 4),
             scope,
-            symbols: SymbolTable::default(),
+            symbols: SymbolTable::with_capacity(8),
             unresolved_references,
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
@@ -205,6 +205,12 @@ impl<'a> SemanticBuilder<'a> {
             self.unresolved_references.into_iter().next().unwrap();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
+
+        if self.shrink_after_build {
+            self.nodes.shrink_to_fit();
+            self.scope.shrink_to_fit();
+            self.symbols.shrink_to_fit();
+        }
 
         let semantic = Semantic {
             source_text: self.source_text,

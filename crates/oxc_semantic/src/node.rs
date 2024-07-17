@@ -69,6 +69,16 @@ pub struct AstNodes<'a> {
 }
 
 impl<'a> AstNodes<'a> {
+    /// Create a new `AstNodes` initialized with enough memory to contain at least `capacity`
+    /// nodes.
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
+        Self {
+            root: None,
+            nodes: IndexVec::with_capacity(capacity),
+            parent_ids: IndexVec::with_capacity(capacity),
+        }
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
         self.nodes.iter()
     }

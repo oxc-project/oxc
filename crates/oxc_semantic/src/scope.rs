@@ -32,6 +32,17 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
+        Self {
+            parent_ids: IndexVec::with_capacity(capacity),
+            child_ids: IndexVec::with_capacity(capacity),
+            node_ids: IndexVec::with_capacity(capacity),
+            flags: IndexVec::with_capacity(capacity),
+            bindings: IndexVec::with_capacity(capacity),
+            root_unresolved_references: Default::default(),
+        }
+    }
+
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }

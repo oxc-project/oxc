@@ -41,6 +41,20 @@ pub struct SymbolTable {
 }
 
 impl SymbolTable {
+    /// Create a [`SymbolTable`] with enough capacity to hold at least `capacity` symbols.
+    pub(crate) fn with_capacity(capacity: usize) -> Self {
+        Self {
+            spans: IndexVec::with_capacity(capacity),
+            names: IndexVec::with_capacity(capacity),
+            flags: IndexVec::with_capacity(capacity),
+            scope_ids: IndexVec::with_capacity(capacity),
+            declarations: IndexVec::with_capacity(capacity),
+            resolved_references: IndexVec::with_capacity(capacity),
+            references: IndexVec::with_capacity(capacity),
+            redeclare_variables: IndexVec::with_capacity(capacity),
+        }
+    }
+
     pub fn len(&self) -> usize {
         self.spans.len()
     }
