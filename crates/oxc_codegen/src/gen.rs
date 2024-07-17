@@ -949,7 +949,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleExportName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             Self::IdentifierName(identifier) => p.print_str(identifier.name.as_str()),
-            Self::IdentifierReference(identifier) => p.print_str(identifier.name.as_str()),
+            Self::IdentifierReference(identifier) => identifier.gen(p, ctx),
             Self::StringLiteral(literal) => literal.gen(p, ctx),
         };
     }
@@ -2538,22 +2538,19 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
     }
 }
 
+// NOTE: `shorthand` is not printed
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         if self.computed {
             p.print_char(b'[');
         }
-        if !self.shorthand {
-            self.key.gen(p, ctx);
-        }
+        self.key.gen(p, ctx);
         if self.computed {
             p.print_char(b']');
         }
-        if !self.shorthand {
-            p.print_colon();
-            p.print_soft_space();
-        }
+        p.print_colon();
+        p.print_soft_space();
         self.value.gen(p, ctx);
     }
 }
@@ -2959,8 +2956,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeLiteral<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::IdentifierReference(decl) => {
-                p.print_str(decl.name.as_str());
+            Self::IdentifierReference(ident) => {
+                ident.gen(p, ctx);
             }
             Self::QualifiedName(decl) => {
                 decl.left.gen(p, ctx);
