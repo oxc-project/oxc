@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- 5d17675 mangler: Add debug mode (#4314) (Boshen)
+- e3e663b mangler: Initialize crate and integrate into minifier (#4197) (Boshen)
+- c818472 minifier: Dce conditional expression `&&` or `||` (#4190) (Boshen)
+
+### Bug Fixes
+
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- f144082 minifier: RemoveDeadCode should visit nested expression (#4268) (underfin)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+
 ## [0.20.0] - 2024-07-11
 
 ### Features
