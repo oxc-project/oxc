@@ -399,12 +399,12 @@ impl<'a> SemanticBuilder<'a> {
                 resolved_references.reserve(references.len());
 
                 references.retain(|(id, flag)| {
-                    if flag.is_type() && symbol_flag.is_can_be_referenced_by_type()
-                        || flag.is_value() && symbol_flag.is_value()
+                    if flag.is_type() && symbol_flag.can_be_referenced_by_type()
+                        || flag.is_value() && symbol_flag.can_be_referenced_by_value()
                     {
-                        // The non type-only ExportSpecifier can reference a type,
-                        // If the reference is not a type, remove the type flag from the reference
-                        if !symbol_flag.is_type() && !flag.is_type_only() {
+                        // The non type-only ExportSpecifier can reference a type/value symbol,
+                        // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
+                        if symbol_flag.is_value() && !flag.is_type_only() {
                             *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
                         }
 
