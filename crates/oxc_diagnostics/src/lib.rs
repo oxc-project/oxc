@@ -47,6 +47,11 @@ pub struct OxcCode {
     pub scope: Option<Cow<'static, str>>,
     pub number: Option<Cow<'static, str>>,
 }
+impl OxcCode {
+    pub fn is_some(&self) -> bool {
+        self.scope.is_some() || self.number.is_some()
+    }
+}
 
 impl fmt::Display for OxcCode {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -70,6 +75,9 @@ pub struct OxcDiagnosticInner {
 
 impl fmt::Display for OxcDiagnostic {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> std::fmt::Result {
+        if self.code.is_some() {
+            write!(f, "{}: ", &self.code)?;
+        }
         write!(f, "{}", &self.message)
     }
 }
