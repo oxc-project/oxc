@@ -27,6 +27,7 @@ use miette::{Diagnostic, SourceCode};
 pub use miette::{LabeledSpan, NamedSource};
 
 #[derive(Debug, Clone)]
+#[must_use]
 pub struct OxcDiagnostic {
     // `Box` the data to make `OxcDiagnostic` 8 bytes so that `Result` is small.
     // This is required because rust does not performance return value optimization.
@@ -41,12 +42,30 @@ impl Deref for OxcDiagnostic {
     }
 }
 
+#[derive(Debug, Default, Clone)]
+pub struct OxcCode {
+    pub scope: Option<Cow<'static, str>>,
+    pub number: Option<Cow<'static, str>>,
+}
+
+impl fmt::Display for OxcCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match (&self.scope, &self.number) {
+            (Some(scope), Some(number)) => write!(f, "{scope}({number})"),
+            (Some(scope), None) => scope.fmt(f),
+            (None, Some(number)) => number.fmt(f),
+            (None, None) => Ok(()),
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct OxcDiagnosticInner {
     pub message: Cow<'static, str>,
     pub labels: Option<Vec<LabeledSpan>>,
     pub help: Option<Cow<'static, str>>,
     pub severity: Severity,
+    pub code: OxcCode,
 }
 
 impl fmt::Display for OxcDiagnostic {
@@ -76,7 +95,6 @@ impl Diagnostic for OxcDiagnostic {
 }
 
 impl OxcDiagnostic {
-    #[must_use]
     pub fn error<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
             inner: Box::new(OxcDiagnosticInner {
@@ -84,11 +102,11 @@ impl OxcDiagnostic {
                 labels: None,
                 help: None,
                 severity: Severity::Error,
+                code: OxcCode::default(),
             }),
         }
     }
 
-    #[must_use]
     pub fn warn<T: Into<Cow<'static, str>>>(message: T) -> Self {
         Self {
             inner: Box::new(OxcDiagnosticInner {
@@ -96,29 +114,55 @@ impl OxcDiagnostic {
                 labels: None,
                 help: None,
                 severity: Severity::Warning,
+                code: OxcCode::default(),
             }),
         }
     }
 
-    #[must_use]
+    #[inline]
+    pub fn with_error_code<T: Into<Cow<'static, str>>, U: Into<Cow<'static, str>>>(
+        self,
+        scope: T,
+        number: U,
+    ) -> Self {
+        self.with_error_code_scope(scope).with_error_code_num(number)
+    }
+
+    #[inline]
+    pub fn with_error_code_scope<T: Into<Cow<'static, str>>>(mut self, code_scope: T) -> Self {
+        self.inner.code.scope = Some(code_scope.into());
+        debug_assert!(
+            self.inner.code.scope.as_ref().is_some_and(|s| !s.is_empty()),
+            "Error code scopes cannot be empty"
+        );
+        self
+    }
+
+    #[inline]
+    pub fn with_error_code_num<T: Into<Cow<'static, str>>>(mut self, code_num: T) -> Self {
+        self.inner.code.number = Some(code_num.into());
+        debug_assert!(
+            self.inner.code.number.as_ref().is_some_and(|n| !n.is_empty()),
+            "Error code numbers cannot be empty"
+        );
+        self
+    }
+
     pub fn with_severity(mut self, severity: Severity) -> Self {
         self.inner.severity = severity;
         self
     }
 
-    #[must_use]
     pub fn with_help<T: Into<Cow<'static, str>>>(mut self, help: T) -> Self {
         self.inner.help = Some(help.into());
         self
     }
 
-    #[must_use]
     pub fn with_label<T: Into<LabeledSpan>>(mut self, label: T) -> Self {
         self.inner.labels = Some(vec![label.into()]);
         self
     }
 
-    #[must_use]
     pub fn with_labels<L: Into<LabeledSpan>, T: IntoIterator<Item = L>>(
         mut self,
         labels: T,
@@ -127,7 +171,6 @@ impl OxcDiagnostic {
         self
     }
 
-    #[must_use]
     pub fn and_label<T: Into<LabeledSpan>>(mut self, label: T) -> Self {
         let mut labels = self.inner.labels.unwrap_or_default();
         labels.push(label.into());
@@ -135,7 +178,6 @@ impl OxcDiagnostic {
         self
     }
 
-    #[must_use]
     pub fn and_labels<L: Into<LabeledSpan>, T: IntoIterator<Item = L>>(
         mut self,
         labels: T,
@@ -146,7 +188,6 @@ impl OxcDiagnostic {
         self
     }
 
-    #[must_use]
     pub fn with_source_code<T: SourceCode + Send + Sync + 'static>(self, code: T) -> Error {
         Error::from(self).with_source_code(code)
     }
