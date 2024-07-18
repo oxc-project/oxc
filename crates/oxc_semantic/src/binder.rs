@@ -46,8 +46,13 @@ impl<'a> Binder for VariableDeclarator<'a> {
         let mut var_scope_ids = vec![];
         if !builder.current_scope_flags().is_var() {
             for scope_id in builder.scope.ancestors(current_scope_id).skip(1) {
+                let flag = builder.scope.get_flags(scope_id);
+                // Skip the catch clause, the scope bindings have been cloned to the child block scope
+                if flag.is_catch_clause() {
+                    continue;
+                }
                 var_scope_ids.push(scope_id);
-                if builder.scope.get_flags(scope_id).is_var() {
+                if flag.is_var() {
                     break;
                 }
             }
