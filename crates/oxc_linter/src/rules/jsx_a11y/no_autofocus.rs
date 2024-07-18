@@ -96,14 +96,18 @@ impl Rule for NoAutofocus {
                 if self.ignore_non_dom {
                     if HTML_TAG.contains(&element_type) {
                         if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                            ctx.diagnostic(no_autofocus_diagnostic(attr.span));
+                            ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+                                fixer.delete(&attr.span)
+                            });
                         }
                     }
                     return;
                 }
 
                 if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                    ctx.diagnostic(no_autofocus_diagnostic(attr.span));
+                    ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+                        fixer.delete(&attr.span)
+                    });
                 }
             }
         }
@@ -154,5 +158,15 @@ fn test() {
         ("<Button autoFocus />", Some(config()), Some(settings()), None),
     ];
 
-    Tester::new(NoAutofocus::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("<div autoFocus />", "<div  />", None),
+        ("<div autoFocus={true} />", "<div  />", None),
+        ("<div autoFocus='true' />", "<div  />", None),
+        ("<Button autoFocus='true' />", "<Button  />", None),
+        ("<input autoFocus />", "<input  />", None),
+        ("<div autoFocus>foo</div>", "<div >foo</div>", None),
+        ("<div autoFocus id='lol'>foo</div>", "<div  id='lol'>foo</div>", None),
+    ];
+
+    Tester::new(NoAutofocus::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

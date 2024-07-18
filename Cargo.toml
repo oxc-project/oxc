@@ -192,6 +192,11 @@ ignored = ["napi", "oxc_transform_napi", "prettyplease"]
 # and we don't rely on it for debugging that much.
 debug = false
 
+[profile.dev.package]
+# Compile macros with some optimizations to make consuming crates build faster
+oxc_macros.opt-level     = 1
+oxc_ast_macros.opt-level = 1
+
 [profile.release.package.oxc_wasm]
 opt-level = 'z'
 
