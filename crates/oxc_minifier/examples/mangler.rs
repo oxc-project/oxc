@@ -10,7 +10,7 @@ use pico_args::Arguments;
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_mangler --example mangler` or `just example mangler`
+// run `cargo run -p oxc_minifier --example mangler`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
