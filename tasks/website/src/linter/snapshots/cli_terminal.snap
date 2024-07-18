@@ -2,7 +2,7 @@
 source: tasks/website/src/linter/cli.rs
 expression: snapshot
 ---
-Usage: [-c=<./oxlintrc.json>] [--fix] [PATH]...
+Usage: [-c=<./oxlintrc.json>] [--fix] [--fix-suggestions] [--fix-dangerously] [PATH]...
 
 Basic Configuration
     -c, --config=<./oxlintrc.json>  Oxlint configuration file (experimental)
@@ -45,6 +45,8 @@ Enable Plugins
 Fix Problems
         --fix                 Fix as many issues as possible. Only unfixed issues are reported in
                               the output
+        --fix-suggestions     Apply auto-fixable suggestions. May change program behavior.
+        --fix-dangerously     Apply dangerous fixes and suggestions.
 
 Ignore Files
         --ignore-path=PATH    Specify the file to use as your .eslintignore

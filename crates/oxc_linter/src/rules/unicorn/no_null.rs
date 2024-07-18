@@ -12,7 +12,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{
     ast_util::is_method_call,
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
@@ -220,7 +220,7 @@ impl Rule for NoNull {
     }
 }
 
-fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> Fix<'a> {
+fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
     fixer.replace(null.span, "undefined")
 }
 #[test]

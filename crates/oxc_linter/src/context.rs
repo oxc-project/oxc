@@ -10,7 +10,7 @@ use oxc_syntax::module_record::ModuleRecord;
 use crate::{
     config::OxlintRules,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::{CompositeFix, Message, RuleFixer},
+    fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
     AllowWarnDeny, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
@@ -26,10 +26,12 @@ pub struct LintContext<'a> {
 
     disable_directives: Rc<DisableDirectives<'a>>,
 
-    /// Whether or not to apply code fixes during linting. Defaults to `false`.
+    /// Whether or not to apply code fixes during linting. Defaults to
+    /// [`FixKind::None`] (no fixing).
     ///
-    /// Set via the `--fix` CLI flag.
-    fix: bool,
+    /// Set via the `--fix`, `--fix-suggestions`, and `--fix-dangerously` CLI
+    /// flags.
+    fix: FixKind,
 
     file_path: Rc<Path>,
 
@@ -69,7 +71,7 @@ impl<'a> LintContext<'a> {
             semantic,
             diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             disable_directives: Rc::new(disable_directives),
-            fix: false,
+            fix: FixKind::None,
             file_path: file_path.into(),
             eslint_config: Arc::new(OxlintConfig::default()),
             current_rule_name: "",
@@ -79,7 +81,7 @@ impl<'a> LintContext<'a> {
 
     /// Enable/disable automatic code fixes.
     #[must_use]
-    pub fn with_fix(mut self, fix: bool) -> Self {
+    pub fn with_fix(mut self, fix: FixKind) -> Self {
         self.fix = fix;
         self
     }
@@ -190,6 +192,7 @@ impl<'a> LintContext<'a> {
     /// Report a lint rule violation.
     ///
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
+    #[inline]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic, None));
     }
@@ -197,18 +200,106 @@ impl<'a> LintContext<'a> {
     /// Report a lint rule violation and provide an automatic fix.
     ///
     /// The second argument is a [closure] that takes a [`RuleFixer`] and
-    /// returns something that can turn into a [`CompositeFix`].
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Fixes created this way should not create parse errors or change the
+    /// semantics of the linted code. If your fix may change the code's
+    /// semantics, use [`LintContext::diagnostic_with_suggestion`] instead. If
+    /// your fix has the potential to create parse errors, use
+    /// [`LintContext::diagnostic_with_dangerous_fix`].
     ///
     /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    #[inline]
     pub fn diagnostic_with_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
-        C: Into<CompositeFix<'a>>,
+        C: Into<RuleFix<'a>>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
-        if self.fix {
-            let fixer = RuleFixer::new(self);
-            let composite_fix: CompositeFix = fix(fixer).into();
-            let fix = composite_fix.normalize_fixes(self.source_text());
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::SafeFix, fix);
+    }
+
+    /// Report a lint rule violation and provide a suggestion for fixing it.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Fixes created this way should not create parse errors, but have the
+    /// potential to change the code's semantics. If your fix is completely safe
+    /// and definitely does not change semantics, use [`LintContext::diagnostic_with_fix`].
+    /// If your fix has the potential to create parse errors, use
+    /// [`LintContext::diagnostic_with_dangerous_fix`].
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    #[inline]
+    pub fn diagnostic_with_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
+    where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::Suggestion, fix);
+    }
+
+    /// Report a lint rule violation and provide a potentially dangerous
+    /// automatic fix for it.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Dangerous fixes should be avoided and are not applied by default with
+    /// `--fix`. Use this method if:
+    /// - Your fix is experimental and you want to test it out in the wild
+    ///   before marking it as safe.
+    /// - Your fix is extremely aggressive and risky, but you want to provide
+    ///   it as an option to users.
+    ///
+    /// When possible, prefer [`LintContext::diagnostic_with_fix`]. If the only
+    /// risk your fix poses is minor(ish) changes to code semantics, use
+    /// [`LintContext::diagnostic_with_suggestion`] instead.
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    ///
+    #[inline]
+    pub fn diagnostic_with_dangerous_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
+    where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousFix, fix);
+    }
+
+    pub fn diagnostic_with_fix_of_kind<C, F>(
+        &self,
+        diagnostic: OxcDiagnostic,
+        fix_kind: FixKind,
+        fix: F,
+    ) where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        // if let Some(accepted_fix_kind) = self.fix {
+        //     let fixer = RuleFixer::new(fix_kind, self);
+        //     let rule_fix: RuleFix<'a> = fix(fixer).into();
+        //     let diagnostic = match (rule_fix.message(), &diagnostic.help) {
+        //         (Some(message), None) => diagnostic.with_help(message.to_owned()),
+        //         _ => diagnostic,
+        //     };
+        //     if rule_fix.kind() <= accepted_fix_kind {
+        //         let fix = rule_fix.into_fix(self.source_text());
+        //         self.add_diagnostic(Message::new(diagnostic, Some(fix)));
+        //     } else {
+        //         self.diagnostic(diagnostic);
+        //     }
+        // } else {
+        //     self.diagnostic(diagnostic);
+        // }
+        let fixer = RuleFixer::new(fix_kind, self);
+        let rule_fix: RuleFix<'a> = fix(fixer).into();
+        let diagnostic = match (rule_fix.message(), &diagnostic.help) {
+            (Some(message), None) => diagnostic.with_help(message.to_owned()),
+            _ => diagnostic,
+        };
+        if self.fix.can_apply(rule_fix.kind()) {
+            let fix = rule_fix.into_fix(self.source_text());
             self.add_diagnostic(Message::new(diagnostic, Some(fix)));
         } else {
             self.diagnostic(diagnostic);

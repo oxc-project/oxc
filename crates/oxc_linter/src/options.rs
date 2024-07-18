@@ -6,8 +6,8 @@ use schemars::{schema::SchemaObject, JsonSchema};
 use serde_json::{Number, Value};
 
 use crate::{
-    config::OxlintConfig, rules::RULES, utils::is_jest_rule_adapted_to_vitest, RuleCategory,
-    RuleEnum, RuleWithSeverity,
+    config::OxlintConfig, fixer::FixKind, rules::RULES, utils::is_jest_rule_adapted_to_vitest,
+    RuleCategory, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Debug)]
@@ -16,7 +16,10 @@ pub struct LintOptions {
     /// Defaults to [("deny", "correctness")]
     pub filter: Vec<(AllowWarnDeny, String)>,
     pub config_path: Option<PathBuf>,
-    pub fix: bool,
+    /// Enable automatic code fixes. Set to [`None`] to disable.
+    ///
+    /// The kind represents the riskiest fix that the linter can apply.
+    pub fix: FixKind,
 
     pub react_plugin: bool,
     pub unicorn_plugin: bool,
@@ -37,7 +40,7 @@ impl Default for LintOptions {
         Self {
             filter: vec![(AllowWarnDeny::Warn, String::from("correctness"))],
             config_path: None,
-            fix: false,
+            fix: FixKind::None,
             react_plugin: true,
             unicorn_plugin: true,
             typescript_plugin: true,
@@ -69,9 +72,19 @@ impl LintOptions {
         self
     }
 
+    /// Set the kind of auto fixes to apply.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_linter::{LintOptions, FixKind};
+    ///
+    /// // turn off all auto fixes. This is default behavior.
+    /// LintOptions::default().with_fix(FixKind::None);
+    /// ```
     #[must_use]
-    pub fn with_fix(mut self, yes: bool) -> Self {
-        self.fix = yes;
+    pub fn with_fix(mut self, kind: FixKind) -> Self {
+        self.fix = kind;
         self
     }
 

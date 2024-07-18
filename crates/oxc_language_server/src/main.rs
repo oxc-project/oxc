@@ -7,7 +7,7 @@ use futures::future::join_all;
 use globset::Glob;
 use ignore::gitignore::Gitignore;
 use log::{debug, error, info};
-use oxc_linter::{LintOptions, Linter};
+use oxc_linter::{FixKind, LintOptions, Linter};
 use serde::{Deserialize, Serialize};
 use tokio::sync::{Mutex, OnceCell, RwLock, SetError};
 use tower_lsp::{
@@ -345,7 +345,9 @@ impl Backend {
             let mut linter = self.server_linter.write().await;
             *linter = ServerLinter::new_with_linter(
                 Linter::from_options(
-                    LintOptions::default().with_fix(true).with_config_path(Some(config_path)),
+                    LintOptions::default()
+                        .with_fix(FixKind::SafeFix)
+                        .with_config_path(Some(config_path)),
                 )
                 .expect("should have initialized linter with new options"),
             );

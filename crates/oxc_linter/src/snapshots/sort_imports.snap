@@ -62,6 +62,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import {b, a, d, c} from 'foo.js';
    ·            ─
    ╰────
+  help: Replace `b, a, d, c` with `a, b, c, d`.
 
   ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
@@ -69,12 +70,14 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─
  2 │             import {e, f, g, h} from 'bar.js';
    ╰────
+  help: Replace `b, a, d, c` with `a, b, c, d`.
 
   ⚠ eslint(sort-imports): Member 'B' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:12]
  1 │ import {a, B, c, D} from 'foo.js';
    ·            ─
    ╰────
+  help: Replace `a, B, c, D` with `B, D, a, c`.
 
   ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
    ╭─[sort_imports.tsx:1:30]
@@ -107,6 +110,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                 ──────────
  7 │                 bar,
    ╰────
+  help: Replace `boop,
+                        foo,
+                        zoo,
+                        baz as qux,
+                        bar,
+                        beep` with `bar,
+                        beep,
+                        boop,
+                        foo,
+                        baz as qux,
+                        zoo`.
 
   ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
    ╭─[sort_imports.tsx:2:13]
@@ -196,3 +210,4 @@ source: crates/oxc_linter/src/tester.rs
  3 │             import { c, a } from 'c';
    ·                         ─
    ╰────
+  help: Replace `c, a` with `a, c`.

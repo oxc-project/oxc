@@ -6,282 +6,329 @@ source: crates/oxc_linter/src/tester.rs
  1 │ var foo = /\#/;
    ·            ──
    ╰────
+  help: Replace `\#` with `#`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ';'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = /\;/;
    ·            ──
    ╰────
+  help: Replace `\;` with `;`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = "\'";
    ·            ──
    ╰────
+  help: Replace `\'` with `'`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = "\#/";
    ·            ──
    ╰────
+  help: Replace `\#` with `#`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = "\a"
    ·            ──
    ╰────
+  help: Replace `\a` with `a`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'B'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = "\B";
    ·            ──
    ╰────
+  help: Replace `\B` with `B`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = "\@";
    ·            ──
    ╰────
+  help: Replace `\@` with `@`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
    ╭─[no_useless_escape.tsx:1:16]
  1 │ var foo = "foo \a bar";
    ·                ──
    ╰────
+  help: Replace `\a` with `a`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = '\"';
    ·            ──
    ╰────
+  help: Replace `\"` with `"`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = '\#';
    ·            ──
    ╰────
+  help: Replace `\#` with `#`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = '\$';
    ·            ──
    ╰────
+  help: Replace `\$` with `$`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'p'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = '\p';
    ·            ──
    ╰────
+  help: Replace `\p` with `p`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'p'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = '\p\a\@';
    ·            ──
    ╰────
+  help: Replace `\p` with `p`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
    ╭─[no_useless_escape.tsx:1:14]
  1 │ var foo = '\p\a\@';
    ·              ──
    ╰────
+  help: Replace `\a` with `a`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '@'
    ╭─[no_useless_escape.tsx:1:16]
  1 │ var foo = '\p\a\@';
    ·                ──
    ╰────
+  help: Replace `\@` with `@`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'd'
    ╭─[no_useless_escape.tsx:1:13]
  1 │ <foo attr={"\d"}/>
    ·             ──
    ╰────
+  help: Replace `\d` with `d`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = '\`';
    ·            ──
    ╰────
+  help: Replace `\`` with ```.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\"`;
    ·            ──
    ╰────
+  help: Replace `\"` with `"`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\'`;
    ·            ──
    ╰────
+  help: Replace `\'` with `'`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\#`;
    ·            ──
    ╰────
+  help: Replace `\#` with `#`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = '\`foo\`';
    ·            ──
    ╰────
+  help: Replace `\`` with ```.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '`'
    ╭─[no_useless_escape.tsx:1:17]
  1 │ var foo = '\`foo\`';
    ·                 ──
    ╰────
+  help: Replace `\`` with ```.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\"${foo}\"`;
    ·            ──
    ╰────
+  help: Replace `\"` with `"`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '"'
    ╭─[no_useless_escape.tsx:1:20]
  1 │ var foo = `\"${foo}\"`;
    ·                    ──
    ╰────
+  help: Replace `\"` with `"`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\'${foo}\'`;
    ·            ──
    ╰────
+  help: Replace `\'` with `'`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\''
    ╭─[no_useless_escape.tsx:1:20]
  1 │ var foo = `\'${foo}\'`;
    ·                    ──
    ╰────
+  help: Replace `\'` with `'`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '#'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\#${foo}`;
    ·            ──
    ╰────
+  help: Replace `\#` with `#`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
    ╭─[no_useless_escape.tsx:1:12]
  1 │ let foo = '\ ';
    ·            ──
    ╰────
+  help: Replace `\ ` with ` `.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ' '
    ╭─[no_useless_escape.tsx:1:12]
  1 │ let foo = /\ /;
    ·            ──
    ╰────
+  help: Replace `\ ` with ` `.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\$\{{${foo}`;
    ·            ──
    ╰────
+  help: Replace `\$` with `$`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = `\$a${foo}`;
    ·            ──
    ╰────
+  help: Replace `\$` with `$`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '{'
    ╭─[no_useless_escape.tsx:1:13]
  1 │ var foo = `a\{{${foo}`;
    ·             ──
    ╰────
+  help: Replace `\{` with `{`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '-'
    ╭─[no_useless_escape.tsx:1:15]
  1 │ var foo = /[ab\-]/
    ·               ──
    ╰────
+  help: Replace `\-` with `-`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '-'
    ╭─[no_useless_escape.tsx:1:13]
  1 │ var foo = /[\-ab]/
    ·             ──
    ╰────
+  help: Replace `\-` with `-`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '?'
    ╭─[no_useless_escape.tsx:1:15]
  1 │ var foo = /[ab\?]/
    ·               ──
    ╰────
+  help: Replace `\?` with `?`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '.'
    ╭─[no_useless_escape.tsx:1:15]
  1 │ var foo = /[ab\.]/
    ·               ──
    ╰────
+  help: Replace `\.` with `.`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '|'
    ╭─[no_useless_escape.tsx:1:14]
  1 │ var foo = /[a\|b]/
    ·              ──
    ╰────
+  help: Replace `\|` with `|`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '-'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = /\-/
    ·            ──
    ╰────
+  help: Replace `\-` with `-`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '-'
    ╭─[no_useless_escape.tsx:1:13]
  1 │ var foo = /[\-]/
    ·             ──
    ╰────
+  help: Replace `\-` with `-`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '$'
    ╭─[no_useless_escape.tsx:1:15]
  1 │ var foo = /[ab\$]/
    ·               ──
    ╰────
+  help: Replace `\$` with `$`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '('
    ╭─[no_useless_escape.tsx:1:13]
  1 │ var foo = /[\(paren]/
    ·             ──
    ╰────
+  help: Replace `\(` with `(`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '['
    ╭─[no_useless_escape.tsx:1:13]
  1 │ var foo = /[\[]/
    ·             ──
    ╰────
+  help: Replace `\[` with `[`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '/'
    ╭─[no_useless_escape.tsx:1:13]
  1 │ var foo = /[\/]/
    ·             ──
    ╰────
+  help: Replace `\/` with `/`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'B'
    ╭─[no_useless_escape.tsx:1:13]
  1 │ var foo = /[\B]/
    ·             ──
    ╰────
+  help: Replace `\B` with `B`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '-'
    ╭─[no_useless_escape.tsx:1:16]
  1 │ var foo = /[a][\-b]/
    ·                ──
    ╰────
+  help: Replace `\-` with `-`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '-'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = /\-[]/
    ·            ──
    ╰────
+  help: Replace `\-` with `-`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '^'
    ╭─[no_useless_escape.tsx:1:14]
  1 │ var foo = /[a\^]/
    ·              ──
    ╰────
+  help: Replace `\^` with `^`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
    ╭─[no_useless_escape.tsx:2:22]
@@ -289,6 +336,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │ literal with useless \escape`
    ·                      ──
    ╰────
+  help: Replace `\e` with `e`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
    ╭─[no_useless_escape.tsx:2:22]
@@ -296,6 +344,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │ literal with useless \escape`
    ·                      ──
    ╰────
+  help: Replace `\e` with `e`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
    ╭─[no_useless_escape.tsx:2:13]
@@ -303,6 +352,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │ and useless \escape`
    ·             ──
    ╰────
+  help: Replace `\e` with `e`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'e'
    ╭─[no_useless_escape.tsx:2:13]
@@ -310,6 +360,7 @@ source: crates/oxc_linter/src/tester.rs
  2 │ and useless \escape`
    ·             ──
    ╰────
+  help: Replace `\e` with `e`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
    ╭─[no_useless_escape.tsx:4:1]
@@ -317,6 +368,7 @@ source: crates/oxc_linter/src/tester.rs
  4 │ \and useless escape`
    · ──
    ╰────
+  help: Replace `\a` with `a`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
    ╭─[no_useless_escape.tsx:4:1]
@@ -324,57 +376,67 @@ source: crates/oxc_linter/src/tester.rs
  4 │ \and useless escape`
    · ──
    ╰────
+  help: Replace `\a` with `a`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character 'a'
    ╭─[no_useless_escape.tsx:1:2]
  1 │ `\a```
    ·  ──
    ╰────
+  help: Replace `\a` with `a`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '（'
    ╭─[no_useless_escape.tsx:1:12]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·            ───
    ╰────
+  help: Replace `\（` with `（`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '）'
    ╭─[no_useless_escape.tsx:1:19]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                  ───
    ╰────
+  help: Replace `\）` with `）`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '（'
    ╭─[no_useless_escape.tsx:1:23]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                     ───
    ╰────
+  help: Replace `\（` with `（`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '）'
    ╭─[no_useless_escape.tsx:1:30]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                           ───
    ╰────
+  help: Replace `\）` with `）`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ')'
    ╭─[no_useless_escape.tsx:1:41]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                                     ──
    ╰────
+  help: Replace `\)` with `)`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character ')'
    ╭─[no_useless_escape.tsx:1:43]
  1 │ var foo = /\（([^\）\（]+)\）$|\(([^\)\)]+)\)$/;
    ·                                       ──
    ╰────
+  help: Replace `\)` with `)`.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\u{85}'
    ╭─[no_useless_escape.tsx:1:40]
  1 │ var stringLiteralWithNextLine = "line 1\line 2";
    ·                                        ─
    ╰────
+  help: Replace `\` with ``.
 
   ⚠ eslint(no-useless-escape): Unnecessary escape character '\u{85}'
    ╭─[no_useless_escape.tsx:1:40]
  1 │ var stringLiteralWithNextLine = `line 1\line 2`;
    ·                                        ─
    ╰────
+  help: Replace `\` with ``.

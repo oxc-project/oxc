@@ -8,82 +8,159 @@ use oxc_span::{GetSpan, Span};
 
 use crate::LintContext;
 
-pub use fix::{CompositeFix, Fix};
+pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
 
-/// Inspired by ESLint's [`RuleFixer`].
+/// Produces [`RuleFix`] instances. Inspired by ESLint's [`RuleFixer`].
 ///
 /// [`RuleFixer`]: https://github.com/eslint/eslint/blob/main/lib/linter/rule-fixer.js
 #[derive(Clone, Copy)]
+#[must_use]
 pub struct RuleFixer<'c, 'a: 'c> {
+    /// What kind of fixes will factory methods produce?
+    ///
+    /// Controlled via `diagnostic_with_fix`, `diagnostic_with_suggestion`, and
+    /// `diagnostic_with_dangerous_fix` methods on [`LintContext`]
+    kind: FixKind,
+    /// Enable/disable automatic creation of suggestion messages.
+    ///
+    /// Auto-messaging is useful for single fixes, but not so much when we know
+    /// multiple fixes will be applied. Some [`RuleFix`] factory methods
+    /// allocate strings on the heap, which would then just get thrown away.
+    /// Turning this off prevents unneeded allocations.
+    ///
+    /// Defaults to `true`
+    auto_message: bool,
     ctx: &'c LintContext<'a>,
 }
 
 impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
-    pub fn new(ctx: &'c LintContext<'a>) -> Self {
-        Self { ctx }
+    /// Maximum length code snippets can be inside auto-created messages before
+    /// they get truncated. Prevents the terminal from getting flooded when a
+    /// replacement covers a large span.
+    const MAX_SNIPPET_LEN: usize = 256;
+
+    pub(super) fn new(kind: FixKind, ctx: &'c LintContext<'a>) -> Self {
+        Self { kind, auto_message: true, ctx }
+    }
+
+    /// Hint to the [`RuleFixer`] that it will be creating [`CompositeFix`]es
+    /// containing more than one [`Fix`].
+    ///
+    /// Calling this method in such cases is _highly recommended_ as it has a
+    /// sizeable performance impact, but is not _strictly_ necessary.
+    pub fn for_multifix(mut self) -> Self {
+        self.auto_message = false;
+        self
+    }
+
+    // NOTE(@DonIsaac): Internal methods shouldn't use `T: Into<Foo>` generics to optimize binary
+    // size. Only use such generics in public APIs.
+    fn new_fix(&self, fix: CompositeFix<'a>, message: Option<Cow<'a, str>>) -> RuleFix<'a> {
+        RuleFix::new(self.kind, message, fix)
+    }
+
+    /// Create a new [`RuleFix`] with pre-allocated memory for multiple fixes.
+    pub fn new_fix_with_capacity(&self, capacity: usize) -> RuleFix<'a> {
+        RuleFix::new(self.kind, None, CompositeFix::Multiple(Vec::with_capacity(capacity)))
     }
 
     /// Get a snippet of source text covered by the given [`Span`]. For details,
     /// see [`Span::source_text`].
-    pub fn source_range(self, span: Span) -> &'a str {
+    #[inline]
+    pub fn source_range(&self, span: Span) -> &'a str {
         self.ctx.source_range(span)
     }
 
-    /// Create a [`Fix`] that deletes the text covered by the given [`Span`] or
-    /// AST node.
-    pub fn delete<S: GetSpan>(self, spanned: &S) -> Fix<'a> {
+    /// Create a [`RuleFix`] that deletes the text covered by the given [`Span`]
+    /// or AST node.
+    #[inline]
+    pub fn delete<S: GetSpan>(&self, spanned: &S) -> RuleFix<'a> {
         self.delete_range(spanned.span())
     }
 
+    /// Delete text covered by a [`Span`]
     #[allow(clippy::unused_self)]
-    pub fn delete_range(self, span: Span) -> Fix<'a> {
-        Fix::delete(span)
+    pub fn delete_range(&self, span: Span) -> RuleFix<'a> {
+        self.new_fix(
+            CompositeFix::Single(Fix::delete(span)),
+            self.auto_message.then_some(Cow::Borrowed("Delete this code.")),
+        )
     }
 
     /// Replace a `target` AST node with the source code of a `replacement` node..
-    pub fn replace_with<T: GetSpan, S: GetSpan>(self, target: &T, replacement: &S) -> Fix<'a> {
+    pub fn replace_with<T: GetSpan, S: GetSpan>(&self, target: &T, replacement: &S) -> RuleFix<'a> {
         let replacement_text = self.ctx.source_range(replacement.span());
-        Fix::new(replacement_text, target.span())
+        let fix = Fix::new(replacement_text, target.span());
+        let message = self.auto_message.then(|| {
+            let target_text = self.possibly_truncate_range(target.span());
+            let borrowed_replacement = Cow::Borrowed(replacement_text);
+            let replacement_text = self.possibly_truncate_snippet(&borrowed_replacement);
+            Cow::Owned(format!("Replace `{target_text}` with `{replacement_text}`."))
+        });
+
+        self.new_fix(CompositeFix::Single(fix), message)
     }
 
     /// Replace a `target` AST node with a `replacement` string.
     #[allow(clippy::unused_self)]
-    pub fn replace<S: Into<Cow<'a, str>>>(self, target: Span, replacement: S) -> Fix<'a> {
-        Fix::new(replacement, target)
+    pub fn replace<S: Into<Cow<'a, str>>>(&self, target: Span, replacement: S) -> RuleFix<'a> {
+        let fix = Fix::new(replacement, target);
+        let target_text = self.possibly_truncate_range(target);
+        let content = self.possibly_truncate_snippet(&fix.content);
+        let message = self
+            .auto_message
+            .then(|| Cow::Owned(format!("Replace `{target_text}` with `{content}`.")));
+
+        self.new_fix(CompositeFix::Single(fix), message)
     }
 
     /// Creates a fix command that inserts text before the given node.
+    #[inline]
     pub fn insert_text_before<T: GetSpan, S: Into<Cow<'a, str>>>(
-        self,
+        &self,
         target: &T,
         text: S,
-    ) -> Fix<'a> {
+    ) -> RuleFix<'a> {
         self.insert_text_before_range(target.span(), text)
     }
 
     /// Creates a fix command that inserts text before the specified range in the source text.
-    pub fn insert_text_before_range<S: Into<Cow<'a, str>>>(self, span: Span, text: S) -> Fix<'a> {
+    #[inline]
+    pub fn insert_text_before_range<S: Into<Cow<'a, str>>>(
+        &self,
+        span: Span,
+        text: S,
+    ) -> RuleFix<'a> {
         self.insert_text_at(span.start, text)
     }
 
     /// Creates a fix command that inserts text after the given node.
+    #[inline]
     pub fn insert_text_after<T: GetSpan, S: Into<Cow<'a, str>>>(
-        self,
+        &self,
         target: &T,
         text: S,
-    ) -> Fix<'a> {
+    ) -> RuleFix<'a> {
         self.insert_text_after_range(target.span(), text)
     }
 
     /// Creates a fix command that inserts text after the specified range in the source text.
-    pub fn insert_text_after_range<S: Into<Cow<'a, str>>>(self, span: Span, text: S) -> Fix<'a> {
+    #[inline]
+    pub fn insert_text_after_range<S: Into<Cow<'a, str>>>(
+        &self,
+        span: Span,
+        text: S,
+    ) -> RuleFix<'a> {
         self.insert_text_at(span.end, text)
     }
 
     /// Creates a fix command that inserts text at the specified index in the source text.
     #[allow(clippy::unused_self)]
-    fn insert_text_at<S: Into<Cow<'a, str>>>(self, index: u32, text: S) -> Fix<'a> {
-        Fix::new(text, Span::new(index, index))
+    fn insert_text_at<S: Into<Cow<'a, str>>>(&self, index: u32, text: S) -> RuleFix<'a> {
+        let fix = Fix::new(text, Span::new(index, index));
+        let content = self.possibly_truncate_snippet(&fix.content);
+        let message = self.auto_message.then(|| Cow::Owned(format!("Insert `{content}`")));
+        self.new_fix(CompositeFix::Single(fix), message)
     }
 
     #[allow(clippy::unused_self)]
@@ -92,8 +169,31 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     }
 
     #[allow(clippy::unused_self)]
-    pub fn noop(self) -> Fix<'a> {
-        Fix::empty()
+    #[inline]
+    pub fn noop(&self) -> RuleFix<'a> {
+        self.new_fix(CompositeFix::None, None)
+    }
+
+    fn possibly_truncate_range(&self, span: Span) -> Cow<'a, str> {
+        let snippet = self.ctx.source_range(span);
+        self.possibly_truncate_snippet(snippet)
+    }
+
+    #[allow(clippy::unused_self)]
+    fn possibly_truncate_snippet<'s>(&self, snippet: &'s str) -> Cow<'s, str>
+    where
+        'a: 's,
+    {
+        if snippet.len() > Self::MAX_SNIPPET_LEN {
+            let substring = match snippet.char_indices().nth(Self::MAX_SNIPPET_LEN) {
+                Some((pos, _)) => Cow::Borrowed(&snippet[..pos]),
+                // slow path when MAX_SNIPPET_LEN is on a UTF-8 character boundary
+                None => Cow::Owned(snippet.chars().take(Self::MAX_SNIPPET_LEN).collect()),
+            };
+            substring + "..."
+        } else {
+            Cow::Borrowed(snippet)
+        }
     }
 }
 
