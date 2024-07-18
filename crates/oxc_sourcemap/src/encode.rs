@@ -129,14 +129,15 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
     } = *token_chunk;
 
     for (idx, token) in tokens[start as usize..end as usize].iter().enumerate() {
+        let index = start as usize + idx;
         if token.get_dst_line() != prev_dst_line {
             prev_dst_col = 0;
             while token.get_dst_line() != prev_dst_line {
                 rv.push(';');
                 prev_dst_line += 1;
             }
-        } else if idx > 0 {
-            if Some(token) == tokens.get(idx - 1) {
+        } else if index > 0 {
+            if Some(token) == tokens.get(index - 1) {
                 continue;
             }
             rv.push(',');
