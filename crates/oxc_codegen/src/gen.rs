@@ -1514,6 +1514,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPropertyKind<'a> {
     }
 }
 
+// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
@@ -1561,16 +1562,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
         if self.computed {
             p.print_char(b'[');
         }
-        if !self.shorthand {
-            self.key.gen(p, ctx);
-        }
+        self.key.gen(p, ctx);
         if self.computed {
             p.print_char(b']');
         }
-        if !self.shorthand {
-            p.print_colon();
-            p.print_soft_space();
-        }
+        p.print_colon();
+        p.print_soft_space();
         self.value.gen_expr(p, Precedence::Assign, Context::default());
     }
 }
@@ -2538,7 +2535,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
     }
 }
 
-// NOTE: `shorthand` is not printed
+// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
