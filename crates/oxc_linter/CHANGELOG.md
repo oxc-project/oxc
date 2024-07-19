@@ -4,6 +4,42 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.6.1] - 2024-07-17
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- 1f8968a linter: Add eslint-plugin-promise rules: avoid-new, no-new-statics, params-names (#4293) (Jelle van der Waa)
+- a4dc56c linter: Add fixer for unicorn/no_useless_promise_resolve_reject (#4244) (Burlin)
+- 6fb808f linter: Add typescript-eslint/no-confusing-non-null-assertion (#4224) (Jaden Rodriguez)
+- 126b66c linter: Support eslint-plugin-vitest/valid-describe-callback (#4185) (cinchen)
+- 05b9a73 linter: Support eslint-plugin-vitest/valid-expect (#4183) (cinchen)
+- 3e56b2b linter: Support eslint-plugin-vitest/no-test-prefixes (#4182) (cinchen)
+- 3016f03 linter: Let fixer functions return a `None` fix (#4210) (DonIsaac)
+- bbe6137 linter: Implement unicorn/no-useless-undefined (#4079) (Burlin)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+
+### Bug Fixes
+
+- 9df60da linter: Correct find first non whitespace logic in @typescript-eslint/consistent-type-imports (#4198) (mysteryven)
+- 67240dc linter: Not ignore adjacent spans when fixing (#4217) (mysteryven)
+- dd07a54 linter: Global variables should always check the builtin variables (#4209) (Jelle van der Waa)
+- 351ecf2 semantic: Incorrect resolve references for `TSTypeQuery` (#4310) (Dunqing)
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+
+### Performance
+
+- 0fdc88b linter: Optimize no-dupe-keys (#4292) (lucab)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- aa22073 codegen: Improve print API (#4196) (Boshen)
+- b5a8f3c linter: Use get_first_parameter_name from unicorn utils (#4255) (Jelle van der Waa)
+- 7089a3d linter: Split up fixer code into separate files (#4222) (DonIsaac)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- 7f1addd semantic: Correct scope in CatchClause (#4192) (Dunqing)
+
 ## [0.6.0] - 2024-07-11
 
 - 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)

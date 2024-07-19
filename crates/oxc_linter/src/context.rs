@@ -1,3 +1,4 @@
+#![allow(rustdoc::private_intra_doc_links)] // useful for intellisense
 use std::{cell::RefCell, path::Path, rc::Rc, sync::Arc};
 
 use oxc_cfg::ControlFlowGraph;
@@ -9,7 +10,7 @@ use oxc_syntax::module_record::ModuleRecord;
 use crate::{
     config::OxlintRules,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
-    fixer::{CompositeFix, Message, RuleFixer},
+    fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
     AllowWarnDeny, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
@@ -18,12 +19,19 @@ use crate::{
 pub struct LintContext<'a> {
     semantic: Rc<Semantic<'a>>,
 
+    /// Diagnostics reported by the linter.
+    ///
+    /// Contains diagnostics for all rules across all files.
     diagnostics: RefCell<Vec<Message<'a>>>,
 
     disable_directives: Rc<DisableDirectives<'a>>,
 
-    /// Whether or not to apply code fixes during linting.
-    fix: bool,
+    /// Whether or not to apply code fixes during linting. Defaults to
+    /// [`FixKind::None`] (no fixing).
+    ///
+    /// Set via the `--fix`, `--fix-suggestions`, and `--fix-dangerously` CLI
+    /// flags.
+    fix: FixKind,
 
     file_path: Rc<Path>,
 
@@ -32,6 +40,15 @@ pub struct LintContext<'a> {
     // states
     current_rule_name: &'static str,
 
+    /// Current rule severity. Allows for user severity overrides, e.g.
+    /// ```json
+    /// // .oxlintrc.json
+    /// {
+    ///   "rules": {
+    ///     "no-debugger": "error"
+    ///   }
+    /// }
+    /// ```
     severity: Severity,
 }
 
@@ -39,6 +56,8 @@ impl<'a> LintContext<'a> {
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new(file_path: Box<Path>, semantic: Rc<Semantic<'a>>) -> Self {
+        const DIAGNOSTICS_INITIAL_CAPACITY: usize = 128;
+
         // We should always check for `semantic.cfg()` being `Some` since we depend on it and it is
         // unwrapped without any runtime checks after construction.
         assert!(
@@ -50,9 +69,9 @@ impl<'a> LintContext<'a> {
                 .build();
         Self {
             semantic,
-            diagnostics: RefCell::new(vec![]),
+            diagnostics: RefCell::new(Vec::with_capacity(DIAGNOSTICS_INITIAL_CAPACITY)),
             disable_directives: Rc::new(disable_directives),
-            fix: false,
+            fix: FixKind::None,
             file_path: file_path.into(),
             eslint_config: Arc::new(OxlintConfig::default()),
             current_rule_name: "",
@@ -60,8 +79,9 @@ impl<'a> LintContext<'a> {
         }
     }
 
+    /// Enable/disable automatic code fixes.
     #[must_use]
-    pub fn with_fix(mut self, fix: bool) -> Self {
+    pub fn with_fix(mut self, fix: FixKind) -> Self {
         self.fix = fix;
         self
     }
@@ -89,12 +109,9 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn cfg(&self) -> &ControlFlowGraph {
-        #[allow(unsafe_code)]
         // SAFETY: `LintContext::new` is the only way to construct a `LintContext` and we always
         // assert the existence of control flow so it should always be `Some`.
-        unsafe {
-            self.semantic().cfg().unwrap_unchecked()
-        }
+        unsafe { self.semantic().cfg().unwrap_unchecked() }
     }
 
     pub fn disable_directives(&self) -> &DisableDirectives<'a> {
@@ -112,14 +129,17 @@ impl<'a> LintContext<'a> {
         span.source_text(self.semantic().source_text())
     }
 
+    /// [`SourceType`] of the file currently being linted.
     pub fn source_type(&self) -> &SourceType {
         self.semantic().source_type()
     }
 
+    /// Path to the file currently being linted.
     pub fn file_path(&self) -> &Path {
         &self.file_path
     }
 
+    /// Plugin settings
     pub fn settings(&self) -> &OxlintSettings {
         &self.eslint_config.settings
     }
@@ -128,6 +148,9 @@ impl<'a> LintContext<'a> {
         &self.eslint_config.globals
     }
 
+    /// Runtime environments turned on/off by the user.
+    ///
+    /// Examples of environments are `builtin`, `browser`, `node`, etc.
     pub fn env(&self) -> &OxlintEnv {
         &self.eslint_config.env
     }
@@ -137,7 +160,7 @@ impl<'a> LintContext<'a> {
     }
 
     pub fn env_contains_var(&self, var: &str) -> bool {
-        if GLOBALS["builtin"].contains_key("var") {
+        if GLOBALS["builtin"].contains_key(var) {
             return true;
         }
         for env in self.env().iter() {
@@ -169,43 +192,151 @@ impl<'a> LintContext<'a> {
     /// Report a lint rule violation.
     ///
     /// Use [`LintContext::diagnostic_with_fix`] to provide an automatic fix.
+    #[inline]
     pub fn diagnostic(&self, diagnostic: OxcDiagnostic) {
         self.add_diagnostic(Message::new(diagnostic, None));
     }
 
     /// Report a lint rule violation and provide an automatic fix.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Fixes created this way should not create parse errors or change the
+    /// semantics of the linted code. If your fix may change the code's
+    /// semantics, use [`LintContext::diagnostic_with_suggestion`] instead. If
+    /// your fix has the potential to create parse errors, use
+    /// [`LintContext::diagnostic_with_dangerous_fix`].
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    #[inline]
     pub fn diagnostic_with_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
     where
-        C: Into<CompositeFix<'a>>,
+        C: Into<RuleFix<'a>>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
-        if self.fix {
-            let fixer = RuleFixer::new(self);
-            let composite_fix: CompositeFix = fix(fixer).into();
-            let fix = composite_fix.normalize_fixes(self.source_text());
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::SafeFix, fix);
+    }
+
+    /// Report a lint rule violation and provide a suggestion for fixing it.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Fixes created this way should not create parse errors, but have the
+    /// potential to change the code's semantics. If your fix is completely safe
+    /// and definitely does not change semantics, use [`LintContext::diagnostic_with_fix`].
+    /// If your fix has the potential to create parse errors, use
+    /// [`LintContext::diagnostic_with_dangerous_fix`].
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    #[inline]
+    pub fn diagnostic_with_suggestion<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
+    where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::Suggestion, fix);
+    }
+
+    /// Report a lint rule violation and provide a potentially dangerous
+    /// automatic fix for it.
+    ///
+    /// The second argument is a [closure] that takes a [`RuleFixer`] and
+    /// returns something that can turn into a `CompositeFix`.
+    ///
+    /// Dangerous fixes should be avoided and are not applied by default with
+    /// `--fix`. Use this method if:
+    /// - Your fix is experimental and you want to test it out in the wild
+    ///   before marking it as safe.
+    /// - Your fix is extremely aggressive and risky, but you want to provide
+    ///   it as an option to users.
+    ///
+    /// When possible, prefer [`LintContext::diagnostic_with_fix`]. If the only
+    /// risk your fix poses is minor(ish) changes to code semantics, use
+    /// [`LintContext::diagnostic_with_suggestion`] instead.
+    ///
+    /// [closure]: <https://doc.rust-lang.org/book/ch13-01-closures.html>
+    ///
+    #[inline]
+    pub fn diagnostic_with_dangerous_fix<C, F>(&self, diagnostic: OxcDiagnostic, fix: F)
+    where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousFix, fix);
+    }
+
+    pub fn diagnostic_with_fix_of_kind<C, F>(
+        &self,
+        diagnostic: OxcDiagnostic,
+        fix_kind: FixKind,
+        fix: F,
+    ) where
+        C: Into<RuleFix<'a>>,
+        F: FnOnce(RuleFixer<'_, 'a>) -> C,
+    {
+        // if let Some(accepted_fix_kind) = self.fix {
+        //     let fixer = RuleFixer::new(fix_kind, self);
+        //     let rule_fix: RuleFix<'a> = fix(fixer).into();
+        //     let diagnostic = match (rule_fix.message(), &diagnostic.help) {
+        //         (Some(message), None) => diagnostic.with_help(message.to_owned()),
+        //         _ => diagnostic,
+        //     };
+        //     if rule_fix.kind() <= accepted_fix_kind {
+        //         let fix = rule_fix.into_fix(self.source_text());
+        //         self.add_diagnostic(Message::new(diagnostic, Some(fix)));
+        //     } else {
+        //         self.diagnostic(diagnostic);
+        //     }
+        // } else {
+        //     self.diagnostic(diagnostic);
+        // }
+        let fixer = RuleFixer::new(fix_kind, self);
+        let rule_fix: RuleFix<'a> = fix(fixer).into();
+        let diagnostic = match (rule_fix.message(), &diagnostic.help) {
+            (Some(message), None) => diagnostic.with_help(message.to_owned()),
+            _ => diagnostic,
+        };
+        if self.fix.can_apply(rule_fix.kind()) {
+            let fix = rule_fix.into_fix(self.source_text());
             self.add_diagnostic(Message::new(diagnostic, Some(fix)));
         } else {
             self.diagnostic(diagnostic);
         }
     }
 
+    /// AST nodes
+    ///
+    /// Shorthand for `self.semantic().nodes()`.
     pub fn nodes(&self) -> &AstNodes<'a> {
         self.semantic().nodes()
     }
 
+    /// Scope tree
+    ///
+    /// Shorthand for `ctx.semantic().scopes()`.
     pub fn scopes(&self) -> &ScopeTree {
         self.semantic().scopes()
     }
 
+    /// Symbol table
+    ///
+    /// Shorthand for `ctx.semantic().symbols()`.
     pub fn symbols(&self) -> &SymbolTable {
         self.semantic().symbols()
     }
 
+    /// Imported modules and exported symbols
+    ///
+    /// Shorthand for `ctx.semantic().module_record()`.
     pub fn module_record(&self) -> &ModuleRecord {
         self.semantic().module_record()
     }
 
-    /* JSDoc */
+    /// JSDoc comments
+    ///
+    /// Shorthand for `ctx.semantic().jsdoc()`.
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         self.semantic().jsdoc()
     }

@@ -21,6 +21,7 @@ mod import {
     pub mod no_named_as_default_member;
     pub mod no_self_import;
     // pub mod no_unused_modules;
+    pub mod no_webpack_loader_syntax;
 }
 
 mod eslint {
@@ -134,6 +135,7 @@ mod typescript {
     pub mod consistent_type_definitions;
     pub mod consistent_type_imports;
     pub mod explicit_function_return_type;
+    pub mod no_confusing_non_null_assertion;
     pub mod no_duplicate_enum_values;
     pub mod no_dynamic_delete;
     pub mod no_empty_interface;
@@ -285,6 +287,7 @@ mod unicorn {
     pub mod no_useless_promise_resolve_reject;
     pub mod no_useless_spread;
     pub mod no_useless_switch_case;
+    pub mod no_useless_undefined;
     pub mod no_zero_fractions;
     pub mod number_literal_case;
     pub mod numeric_separators_style;
@@ -430,6 +433,12 @@ mod tree_shaking {
     pub mod no_side_effects_in_initialization;
 }
 
+mod promise {
+    pub mod avoid_new;
+    pub mod no_new_statics;
+    pub mod param_names;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
@@ -560,6 +569,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::explicit_function_return_type,
     typescript::no_non_null_assertion,
     typescript::no_non_null_asserted_nullish_coalescing,
+    typescript::no_confusing_non_null_assertion,
     typescript::no_dynamic_delete,
     jest::consistent_test_it,
     jest::expect_expect,
@@ -650,6 +660,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_useless_promise_resolve_reject,
     unicorn::no_useless_spread,
     unicorn::no_useless_switch_case,
+    unicorn::no_useless_undefined,
     unicorn::no_zero_fractions,
     unicorn::number_literal_case,
     unicorn::numeric_separators_style,
@@ -731,6 +742,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_unused_modules,
     import::no_duplicates,
     import::no_default_export,
+    import::no_webpack_loader_syntax,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
@@ -818,4 +830,7 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::require_returns_type,
     jsdoc::require_yields,
     tree_shaking::no_side_effects_in_initialization,
+    promise::avoid_new,
+    promise::no_new_statics,
+    promise::param_names,
 }

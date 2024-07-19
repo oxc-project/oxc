@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
 use bpaf::Bpaf;
-use oxc_linter::AllowWarnDeny;
+use oxc_linter::{AllowWarnDeny, FixKind};
 
 use super::{
     expand_glob,
@@ -122,6 +122,40 @@ pub struct FixOptions {
     /// Fix as many issues as possible. Only unfixed issues are reported in the output
     #[bpaf(switch)]
     pub fix: bool,
+    /// Apply auto-fixable suggestions. May change program behavior.
+    #[bpaf(switch)]
+    pub fix_suggestions: bool,
+
+    /// Apply dangerous fixes and suggestions.
+    #[bpaf(switch)]
+    pub fix_dangerously: bool,
+}
+
+impl FixOptions {
+    pub fn fix_kind(&self) -> FixKind {
+        let mut kind = FixKind::None;
+
+        if self.fix {
+            kind.set(FixKind::SafeFix, true);
+        }
+
+        if self.fix_suggestions {
+            kind.set(FixKind::Suggestion, true);
+        }
+
+        if self.fix_dangerously {
+            if kind.is_none() {
+                kind.set(FixKind::Fix, true);
+            }
+            kind.set(FixKind::Dangerous, true);
+        }
+
+        kind
+    }
+
+    pub fn is_enabled(&self) -> bool {
+        self.fix || self.fix_suggestions || self.fix_dangerously
+    }
 }
 
 /// Handle Warnings
@@ -223,6 +257,10 @@ pub struct EnablePlugins {
     /// Enable the React performance plugin and detect rendering performance problems
     #[bpaf(switch, hide_usage)]
     pub react_perf_plugin: bool,
+
+    /// Enable the promise plugin and detect promise usage problems
+    #[bpaf(switch, hide_usage)]
+    pub promise_plugin: bool,
 }
 
 #[cfg(test)]

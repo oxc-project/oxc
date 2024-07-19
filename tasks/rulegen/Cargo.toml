@@ -9,8 +9,9 @@ license.workspace = true
 workspace = true
 
 [[bin]]
-name = "rulegen"
-test = false
+name    = "rulegen"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_allocator    = { workspace = true }

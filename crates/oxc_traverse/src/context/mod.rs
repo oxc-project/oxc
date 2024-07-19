@@ -141,7 +141,7 @@ impl<'a> TraverseCtx<'a> {
     ///
     /// Shortcut for `ctx.ancestry.parent`.
     #[inline]
-    #[allow(unsafe_code)]
+
     pub fn parent(&self) -> &Ancestor<'a> {
         self.ancestry.parent()
     }
@@ -454,7 +454,7 @@ impl<'a> TraverseCtx<'a> {
     /// See safety constraints of `TraverseAncestry.pop_stack`.
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    #[allow(unsafe_code)]
+
     pub(crate) unsafe fn pop_stack(&mut self) {
         self.ancestry.pop_stack();
     }
@@ -465,7 +465,7 @@ impl<'a> TraverseCtx<'a> {
     /// See safety constraints of `TraverseAncestry.retag_stack`.
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    #[allow(unsafe_code)]
+
     pub(crate) unsafe fn retag_stack(&mut self, ty: AncestorType) {
         self.ancestry.retag_stack(ty);
     }

@@ -1,0 +1,66 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/typeof-this.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(decorator)",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function)",
+            "id": 3,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "baz",
+                "node": "FormalParameter",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "Class(Foo)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 0,
+        "name": "decorator",
+        "node": "Function(decorator)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "decorator",
+            "node_id": 7
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 1,
+        "name": "Foo",
+        "node": "Class(Foo)",
+        "references": []
+      }
+    ]
+  }
+]

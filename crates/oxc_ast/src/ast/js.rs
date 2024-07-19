@@ -79,7 +79,7 @@ pub enum Expression<'a> {
     ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
     ClassExpression(Box<'a, Class<'a>>) = 17,
     ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
-    #[visit_args(flags = None)]
+    #[visit_args(flags = ScopeFlags::Function)]
     FunctionExpression(Box<'a, Function<'a>>) = 19,
     ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
     LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
@@ -970,7 +970,7 @@ pub struct BlockStatement<'a> {
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
-    #[visit_args(flags = None)]
+    #[visit_args(flags = ScopeFlags::Function)]
     FunctionDeclaration(Box<'a, Function<'a>>) = 33,
     ClassDeclaration(Box<'a, Class<'a>>) = 34,
     UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
@@ -1300,7 +1300,7 @@ pub struct TryStatement<'a> {
 }
 
 #[visited_node]
-#[scope(if(self.param.is_some()))]
+#[scope(flags(ScopeFlags::CatchClause), if(self.param.is_some()))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1437,9 +1437,9 @@ pub struct BindingRestElement<'a> {
 /// Function Definitions
 #[visited_node]
 #[scope(
-    // TODO: `ScopeFlags::Function` is not correct if this is a `MethodDefinition`
-    flags(flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function),
-    strict_if(self.body.as_ref().is_some_and(|body| body.has_use_strict_directive())),
+    // `flags` passed in to visitor via parameter defined by `#[visit_args(flags = ...)]` on parents
+    flags(flags),
+    strict_if(self.is_strict()),
 )]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1470,8 +1470,8 @@ pub struct Function<'a> {
     /// ```
     pub this_param: Option<TSThisParameter<'a>>,
     pub params: Box<'a, FormalParameters<'a>>,
-    pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub return_type: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    pub body: Option<Box<'a, FunctionBody<'a>>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1590,14 +1590,14 @@ pub struct Class<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
-    #[scope(enter_before)]
     pub id: Option<BindingIdentifier<'a>>,
+    #[scope(enter_before)]
+    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     #[visit_as(ClassHeritage)]
     pub super_class: Option<Expression<'a>>,
-    pub body: Box<'a, ClassBody<'a>>,
-    pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
+    pub body: Box<'a, ClassBody<'a>>,
     pub r#abstract: bool,
     pub declare: bool,
     pub scope_id: Cell<Option<ScopeId>>,
@@ -1642,12 +1642,12 @@ pub struct MethodDefinition<'a> {
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
-    #[visit_args(flags = Some(match self.kind {
-        MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-        MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-        MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-        MethodDefinitionKind::Method => ScopeFlags::empty(),
-    }))]
+    #[visit_args(flags = match self.kind {
+        MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
+        MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
+        MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
+        MethodDefinitionKind::Method => ScopeFlags::Function,
+    })]
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
     pub computed: bool,
@@ -1959,7 +1959,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
 pub enum ExportDefaultDeclarationKind<'a> {
-    #[visit_args(flags = None)]
+    #[visit_args(flags = ScopeFlags::Function)]
     FunctionDeclaration(Box<'a, Function<'a>>) = 64,
     ClassDeclaration(Box<'a, Class<'a>>) = 65,
 

@@ -127,10 +127,16 @@ impl Case for PrettierTypeScriptCase {
     }
 
     fn run(&mut self) {
-        let source_text = self.base.code();
-        let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
-        self.base.set_result(result);
+        let units = self.base.units.clone();
+        for unit in units {
+            self.base.code = unit.content.to_string();
+            let result = get_result(&unit.content, unit.source_type);
+            if result != TestResult::Passed {
+                self.base.result = result;
+                return;
+            }
+        }
+        self.base.result = TestResult::Passed;
     }
 }
 

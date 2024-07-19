@@ -143,8 +143,8 @@ pub(crate) enum AncestorType {
     FunctionTypeParameters = 111,
     FunctionThisParam = 112,
     FunctionParams = 113,
-    FunctionBody = 114,
-    FunctionReturnType = 115,
+    FunctionReturnType = 114,
+    FunctionBody = 115,
     FormalParametersItems = 116,
     FormalParametersRest = 117,
     FormalParameterDecorators = 118,
@@ -158,11 +158,11 @@ pub(crate) enum AncestorType {
     YieldExpressionArgument = 126,
     ClassDecorators = 127,
     ClassId = 128,
-    ClassSuperClass = 129,
-    ClassBody = 130,
-    ClassTypeParameters = 131,
-    ClassSuperTypeParameters = 132,
-    ClassImplements = 133,
+    ClassTypeParameters = 129,
+    ClassSuperClass = 130,
+    ClassSuperTypeParameters = 131,
+    ClassImplements = 132,
+    ClassBody = 133,
     ClassBodyBody = 134,
     MethodDefinitionDecorators = 135,
     MethodDefinitionKey = 136,
@@ -531,8 +531,8 @@ pub enum Ancestor<'a> {
         AncestorType::FunctionTypeParameters as u16,
     FunctionThisParam(FunctionWithoutThisParam<'a>) = AncestorType::FunctionThisParam as u16,
     FunctionParams(FunctionWithoutParams<'a>) = AncestorType::FunctionParams as u16,
-    FunctionBody(FunctionWithoutBody<'a>) = AncestorType::FunctionBody as u16,
     FunctionReturnType(FunctionWithoutReturnType<'a>) = AncestorType::FunctionReturnType as u16,
+    FunctionBody(FunctionWithoutBody<'a>) = AncestorType::FunctionBody as u16,
     FormalParametersItems(FormalParametersWithoutItems<'a>) =
         AncestorType::FormalParametersItems as u16,
     FormalParametersRest(FormalParametersWithoutRest<'a>) =
@@ -557,12 +557,12 @@ pub enum Ancestor<'a> {
         AncestorType::YieldExpressionArgument as u16,
     ClassDecorators(ClassWithoutDecorators<'a>) = AncestorType::ClassDecorators as u16,
     ClassId(ClassWithoutId<'a>) = AncestorType::ClassId as u16,
-    ClassSuperClass(ClassWithoutSuperClass<'a>) = AncestorType::ClassSuperClass as u16,
-    ClassBody(ClassWithoutBody<'a>) = AncestorType::ClassBody as u16,
     ClassTypeParameters(ClassWithoutTypeParameters<'a>) = AncestorType::ClassTypeParameters as u16,
+    ClassSuperClass(ClassWithoutSuperClass<'a>) = AncestorType::ClassSuperClass as u16,
     ClassSuperTypeParameters(ClassWithoutSuperTypeParameters<'a>) =
         AncestorType::ClassSuperTypeParameters as u16,
     ClassImplements(ClassWithoutImplements<'a>) = AncestorType::ClassImplements as u16,
+    ClassBody(ClassWithoutBody<'a>) = AncestorType::ClassBody as u16,
     ClassBodyBody(ClassBodyWithoutBody<'a>) = AncestorType::ClassBodyBody as u16,
     MethodDefinitionDecorators(MethodDefinitionWithoutDecorators<'a>) =
         AncestorType::MethodDefinitionDecorators as u16,
@@ -1242,8 +1242,8 @@ impl<'a> Ancestor<'a> {
                 | Self::FunctionTypeParameters(_)
                 | Self::FunctionThisParam(_)
                 | Self::FunctionParams(_)
-                | Self::FunctionBody(_)
                 | Self::FunctionReturnType(_)
+                | Self::FunctionBody(_)
         )
     }
 
@@ -1284,11 +1284,11 @@ impl<'a> Ancestor<'a> {
             self,
             Self::ClassDecorators(_)
                 | Self::ClassId(_)
-                | Self::ClassSuperClass(_)
-                | Self::ClassBody(_)
                 | Self::ClassTypeParameters(_)
+                | Self::ClassSuperClass(_)
                 | Self::ClassSuperTypeParameters(_)
                 | Self::ClassImplements(_)
+                | Self::ClassBody(_)
         )
     }
 
@@ -5194,8 +5194,8 @@ pub(crate) const OFFSET_FUNCTION_DECLARE: usize = offset_of!(Function, declare);
 pub(crate) const OFFSET_FUNCTION_TYPE_PARAMETERS: usize = offset_of!(Function, type_parameters);
 pub(crate) const OFFSET_FUNCTION_THIS_PARAM: usize = offset_of!(Function, this_param);
 pub(crate) const OFFSET_FUNCTION_PARAMS: usize = offset_of!(Function, params);
-pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_RETURN_TYPE: usize = offset_of!(Function, return_type);
+pub(crate) const OFFSET_FUNCTION_BODY: usize = offset_of!(Function, body);
 pub(crate) const OFFSET_FUNCTION_SCOPE_ID: usize = offset_of!(Function, scope_id);
 
 #[repr(transparent)]
@@ -5253,18 +5253,18 @@ impl<'a> FunctionWithoutId<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
-                as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
         }
     }
 
@@ -5331,18 +5331,18 @@ impl<'a> FunctionWithoutTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
-                as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
         }
     }
 
@@ -5409,18 +5409,18 @@ impl<'a> FunctionWithoutThisParam<'a> {
     }
 
     #[inline]
-    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
-                as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
+                as *const Option<Box<'a, FunctionBody<'a>>>)
         }
     }
 
@@ -5487,96 +5487,18 @@ impl<'a> FunctionWithoutParams<'a> {
     }
 
     #[inline]
+    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn body(&self) -> &Option<Box<'a, FunctionBody<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
                 as *const Option<Box<'a, FunctionBody<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct FunctionWithoutBody<'a>(pub(crate) *const Function<'a>);
-
-impl<'a> FunctionWithoutBody<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &FunctionType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
-                as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn generator(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
-    }
-
-    #[inline]
-    pub fn r#async(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn this_param(&self) -> &Option<TSThisParameter<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
-                as *const Option<TSThisParameter<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn params(&self) -> &Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
@@ -5655,6 +5577,84 @@ impl<'a> FunctionWithoutReturnType<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_FUNCTION_BODY)
                 as *const Option<Box<'a, FunctionBody<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct FunctionWithoutBody<'a>(pub(crate) *const Function<'a>);
+
+impl<'a> FunctionWithoutBody<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &FunctionType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE) as *const FunctionType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_ID)
+                as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn generator(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_GENERATOR) as *const bool) }
+    }
+
+    #[inline]
+    pub fn r#async(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_ASYNC) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_FUNCTION_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn this_param(&self) -> &Option<TSThisParameter<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_THIS_PARAM)
+                as *const Option<TSThisParameter<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(&self) -> &Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_FUNCTION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
@@ -6135,12 +6135,12 @@ pub(crate) const OFFSET_CLASS_TYPE: usize = offset_of!(Class, r#type);
 pub(crate) const OFFSET_CLASS_SPAN: usize = offset_of!(Class, span);
 pub(crate) const OFFSET_CLASS_DECORATORS: usize = offset_of!(Class, decorators);
 pub(crate) const OFFSET_CLASS_ID: usize = offset_of!(Class, id);
-pub(crate) const OFFSET_CLASS_SUPER_CLASS: usize = offset_of!(Class, super_class);
-pub(crate) const OFFSET_CLASS_BODY: usize = offset_of!(Class, body);
 pub(crate) const OFFSET_CLASS_TYPE_PARAMETERS: usize = offset_of!(Class, type_parameters);
+pub(crate) const OFFSET_CLASS_SUPER_CLASS: usize = offset_of!(Class, super_class);
 pub(crate) const OFFSET_CLASS_SUPER_TYPE_PARAMETERS: usize =
     offset_of!(Class, super_type_parameters);
 pub(crate) const OFFSET_CLASS_IMPLEMENTS: usize = offset_of!(Class, implements);
+pub(crate) const OFFSET_CLASS_BODY: usize = offset_of!(Class, body);
 pub(crate) const OFFSET_CLASS_ABSTRACT: usize = offset_of!(Class, r#abstract);
 pub(crate) const OFFSET_CLASS_DECLARE: usize = offset_of!(Class, declare);
 pub(crate) const OFFSET_CLASS_SCOPE_ID: usize = offset_of!(Class, scope_id);
@@ -6168,22 +6168,17 @@ impl<'a> ClassWithoutDecorators<'a> {
     }
 
     #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
         }
     }
 
@@ -6201,6 +6196,11 @@ impl<'a> ClassWithoutDecorators<'a> {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
                 as *const Option<Vec<'a, TSClassImplements<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
     }
 
     #[inline]
@@ -6244,161 +6244,10 @@ impl<'a> ClassWithoutId<'a> {
     }
 
     #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn r#abstract(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutSuperClass<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutSuperClass<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
-                as *const Option<Vec<'a, TSClassImplements<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn r#abstract(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
-    }
-
-    #[inline]
-    pub fn declare(&self) -> &bool {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ClassWithoutBody<'a>(pub(crate) *const Class<'a>);
-
-impl<'a> ClassWithoutBody<'a> {
-    #[inline]
-    pub fn r#type(&self) -> &ClassType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
-    }
-
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
         }
     }
 
@@ -6410,14 +6259,6 @@ impl<'a> ClassWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
     pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
@@ -6431,6 +6272,11 @@ impl<'a> ClassWithoutBody<'a> {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
                 as *const Option<Vec<'a, TSClassImplements<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
     }
 
     #[inline]
@@ -6488,8 +6334,79 @@ impl<'a> ClassWithoutTypeParameters<'a> {
     }
 
     #[inline]
+    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Option<Vec<'a, TSClassImplements<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutSuperClass<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutSuperClass<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
     }
 
     #[inline]
@@ -6506,6 +6423,11 @@ impl<'a> ClassWithoutTypeParameters<'a> {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
                 as *const Option<Vec<'a, TSClassImplements<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
     }
 
     #[inline]
@@ -6556,22 +6478,17 @@ impl<'a> ClassWithoutSuperTypeParameters<'a> {
     }
 
     #[inline]
-    pub fn super_class(&self) -> &Option<Expression<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
-    }
-
-    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
         }
     }
 
@@ -6581,6 +6498,11 @@ impl<'a> ClassWithoutSuperTypeParameters<'a> {
             &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
                 as *const Option<Vec<'a, TSClassImplements<'a>>>)
         }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
     }
 
     #[inline]
@@ -6631,6 +6553,14 @@ impl<'a> ClassWithoutImplements<'a> {
     }
 
     #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn super_class(&self) -> &Option<Expression<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
@@ -6638,8 +6568,63 @@ impl<'a> ClassWithoutImplements<'a> {
     }
 
     #[inline]
+    pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn body(&self) -> &Box<'a, ClassBody<'a>> {
         unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_BODY) as *const Box<'a, ClassBody<'a>>) }
+    }
+
+    #[inline]
+    pub fn r#abstract(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_ABSTRACT) as *const bool) }
+    }
+
+    #[inline]
+    pub fn declare(&self) -> &bool {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_DECLARE) as *const bool) }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ClassWithoutBody<'a>(pub(crate) *const Class<'a>);
+
+impl<'a> ClassWithoutBody<'a> {
+    #[inline]
+    pub fn r#type(&self) -> &ClassType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_TYPE) as *const ClassType) }
+    }
+
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_CLASS_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn decorators(&self) -> &Vec<'a, Decorator<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_DECORATORS) as *const Vec<'a, Decorator<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn id(&self) -> &Option<BindingIdentifier<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_ID) as *const Option<BindingIdentifier<'a>>)
+        }
     }
 
     #[inline]
@@ -6651,10 +6636,25 @@ impl<'a> ClassWithoutImplements<'a> {
     }
 
     #[inline]
+    pub fn super_class(&self) -> &Option<Expression<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_CLASS) as *const Option<Expression<'a>>)
+        }
+    }
+
+    #[inline]
     pub fn super_type_parameters(&self) -> &Option<Box<'a, TSTypeParameterInstantiation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_CLASS_SUPER_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterInstantiation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn implements(&self) -> &Option<Vec<'a, TSClassImplements<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_CLASS_IMPLEMENTS)
+                as *const Option<Vec<'a, TSClassImplements<'a>>>)
         }
     }
 
@@ -8839,6 +8839,8 @@ pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE: usize =
     offset_of!(TSConditionalType, true_type);
 pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE: usize =
     offset_of!(TSConditionalType, false_type);
+pub(crate) const OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID: usize =
+    offset_of!(TSConditionalType, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -8870,6 +8872,14 @@ impl<'a> TSConditionalTypeWithoutCheckType<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE)
                 as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -8904,6 +8914,14 @@ impl<'a> TSConditionalTypeWithoutExtendsType<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_FALSE_TYPE)
                 as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -8941,6 +8959,14 @@ impl<'a> TSConditionalTypeWithoutTrueType<'a> {
                 as *const TSType<'a>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -8973,6 +8999,14 @@ impl<'a> TSConditionalTypeWithoutFalseType<'a> {
     pub fn true_type(&self) -> &TSType<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_TRUE_TYPE) as *const TSType<'a>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9318,7 +9352,6 @@ pub(crate) const OFFSET_TS_TYPE_PARAMETER_DEFAULT: usize = offset_of!(TSTypePara
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_IN: usize = offset_of!(TSTypeParameter, r#in);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_OUT: usize = offset_of!(TSTypeParameter, out);
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_CONST: usize = offset_of!(TSTypeParameter, r#const);
-pub(crate) const OFFSET_TS_TYPE_PARAMETER_SCOPE_ID: usize = offset_of!(TSTypeParameter, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9359,14 +9392,6 @@ impl<'a> TSTypeParameterWithoutName<'a> {
     #[inline]
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
     }
 }
 
@@ -9410,14 +9435,6 @@ impl<'a> TSTypeParameterWithoutConstraint<'a> {
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
     }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
 }
 
 #[repr(transparent)]
@@ -9460,14 +9477,6 @@ impl<'a> TSTypeParameterWithoutDefault<'a> {
     pub fn r#const(&self) -> &bool {
         unsafe { &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_CONST) as *const bool) }
     }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_PARAMETER_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
 }
 
 pub(crate) const OFFSET_TS_TYPE_PARAMETER_DECLARATION_SPAN: usize =
@@ -9500,6 +9509,8 @@ pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_TYPE_ANNOTATION: usize =
     offset_of!(TSTypeAliasDeclaration, type_annotation);
 pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE: usize =
     offset_of!(TSTypeAliasDeclaration, declare);
+pub(crate) const OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSTypeAliasDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9533,6 +9544,14 @@ impl<'a> TSTypeAliasDeclarationWithoutId<'a> {
     pub fn declare(&self) -> &bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9573,6 +9592,14 @@ impl<'a> TSTypeAliasDeclarationWithoutTypeParameters<'a> {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -9609,6 +9636,14 @@ impl<'a> TSTypeAliasDeclarationWithoutTypeAnnotation<'a> {
     pub fn declare(&self) -> &bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_TYPE_ALIAS_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9668,6 +9703,8 @@ pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_BODY: usize =
     offset_of!(TSInterfaceDeclaration, body);
 pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_DECLARE: usize =
     offset_of!(TSInterfaceDeclaration, declare);
+pub(crate) const OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSInterfaceDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -9709,6 +9746,14 @@ impl<'a> TSInterfaceDeclarationWithoutId<'a> {
     pub fn declare(&self) -> &bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9753,6 +9798,14 @@ impl<'a> TSInterfaceDeclarationWithoutExtends<'a> {
     pub fn declare(&self) -> &bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -9801,6 +9854,14 @@ impl<'a> TSInterfaceDeclarationWithoutTypeParameters<'a> {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -9843,6 +9904,14 @@ impl<'a> TSInterfaceDeclarationWithoutBody<'a> {
     pub fn declare(&self) -> &bool {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_DECLARE) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_INTERFACE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -10188,6 +10257,8 @@ pub(crate) const OFFSET_TS_METHOD_SIGNATURE_RETURN_TYPE: usize =
     offset_of!(TSMethodSignature, return_type);
 pub(crate) const OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS: usize =
     offset_of!(TSMethodSignature, type_parameters);
+pub(crate) const OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID: usize =
+    offset_of!(TSMethodSignature, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -10246,6 +10317,14 @@ impl<'a> TSMethodSignatureWithoutKey<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -10308,6 +10387,14 @@ impl<'a> TSMethodSignatureWithoutThisParam<'a> {
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -10366,6 +10453,14 @@ impl<'a> TSMethodSignatureWithoutParams<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -10428,6 +10523,14 @@ impl<'a> TSMethodSignatureWithoutReturnType<'a> {
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -10488,6 +10591,14 @@ impl<'a> TSMethodSignatureWithoutTypeParameters<'a> {
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SPAN: usize =
@@ -10498,6 +10609,8 @@ pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE: usize =
     offset_of!(TSConstructSignatureDeclaration, return_type);
 pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS: usize =
     offset_of!(TSConstructSignatureDeclaration, type_parameters);
+pub(crate) const OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID: usize =
+    offset_of!(TSConstructSignatureDeclaration, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -10527,6 +10640,14 @@ impl<'a> TSConstructSignatureDeclarationWithoutParams<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -10561,6 +10682,14 @@ impl<'a> TSConstructSignatureDeclarationWithoutReturnType<'a> {
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -10591,6 +10720,14 @@ impl<'a> TSConstructSignatureDeclarationWithoutTypeParameters<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -11410,6 +11547,7 @@ pub(crate) const OFFSET_TS_MAPPED_TYPE_TYPE_ANNOTATION: usize =
     offset_of!(TSMappedType, type_annotation);
 pub(crate) const OFFSET_TS_MAPPED_TYPE_OPTIONAL: usize = offset_of!(TSMappedType, optional);
 pub(crate) const OFFSET_TS_MAPPED_TYPE_READONLY: usize = offset_of!(TSMappedType, readonly);
+pub(crate) const OFFSET_TS_MAPPED_TYPE_SCOPE_ID: usize = offset_of!(TSMappedType, scope_id);
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -11450,6 +11588,14 @@ impl<'a> TSMappedTypeWithoutTypeParameter<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
                 as *const TSMappedTypeModifierOperator)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }
@@ -11495,6 +11641,14 @@ impl<'a> TSMappedTypeWithoutNameType<'a> {
                 as *const TSMappedTypeModifierOperator)
         }
     }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
 }
 
 #[repr(transparent)]
@@ -11536,6 +11690,14 @@ impl<'a> TSMappedTypeWithoutTypeAnnotation<'a> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_READONLY)
                 as *const TSMappedTypeModifierOperator)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
         }
     }
 }

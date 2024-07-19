@@ -14,7 +14,7 @@ use crate::{
         get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
     },
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
@@ -224,18 +224,18 @@ fn diagnose_array_in_array_spread<'a>(
             // [ ...[a, b, c], ...[d, e, f] ] -> [a, b, c, d, e, f]
             ctx.diagnostic_with_fix(diagnostic, |fixer| {
                 let mut codegen = fixer.codegen();
-                codegen.print(b'[');
+                codegen.print_char(b'[');
                 let elements =
                     spreads.iter().flat_map(|arr| arr.elements.iter()).collect::<Vec<_>>();
                 let n = elements.len();
                 for (i, el) in elements.into_iter().enumerate() {
                     codegen.print_expression(el.to_expression());
                     if i < n - 1 {
-                        codegen.print(b',');
+                        codegen.print_char(b',');
                         codegen.print_hard_space();
                     }
                 }
-                codegen.print(b']');
+                codegen.print_char(b']');
                 fixer.replace(outer_array.span, codegen)
             });
         }
@@ -447,7 +447,7 @@ fn fix_replace<'a, T: GetSpan, U: GetSpan>(
     fixer: RuleFixer<'_, 'a>,
     target: &T,
     replacement: &U,
-) -> Fix<'a> {
+) -> RuleFix<'a> {
     let replacement = fixer.source_range(replacement.span());
     fixer.replace(target.span(), replacement)
 }
@@ -457,7 +457,7 @@ fn fix_by_removing_spread<'a, S: GetSpan>(
     fixer: RuleFixer<'_, 'a>,
     iterable: &S,
     spread: &SpreadElement<'a>,
-) -> Fix<'a> {
+) -> RuleFix<'a> {
     fixer.replace(iterable.span(), fixer.source_range(spread.argument.span()))
 }
 

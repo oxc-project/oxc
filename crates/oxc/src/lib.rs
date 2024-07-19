@@ -55,6 +55,12 @@ pub mod minifier {
     pub use oxc_minifier::*;
 }
 
+#[cfg(feature = "minifier")]
+pub mod mangler {
+    #[doc(inline)]
+    pub use oxc_mangler::*;
+}
+
 #[cfg(feature = "codegen")]
 pub mod codegen {
     #[doc(inline)]

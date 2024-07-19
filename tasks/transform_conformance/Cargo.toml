@@ -17,8 +17,9 @@ workspace = true
 doctest = false
 
 [[bin]]
-name = "oxc_transform_conformance"
-test = false
+name    = "oxc_transform_conformance"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_span         = { workspace = true }

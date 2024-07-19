@@ -13,7 +13,7 @@ use oxc_linter::{
         AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,
         LINT_PARTIAL_LOADER_EXT,
     },
-    LintContext, Linter,
+    FixKind, LintContext, Linter,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -388,7 +388,7 @@ pub struct ServerLinter {
 
 impl ServerLinter {
     pub fn new() -> Self {
-        let linter = Linter::default().with_fix(true);
+        let linter = Linter::default().with_fix(FixKind::SafeFix);
         Self { linter: Arc::new(linter) }
     }
 

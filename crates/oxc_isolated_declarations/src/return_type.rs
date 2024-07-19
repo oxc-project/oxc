@@ -136,7 +136,7 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
         }
     }
 
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {
         // We don't care about nested functions
     }
 

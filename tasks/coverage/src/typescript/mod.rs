@@ -3,9 +3,7 @@ mod transpile_runner;
 
 use std::path::{Path, PathBuf};
 
-use oxc_span::SourceType;
-
-use self::meta::TestCaseContent;
+use self::meta::{CompilerSettings, TestCaseContent, TestUnitData};
 pub use self::transpile_runner::{TranspileRunner, TypeScriptTranspileCase};
 use crate::{
     project_root,
@@ -62,48 +60,18 @@ impl<T: Case> Suite<T> for TypeScriptSuite<T> {
 
 pub struct TypeScriptCase {
     path: PathBuf,
-    code: String,
-    source_type: SourceType,
-    result: TestResult,
-    meta: TestCaseContent,
-}
-
-impl TypeScriptCase {
-    pub fn source_type(&self) -> SourceType {
-        self.source_type
-    }
-
-    pub fn set_result(&mut self, result: TestResult) {
-        self.result = result;
-    }
-
-    pub fn meta(&self) -> &TestCaseContent {
-        &self.meta
-    }
+    pub code: String,
+    pub units: Vec<TestUnitData>,
+    pub settings: CompilerSettings,
+    error_files: Vec<String>,
+    pub result: TestResult,
 }
 
 impl Case for TypeScriptCase {
     fn new(path: PathBuf, code: String) -> Self {
-        let meta = TestCaseContent::make_units_from_test(&path, &code);
-        let compiler_options = &meta.settings;
-        let is_module = ["esnext", "es2022", "es2020", "es2015"]
-            .into_iter()
-            .any(|module| compiler_options.modules.contains(&module.to_string()));
-        let source_type = SourceType::from_path(&path)
-            .unwrap()
-            .with_script(true)
-            .with_module(is_module)
-            .with_jsx(!compiler_options.jsx.is_empty())
-            .with_typescript_definition(compiler_options.declaration);
-        Self {
-            path,
-            // FIXME: current skip multi-file test cases, if doesn't skip in the future, need to handle multi-file test cases
-            // Use meta.tests[0].content.clone() instead of code to get without meta options code
-            code: meta.tests[0].content.clone(),
-            source_type,
-            result: TestResult::ToBeRun,
-            meta,
-        }
+        let TestCaseContent { tests, settings, error_files } =
+            TestCaseContent::make_units_from_test(&path, &code);
+        Self { path, code, units: tests, settings, error_files, result: TestResult::ToBeRun }
     }
 
     fn code(&self) -> &str {
@@ -119,15 +87,18 @@ impl Case for TypeScriptCase {
     }
 
     fn should_fail(&self) -> bool {
-        !self.meta.error_files.is_empty()
-    }
-
-    fn skip_test_case(&self) -> bool {
-        // skip multi-file test cases for now
-        self.meta.tests.len() > 1
+        !self.error_files.is_empty()
     }
 
     fn run(&mut self) {
-        self.result = self.execute(self.source_type);
+        let units = self.units.clone();
+        for unit in units {
+            self.code.clone_from(&unit.content);
+            self.result = self.execute(unit.source_type);
+            if self.result != TestResult::Passed {
+                return;
+            }
+        }
+        self.result = TestResult::Passed;
     }
 }

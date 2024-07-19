@@ -198,7 +198,7 @@ impl ExplicitLengthCheck {
             let start = ctx.source_text().as_bytes()[span.start as usize - 1];
             need_pad_start = start.is_ascii_alphabetic() || !start.is_ascii();
         }
-        if (span.end as usize) < ctx.source_text().as_bytes().len() {
+        if (span.end as usize) < ctx.source_text().len() {
             let end = ctx.source_text().as_bytes()[span.end as usize];
             need_pad_end = end.is_ascii_alphabetic() || !end.is_ascii();
         }

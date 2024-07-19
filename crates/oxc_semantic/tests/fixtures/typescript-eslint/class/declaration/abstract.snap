@@ -1,0 +1,52 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/abstract.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function)",
+            "id": 2,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 1,
+                "name": "a",
+                "node": "FormalParameter",
+                "references": []
+              },
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "b",
+                "node": "FormalParameter",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(A)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "A",
+        "node": "Class(A)",
+        "references": []
+      }
+    ]
+  }
+]

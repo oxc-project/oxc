@@ -22,6 +22,7 @@ ready:
   just test
   just lint
   just doc
+  just ast
   cargo shear
   git status
 
@@ -144,6 +145,9 @@ new-react-perf-rule name:
 new-n-rule name:
     cargo run -p rulegen {{name}} n
 
+new-promise-rule name:
+    cargo run -p rulegen {{name}} promise
+
 clone-submodule dir url sha:
   git clone --depth=1 {{url}} {{dir}} || true
   cd {{dir}} && git fetch origin {{sha}} && git reset --hard {{sha}}
@@ -153,5 +157,7 @@ website path:
   cargo run -p website -- linter-cli > {{path}}/src/docs/guide/usage/linter/generated-cli.md
   cargo run -p website -- linter-schema-markdown > {{path}}/src/docs/guide/usage/linter/generated-config.md
 
-codegen:
-    cargo run -p oxc_ast_codegen
+# sync ast changes
+ast:
+  cargo run -p oxc_ast_codegen
+  just check

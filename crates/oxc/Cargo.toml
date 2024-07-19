@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc"
-version                = "0.20.0"
+version                = "0.21.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -31,6 +31,7 @@ oxc_syntax                = { workspace = true }
 oxc_semantic              = { workspace = true, optional = true }
 oxc_transformer           = { workspace = true, optional = true }
 oxc_minifier              = { workspace = true, optional = true }
+oxc_mangler               = { workspace = true, optional = true }
 oxc_codegen               = { workspace = true, optional = true }
 oxc_sourcemap             = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
@@ -39,7 +40,7 @@ oxc_isolated_declarations = { workspace = true, optional = true }
 serialize             = ["oxc_ast/serialize", "oxc_semantic?/serialize", "oxc_span/serialize", "oxc_syntax/serialize"]
 semantic              = ["oxc_semantic"]
 transformer           = ["oxc_transformer"]
-minifier              = ["oxc_minifier"]
+minifier              = ["oxc_mangler", "oxc_minifier"]
 codegen               = ["oxc_codegen"]
 isolated_declarations = ["oxc_isolated_declarations"]
 

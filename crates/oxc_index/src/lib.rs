@@ -229,7 +229,6 @@ pub struct IndexVec<I: Idx, T> {
     _marker: PhantomData<fn(&I)>,
 }
 
-#[allow(unsafe_code)]
 // SAFETY: Whether `IndexVec` is `Send` depends only on the data,
 // not the phantom data.
 unsafe impl<I: Idx, T> Send for IndexVec<I, T> where T: Send {}
@@ -349,10 +348,8 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn into_boxed_slice(self) -> alloc::boxed::Box<IndexSlice<I, [T]>> {
         let b = self.raw.into_boxed_slice();
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
-        #[allow(unsafe_code)]
-        unsafe {
-            Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>)
-        }
+
+        unsafe { Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>) }
     }
 
     /// Return an iterator that removes the items from the requested range. See

@@ -5,7 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -43,7 +43,11 @@ impl Rule for NoDupeKeys {
         let AstKind::ObjectExpression(obj_expr) = node.kind() else {
             return;
         };
-        let mut map = FxHashMap::default();
+        let len = obj_expr.properties.len();
+        if len <= 1 {
+            return;
+        }
+        let mut map = FxHashMap::with_capacity_and_hasher(len, FxBuildHasher);
         for prop in &obj_expr.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = prop else {
                 continue;
