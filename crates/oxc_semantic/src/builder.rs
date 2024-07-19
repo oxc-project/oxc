@@ -553,6 +553,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             &program.scope_id,
         );
 
+        if let Some(hashbang) = &program.hashbang {
+            self.visit_hashbang(hashbang);
+        }
+
         for directive in &program.directives {
             self.visit_directive(directive);
         }
