@@ -1571,6 +1571,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
 
+        if let Some(parameters) = &expr.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+
         self.visit_formal_parameters(&expr.params);
 
         /* cfg */
@@ -1580,6 +1584,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             EdgeType::NewFunction
         ));
         /* cfg */
+
+        if let Some(return_type) = &expr.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
 
         self.visit_function_body(&expr.body);
 
@@ -1592,9 +1600,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if let Some(parameters) = &expr.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
         self.leave_node(kind);
         self.leave_scope();
     }
