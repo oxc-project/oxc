@@ -1045,6 +1045,11 @@ impl<'a> FormalParameter<'a> {
     pub fn is_public(&self) -> bool {
         matches!(self.accessibility, Some(TSAccessibility::Public))
     }
+
+    #[inline]
+    pub fn has_modifier(&self) -> bool {
+        self.accessibility.is_some() || self.readonly || self.r#override
+    }
 }
 
 impl FormalParameterKind {

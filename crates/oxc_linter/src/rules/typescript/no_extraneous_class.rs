@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{ClassElement, FormalParameter, MethodDefinitionKind},
+    ast::{ClassElement, FormalParameter},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -59,8 +59,7 @@ declare_oxc_lint!(
     ///   abstract class Foo {}
     /// ```
     NoExtraneousClass,
-    suspicious, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    suspicious
 );
 
 fn empty_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
@@ -84,69 +83,61 @@ fn only_constructor_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic 
 
 impl Rule for NoExtraneousClass {
     fn from_configuration(value: serde_json::Value) -> Self {
+        use serde_json::Value;
+        let Some(config) = value.get(0).and_then(Value::as_object) else {
+            return Self::default();
+        };
         Self {
-            allow_constructor_only: value
-                .get(0)
-                .and_then(|x| x.get("allowConstructorOnly"))
-                .and_then(serde_json::Value::as_bool)
+            allow_constructor_only: config
+                .get("allowConstructorOnly")
+                .and_then(Value::as_bool)
                 .unwrap_or(false),
-            allow_empty: value
-                .get(0)
-                .and_then(|x| x.get("allowEmpty"))
-                .and_then(serde_json::Value::as_bool)
+            allow_empty: config
+                .get("allowEmpty") // lb
+                .and_then(Value::as_bool)
                 .unwrap_or(false),
-            allow_static_only: value
-                .get(0)
-                .and_then(|x| x.get("allowStaticOnly"))
-                .and_then(serde_json::Value::as_bool)
+            allow_static_only: config
+                .get("allowStaticOnly")
+                .and_then(Value::as_bool)
                 .unwrap_or(false),
-            allow_with_decorator: value
-                .get(0)
-                .and_then(|x| x.get("allowWithDecorator"))
-                .and_then(serde_json::Value::as_bool)
+            allow_with_decorator: config
+                .get("allowWithDecorator")
+                .and_then(Value::as_bool)
                 .unwrap_or(false),
         }
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::Class(class) = node.kind() {
-            if class.super_class.is_some() {
-                return;
-            }
-            if self.allow_with_decorator && class.decorators.len() > 0 {
-                return;
-            }
-            if class.body.body.len() == 0 {
-                if self.allow_empty {
-                    return;
-                }
-                ctx.diagnostic(empty_no_extraneous_class_diagnostic(class.span));
-                return;
-            }
-
-            let only_constructor = class.body.body.iter().all(|prop| {
-                if let ClassElement::MethodDefinition(method_definition) = prop {
-                    method_definition.kind == MethodDefinitionKind::Constructor
-                        && !method_definition
-                            .value
-                            .params
-                            .items
-                            .iter()
-                            .any(FormalParameter::is_public)
-                } else {
-                    false
-                }
-            });
-            if only_constructor && !self.allow_constructor_only {
-                ctx.diagnostic(only_constructor_no_extraneous_class_diagnostic(class.span));
-                return;
-            }
-            let only_static =
-                class.body.body.iter().all(|prop| prop.r#static() && !prop.is_abstract());
-            if only_static && !self.allow_static_only {
-                ctx.diagnostic(only_static_no_extraneous_class_diagnostic(class.span));
-            }
+        let AstKind::Class(class) = node.kind() else {
+            return;
+        };
+        if class.super_class.is_some()
+            || (self.allow_with_decorator && !class.decorators.is_empty())
+        {
+            return;
         }
+        let span = class.id.as_ref().map(|id| id.span).unwrap_or(class.span);
+        let body = &class.body.body;
+        match body.as_slice() {
+            [] => {
+                if !self.allow_empty {
+                    ctx.diagnostic(empty_no_extraneous_class_diagnostic(class.span));
+                }
+            }
+            [ClassElement::MethodDefinition(constructor)] if constructor.kind.is_constructor() => {
+                let only_constructor =
+                    !constructor.value.params.items.iter().any(FormalParameter::has_modifier);
+                if only_constructor && !self.allow_constructor_only {
+                    ctx.diagnostic(only_constructor_no_extraneous_class_diagnostic(span));
+                }
+            }
+            _ => {
+                let only_static = body.iter().all(|prop| prop.r#static() && !prop.is_abstract());
+                if only_static && !self.allow_static_only {
+                    ctx.diagnostic(only_static_no_extraneous_class_diagnostic(span));
+                }
+            }
+        };
     }
 }
 
