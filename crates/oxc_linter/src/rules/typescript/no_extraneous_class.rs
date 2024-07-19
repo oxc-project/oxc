@@ -116,7 +116,7 @@ impl Rule for NoExtraneousClass {
         {
             return;
         }
-        let span = class.id.as_ref().map(|id| id.span).unwrap_or(class.span);
+        let span = class.id.as_ref().map_or(class.span, |id| id.span);
         let body = &class.body.body;
         match body.as_slice() {
             [] => {
