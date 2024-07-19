@@ -112,11 +112,11 @@ fn unexpected_type_annotation(span0: Span) -> OxcDiagnostic {
 
 pub fn check_array_pattern<'a>(pattern: &ArrayPattern<'a>, ctx: &SemanticBuilder<'a>) {
     for element in &pattern.elements {
-        let _ = element.as_ref().map(|element| {
+        if let Some(element) = element.as_ref() {
             if let Some(type_annotation) = &element.type_annotation {
                 ctx.error(unexpected_type_annotation(type_annotation.span));
             }
-        });
+        }
     }
 }
 
