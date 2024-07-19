@@ -351,25 +351,25 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: bool,
         r#async: bool,
-        params: T1,
-        body: T2,
-        type_parameters: T3,
-        return_type: T4,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         Expression::ArrowFunctionExpression(self.alloc(self.arrow_function_expression(
             span,
             expression,
             r#async,
-            params,
-            body,
             type_parameters,
+            params,
             return_type,
+            body,
         )))
     }
 
@@ -3863,25 +3863,25 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: bool,
         r#async: bool,
-        params: T1,
-        body: T2,
-        type_parameters: T3,
-        return_type: T4,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
     ) -> ArrowFunctionExpression<'a>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         ArrowFunctionExpression {
             span,
             expression,
             r#async,
-            params: params.into_in(self.allocator),
-            body: body.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
+            params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
+            body: body.into_in(self.allocator),
             scope_id: Default::default(),
         }
     }
@@ -3892,25 +3892,25 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         expression: bool,
         r#async: bool,
-        params: T1,
-        body: T2,
-        type_parameters: T3,
-        return_type: T4,
+        type_parameters: T1,
+        params: T2,
+        return_type: T3,
+        body: T4,
     ) -> Box<'a, ArrowFunctionExpression<'a>>
     where
-        T1: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T2: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Box<'a, FunctionBody<'a>>>,
     {
         self.arrow_function_expression(
             span,
             expression,
             r#async,
-            params,
-            body,
             type_parameters,
+            params,
             return_type,
+            body,
         )
         .into_in(self.allocator)
     }

@@ -151,10 +151,10 @@ pub(crate) enum AncestorType {
     FormalParameterPattern = 119,
     FunctionBodyDirectives = 120,
     FunctionBodyStatements = 121,
-    ArrowFunctionExpressionParams = 122,
-    ArrowFunctionExpressionBody = 123,
-    ArrowFunctionExpressionTypeParameters = 124,
-    ArrowFunctionExpressionReturnType = 125,
+    ArrowFunctionExpressionTypeParameters = 122,
+    ArrowFunctionExpressionParams = 123,
+    ArrowFunctionExpressionReturnType = 124,
+    ArrowFunctionExpressionBody = 125,
     YieldExpressionArgument = 126,
     ClassDecorators = 127,
     ClassId = 128,
@@ -545,14 +545,14 @@ pub enum Ancestor<'a> {
         AncestorType::FunctionBodyDirectives as u16,
     FunctionBodyStatements(FunctionBodyWithoutStatements<'a>) =
         AncestorType::FunctionBodyStatements as u16,
-    ArrowFunctionExpressionParams(ArrowFunctionExpressionWithoutParams<'a>) =
-        AncestorType::ArrowFunctionExpressionParams as u16,
-    ArrowFunctionExpressionBody(ArrowFunctionExpressionWithoutBody<'a>) =
-        AncestorType::ArrowFunctionExpressionBody as u16,
     ArrowFunctionExpressionTypeParameters(ArrowFunctionExpressionWithoutTypeParameters<'a>) =
         AncestorType::ArrowFunctionExpressionTypeParameters as u16,
+    ArrowFunctionExpressionParams(ArrowFunctionExpressionWithoutParams<'a>) =
+        AncestorType::ArrowFunctionExpressionParams as u16,
     ArrowFunctionExpressionReturnType(ArrowFunctionExpressionWithoutReturnType<'a>) =
         AncestorType::ArrowFunctionExpressionReturnType as u16,
+    ArrowFunctionExpressionBody(ArrowFunctionExpressionWithoutBody<'a>) =
+        AncestorType::ArrowFunctionExpressionBody as u16,
     YieldExpressionArgument(YieldExpressionWithoutArgument<'a>) =
         AncestorType::YieldExpressionArgument as u16,
     ClassDecorators(ClassWithoutDecorators<'a>) = AncestorType::ClassDecorators as u16,
@@ -1266,10 +1266,10 @@ impl<'a> Ancestor<'a> {
     pub fn is_arrow_function_expression(&self) -> bool {
         matches!(
             self,
-            Self::ArrowFunctionExpressionParams(_)
-                | Self::ArrowFunctionExpressionBody(_)
-                | Self::ArrowFunctionExpressionTypeParameters(_)
+            Self::ArrowFunctionExpressionTypeParameters(_)
+                | Self::ArrowFunctionExpressionParams(_)
                 | Self::ArrowFunctionExpressionReturnType(_)
+                | Self::ArrowFunctionExpressionBody(_)
         )
     }
 
@@ -5856,136 +5856,16 @@ pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION: usize =
     offset_of!(ArrowFunctionExpression, expression);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC: usize =
     offset_of!(ArrowFunctionExpression, r#async);
-pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS: usize =
-    offset_of!(ArrowFunctionExpression, params);
-pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_BODY: usize =
-    offset_of!(ArrowFunctionExpression, body);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS: usize =
     offset_of!(ArrowFunctionExpression, type_parameters);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS: usize =
+    offset_of!(ArrowFunctionExpression, params);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE: usize =
     offset_of!(ArrowFunctionExpression, return_type);
+pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_BODY: usize =
+    offset_of!(ArrowFunctionExpression, body);
 pub(crate) const OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID: usize =
     offset_of!(ArrowFunctionExpression, scope_id);
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ArrowFunctionExpressionWithoutParams<'a>(pub(crate) *const ArrowFunctionExpression<'a>);
-
-impl<'a> ArrowFunctionExpressionWithoutParams<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn expression(&self) -> &bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
-                as *const bool)
-        }
-    }
-
-    #[inline]
-    pub fn r#async(&self) -> &bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Box<'a, FunctionBody<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-                as *const Box<'a, FunctionBody<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ArrowFunctionExpressionWithoutBody<'a>(pub(crate) *const ArrowFunctionExpression<'a>);
-
-impl<'a> ArrowFunctionExpressionWithoutBody<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
-        }
-    }
-
-    #[inline]
-    pub fn expression(&self) -> &bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
-                as *const bool)
-        }
-    }
-
-    #[inline]
-    pub fn r#async(&self) -> &bool {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
-        }
-    }
-
-    #[inline]
-    pub fn params(&self) -> &Box<'a, FormalParameters<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
-                as *const Box<'a, FormalParameters<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
-                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
-                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
-                as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -6025,6 +5905,14 @@ impl<'a> ArrowFunctionExpressionWithoutTypeParameters<'a> {
     }
 
     #[inline]
+    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn body(&self) -> &Box<'a, FunctionBody<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
@@ -6033,10 +5921,62 @@ impl<'a> ArrowFunctionExpressionWithoutTypeParameters<'a> {
     }
 
     #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ArrowFunctionExpressionWithoutParams<'a>(pub(crate) *const ArrowFunctionExpression<'a>);
+
+impl<'a> ArrowFunctionExpressionWithoutParams<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(&self) -> &bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#async(&self) -> &bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
                 as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Box<'a, FunctionBody<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+                as *const Box<'a, FunctionBody<'a>>)
         }
     }
 
@@ -6079,6 +6019,14 @@ impl<'a> ArrowFunctionExpressionWithoutReturnType<'a> {
     }
 
     #[inline]
+    pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
+                as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
     pub fn params(&self) -> &Box<'a, FormalParameters<'a>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
@@ -6095,10 +6043,62 @@ impl<'a> ArrowFunctionExpressionWithoutReturnType<'a> {
     }
 
     #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
+                as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
+pub struct ArrowFunctionExpressionWithoutBody<'a>(pub(crate) *const ArrowFunctionExpression<'a>);
+
+impl<'a> ArrowFunctionExpressionWithoutBody<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_SPAN) as *const Span)
+        }
+    }
+
+    #[inline]
+    pub fn expression(&self) -> &bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_EXPRESSION)
+                as *const bool)
+        }
+    }
+
+    #[inline]
+    pub fn r#async(&self) -> &bool {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_ASYNC) as *const bool)
+        }
+    }
+
+    #[inline]
     pub fn type_parameters(&self) -> &Option<Box<'a, TSTypeParameterDeclaration<'a>>> {
         unsafe {
             &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
                 as *const Option<Box<'a, TSTypeParameterDeclaration<'a>>>)
+        }
+    }
+
+    #[inline]
+    pub fn params(&self) -> &Box<'a, FormalParameters<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
+                as *const Box<'a, FormalParameters<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn return_type(&self) -> &Option<Box<'a, TSTypeAnnotation<'a>>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
+                as *const Option<Box<'a, TSTypeAnnotation<'a>>>)
         }
     }
 
