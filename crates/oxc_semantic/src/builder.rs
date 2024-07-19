@@ -149,13 +149,15 @@ impl<'a> Visit<'a> for Collector {
     #[inline]
     fn visit_jsx_element_name(&mut self, it: &JSXElementName<'a>) {
         self.node += 1;
-        if let JSXElementName::Identifier(ident) = it {
-            self.node += 1;
-            if ident.name.chars().next().is_some_and(char::is_uppercase) {
-                self.reference += 1;
+        match it {
+            JSXElementName::Identifier(ident) => {
+                self.node += 1;
+                if ident.name.chars().next().is_some_and(char::is_uppercase) {
+                    self.reference += 1;
+                }
             }
-        } else {
-            self.visit_jsx_element_name(it);
+            JSXElementName::NamespacedName(name) => self.visit_jsx_namespaced_name(name),
+            JSXElementName::MemberExpression(expr) => self.visit_jsx_member_expression(expr),
         }
     }
 
