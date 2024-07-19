@@ -6,6 +6,7 @@ use std::{
     sync::Arc,
 };
 
+use oxc_ast::visit::walk::{walk_ts_enum_member_name, walk_ts_module_declaration_name};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
 use oxc_cfg::{
@@ -287,6 +288,12 @@ impl<'a> SemanticBuilder<'a> {
             self.symbols.reserve(collector.symbol, collector.reference);
 
             self.visit_program(program);
+
+            debug_assert_eq!(self.nodes.len(), collector.node);
+            debug_assert_eq!(self.scope.len(), collector.scope);
+            debug_assert_eq!(self.symbols.references.len(), collector.reference);
+            debug_assert!(collector.symbol >= self.symbols.len());
+
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
                 checker::check_module_record(&self);
