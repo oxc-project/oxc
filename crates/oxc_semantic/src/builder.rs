@@ -227,7 +227,7 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         if self.source_text.len() < 4000 {
-            self.nodes.reserve(self.source_text.split_ascii_whitespace().count());
+            self.nodes.reserve(program.body.len() * 4);
             self.scope.reserve(program.body.len());
             self.symbols.reserve(program.body.len(), program.body.len());
         } else {
