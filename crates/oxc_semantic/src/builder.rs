@@ -166,10 +166,10 @@ impl<'a> Visit<'a> for Collector {
         // NOTE: AstKind doesn't exists!
         // self.node += 1;
 
-        if let JSXAttributeName::Identifier(_) = it {
-            self.node += 1;
+        if let JSXAttributeName::NamespacedName(name) = it {
+            self.visit_jsx_namespaced_name(name);
         } else {
-            self.visit_jsx_attribute_name(it);
+            self.node += 1;
         }
     }
 }
