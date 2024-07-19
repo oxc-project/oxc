@@ -100,7 +100,7 @@ pub struct SemanticBuilderReturn<'a> {
     pub errors: Vec<OxcDiagnostic>,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct Collector {
     node: usize,
     scope: usize,
@@ -124,13 +124,32 @@ impl<'a> Visit<'a> for Collector {
 
     fn visit_binding_identifier(&mut self, _: &BindingIdentifier<'a>) {
         self.symbol += 1;
+        self.node += 1;
     }
     fn visit_identifier_reference(&mut self, _: &IdentifierReference<'a>) {
         self.reference += 1;
+        self.node += 1;
     }
     fn visit_jsx_identifier(&mut self, _: &JSXIdentifier<'a>) {
         self.reference += 1;
+        self.node += 1;
     }
+    fn visit_jsx_member_expression_object(&mut self, it: &JSXMemberExpressionObject<'a>) {
+        if let JSXMemberExpressionObject::MemberExpression(expr) = &it {
+            self.visit_jsx_member_expression(expr);
+        } else {
+            self.node += 1;
+        }
+    }
+    // fn visit_jsx_element_name(&mut self, it: &JSXElementName<'a>) {
+    //     if let JSXElementName::Identifier(ident) = it {
+    //         if !ident.name.chars().next().is_some_and(char::is_uppercase) {
+    //             return;
+    //         }
+    //     }
+
+    //     self.visit_jsx_element_name(it);
+    // }
 }
 
 impl<'a> SemanticBuilder<'a> {
