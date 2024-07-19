@@ -226,9 +226,7 @@ impl<'a> SemanticBuilder<'a> {
             program.scope_id.set(Some(scope_id));
         } else {
             if self.source_text.len() < 4000 {
-                // self.nodes.reserve(self.source_text.split_ascii_whitespace().count());
-                self.scope.reserve(program.body.len());
-                // self.symbols.reserve(program.body.len(), program.body.len());
+                self.nodes.reserve(program.body.len() * 8);
             } else {
                 let mut collector = Collector::default();
                 collector.visit_program(program);
