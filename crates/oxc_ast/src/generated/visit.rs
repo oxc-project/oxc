@@ -51,6 +51,11 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
+    fn visit_hashbang(&mut self, it: &Hashbang<'a>) {
+        walk_hashbang(self, it);
+    }
+
+    #[inline]
     fn visit_directives(&mut self, it: &Vec<'a, Directive<'a>>) {
         walk_directives(self, it);
     }
@@ -63,11 +68,6 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_string_literal(&mut self, it: &StringLiteral<'a>) {
         walk_string_literal(self, it);
-    }
-
-    #[inline]
-    fn visit_hashbang(&mut self, it: &Hashbang<'a>) {
-        walk_hashbang(self, it);
     }
 
     #[inline]
@@ -1366,12 +1366,19 @@ pub mod walk {
             },
             &it.scope_id,
         );
-        visitor.visit_directives(&it.directives);
         if let Some(hashbang) = &it.hashbang {
             visitor.visit_hashbang(hashbang);
         }
+        visitor.visit_directives(&it.directives);
         visitor.visit_statements(&it.body);
         visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_hashbang<'a, V: Visit<'a>>(visitor: &mut V, it: &Hashbang<'a>) {
+        let kind = AstKind::Hashbang(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
@@ -1393,13 +1400,6 @@ pub mod walk {
     #[inline]
     pub fn walk_string_literal<'a, V: Visit<'a>>(visitor: &mut V, it: &StringLiteral<'a>) {
         let kind = AstKind::StringLiteral(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_hashbang<'a, V: Visit<'a>>(visitor: &mut V, it: &Hashbang<'a>) {
-        let kind = AstKind::Hashbang(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }

@@ -136,11 +136,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         source_type: SourceType,
-        directives: Vec<'a, Directive<'a>>,
         hashbang: Option<Hashbang<'a>>,
+        directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Program<'a> {
-        Program { span, source_type, directives, hashbang, body, scope_id: Default::default() }
+        Program { span, source_type, hashbang, directives, body, scope_id: Default::default() }
     }
 
     #[inline]
@@ -148,11 +148,11 @@ impl<'a> AstBuilder<'a> {
         self,
         span: Span,
         source_type: SourceType,
-        directives: Vec<'a, Directive<'a>>,
         hashbang: Option<Hashbang<'a>>,
+        directives: Vec<'a, Directive<'a>>,
         body: Vec<'a, Statement<'a>>,
     ) -> Box<'a, Program<'a>> {
-        self.program(span, source_type, directives, hashbang, body).into_in(self.allocator)
+        self.program(span, source_type, hashbang, directives, body).into_in(self.allocator)
     }
 
     #[inline]

@@ -30,8 +30,8 @@ use oxc_syntax::{
 #[allow(dead_code)]
 pub(crate) enum AncestorType {
     None = 0,
-    ProgramDirectives = 1,
-    ProgramHashbang = 2,
+    ProgramHashbang = 1,
+    ProgramDirectives = 2,
     ProgramBody = 3,
     ArrayExpressionElements = 4,
     ObjectExpressionProperties = 5,
@@ -343,8 +343,8 @@ pub(crate) enum AncestorType {
 #[derive(Debug)]
 pub enum Ancestor<'a> {
     None = AncestorType::None as u16,
-    ProgramDirectives(ProgramWithoutDirectives<'a>) = AncestorType::ProgramDirectives as u16,
     ProgramHashbang(ProgramWithoutHashbang<'a>) = AncestorType::ProgramHashbang as u16,
+    ProgramDirectives(ProgramWithoutDirectives<'a>) = AncestorType::ProgramDirectives as u16,
     ProgramBody(ProgramWithoutBody<'a>) = AncestorType::ProgramBody as u16,
     ArrayExpressionElements(ArrayExpressionWithoutElements<'a>) =
         AncestorType::ArrayExpressionElements as u16,
@@ -872,7 +872,7 @@ pub enum Ancestor<'a> {
 impl<'a> Ancestor<'a> {
     #[inline]
     pub fn is_program(&self) -> bool {
-        matches!(self, Self::ProgramDirectives(_) | Self::ProgramHashbang(_) | Self::ProgramBody(_))
+        matches!(self, Self::ProgramHashbang(_) | Self::ProgramDirectives(_) | Self::ProgramBody(_))
     }
 
     #[inline]
@@ -2178,47 +2178,10 @@ impl<'a> Ancestor<'a> {
 
 pub(crate) const OFFSET_PROGRAM_SPAN: usize = offset_of!(Program, span);
 pub(crate) const OFFSET_PROGRAM_SOURCE_TYPE: usize = offset_of!(Program, source_type);
-pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
 pub(crate) const OFFSET_PROGRAM_HASHBANG: usize = offset_of!(Program, hashbang);
+pub(crate) const OFFSET_PROGRAM_DIRECTIVES: usize = offset_of!(Program, directives);
 pub(crate) const OFFSET_PROGRAM_BODY: usize = offset_of!(Program, body);
 pub(crate) const OFFSET_PROGRAM_SCOPE_ID: usize = offset_of!(Program, scope_id);
-
-#[repr(transparent)]
-#[derive(Debug)]
-pub struct ProgramWithoutDirectives<'a>(pub(crate) *const Program<'a>);
-
-impl<'a> ProgramWithoutDirectives<'a> {
-    #[inline]
-    pub fn span(&self) -> &Span {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
-    }
-
-    #[inline]
-    pub fn source_type(&self) -> &SourceType {
-        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
-    }
-
-    #[inline]
-    pub fn hashbang(&self) -> &Option<Hashbang<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn body(&self) -> &Vec<'a, Statement<'a>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_BODY) as *const Vec<'a, Statement<'a>>)
-        }
-    }
-
-    #[inline]
-    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
-        unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
-        }
-    }
-}
 
 #[repr(transparent)]
 #[derive(Debug)]
@@ -2260,6 +2223,43 @@ impl<'a> ProgramWithoutHashbang<'a> {
 
 #[repr(transparent)]
 #[derive(Debug)]
+pub struct ProgramWithoutDirectives<'a>(pub(crate) *const Program<'a>);
+
+impl<'a> ProgramWithoutDirectives<'a> {
+    #[inline]
+    pub fn span(&self) -> &Span {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SPAN) as *const Span) }
+    }
+
+    #[inline]
+    pub fn source_type(&self) -> &SourceType {
+        unsafe { &*((self.0 as *const u8).add(OFFSET_PROGRAM_SOURCE_TYPE) as *const SourceType) }
+    }
+
+    #[inline]
+    pub fn hashbang(&self) -> &Option<Hashbang<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn body(&self) -> &Vec<'a, Statement<'a>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_BODY) as *const Vec<'a, Statement<'a>>)
+        }
+    }
+
+    #[inline]
+    pub fn scope_id(&self) -> &Cell<Option<ScopeId>> {
+        unsafe {
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_SCOPE_ID) as *const Cell<Option<ScopeId>>)
+        }
+    }
+}
+
+#[repr(transparent)]
+#[derive(Debug)]
 pub struct ProgramWithoutBody<'a>(pub(crate) *const Program<'a>);
 
 impl<'a> ProgramWithoutBody<'a> {
@@ -2274,17 +2274,17 @@ impl<'a> ProgramWithoutBody<'a> {
     }
 
     #[inline]
-    pub fn directives(&self) -> &Vec<'a, Directive<'a>> {
+    pub fn hashbang(&self) -> &Option<Hashbang<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_DIRECTIVES)
-                as *const Vec<'a, Directive<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
         }
     }
 
     #[inline]
-    pub fn hashbang(&self) -> &Option<Hashbang<'a>> {
+    pub fn directives(&self) -> &Vec<'a, Directive<'a>> {
         unsafe {
-            &*((self.0 as *const u8).add(OFFSET_PROGRAM_HASHBANG) as *const Option<Hashbang<'a>>)
+            &*((self.0 as *const u8).add(OFFSET_PROGRAM_DIRECTIVES)
+                as *const Vec<'a, Directive<'a>>)
         }
     }
 

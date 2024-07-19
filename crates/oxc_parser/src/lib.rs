@@ -328,8 +328,8 @@ impl<'a> ParserImpl<'a> {
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
-                    self.ast.vec(),
                     None,
+                    self.ast.vec(),
                     self.ast.vec(),
                 );
                 (program, true)
@@ -361,7 +361,7 @@ impl<'a> ParserImpl<'a> {
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
         let span = Span::new(0, self.source_text.len() as u32);
-        Ok(self.ast.program(span, self.source_type, directives, hashbang, statements))
+        Ok(self.ast.program(span, self.source_type, hashbang, directives, statements))
     }
 
     fn default_context(source_type: SourceType, options: ParserOptions) -> Context {

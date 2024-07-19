@@ -39,8 +39,8 @@ pub struct Program<'a> {
     #[cfg_attr(feature = "serialize", serde(flatten))]
     pub span: Span,
     pub source_type: SourceType,
-    pub directives: Vec<'a, Directive<'a>>,
     pub hashbang: Option<Hashbang<'a>>,
+    pub directives: Vec<'a, Directive<'a>>,
     pub body: Vec<'a, Statement<'a>>,
     pub scope_id: Cell<Option<ScopeId>>,
 }

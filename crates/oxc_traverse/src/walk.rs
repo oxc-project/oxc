@@ -37,18 +37,18 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
         ctx.set_current_scope_id(scope_id);
     }
     traverser.enter_program(&mut *node, ctx);
-    ctx.push_stack(Ancestor::ProgramDirectives(ancestor::ProgramWithoutDirectives(node)));
+    ctx.push_stack(Ancestor::ProgramHashbang(ancestor::ProgramWithoutHashbang(node)));
+    if let Some(field) =
+        &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_HASHBANG) as *mut Option<Hashbang>)
+    {
+        walk_hashbang(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ProgramDirectives);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_DIRECTIVES)
         as *mut Vec<Directive>))
         .iter_mut()
     {
         walk_directive(traverser, item as *mut _, ctx);
-    }
-    if let Some(field) =
-        &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_HASHBANG) as *mut Option<Hashbang>)
-    {
-        ctx.retag_stack(AncestorType::ProgramHashbang);
-        walk_hashbang(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ProgramBody);
     walk_statements(
