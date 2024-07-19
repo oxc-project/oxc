@@ -172,6 +172,20 @@ impl<'a> Visit<'a> for Collector {
             self.node += 1;
         }
     }
+
+    #[inline]
+    fn visit_ts_enum_member_name(&mut self, it: &TSEnumMemberName<'a>) {
+        if !it.is_expression() {
+            self.symbol += 1;
+        }
+        walk_ts_enum_member_name(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_module_declaration_name(&mut self, it: &TSModuleDeclarationName<'a>) {
+        self.symbol += 1;
+        walk_ts_module_declaration_name(self, it);
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
