@@ -297,6 +297,18 @@ impl PartialEq<CompactStr> for &str {
     }
 }
 
+impl PartialEq<CompactStr> for str {
+    fn eq(&self, other: &CompactStr) -> bool {
+        self == other.as_str()
+    }
+}
+
+impl PartialEq<str> for CompactStr {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
+    }
+}
+
 impl Index<Span> for CompactStr {
     type Output = str;
 
@@ -330,5 +342,19 @@ impl Serialize for CompactStr {
         S: Serializer,
     {
         serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::CompactStr;
+
+    #[test]
+    fn test_compactstr_eq() {
+        let foo = CompactStr::new("foo");
+        assert_eq!(foo, "foo");
+        assert_eq!(&foo, "foo");
+        assert_eq!("foo", foo);
+        assert_eq!("foo", &foo);
     }
 }
