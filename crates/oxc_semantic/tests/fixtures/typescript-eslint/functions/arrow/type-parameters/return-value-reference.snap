@@ -16,7 +16,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
             "id": 1,
             "name": "T",
             "node": "TSTypeParameter",
-            "references": []
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 12
+              }
+            ]
           }
         ]
       }
