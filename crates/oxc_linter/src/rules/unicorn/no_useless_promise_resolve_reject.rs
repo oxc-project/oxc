@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     ast_util::outermost_paren_parent,
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
@@ -223,7 +223,7 @@ fn generate_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     ctx: &LintContext<'a>,
     node: &AstNode<'a>,
-) -> Fix<'a> {
+) -> RuleFix<'a> {
     if call_expr.arguments.len() > 1 {
         return fixer.noop();
     }

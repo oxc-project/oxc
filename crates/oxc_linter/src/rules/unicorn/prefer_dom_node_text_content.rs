@@ -123,5 +123,13 @@ fn test() {
         ("for (const [{innerText}] of elements);", None),
     ];
 
-    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).test_and_snapshot();
+    // TODO: implement a fixer for destructuring assignment cases
+    let fix = vec![
+        ("node.innerText;", "node.textContent;"),
+        ("node?.innerText;", "node?.textContent;"),
+        ("node.innerText = 'foo';", "node.textContent = 'foo';"),
+        ("innerText.innerText = 'foo';", "innerText.textContent = 'foo';"),
+    ];
+
+    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -27,13 +27,14 @@ use oxc_semantic::AstNode;
 pub use crate::{
     config::OxlintConfig,
     context::LintContext,
+    fixer::FixKind,
     options::{AllowWarnDeny, LintOptions},
     rule::{RuleCategory, RuleMeta, RuleWithSeverity},
     service::{LintService, LintServiceOptions},
 };
 use crate::{
     config::{OxlintEnv, OxlintGlobals, OxlintSettings},
-    fixer::{Fix, Fixer, Message},
+    fixer::{Fixer, Message},
     rules::RuleEnum,
     table::RuleTable,
 };
@@ -84,10 +85,19 @@ impl Linter {
         self
     }
 
-    /// Enable/disable automatic code fixes.
+    /// Set the kind of auto fixes to apply.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use oxc_linter::{Linter, FixKind};
+    ///
+    /// // turn off all auto fixes. This is default behavior.
+    /// Linter::default().with_fix(FixKind::None);
+    /// ```
     #[must_use]
-    pub fn with_fix(mut self, yes: bool) -> Self {
-        self.options.fix = yes;
+    pub fn with_fix(mut self, kind: FixKind) -> Self {
+        self.options.fix = kind;
         self
     }
 

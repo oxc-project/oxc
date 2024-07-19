@@ -122,12 +122,16 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
 
         /// Syntax tree traversal
         pub trait #trait_name <'a>: Sized {
+            #[inline]
             fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
+            #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
 
             endl!();
 
+            #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
+            #[inline]
             fn leave_scope(&mut self) {}
 
             endl!();

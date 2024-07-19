@@ -27,10 +27,14 @@ use walk::*;
 
 /// Syntax tree traversal
 pub trait Visit<'a>: Sized {
+    #[inline]
     fn enter_node(&mut self, kind: AstKind<'a>) {}
+    #[inline]
     fn leave_node(&mut self, kind: AstKind<'a>) {}
 
+    #[inline]
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
+    #[inline]
     fn leave_scope(&mut self) {}
 
     #[inline]
@@ -3697,12 +3701,17 @@ pub mod walk {
     pub fn walk_catch_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &CatchClause<'a>) {
         let kind = AstKind::CatchClause(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
+        let scope_events_cond = it.param.is_some();
+        if scope_events_cond {
+            visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
+        }
         if let Some(param) = &it.param {
             visitor.visit_catch_parameter(param);
         }
         visitor.visit_block_statement(&it.body);
-        visitor.leave_scope();
+        if scope_events_cond {
+            visitor.leave_scope();
+        }
         visitor.leave_node(kind);
     }
 

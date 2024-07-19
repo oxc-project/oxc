@@ -134,6 +134,7 @@ source: crates/oxc_linter/src/tester.rs
    ·                ────
  4 │             
    ╰────
+  help: Delete this code.
 
   ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
    ╭─[no_focused_tests.tsx:1:10]

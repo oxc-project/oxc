@@ -443,12 +443,12 @@ impl<'a> SemanticBuilder<'a> {
                 resolved_references.reserve(references.len());
 
                 references.retain(|(id, flag)| {
-                    if flag.is_type() && symbol_flag.is_can_be_referenced_by_type()
-                        || flag.is_value() && symbol_flag.is_value()
+                    if flag.is_type() && symbol_flag.can_be_referenced_by_type()
+                        || flag.is_value() && symbol_flag.can_be_referenced_by_value()
                     {
-                        // The non type-only ExportSpecifier can reference a type,
-                        // If the reference is not a type, remove the type flag from the reference
-                        if !symbol_flag.is_type() && !flag.is_type_only() {
+                        // The non type-only ExportSpecifier can reference a type/value symbol,
+                        // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
+                        if symbol_flag.is_value() && !flag.is_type_only() {
                             *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
                         }
 
@@ -871,12 +871,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
+        self.enter_node(kind);
         let is_lexical_declaration =
             stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         }
-        self.enter_node(kind);
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
         }
@@ -934,19 +934,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.leave_node(kind);
         if is_lexical_declaration {
             self.leave_scope();
         }
+        self.leave_node(kind);
     }
 
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
+        self.enter_node(kind);
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         }
-        self.enter_node(kind);
 
         self.visit_for_statement_left(&stmt.left);
 
@@ -998,19 +998,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.leave_node(kind);
         if is_lexical_declaration {
             self.leave_scope();
         }
+        self.leave_node(kind);
     }
 
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
+        self.enter_node(kind);
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
             self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         }
-        self.enter_node(kind);
 
         self.visit_for_statement_left(&stmt.left);
 
@@ -1061,10 +1061,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        self.leave_node(kind);
         if is_lexical_declaration {
             self.leave_scope();
         }
+        self.leave_node(kind);
     }
 
     fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {

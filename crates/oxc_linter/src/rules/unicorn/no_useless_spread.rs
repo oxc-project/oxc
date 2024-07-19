@@ -14,7 +14,7 @@ use crate::{
         get_new_expr_ident_name, is_method_call, is_new_expression, outermost_paren_parent,
     },
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
@@ -447,7 +447,7 @@ fn fix_replace<'a, T: GetSpan, U: GetSpan>(
     fixer: RuleFixer<'_, 'a>,
     target: &T,
     replacement: &U,
-) -> Fix<'a> {
+) -> RuleFix<'a> {
     let replacement = fixer.source_range(replacement.span());
     fixer.replace(target.span(), replacement)
 }
@@ -457,7 +457,7 @@ fn fix_by_removing_spread<'a, S: GetSpan>(
     fixer: RuleFixer<'_, 'a>,
     iterable: &S,
     spread: &SpreadElement<'a>,
-) -> Fix<'a> {
+) -> RuleFix<'a> {
     fixer.replace(iterable.span(), fixer.source_range(spread.argument.span()))
 }
 

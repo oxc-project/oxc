@@ -8,7 +8,7 @@ use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_expect_jest_fn_call, ParsedExpectFnCall,
@@ -116,7 +116,7 @@ impl PreferExpectResolves {
         jest_expect_fn_call: &ParsedExpectFnCall<'a>,
         call_expr: &CallExpression<'a>,
         ident_span: Span,
-    ) -> Fix<'a> {
+    ) -> RuleFix<'a> {
         let mut formatter = fixer.codegen();
         let first = call_expr.arguments.first().unwrap();
         let Argument::AwaitExpression(await_expr) = first else {
