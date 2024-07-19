@@ -35,11 +35,11 @@
     "@oxc/oxc_wasm": "link:../npm/oxc-wasm",
     "concurrently": "^8.2.2",
     "vite": "^5.2.13",
-    "wasm-pack": "^0.12.1"
+    "wasm-pack": "^0.13.0"
   },
   "engines": {
     "node": ">=20.14.0",
     "pnpm": ">=9.2.0"
   },
-  "packageManager": "pnpm@9.4.0"
+  "packageManager": "pnpm@9.5.0"
 }
