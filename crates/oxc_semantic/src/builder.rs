@@ -563,8 +563,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
 
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
