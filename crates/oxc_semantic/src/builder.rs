@@ -224,24 +224,24 @@ impl<'a> SemanticBuilder<'a> {
         if self.source_type.is_typescript_definition() {
             let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
-        }
-
-        if self.source_text.len() < 4000 {
-            self.nodes.reserve(program.body.len() * 4);
-            self.scope.reserve(program.body.len());
-            self.symbols.reserve(program.body.len(), program.body.len());
         } else {
-            let mut collector = Collector::default();
-            collector.visit_program(program);
-            self.nodes.reserve(collector.node);
-            self.scope.reserve(collector.scope);
-            self.symbols.reserve(collector.symbol, collector.reference);
-            self.visit_program(program);
-        }
+            if self.source_text.len() < 4000 {
+                self.nodes.reserve(self.source_text.split_ascii_whitespace().count());
+                self.scope.reserve(program.body.len());
+                self.symbols.reserve(program.body.len(), program.body.len());
+            } else {
+                let mut collector = Collector::default();
+                collector.visit_program(program);
+                self.nodes.reserve(collector.node);
+                self.scope.reserve(collector.scope);
+                self.symbols.reserve(collector.symbol, collector.reference);
+                self.visit_program(program);
+            }
 
-        // Checking syntax error on module record requires scope information from the previous AST pass
-        if self.check_syntax_error {
-            checker::check_module_record(&self);
+            // Checking syntax error on module record requires scope information from the previous AST pass
+            if self.check_syntax_error {
+                checker::check_module_record(&self);
+            }
         }
 
         debug_assert_eq!(self.current_scope_depth, 0);
