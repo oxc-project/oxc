@@ -235,9 +235,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.nodes.reserve(collector.node);
                 self.scope.reserve(collector.scope);
                 self.symbols.reserve(collector.symbol, collector.reference);
-                self.visit_program(program);
             }
 
+            self.visit_program(program);
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
                 checker::check_module_record(&self);
