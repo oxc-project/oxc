@@ -225,15 +225,11 @@ impl<'a> SemanticBuilder<'a> {
             let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
-            if self.source_text.len() < 4000 {
-                self.nodes.reserve(program.body.len() * 8);
-            } else {
-                let mut collector = Collector::default();
-                collector.visit_program(program);
-                self.nodes.reserve(collector.node);
-                self.scope.reserve(collector.scope);
-                self.symbols.reserve(collector.symbol, collector.reference);
-            }
+            let mut collector = Collector::default();
+            collector.visit_program(program);
+            self.nodes.reserve(collector.node);
+            self.scope.reserve(collector.scope);
+            self.symbols.reserve(collector.symbol, collector.reference);
 
             self.visit_program(program);
             // Checking syntax error on module record requires scope information from the previous AST pass
