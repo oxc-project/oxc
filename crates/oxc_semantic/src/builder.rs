@@ -117,39 +117,59 @@ impl<'a> Visit<'a> for Collector {
     fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.scope += 1;
     }
-    #[inline]
-    fn leave_node(&mut self, _: AstKind<'a>) {}
-    #[inline]
-    fn leave_scope(&mut self) {}
 
+    #[inline]
     fn visit_binding_identifier(&mut self, _: &BindingIdentifier<'a>) {
         self.symbol += 1;
         self.node += 1;
     }
+
+    #[inline]
     fn visit_identifier_reference(&mut self, _: &IdentifierReference<'a>) {
         self.reference += 1;
         self.node += 1;
     }
+
+    #[inline]
     fn visit_jsx_identifier(&mut self, _: &JSXIdentifier<'a>) {
         self.reference += 1;
         self.node += 1;
     }
+
+    #[inline]
     fn visit_jsx_member_expression_object(&mut self, it: &JSXMemberExpressionObject<'a>) {
+        self.node += 1;
         if let JSXMemberExpressionObject::MemberExpression(expr) = &it {
             self.visit_jsx_member_expression(expr);
         } else {
             self.node += 1;
         }
     }
-    // fn visit_jsx_element_name(&mut self, it: &JSXElementName<'a>) {
-    //     if let JSXElementName::Identifier(ident) = it {
-    //         if !ident.name.chars().next().is_some_and(char::is_uppercase) {
-    //             return;
-    //         }
-    //     }
 
-    //     self.visit_jsx_element_name(it);
-    // }
+    #[inline]
+    fn visit_jsx_element_name(&mut self, it: &JSXElementName<'a>) {
+        self.node += 1;
+        if let JSXElementName::Identifier(ident) = it {
+            self.node += 1;
+            if ident.name.chars().next().is_some_and(char::is_uppercase) {
+                self.reference += 1;
+            }
+        } else {
+            self.visit_jsx_element_name(it);
+        }
+    }
+
+    #[inline]
+    fn visit_jsx_attribute_name(&mut self, it: &JSXAttributeName<'a>) {
+        // NOTE: AstKind doesn't exists!
+        // self.node += 1;
+
+        if let JSXAttributeName::Identifier(_) = it {
+            self.node += 1;
+        } else {
+            self.visit_jsx_attribute_name(it);
+        }
+    }
 }
 
 impl<'a> SemanticBuilder<'a> {
