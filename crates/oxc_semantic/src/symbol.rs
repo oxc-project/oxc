@@ -1,5 +1,7 @@
 #![allow(non_snake_case)] // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 
+use std::{fmt, hash};
+
 use oxc_ast::ast::Expression;
 use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
@@ -13,7 +15,7 @@ use serde::Serialize;
 use tsify::Tsify;
 
 use crate::{
-    node::AstNodeId,
+    node::{AstNode, AstNodeId},
     reference::{Reference, ReferenceId},
 };
 
@@ -192,5 +194,187 @@ impl SymbolTable {
             }
             _ => false,
         }
+    }
+}
+
+/// A unique symbol found in a parsed program.
+///
+/// A [`Symbol`] is a value bound to some name, called an identifier. In source
+/// code, this identifier is a string, but because of scoping, [`Symbol`]s use a
+/// clearer [`SymbolId`].
+///
+/// ```ts
+/// let x = 1;         // <- 1
+/// function foo() {   // <- 2
+///     let x = 2;     // <- 3, shadowed
+/// }
+/// ```
+///
+/// ## Values vs Types
+///
+/// TypeScript interfaces, type parameters, type aliases, and so on are also
+/// symbols and are stored in the [`SymbolTable`], alongside JavaScript
+/// value-like symbols. You can tell which one a [`Symbol`] is by inspecting its [`SymbolFlags`].
+///
+/// ## Symbols in the AST
+///
+/// The AST makes it easy to differentiate which nodes declare a [`Symbol`] and
+/// which reference one by having different kinds of nodes for each. Symbol
+/// bindings are represented by [`BindingIdentifier`] nodes, which are usually
+/// contained inside [`Declaration`]s
+///
+/// ## Representation
+///
+/// [`Symbol`]s are effectively just fat pointers. This has several implications
+/// for their usage. For one, [`Clone`]s are extremely cheap. Despite this, they
+/// intentionally do not implement [`Copy`] so that passing them around is more
+/// obvious in consuming code. Secondly, they do not own any of their own data.
+/// Most data is stored in the [`SymbolTable`], but some pieces are in
+/// [`crate::AstNodes`] and [`crate::ScopeTree`]. All of these are tied to the
+/// memory arena used during semantic analysis, making symbols neither [`Send`]
+/// nor [`Sync`].
+///
+/// [`BindingIdentifier`]: oxc_ast::ast::BindingIdentifier
+/// [`Declaration`]: oxc_ast::ast::Declaration
+#[derive(Clone)]
+#[non_exhaustive]
+#[must_use]
+pub struct Symbol<'s, 'a> {
+    id: SymbolId,
+    flags: SymbolFlags, // can be added w/o cost since id is 4 bytes
+    semantic: &'s crate::Semantic<'a>,
+}
+
+impl<'s, 'a> Symbol<'s, 'a> {
+    pub(crate) fn new(semantic: &'s crate::Semantic<'a>, symbol_id: SymbolId) -> Self {
+        let flags = semantic.symbols().get_flag(symbol_id);
+        Self { id: symbol_id, flags, semantic }
+    }
+
+    /// The unique identifier for this [`Symbol`].
+    ///
+    /// Although symbols are different across programs, their IDs are not.
+    /// There are only so many IDs that can be fit in 4 bytes. Prefer
+    /// [`PartialEq::eq`] for comparison if you're not certain that the same
+    /// symbol table is being used.
+    #[inline]
+    pub fn id(&self) -> SymbolId {
+        self.id
+    }
+
+    /// The [`ScopeId`] of the scope this [`Symbol`] was declared inside of.
+    #[inline]
+    pub fn scope_id(&self) -> ScopeId {
+        self.semantic.symbols.get_scope_id(self.id)
+    }
+
+    /// Flags describing the scope this [`Symbol`] was declared in.
+    #[inline]
+    pub fn scope_flags(&self) -> crate::scope::ScopeFlags {
+        self.semantic.scopes.get_flags(self.scope_id())
+    }
+
+    /// Flags describing what kind of value this [`Symbol`] is bound to and the
+    /// nature of binding (an import, a const variable, etc.)
+    #[inline]
+    pub fn flags(&self) -> SymbolFlags {
+        self.flags
+    }
+
+    /// The identifier name this [`Symbol`] is bound to.
+    #[inline]
+    pub fn name(&self) -> &str {
+        self.semantic.symbols.get_name(self.id)
+    }
+
+    /// The [`Span`] for this [`Symbol`]'s declaration.
+    #[inline]
+    pub fn span(&self) -> oxc_span::Span {
+        self.semantic.symbols.get_span(self.id)
+    }
+
+    /// The [`AstNodeId`] for the AST node that declared this [`Symbol`].
+    ///
+    /// This is usually a kind of [`Declaration`].
+    ///
+    /// [`Declaration`]: oxc_ast::ast::Declaration
+    #[inline]
+    pub fn declaration_id(&self) -> AstNodeId {
+        self.semantic.symbols.get_declaration(self.id)
+    }
+
+    /// The [`AstNode`] that declared this [`Symbol`].
+    ///
+    /// This is usually a kind of [`Declaration`].
+    ///
+    /// [`Declaration`]: oxc_ast::ast::Declaration
+    #[inline]
+    pub fn declaration(&self) -> &AstNode<'a> {
+        self.semantic.nodes.get_node(self.declaration_id())
+    }
+
+    /// Returns `true` if any references to this [`Symbol`] were found.
+    #[inline]
+    pub fn has_references(&self) -> bool {
+        !self.semantic.symbols.resolved_references[self.id].is_empty()
+    }
+
+    /// Get IDs resolved [`Reference`]s to this [`Symbol`].
+    ///
+    /// This is a cheaper operation than [`Symbol::references`] and should be
+    /// preferred wherever possible.
+    #[inline]
+    pub fn reference_ids(&self) -> &[ReferenceId] {
+        self.semantic.symbols.get_resolved_reference_ids(self.id).as_slice()
+    }
+
+    /// Get resolved [`Reference`]s to this [`Symbol`].
+    ///
+    /// If you want to know how many references a symbol has, prefer
+    /// [`Symbol::has_references`] or [`Symbol::reference_ids`].
+    #[inline]
+    pub fn references(&self) -> impl Iterator<Item = &Reference> + '_ {
+        self.semantic.symbols.get_resolved_references(self.id)
+    }
+}
+
+impl oxc_span::GetSpan for Symbol<'_, '_> {
+    fn span(&self) -> Span {
+        self.semantic.symbols.get_span(self.id)
+    }
+}
+
+impl PartialEq for Symbol<'_, '_> {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
+            && (self.semantic as *const crate::Semantic<'_>)
+                .eq(&(other.semantic as *const crate::Semantic<'_>))
+    }
+}
+
+impl hash::Hash for Symbol<'_, '_> {
+    fn hash<H: hash::Hasher>(&self, state: &mut H) {
+        self.id.hash(state);
+        let addr = self.semantic as *const _ as usize;
+        state.write_usize(addr);
+    }
+}
+
+impl fmt::Debug for Symbol<'_, '_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Symbol")
+            .field("id", &self.id)
+            .field("name", &self.name())
+            .field("symbol_flags", &self.flags())
+            .field("declaration_node_id", &self.declaration_id())
+            .field("scope_id", &self.scope_id())
+            .field("references", &self.reference_ids())
+            .finish()
+    }
+}
+
+impl fmt::Display for Symbol<'_, '_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name().fmt(f)
     }
 }
