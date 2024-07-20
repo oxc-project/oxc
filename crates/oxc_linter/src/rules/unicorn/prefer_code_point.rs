@@ -62,7 +62,10 @@ impl Rule for PreferCodePoint {
             _ => return,
         };
 
-        ctx.diagnostic(prefer_code_point_diagnostic(span, replacement, current));
+        ctx.diagnostic_with_fix(
+            prefer_code_point_diagnostic(span, replacement, current),
+            |fixer| fixer.replace(span, replacement),
+        );
     }
 }
 
@@ -100,5 +103,15 @@ fn test() {
         r"(( (( String )).fromCharCode( ((code)), ) ))",
     ];
 
-    Tester::new(PreferCodePoint::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r"string.charCodeAt(index)", r"string.codePointAt(index)"),
+        (
+            r"(( (( String )).fromCharCode( ((code)), ) ))",
+            r"(( (( String )).fromCodePoint( ((code)), ) ))",
+        ),
+        (r#""🦄".charCodeAt(0)"#, r#""🦄".codePointAt(0)"#),
+        (r"String.fromCharCode(0x1f984);", r"String.fromCodePoint(0x1f984);"),
+    ];
+
+    Tester::new(PreferCodePoint::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
