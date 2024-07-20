@@ -97,13 +97,6 @@ fn no_else_return_diagnostic_fix<'a>(ctx: &LintContext<'a>, else_stmt_prev: &Sta
   let else_code_prev_token = get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
   let fix_else_code = format!("{}{}", else_code_prev_token, replace_block(else_code));
 
-  println!(
-    "raw_prev: {:?} raw: {:?} fix: {:?}", 
-    ctx.source_range(else_stmt_prev.span()), 
-    else_code, 
-    fix_else_code
-  );
-
   ctx.diagnostic_with_fix(
     no_else_return_diagnostic(else_stmt),
     |fixer| {
@@ -159,7 +152,6 @@ fn check_if_with_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
     return;
   };
   
-  println!("always_returns: {:?}", ctx.source_range(if_stmt.consequent.span()));
   if always_returns(&if_stmt.consequent) {
     no_else_return_diagnostic_fix(ctx, &if_stmt.consequent, alternate, node);
   }
@@ -190,10 +182,7 @@ fn check_if_without_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
   }
 
 
-  if consequents.iter().all(|stmt| {
-    println!("always_returns: {:?}", ctx.source_range(stmt.span()));
-    always_returns(stmt)
-  }) {
+  if consequents.iter().all(|stmt| always_returns(stmt)) {
     no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
   }
 }
@@ -233,7 +222,6 @@ impl Rule for NoElseReturn {
     if !is_in_statement_list_parents(parent_node) {
       return;
     }
-    println!("[validate] {:?}", ctx.source_range(node.kind().span()));
     if self.allow_else_if {
       check_if_without_else(ctx, node);
     } else {
