@@ -90,22 +90,23 @@ fn no_else_return_diagnostic_fix<'a>(ctx: &LintContext<'a>, else_stmt_prev: &Sta
     return ctx.diagnostic(no_else_return_diagnostic(else_stmt));
   };
 
+  let prev_span = else_stmt_prev.span();
+  let span = else_stmt.span();
+
+  let else_code = ctx.source_range(span);
+  let else_code_prev_token = get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
+  let fix_else_code = format!("{}{}", else_code_prev_token, replace_block(else_code));
+
+  println!(
+    "raw_prev: {:?} raw: {:?} fix: {:?}", 
+    ctx.source_range(else_stmt_prev.span()), 
+    else_code, 
+    fix_else_code
+  );
+
   ctx.diagnostic_with_fix(
     no_else_return_diagnostic(else_stmt),
     |fixer| {
-      let prev_span = else_stmt_prev.span();
-      let span = else_stmt.span();
-
-      let else_code = ctx.source_range(span);
-      let else_code_prev_token = get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
-      let fix_else_code = format!("{}{}", else_code_prev_token, replace_block(else_code));
-
-      println!(
-        "raw_prev: {:?} raw: {:?} fix: {:?}", 
-        ctx.source_range(else_stmt_prev.span()), 
-        else_code, 
-        fix_else_code
-      );
       fixer.replace(Span::new(prev_span.end, span.end), fix_else_code)
   })
 }
@@ -157,7 +158,8 @@ fn check_if_with_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
   let Some(alternate) = &if_stmt.alternate else {
     return;
   };
-
+  
+  println!("always_returns: {:?}", ctx.source_range(if_stmt.consequent.span()));
   if always_returns(&if_stmt.consequent) {
     no_else_return_diagnostic_fix(ctx, &if_stmt.consequent, alternate, node);
   }
@@ -187,8 +189,11 @@ fn check_if_without_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
     }
   }
 
-  
-  if consequents.iter().all(|stmt| always_returns(stmt)) {
+
+  if consequents.iter().all(|stmt| {
+    println!("always_returns: {:?}", ctx.source_range(stmt.span()));
+    always_returns(stmt)
+  }) {
     no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
   }
 }
@@ -365,11 +370,11 @@ fn test() {
         ("function foo1() { if (true) { return x; } else { return y; } }", "function foo1() { if (true) { return x; }  return y;  }", None),
 ("function foo2() { if (true) { var x = bar; return x; } else { var y = baz; return y; } }", "function foo2() { if (true) { var x = bar; return x; }  var y = baz; return y;  }", None),
 ("function foo3() { if (true) return x; else return y; }", "function foo3() { if (true) return x; return y; }", None),
-("function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }", "function foo4() { if (true) { if (false) return x; return y; } else { return z; } }", None),
+("function foo4() { if (true) { if (false) return x; else return y; } else { return z; } }", "function foo4() { if (true) { if (false) return x; return y; }  return z;  }", None),
 ("function foo5() { if (true) { if (false) { if (true) return x; else { w = y; } } else { w = x; } } else { return z; } }", "function foo5() { if (true) { if (false) { if (true) return x;  w = y;  } else { w = x; } } else { return z; } }", None),
 ("function foo6() { if (true) { if (false) { if (true) return x; else return y; } } else { return z; } }", "function foo6() { if (true) { if (false) { if (true) return x; return y; } } else { return z; } }", None),
-("function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }", "function foo7() { if (true) { if (false) { if (true) return x; return y; } return w; } else { return z; } }", None),
-("function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }", "function foo8() { if (true) { if (false) { if (true) return x; return y; } else { w = x; } } else { return z; } }", None),
+("function foo7() { if (true) { if (false) { if (true) return x; else return y; } return w; } else { return z; } }", "function foo7() { if (true) { if (false) { if (true) return x; return y; } return w; }  return z;  }", None),
+("function foo8() { if (true) { if (false) { if (true) return x; else return y; } else { w = x; } } else { return z; } }", "function foo8() { if (true) { if (false) { if (true) return x; return y; }  w = x;  } else { return z; } }", None),
 ("function foo9() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }", "function foo9() {if (x) { return true; } else if (y) { return true; }  notAReturn();  }", None),
 ("function foo9a() {if (x) { return true; } else if (y) { return true; } else { notAReturn(); } }", "function foo9a() {if (x) { return true; } if (y) { return true; } else { notAReturn(); } }", Some(serde_json::json!([{ "allowElseIf": false }]))),
 ("function foo9b() {if (x) { return true; } if (y) { return true; } else { notAReturn(); } }", "function foo9b() {if (x) { return true; } if (y) { return true; }  notAReturn();  }", Some(serde_json::json!([{ "allowElseIf": false }]))),
