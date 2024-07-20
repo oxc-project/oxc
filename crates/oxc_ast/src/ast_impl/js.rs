@@ -1,9 +1,9 @@
 use crate::ast::*;
 
-use std::{cell::Cell, fmt, hash::Hash};
+use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
-use oxc_span::{Atom, CompactStr, GetSpan, SourceType, Span};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     reference::{ReferenceFlag, ReferenceId},
@@ -332,20 +332,20 @@ impl<'a> ObjectExpression<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
-    pub fn static_name(&self) -> Option<CompactStr> {
+    pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
-            Self::StaticIdentifier(ident) => Some(ident.name.to_compact_str()),
-            Self::StringLiteral(lit) => Some(lit.value.to_compact_str()),
-            Self::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
-            Self::NumericLiteral(lit) => Some(lit.value.to_string().into()),
-            Self::BigIntLiteral(lit) => Some(lit.raw.to_compact_str()),
-            Self::NullLiteral(_) => Some("null".into()),
+            Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
+            Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
+            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
+            Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
             Self::TemplateLiteral(lit) => lit
                 .expressions
                 .is_empty()
                 .then(|| lit.quasi())
                 .flatten()
-                .map(|quasi| quasi.to_compact_str()),
+                .map(std::convert::Into::into),
             _ => None,
         }
     }
@@ -369,9 +369,9 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    pub fn name(&self) -> Option<CompactStr> {
+    pub fn name(&self) -> Option<Cow<'a, str>> {
         if self.is_private_identifier() {
-            self.private_name().map(|name| name.to_compact_str())
+            self.private_name().map(|name| Cow::Borrowed(name.as_str()))
         } else {
             self.static_name()
         }
@@ -1237,7 +1237,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    pub fn static_name(&self) -> Option<CompactStr> {
+    pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
@@ -1424,8 +1424,8 @@ impl<'a> ImportDeclarationSpecifier<'a> {
             ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
     }
-    pub fn name(&self) -> CompactStr {
-        self.local().name.to_compact_str()
+    pub fn name(&self) -> Cow<'a, str> {
+        Cow::Borrowed(self.local().name.as_str())
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{error::Error, ops::Deref};
+use std::{borrow::Cow, error::Error, ops::Deref};
 
 use itertools::Itertools;
 use oxc_ast::{
@@ -11,7 +11,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{Reference, SymbolId};
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -231,7 +231,7 @@ impl Rule for ConsistentTypeImports {
 
             // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
             let type_imports = format_word_list(&type_names);
-            let type_names = type_names.iter().map(CompactStr::as_str).collect::<Vec<_>>();
+            let type_names = type_names.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>();
 
             let fixer_fn = |fixer: RuleFixer<'_, 'a>| {
                 let fix_options = FixOptions {
@@ -272,13 +272,13 @@ impl Rule for ConsistentTypeImports {
 // the `and` clause inserted before the last item.
 //
 // Example: ['foo', 'bar', 'baz' ] returns the string "foo, bar, and baz".
-fn format_word_list(words: &[CompactStr]) -> String {
+fn format_word_list<'a>(words: &[Cow<'a, str>]) -> Cow<'a, str> {
     match words.len() {
-        0 => String::new(),
-        1 => words[0].to_string(),
-        2 => format!("{} and {}", words[0], words[1]),
+        0 => Cow::Borrowed(""),
+        1 => words[0].clone(),
+        2 => Cow::Owned(format!("{} and {}", words[0], words[1])),
         _ => {
-            let mut result = String::new();
+            let mut result = String::with_capacity(words.len() * 2);
             for (i, word) in words.iter().enumerate() {
                 if i == words.len() - 1 {
                     result.push_str(&format!("and {word}"));
@@ -286,7 +286,7 @@ fn format_word_list(words: &[CompactStr]) -> String {
                     result.push_str(&format!("{word}, "));
                 }
             }
-            result
+            Cow::Owned(result)
         }
     }
 }

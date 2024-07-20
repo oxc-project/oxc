@@ -63,7 +63,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.into(),
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -83,7 +83,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.into(),
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -124,18 +124,14 @@ impl ClassTableBuilder {
             return;
         }
         let is_private = method.key.is_private_identifier();
-        let name = if is_private {
-            method.key.private_name().map(|name| name.to_compact_str())
-        } else {
-            method.key.static_name()
-        };
+        let name = method.key.name();
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.into(),
                         method.key.span(),
                         method.r#static,
                         is_private,

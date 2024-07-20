@@ -64,7 +64,7 @@ impl Rule for NoDanger {
                 for prop in &obj_expr.properties {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
                         if let Some(prop_name) = obj_prop.key.static_name() {
-                            if prop_name.as_str() == "dangerouslySetInnerHTML" {
+                            if prop_name == "dangerouslySetInnerHTML" {
                                 ctx.diagnostic(no_danger_diagnostic(obj_prop.key.span()));
                             }
                         }
