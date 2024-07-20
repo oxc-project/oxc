@@ -1,12 +1,11 @@
-use itertools::Itertools;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeId, ScopeTree};
-use oxc_span::{Atom, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_ast::{
-  ast::{BlockStatement, IfStatement, Statement}, AstKind
+  ast::Statement, AstKind
 };
-use crate::{context::LintContext, fixer::{Fix, RuleFixer}, rule::Rule, AstNode};
+use crate::{context::LintContext,  rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoElseReturn {
