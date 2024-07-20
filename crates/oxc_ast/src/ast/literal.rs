@@ -10,7 +10,7 @@
 use std::hash::Hash;
 
 use bitflags::bitflags;
-use oxc_ast_macros::visited_node;
+use oxc_ast_macros::ast;
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -18,56 +18,56 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct BooleanLiteral {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub value: bool,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct NullLiteral {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct NumericLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub value: f64,
     pub raw: &'a str,
-    #[cfg_attr(feature = "serialize", serde(skip))]
+    #[serde(skip)]
     pub base: NumberBase,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct BigIntLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub raw: Atom<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip))]
+    #[serde(skip)]
     pub base: BigintBase,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct RegExpLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
@@ -75,6 +75,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
@@ -82,16 +83,17 @@ pub struct RegExp<'a> {
     pub flags: RegExpFlags,
 }
 
+#[ast]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct StringLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub value: Atom<'a>,
 }
