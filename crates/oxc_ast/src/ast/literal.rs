@@ -21,9 +21,9 @@ use tsify::Tsify;
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct BooleanLiteral {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub value: bool,
 }
@@ -31,43 +31,43 @@ pub struct BooleanLiteral {
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct NullLiteral {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
 }
 
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct NumericLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub value: f64,
     pub raw: &'a str,
-    #[cfg_attr(feature = "serialize", serde(skip))]
+    #[serde(skip)]
     pub base: NumberBase,
 }
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct BigIntLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub raw: Atom<'a>,
-    #[cfg_attr(feature = "serialize", serde(skip))]
+    #[serde(skip)]
     pub base: BigintBase,
 }
 
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct RegExpLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     // valid regex is printed as {}
     // invalid regex is printed as null, which we can't implement yet
@@ -91,9 +91,9 @@ pub struct EmptyObject;
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(tag = "type"))]
+#[serde(tag = "type")]
 pub struct StringLiteral<'a> {
-    #[cfg_attr(feature = "serialize", serde(flatten))]
+    #[serde(flatten)]
     pub span: Span,
     pub value: Atom<'a>,
 }
