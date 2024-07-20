@@ -1,8 +1,8 @@
 //! Literals
 
-// NB: `#[span]`, `#[scope(...)]`, `#[visit(...)]`, `#[visit_as(...)]` and `#[visit_args(...)]` do
-// not do anything to the code, They are purely markers for codegen used in
-// `tasts/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in that crate.
+// NB: `#[span]`, `#[scope(...)]` and `#[visit(...)]` do NOT do anything to the code.
+// They are purely markers for codegen used in
+// `tasks/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in those crates.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]

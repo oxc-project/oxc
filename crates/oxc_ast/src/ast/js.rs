@@ -1,6 +1,6 @@
-// NB: `#[span]`, `#[scope(...)]`, `#[visit(...)]`, `#[visit_as(...)]` and `#[visit_args(...)]` do
-// not do anything to the code, They are purely markers for codegen used in
-// `tasts/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in that crate.
+// NB: `#[span]`, `#[scope(...)]` and `#[visit(...)]` do NOT do anything to the code.
+// They are purely markers for codegen used in
+// `tasks/ast_codegen` and `crates/oxc_traverse/scripts`. See docs in those crates.
 
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
@@ -79,7 +79,7 @@ pub enum Expression<'a> {
     ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
     ClassExpression(Box<'a, Class<'a>>) = 17,
     ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
-    #[visit_args(flags = ScopeFlags::Function)]
+    #[visit(args(flags = ScopeFlags::Function))]
     FunctionExpression(Box<'a, Function<'a>>) = 19,
     ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
     LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
@@ -252,7 +252,7 @@ pub enum ArrayExpressionElement<'a> {
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Elision) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
-    // TODO: support for attributes syntax here so we can use `#[visit_as(ExpressionArrayElement)]`
+    // TODO: support for attributes syntax here so we can use `#[visit(as(ExpressionArrayElement))]`
     @inherit Expression
 }
 }
@@ -966,7 +966,7 @@ pub struct BlockStatement<'a> {
 #[serde(untagged)]
 pub enum Declaration<'a> {
     VariableDeclaration(Box<'a, VariableDeclaration<'a>>) = 32,
-    #[visit_args(flags = ScopeFlags::Function)]
+    #[visit(args(flags = ScopeFlags::Function))]
     FunctionDeclaration(Box<'a, Function<'a>>) = 33,
     ClassDeclaration(Box<'a, Class<'a>>) = 34,
     UsingDeclaration(Box<'a, UsingDeclaration<'a>>) = 35,
@@ -1292,7 +1292,7 @@ pub struct TryStatement<'a> {
     pub span: Span,
     pub block: Box<'a, BlockStatement<'a>>,
     pub handler: Option<Box<'a, CatchClause<'a>>>,
-    #[visit_as(FinallyClause)]
+    #[visit(as(FinallyClause))]
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
@@ -1428,7 +1428,7 @@ pub struct BindingRestElement<'a> {
 /// Function Definitions
 #[ast(visit)]
 #[scope(
-    // `flags` passed in to visitor via parameter defined by `#[visit_args(flags = ...)]` on parents
+    // `flags` passed in to visitor via parameter defined by `#[visit(args(flags = ...))]` on parents
     flags(flags),
     strict_if(self.is_strict()),
 )]
@@ -1582,7 +1582,7 @@ pub struct Class<'a> {
     pub id: Option<BindingIdentifier<'a>>,
     #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
-    #[visit_as(ClassHeritage)]
+    #[visit(as(ClassHeritage))]
     pub super_class: Option<Expression<'a>>,
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
@@ -1632,12 +1632,12 @@ pub struct MethodDefinition<'a> {
     pub span: Span,
     pub decorators: Vec<'a, Decorator<'a>>,
     pub key: PropertyKey<'a>,
-    #[visit_args(flags = match self.kind {
+    #[visit(args(flags = match self.kind {
         MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
         MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
         MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
         MethodDefinitionKind::Method => ScopeFlags::Function,
-    })]
+    }))]
     pub value: Box<'a, Function<'a>>, // FunctionExpression
     pub kind: MethodDefinitionKind,
     pub computed: bool,
@@ -1953,7 +1953,7 @@ inherit_variants! {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ExportDefaultDeclarationKind<'a> {
-    #[visit_args(flags = ScopeFlags::Function)]
+    #[visit(args(flags = ScopeFlags::Function))]
     FunctionDeclaration(Box<'a, Function<'a>>) = 64,
     ClassDeclaration(Box<'a, Class<'a>>) = 65,
 

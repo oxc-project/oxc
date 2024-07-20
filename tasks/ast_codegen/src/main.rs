@@ -4,6 +4,7 @@ mod defs;
 mod fmt;
 mod generators;
 mod linker;
+mod markers;
 mod schema;
 mod util;
 

@@ -360,7 +360,7 @@ pub fn analyze(type_def: &TypeRef) -> Result<()> {
             let attr = match attr {
                 Some(Attribute { meta: Meta::Path(_), .. }) => AstAttr::Mark,
                 Some(attr @ Attribute { meta: Meta::List(_), .. }) => {
-                    // TODO: support for punctuated list of arguments here!
+                    // TODO: support for punctuated list of arguments here if needed!
                     let args = attr.parse_args::<Path>().normalize()?;
                     if args.is_ident("visit") {
                         AstAttr::Visit
