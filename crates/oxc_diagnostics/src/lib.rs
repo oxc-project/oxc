@@ -100,6 +100,11 @@ impl Diagnostic for OxcDiagnostic {
             .map(Box::new)
             .map(|b| b as Box<dyn Iterator<Item = LabeledSpan>>)
     }
+
+    fn code<'a>(&'a self) -> Option<Box<dyn Display + 'a>> {
+        // self.code.is_some().then(|| Box::new(&self.code) as Box<dyn Display>)
+        None
+    }
 }
 
 impl OxcDiagnostic {
@@ -138,21 +143,29 @@ impl OxcDiagnostic {
 
     #[inline]
     pub fn with_error_code_scope<T: Into<Cow<'static, str>>>(mut self, code_scope: T) -> Self {
-        self.inner.code.scope = Some(code_scope.into());
+        self.inner.code.scope = match self.inner.code.scope {
+            Some(scope) => Some(scope),
+            None => Some(code_scope.into()),
+        };
         debug_assert!(
             self.inner.code.scope.as_ref().is_some_and(|s| !s.is_empty()),
             "Error code scopes cannot be empty"
         );
+
         self
     }
 
     #[inline]
     pub fn with_error_code_num<T: Into<Cow<'static, str>>>(mut self, code_num: T) -> Self {
-        self.inner.code.number = Some(code_num.into());
+        self.inner.code.number = match self.inner.code.number {
+            Some(num) => Some(num),
+            None => Some(code_num.into()),
+        };
         debug_assert!(
             self.inner.code.number.as_ref().is_some_and(|n| !n.is_empty()),
             "Error code numbers cannot be empty"
         );
+
         self
     }
 

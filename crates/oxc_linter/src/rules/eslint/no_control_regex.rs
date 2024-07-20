@@ -11,7 +11,7 @@ use regex::{Matches, Regex};
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
 fn no_control_regex_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-control-regex): Unexpected control character(s)")
+    OxcDiagnostic::warn("Unexpected control character(s)")
         .with_help(format!("Unexpected control character(s) in regular expression: \"{x0}\""))
         .with_label(span1)
 }

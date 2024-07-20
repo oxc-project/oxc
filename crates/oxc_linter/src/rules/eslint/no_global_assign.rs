@@ -5,10 +5,8 @@ use oxc_span::{CompactStr, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_global_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(no-global-assign): Read-only global '{x0}' should not be modified."
-    ))
-    .with_label(span1.label(format!("Read-only global '{x0}' should not be modified.")))
+    OxcDiagnostic::warn(format!("Read-only global '{x0}' should not be modified."))
+        .with_label(span1.label(format!("Read-only global '{x0}' should not be modified.")))
 }
 
 #[derive(Debug, Default, Clone)]

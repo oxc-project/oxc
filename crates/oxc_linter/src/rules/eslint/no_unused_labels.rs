@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_labels_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-unused-labels): Disallow unused labels")
+    OxcDiagnostic::warn("Disallow unused labels")
         .with_help(format!("'{x0}:' is defined but never used."))
         .with_label(span1)
 }

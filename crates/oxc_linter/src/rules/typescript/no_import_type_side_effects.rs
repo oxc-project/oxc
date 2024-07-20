@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
 fn no_import_type_side_effects_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-import-type-side-effects): TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.")
+    OxcDiagnostic::warn("TypeScript will only remove the inline type specifiers which will leave behind a side effect import at runtime.")
         .with_help("Convert this to a top-level type qualifier to properly remove the entire import.")
         .with_label(span0)
 }

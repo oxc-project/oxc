@@ -16,9 +16,7 @@ fn adjacent_overload_signatures_diagnostic(
     span1: Option<Span>,
     span2: Span,
 ) -> OxcDiagnostic {
-    let mut d = OxcDiagnostic::warn(format!(
-        "typescript-eslint(adjacent-overload-signatures): All {x0:?} signatures should be adjacent."
-    ));
+    let mut d = OxcDiagnostic::warn(format!("All {x0:?} signatures should be adjacent."));
     if let Some(span) = span1 {
         d = d.and_label(span);
     }

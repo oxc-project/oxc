@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, globals::PRE_DEFINE_VAR, rule::Rule};
 
 fn no_shadow_restricted_names_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-shadow-restricted-names): Shadowing of global properties such as 'undefined' is not allowed.")
+    OxcDiagnostic::warn("Shadowing of global properties such as 'undefined' is not allowed.")
         .with_help(format!("Shadowing of global properties '{x0}'."))
         .with_label(span1)
 }

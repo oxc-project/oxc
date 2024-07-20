@@ -1,256 +1,256 @@
 ---
 source: crates/oxc_linter/src/tester.rs
 ---
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe.skip('foo', function () {})
    · ─────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe.skip.each([1, 2, 3])('%s', (a, b) => {});
    · ─────────────────────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xdescribe.each([1, 2, 3])('%s', (a, b) => {});
    · ─────────────────────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe[`skip`]('foo', function () {})
    · ────────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe['skip']('foo', function () {})
    · ────────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it.skip('foo', function () {})
    · ───────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it['skip']('foo', function () {})
    · ──────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test.skip('foo', function () {})
    · ─────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it.skip.each``('foo', function () {})
    · ──────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test.skip.each``('foo', function () {})
    · ────────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it.skip.each([])('foo', function () {})
    · ────────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test.skip.each([])('foo', function () {})
    · ──────────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test['skip']('foo', function () {})
    · ────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xdescribe('foo', function () {})
    · ─────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit('foo', function () {})
    · ───
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest('foo', function () {})
    · ─────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit.each``('foo', function () {})
    · ──────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest.each``('foo', function () {})
    · ────────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit.each([])('foo', function () {})
    · ────────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest.each([])('foo', function () {})
    · ──────────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Test is missing function argument"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Test is missing function argument
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it('has title but no callback')
    · ───────────────────────────────
    ╰────
-  help: "Add function argument"
+  help: Add function argument
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Test is missing function argument"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Test is missing function argument
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test('has title but no callback')
    · ─────────────────────────────────
    ╰────
-  help: "Add function argument"
+  help: Add function argument
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Call to pending()"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Call to pending()
    ╭─[no_disabled_tests.tsx:1:48]
  1 │ it('contains a call to pending', function () { pending() })
    ·                                                ─────────
    ╰────
-  help: "Remove pending() call"
+  help: Remove pending() call
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Call to pending()"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Call to pending()
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ pending()
    · ─────────
    ╰────
-  help: "Remove pending() call"
+  help: Remove pending() call
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Call to pending()"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Call to pending()
    ╭─[no_disabled_tests.tsx:1:54]
  1 │ describe('contains a call to pending', function () { pending() })
    ·                                                      ─────────
    ╰────
-  help: "Remove pending() call"
+  help: Remove pending() call
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Test is missing function argument"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Test is missing function argument
    ╭─[no_disabled_tests.tsx:1:38]
  1 │ import { test } from '@jest/globals';test('something');
    ·                                      ─────────────────
    ╰────
-  help: "Add function argument"
+  help: Add function argument
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ describe.skip("foo", function () {})
    · ─────────────
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest("foo", function () {})
    · ─────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit.each``("foo", function () {})
    · ──────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xtest.each``("foo", function () {})
    · ────────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Disabled test"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ xit.each([])("foo", function () {})
    · ────────────
    ╰────
-  help: "Remove x prefix"
+  help: Remove x prefix
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Test is missing function argument"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Test is missing function argument
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ it("has title but no callback")
    · ───────────────────────────────
    ╰────
-  help: "Add function argument"
+  help: Add function argument
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Test is missing function argument"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Test is missing function argument
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ test("has title but no callback")
    · ─────────────────────────────────
    ╰────
-  help: "Add function argument"
+  help: Add function argument
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Call to pending()"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Call to pending()
    ╭─[no_disabled_tests.tsx:1:48]
  1 │ it("contains a call to pending", function () { pending() })
    ·                                                ─────────
    ╰────
-  help: "Remove pending() call"
+  help: Remove pending() call
 
-  ⚠ eslint-plugin-jest(no-disabled-tests): "Call to pending()"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Call to pending()
    ╭─[no_disabled_tests.tsx:1:1]
  1 │ pending();
    · ─────────
    ╰────
-  help: "Remove pending() call"
+  help: Remove pending() call
 
-  ⚠ eslint-plugin-vitest(no-disabled-tests): "Disabled test suite"
+  ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:3:13]
  2 │             import { describe } from 'vitest'; 
  3 │             describe.skip("foo", function () {})
    ·             ─────────────
  4 │         
    ╰────
-  help: "Remove the appending `.skip`"
+  help: Remove the appending `.skip`

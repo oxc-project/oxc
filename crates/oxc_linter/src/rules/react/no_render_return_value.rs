@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_render_return_value_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(no-render-return-value): Do not depend on the return value from ReactDOM.render.")
+    OxcDiagnostic::warn("Do not depend on the return value from ReactDOM.render.")
         .with_help("Using the return value is a legacy feature.")
         .with_label(span0)
 }

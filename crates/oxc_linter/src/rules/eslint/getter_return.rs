@@ -19,7 +19,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn getter_return_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(getter-return): Expected to always return a value in getter.")
+    OxcDiagnostic::warn("Expected to always return a value in getter.")
         .with_help("Return a value from all code paths in getter.")
         .with_label(span0)
 }

@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn likely_array(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")
+    OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
         .with_help("It looks like you're spreading an `Array`. Consider using the `Array.push` or `Array.concat` methods to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             span0.label("From this spread"),
@@ -24,7 +24,7 @@ fn likely_array(span0: Span, span1: Span) -> OxcDiagnostic {
 }
 
 fn likely_object(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")
+    OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
         .with_help("It looks like you're spreading an `Object`. Consider using the `Object.assign` or assignment operators to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             span0.label("From this spread"),
@@ -33,7 +33,7 @@ fn likely_object(span0: Span, span1: Span) -> OxcDiagnostic {
 }
 
 fn unknown(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(no-accumulating-spread): Do not spread accumulators in Array.prototype.reduce()")
+    OxcDiagnostic::warn("Do not spread accumulators in Array.prototype.reduce()")
         .with_help("Consider using `Object.assign()` or `Array.prototype.push()` to mutate the accumulator instead.\nUsing spreads within accumulators leads to `O(n^2)` time complexity.")
         .with_labels([
             span0.label("From this spread"),

@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_new_wrappers_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects")
+    OxcDiagnostic::warn("Disallow new operators with the String, Number, and Boolean objects")
         .with_help(format!("do not use {x0} as a constructor, consider removing the new operator."))
         .with_label(span1)
 }

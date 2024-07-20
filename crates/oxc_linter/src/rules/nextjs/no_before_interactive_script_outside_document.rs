@@ -14,7 +14,7 @@ use crate::{
 };
 
 fn no_before_interactive_script_outside_document_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-next(no-before-interactive-script-outside-document): next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`")
+    OxcDiagnostic::warn("next/script's `beforeInteractive` strategy should not be used outside of `pages/_document.js`")
         .with_help("See https://nextjs.org/docs/messages/no-before-interactive-script-outside-document")
         .with_label(span0)
 }

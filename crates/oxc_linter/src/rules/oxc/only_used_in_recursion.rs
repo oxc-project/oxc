@@ -10,7 +10,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "oxc(only-used-in-recursion): Parameter `{x1}` is only used in recursive calls"
+        "Parameter `{x1}` is only used in recursive calls"
     ))
     .with_help(
         "Remove the argument and its usage. Alternatively, use the argument in the function body.",

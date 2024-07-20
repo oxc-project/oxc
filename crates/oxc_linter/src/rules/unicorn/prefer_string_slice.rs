@@ -6,10 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_string_slice_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#{x1}()"
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Prefer String#slice() over String#{x1}()")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

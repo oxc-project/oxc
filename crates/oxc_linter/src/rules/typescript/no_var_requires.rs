@@ -6,11 +6,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{ast_util::is_global_require_call, context::LintContext, rule::Rule, AstNode};
 
 fn no_var_requires_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(no-var-requires): Require statement not part of import statement.",
-    )
-    .with_help("Use ES6 style imports or import instead.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Require statement not part of import statement.")
+        .with_help("Use ES6 style imports or import instead.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

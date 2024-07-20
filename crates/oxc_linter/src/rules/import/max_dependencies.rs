@@ -6,7 +6,7 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule};
 
 fn max_dependencies_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-import(max-dependencies): {x0:?}"))
+    OxcDiagnostic::warn(format!("{x0:?}"))
         .with_help("Reduce the number of dependencies in this file")
         .with_label(span1)
 }

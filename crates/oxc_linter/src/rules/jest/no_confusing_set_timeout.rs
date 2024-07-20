@@ -13,20 +13,17 @@ use crate::{
 };
 
 fn no_global_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
-        .with_help("`jest.setTimeout` should be call in `global` scope")
-        .with_label(span0)
+    OxcDiagnostic::warn("`jest.setTimeout` should be call in `global` scope").with_label(span0)
 }
 
 fn no_multiple_set_timeouts_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
-        .with_help("Do not call `jest.setTimeout` multiple times, as only the last call will have an effect")
+    OxcDiagnostic::warn("Do not call `jest.setTimeout` multiple times")
+        .with_help("Only the last call to `jest.setTimeout` will have an effect.")
         .with_label(span0)
 }
 
 fn no_unorder_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
-        .with_help("`jest.setTimeout` should be placed before any other jest methods")
+    OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods")
         .with_label(span0)
 }
 

@@ -10,7 +10,7 @@ use phf::{phf_map, phf_set};
 use crate::{context::LintContext, rule::Rule, utils::has_jsx_prop_lowercase, AstNode};
 
 fn role_has_required_aria_props_diagnostic(span: Span, role: &str, props: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-has-required-aria-props): `{role}` role is missing required aria props `{props}`."))
+    OxcDiagnostic::warn(format!("`{role}` role is missing required aria props `{props}`."))
         .with_help(format!("Add missing aria props `{props}` to the element with `{role}` role."))
         .and_label(span)
 }

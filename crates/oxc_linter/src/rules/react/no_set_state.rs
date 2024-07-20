@@ -11,7 +11,7 @@ use crate::{
 };
 
 fn no_set_state_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(no-set-state): Do not use setState").with_label(span0)
+    OxcDiagnostic::warn("Do not use setState").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

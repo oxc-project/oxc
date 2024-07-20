@@ -28,7 +28,7 @@ declare_oxc_lint!(
 );
 
 fn no_non_null_asserted_nullish_coalescing_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-non-null-asserted-nullish-coalescing): 'Disallow non-null assertions in the left operand of a nullish coalescing operator")
+    OxcDiagnostic::warn("'Disallow non-null assertions in the left operand of a nullish coalescing operator")
         .with_help("The nullish coalescing operator is designed to handle undefined and null - using a non-null assertion is not needed.")
         .with_label(span0)
 }
