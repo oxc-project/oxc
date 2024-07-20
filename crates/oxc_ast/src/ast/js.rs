@@ -322,6 +322,7 @@ pub enum PropertyKey<'a> {
 }
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
@@ -369,6 +370,7 @@ pub struct TemplateElement<'a> {
 }
 
 /// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
+#[ast]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct TemplateElementValue<'a> {
@@ -1012,6 +1014,7 @@ pub struct VariableDeclaration<'a> {
     pub declare: bool,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
@@ -1475,6 +1478,7 @@ pub struct Function<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FunctionType {
@@ -1518,6 +1522,7 @@ pub struct FormalParameter<'a> {
     pub r#override: bool,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FormalParameterKind {
@@ -1602,6 +1607,7 @@ pub struct Class<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum ClassType {
@@ -1656,6 +1662,7 @@ pub struct MethodDefinition<'a> {
     pub accessibility: Option<TSAccessibility>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum MethodDefinitionType {
@@ -1685,6 +1692,7 @@ pub struct PropertyDefinition<'a> {
     pub accessibility: Option<TSAccessibility>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum PropertyDefinitionType {
@@ -1692,6 +1700,7 @@ pub enum PropertyDefinitionType {
     TSAbstractPropertyDefinition,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
@@ -1761,6 +1770,7 @@ macro_rules! match_module_declaration {
 }
 pub use match_module_declaration;
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum AccessorPropertyType {

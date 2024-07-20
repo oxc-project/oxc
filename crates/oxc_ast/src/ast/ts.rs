@@ -294,6 +294,7 @@ pub struct TSTypeOperator<'a> {
     pub type_annotation: TSType<'a>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
@@ -621,6 +622,7 @@ pub struct TSTypeAliasDeclaration<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
@@ -722,6 +724,7 @@ pub struct TSCallSignatureDeclaration<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
@@ -838,6 +841,7 @@ pub struct TSModuleDeclaration<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
@@ -1019,6 +1023,7 @@ pub struct TSMappedType<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -1172,6 +1177,7 @@ pub struct TSInstantiationExpression<'a> {
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]

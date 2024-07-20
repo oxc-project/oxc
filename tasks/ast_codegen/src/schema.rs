@@ -386,7 +386,7 @@ pub fn analyze(type_def: &TypeRef) -> Result<()> {
             // AST without visit!
             type_def.borrow_mut().set_ast(true)?;
         }
-        Some(AstAttr::None) => { /* non AST types */ }
+        Some(AstAttr::None) => return Err(String::from("All `enums` and `structs` defined in the source of truth should be marked with an `#[ast]` attribute!")),
         None => { /* unrelated items like `use`, `type` and `macro` definitions */ }
     }
 

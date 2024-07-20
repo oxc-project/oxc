@@ -75,6 +75,7 @@ pub struct RegExpLiteral<'a> {
     pub regex: RegExp<'a>,
 }
 
+#[ast]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct RegExp<'a> {
@@ -82,6 +83,7 @@ pub struct RegExp<'a> {
     pub flags: RegExpFlags,
 }
 
+#[ast]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
