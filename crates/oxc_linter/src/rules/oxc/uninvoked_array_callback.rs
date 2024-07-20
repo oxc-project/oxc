@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn uninvoked_array_callback_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(uninvoked-array-callback): Uninvoked array callback")
+    OxcDiagnostic::warn("Uninvoked array callback")
         .with_help(
             "consider filling the array with `undefined` values using `Array.prototype.fill()`",
         )

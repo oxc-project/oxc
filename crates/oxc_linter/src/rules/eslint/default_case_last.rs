@@ -6,10 +6,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn default_case_last_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(default-case-last): Enforce default clauses in switch statements to be last",
-    )
-    .with_label(span0.label("Default clause should be the last clause."))
+    OxcDiagnostic::warn("Enforce default clauses in switch statements to be last")
+        .with_label(span0.label("Default clause should be the last clause."))
 }
 
 #[derive(Debug, Default, Clone)]

@@ -13,7 +13,7 @@ use crate::{
 };
 
 fn no_console_spaces_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-console-spaces): Do not use {x0} spaces with `console.{x1}` parameters"))
+    OxcDiagnostic::warn(format!("Do not use {x0} spaces with `console.{x1}` parameters"))
         .with_help("The `console.log()` method and similar methods join the parameters with a space so adding a leading/trailing space to a parameter, results in two spaces being added.")
         .with_label(span2)
 }

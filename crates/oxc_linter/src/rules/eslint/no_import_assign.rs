@@ -9,7 +9,7 @@ use phf::phf_set;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_import_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-import-assign): do not assign to imported bindings")
+    OxcDiagnostic::warn("do not assign to imported bindings")
         .with_help("imported bindings are readonly")
         .with_label(span0)
 }

@@ -10,11 +10,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_named_as_default_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-import(no-webpack-loader-syntax): Unexpected `!` in `{x0}`."
-    ))
-    .with_help("Do not use import syntax to configure webpack loaders")
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Unexpected `!` in `{x0}`."))
+        .with_help("Do not use import syntax to configure webpack loaders")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

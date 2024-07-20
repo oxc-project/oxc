@@ -6,7 +6,7 @@ use oxc_syntax::module_record::{ExportImportName, ImportImportName};
 use crate::{context::LintContext, rule::Rule};
 
 fn named_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-import(named): named import {x0:?} not found"))
+    OxcDiagnostic::warn(format!("named import {x0:?} not found"))
         .with_help(format!("does {x1:?} have the export {x0:?}?"))
         .with_label(span2)
 }

@@ -8,7 +8,7 @@ use crate::{
 };
 
 fn no_empty_file_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")
+    OxcDiagnostic::warn("Empty files are not allowed.")
         .with_help("Delete this file or add some code to it.")
         .with_label(span0)
 }

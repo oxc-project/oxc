@@ -21,29 +21,19 @@ use crate::{
 };
 
 fn no_import_type_annotations_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(consistent-type-imports): `import()` type annotations are forbidden.",
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("`import()` type annotations are forbidden.").with_label(span)
 }
 
 fn avoid_import_type_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(consistent-type-imports): Use an `import` instead of an `import type`.",
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("Use an `import` instead of an `import type`.").with_label(span)
 }
 fn type_over_value_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn( "typescript-eslint(consistent-type-imports): All imports in the declaration are only used as types. Use `import type`."
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("All imports in the declaration are only used as types. Use `import type`.")
+        .with_label(span)
 }
 
 fn some_imports_are_only_types_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "typescript-eslint(consistent-type-imports): Imports {x1} are only used as type."
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Imports {x1} are only used as type.")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

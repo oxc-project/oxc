@@ -9,9 +9,7 @@ use crate::{
 };
 
 fn aria_props_diagnostic(span: Span, prop_name: &str, suggestion: Option<&str>) -> OxcDiagnostic {
-    let mut err = OxcDiagnostic::warn(format!(
-        "eslint-plugin-jsx-a11y(aria-props): '{prop_name}' is not a valid ARIA attribute."
-    ));
+    let mut err = OxcDiagnostic::warn(format!("'{prop_name}' is not a valid ARIA attribute."));
 
     if let Some(suggestion) = suggestion {
         err = err.with_help(format!("Did you mean '{suggestion}'?"));

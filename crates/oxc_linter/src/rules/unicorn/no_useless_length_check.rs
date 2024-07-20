@@ -13,7 +13,7 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn some(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-length-check)")
+    OxcDiagnostic::warn("Found a useless array length check")
         .with_help(
             "The non-empty check is useless as `Array#some()` returns `false` for an empty array.",
         )
@@ -21,7 +21,7 @@ fn some(span0: Span) -> OxcDiagnostic {
 }
 
 fn every(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-useless-length-check)")
+    OxcDiagnostic::warn("Found a useless array length check")
         .with_help(
             "The empty check is useless as `Array#every()` returns `true` for an empty array.",
         )

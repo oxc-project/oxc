@@ -17,13 +17,11 @@ use crate::{
 };
 
 fn empty_test(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")
-        .with_label(span0)
+    OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span0)
 }
 
 fn un_implemented_test_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")
-        .with_label(span0)
+    OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -63,22 +63,15 @@ declare_oxc_lint!(
 );
 
 fn empty_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-extraneous-class): Unexpected empty class.")
-        .with_label(span)
+    OxcDiagnostic::warn("Unexpected empty class.").with_label(span)
 }
 
 fn only_static_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(no-extraneous-class): Unexpected class with only static properties.",
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("Unexpected class with only static properties.").with_label(span)
 }
 
 fn only_constructor_no_extraneous_class_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.",
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("Unexpected class with only a constructor.").with_label(span)
 }
 
 impl Rule for NoExtraneousClass {

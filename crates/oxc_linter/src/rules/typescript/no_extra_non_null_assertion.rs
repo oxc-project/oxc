@@ -6,8 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_extra_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-extra-non-null-assertion): extra non-null assertion")
-        .with_label(span0)
+    OxcDiagnostic::warn("extra non-null assertion").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

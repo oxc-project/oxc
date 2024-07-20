@@ -6,11 +6,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_code_point_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(prefer-code-point): Prefer `{x1}` over `{x2}`"
-    ))
-    .with_help(format!("Unicode is better supported in `{x1}` than `{x2}`"))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`"))
+        .with_help(format!("Unicode is better supported in `{x1}` than `{x2}`"))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

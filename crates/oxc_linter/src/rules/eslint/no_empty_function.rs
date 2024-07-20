@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_function_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-empty-function): Disallow empty functions")
+    OxcDiagnostic::warn("Disallow empty functions")
         .with_help("Unexpected empty function block")
         .with_label(span0)
 }

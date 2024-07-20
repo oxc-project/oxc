@@ -87,7 +87,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub fn plugin_name(&self) -> &str {
+            pub fn plugin_name(&self) -> &'static str {
                 match self {
                     #(Self::#struct_names(_) => #plugin_names),*
                 }

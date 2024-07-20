@@ -7,7 +7,8 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule, AstNode};
 
 fn no_typeof_undefined_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.").with_label(span0)
+    OxcDiagnostic::warn("Compare with `undefined` directly instead of using `typeof`.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

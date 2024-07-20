@@ -14,7 +14,7 @@ use crate::{
 };
 
 fn jsx_no_new_object_as_prop_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.")
+    OxcDiagnostic::warn("JSX attribute values should not contain objects created in the same scope.")
         .with_help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).")
         .with_label(span0)
 }

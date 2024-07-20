@@ -6,10 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn static_promise_diagnostic(x0: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-promise(no-new-statics): Disallow calling `new` on a `Promise.{x0}`"
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Disallow calling `new` on a `Promise.{x0}`")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

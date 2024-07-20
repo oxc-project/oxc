@@ -14,7 +14,7 @@ use crate::{
 };
 
 fn bad_replace_all_arg_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")
+    OxcDiagnostic::warn("Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.")
         .with_help("To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.")
         .with_labels([
             span0.label("`replaceAll` called here"),

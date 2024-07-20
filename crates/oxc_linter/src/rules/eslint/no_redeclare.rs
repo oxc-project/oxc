@@ -9,17 +9,17 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_redeclare_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-redeclare): '{x0}' is already defined.")).with_labels([
+    OxcDiagnostic::warn(format!("'{x0}' is already defined.")).with_labels([
         span1.label(format!("'{x0}' is already defined.")),
         span2.label("It can not be redeclare here."),
     ])
 }
 
 fn no_redeclare_as_builti_in_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(no-redeclare): '{x0}' is already defined as a built-in global variable."
-    ))
-    .with_label(span1.label(format!("'{x0}' is already defined as a built-in global variable.")))
+    OxcDiagnostic::warn(format!("'{x0}' is already defined as a built-in global variable."))
+        .with_label(
+            span1.label(format!("'{x0}' is already defined as a built-in global variable.")),
+        )
 }
 
 #[derive(Debug, Default, Clone)]
