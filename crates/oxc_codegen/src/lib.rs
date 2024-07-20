@@ -14,16 +14,18 @@ use std::{borrow::Cow, ops::Range};
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
-    ast::{BlockStatement, Directive, Expression, Program, Statement},
+    ast::{
+        BindingIdentifier, BlockStatement, Directive, Expression, IdentifierReference, Program,
+        Statement,
+    },
     Comment, Trivias,
 };
 use oxc_mangler::Mangler;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use oxc_syntax::{
     identifier::is_identifier_part,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
-    symbol::SymbolId,
 };
 
 pub use crate::{
@@ -425,19 +427,25 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
-    #[allow(clippy::needless_pass_by_value)]
-    fn print_symbol(&mut self, span: Span, symbol_id: Option<SymbolId>, fallback: &str) {
+    fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &str {
         if let Some(mangler) = &self.mangler {
-            if let Some(symbol_id) = symbol_id {
-                let name = mangler.get_symbol_name(symbol_id);
-                let name = CompactStr::new(name);
-                self.add_source_mapping_for_name(span, &name);
-                self.print_str(&name);
-                return;
+            if let Some(reference_id) = reference.reference_id.get() {
+                if let Some(name) = mangler.get_reference_name(reference_id) {
+                    return name;
+                }
             }
         }
-        self.add_source_mapping_for_name(span, fallback);
-        self.print_str(fallback);
+        reference.name.as_str()
+    }
+
+    fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &str {
+        if let Some(mangler) = &self.mangler {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                let name = mangler.get_symbol_name(symbol_id);
+                return name;
+            }
+        }
+        ident.name.as_str()
     }
 
     fn print_space_before_operator(&mut self, next: Operator) {
