@@ -50,7 +50,7 @@ fn is_safe_from_name_collisions<'a>(ctx: &LintContext<'a>, stmt: &Statement, par
           bindings.iter().find(|(_, bindings_symbol_id)| symbol_id == bindings_symbol_id).is_none()
         })
         .collect();
-        
+      
       if bindings.iter().any(|(name, _)| {
         parent_bindings.iter().any(|(parent_name, _)| name == parent_name)
       }) {
@@ -64,19 +64,49 @@ fn is_safe_from_name_collisions<'a>(ctx: &LintContext<'a>, stmt: &Statement, par
   }
 }
 
-fn no_else_return_diagnostic(stmt: &Statement) -> OxcDiagnostic{
-  OxcDiagnostic::warn("eslint(no-else-return): Disallow `else` blocks after `return` statements in `if` statements")
-      .with_label(stmt.span())
+fn replace_block(str: &str) -> String {
+  let mut res = String::from(str);
+  let len = res.len();
+  if &str[0..1] == "{" && &str[len-1..len] == "}" {
+    res = String::from(&res[1..len-1]);
+  }
+  res
 }
 
-fn no_else_return_diagnostic_fix<'a>(ctx: &LintContext<'a>, stmt: &Statement, parent_scope_id: ScopeId) {
-  if !is_safe_from_name_collisions(ctx, stmt, parent_scope_id) {
-    return ctx.diagnostic(no_else_return_diagnostic(stmt));
+fn get_else_code_space_token(str: &str, else_code: &str) -> String {
+  let res = String::from(str).replacen("else ", "", 1).replace(else_code, "");
+  res
+}
+
+fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic{
+  OxcDiagnostic::warn("eslint(no-else-return): Disallow `else` blocks after `return` statements in `if` statements")
+      .with_label(else_stmt.span())
+}
+
+fn no_else_return_diagnostic_fix<'a>(ctx: &LintContext<'a>, else_stmt_prev: &Statement, else_stmt: &Statement, if_block_node: &AstNode) {
+  let parent_scope_id = if_block_node.scope_id();
+
+  if !is_safe_from_name_collisions(ctx, else_stmt, parent_scope_id) {
+    return ctx.diagnostic(no_else_return_diagnostic(else_stmt));
   };
+
   ctx.diagnostic_with_fix(
-    no_else_return_diagnostic(stmt),
-    |fixer| {      
-      fixer.replace(Span::new(0,0), "")
+    no_else_return_diagnostic(else_stmt),
+    |fixer| {
+      let prev_span = else_stmt_prev.span();
+      let span = else_stmt.span();
+
+      let else_code = ctx.source_range(span);
+      let else_code_prev_token = get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
+      let fix_else_code = format!("{}{}", else_code_prev_token, replace_block(else_code));
+
+      println!(
+        "raw_prev: {:?} raw: {:?} fix: {:?}", 
+        ctx.source_range(else_stmt_prev.span()), 
+        else_code, 
+        fix_else_code
+      );
+      fixer.replace(Span::new(prev_span.end, span.end), fix_else_code)
   })
 }
 
@@ -90,11 +120,10 @@ fn check_for_return(node: &Statement) -> bool {
 fn naive_has_return(node: &Statement) -> bool {
   match node {
     Statement::BlockStatement(block) => {
-      let last_child = block.body.last();
-      match last_child {
-        Some(node) => check_for_return(node),
-        None => false
-      }
+      let Some(last_child) = block.body.last() else {
+        return false;
+      };
+      check_for_return(last_child)
     },
     node => check_for_return(node)
   }
@@ -121,26 +150,34 @@ fn always_returns(stmt: &Statement) -> bool {
   }
 }
 
-fn check_if_with_else<'a>(ctx: &LintContext<'a>, if_stmt: &IfStatement<'a>,  parent_scope_id: ScopeId) {
+fn check_if_with_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
+  let AstKind::IfStatement(if_stmt) = node.kind() else {
+    return;
+  };
   let Some(alternate) = &if_stmt.alternate else {
     return;
   };
 
   if always_returns(&if_stmt.consequent) {
-    no_else_return_diagnostic_fix(ctx, alternate, parent_scope_id);
+    no_else_return_diagnostic_fix(ctx, &if_stmt.consequent, alternate, node);
   }
 }
 
-fn check_if_without_else<'a>(ctx: &LintContext<'a>, if_stmt: &IfStatement<'a>, parent_scope_id: ScopeId) {
+fn check_if_without_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
+  let AstKind::IfStatement(if_stmt) = node.kind() else {
+    return;
+  };
   let mut consequents: Vec<&Statement> = Vec::new();
   let mut current_node = if_stmt;
-  let mut last_alternate: &Statement;
+  let mut last_alternate;
+  let mut last_alternate_prev;
 
   loop {
     let Some(alternate) = &current_node.alternate else {
       return;
     };
     consequents.push(&current_node.consequent);
+    last_alternate_prev = &current_node.consequent;
     last_alternate = alternate;
     match alternate {
       Statement::IfStatement(if_stmt) => {
@@ -152,7 +189,7 @@ fn check_if_without_else<'a>(ctx: &LintContext<'a>, if_stmt: &IfStatement<'a>, p
 
   
   if consequents.iter().all(|stmt| always_returns(stmt)) {
-    no_else_return_diagnostic_fix(ctx, last_alternate, parent_scope_id);
+    no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
   }
 }
 
@@ -180,7 +217,7 @@ impl Rule for NoElseReturn {
   }
 
   fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    let AstKind::IfStatement(if_stmt) = node.kind() else {
+    let AstKind::IfStatement(_) = node.kind() else {
       return;
     };
 
@@ -188,17 +225,14 @@ impl Rule for NoElseReturn {
       return;
     };
 
-    let parent_scope_id = parent_node.scope_id();
-    // println!("{:?}", ctx.source_range(parent_node.kind().span()));
-
     if !is_in_statement_list_parents(parent_node) {
       return;
     }
-
-    if self.allow_else_if { 
-      check_if_without_else(ctx, if_stmt, parent_scope_id);
+    println!("[validate] {:?}", ctx.source_range(node.kind().span()));
+    if self.allow_else_if {
+      check_if_without_else(ctx, node);
     } else {
-      check_if_with_else(ctx, if_stmt, parent_scope_id);
+      check_if_with_else(ctx, node);
     }
 	}
 }
