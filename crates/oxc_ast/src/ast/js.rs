@@ -325,7 +325,7 @@ pub enum PropertyKey<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum PropertyKind {
     Init,
     Get,
@@ -1011,7 +1011,7 @@ pub struct VariableDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum VariableDeclarationKind {
     Var,
     Const,
@@ -1688,7 +1688,7 @@ pub enum PropertyDefinitionType {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum MethodDefinitionKind {
     Constructor,
     Method,

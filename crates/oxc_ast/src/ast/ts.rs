@@ -297,7 +297,7 @@ pub struct TSTypeOperator<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum TSTypeOperatorOperator {
     Keyof,
     Unique,
@@ -625,7 +625,7 @@ pub struct TSTypeAliasDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum TSAccessibility {
     Private,
     Protected,
@@ -727,7 +727,7 @@ pub struct TSCallSignatureDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum TSMethodSignatureKind {
     Method,
     Get,
@@ -841,7 +841,7 @@ pub struct TSModuleDeclaration<'a> {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
     Global,
     Module,
