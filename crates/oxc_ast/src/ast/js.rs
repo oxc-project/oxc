@@ -581,6 +581,8 @@ pub struct LogicalExpression<'a> {
 }
 
 /// Conditional Expression
+///
+/// This is a ternary
 #[visited_node]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

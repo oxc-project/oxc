@@ -259,7 +259,11 @@ impl Tester {
         let allocator = Allocator::default();
         let rule = self.find_rule().read_json(rule_config.unwrap_or_default());
         let options = LintOptions::default()
-            .with_fix(is_fix.then_some(FixKind::DangerousFix).unwrap_or_default())
+            .with_fix(
+                is_fix
+                    .then_some(FixKind::DangerousFix.union(FixKind::Suggestion))
+                    .unwrap_or_default(),
+            )
             .with_import_plugin(self.import_plugin)
             .with_jest_plugin(self.jest_plugin)
             .with_vitest_plugin(self.vitest_plugin)

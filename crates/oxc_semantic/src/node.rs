@@ -1,6 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_cfg::BasicBlockId;
 use oxc_index::IndexVec;
+use oxc_span::GetSpan;
 pub use oxc_syntax::node::{AstNodeId, NodeFlags};
 
 use crate::scope::ScopeId;
@@ -54,6 +55,12 @@ impl<'a> AstNode<'a> {
 
     pub fn flags_mut(&mut self) -> &mut NodeFlags {
         &mut self.flags
+    }
+}
+
+impl GetSpan for AstNode<'_> {
+    fn span(&self) -> oxc_span::Span {
+        self.kind.span()
     }
 }
 
