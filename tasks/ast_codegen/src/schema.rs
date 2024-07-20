@@ -5,11 +5,11 @@ use syn::{
     parse::{Parse, ParseBuffer},
     parse_quote,
     punctuated::Punctuated,
-    Attribute, Generics, Ident, Item, ItemConst, ItemEnum, ItemMacro, ItemStruct, ItemUse, Token,
-    Type, Variant, Visibility,
+    Attribute, Generics, Ident, Item, ItemConst, ItemEnum, ItemMacro, ItemStruct, ItemUse, Meta,
+    MetaList, Path, Token, Type, Variant, Visibility,
 };
 
-use crate::TypeName;
+use crate::{util::NormalizeError, TypeName};
 
 use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result, TypeDef, TypeRef};
 
@@ -40,6 +40,7 @@ impl From<Ident> for Inherit {
 pub struct EnumMeta {
     pub inherits: Vec<Inherit>,
     pub visitable: bool,
+    pub ast: bool,
 }
 
 #[derive(Debug)]
@@ -74,6 +75,7 @@ impl From<ItemEnum> for REnum {
 #[derive(Debug, Default, Clone)]
 pub struct StructMeta {
     pub visitable: bool,
+    pub ast: bool,
 }
 
 #[derive(Debug)]
@@ -152,9 +154,24 @@ impl RType {
     }
 
     pub fn set_visitable(&mut self, value: bool) -> Result<()> {
+        macro_rules! assign {
+            ($it:ident) => {{
+                debug_assert!($it.meta.ast, "only ast types can be visitable!");
+                $it.meta.visitable = value;
+            }};
+        }
         match self {
-            RType::Enum(it) => it.meta.visitable = value,
-            RType::Struct(it) => it.meta.visitable = value,
+            RType::Enum(it) => assign!(it),
+            RType::Struct(it) => assign!(it),
+            _ => return Err("Unsupported type!".to_string()),
+        }
+        Ok(())
+    }
+
+    pub fn set_ast(&mut self, value: bool) -> Result<()> {
+        match self {
+            RType::Enum(it) => it.meta.ast = value,
+            RType::Struct(it) => it.meta.ast = value,
             _ => return Err("Unsupported type!".to_string()),
         }
         Ok(())
@@ -203,10 +220,10 @@ impl Module {
     pub fn load(mut self) -> Result<Self> {
         assert!(!self.loaded, "can't load twice!");
 
-        let mut file = std::fs::File::open(&self.path).map_err(|e| e.to_string())?;
+        let mut file = std::fs::File::open(&self.path).normalize()?;
         let mut content = String::new();
-        file.read_to_string(&mut content).map_err(|e| e.to_string())?;
-        let file = parse_file(content.as_str()).map_err(|e| e.to_string())?;
+        file.read_to_string(&mut content).normalize()?;
+        let file = parse_file(content.as_str()).normalize()?;
         self.shebang = file.shebang;
         self.attrs = file.attrs;
         self.items = file
@@ -311,7 +328,7 @@ pub fn expand(type_def: &TypeRef) -> Result<()> {
                         inherits,
                     ))
                 })
-                .map_err(|e| e.to_string())?;
+                .normalize()?;
             Some(RType::Enum(REnum::with_meta(
                 enum_,
                 EnumMeta {
@@ -331,16 +348,46 @@ pub fn expand(type_def: &TypeRef) -> Result<()> {
 }
 
 pub fn analyze(type_def: &TypeRef) -> Result<()> {
-    let is_visitable = match &*type_def.borrow() {
+    enum AstAttr {
+        None,
+        Mark,
+        Visit,
+    }
+    let ast_attr = match &*type_def.borrow() {
         RType::Enum(REnum { item: ItemEnum { attrs, .. }, .. })
         | RType::Struct(RStruct { item: ItemStruct { attrs, .. }, .. }) => {
-            Some(attrs.iter().any(|attr| attr.path().is_ident("visited_node")))
+            let attr = attrs.iter().find(|attr| attr.path().is_ident("ast"));
+            let attr = match attr {
+                Some(Attribute { meta: Meta::Path(_), .. }) => AstAttr::Mark,
+                Some(attr @ Attribute { meta: Meta::List(_), .. }) => {
+                    // TODO: support for punctuated list of arguments here!
+                    let args = attr.parse_args::<Path>().normalize()?;
+                    if args.is_ident("visit") {
+                        AstAttr::Visit
+                    } else {
+                        AstAttr::Mark
+                    }
+                }
+                Some(_) => return Err(String::from("Invalid arguments in the `ast` attribute!")),
+                None => AstAttr::None,
+            };
+            Some(attr)
         }
         _ => None,
     };
 
-    if let Some(is_visitable) = is_visitable {
-        type_def.borrow_mut().set_visitable(is_visitable)?;
+    #[allow(clippy::match_same_arms)]
+    match ast_attr {
+        Some(AstAttr::Visit) => {
+            type_def.borrow_mut().set_ast(true)?;
+            type_def.borrow_mut().set_visitable(true)?;
+        }
+        Some(AstAttr::Mark) => {
+            // AST without visit!
+            type_def.borrow_mut().set_ast(true)?;
+        }
+        Some(AstAttr::None) => { /* non AST types */ }
+        None => { /* unrelated items like `use`, `type` and `macro` definitions */ }
     }
 
     Ok(())

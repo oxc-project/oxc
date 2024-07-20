@@ -10,7 +10,7 @@
 use std::hash::Hash;
 
 use bitflags::bitflags;
-use oxc_ast_macros::visited_node;
+use oxc_ast_macros::ast;
 use oxc_span::{Atom, Span};
 use oxc_syntax::number::{BigintBase, NumberBase};
 #[cfg(feature = "serialize")]
@@ -18,7 +18,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -28,7 +28,7 @@ pub struct BooleanLiteral {
     pub value: bool,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -37,7 +37,7 @@ pub struct NullLiteral {
     pub span: Span,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -50,7 +50,7 @@ pub struct NumericLiteral<'a> {
     pub base: NumberBase,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -62,7 +62,7 @@ pub struct BigIntLiteral<'a> {
     pub base: BigintBase,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -86,7 +86,7 @@ pub struct RegExp<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct EmptyObject;
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]

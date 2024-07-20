@@ -27,7 +27,7 @@ use defs::TypeDef;
 use generators::{AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
-use util::write_all_to;
+use util::{write_all_to, NormalizeError};
 
 use crate::generators::ImplGetSpanGenerator;
 
@@ -250,7 +250,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
         let path = schema_path.to_str().expect("invalid path for schema output.");
-        let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
+        let schema = serde_json::to_string_pretty(&schema).normalize()?;
         write_all_to(schema.as_bytes(), path)?;
     }
 

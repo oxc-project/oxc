@@ -8,7 +8,7 @@
 use std::cell::Cell;
 
 use oxc_allocator::{Box, Vec};
-use oxc_ast_macros::visited_node;
+use oxc_ast_macros::ast;
 use oxc_span::{Atom, SourceType, Span};
 use oxc_syntax::{
     operator::{
@@ -27,7 +27,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
-#[visited_node]
+#[ast(visit)]
 #[scope(
     flags(ScopeFlags::Top),
     strict_if(self.source_type.is_strict() || self.directives.iter().any(Directive::is_use_strict)),
@@ -51,7 +51,7 @@ inherit_variants! {
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -160,7 +160,7 @@ macro_rules! match_expression {
 pub use match_expression;
 
 /// Identifier Name
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
@@ -171,7 +171,7 @@ pub struct IdentifierName<'a> {
 }
 
 /// Identifier Reference
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
@@ -186,7 +186,7 @@ pub struct IdentifierReference<'a> {
 }
 
 /// Binding Identifier
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
@@ -199,7 +199,7 @@ pub struct BindingIdentifier<'a> {
 }
 
 /// Label Identifier
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "Identifier"))]
@@ -210,7 +210,7 @@ pub struct LabelIdentifier<'a> {
 }
 
 /// This Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -220,7 +220,7 @@ pub struct ThisExpression {
 }
 
 /// <https://tc39.es/ecma262/#prod-ArrayLiteral>
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -241,7 +241,7 @@ inherit_variants! {
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -259,14 +259,14 @@ pub enum ArrayExpressionElement<'a> {
 
 /// Array Expression Elision Element
 /// Serialized as `null` in JSON AST. See `serialize.rs`.
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 pub struct Elision {
     pub span: Span,
 }
 
 /// Object Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -278,7 +278,7 @@ pub struct ObjectExpression<'a> {
     pub trailing_comma: Option<Span>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -287,7 +287,7 @@ pub enum ObjectPropertyKind<'a> {
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -309,7 +309,7 @@ inherit_variants! {
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -334,7 +334,7 @@ pub enum PropertyKind {
 /// Template Literal
 ///
 /// This is interpreted by interleaving the expression elements in between the quasi elements.
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -345,7 +345,7 @@ pub struct TemplateLiteral<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -357,7 +357,7 @@ pub struct TaggedTemplateExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -384,7 +384,7 @@ pub struct TemplateElementValue<'a> {
 }
 
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -410,7 +410,7 @@ macro_rules! match_member_expression {
 pub use match_member_expression;
 
 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -423,7 +423,7 @@ pub struct ComputedMemberExpression<'a> {
 }
 
 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -436,7 +436,7 @@ pub struct StaticMemberExpression<'a> {
 }
 
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -449,7 +449,7 @@ pub struct PrivateFieldExpression<'a> {
 }
 
 /// Call Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -463,7 +463,7 @@ pub struct CallExpression<'a> {
 }
 
 /// New Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -476,7 +476,7 @@ pub struct NewExpression<'a> {
 }
 
 /// Meta Property `new.target` | `import.meta`
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -488,7 +488,7 @@ pub struct MetaProperty<'a> {
 }
 
 /// Spread Element
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -504,7 +504,7 @@ inherit_variants! {
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -517,7 +517,7 @@ pub enum Argument<'a> {
 }
 
 /// Update Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -530,7 +530,7 @@ pub struct UpdateExpression<'a> {
 }
 
 /// Unary Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -542,7 +542,7 @@ pub struct UnaryExpression<'a> {
 }
 
 /// Binary Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -555,7 +555,7 @@ pub struct BinaryExpression<'a> {
 }
 
 /// Private Identifier in Shift Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -568,7 +568,7 @@ pub struct PrivateInExpression<'a> {
 }
 
 /// Binary Logical Operators
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -581,7 +581,7 @@ pub struct LogicalExpression<'a> {
 }
 
 /// Conditional Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -594,7 +594,7 @@ pub struct ConditionalExpression<'a> {
 }
 
 /// Assignment Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -613,7 +613,7 @@ inherit_variants! {
 /// See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -632,7 +632,7 @@ inherit_variants! {
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -687,7 +687,7 @@ macro_rules! match_simple_assignment_target {
 }
 pub use match_simple_assignment_target;
 
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -707,7 +707,7 @@ macro_rules! match_assignment_target_pattern {
 pub use match_assignment_target_pattern;
 
 // See serializer in serialize.rs
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -726,7 +726,7 @@ pub struct ArrayAssignmentTarget<'a> {
 }
 
 // See serializer in serialize.rs
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -742,7 +742,7 @@ pub struct ObjectAssignmentTarget<'a> {
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "RestElement"))]
@@ -759,7 +759,7 @@ inherit_variants! {
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -771,7 +771,7 @@ pub enum AssignmentTargetMaybeDefault<'a> {
 }
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -782,7 +782,7 @@ pub struct AssignmentTargetWithDefault<'a> {
     pub init: Expression<'a>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -792,7 +792,7 @@ pub enum AssignmentTargetProperty<'a> {
 }
 
 /// Assignment Property - Identifier Reference
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -804,7 +804,7 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
 }
 
 /// Assignment Property - Property Name
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -816,7 +816,7 @@ pub struct AssignmentTargetPropertyProperty<'a> {
 }
 
 /// Sequence Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -826,7 +826,7 @@ pub struct SequenceExpression<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -836,7 +836,7 @@ pub struct Super {
 }
 
 /// Await Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -846,7 +846,7 @@ pub struct AwaitExpression<'a> {
     pub argument: Expression<'a>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -862,7 +862,7 @@ inherit_variants! {
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -875,7 +875,7 @@ pub enum ChainElement<'a> {
 }
 
 /// Parenthesized Expression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -892,7 +892,7 @@ inherit_variants! {
 /// See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -925,7 +925,7 @@ pub enum Statement<'a> {
 }
 
 /// Directive Prologue
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -939,7 +939,7 @@ pub struct Directive<'a> {
 }
 
 /// Hashbang
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -950,7 +950,7 @@ pub struct Hashbang<'a> {
 }
 
 /// Block Statement
-#[visited_node]
+#[ast(visit)]
 #[scope]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -963,7 +963,7 @@ pub struct BlockStatement<'a> {
 }
 
 /// Declarations and the Variable Statement
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1000,7 +1000,7 @@ macro_rules! match_declaration {
 pub use match_declaration;
 
 /// Variable Declaration
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1021,7 +1021,7 @@ pub enum VariableDeclarationKind {
     Let,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1037,7 +1037,7 @@ pub struct VariableDeclarator<'a> {
 
 /// Using Declaration
 /// * <https://github.com/tc39/proposal-explicit-resource-management>
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1050,7 +1050,7 @@ pub struct UsingDeclaration<'a> {
 }
 
 /// Empty Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1060,7 +1060,7 @@ pub struct EmptyStatement {
 }
 
 /// Expression Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1071,7 +1071,7 @@ pub struct ExpressionStatement<'a> {
 }
 
 /// If Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1084,7 +1084,7 @@ pub struct IfStatement<'a> {
 }
 
 /// Do-While Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1096,7 +1096,7 @@ pub struct DoWhileStatement<'a> {
 }
 
 /// While Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1108,7 +1108,7 @@ pub struct WhileStatement<'a> {
 }
 
 /// For Statement
-#[visited_node]
+#[ast(visit)]
 #[scope(if(self.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration)))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1129,7 +1129,7 @@ inherit_variants! {
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1143,7 +1143,7 @@ pub enum ForStatementInit<'a> {
 }
 
 /// For-In Statement
-#[visited_node]
+#[ast(visit)]
 #[scope(if(self.left.is_lexical_declaration()))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1163,7 +1163,7 @@ inherit_variants! {
 /// Inherits variants from [`AssignmentTarget`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1176,7 +1176,7 @@ pub enum ForStatementLeft<'a> {
 }
 }
 /// For-Of Statement
-#[visited_node]
+#[ast(visit)]
 #[scope(if(self.left.is_lexical_declaration()))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1192,7 +1192,7 @@ pub struct ForOfStatement<'a> {
 }
 
 /// Continue Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1203,7 +1203,7 @@ pub struct ContinueStatement<'a> {
 }
 
 /// Break Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1214,7 +1214,7 @@ pub struct BreakStatement<'a> {
 }
 
 /// Return Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1225,7 +1225,7 @@ pub struct ReturnStatement<'a> {
 }
 
 /// With Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1237,7 +1237,7 @@ pub struct WithStatement<'a> {
 }
 
 /// Switch Statement
-#[visited_node]
+#[ast(visit)]
 #[scope]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1251,7 +1251,7 @@ pub struct SwitchStatement<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1263,7 +1263,7 @@ pub struct SwitchCase<'a> {
 }
 
 /// Labelled Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1275,7 +1275,7 @@ pub struct LabeledStatement<'a> {
 }
 
 /// Throw Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1286,7 +1286,7 @@ pub struct ThrowStatement<'a> {
 }
 
 /// Try Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1299,7 +1299,7 @@ pub struct TryStatement<'a> {
     pub finalizer: Option<Box<'a, BlockStatement<'a>>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[scope(flags(ScopeFlags::CatchClause), if(self.param.is_some()))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1312,7 +1312,7 @@ pub struct CatchClause<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1323,7 +1323,7 @@ pub struct CatchParameter<'a> {
 }
 
 /// Debugger Statement
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1334,7 +1334,7 @@ pub struct DebuggerStatement {
 
 /// Destructuring Binding Patterns
 /// * <https://tc39.es/ecma262/#prod-BindingPattern>
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -1351,7 +1351,7 @@ pub struct BindingPattern<'a> {
     pub optional: bool,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -1369,7 +1369,7 @@ pub enum BindingPatternKind<'a> {
     AssignmentPattern(Box<'a, AssignmentPattern<'a>>),
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1381,7 +1381,7 @@ pub struct AssignmentPattern<'a> {
 }
 
 // See serializer in serialize.rs
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1394,7 +1394,7 @@ pub struct ObjectPattern<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1408,7 +1408,7 @@ pub struct BindingProperty<'a> {
 }
 
 // See serializer in serialize.rs
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1424,7 +1424,7 @@ pub struct ArrayPattern<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename = "RestElement"))]
@@ -1435,7 +1435,7 @@ pub struct BindingRestElement<'a> {
 }
 
 /// Function Definitions
-#[visited_node]
+#[ast(visit)]
 #[scope(
     // `flags` passed in to visitor via parameter defined by `#[visit_args(flags = ...)]` on parents
     flags(flags),
@@ -1487,7 +1487,7 @@ pub enum FunctionType {
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
 // See serializer in serialize.rs
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1504,7 +1504,7 @@ pub struct FormalParameters<'a> {
     pub rest: Option<Box<'a, BindingRestElement<'a>>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1532,7 +1532,7 @@ pub enum FormalParameterKind {
 }
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1544,7 +1544,7 @@ pub struct FunctionBody<'a> {
 }
 
 /// Arrow Function Definitions
-#[visited_node]
+#[ast(visit)]
 #[scope(
     flags(ScopeFlags::Function | ScopeFlags::Arrow),
     strict_if(self.body.has_use_strict_directive()),
@@ -1567,7 +1567,7 @@ pub struct ArrowFunctionExpression<'a> {
 }
 
 /// Generator Function Definitions
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1579,7 +1579,7 @@ pub struct YieldExpression<'a> {
 }
 
 /// Class Definitions
-#[visited_node]
+#[ast(visit)]
 #[scope(flags(ScopeFlags::StrictMode))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1609,7 +1609,7 @@ pub enum ClassType {
     ClassExpression,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1619,7 +1619,7 @@ pub struct ClassBody<'a> {
     pub body: Vec<'a, ClassElement<'a>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -1631,7 +1631,7 @@ pub enum ClassElement<'a> {
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>),
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -1663,7 +1663,7 @@ pub enum MethodDefinitionType {
     TSAbstractMethodDefinition,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
@@ -1702,7 +1702,7 @@ pub enum MethodDefinitionKind {
     Set,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1712,7 +1712,7 @@ pub struct PrivateIdentifier<'a> {
     pub name: Atom<'a>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[scope(flags(ScopeFlags::ClassStaticBlock))]
 #[derive(Debug)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1724,7 +1724,7 @@ pub struct StaticBlock<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1768,7 +1768,7 @@ pub enum AccessorPropertyType {
     TSAbstractAccessorProperty,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub struct AccessorProperty<'a> {
@@ -1782,7 +1782,7 @@ pub struct AccessorProperty<'a> {
     pub r#static: bool,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1793,7 +1793,7 @@ pub struct ImportExpression<'a> {
     pub arguments: Vec<'a, Expression<'a>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1809,7 +1809,7 @@ pub struct ImportDeclaration<'a> {
     pub import_kind: ImportOrExportKind,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -1825,7 +1825,7 @@ pub enum ImportDeclarationSpecifier<'a> {
 
 // import {imported} from "source"
 // import {imported as local} from "source"
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1838,7 +1838,7 @@ pub struct ImportSpecifier<'a> {
 }
 
 // import local from "source"
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1849,7 +1849,7 @@ pub struct ImportDefaultSpecifier<'a> {
 }
 
 // import * as local from "source"
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1859,7 +1859,7 @@ pub struct ImportNamespaceSpecifier<'a> {
     pub local: BindingIdentifier<'a>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1870,7 +1870,7 @@ pub struct WithClause<'a> {
     pub with_entries: Vec<'a, ImportAttribute<'a>>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1881,7 +1881,7 @@ pub struct ImportAttribute<'a> {
     pub value: StringLiteral<'a>,
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
@@ -1890,7 +1890,7 @@ pub enum ImportAttributeKey<'a> {
     StringLiteral(StringLiteral<'a>),
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1910,7 +1910,7 @@ pub struct ExportNamedDeclaration<'a> {
 /// export default HoistableDeclaration
 /// export default ClassDeclaration
 /// export default AssignmentExpression
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type"))]
@@ -1921,7 +1921,7 @@ pub struct ExportDefaultDeclaration<'a> {
     pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1934,7 +1934,7 @@ pub struct ExportAllDeclaration<'a> {
     pub export_kind: ImportOrExportKind,     // `export type *`
 }
 
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(tag = "type", rename_all = "camelCase"))]
@@ -1952,7 +1952,7 @@ inherit_variants! {
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
-#[visited_node]
+#[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1975,7 +1975,7 @@ pub enum ExportDefaultDeclarationKind<'a> {
 ///   * `export {foo as "\0 any unicode"}`
 /// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>
 /// * <https://github.com/tc39/ecma262/pull/2154>
-#[visited_node]
+#[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[cfg_attr(feature = "serialize", serde(untagged))]
