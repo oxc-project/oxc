@@ -9,7 +9,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_eq_null_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-eq-null): Use '===' to compare with null")
+    OxcDiagnostic::warn("Use '===' to compare with null")
         .with_help("Disallow `null` comparisons without type-checking operators.")
         .with_label(span0)
 }

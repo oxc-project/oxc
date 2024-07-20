@@ -7,17 +7,17 @@ use rustc_hash::FxHashSet;
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_internal};
 
 fn invalid_access_level(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsdoc(check-access): Invalid access level is specified or missing.",
-    )
-    .with_help("Valid access levels are `package`, `private`, `protected`, and `public`.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Invalid access level is specified or missing.")
+        .with_help("Valid access levels are `package`, `private`, `protected`, and `public`.")
+        .with_label(span0)
 }
 
 fn redundant_access_tags(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.")
-        .with_help("There should be only one instance of access tag in a JSDoc comment.")
-        .with_label(span0)
+    OxcDiagnostic::warn(
+        "Mixing of @access with @public, @private, @protected, or @package on the same doc block.",
+    )
+    .with_help("There should be only one instance of access tag in a JSDoc comment.")
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

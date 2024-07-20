@@ -21,6 +21,7 @@ mod import {
     pub mod no_named_as_default_member;
     pub mod no_self_import;
     // pub mod no_unused_modules;
+    pub mod no_webpack_loader_syntax;
 }
 
 mod eslint {
@@ -141,6 +142,7 @@ mod typescript {
     pub mod no_empty_interface;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
+    pub mod no_extraneous_class;
     pub mod no_import_type_side_effects;
     pub mod no_misused_new;
     pub mod no_namespace;
@@ -433,6 +435,12 @@ mod tree_shaking {
     pub mod no_side_effects_in_initialization;
 }
 
+mod promise {
+    pub mod avoid_new;
+    pub mod no_new_statics;
+    pub mod param_names;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
@@ -566,6 +574,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_asserted_nullish_coalescing,
     typescript::no_confusing_non_null_assertion,
     typescript::no_dynamic_delete,
+    typescript::no_extraneous_class,
     jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,
@@ -737,6 +746,7 @@ oxc_macros::declare_all_lint_rules! {
     // import::no_unused_modules,
     import::no_duplicates,
     import::no_default_export,
+    import::no_webpack_loader_syntax,
     jsx_a11y::alt_text,
     jsx_a11y::anchor_has_content,
     jsx_a11y::anchor_is_valid,
@@ -824,4 +834,7 @@ oxc_macros::declare_all_lint_rules! {
     jsdoc::require_returns_type,
     jsdoc::require_yields,
     tree_shaking::no_side_effects_in_initialization,
+    promise::avoid_new,
+    promise::no_new_statics,
+    promise::param_names,
 }

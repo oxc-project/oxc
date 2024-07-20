@@ -65,10 +65,8 @@ impl<'a> AstBuilder<'a> {
     #[inline]
     pub fn copy<T>(self, src: &T) -> T {
         // SAFETY: Not safe (see above)
-        #[allow(unsafe_code)]
-        unsafe {
-            std::mem::transmute_copy(src)
-        }
+
+        unsafe { std::mem::transmute_copy(src) }
     }
 
     /// Moves the expression out by replacing it with a null expression.

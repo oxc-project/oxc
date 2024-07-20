@@ -88,7 +88,7 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
                 insert!("// SAFETY:");
                 insert!("// This should be safe as long as `src` is an reference from the allocator.");
                 insert!("// But honestly, I'm not really sure if this is safe.");
-                #[allow(unsafe_code)]
+
                 unsafe {
                     std::mem::transmute(t)
                 }
@@ -122,12 +122,16 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
 
         /// Syntax tree traversal
         pub trait #trait_name <'a>: Sized {
+            #[inline]
             fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
+            #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
 
             endl!();
 
+            #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
+            #[inline]
             fn leave_scope(&mut self) {}
 
             endl!();
@@ -254,7 +258,7 @@ impl<'a> VisitBuilder<'a> {
 
         let as_param_type = self.with_ref_pat(&as_type);
         let (extra_params, extra_args) = if ident == "Function" {
-            (quote!(, flags: Option<ScopeFlags>,), quote!(, flags))
+            (quote!(, flags: ScopeFlags,), quote!(, flags))
         } else {
             (TokenStream::default(), TokenStream::default())
         };

@@ -61,11 +61,9 @@ declare_oxc_lint!(
 );
 
 fn explicit_function_return_type_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(explicit-function-return-type): Missing return type on function.",
-    )
-    .with_help("Require explicit return types on functions and class methods.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Missing return type on function.")
+        .with_help("Require explicit return types on functions and class methods.")
+        .with_label(span0)
 }
 
 impl Rule for ExplicitFunctionReturnType {

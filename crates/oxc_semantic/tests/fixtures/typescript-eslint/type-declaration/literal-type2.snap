@@ -1,0 +1,83 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/literal-type2.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "T",
+            "node": "TSTypeParameter",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 14
+              },
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 1,
+                "name": "T",
+                "node_id": 21
+              },
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 2,
+                "name": "T",
+                "node_id": 28
+              },
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 3,
+                "name": "T",
+                "node_id": 35
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "EnthusiasticGreeting",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 0,
+            "name": "EnthusiasticGreeting",
+            "node_id": 40
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "HELLO",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

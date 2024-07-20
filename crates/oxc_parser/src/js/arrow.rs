@@ -304,10 +304,10 @@ impl<'a> ParserImpl<'a> {
             self.end_span(span),
             expression,
             r#async,
-            params,
-            body,
             type_parameters,
+            params,
             return_type,
+            body,
         ))
     }
 

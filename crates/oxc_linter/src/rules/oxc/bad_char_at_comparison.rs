@@ -11,7 +11,7 @@ fn bad_char_at_comparison_diagnostic(
     compared_string: Span,
     x2: usize,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(bad-char-at-comparison): Invalid comparison with `charAt` method")
+    OxcDiagnostic::warn("Invalid comparison with `charAt` method")
         .with_help("`String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.")
         .with_labels([
             char_at.label("`charAt` called here"),

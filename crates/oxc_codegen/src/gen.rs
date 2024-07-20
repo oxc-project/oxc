@@ -949,7 +949,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ModuleExportName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             Self::IdentifierName(identifier) => p.print_str(identifier.name.as_str()),
-            Self::IdentifierReference(identifier) => p.print_str(identifier.name.as_str()),
+            Self::IdentifierReference(identifier) => identifier.gen(p, ctx),
             Self::StringLiteral(literal) => literal.gen(p, ctx),
         };
     }
@@ -1189,10 +1189,8 @@ fn print_non_negative_float<const MINIFY: bool>(value: f64, _p: &Codegen<{ MINIF
     let dot = chars.iter().position(|&c| c == b'.');
     let u8_to_string = |num: &[u8]| {
         // SAFETY: criteria of `from_utf8_unchecked`.are met.
-        #[allow(unsafe_code)]
-        unsafe {
-            String::from_utf8_unchecked(num.to_vec())
-        }
+
+        unsafe { String::from_utf8_unchecked(num.to_vec()) }
     };
 
     if dot == Some(1) && chars[0] == b'0' {
@@ -1421,8 +1419,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let wrap = precedence > self.precedence() || ctx.has_forbid_call();
         let ctx = ctx.and_forbid_call(false);
-        p.gen_comment(self.span.start);
         p.wrap(wrap, |p| {
+            p.gen_comment(self.span.start);
             p.add_source_mapping(self.span.start);
             self.callee.gen_expr(p, self.precedence(), ctx);
             if self.optional {
@@ -1516,6 +1514,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPropertyKind<'a> {
     }
 }
 
+// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
@@ -1563,16 +1562,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
         if self.computed {
             p.print_char(b'[');
         }
-        if !self.shorthand {
-            self.key.gen(p, ctx);
-        }
+        self.key.gen(p, ctx);
         if self.computed {
             p.print_char(b']');
         }
-        if !self.shorthand {
-            p.print_colon();
-            p.print_soft_space();
-        }
+        p.print_colon();
+        p.print_soft_space();
         self.value.gen_expr(p, Precedence::Assign, Context::default());
     }
 }
@@ -2051,8 +2046,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.gen_comment(self.span.start);
         p.wrap(precedence > self.precedence(), |p| {
+            p.gen_comment(self.span.start);
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
             self.callee.gen_expr(p, Precedence::NewWithoutArgs, ctx.and_forbid_call(true));
@@ -2540,22 +2535,19 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
     }
 }
 
+// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         if self.computed {
             p.print_char(b'[');
         }
-        if !self.shorthand {
-            self.key.gen(p, ctx);
-        }
+        self.key.gen(p, ctx);
         if self.computed {
             p.print_char(b']');
         }
-        if !self.shorthand {
-            p.print_colon();
-            p.print_soft_space();
-        }
+        p.print_colon();
+        p.print_soft_space();
         self.value.gen(p, ctx);
     }
 }
@@ -2961,8 +2953,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeLiteral<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSTypeName<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
-            Self::IdentifierReference(decl) => {
-                p.print_str(decl.name.as_str());
+            Self::IdentifierReference(ident) => {
+                ident.gen(p, ctx);
             }
             Self::QualifiedName(decl) => {
                 decl.left.gen(p, ctx);

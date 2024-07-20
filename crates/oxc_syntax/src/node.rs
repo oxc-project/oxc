@@ -2,14 +2,11 @@ use bitflags::bitflags;
 use oxc_index::define_index_type;
 
 define_index_type! {
-    pub struct AstNodeId = usize;
+    pub struct AstNodeId = u32;
 }
 
 impl AstNodeId {
-    #[inline]
-    pub fn dummy() -> Self {
-        Self::new(0)
-    }
+    pub const DUMMY: Self = AstNodeId::from_raw_unchecked(0);
 }
 
 #[cfg(feature = "serialize")]

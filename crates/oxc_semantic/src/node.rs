@@ -142,6 +142,7 @@ impl<'a> AstNodes<'a> {
     }
 
     /// Create and add an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
+    /// Node must not be `Program`. Use `add_program_node` instead.
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,
@@ -150,14 +151,22 @@ impl<'a> AstNodes<'a> {
         cfg_id: BasicBlockId,
         flags: NodeFlags,
     ) -> AstNodeId {
-        let ast_node_id = match kind {
-            AstKind::Program(_) => {
-                let id = self.parent_ids.push(None);
-                self.root = Some(id);
-                id
-            }
-            _ => self.parent_ids.push(Some(parent_node_id)),
-        };
+        let ast_node_id = self.parent_ids.push(Some(parent_node_id));
+        let node = AstNode::new(kind, scope_id, cfg_id, flags, ast_node_id);
+        self.nodes.push(node);
+        ast_node_id
+    }
+
+    /// Create and add an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
+    pub fn add_program_node(
+        &mut self,
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        cfg_id: BasicBlockId,
+        flags: NodeFlags,
+    ) -> AstNodeId {
+        let ast_node_id = self.parent_ids.push(None);
+        self.root = Some(ast_node_id);
         let node = AstNode::new(kind, scope_id, cfg_id, flags, ast_node_id);
         self.nodes.push(node);
         ast_node_id

@@ -13,7 +13,8 @@ use oxc_span::SourceType;
 use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
 pub trait Binder {
-    fn bind(&self, _builder: &mut SemanticBuilder) {}
+    #[allow(unused_variables)]
+    fn bind(&self, builder: &mut SemanticBuilder) {}
 }
 
 impl<'a> Binder for VariableDeclarator<'a> {
@@ -45,8 +46,13 @@ impl<'a> Binder for VariableDeclarator<'a> {
         let mut var_scope_ids = vec![];
         if !builder.current_scope_flags().is_var() {
             for scope_id in builder.scope.ancestors(current_scope_id).skip(1) {
+                let flag = builder.scope.get_flags(scope_id);
+                // Skip the catch clause, the scope bindings have been cloned to the child block scope
+                if flag.is_catch_clause() {
+                    continue;
+                }
                 var_scope_ids.push(scope_id);
-                if builder.scope.get_flags(scope_id).is_var() {
+                if flag.is_var() {
                     break;
                 }
             }
@@ -150,28 +156,16 @@ impl<'a> Binder for Function<'a> {
             }
         }
 
-        // bind scope flags: Constructor | GetAccessor | SetAccessor
-        if let Some(kind) = builder.nodes.parent_kind(builder.current_node_id) {
-            match kind {
-                AstKind::MethodDefinition(def) => {
-                    let flag = builder.scope.get_flags_mut(current_scope_id);
-                    *flag |= match def.kind {
-                        MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-                        MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-                        MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-                        MethodDefinitionKind::Method => ScopeFlags::empty(),
-                    };
-                }
-                AstKind::ObjectProperty(prop) => {
-                    let flag = builder.scope.get_flags_mut(current_scope_id);
-                    *flag |= match prop.kind {
-                        PropertyKind::Get => ScopeFlags::GetAccessor,
-                        PropertyKind::Set => ScopeFlags::SetAccessor,
-                        PropertyKind::Init => ScopeFlags::empty(),
-                    };
-                }
-                _ => {}
-            }
+        // Bind scope flags: GetAccessor | SetAccessor
+        if let Some(AstKind::ObjectProperty(prop)) =
+            builder.nodes.parent_kind(builder.current_node_id)
+        {
+            let flag = builder.scope.get_flags_mut(current_scope_id);
+            match prop.kind {
+                PropertyKind::Get => *flag |= ScopeFlags::GetAccessor,
+                PropertyKind::Set => *flag |= ScopeFlags::SetAccessor,
+                PropertyKind::Init => {}
+            };
         }
     }
 }
@@ -262,11 +256,24 @@ impl<'a> Binder for CatchParameter<'a> {
     }
 }
 
-fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut SemanticBuilder) {
+fn declare_symbol_for_import_specifier(
+    ident: &BindingIdentifier,
+    is_type: bool,
+    builder: &mut SemanticBuilder,
+) {
+    let includes = if is_type
+        || builder.nodes.parent_kind(builder.current_node_id).is_some_and(
+            |decl| matches!(decl, AstKind::ImportDeclaration(decl) if decl.import_kind.is_type()),
+        ) {
+        SymbolFlags::TypeImport
+    } else {
+        SymbolFlags::Import
+    };
+
     let symbol_id = builder.declare_symbol(
         ident.span,
         &ident.name,
-        SymbolFlags::ImportBinding,
+        includes,
         SymbolFlags::ImportBindingExcludes,
     );
     ident.symbol_id.set(Some(symbol_id));
@@ -274,25 +281,25 @@ fn declare_symbol_for_import_specifier(ident: &BindingIdentifier, builder: &mut 
 
 impl<'a> Binder for ImportSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.local, builder);
+        declare_symbol_for_import_specifier(&self.local, self.import_kind.is_type(), builder);
     }
 }
 
 impl<'a> Binder for ImportDefaultSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.local, builder);
+        declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
 impl<'a> Binder for ImportNamespaceSpecifier<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.local, builder);
+        declare_symbol_for_import_specifier(&self.local, false, builder);
     }
 }
 
 impl<'a> Binder for TSImportEqualsDeclaration<'a> {
     fn bind(&self, builder: &mut SemanticBuilder) {
-        declare_symbol_for_import_specifier(&self.id, builder);
+        declare_symbol_for_import_specifier(&self.id, false, builder);
     }
 }
 

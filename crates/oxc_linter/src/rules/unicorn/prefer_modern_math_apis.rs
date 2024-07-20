@@ -12,24 +12,15 @@ use crate::{
 };
 
 fn prefer_math_abs(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives",
-    )
-    .with_label(span0)
+    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives").with_label(span0)
 }
 
 fn prefer_math_hypot(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives",
-    )
-    .with_label(span0)
+    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span0)
 }
 
 fn prefer_math_log_n(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.{x1}(x)` over `{x2}`"
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Prefer `Math.{x1}(x)` over `{x2}`")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

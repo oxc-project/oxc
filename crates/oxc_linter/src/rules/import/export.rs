@@ -9,10 +9,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_named_export(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-import(export): No named exports found in module '{x1}'"
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("No named exports found in module '{x1}'")).with_label(span0)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>
@@ -89,10 +86,8 @@ impl Rule for Export {
                 let labels = spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
 
                 ctx.diagnostic(
-                    OxcDiagnostic::warn(format!(
-                        "eslint-plugin-import(export): Multiple exports of name '{name}'."
-                    ))
-                    .with_labels(labels),
+                    OxcDiagnostic::warn(format!("Multiple exports of name '{name}'."))
+                        .with_labels(labels),
                 );
             }
         }
@@ -103,8 +98,7 @@ impl Rule for Export {
                 spans.push(span);
                 let labels = spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
                 ctx.diagnostic(
-                    OxcDiagnostic::warn("eslint-plugin-import(export): Multiple default exports.")
-                        .with_labels(labels),
+                    OxcDiagnostic::warn("Multiple default exports.").with_labels(labels),
                 );
             }
         }

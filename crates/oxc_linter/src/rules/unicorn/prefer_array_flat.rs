@@ -20,7 +20,7 @@ use crate::{
 };
 
 fn prefer_array_flat_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-array-flat): Prefer Array#flat() over legacy techniques to flatten arrays.")
+    OxcDiagnostic::warn("Prefer Array#flat() over legacy techniques to flatten arrays.")
         .with_help(r"Call `.flat()` on the array instead.")
         .with_label(span0)
 }

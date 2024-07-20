@@ -6,11 +6,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_assign_module_variable_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-next(no-assign-module-variable): Do not assign to the variable `module`.",
-    )
-    .with_help("See https://nextjs.org/docs/messages/no-assign-module-variable")
-    .with_label(span0)
+    OxcDiagnostic::warn("Do not assign to the variable `module`.")
+        .with_help("See https://nextjs.org/docs/messages/no-assign-module-variable")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

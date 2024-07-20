@@ -10,13 +10,13 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn comparison_with_na_n(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
         .with_help("Use the isNaN function to compare with NaN.")
         .with_label(span0)
 }
 
 fn switch_na_n(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
         .with_help(
             "'switch(NaN)' can never match a case clause. Use Number.isNaN instead of the switch.",
         )
@@ -24,13 +24,13 @@ fn switch_na_n(span0: Span) -> OxcDiagnostic {
 }
 
 fn case_na_n(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
         .with_help("'case NaN' can never match. Use Number.isNaN before the switch.")
         .with_label(span0)
 }
 
 fn index_of_na_n(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(use-isnan): Requires calls to isNaN() when checking for NaN")
+    OxcDiagnostic::warn("Requires calls to isNaN() when checking for NaN")
         .with_help(format!("Array prototype method '{x0}' cannot find NaN."))
         .with_label(span1)
 }

@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_dom_node_append_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-append): Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.")
+    OxcDiagnostic::warn("Prefer `Node#append()` over `Node#appendChild()` for DOM nodes.")
         .with_help("Replace `Node#appendChild()` with `Node#append()`.")
         .with_label(span0)
 }
@@ -68,7 +68,9 @@ impl Rule for PreferDomNodeAppend {
             return;
         }
 
-        ctx.diagnostic(prefer_dom_node_append_diagnostic(span));
+        ctx.diagnostic_with_fix(prefer_dom_node_append_diagnostic(span), |fixer| {
+            fixer.replace(span, "append")
+        });
     }
 }
 
@@ -111,5 +113,18 @@ fn test() {
         r"() => node?.appendChild(child)",
     ];
 
-    Tester::new(PreferDomNodeAppend::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (
+            r"node.appendChild(child).appendChild(grandchild);",
+            r"node.append(child).append(grandchild);",
+        ),
+        (r"node?.appendChild(child);", r"node?.append(child);"),
+        (
+            r"function foo() { return node.appendChild(child); }",
+            r"function foo() { return node.append(child); }",
+        ),
+        (r"const foo = [node.appendChild(child)]", r"const foo = [node.append(child)]"),
+    ];
+
+    Tester::new(PreferDomNodeAppend::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -12,10 +12,7 @@ use crate::{
 pub struct PreferExponentiationOperator;
 
 fn prefer_exponentian_operator_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(prefer-exponentian-operator): Prefer `**` over `Math.pow`.",
-    )
-    .with_label(span0)
+    OxcDiagnostic::warn("Prefer `**` over `Math.pow`.").with_label(span0)
 }
 
 declare_oxc_lint!(

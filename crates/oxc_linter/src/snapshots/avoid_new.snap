@@ -1,0 +1,20 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(avoid-new): Avoid creating new promises
+   ╭─[avoid_new.tsx:1:9]
+ 1 │ var x = new Promise(function (x, y) {})
+   ·         ───────────────────────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(avoid-new): Avoid creating new promises
+   ╭─[avoid_new.tsx:1:1]
+ 1 │ new Promise()
+   · ─────────────
+   ╰────
+
+  ⚠ eslint-plugin-promise(avoid-new): Avoid creating new promises
+   ╭─[avoid_new.tsx:1:7]
+ 1 │ Thing(new Promise(() => {}))
+   ·       ─────────────────────
+   ╰────

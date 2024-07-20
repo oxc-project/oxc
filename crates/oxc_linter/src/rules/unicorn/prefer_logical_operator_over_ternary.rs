@@ -7,7 +7,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
 fn prefer_logical_operator_over_ternary_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.")
+    OxcDiagnostic::warn("Prefer using a logical operator over a ternary.")
         .with_help("Switch to \"||\" or \"??\" operator")
         .with_label(span0)
 }

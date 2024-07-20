@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_img_element_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-next(no-img-element): Prevent usage of `<img>` element due to slower LCP and higher bandwidth.")
+    OxcDiagnostic::warn("Prevent usage of `<img>` element due to slower LCP and higher bandwidth.")
         .with_help("See https://nextjs.org/docs/messages/no-img-element")
         .with_label(span0)
 }

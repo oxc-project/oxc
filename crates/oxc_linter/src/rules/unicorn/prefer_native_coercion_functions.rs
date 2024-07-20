@@ -1,5 +1,5 @@
 use oxc_ast::{
-    ast::{Argument, BindingPatternKind, Expression, FormalParameters, FunctionBody, Statement},
+    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -7,14 +7,15 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::get_first_parameter_name, AstNode};
 
 fn function(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-native-coercion-functions): The function is equivalent to `{x1}`. Call `{x1}` directly.")).with_label(span0)
+    OxcDiagnostic::warn(format!("The function is equivalent to `{x1}`. Call `{x1}` directly."))
+        .with_label(span0)
 }
 
 fn array_callback(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-native-coercion-functions): The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.")
+    OxcDiagnostic::warn("The arrow function in the callback of the array is equivalent to `Boolean`. Replace the callback with `Boolean`.")
         .with_label(span0)
 }
 
@@ -92,15 +93,6 @@ impl Rule for PreferNativeCoercionFunctions {
             _ => {}
         }
     }
-}
-
-fn get_first_parameter_name<'a>(arg: &'a FormalParameters) -> Option<&'a str> {
-    let first_func_param = arg.items.first()?;
-    let BindingPatternKind::BindingIdentifier(first_func_param) = &first_func_param.pattern.kind
-    else {
-        return None;
-    };
-    Some(first_func_param.name.as_str())
 }
 
 fn check_function(

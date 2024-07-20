@@ -88,6 +88,7 @@ impl ConcatSourceMapBuilder {
     }
 }
 
+#[cfg(feature = "concurrent")]
 #[test]
 fn test_concat_sourcemap_builder() {
     let sm1 = SourceMap::new(
@@ -108,18 +109,32 @@ fn test_concat_sourcemap_builder() {
         vec![Token::new(1, 1, 1, 1, Some(0), Some(0))],
         None,
     );
+    let sm3 = SourceMap::new(
+        None,
+        vec!["abc".into()],
+        None,
+        vec!["abc.js".into()],
+        None,
+        vec![Token::new(1, 2, 2, 2, Some(0), Some(0))],
+        None,
+    );
 
     let mut builder = ConcatSourceMapBuilder::default();
     builder.add_sourcemap(&sm1, 0);
     builder.add_sourcemap(&sm2, 2);
+    builder.add_sourcemap(&sm3, 2);
 
     let sm = SourceMap::new(
         None,
-        vec!["foo".into(), "foo2".into(), "bar".into()],
+        vec!["foo".into(), "foo2".into(), "bar".into(), "abc".into()],
         None,
-        vec!["foo.js".into(), "bar.js".into()],
+        vec!["foo.js".into(), "bar.js".into(), "abc.js".into()],
         None,
-        vec![Token::new(1, 1, 1, 1, Some(0), Some(0)), Token::new(3, 1, 1, 1, Some(1), Some(2))],
+        vec![
+            Token::new(1, 1, 1, 1, Some(0), Some(0)),
+            Token::new(3, 1, 1, 1, Some(1), Some(2)),
+            Token::new(3, 2, 2, 2, Some(2), Some(3)),
+        ],
         None,
     );
     let concat_sm = builder.into_sourcemap();
@@ -131,9 +146,10 @@ fn test_concat_sourcemap_builder() {
         concat_sm.token_chunks,
         Some(vec![
             TokenChunk::new(0, 1, 0, 0, 0, 0, 0, 0,),
-            TokenChunk::new(1, 2, 1, 1, 1, 1, 0, 0,)
+            TokenChunk::new(1, 2, 1, 1, 1, 1, 0, 0,),
+            TokenChunk::new(2, 3, 3, 1, 1, 1, 2, 1,)
         ])
     );
 
-    assert_eq!(sm.to_json_string().unwrap(), sm.to_json_string().unwrap());
+    assert_eq!(sm.to_json().mappings, concat_sm.to_json().mappings);
 }

@@ -8,8 +8,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-useless-escape): Unnecessary escape character {x0:?}"))
-        .with_label(span1)
+    OxcDiagnostic::warn(format!("Unnecessary escape character {x0:?}")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -160,7 +159,7 @@ fn check_string(string: &str) -> Vec<usize> {
     for offset in escapes {
         // Safety:
         // The offset comes from a utf8 checked string
-        #[allow(unsafe_code)]
+
         let s = unsafe { std::str::from_utf8_unchecked(&bytes[offset..]) };
         if let Some(c) = s.chars().nth(1) {
             if !(c == quote_char

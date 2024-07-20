@@ -14,19 +14,15 @@ use crate::{
 };
 
 fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods",
-    )
-    .with_help(format!("Use of `{x0:?}` is disallowed"))
-    .with_label(span1)
+    OxcDiagnostic::warn("Disallow specific `jest.` methods")
+        .with_help(format!("Use of `{x0:?}` is disallowed"))
+        .with_label(span1)
 }
 
 fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods",
-    )
-    .with_help(format!("{x0:?}"))
-    .with_label(span1)
+    OxcDiagnostic::warn("Disallow specific `jest.` methods")
+        .with_help(format!("{x0:?}"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -199,10 +199,8 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     #[must_use]
     pub fn into_source_text(&mut self) -> String {
         // SAFETY: criteria of `from_utf8_unchecked` are met.
-        #[allow(unsafe_code)]
-        unsafe {
-            String::from_utf8_unchecked(std::mem::take(&mut self.code))
-        }
+
+        unsafe { String::from_utf8_unchecked(std::mem::take(&mut self.code)) }
     }
 
     /// Push a single character into the buffer
@@ -269,7 +267,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     fn peek_nth(&self, n: usize) -> Option<char> {
-        #[allow(unsafe_code)]
         // SAFETY: criteria of `from_utf8_unchecked` are met.
         unsafe { std::str::from_utf8_unchecked(self.code()) }.chars().nth_back(n)
     }

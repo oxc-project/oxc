@@ -6,7 +6,7 @@ expression: snapshot
 
 
 ## Usage
- **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[**`--fix`**\] \[_`PATH`_\]...
+ **`oxlint`** \[**`-c`**=_`<./oxlintrc.json>`_\] \[**`--fix`**\] \[**`--fix-suggestions`**\] \[**`--fix-dangerously`**\] \[_`PATH`_\]...
 
 ## Basic Configuration
 - **`-c`**, **`--config`**=_`<./oxlintrc.json>`_ &mdash; 
@@ -66,12 +66,18 @@ Arguments:
   Enable the Next.js plugin and detect Next.js problems
 - **`    --react-perf-plugin`** &mdash; 
   Enable the React performance plugin and detect rendering performance problems
+- **`    --promise-plugin`** &mdash; 
+  Enable the promise plugin and detect promise usage problems
 
 
 
 ## Fix Problems
 - **`    --fix`** &mdash; 
   Fix as many issues as possible. Only unfixed issues are reported in the output
+- **`    --fix-suggestions`** &mdash; 
+  Apply auto-fixable suggestions. May change program behavior.
+- **`    --fix-dangerously`** &mdash; 
+  Apply dangerous fixes and suggestions.
 
 
 

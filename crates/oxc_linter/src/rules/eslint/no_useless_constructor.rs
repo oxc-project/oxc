@@ -12,12 +12,12 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_constructor(constructor_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-useless-constructor): Empty constructors are unnecessary")
+    OxcDiagnostic::warn("Empty constructors are unnecessary")
         .with_label(constructor_span)
         .with_help("Remove the constructor or add code to it.")
 }
 fn no_redundant_super_call(constructor_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-useless-constructor): Redundant super call in constructor")
+    OxcDiagnostic::warn("Redundant super call in constructor")
         .with_label(constructor_span).with_help("Constructors of subclasses invoke super() automatically if they are empty. Remove this constructor or add code to it.")
 }
 

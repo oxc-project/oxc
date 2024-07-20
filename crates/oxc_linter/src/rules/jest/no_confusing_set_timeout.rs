@@ -13,20 +13,17 @@ use crate::{
 };
 
 fn no_global_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
-        .with_help("`jest.setTimeout` should be call in `global` scope")
-        .with_label(span0)
+    OxcDiagnostic::warn("`jest.setTimeout` should be call in `global` scope").with_label(span0)
 }
 
 fn no_multiple_set_timeouts_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
-        .with_help("Do not call `jest.setTimeout` multiple times, as only the last call will have an effect")
+    OxcDiagnostic::warn("Do not call `jest.setTimeout` multiple times")
+        .with_help("Only the last call to `jest.setTimeout` will have an effect.")
         .with_label(span0)
 }
 
 fn no_unorder_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-confusing-set-timeout)")
-        .with_help("`jest.setTimeout` should be placed before any other jest methods")
+    OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods")
         .with_label(span0)
 }
 
@@ -90,15 +87,19 @@ impl Rule for NoConfusingSetTimeout {
         let mut jest_reference_id_list: Vec<(ReferenceId, Span)> = vec![];
         let mut seen_jest_set_timeout = false;
 
-        for reference_ids in scopes.root_unresolved_references().values() {
+        for reference_ids in scopes.root_unresolved_references_ids() {
             collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
         }
 
         for reference_ids in &symbol_table.resolved_references {
-            collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
+            collect_jest_reference_id(
+                reference_ids.iter().copied(),
+                &mut jest_reference_id_list,
+                ctx,
+            );
         }
 
-        for reference_id_list in scopes.root_unresolved_references().values() {
+        for reference_id_list in scopes.root_unresolved_references_ids() {
             handle_jest_set_time_out(
                 ctx,
                 reference_id_list,
@@ -111,7 +112,7 @@ impl Rule for NoConfusingSetTimeout {
         for reference_id_list in &symbol_table.resolved_references {
             handle_jest_set_time_out(
                 ctx,
-                reference_id_list,
+                reference_id_list.iter().copied(),
                 &jest_reference_id_list,
                 &mut seen_jest_set_timeout,
                 &id_to_jest_node_map,
@@ -121,7 +122,7 @@ impl Rule for NoConfusingSetTimeout {
 }
 
 fn collect_jest_reference_id(
-    reference_id_list: &Vec<ReferenceId>,
+    reference_id_list: impl Iterator<Item = ReferenceId>,
     jest_reference_list: &mut Vec<(ReferenceId, Span)>,
     ctx: &LintContext,
 ) {
@@ -129,7 +130,7 @@ fn collect_jest_reference_id(
     let nodes = ctx.nodes();
 
     for reference_id in reference_id_list {
-        let reference = symbol_table.get_reference(*reference_id);
+        let reference = symbol_table.get_reference(reference_id);
         if !is_jest_call(reference.name()) {
             continue;
         }
@@ -139,13 +140,13 @@ fn collect_jest_reference_id(
         let AstKind::MemberExpression(member_expr) = parent_node.kind() else {
             continue;
         };
-        jest_reference_list.push((*reference_id, member_expr.span()));
+        jest_reference_list.push((reference_id, member_expr.span()));
     }
 }
 
 fn handle_jest_set_time_out<'a>(
     ctx: &LintContext<'a>,
-    reference_id_list: &Vec<ReferenceId>,
+    reference_id_list: impl Iterator<Item = ReferenceId>,
     jest_reference_id_list: &Vec<(ReferenceId, Span)>,
     seen_jest_set_timeout: &mut bool,
     id_to_jest_node_map: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
@@ -154,7 +155,7 @@ fn handle_jest_set_time_out<'a>(
     let scopes = ctx.scopes();
     let symbol_table = ctx.symbols();
 
-    for &reference_id in reference_id_list {
+    for reference_id in reference_id_list {
         let reference = symbol_table.get_reference(reference_id);
 
         let Some(parent_node) = nodes.parent_node(reference.node_id()) else {

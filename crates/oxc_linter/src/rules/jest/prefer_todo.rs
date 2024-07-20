@@ -8,7 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
@@ -17,13 +17,11 @@ use crate::{
 };
 
 fn empty_test(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")
-        .with_label(span0)
+    OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span0)
 }
 
 fn un_implemented_test_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")
-        .with_label(span0)
+    OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -137,7 +135,7 @@ fn is_empty_function(expr: &CallExpression) -> bool {
     }
 }
 
-fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> Fix<'a> {
+fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFix<'a> {
     let mut formatter = fixer.codegen();
 
     match &expr.callee {

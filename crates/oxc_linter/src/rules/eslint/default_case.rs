@@ -7,7 +7,7 @@ use regex::{Regex, RegexBuilder};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn default_case_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(default-case): Require default cases in switch statements.")
+    OxcDiagnostic::warn("Require default cases in switch statements.")
         .with_help("Add a default case.")
         .with_label(span0)
 }

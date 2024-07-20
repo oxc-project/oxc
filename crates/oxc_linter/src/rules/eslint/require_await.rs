@@ -14,8 +14,7 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 pub struct RequireAwait;
 
 fn require_await_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(require-await): Async function has no 'await' expression.")
-        .with_label(span0)
+    OxcDiagnostic::warn("Async function has no 'await' expression.").with_label(span0)
 }
 
 declare_oxc_lint!(
@@ -105,7 +104,7 @@ impl<'a> Visit<'a> for AwaitFinder {
 
     fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {}
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 }
 
 #[test]

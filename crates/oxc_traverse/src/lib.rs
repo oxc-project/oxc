@@ -136,7 +136,7 @@ mod walk;
 ///     }
 /// }
 /// ```
-#[allow(unsafe_code)]
+
 pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
     allocator: &'a Allocator,

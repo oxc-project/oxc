@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn require_render_return_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(require-render-return): Your render method should have a return statement")
+    OxcDiagnostic::warn("Your render method should have a return statement")
         .with_help("When writing the `render` method in a component it is easy to forget to return the JSX content. This rule will warn if the return statement is missing.")
         .with_label(span0)
 }

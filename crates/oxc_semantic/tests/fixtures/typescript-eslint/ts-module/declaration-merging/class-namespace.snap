@@ -1,0 +1,58 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/declaration-merging/class-namespace.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(Foo)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "id": 2,
+        "node": "TSModuleDeclaration",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
+            "id": 1,
+            "name": "x",
+            "node": "VariableDeclarator",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class | NameSpaceModule | ValueModule)",
+        "id": 0,
+        "name": "Foo",
+        "node": "Class(Foo)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "Foo",
+            "node_id": 16
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "usage",
+        "node": "VariableDeclarator",
+        "references": []
+      }
+    ]
+  }
+]

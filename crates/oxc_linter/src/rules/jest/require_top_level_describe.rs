@@ -16,27 +16,23 @@ use crate::{
 };
 
 fn too_many_describes(max: usize, repeat: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block",
-    )
-    .with_help(format!("There should not be more than {max:?} describe{repeat} at the top level."))
-    .with_label(span0)
+    OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
+        .with_help(format!(
+            "There should not be more than {max:?} describe{repeat} at the top level."
+        ))
+        .with_label(span0)
 }
 
 fn unexpected_test_case(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block",
-    )
-    .with_help("All test cases must be wrapped in a describe block.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
+        .with_help("All test cases must be wrapped in a describe block.")
+        .with_label(span0)
 }
 
 fn unexpected_hook(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block",
-    )
-    .with_help("All hooks must be wrapped in a describe block.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Require test cases and hooks to be inside a `describe` block")
+        .with_help("All hooks must be wrapped in a describe block.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Clone)]

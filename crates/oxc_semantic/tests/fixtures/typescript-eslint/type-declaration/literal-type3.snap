@@ -1,0 +1,72 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/literal-type3.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 3,
+        "node": "Function(setAlignment)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "value",
+            "node": "FormalParameter",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "VerticalAlignment",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 0,
+            "name": "VerticalAlignment",
+            "node_id": 28
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "HorizontalAlignment",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 0,
+            "name": "HorizontalAlignment",
+            "node_id": 31
+          }
+        ]
+      }
+    ]
+  }
+]

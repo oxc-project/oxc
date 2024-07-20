@@ -6,25 +6,22 @@
     "test": "node test.mjs"
   },
   "devDependencies": {
-    "@napi-rs/cli": "^2.18.0"
+    "@napi-rs/cli": "3.0.0-alpha.61"
   },
   "engines": {
     "node": ">=14.*"
   },
   "napi": {
-    "name": "transform",
-    "triples": {
-      "defaults": false,
-      "additional": [
-        "x86_64-pc-windows-msvc",
-        "aarch64-pc-windows-msvc",
-        "x86_64-unknown-linux-gnu",
-        "aarch64-unknown-linux-gnu",
-        "x86_64-unknown-linux-musl",
-        "aarch64-unknown-linux-musl",
-        "x86_64-apple-darwin",
-        "aarch64-apple-darwin"
-      ]
-    }
+    "binaryName": "transform",
+    "targets": [
+      "x86_64-pc-windows-msvc",
+      "aarch64-pc-windows-msvc",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "aarch64-unknown-linux-musl",
+      "x86_64-apple-darwin",
+      "aarch64-apple-darwin"
+    ]
   }
 }

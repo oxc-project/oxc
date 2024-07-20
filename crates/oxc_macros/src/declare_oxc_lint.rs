@@ -1,4 +1,4 @@
-use convert_case::{Case, Casing};
+use convert_case::{Boundary, Case, Converter};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
@@ -39,9 +39,14 @@ impl Parse for LintRuleMeta {
     }
 }
 
+fn rule_name_converter() -> Converter {
+    Converter::new().remove_boundary(Boundary::LowerDigit).to_case(Case::Kebab)
+}
+
 pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let LintRuleMeta { name, category, documentation, used_in_test } = metadata;
-    let canonical_name = name.to_string().to_case(Case::Kebab);
+
+    let canonical_name = rule_name_converter().convert(name.to_string());
     let category = match category.to_string().as_str() {
         "correctness" => quote! { RuleCategory::Correctness },
         "suspicious" => quote! { RuleCategory::Suspicious },

@@ -11,7 +11,7 @@ use crate::{
 };
 
 fn missing_name_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsdoc(require-param-name): Missing JSDoc `@param` name.")
+    OxcDiagnostic::warn("Missing JSDoc `@param` name.")
         .with_help("Add name to `@param` tag.")
         .with_label(span0)
 }

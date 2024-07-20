@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn aria_role_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.")
+    OxcDiagnostic::warn("Elements with ARIA roles must use a valid, non-abstract ARIA role.")
         .with_help(format!("Set a valid, non-abstract ARIA role for element with ARIA{x1}"))
         .with_label(span0)
 }

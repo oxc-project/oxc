@@ -26,6 +26,7 @@ impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.fold_conditional_expression(expr);
         self.fold_logical_expression(expr);
+        walk_mut::walk_expression(self, expr);
     }
 }
 
@@ -150,7 +151,7 @@ impl<'a> Visit<'a> for KeepVar<'a> {
         }
     }
 
-    fn visit_function(&mut self, _it: &Function<'a>, _flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
         /* skip functions */
     }
 

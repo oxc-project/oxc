@@ -14,8 +14,7 @@ use oxc_syntax::operator::AssignmentOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_self_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-self-assign): this expression is assigned to itself")
-        .with_label(span0)
+    OxcDiagnostic::warn("this expression is assigned to itself").with_label(span0)
 }
 
 #[derive(Debug, Clone)]

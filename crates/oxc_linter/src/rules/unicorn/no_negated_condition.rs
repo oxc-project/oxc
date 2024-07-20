@@ -10,11 +10,9 @@ use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_negated_condition_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.",
-    )
-    .with_help("Remove the negation operator and switch the consequent and alternate branches.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Unexpected negated condition.")
+        .with_help("Remove the negation operator and switch the consequent and alternate branches.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

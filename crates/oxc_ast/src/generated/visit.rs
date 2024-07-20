@@ -27,10 +27,14 @@ use walk::*;
 
 /// Syntax tree traversal
 pub trait Visit<'a>: Sized {
+    #[inline]
     fn enter_node(&mut self, kind: AstKind<'a>) {}
+    #[inline]
     fn leave_node(&mut self, kind: AstKind<'a>) {}
 
+    #[inline]
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
+    #[inline]
     fn leave_scope(&mut self) {}
 
     #[inline]
@@ -38,15 +42,17 @@ pub trait Visit<'a>: Sized {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-        #[allow(unsafe_code)]
-        unsafe {
-            std::mem::transmute(t)
-        }
+        unsafe { std::mem::transmute(t) }
     }
 
     #[inline]
     fn visit_program(&mut self, it: &Program<'a>) {
         walk_program(self, it);
+    }
+
+    #[inline]
+    fn visit_hashbang(&mut self, it: &Hashbang<'a>) {
+        walk_hashbang(self, it);
     }
 
     #[inline]
@@ -62,11 +68,6 @@ pub trait Visit<'a>: Sized {
     #[inline]
     fn visit_string_literal(&mut self, it: &StringLiteral<'a>) {
         walk_string_literal(self, it);
-    }
-
-    #[inline]
-    fn visit_hashbang(&mut self, it: &Hashbang<'a>) {
-        walk_hashbang(self, it);
     }
 
     #[inline]
@@ -215,88 +216,23 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
-        walk_formal_parameters(self, it);
+    fn visit_ts_type_parameter_declaration(&mut self, it: &TSTypeParameterDeclaration<'a>) {
+        walk_ts_type_parameter_declaration(self, it);
     }
 
     #[inline]
-    fn visit_formal_parameter_list(&mut self, it: &Vec<'a, FormalParameter<'a>>) {
-        walk_formal_parameter_list(self, it);
+    fn visit_ts_type_parameters(&mut self, it: &Vec<'a, TSTypeParameter<'a>>) {
+        walk_ts_type_parameters(self, it);
     }
 
     #[inline]
-    fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
-        walk_formal_parameter(self, it);
-    }
-
-    #[inline]
-    fn visit_decorators(&mut self, it: &Vec<'a, Decorator<'a>>) {
-        walk_decorators(self, it);
-    }
-
-    #[inline]
-    fn visit_decorator(&mut self, it: &Decorator<'a>) {
-        walk_decorator(self, it);
-    }
-
-    #[inline]
-    fn visit_binding_pattern(&mut self, it: &BindingPattern<'a>) {
-        walk_binding_pattern(self, it);
-    }
-
-    #[inline]
-    fn visit_binding_pattern_kind(&mut self, it: &BindingPatternKind<'a>) {
-        walk_binding_pattern_kind(self, it);
+    fn visit_ts_type_parameter(&mut self, it: &TSTypeParameter<'a>) {
+        walk_ts_type_parameter(self, it);
     }
 
     #[inline]
     fn visit_binding_identifier(&mut self, it: &BindingIdentifier<'a>) {
         walk_binding_identifier(self, it);
-    }
-
-    #[inline]
-    fn visit_object_pattern(&mut self, it: &ObjectPattern<'a>) {
-        walk_object_pattern(self, it);
-    }
-
-    #[inline]
-    fn visit_binding_properties(&mut self, it: &Vec<'a, BindingProperty<'a>>) {
-        walk_binding_properties(self, it);
-    }
-
-    #[inline]
-    fn visit_binding_property(&mut self, it: &BindingProperty<'a>) {
-        walk_binding_property(self, it);
-    }
-
-    #[inline]
-    fn visit_property_key(&mut self, it: &PropertyKey<'a>) {
-        walk_property_key(self, it);
-    }
-
-    #[inline]
-    fn visit_private_identifier(&mut self, it: &PrivateIdentifier<'a>) {
-        walk_private_identifier(self, it);
-    }
-
-    #[inline]
-    fn visit_binding_rest_element(&mut self, it: &BindingRestElement<'a>) {
-        walk_binding_rest_element(self, it);
-    }
-
-    #[inline]
-    fn visit_array_pattern(&mut self, it: &ArrayPattern<'a>) {
-        walk_array_pattern(self, it);
-    }
-
-    #[inline]
-    fn visit_assignment_pattern(&mut self, it: &AssignmentPattern<'a>) {
-        walk_assignment_pattern(self, it);
-    }
-
-    #[inline]
-    fn visit_ts_type_annotation(&mut self, it: &TSTypeAnnotation<'a>) {
-        walk_ts_type_annotation(self, it);
     }
 
     #[inline]
@@ -385,18 +321,83 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_ts_type_parameter_declaration(&mut self, it: &TSTypeParameterDeclaration<'a>) {
-        walk_ts_type_parameter_declaration(self, it);
+    fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
+        walk_formal_parameters(self, it);
     }
 
     #[inline]
-    fn visit_ts_type_parameters(&mut self, it: &Vec<'a, TSTypeParameter<'a>>) {
-        walk_ts_type_parameters(self, it);
+    fn visit_formal_parameter_list(&mut self, it: &Vec<'a, FormalParameter<'a>>) {
+        walk_formal_parameter_list(self, it);
     }
 
     #[inline]
-    fn visit_ts_type_parameter(&mut self, it: &TSTypeParameter<'a>) {
-        walk_ts_type_parameter(self, it);
+    fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
+        walk_formal_parameter(self, it);
+    }
+
+    #[inline]
+    fn visit_decorators(&mut self, it: &Vec<'a, Decorator<'a>>) {
+        walk_decorators(self, it);
+    }
+
+    #[inline]
+    fn visit_decorator(&mut self, it: &Decorator<'a>) {
+        walk_decorator(self, it);
+    }
+
+    #[inline]
+    fn visit_binding_pattern(&mut self, it: &BindingPattern<'a>) {
+        walk_binding_pattern(self, it);
+    }
+
+    #[inline]
+    fn visit_binding_pattern_kind(&mut self, it: &BindingPatternKind<'a>) {
+        walk_binding_pattern_kind(self, it);
+    }
+
+    #[inline]
+    fn visit_object_pattern(&mut self, it: &ObjectPattern<'a>) {
+        walk_object_pattern(self, it);
+    }
+
+    #[inline]
+    fn visit_binding_properties(&mut self, it: &Vec<'a, BindingProperty<'a>>) {
+        walk_binding_properties(self, it);
+    }
+
+    #[inline]
+    fn visit_binding_property(&mut self, it: &BindingProperty<'a>) {
+        walk_binding_property(self, it);
+    }
+
+    #[inline]
+    fn visit_property_key(&mut self, it: &PropertyKey<'a>) {
+        walk_property_key(self, it);
+    }
+
+    #[inline]
+    fn visit_private_identifier(&mut self, it: &PrivateIdentifier<'a>) {
+        walk_private_identifier(self, it);
+    }
+
+    #[inline]
+    fn visit_binding_rest_element(&mut self, it: &BindingRestElement<'a>) {
+        walk_binding_rest_element(self, it);
+    }
+
+    #[inline]
+    fn visit_array_pattern(&mut self, it: &ArrayPattern<'a>) {
+        walk_array_pattern(self, it);
+    }
+
+    #[inline]
+    fn visit_assignment_pattern(&mut self, it: &AssignmentPattern<'a>) {
+        walk_assignment_pattern(self, it);
+    }
+
+    #[inline]
+    fn visit_ts_type_annotation(&mut self, it: &TSTypeAnnotation<'a>) {
+        walk_ts_type_annotation(self, it);
     }
 
     #[inline]
@@ -839,7 +840,7 @@ pub trait Visit<'a>: Sized {
     }
 
     #[inline]
-    fn visit_function(&mut self, it: &Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
         walk_function(self, it, flags);
     }
 
@@ -1365,12 +1366,19 @@ pub mod walk {
             },
             &it.scope_id,
         );
-        visitor.visit_directives(&it.directives);
         if let Some(hashbang) = &it.hashbang {
             visitor.visit_hashbang(hashbang);
         }
+        visitor.visit_directives(&it.directives);
         visitor.visit_statements(&it.body);
         visitor.leave_scope();
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_hashbang<'a, V: Visit<'a>>(visitor: &mut V, it: &Hashbang<'a>) {
+        let kind = AstKind::Hashbang(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
 
@@ -1392,13 +1400,6 @@ pub mod walk {
     #[inline]
     pub fn walk_string_literal<'a, V: Visit<'a>>(visitor: &mut V, it: &StringLiteral<'a>) {
         let kind = AstKind::StringLiteral(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_hashbang<'a, V: Visit<'a>>(visitor: &mut V, it: &Hashbang<'a>) {
-        let kind = AstKind::Hashbang(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.leave_node(kind);
     }
@@ -1512,7 +1513,7 @@ pub mod walk {
             Expression::ClassExpression(it) => visitor.visit_class(it),
             Expression::ConditionalExpression(it) => visitor.visit_conditional_expression(it),
             Expression::FunctionExpression(it) => {
-                let flags = None;
+                let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
             Expression::ImportExpression(it) => visitor.visit_import_expression(it),
@@ -1717,177 +1718,57 @@ pub mod walk {
             },
             &it.scope_id,
         );
-        visitor.visit_formal_parameters(&it.params);
-        visitor.visit_function_body(&it.body);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
         }
+        visitor.visit_function_body(&it.body);
         visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_formal_parameters<'a, V: Visit<'a>>(visitor: &mut V, it: &FormalParameters<'a>) {
-        let kind = AstKind::FormalParameters(visitor.alloc(it));
+    pub fn walk_ts_type_parameter_declaration<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &TSTypeParameterDeclaration<'a>,
+    ) {
+        let kind = AstKind::TSTypeParameterDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.visit_formal_parameter_list(&it.items);
-        if let Some(rest) = &it.rest {
-            visitor.visit_binding_rest_element(rest);
-        }
+        visitor.visit_ts_type_parameters(&it.params);
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_formal_parameter_list<'a, V: Visit<'a>>(
+    pub fn walk_ts_type_parameters<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, FormalParameter<'a>>,
+        it: &Vec<'a, TSTypeParameter<'a>>,
     ) {
         for el in it.iter() {
-            visitor.visit_formal_parameter(el);
+            visitor.visit_ts_type_parameter(el);
         }
     }
 
     #[inline]
-    pub fn walk_formal_parameter<'a, V: Visit<'a>>(visitor: &mut V, it: &FormalParameter<'a>) {
-        let kind = AstKind::FormalParameter(visitor.alloc(it));
+    pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeParameter<'a>) {
+        let kind = AstKind::TSTypeParameter(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.visit_decorators(&it.decorators);
-        visitor.visit_binding_pattern(&it.pattern);
+        visitor.visit_binding_identifier(&it.name);
+        if let Some(constraint) = &it.constraint {
+            visitor.visit_ts_type(constraint);
+        }
+        if let Some(default) = &it.default {
+            visitor.visit_ts_type(default);
+        }
         visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_decorators<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Decorator<'a>>) {
-        for el in it.iter() {
-            visitor.visit_decorator(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_decorator<'a, V: Visit<'a>>(visitor: &mut V, it: &Decorator<'a>) {
-        let kind = AstKind::Decorator(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_expression(&it.expression);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_binding_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingPattern<'a>) {
-        // NOTE: AstKind doesn't exists!
-        visitor.visit_binding_pattern_kind(&it.kind);
-        if let Some(type_annotation) = &it.type_annotation {
-            visitor.visit_ts_type_annotation(type_annotation);
-        }
-    }
-
-    #[inline]
-    pub fn walk_binding_pattern_kind<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &BindingPatternKind<'a>,
-    ) {
-        match it {
-            BindingPatternKind::BindingIdentifier(it) => visitor.visit_binding_identifier(it),
-            BindingPatternKind::ObjectPattern(it) => visitor.visit_object_pattern(it),
-            BindingPatternKind::ArrayPattern(it) => visitor.visit_array_pattern(it),
-            BindingPatternKind::AssignmentPattern(it) => visitor.visit_assignment_pattern(it),
-        }
     }
 
     #[inline]
     pub fn walk_binding_identifier<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingIdentifier<'a>) {
         let kind = AstKind::BindingIdentifier(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_object_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &ObjectPattern<'a>) {
-        let kind = AstKind::ObjectPattern(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_binding_properties(&it.properties);
-        if let Some(rest) = &it.rest {
-            visitor.visit_binding_rest_element(rest);
-        }
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_binding_properties<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &Vec<'a, BindingProperty<'a>>,
-    ) {
-        for el in it.iter() {
-            visitor.visit_binding_property(el);
-        }
-    }
-
-    #[inline]
-    pub fn walk_binding_property<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingProperty<'a>) {
-        // NOTE: AstKind doesn't exists!
-        visitor.visit_property_key(&it.key);
-        visitor.visit_binding_pattern(&it.value);
-    }
-
-    #[inline]
-    pub fn walk_property_key<'a, V: Visit<'a>>(visitor: &mut V, it: &PropertyKey<'a>) {
-        let kind = AstKind::PropertyKey(visitor.alloc(it));
-        visitor.enter_node(kind);
-        match it {
-            PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
-            PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
-            match_expression!(PropertyKey) => visitor.visit_expression(it.to_expression()),
-        }
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_private_identifier<'a, V: Visit<'a>>(visitor: &mut V, it: &PrivateIdentifier<'a>) {
-        let kind = AstKind::PrivateIdentifier(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_binding_rest_element<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &BindingRestElement<'a>,
-    ) {
-        let kind = AstKind::BindingRestElement(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_binding_pattern(&it.argument);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_array_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &ArrayPattern<'a>) {
-        let kind = AstKind::ArrayPattern(visitor.alloc(it));
-        visitor.enter_node(kind);
-        for elements in it.elements.iter().flatten() {
-            visitor.visit_binding_pattern(elements);
-        }
-        if let Some(rest) = &it.rest {
-            visitor.visit_binding_rest_element(rest);
-        }
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_assignment_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &AssignmentPattern<'a>) {
-        let kind = AstKind::AssignmentPattern(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_binding_pattern(&it.left);
-        visitor.visit_expression(&it.right);
-        visitor.leave_node(kind);
-    }
-
-    #[inline]
-    pub fn walk_ts_type_annotation<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeAnnotation<'a>) {
-        let kind = AstKind::TSTypeAnnotation(visitor.alloc(it));
-        visitor.enter_node(kind);
-        visitor.visit_ts_type(&it.type_annotation);
         visitor.leave_node(kind);
     }
 
@@ -2033,11 +1914,15 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_conditional_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSConditionalType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::TSConditionalType(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type(&it.check_type);
         visitor.visit_ts_type(&it.extends_type);
         visitor.visit_ts_type(&it.true_type);
         visitor.visit_ts_type(&it.false_type);
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2051,39 +1936,157 @@ pub mod walk {
     }
 
     #[inline]
-    pub fn walk_ts_type_parameter_declaration<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &TSTypeParameterDeclaration<'a>,
-    ) {
-        let kind = AstKind::TSTypeParameterDeclaration(visitor.alloc(it));
+    pub fn walk_formal_parameters<'a, V: Visit<'a>>(visitor: &mut V, it: &FormalParameters<'a>) {
+        let kind = AstKind::FormalParameters(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.visit_ts_type_parameters(&it.params);
+        visitor.visit_formal_parameter_list(&it.items);
+        if let Some(rest) = &it.rest {
+            visitor.visit_binding_rest_element(rest);
+        }
         visitor.leave_node(kind);
     }
 
     #[inline]
-    pub fn walk_ts_type_parameters<'a, V: Visit<'a>>(
+    pub fn walk_formal_parameter_list<'a, V: Visit<'a>>(
         visitor: &mut V,
-        it: &Vec<'a, TSTypeParameter<'a>>,
+        it: &Vec<'a, FormalParameter<'a>>,
     ) {
         for el in it.iter() {
-            visitor.visit_ts_type_parameter(el);
+            visitor.visit_formal_parameter(el);
         }
     }
 
     #[inline]
-    pub fn walk_ts_type_parameter<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeParameter<'a>) {
-        let kind = AstKind::TSTypeParameter(visitor.alloc(it));
+    pub fn walk_formal_parameter<'a, V: Visit<'a>>(visitor: &mut V, it: &FormalParameter<'a>) {
+        let kind = AstKind::FormalParameter(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
-        visitor.visit_binding_identifier(&it.name);
-        if let Some(constraint) = &it.constraint {
-            visitor.visit_ts_type(constraint);
+        visitor.visit_decorators(&it.decorators);
+        visitor.visit_binding_pattern(&it.pattern);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_decorators<'a, V: Visit<'a>>(visitor: &mut V, it: &Vec<'a, Decorator<'a>>) {
+        for el in it.iter() {
+            visitor.visit_decorator(el);
         }
-        if let Some(default) = &it.default {
-            visitor.visit_ts_type(default);
+    }
+
+    #[inline]
+    pub fn walk_decorator<'a, V: Visit<'a>>(visitor: &mut V, it: &Decorator<'a>) {
+        let kind = AstKind::Decorator(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_expression(&it.expression);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_binding_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingPattern<'a>) {
+        // NOTE: AstKind doesn't exists!
+        visitor.visit_binding_pattern_kind(&it.kind);
+        if let Some(type_annotation) = &it.type_annotation {
+            visitor.visit_ts_type_annotation(type_annotation);
         }
-        visitor.leave_scope();
+    }
+
+    #[inline]
+    pub fn walk_binding_pattern_kind<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &BindingPatternKind<'a>,
+    ) {
+        match it {
+            BindingPatternKind::BindingIdentifier(it) => visitor.visit_binding_identifier(it),
+            BindingPatternKind::ObjectPattern(it) => visitor.visit_object_pattern(it),
+            BindingPatternKind::ArrayPattern(it) => visitor.visit_array_pattern(it),
+            BindingPatternKind::AssignmentPattern(it) => visitor.visit_assignment_pattern(it),
+        }
+    }
+
+    #[inline]
+    pub fn walk_object_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &ObjectPattern<'a>) {
+        let kind = AstKind::ObjectPattern(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_binding_properties(&it.properties);
+        if let Some(rest) = &it.rest {
+            visitor.visit_binding_rest_element(rest);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_binding_properties<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &Vec<'a, BindingProperty<'a>>,
+    ) {
+        for el in it.iter() {
+            visitor.visit_binding_property(el);
+        }
+    }
+
+    #[inline]
+    pub fn walk_binding_property<'a, V: Visit<'a>>(visitor: &mut V, it: &BindingProperty<'a>) {
+        // NOTE: AstKind doesn't exists!
+        visitor.visit_property_key(&it.key);
+        visitor.visit_binding_pattern(&it.value);
+    }
+
+    #[inline]
+    pub fn walk_property_key<'a, V: Visit<'a>>(visitor: &mut V, it: &PropertyKey<'a>) {
+        let kind = AstKind::PropertyKey(visitor.alloc(it));
+        visitor.enter_node(kind);
+        match it {
+            PropertyKey::StaticIdentifier(it) => visitor.visit_identifier_name(it),
+            PropertyKey::PrivateIdentifier(it) => visitor.visit_private_identifier(it),
+            match_expression!(PropertyKey) => visitor.visit_expression(it.to_expression()),
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_private_identifier<'a, V: Visit<'a>>(visitor: &mut V, it: &PrivateIdentifier<'a>) {
+        let kind = AstKind::PrivateIdentifier(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_binding_rest_element<'a, V: Visit<'a>>(
+        visitor: &mut V,
+        it: &BindingRestElement<'a>,
+    ) {
+        let kind = AstKind::BindingRestElement(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_binding_pattern(&it.argument);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_array_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &ArrayPattern<'a>) {
+        let kind = AstKind::ArrayPattern(visitor.alloc(it));
+        visitor.enter_node(kind);
+        for elements in it.elements.iter().flatten() {
+            visitor.visit_binding_pattern(elements);
+        }
+        if let Some(rest) = &it.rest {
+            visitor.visit_binding_rest_element(rest);
+        }
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_assignment_pattern<'a, V: Visit<'a>>(visitor: &mut V, it: &AssignmentPattern<'a>) {
+        let kind = AstKind::AssignmentPattern(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_binding_pattern(&it.left);
+        visitor.visit_expression(&it.right);
+        visitor.leave_node(kind);
+    }
+
+    #[inline]
+    pub fn walk_ts_type_annotation<'a, V: Visit<'a>>(visitor: &mut V, it: &TSTypeAnnotation<'a>) {
+        let kind = AstKind::TSTypeAnnotation(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.visit_ts_type(&it.type_annotation);
         visitor.leave_node(kind);
     }
 
@@ -2265,7 +2268,9 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_mapped_type<'a, V: Visit<'a>>(visitor: &mut V, it: &TSMappedType<'a>) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::TSMappedType(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_ts_type_parameter(&it.type_parameter);
         if let Some(name_type) = &it.name_type {
             visitor.visit_ts_type(name_type);
@@ -2273,6 +2278,8 @@ pub mod walk {
         if let Some(type_annotation) = &it.type_annotation {
             visitor.visit_ts_type(type_annotation);
         }
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2436,7 +2443,9 @@ pub mod walk {
         visitor: &mut V,
         it: &TSConstructSignatureDeclaration<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::TSConstructSignatureDeclaration(visitor.alloc(it));
+        visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_formal_parameters(&it.params);
         if let Some(return_type) = &it.return_type {
             visitor.visit_ts_type_annotation(return_type);
@@ -2444,12 +2453,15 @@ pub mod walk {
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.leave_scope();
+        visitor.leave_node(kind);
     }
 
     #[inline]
     pub fn walk_ts_method_signature<'a, V: Visit<'a>>(visitor: &mut V, it: &TSMethodSignature<'a>) {
         let kind = AstKind::TSMethodSignature(visitor.alloc(it));
         visitor.enter_node(kind);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         visitor.visit_property_key(&it.key);
         if let Some(this_param) = &it.this_param {
             visitor.visit_ts_this_parameter(this_param);
@@ -2461,6 +2473,7 @@ pub mod walk {
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3017,27 +3030,23 @@ pub mod walk {
         visitor.visit_decorators(&it.decorators);
         visitor.visit_property_key(&it.key);
         {
-            let flags = Some(match it.kind {
-                MethodDefinitionKind::Get => ScopeFlags::GetAccessor,
-                MethodDefinitionKind::Set => ScopeFlags::SetAccessor,
-                MethodDefinitionKind::Constructor => ScopeFlags::Constructor,
-                MethodDefinitionKind::Method => ScopeFlags::empty(),
-            });
+            let flags = match it.kind {
+                MethodDefinitionKind::Get => ScopeFlags::Function | ScopeFlags::GetAccessor,
+                MethodDefinitionKind::Set => ScopeFlags::Function | ScopeFlags::SetAccessor,
+                MethodDefinitionKind::Constructor => ScopeFlags::Function | ScopeFlags::Constructor,
+                MethodDefinitionKind::Method => ScopeFlags::Function,
+            };
             visitor.visit_function(&it.value, flags);
         }
         visitor.leave_node(kind);
     }
 
-    pub fn walk_function<'a, V: Visit<'a>>(
-        visitor: &mut V,
-        it: &Function<'a>,
-        flags: Option<ScopeFlags>,
-    ) {
+    pub fn walk_function<'a, V: Visit<'a>>(visitor: &mut V, it: &Function<'a>, flags: ScopeFlags) {
         let kind = AstKind::Function(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.enter_scope(
             {
-                let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
+                let mut flags = flags;
                 if it.is_strict() {
                     flags |= ScopeFlags::StrictMode;
                 }
@@ -3692,12 +3701,17 @@ pub mod walk {
     pub fn walk_catch_clause<'a, V: Visit<'a>>(visitor: &mut V, it: &CatchClause<'a>) {
         let kind = AstKind::CatchClause(visitor.alloc(it));
         visitor.enter_node(kind);
-        visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
+        let scope_events_cond = it.param.is_some();
+        if scope_events_cond {
+            visitor.enter_scope(ScopeFlags::CatchClause, &it.scope_id);
+        }
         if let Some(param) = &it.param {
             visitor.visit_catch_parameter(param);
         }
         visitor.visit_block_statement(&it.body);
-        visitor.leave_scope();
+        if scope_events_cond {
+            visitor.leave_scope();
+        }
         visitor.leave_node(kind);
     }
 
@@ -3741,7 +3755,7 @@ pub mod walk {
         match it {
             Declaration::VariableDeclaration(it) => visitor.visit_variable_declaration(it),
             Declaration::FunctionDeclaration(it) => {
-                let flags = None;
+                let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
             Declaration::ClassDeclaration(it) => visitor.visit_class(it),
@@ -3764,10 +3778,12 @@ pub mod walk {
         let kind = AstKind::TSTypeAliasDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(type_parameters) = &it.type_parameters {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_ts_type(&it.type_annotation);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3779,6 +3795,7 @@ pub mod walk {
         let kind = AstKind::TSInterfaceDeclaration(visitor.alloc(it));
         visitor.enter_node(kind);
         visitor.visit_binding_identifier(&it.id);
+        visitor.enter_scope(ScopeFlags::empty(), &it.scope_id);
         if let Some(extends) = &it.extends {
             visitor.visit_ts_interface_heritages(extends);
         }
@@ -3786,6 +3803,7 @@ pub mod walk {
             visitor.visit_ts_type_parameter_declaration(type_parameters);
         }
         visitor.visit_ts_interface_body(&it.body);
+        visitor.leave_scope();
         visitor.leave_node(kind);
     }
 
@@ -3930,6 +3948,8 @@ pub mod walk {
 
     #[inline]
     pub fn walk_ts_module_reference<'a, V: Visit<'a>>(visitor: &mut V, it: &TSModuleReference<'a>) {
+        let kind = AstKind::TSModuleReference(visitor.alloc(it));
+        visitor.enter_node(kind);
         match it {
             TSModuleReference::ExternalModuleReference(it) => {
                 visitor.visit_ts_external_module_reference(it)
@@ -3938,6 +3958,7 @@ pub mod walk {
                 visitor.visit_ts_type_name(it.to_ts_type_name())
             }
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4122,7 +4143,7 @@ pub mod walk {
     ) {
         match it {
             ExportDefaultDeclarationKind::FunctionDeclaration(it) => {
-                let flags = None;
+                let flags = ScopeFlags::Function;
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),
