@@ -74,6 +74,10 @@ impl Rule for PreferEs6Class {
             ));
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[derive(Debug, Default, Clone)]

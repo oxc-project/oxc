@@ -78,6 +78,10 @@ impl Rule for RequireRenderReturn {
             };
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq)]

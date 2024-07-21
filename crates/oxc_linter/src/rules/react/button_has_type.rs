@@ -146,6 +146,10 @@ impl Rule for ButtonHasType {
                 .unwrap_or(true),
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 impl ButtonHasType {

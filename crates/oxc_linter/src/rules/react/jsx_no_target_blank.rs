@@ -243,6 +243,10 @@ impl Rule for JsxNoTargetBlank {
                 .unwrap_or(false),
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 fn check_is_external_link(link: &str) -> bool {

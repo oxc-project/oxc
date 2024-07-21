@@ -60,6 +60,10 @@ impl Rule for JsxNoCommentTextnodes {
             ctx.diagnostic(jsx_no_comment_textnodes_diagnostic(jsx_text.span));
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 fn control_patterns(pattern: &str) -> bool {

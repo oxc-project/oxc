@@ -47,6 +47,10 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
 
         ctx.diagnostic(no_non_null_asserted_nullish_coalescing_diagnostic(ts_non_null_expr.span));
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 fn has_assignment_before_node(
     symbol_id: SymbolId,

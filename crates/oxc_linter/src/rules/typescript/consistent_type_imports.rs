@@ -266,6 +266,10 @@ impl Rule for ConsistentTypeImports {
             );
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 // Given an array of words, returns an English-friendly concatenation, separated with commas, with
