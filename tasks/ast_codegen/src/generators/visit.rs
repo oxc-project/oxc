@@ -37,7 +37,7 @@ pub struct VisitMutGenerator;
 
 impl Generator for VisitGenerator {
     fn name(&self) -> &'static str {
-        "VisitGenerator"
+        stringify!(VisitGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
@@ -47,7 +47,7 @@ impl Generator for VisitGenerator {
 
 impl Generator for VisitMutGenerator {
     fn name(&self) -> &'static str {
-        "VisitMutGenerator"
+        stringify!(VisitMutGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {

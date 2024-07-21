@@ -23,7 +23,7 @@ pub struct AstBuilderGenerator;
 
 impl Generator for AstBuilderGenerator {
     fn name(&self) -> &'static str {
-        "AstBuilderGenerator"
+        stringify!(AstBuilderGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
