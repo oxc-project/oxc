@@ -1,6 +1,6 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
-use quote::{quote, ToTokens};
+use quote::quote;
 
 fn enum_repr(enum_: &syn::ItemEnum) -> TokenStream2 {
     if enum_.variants.iter().any(|var| !matches!(var.fields, syn::Fields::Unit)) {
@@ -41,7 +41,7 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
         #repr
         #input
     };
-    TokenStream::from(expanded.into_token_stream())
+    TokenStream::from(expanded)
 }
 
 /// Dummy derive macro for a non-existent trait `Ast`.
