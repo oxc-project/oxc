@@ -14,6 +14,7 @@ use syn::{
 
 use crate::{
     generators::generated_header,
+    output,
     schema::{Inherit, REnum, RStruct, RType},
     util::{TypeAnalyzeResult, TypeExt, TypeIdentResult, TypeWrapper},
     CodegenCtx, Generator, GeneratorOutput, TypeRef,
@@ -38,7 +39,7 @@ impl Generator for AstBuilderGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "ast_builder",
+            output(crate::AST_CRATE, "ast_builder.rs"),
             quote! {
                 #header
                 insert!("#![allow(clippy::default_trait_access, clippy::too_many_arguments, clippy::fn_params_excessive_bools)]");

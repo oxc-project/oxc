@@ -3,7 +3,7 @@ use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
 use crate::{
-    markers::get_visit_markers, schema::RType, util::TypeExt, CodegenCtx, Generator,
+    markers::get_visit_markers, output, schema::RType, util::TypeExt, CodegenCtx, Generator,
     GeneratorOutput, TypeRef,
 };
 
@@ -163,7 +163,7 @@ impl Generator for AstKindGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "ast_kind",
+            output(crate::AST_CRATE, "ast_kind.rs"),
             quote! {
                 #header
 

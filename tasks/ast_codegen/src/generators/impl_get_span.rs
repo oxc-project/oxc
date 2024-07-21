@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Attribute, Variant};
+use syn::Variant;
 
 use crate::{
+    output,
     schema::{REnum, RStruct, RType},
     CodegenCtx, Generator, GeneratorOutput,
 };
@@ -37,7 +35,7 @@ impl Generator for ImplGetSpanGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "span",
+            output(crate::AST_CRATE, "span.rs"),
             quote! {
                 #header
                 insert!("#![allow(clippy::match_same_arms)]");

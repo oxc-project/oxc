@@ -4,12 +4,15 @@ use syn::parse_quote;
 
 use super::{CodegenCtx, Cow, Inherit, Itertools, RType, Result};
 
-pub trait Linker<'a> {
-    fn link(&'a self, linker: impl FnMut(&mut RType, &'a Self) -> Result<bool>) -> Result<&'a ()>;
+pub trait Linker: Sized {
+    fn link(self, linker: impl FnMut(&mut RType, &Self) -> Result<bool>) -> Result<Self>;
 }
 
 pub trait Unresolved {
     fn unresolved(&self) -> bool;
+
+    // TODO: remove me
+    #[allow(dead_code)]
     fn resolved(&self) -> bool {
         !self.unresolved()
     }
@@ -27,11 +30,8 @@ impl Unresolved for Vec<Inherit> {
     }
 }
 
-impl<'a> Linker<'a> for CodegenCtx {
-    fn link(
-        &'a self,
-        mut linker: impl FnMut(&mut RType, &'a Self) -> Result<bool>,
-    ) -> Result<&'a ()> {
+impl Linker for CodegenCtx {
+    fn link(self, mut linker: impl FnMut(&mut RType, &Self) -> Result<bool>) -> Result<Self> {
         // we sort by `TypeId` so we always have the same ordering as how it is written in the rust.
         let mut unresolved = self
             .ident_table
@@ -45,13 +45,13 @@ impl<'a> Linker<'a> for CodegenCtx {
 
             let val = &mut self.ty_table[next_id].borrow_mut();
 
-            if !linker(val, self)? {
+            if !linker(val, &self)? {
                 // for now we don't have entangled dependencies so we just add unresolved item back
                 // to the list so we revisit it again at the end.
                 unresolved.push_front(next);
             }
         }
-        Ok(&())
+        Ok(self)
     }
 }
 
