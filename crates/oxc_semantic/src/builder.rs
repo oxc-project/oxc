@@ -123,7 +123,7 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
-            current_scope_depth: 0,
+            current_scope_depth: 1, // Start with depth for `Program`
             function_stack: vec![],
             namespace_stack: vec![],
             nodes: AstNodes::default(),
@@ -200,7 +200,7 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
-        debug_assert_eq!(self.current_scope_depth, 0);
+        debug_assert_eq!(self.current_scope_depth, 1);
         self.scope.root_unresolved_references =
             self.unresolved_references.into_iter().next().unwrap();
 
@@ -460,31 +460,26 @@ impl<'a> SemanticBuilder<'a> {
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
+    // NB: Not called for `Program`
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        let parent_scope_id =
-            if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
+        let parent_scope_id = self.current_scope_id;
 
         let mut flags = flags;
-
         if !flags.is_strict_mode() && self.current_node_flags.has_class() {
             // NOTE A class definition is always strict mode code.
             flags |= ScopeFlags::StrictMode;
         };
+        flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
 
-        if let Some(parent_scope_id) = parent_scope_id {
-            flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
-        }
-
-        self.current_scope_id = self.scope.add_scope(parent_scope_id, self.current_node_id, flags);
+        self.current_scope_id =
+            self.scope.add_scope(Some(parent_scope_id), self.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
-        if let Some(parent_scope_id) = parent_scope_id {
-            if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-                // Clone the `CatchClause` bindings and add them to the current scope.
-                // to make it easier to check redeclare errors.
-                let bindings = self.scope.get_bindings(parent_scope_id).clone();
-                self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
-            }
+        if self.scope.get_flags(parent_scope_id).is_catch_clause() {
+            // Clone the `CatchClause` bindings and add them to the current scope.
+            // to make it easier to check redeclare errors.
+            let bindings = self.scope.get_bindings(parent_scope_id).clone();
+            self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
         }
 
         // Increment scope depth, and ensure stack is large enough that
@@ -495,16 +490,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
     }
 
+    // NB: Not called for `Program`
     fn leave_scope(&mut self) {
         self.resolve_references_for_current_scope();
-        if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
+
+        // `get_parent_id` always returns `Some` because this method is not called for `Program`.
+        // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
+        // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
+        let parent_id = self.scope.get_parent_id(self.current_scope_id);
+        debug_assert!(parent_id.is_some());
+        if let Some(parent_id) = parent_id {
             self.current_scope_id = parent_id;
         }
+
         self.current_scope_depth -= 1;
     }
 
     // Setup all the context for the binder.
     // The order is important here.
+    // NB: Not called for `Program`.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
         self.enter_kind(kind);
@@ -542,16 +546,15 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         );
         self.record_ast_node();
 
-        self.enter_scope(
-            {
-                let mut flags = ScopeFlags::Top;
-                if program.is_strict() {
-                    flags |= ScopeFlags::StrictMode;
-                }
-                flags
-            },
-            &program.scope_id,
-        );
+        // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
+        // Inline the specific logic for `Program` here instead.
+        // This simplifies logic in `enter_scope`, as it doesn't have to handle the special case.
+        let mut flags = ScopeFlags::Top;
+        if program.is_strict() {
+            flags |= ScopeFlags::StrictMode;
+        }
+        self.current_scope_id = self.scope.add_scope(None, self.current_node_id, flags);
+        program.scope_id.set(Some(self.current_scope_id));
 
         if let Some(hashbang) = &program.hashbang {
             self.visit_hashbang(hashbang);
@@ -567,7 +570,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
 
-        self.leave_scope();
+        // Don't call `leave_scope` here as `Program` is a special case - scope has no `parent_id`.
+        // This simplifies `leave_scope`.
+        self.resolve_references_for_current_scope();
+
         self.leave_node(kind);
     }
 
