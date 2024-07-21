@@ -16,6 +16,68 @@ use oxc_ast::ast::*;
 
 use crate::context::LintContext;
 
+pub enum SkipChainExpression<'a> {
+    ChainElement(&'a ChainElement<'a>),
+    Expression(&'a Expression<'a>),
+}
+
+pub fn skip_parenthesized_expression<'a>(expr: &'a Expression<'a>) -> &Expression<'a> {
+    match expr {
+        Expression::ParenthesizedExpression(paren_expr) => &paren_expr.expression,
+        _ => expr
+    }
+}
+
+pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> SkipChainExpression<'a> {
+    match expr {
+        Expression::ParenthesizedExpression(paren_expr) => skip_chain_expression(&paren_expr.expression),
+        Expression::ChainExpression(chain_expr) => SkipChainExpression::ChainElement(&chain_expr.expression),
+        _ => SkipChainExpression::Expression(expr)
+    }
+}
+
+pub fn get_skip_chain_expression_static_member_expression(skip_expr_callee: SkipChainExpression) -> Option<&StaticMemberExpression> {
+    match skip_expr_callee {
+        SkipChainExpression::ChainElement(expr) => {
+           match expr {
+                ChainElement::StaticMemberExpression(member_expr) => {
+                    Some(member_expr)
+                },
+                _ => None,
+           }
+        },
+        SkipChainExpression::Expression(expr) => {
+            match expr {
+                Expression::StaticMemberExpression(member_expr) => {
+                    Some(member_expr)
+                },
+                _ => None,
+            }
+        }
+    }
+}
+
+pub fn get_skip_chain_expr_member_expr(skip_expr_callee: SkipChainExpression) -> Option<&MemberExpression> {
+    match skip_expr_callee {
+        SkipChainExpression::ChainElement(expr) => {
+            match expr {
+                match_member_expression!(ChainElement) => {
+                    Some(expr.to_member_expression())
+                },
+                _ => None,
+           }
+        },
+        SkipChainExpression::Expression(expr) => {
+            match expr {
+                match_member_expression!(Expression) => {
+                    Some(expr.to_member_expression())
+                },
+                _ => None,
+            }
+        }
+    }
+}
+
 /// Test if an AST node is a boolean value that never changes. Specifically we
 /// test for:
 /// 1. Literal booleans (`true` or `false`)
@@ -72,6 +134,14 @@ fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
 ///   if coerced to that type, the value will be constant.
 pub trait IsConstant<'a, 'b> {
     fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool;
+}
+
+pub trait IsArray {
+    fn is_array(&self) -> bool;
+}
+
+pub trait IsNullOrUnderfined {
+    fn is_null_or_undefined(&self) -> bool;
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
@@ -166,6 +236,26 @@ impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
             match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
+        }
+    }
+}
+
+impl IsArray for Argument<'_> {
+    fn is_array(&self) -> bool {
+        match self {
+            Argument::ArrayExpression(_) => true,
+            _ => false
+        }
+    }
+}
+
+impl IsNullOrUnderfined for Argument<'_> {
+    fn is_null_or_undefined(&self) -> bool {
+        match self {
+            Argument::NullLiteral(_) => true,
+            Argument::Identifier(ident) => ident.name == "undefined",
+            Argument::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Void,
+            _ => false
         }
     }
 }

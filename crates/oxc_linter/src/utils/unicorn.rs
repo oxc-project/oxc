@@ -1,13 +1,13 @@
 mod boolean;
 use oxc_ast::{
     ast::{
-        BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
-        MemberExpression, Statement,
+        Argument, ArrayExpression, ArrayExpressionElement, BindingPatternKind, CallExpression, Expression, FormalParameters, FunctionBody, LogicalExpression, MemberExpression, Statement
     },
     AstKind,
 };
 use oxc_semantic::AstNode;
 use oxc_syntax::operator::LogicalOperator;
+use oxc_span::{GetSpan, Span};
 
 pub use self::boolean::*;
 use crate::LintContext;
@@ -188,6 +188,14 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
             return left_bool.value == right_bool.value;
         }
 
+        (Expression::CallExpression(left_call), Expression::CallExpression(right_call)) => {
+            return is_same_call_expression(left_call, right_call, ctx);
+        }
+
+        (Expression::ArrayExpression(left), Expression::ArrayExpression(right)) => {
+            return is_same_array_expression(left, right, ctx);
+        }
+
         (
             Expression::ChainExpression(left_chain_expr),
             Expression::ChainExpression(right_chain_expr),
@@ -211,11 +219,80 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
     false
 }
 
+fn is_same_array_expression(
+    left: &ArrayExpression,
+    right: &ArrayExpression,
+    ctx: &LintContext,
+) -> bool {
+    if left.elements.len() != right.elements.len() {
+        return false;
+    }
+
+    for (left, right) in left.elements.iter().zip(right.elements.iter()) {
+        match (left, right) {
+            (ArrayExpressionElement::SpreadElement(left), ArrayExpressionElement::SpreadElement(right)) => {
+                if !is_same_reference(&left.argument, &right.argument, ctx) {
+                    return false
+                }
+            }
+            (left, right) => {
+                if !is_same_reference(left.as_expression().unwrap(), right.as_expression().unwrap(), ctx) {
+                    return false
+                }
+            },
+        }
+    }
+    return true;
+}
+
+pub fn is_same_call_expression(
+    left: &CallExpression,
+    right: &CallExpression,
+    ctx: &LintContext,
+) -> bool {
+    if left.optional != right.optional {
+        return false;
+    }
+
+    if !is_same_reference(&left.callee, &right.callee, ctx) {
+        return false;
+    }
+
+    if left.arguments.len() != right.arguments.len() {
+        return false;
+    }
+
+    if left.arguments.len() != right.arguments.len() {
+        return false;
+    }
+
+    for (left, right) in left.arguments.iter().zip(right.arguments.iter()) {
+        match (left, right) {
+            (Argument::SpreadElement(left), Argument::SpreadElement(right)) => {
+                if !is_same_reference(&left.argument, &right.argument, ctx) {
+                    return false
+                }
+            }
+            (left, right) => {
+                if !is_same_reference(left.as_expression().unwrap(), right.as_expression().unwrap(), ctx) {
+                    return false
+                }
+            }
+        }
+    }
+
+    return true
+}
+
 pub fn is_same_member_expression(
     left: &MemberExpression,
     right: &MemberExpression,
     ctx: &LintContext,
 ) -> bool {
+    if left.optional() != right.optional() {
+        return false;
+    }
+
     let left_static_property_name = left.static_property_name();
     let right_static_property_name = right.static_property_name();
 
