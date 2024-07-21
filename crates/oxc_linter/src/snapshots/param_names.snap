@@ -1,0 +1,50 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^_?resolve$`
+   ╭─[param_names.tsx:1:22]
+ 1 │ new Promise(function(reject, resolve) {})
+   ·                      ──────
+   ╰────
+
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^_?reject$`
+   ╭─[param_names.tsx:1:30]
+ 1 │ new Promise(function(reject, resolve) {})
+   ·                              ───────
+   ╰────
+
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^_?reject$`
+   ╭─[param_names.tsx:1:31]
+ 1 │ new Promise(function(resolve, rej) {})
+   ·                               ───
+   ╰────
+
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^_?resolve$`
+   ╭─[param_names.tsx:1:13]
+ 1 │ new Promise(yes => {})
+   ·             ───
+   ╰────
+
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^_?resolve$`
+   ╭─[param_names.tsx:1:14]
+ 1 │ new Promise((yes, no) => {})
+   ·              ───
+   ╰────
+
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^_?reject$`
+   ╭─[param_names.tsx:1:19]
+ 1 │ new Promise((yes, no) => {})
+   ·                   ──
+   ╰────
+
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^yes$`
+   ╭─[param_names.tsx:1:22]
+ 1 │ new Promise(function(resolve, reject) { config(); })
+   ·                      ───────
+   ╰────
+
+  ⚠ eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `^no$`
+   ╭─[param_names.tsx:1:31]
+ 1 │ new Promise(function(resolve, reject) { config(); })
+   ·                               ──────
+   ╰────

@@ -10,12 +10,12 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::SymbolId;
+use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::{Fix, RuleFixer},
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
 };
@@ -256,7 +256,7 @@ impl Rule for ConsistentTypeImports {
                     Ok(fixes) => fixes,
                     Err(err) => {
                         debug_assert!(false, "Failed to fix: {err}");
-                        vec![]
+                        fixer.noop()
                     }
                 }
             };
@@ -309,7 +309,7 @@ fn is_only_has_type_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
     if peekable_iter.peek().is_none() {
         return false;
     }
-    peekable_iter.all(oxc_semantic::Reference::is_type)
+    peekable_iter.all(Reference::is_type)
 }
 
 struct FixOptions<'a, 'b> {
@@ -329,8 +329,9 @@ fn fixer_error<S: Into<String>, T>(message: S) -> FixerResult<T> {
 
 // import { Foo, Bar } from 'foo' => import type { Foo, Bar } from 'foo'
 #[allow(clippy::unnecessary_cast, clippy::cast_possible_truncation)]
-fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResult<Vec<Fix<'a>>> {
+fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, type_names, fix_style, ctx } = options;
+    let fixer = fixer.for_multifix();
 
     let GroupedSpecifiers { namespace_specifier, named_specifiers, default_specifier } =
         classify_specifier(import_decl);
@@ -389,8 +390,8 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
     let fixes_named_specifiers =
         get_fixes_named_specifiers(options, &type_names_specifiers, &named_specifiers)?;
 
-    let mut fixes = vec![];
-    let mut after_fixes = vec![];
+    let mut rule_fixes = fixer.new_fix_with_capacity(4);
+    let mut after_fixes = fixer.new_fix_with_capacity(4);
 
     if !type_names_specifiers.is_empty() {
         // definitely all type references: `import type { A, B } from 'foo'`
@@ -409,7 +410,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                 &fixes_named_specifiers.type_named_specifiers_text,
             )?;
             if type_only_named_import.span.end <= import_decl.span.start {
-                fixes.push(fix);
+                rule_fixes.push(fix);
             } else {
                 after_fixes.push(fix);
             }
@@ -427,9 +428,9 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                         .join(", "),
                     ctx.source_range(import_decl.source.span),
                 );
-                fixes.push(fixer.insert_text_before(*import_decl, text));
+                rule_fixes.push(fixer.insert_text_before(*import_decl, text));
             } else {
-                fixes.push(fixer.insert_text_before(
+                rule_fixes.push(fixer.insert_text_before(
                     *import_decl,
                     format!(
                         "import type {{{}}} from {};\n",
@@ -441,7 +442,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
         }
     }
 
-    let mut fixes_remove_type_namespace_specifier = vec![];
+    let mut fixes_remove_type_namespace_specifier = fixer.new_fix_with_capacity(0);
 
     if let Some(namespace_specifier) = namespace_specifier {
         if type_names.iter().contains(&namespace_specifier.local.name.as_str()) {
@@ -459,7 +460,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
 
             // import type * as Ns from 'foo'
             // ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ insert
-            fixes.push(fixer.insert_text_before(
+            rule_fixes.push(fixer.insert_text_before(
                 *import_decl,
                 format!(
                     "import type {} from {};\n",
@@ -475,7 +476,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
             if type_names.len() == import_decl.specifiers.as_ref().map_or(0, |s| s.len()) {
                 // import type Type from 'foo'
                 //        ^^^^^ insert
-                fixes.push(fixer.insert_text_after(
+                rule_fixes.push(fixer.insert_text_after(
                     &Span::new(import_decl.span().start, import_decl.span().start + 6),
                     " type",
                 ));
@@ -490,7 +491,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                     default_specifier.span.start,
                     import_decl.span().start + comma,
                 ));
-                fixes.push(fixer.insert_text_before(
+                rule_fixes.push(fixer.insert_text_before(
                     *import_decl,
                     format!(
                         "import type {default_text} from {};\n",
@@ -502,7 +503,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
                     find_first_non_white_space(&import_text[(comma + 1) as usize..])
                 {
                     let after_token = comma as usize + 1 + after_token.0;
-                    fixes.push(fixer.delete_range(Span::new(
+                    rule_fixes.push(fixer.delete_range(Span::new(
                         default_specifier.span.start,
                         import_decl.span().start + after_token as u32,
                     )));
@@ -511,22 +512,22 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
         }
     }
 
-    fixes.extend(fixes_named_specifiers.remove_type_name_specifiers);
-    fixes.extend(fixes_remove_type_namespace_specifier);
-    fixes.extend(after_fixes);
-    Ok(fixes)
+    Ok(rule_fixes
+        .extend(fixes_named_specifiers.remove_type_name_specifiers)
+        .extend(fixes_remove_type_namespace_specifier)
+        .extend(after_fixes))
 }
 
 fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
     options: &FixOptions<'a, '_>,
     insert_text: &str,
-) -> FixerResult<Fix<'a>> {
+) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
     let import_text = ctx.source_range(import_decl.span);
     let close_brace = try_find_char(import_text, '}')?;
 
     let first_non_whitespace_before_close_brace =
-        import_text[..close_brace as usize].chars().rev().find(|c| c.is_whitespace());
+        import_text[..close_brace as usize].chars().rev().find(|c| !c.is_whitespace());
 
     let span =
         Span::new(import_decl.span().start + close_brace, import_decl.span().start + close_brace);
@@ -541,7 +542,7 @@ fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
 #[derive(Default, Debug)]
 struct FixNamedSpecifiers<'a> {
     type_named_specifiers_text: String,
-    remove_type_name_specifiers: Vec<Fix<'a>>,
+    remove_type_name_specifiers: RuleFix<'a>,
 }
 
 // get the type-only named import declaration with same source
@@ -578,15 +579,16 @@ fn get_fixes_named_specifiers<'a>(
     options: &FixOptions<'a, '_>,
     subset_named_specifiers: &[&ImportSpecifier<'a>],
     all_named_specifiers: &[&ImportSpecifier<'a>],
-) -> Result<FixNamedSpecifiers<'a>, Box<dyn Error>> {
+) -> FixerResult<FixNamedSpecifiers<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
+    let fixer = fixer.for_multifix();
 
     if all_named_specifiers.is_empty() {
         return Ok(FixNamedSpecifiers::default());
     }
 
     let mut type_named_specifiers_text: Vec<&str> = vec![];
-    let mut remove_type_named_specifiers: Vec<Fix> = vec![];
+    let mut remove_type_named_specifiers = fixer.new_fix_with_capacity(1);
 
     if subset_named_specifiers.len() == all_named_specifiers.len() {
         // import Foo, {Type1, Type2} from 'foo'
@@ -736,10 +738,11 @@ fn try_find_char(text: &str, c: char) -> Result<u32, Box<dyn Error>> {
 
 fn fix_inline_type_import_declaration<'a>(
     options: &FixOptions<'a, '_>,
-) -> FixerResult<Vec<Fix<'a>>> {
+) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, type_names, ctx, .. } = options;
+    let fixer = fixer.for_multifix();
 
-    let mut fixes = vec![];
+    let mut rule_fixes = fixer.new_fix_with_capacity(0);
 
     let Some(specifiers) = &import_decl.specifiers else {
         return fixer_error("Missing specifiers in import declaration");
@@ -748,7 +751,7 @@ fn fix_inline_type_import_declaration<'a>(
     for specifier in specifiers {
         if let ImportDeclarationSpecifier::ImportSpecifier(specifier) = specifier {
             if type_names.iter().contains(&specifier.local.name.as_str()) {
-                fixes.push(
+                rule_fixes.push(
                     fixer.replace(
                         specifier.span,
                         format!("type {}", ctx.source_range(specifier.span)),
@@ -758,20 +761,21 @@ fn fix_inline_type_import_declaration<'a>(
         }
     }
 
-    Ok(fixes)
+    Ok(rule_fixes)
 }
 
 fn fix_insert_type_specifier_for_import_declaration<'a>(
     options: &FixOptions<'a, '_>,
     is_default_import: bool,
-) -> FixerResult<Vec<Fix<'a>>> {
+) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
+    let fixer = fixer.for_multifix();
     let import_source = ctx.source_range(import_decl.span);
-    let mut fixes = vec![];
+    let mut rule_fixes = fixer.new_fix_with_capacity(1);
 
     // "import { Foo, Bar } from 'foo'" => "import type { Foo, Bar } from 'foo'"
     //                                             ^^^^ add
-    fixes.push(
+    rule_fixes.push(
         fixer.replace(Span::new(import_decl.span.start, import_decl.span.start + 6), "import type"),
     );
 
@@ -784,7 +788,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
             let base = import_decl.span.start;
             // import foo, {} from 'foo'
             //           ^^^^ delete
-            fixes.push(
+            rule_fixes.push(
                 fixer.delete(&Span::new(base + comma_token, base + (closing_brace_token + 1))),
             );
             if import_decl.specifiers.as_ref().is_some_and(|specifiers| specifiers.len() > 1) {
@@ -800,7 +804,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
                     ));
                 };
 
-                fixes.push(fixer.insert_text_after(
+                rule_fixes.push(fixer.insert_text_after(
                     *import_decl,
                     format!(
                         "\nimport type {} from {}",
@@ -818,7 +822,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
                 if specifier.import_kind.is_type() {
                     // import { type    A } from 'foo.js'
                     //          ^^^^^^^^ delete
-                    fixes.push(
+                    rule_fixes.push(
                         fixer.delete(&Span::new(
                             specifier.span.start,
                             specifier.imported.span().start,
@@ -829,7 +833,7 @@ fn fix_insert_type_specifier_for_import_declaration<'a>(
         }
     }
 
-    Ok(fixes)
+    Ok(rule_fixes)
 }
 
 struct GroupedSpecifiers<'a, 'b> {
@@ -866,11 +870,12 @@ fn classify_specifier<'a, 'b>(import_decl: &'b ImportDeclaration<'a>) -> Grouped
 
 // import type Foo from 'foo'
 //        ^^^^ remove
+// note:(don): RuleFix added
 fn fix_remove_type_specifier_from_import_declaration<'a>(
     fixer: RuleFixer<'_, 'a>,
     import_decl_span: Span,
     ctx: &LintContext<'a>,
-) -> Fix<'a> {
+) -> RuleFix<'a> {
     let import_source = ctx.source_range(import_decl_span);
     let new_import_source = import_source
         // `    type Foo from 'foo'`
@@ -896,7 +901,7 @@ fn fix_remove_type_specifier_from_import_specifier<'a>(
     fixer: RuleFixer<'_, 'a>,
     specifier_span: Span,
     ctx: &LintContext<'a>,
-) -> Fix<'a> {
+) -> RuleFix<'a> {
     let specifier_source = ctx.source_range(specifier_span);
     let new_specifier_source = specifier_source.strip_prefix("type ");
 
@@ -907,8 +912,15 @@ fn fix_remove_type_specifier_from_import_specifier<'a>(
 fn test() {
     use crate::tester::Tester;
 
-    fn remove_prefix_space(str: &str) -> String {
-        str.lines().map(str::trim).collect::<Vec<_>>().join("\n")
+    fn remove_common_prefix_space(str: &str) -> String {
+        let first_content_line = str.lines().find(|line| line.trim() != "").unwrap();
+        let prefix_space =
+            first_content_line.chars().take_while(|c| c.is_whitespace()).collect::<String>();
+
+        str.lines()
+            .map(|line| line.strip_prefix(&prefix_space).unwrap_or(line).to_string())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
 
     let pass = vec![
@@ -1148,7 +1160,7 @@ fn test() {
         (
             "
               import Type from 'foo';
-              
+
               export { Type }; // is a value export
               export default Type; // is a value export
             ",
@@ -1157,7 +1169,7 @@ fn test() {
         (
             "
               import type Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1167,7 +1179,7 @@ fn test() {
         (
             "
               import { Type } from 'foo';
-        
+
               export { Type }; // is a value export
               export default Type; // is a value export
             ",
@@ -1176,7 +1188,7 @@ fn test() {
         (
             "
               import type { Type } from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1186,7 +1198,7 @@ fn test() {
         (
             "
               import * as Type from 'foo';
-        
+
               export { Type }; // is a value export
               export default Type; // is a value export
             ",
@@ -1195,7 +1207,7 @@ fn test() {
         (
             "
               import type * as Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1205,7 +1217,7 @@ fn test() {
         (
             "
               import Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1215,7 +1227,7 @@ fn test() {
         (
             "
               import { Type } from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1225,7 +1237,7 @@ fn test() {
         (
             "
               import * as Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1275,7 +1287,7 @@ fn test() {
         (
             "
               import type * as constants from './constants';
-        
+
               export type Y = {
                 [constants.X]: ReadonlyArray<string>;
               };
@@ -1789,7 +1801,7 @@ fn test() {
         (
             "
               import Type from 'foo';
-        
+
               export type { Type }; // is a type-only export
             ",
             None,
@@ -1797,7 +1809,7 @@ fn test() {
         (
             "
               import { Type } from 'foo';
-        
+
               export type { Type }; // is a type-only export
             ",
             None,
@@ -1805,7 +1817,7 @@ fn test() {
         (
             "
               import * as Type from 'foo';
-        
+
               export type { Type }; // is a type-only export
             ",
             None,
@@ -1813,7 +1825,7 @@ fn test() {
         (
             "
               import type Type from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1823,7 +1835,7 @@ fn test() {
         (
             "
               import type { Type } from 'foo';
-        
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1833,7 +1845,7 @@ fn test() {
         (
             "
               import type * as Type from 'foo';
-              
+
               export { Type }; // is a type-only export
               export default Type; // is a type-only export
               export type { Type }; // is a type-only export
@@ -1846,7 +1858,7 @@ fn test() {
               import type // comment
               DefType from 'foo';
               import type /*comment*/ { Type } from 'foo';
-              
+
               type T = { a: AllType; b: DefType; c: Type };
             ",
             Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
@@ -1926,7 +1938,7 @@ fn test() {
         (
             "
               import { A, B } from 'foo';
-              
+
               let foo: A;
               B();
             ",
@@ -2021,7 +2033,7 @@ fn test() {
             "
               import { A, B, C } from 'foo';
               import type { D } from 'deez';
-              
+
               const foo: A = B();
               let bar: C;
               let baz: D;
@@ -2125,7 +2137,7 @@ fn test() {
                 class A {
                   @deco
                   get foo() {}
-              
+
                   set foo(value: Foo) {}
                 }
             ",
@@ -2137,7 +2149,7 @@ fn test() {
                 class A {
                   @deco
                   get foo() {}
-              
+
                   set ['foo'](value: Foo) {}
                 }
             ",
@@ -2177,6 +2189,38 @@ fn test() {
         //     ",
         //     None,
         // ),
+        (
+            "
+            import type {
+              StorageProvider,
+            } from '../../../fundamentals';
+            import {
+              Config,
+              OnEvent,
+              StorageProviderFactory,
+              URLHelper,
+            } from '../../../fundamentals';
+
+            type A = StorageProvider
+            type B = Config
+            type C = OnEvent
+            type D = URLHelper
+            ",
+            None,
+        ),
+        (
+            "
+            import type {
+              TransformResult,
+            } from './plugin'
+            import { defineParallelPlugin,DefineParallelPluginResult } from './plugin'
+
+            type A = TransformResult;
+            type B = DefineParallelPluginResult;
+            const c = defineParallelPlugin()
+            ",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -2189,7 +2233,7 @@ fn test() {
               foo: Foo;
             }
             function fn(a: Foo): Foo {}
-            ",
+                      ",
             "
             import type Foo from 'foo';
             let foo: Foo;
@@ -2621,12 +2665,12 @@ fn test() {
         (
             "
             import Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             "
             import type Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             None,
@@ -2634,12 +2678,12 @@ fn test() {
         (
             "
             import { Type } from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             "
             import type { Type } from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             None,
@@ -2647,12 +2691,12 @@ fn test() {
         (
             "
             import * as Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             "
             import type * as Type from 'foo';
-            
+
             export type { Type }; // is a type-only export
                       ",
             None,
@@ -2660,14 +2704,14 @@ fn test() {
         (
             "
             import type Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
                       ",
             "
             import Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
@@ -2677,14 +2721,14 @@ fn test() {
         (
             "
             import type { Type } from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
                       ",
             "
             import { Type } from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
@@ -2694,14 +2738,14 @@ fn test() {
         (
             "
             import type * as Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
                       ",
             "
             import * as Type from 'foo';
-            
+
             export { Type }; // is a type-only export
             export default Type; // is a type-only export
             export type { Type }; // is a type-only export
@@ -2714,7 +2758,7 @@ fn test() {
             import type // comment
             DefType from 'foo';
             import type /*comment*/ { Type } from 'foo';
-            
+
             type T = { a: AllType; b: DefType; c: Type };
                       ",
             "
@@ -2722,7 +2766,7 @@ fn test() {
             import // comment
             DefType from 'foo';
             import /*comment*/ { Type } from 'foo';
-            
+
             type T = { a: AllType; b: DefType; c: Type };
                       ",
             Some(serde_json::json!([{ "prefer": "no-type-imports" }])),
@@ -2851,13 +2895,13 @@ fn test() {
         (
             "
             import { A, B } from 'foo';
-            
+
             let foo: A;
             B();
                       ",
             "
             import { type A, B } from 'foo';
-            
+
             let foo: A;
             B();
                       ",
@@ -2997,7 +3041,7 @@ fn test() {
             "
             import { A, B, C } from 'foo';
             import type { D } from 'deez';
-            
+
             const foo: A = B();
             let bar: C;
             let baz: D;
@@ -3005,7 +3049,7 @@ fn test() {
             "
             import { type A, B, type C } from 'foo';
             import type { D } from 'deez';
-            
+
             const foo: A = B();
             let bar: C;
             let baz: D;
@@ -3258,6 +3302,64 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+            import type {
+              StorageProvider,
+            } from '../../../fundamentals';
+            import {
+              Config,
+              OnEvent,
+              StorageProviderFactory,
+              URLHelper,
+            } from '../../../fundamentals';
+
+            type A = StorageProvider
+            type B = Config
+            type C = OnEvent
+            type D = URLHelper
+            ",
+            "
+            import type {
+              StorageProvider,
+
+              Config,
+              OnEvent,
+              URLHelper} from '../../../fundamentals';
+            import {
+              StorageProviderFactory
+            } from '../../../fundamentals';
+
+            type A = StorageProvider
+            type B = Config
+            type C = OnEvent
+            type D = URLHelper
+            ",
+            None,
+        ),
+        (
+            "
+            import type {
+              TransformResult,
+            } from './plugin'
+            import { defineParallelPlugin, DefineParallelPluginResult } from './plugin'
+
+            type A = TransformResult;
+            type B = DefineParallelPluginResult;
+            const c = defineParallelPlugin()
+            ",
+            "
+            import type {
+              TransformResult,
+             DefineParallelPluginResult } from './plugin'
+            import { defineParallelPlugin } from './plugin'
+
+            type A = TransformResult;
+            type B = DefineParallelPluginResult;
+            const c = defineParallelPlugin()
+            ",
+            None,
+        ),
     ];
 
     // To format fix code.
@@ -3267,7 +3369,7 @@ fn test() {
     // '\n'`, so let's remove the prefix space.
     let fix = fix
         .into_iter()
-        .map(|(a, b, c)| (remove_prefix_space(a), remove_prefix_space(b), c))
+        .map(|(a, b, c)| (remove_common_prefix_space(a), remove_common_prefix_space(b), c))
         .collect::<Vec<_>>();
 
     Tester::new(ConsistentTypeImports::NAME, pass, fail).expect_fix(fix).test_and_snapshot();

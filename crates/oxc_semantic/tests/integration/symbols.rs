@@ -114,3 +114,194 @@ fn test_export_flag() {
     tester.has_root_symbol("b").contains_flags(SymbolFlags::Export).test();
     tester.has_root_symbol("c").contains_flags(SymbolFlags::Export).test();
 }
+
+#[test]
+fn test_multiple_ts_type_alias_declaration() {
+    let tester = SemanticTester::ts(
+        "
+        type A<AB> = AB
+        type B<AB> = AB
+    ",
+    );
+
+    tester
+        .has_symbol("AB")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .test();
+}
+
+#[test]
+fn test_function_with_type_parameter() {
+    let tester = SemanticTester::ts(
+        "
+        function mdl<M>() {
+            function mdl2() {
+                function mdl3() {
+                    return '' as M;
+                }
+            }
+        }
+        function kfc<K>() {
+            function kfc2<K>() {
+                function kfc3<K>() {
+                    return '' as K;
+                }
+            }
+        }
+        ",
+    );
+
+    tester.has_symbol("M").has_number_of_references(1).test();
+    tester.has_symbol("K").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_class_with_type_parameter() {
+    let tester = SemanticTester::ts(
+        "
+        class Cls<T> {
+            a: T;
+            method<K>(b: T | K) {}
+            func() {
+                type D = T;
+                return null as D
+            }
+        }
+        type B = any;
+        class ClassB<B> {
+            b: B;
+        }
+        ",
+    );
+
+    tester.has_symbol("T").has_number_of_references(3).test();
+    tester.has_symbol("K").has_number_of_references(1).test();
+    tester.has_symbol("D").has_number_of_references(1).test();
+
+    // type B is not referenced
+    tester.has_symbol("B").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_ts_mapped_type() {
+    let tester = SemanticTester::ts(
+        "
+        type M<T> = { [K in keyof T]: T[K] };
+        type Y = any;
+        type X<T> = { [Y in keyof T]: T[Y] };
+        ",
+    );
+
+    tester.has_symbol("T").has_number_of_references(2).test();
+    tester.has_symbol("K").has_number_of_references(1).test();
+
+    // type Y is not referenced
+    tester.has_symbol("Y").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_ts_interface_declaration_with_type_parameter() {
+    let tester = SemanticTester::ts(
+        "
+        type A = any;
+        interface ITA<A> {
+            a: A;
+        }
+        interface ITB<B> {
+            b: B;
+        }
+        ",
+    );
+
+    tester.has_symbol("B").has_number_of_references(1).test();
+
+    // type A is not referenced
+    tester.has_symbol("A").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_ts_infer_type() {
+    let tester = SemanticTester::ts(
+        "
+        type T = T extends infer U ? U : never;
+
+        type C = any;
+        type K = K extends infer C ? K : never;
+        ",
+    );
+
+    tester.has_symbol("T").has_number_of_references(1).test();
+    tester.has_symbol("U").has_number_of_references(1).test();
+
+    // type C is not referenced
+    tester.has_symbol("C").has_number_of_references(0).test();
+}
+
+#[test]
+fn test_value_used_as_type() {
+    // Type annotations (or any type reference) do not resolve to value symbols
+    SemanticTester::ts(
+        "
+    const x = 1;
+    function foo(a: x) { }
+    ",
+    )
+    .has_root_symbol("x")
+    .intersects_flags(SymbolFlags::Value)
+    .has_number_of_references(0)
+    .test();
+
+    // T is a value that gets shadowed by a type. When `T` is referenced within
+    // a value context, the root `const T` should be the symbol recoreded in the
+    // reference.
+    let tester = SemanticTester::ts(
+        "
+const T = 1;
+function foo<T extends number>(a: T) {
+    return a + T;
+}
+",
+    );
+
+    tester.has_root_symbol("T").has_number_of_reads(1).test();
+}
+
+#[test]
+fn test_type_used_as_value() {
+    SemanticTester::ts(
+        "
+    type T = number;
+    let x = T;
+    ",
+    )
+    .has_some_symbol("T")
+    .has_number_of_reads(0)
+    .test();
+}
+
+#[test]
+fn test_type_query() {
+    SemanticTester::ts(
+        "
+    type T = number;
+    let x: typeof T;
+    ",
+    )
+    .has_some_symbol("T")
+    .has_number_of_reads(0)
+    .test();
+}
+
+#[test]
+fn test_ts_interface_heritage() {
+    SemanticTester::ts(
+        "
+        type Heritage = { x: number; y: string; };
+        interface A extends (Heritage.x) {}
+    ",
+    )
+    .has_some_symbol("Heritage")
+    .has_number_of_references(1)
+    .test();
+}

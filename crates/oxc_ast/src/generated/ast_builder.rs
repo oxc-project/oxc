@@ -485,29 +485,29 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        body: T1,
-        type_parameters: T2,
-        super_type_parameters: T3,
+        super_type_parameters: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> Expression<'a>
     where
-        T1: IntoIn<'a, Box<'a, ClassBody<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Expression::ClassExpression(self.alloc(self.class(
             r#type,
             span,
             decorators,
             id,
-            super_class,
-            body,
             type_parameters,
+            super_class,
             super_type_parameters,
             implements,
+            body,
             r#abstract,
             declare,
         )))
@@ -554,14 +554,14 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         this_param: Option<TSThisParameter<'a>>,
         params: T2,
-        body: T3,
-        return_type: T4,
+        return_type: T3,
+        body: T4,
     ) -> Expression<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Expression::FunctionExpression(self.alloc(self.function(
             r#type,
@@ -573,8 +573,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             this_param,
             params,
-            body,
             return_type,
+            body,
         )))
     }
 
@@ -2689,14 +2689,14 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         this_param: Option<TSThisParameter<'a>>,
         params: T2,
-        body: T3,
-        return_type: T4,
+        return_type: T3,
+        body: T4,
     ) -> Declaration<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Declaration::FunctionDeclaration(self.alloc(self.function(
             r#type,
@@ -2708,8 +2708,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             this_param,
             params,
-            body,
             return_type,
+            body,
         )))
     }
 
@@ -2728,29 +2728,29 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        body: T1,
-        type_parameters: T2,
-        super_type_parameters: T3,
+        super_type_parameters: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> Declaration<'a>
     where
-        T1: IntoIn<'a, Box<'a, ClassBody<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Declaration::ClassDeclaration(self.alloc(self.class(
             r#type,
             span,
             decorators,
             id,
-            super_class,
-            body,
             type_parameters,
+            super_class,
             super_type_parameters,
             implements,
+            body,
             r#abstract,
             declare,
         )))
@@ -3720,14 +3720,14 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         this_param: Option<TSThisParameter<'a>>,
         params: T2,
-        body: T3,
-        return_type: T4,
+        return_type: T3,
+        body: T4,
     ) -> Function<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         Function {
             r#type,
@@ -3739,8 +3739,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters: type_parameters.into_in(self.allocator),
             this_param,
             params: params.into_in(self.allocator),
-            body: body.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
+            body: body.into_in(self.allocator),
             scope_id: Default::default(),
         }
     }
@@ -3757,14 +3757,14 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         this_param: Option<TSThisParameter<'a>>,
         params: T2,
-        body: T3,
-        return_type: T4,
+        return_type: T3,
+        body: T4,
     ) -> Box<'a, Function<'a>>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         self.function(
             r#type,
@@ -3776,8 +3776,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             this_param,
             params,
-            body,
             return_type,
+            body,
         )
         .into_in(self.allocator)
     }
@@ -3942,29 +3942,29 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        body: T1,
-        type_parameters: T2,
-        super_type_parameters: T3,
+        super_type_parameters: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> Class<'a>
     where
-        T1: IntoIn<'a, Box<'a, ClassBody<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         Class {
             r#type,
             span,
             decorators,
             id,
-            super_class,
-            body: body.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
+            super_class,
             super_type_parameters: super_type_parameters.into_in(self.allocator),
             implements,
+            body: body.into_in(self.allocator),
             r#abstract,
             declare,
             scope_id: Default::default(),
@@ -3978,29 +3978,29 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        body: T1,
-        type_parameters: T2,
-        super_type_parameters: T3,
+        super_type_parameters: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> Box<'a, Class<'a>>
     where
-        T1: IntoIn<'a, Box<'a, ClassBody<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         self.class(
             r#type,
             span,
             decorators,
             id,
-            super_class,
-            body,
             type_parameters,
+            super_class,
             super_type_parameters,
             implements,
+            body,
             r#abstract,
             declare,
         )
@@ -4901,14 +4901,14 @@ impl<'a> AstBuilder<'a> {
         type_parameters: T1,
         this_param: Option<TSThisParameter<'a>>,
         params: T2,
-        body: T3,
-        return_type: T4,
+        return_type: T3,
+        body: T4,
     ) -> ExportDefaultDeclarationKind<'a>
     where
         T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
         T2: IntoIn<'a, Box<'a, FormalParameters<'a>>>,
-        T3: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
-        T4: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T3: IntoIn<'a, Option<Box<'a, TSTypeAnnotation<'a>>>>,
+        T4: IntoIn<'a, Option<Box<'a, FunctionBody<'a>>>>,
     {
         ExportDefaultDeclarationKind::FunctionDeclaration(self.alloc(self.function(
             r#type,
@@ -4920,8 +4920,8 @@ impl<'a> AstBuilder<'a> {
             type_parameters,
             this_param,
             params,
-            body,
             return_type,
+            body,
         )))
     }
 
@@ -4943,29 +4943,29 @@ impl<'a> AstBuilder<'a> {
         span: Span,
         decorators: Vec<'a, Decorator<'a>>,
         id: Option<BindingIdentifier<'a>>,
+        type_parameters: T1,
         super_class: Option<Expression<'a>>,
-        body: T1,
-        type_parameters: T2,
-        super_type_parameters: T3,
+        super_type_parameters: T2,
         implements: Option<Vec<'a, TSClassImplements<'a>>>,
+        body: T3,
         r#abstract: bool,
         declare: bool,
     ) -> ExportDefaultDeclarationKind<'a>
     where
-        T1: IntoIn<'a, Box<'a, ClassBody<'a>>>,
-        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
-        T3: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T1: IntoIn<'a, Option<Box<'a, TSTypeParameterDeclaration<'a>>>>,
+        T2: IntoIn<'a, Option<Box<'a, TSTypeParameterInstantiation<'a>>>>,
+        T3: IntoIn<'a, Box<'a, ClassBody<'a>>>,
     {
         ExportDefaultDeclarationKind::ClassDeclaration(self.alloc(self.class(
             r#type,
             span,
             decorators,
             id,
-            super_class,
-            body,
             type_parameters,
+            super_class,
             super_type_parameters,
             implements,
+            body,
             r#abstract,
             declare,
         )))
@@ -6062,7 +6062,14 @@ impl<'a> AstBuilder<'a> {
         true_type: TSType<'a>,
         false_type: TSType<'a>,
     ) -> TSConditionalType<'a> {
-        TSConditionalType { span, check_type, extends_type, true_type, false_type }
+        TSConditionalType {
+            span,
+            check_type,
+            extends_type,
+            true_type,
+            false_type,
+            scope_id: Default::default(),
+        }
     }
 
     #[inline]
@@ -6542,16 +6549,7 @@ impl<'a> AstBuilder<'a> {
         out: bool,
         r#const: bool,
     ) -> TSTypeParameter<'a> {
-        TSTypeParameter {
-            span,
-            name,
-            constraint,
-            default,
-            r#in,
-            out,
-            r#const,
-            scope_id: Default::default(),
-        }
+        TSTypeParameter { span, name, constraint, default, r#in, out, r#const }
     }
 
     #[inline]
@@ -6605,6 +6603,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters: type_parameters.into_in(self.allocator),
             type_annotation,
             declare,
+            scope_id: Default::default(),
         }
     }
 
@@ -6675,6 +6674,7 @@ impl<'a> AstBuilder<'a> {
             type_parameters: type_parameters.into_in(self.allocator),
             body: body.into_in(self.allocator),
             declare,
+            scope_id: Default::default(),
         }
     }
 
@@ -7013,6 +7013,7 @@ impl<'a> AstBuilder<'a> {
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -7066,6 +7067,7 @@ impl<'a> AstBuilder<'a> {
             params: params.into_in(self.allocator),
             return_type: return_type.into_in(self.allocator),
             type_parameters: type_parameters.into_in(self.allocator),
+            scope_id: Default::default(),
         }
     }
 
@@ -7678,6 +7680,7 @@ impl<'a> AstBuilder<'a> {
             type_annotation,
             optional,
             readonly,
+            scope_id: Default::default(),
         }
     }
 

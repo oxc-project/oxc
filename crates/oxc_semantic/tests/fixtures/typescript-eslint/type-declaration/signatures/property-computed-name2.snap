@@ -1,0 +1,58 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/signatures/property-computed-name2.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSEnumDeclaration(Foo)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(EnumMember)",
+            "id": 1,
+            "name": "a",
+            "node": "TSEnumMember",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(RegularEnum)",
+        "id": 0,
+        "name": "Foo",
+        "node": "TSEnumDeclaration(Foo)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "Foo",
+            "node_id": 11
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "A",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

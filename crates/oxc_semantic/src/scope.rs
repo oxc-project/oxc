@@ -3,28 +3,29 @@ use std::hash::BuildHasherDefault;
 use indexmap::IndexMap;
 use oxc_index::IndexVec;
 use oxc_span::CompactStr;
+use oxc_syntax::reference::{ReferenceFlag, ReferenceId};
 pub use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::{FxHashMap, FxHasher};
 
-use crate::{reference::ReferenceId, symbol::SymbolId, AstNodeId};
+use crate::{symbol::SymbolId, AstNodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
-pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<ReferenceId>>;
+pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
+pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
 
 /// Scope Tree
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
 #[derive(Debug, Default)]
 pub struct ScopeTree {
-    /// Maps a scope to the parent scope it belongs in
+    /// Maps a scope to the parent scope it belongs in.
     parent_ids: IndexVec<ScopeId, Option<ScopeId>>,
-
-    /// Maps a scope to direct children scopes
-    child_ids: FxHashMap<ScopeId, Vec<ScopeId>>,
-    // Maps a scope to its node id
-    node_ids: FxHashMap<ScopeId, AstNodeId>,
+    /// Maps a scope to direct children scopes.
+    child_ids: IndexVec<ScopeId, Vec<ScopeId>>,
+    /// Maps a scope to its node id.
+    node_ids: IndexVec<ScopeId, AstNodeId>,
     flags: IndexVec<ScopeId, ScopeFlags>,
     bindings: IndexVec<ScopeId, Bindings>,
     pub(crate) root_unresolved_references: UnresolvedReferences,
@@ -48,10 +49,10 @@ impl ScopeTree {
         // have recursive closures
         fn add_to_list(
             parent_id: ScopeId,
-            child_ids: &FxHashMap<ScopeId, Vec<ScopeId>>,
+            child_ids: &IndexVec<ScopeId, Vec<ScopeId>>,
             items: &mut Vec<ScopeId>,
         ) {
-            if let Some(children) = child_ids.get(&parent_id) {
+            if let Some(children) = child_ids.get(parent_id) {
                 for child_id in children {
                     items.push(*child_id);
                     add_to_list(*child_id, child_ids, items);
@@ -67,11 +68,11 @@ impl ScopeTree {
     }
 
     pub fn get_child_ids(&self, scope_id: ScopeId) -> Option<&Vec<ScopeId>> {
-        self.child_ids.get(&scope_id)
+        self.child_ids.get(scope_id)
     }
 
     pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> Option<&mut Vec<ScopeId>> {
-        self.child_ids.get_mut(&scope_id)
+        self.child_ids.get_mut(scope_id)
     }
 
     pub fn descendants_from_root(&self) -> impl Iterator<Item = ScopeId> + '_ {
@@ -89,6 +90,12 @@ impl ScopeTree {
 
     pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
         &self.root_unresolved_references
+    }
+
+    pub fn root_unresolved_references_ids(
+        &self,
+    ) -> impl Iterator<Item = impl Iterator<Item = ReferenceId> + '_> + '_ {
+        self.root_unresolved_references.values().map(|v| v.iter().map(|(id, _)| *id))
     }
 
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
@@ -132,7 +139,7 @@ impl ScopeTree {
     pub fn set_parent_id(&mut self, scope_id: ScopeId, parent_id: Option<ScopeId>) {
         self.parent_ids[scope_id] = parent_id;
         if let Some(parent_id) = parent_id {
-            self.child_ids.entry(parent_id).or_default().push(scope_id);
+            self.child_ids[parent_id].push(scope_id);
         }
     }
 
@@ -141,8 +148,12 @@ impl ScopeTree {
         self.get_binding(self.root_scope_id(), name)
     }
 
-    pub fn add_root_unresolved_reference(&mut self, name: CompactStr, reference_id: ReferenceId) {
-        self.root_unresolved_references.entry(name).or_default().push(reference_id);
+    pub fn add_root_unresolved_reference(
+        &mut self,
+        name: CompactStr,
+        reference: UnresolvedReference,
+    ) {
+        self.root_unresolved_references.entry(name).or_default().push(reference);
     }
 
     pub fn has_binding(&self, scope_id: ScopeId, name: &str) -> bool {
@@ -167,7 +178,7 @@ impl ScopeTree {
     }
 
     pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {
-        self.node_ids[&scope_id]
+        self.node_ids[scope_id]
     }
 
     pub fn iter_bindings(&self) -> impl Iterator<Item = (ScopeId, SymbolId, &'_ CompactStr)> + '_ {
@@ -180,20 +191,24 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
-    pub fn add_scope(&mut self, parent_id: Option<ScopeId>, flags: ScopeFlags) -> ScopeId {
+    pub fn add_scope(
+        &mut self,
+        parent_id: Option<ScopeId>,
+        node_id: AstNodeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);
+        _ = self.child_ids.push(vec![]);
         _ = self.flags.push(flags);
         _ = self.bindings.push(Bindings::default());
+        _ = self.node_ids.push(node_id);
 
+        // Set this scope as child of parent scope.
         if let Some(parent_id) = parent_id {
-            self.child_ids.entry(parent_id).or_default().push(scope_id);
+            self.child_ids[parent_id].push(scope_id);
         }
 
         scope_id
-    }
-
-    pub(crate) fn add_node_id(&mut self, scope_id: ScopeId, node_id: AstNodeId) {
-        self.node_ids.insert(scope_id, node_id);
     }
 
     pub fn add_binding(&mut self, scope_id: ScopeId, name: CompactStr, symbol_id: SymbolId) {

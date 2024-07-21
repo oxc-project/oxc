@@ -17,9 +17,10 @@ workspace = true
 doctest = false
 
 [[bin]]
-name = "oxc_prettier_conformance"
-path = "src/main.rs"
-test = false
+name    = "oxc_prettier_conformance"
+path    = "src/main.rs"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_allocator    = { workspace = true }

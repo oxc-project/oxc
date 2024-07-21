@@ -1,0 +1,3 @@
+interface A {
+  a: string;
+}

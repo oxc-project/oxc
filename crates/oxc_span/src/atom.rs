@@ -208,7 +208,7 @@ impl CompactStr {
     #[inline]
     pub const fn new_const(s: &'static str) -> Self {
         assert!(s.len() <= MAX_INLINE_LEN);
-        Self(CompactString::new_inline(s))
+        Self(CompactString::const_new(s))
     }
 
     /// Get string content as a `&str` slice.

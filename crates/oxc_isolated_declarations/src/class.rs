@@ -123,8 +123,8 @@ impl<'a> IsolatedDeclarations<'a> {
             self.ast.copy(&function.type_parameters),
             self.ast.copy(&function.this_param),
             params,
-            Option::<FunctionBody>::None,
             return_type,
+            Option::<FunctionBody>::None,
         );
 
         self.ast.class_element_method_definition(
@@ -490,11 +490,11 @@ impl<'a> IsolatedDeclarations<'a> {
             decl.span,
             self.ast.vec(),
             self.ast.copy(&decl.id),
-            self.ast.copy(&decl.super_class),
-            body,
             self.ast.copy(&decl.type_parameters),
+            self.ast.copy(&decl.super_class),
             self.ast.copy(&decl.super_type_parameters),
             self.ast.copy(&decl.implements),
+            body,
             decl.r#abstract,
             declare.unwrap_or_else(|| self.is_declare()),
         ))

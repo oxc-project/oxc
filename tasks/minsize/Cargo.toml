@@ -13,8 +13,9 @@ test    = false
 doctest = false
 
 [[bin]]
-name = "oxc_minsize"
-test = false
+name    = "oxc_minsize"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_span      = { workspace = true }

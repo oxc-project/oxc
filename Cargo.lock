@@ -275,13 +275,14 @@ dependencies = [
 
 [[package]]
 name = "compact_str"
-version = "0.7.1"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f86b9c4c00838774a6d902ef931eff7470720c51d90c2e32cfe15dc304737b3f"
+checksum = "6050c3a16ddab2e412160b31f2c871015704239bca62f72f6e5f0be631d3f644"
 dependencies = [
  "castaway",
  "cfg-if",
  "itoa",
+ "rustversion",
  "ryu",
  "serde",
  "static_assertions",
@@ -933,7 +934,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e310b3a6b5907f99202fcdb4960ff45b93735d7c7d96b760fcff8db2dc0e103d"
 dependencies = [
  "cfg-if",
- "windows-targets 0.52.6",
+ "windows-targets 0.48.5",
 ]
 
 [[package]]
@@ -1086,9 +1087,9 @@ dependencies = [
 
 [[package]]
 name = "napi"
-version = "3.0.0-alpha.6"
+version = "3.0.0-alpha.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2e5a69ce63aa1e68c939c5afa3f7be80d0c37eb3755022b064792dc019f08d8e"
+checksum = "4ec04344cc540f5897e97c9821ab99e7eb276b4dca6f3e6e441dfa72e5bcde70"
 dependencies = [
  "bitflags 2.6.0",
  "ctor",
@@ -1272,7 +1273,7 @@ checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
 name = "oxc"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1280,6 +1281,7 @@ dependencies = [
  "oxc_diagnostics",
  "oxc_index",
  "oxc_isolated_declarations",
+ "oxc_mangler",
  "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
@@ -1308,7 +1310,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1318,7 +1320,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "bitflags 2.6.0",
  "num-bigint",
@@ -1352,7 +1354,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.20.0"
+version = "0.21.0"
 
 [[package]]
 name = "oxc_benchmark"
@@ -1377,7 +1379,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "bitflags 2.6.0",
  "itertools 0.13.0",
@@ -1388,18 +1390,21 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "base64",
  "bitflags 2.6.0",
  "daachorse",
+ "insta",
  "once_cell",
  "oxc_allocator",
  "oxc_ast",
+ "oxc_mangler",
  "oxc_parser",
  "oxc_sourcemap",
  "oxc_span",
  "oxc_syntax",
+ "pico-args",
  "rustc-hash",
 ]
 
@@ -1440,7 +1445,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "miette",
  "owo-colors",
@@ -1450,14 +1455,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "insta",
  "oxc_allocator",
@@ -1503,8 +1508,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
+ "bitflags 2.6.0",
  "convert_case",
  "dashmap 6.0.1",
  "insta",
@@ -1551,18 +1557,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "oxc_mangler"
+version = "0.21.0"
+dependencies = [
+ "itertools 0.13.0",
+ "oxc_ast",
+ "oxc_index",
+ "oxc_semantic",
+ "oxc_span",
+]
+
+[[package]]
 name = "oxc_minifier"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "insta",
- "itertools 0.13.0",
  "num-bigint",
  "num-traits",
  "oxc_allocator",
  "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
- "oxc_index",
+ "oxc_mangler",
  "oxc_parser",
  "oxc_semantic",
  "oxc_span",
@@ -1587,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_module_lexer"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1597,7 +1613,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
@@ -1684,9 +1700,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_resolver"
-version = "1.9.3"
+version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee5850e737373628dfd9db8be5a0e85f1c816985fbb9cda58387b7f4b1f571d6"
+checksum = "c368aa1e41d8f8fb0ecbbe7130cd47814897f9a537cc7213be586ec34702d31f"
 dependencies = [
  "dashmap 6.0.1",
  "dunce",
@@ -1702,7 +1718,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "indexmap",
  "insta",
@@ -1718,13 +1734,14 @@ dependencies = [
  "phf",
  "rustc-hash",
  "serde",
+ "serde_json",
  "tsify",
  "wasm-bindgen",
 ]
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -1736,7 +1753,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "compact_str",
  "miette",
@@ -1748,7 +1765,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "bitflags 2.6.0",
  "dashmap 6.0.1",
@@ -1792,7 +1809,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -1808,7 +1825,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "dashmap 6.0.1",
  "indexmap",
@@ -1830,7 +1847,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.20.0"
+version = "0.21.0"
 dependencies = [
  "compact_str",
  "memoffset",
@@ -1857,7 +1874,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.6.0"
+version = "0.6.1"
 dependencies = [
  "bpaf",
  "glob",

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::syntax_directed_operations::{BoundNames, PropName};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
@@ -6,6 +8,10 @@ use oxc_span::{Atom, GetSpan, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{builder::SemanticBuilder, diagnostics::redeclaration};
+
+fn ts_error<M: Into<Cow<'static, str>>>(code: &'static str, message: M) -> OxcDiagnostic {
+    OxcDiagnostic::error(message).with_error_code("TS", code)
+}
 
 fn empty_type_parameter_list(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Type parameter list cannot be empty.").with_label(span0)
@@ -171,7 +177,7 @@ pub fn check_ts_enum_declaration<'a>(decl: &TSEnumDeclaration<'a>, ctx: &Semanti
 
 /// TS(1392)
 fn import_alias_cannot_use_import_type(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS(1392): An import alias cannot use 'import type'").with_label(span)
+    ts_error("1392", "An import alias cannot use 'import type'").with_label(span)
 }
 
 pub fn check_ts_import_equals_declaration<'a>(
@@ -188,11 +194,9 @@ pub fn check_ts_import_equals_declaration<'a>(
 /// - Abstract properties can only appear within an abstract class. (1253)
 /// - Abstract methods can only appear within an abstract class. (1244)
 fn abstract_elem_in_concrete_class(is_property: bool, span: Span) -> OxcDiagnostic {
-    let (code, elem_kind) = if is_property { (1253, "properties") } else { (1244, "methods") };
-    OxcDiagnostic::error(format!(
-        "TS({code}): Abstract {elem_kind} can only appear within an abstract class."
-    ))
-    .with_label(span)
+    let (code, elem_kind) = if is_property { ("1253", "properties") } else { ("1244", "methods") };
+    ts_error(code, format!("Abstract {elem_kind} can only appear within an abstract class."))
+        .with_label(span)
 }
 
 pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
@@ -207,26 +211,24 @@ pub fn check_class<'a>(class: &Class<'a>, ctx: &SemanticBuilder<'a>) {
 }
 
 fn abstract_element_cannot_have_initializer(
-    code: u32,
+    code: &'static str,
     elem_name: &str,
     prop_name: &str,
     span: Span,
     init_or_impl: &str,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::error(
-        format!("TS({code}): {elem_name} '{prop_name}' cannot have an {init_or_impl} because it is marked abstract."),
-    )
+    ts_error(code, format!("{elem_name} '{prop_name}' cannot have an {init_or_impl} because it is marked abstract."))
     .with_label(span)
 }
 
 /// TS(1245): Method 'foo' cannot have an implementation because it is marked abstract.
 fn abstract_method_cannot_have_implementation(method_name: &str, span: Span) -> OxcDiagnostic {
-    abstract_element_cannot_have_initializer(1245, "Method", method_name, span, "implementation")
+    abstract_element_cannot_have_initializer("1245", "Method", method_name, span, "implementation")
 }
 
 /// TS(1267): Property 'foo' cannot have an initializer because it is marked abstract.
 fn abstract_property_cannot_have_initializer(prop_name: &str, span: Span) -> OxcDiagnostic {
-    abstract_element_cannot_have_initializer(1267, "Property", prop_name, span, "initializer")
+    abstract_element_cannot_have_initializer("1267", "Property", prop_name, span, "initializer")
 }
 
 /// TS(1318): Accessor 'foo' cannot have an implementation because it is marked abstract.
@@ -237,7 +239,7 @@ fn abstract_property_cannot_have_initializer(prop_name: &str, span: Span) -> Oxc
 /// > implementation.`, is less helpful than the one provided here.
 fn abstract_accessor_cannot_have_implementation(accessor_name: &str, span: Span) -> OxcDiagnostic {
     abstract_element_cannot_have_initializer(
-        1318,
+        "1318",
         "Accessor",
         accessor_name,
         span,
@@ -247,8 +249,11 @@ fn abstract_accessor_cannot_have_implementation(accessor_name: &str, span: Span)
 
 /// 'abstract' modifier can only appear on a class, method, or property declaration. (1242)
 fn illegal_abstract_modifier(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS(1242): 'abstract' modifier can only appear on a class, method, or property declaration.")
-        .with_label(span)
+    ts_error(
+        "1242",
+        "'abstract' modifier can only appear on a class, method, or property declaration.",
+    )
+    .with_label(span)
 }
 
 pub fn check_method_definition<'a>(method: &MethodDefinition<'a>, ctx: &SemanticBuilder<'a>) {

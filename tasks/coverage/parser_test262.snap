@@ -24102,6 +24102,14 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  22 │   }
     ╰────
 
+  × Cannot use await in class static initialization block
+    ╭─[language/expressions/class/static-init-await-binding.js:21:12]
+ 20 │   static {
+ 21 │     (class await {});
+    ·            ─────
+ 22 │   }
+    ╰────
+
   × The keyword 'yield' is reserved
     ╭─[language/expressions/class/static-method-param-dflt-yield.js:21:16]
  20 │ 0, class {
@@ -28498,7 +28506,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
     ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/global-code/return.js:22:1]
  21 │ 
  22 │ return;
@@ -32440,7 +32448,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
     ·                               ──
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/module-code/parse-err-return.js:32:1]
  31 │ 
  32 │ return;
@@ -40144,7 +40152,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  24 │   }
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/class/static-init-invalid-return.js:24:7]
  23 │     static {
  24 │       return;
@@ -44817,7 +44825,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
     ╰────
   help: Try insert a semicolon here
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T1.js:18:1]
  17 │ var x=1;
  18 │ return;
@@ -44825,7 +44833,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  19 │ var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T10.js:17:1]
  16 │ //CHECK#1
  17 │ return (0);
@@ -44833,7 +44841,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  18 │ //
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T2.js:18:1]
  17 │ var x=1;
  18 │ return x;
@@ -44841,7 +44849,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  19 │ var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T3.js:18:5]
  17 │ try {
  18 │     return 1;
@@ -44849,7 +44857,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  19 │ } catch(e){
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T3.js:20:5]
  19 │ } catch(e){
  20 │     return 1;
@@ -44857,7 +44865,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  21 │ }
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T4.js:17:1]
  16 │ //CHECK#1
  17 │ return;
@@ -44865,7 +44873,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  18 │ //
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T5.js:21:5]
  20 │     var x=1;
  21 │     return;
@@ -44873,7 +44881,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T6.js:21:5]
  20 │     var x=1;
  21 │     return;
@@ -44881,7 +44889,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T7.js:21:5]
  20 │     var x=1;
  21 │     return x;
@@ -44889,7 +44897,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T8.js:21:5]
  20 │     var x=1;
  21 │     return x;
@@ -44897,7 +44905,7 @@ Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T9.js:20:5]
  19 │ } catch(e){
  20 │     return e;

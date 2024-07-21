@@ -70,8 +70,8 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                                 let span_source_code =
                                     fixer.source_range(parenthesis_span_without_right_one);
 
-                                formatter.print_str(span_source_code.as_bytes());
-                                formatter.print_str(b"0)");
+                                formatter.print_str(span_source_code);
+                                formatter.print_str("0)");
 
                                 formatter.into_source_text()
                             };

@@ -1888,7 +1888,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    · ───
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[core/uncategorised/454/input.js:1:1]
  1 │ return
    · ──────
@@ -9129,7 +9129,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·               ─
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[esprima/invalid-syntax/migrated_0171/input.js:1:1]
  1 │ return
    · ──────
@@ -10146,7 +10146,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  7 │ }
    ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/class/accessor-invalid/input.ts:3:3]
  2 │   declare accessor prop7: number;
  3 │   private accessor #p: any;
@@ -10162,7 +10162,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1030: 'declare' modifier already seen.
+  × TS(1030): declare' modifier already seen.
    ╭─[typescript/class/duplicate-modifier-1/input.ts:2:18]
  1 │ class A {
  2 │   declare public declare foo;
@@ -10171,7 +10171,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'declare' modifier already seen.
+  × TS(1030): declare' modifier already seen.
    ╭─[typescript/class/duplicate-modifier-2/input.ts:2:25]
  1 │ class A {
  2 │   declare public static declare foo;
@@ -10180,7 +10180,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'public' modifier already seen.
+  × TS(1030): public' modifier already seen.
    ╭─[typescript/class/duplicates-accessibility/input.ts:2:10]
  1 │ class Foo {
  2 │   public public a;
@@ -10319,7 +10319,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  11 │ }
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/class/private-fields-modifier-private/input.ts:2:3]
  1 │ class A {
  2 │   private #a;
@@ -10327,7 +10327,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ }
    ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/class/private-fields-modifier-protected/input.ts:2:3]
  1 │ class A {
  2 │   protected #a;
@@ -10335,7 +10335,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ }
    ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[typescript/class/private-fields-modifier-public/input.ts:2:3]
  1 │ class A {
  2 │   public #a;
@@ -10390,7 +10390,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                ───
    ╰────
 
-  × TS1030: 'declare' modifier already seen.
+  × TS(1030): declare' modifier already seen.
    ╭─[typescript/export/double-declare/input.ts:1:16]
  1 │ export declare declare var name;
    ·                ───────
@@ -10511,7 +10511,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·                          ─
    ╰────
 
-  × TS1095: A 'set' accessor cannot have a return type annotation
+  × TS(1095):  A 'set' accessor cannot have a return type annotation.
    ╭─[typescript/interface/get-set-invalid-return-types/input.ts:2:17]
  1 │ interface Foo {
  2 │   set foo(param): string;
@@ -10519,7 +10519,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  3 │ }
    ╰────
 
-  × TS1095: A 'set' accessor cannot have a return type annotation
+  × TS(1095):  A 'set' accessor cannot have a return type annotation.
    ╭─[typescript/interface/get-set-invalid-return-types-babel-7/input.ts:2:17]
  1 │ interface Foo {
  2 │   set foo(param): string;
@@ -11003,7 +11003,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
    ·               ╰── `,` expected
    ╰────
 
-  × 'public' modifier cannot be used on a type parameter.
+  × TS(1273): 'public' modifier cannot be used on a type parameter.
     ╭─[typescript/types/variance-annotations/input.ts:95:10]
  94 │ 
  95 │ type T20<public T> = T;  // Error
@@ -11011,7 +11011,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS1030: 'in' modifier already seen.
+  × TS(1030): in' modifier already seen.
     ╭─[typescript/types/variance-annotations/input.ts:96:17]
  95 │ type T20<public T> = T;  // Error
  96 │ type T21<in out in T> = T;  // Error
@@ -11020,7 +11020,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'out' modifier already seen.
+  × TS(1030): out' modifier already seen.
     ╭─[typescript/types/variance-annotations/input.ts:97:17]
  96 │ type T21<in out in T> = T;  // Error
  97 │ type T22<in out out T> = T;  // Error
@@ -11029,7 +11029,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
     ╰────
   help: Remove the duplicate modifier.
 
-  × 'public' modifier cannot be used on a type parameter.
+  × TS(1273): 'public' modifier cannot be used on a type parameter.
     ╭─[typescript/types/variance-annotations-babel-7/input.ts:95:10]
  94 │ 
  95 │ type T20<public T> = T;  // Error
@@ -11037,7 +11037,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS1030: 'in' modifier already seen.
+  × TS(1030): in' modifier already seen.
     ╭─[typescript/types/variance-annotations-babel-7/input.ts:96:17]
  95 │ type T20<public T> = T;  // Error
  96 │ type T21<in out in T> = T;  // Error
@@ -11046,7 +11046,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'out' modifier already seen.
+  × TS(1030): out' modifier already seen.
     ╭─[typescript/types/variance-annotations-babel-7/input.ts:97:17]
  96 │ type T21<in out in T> = T;  // Error
  97 │ type T22<in out out T> = T;  // Error
@@ -11055,7 +11055,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
     ╰────
   help: Remove the duplicate modifier.
 
-  × 'public' modifier cannot be used on a type parameter.
+  × TS(1273): 'public' modifier cannot be used on a type parameter.
     ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:98:10]
  97 │ 
  98 │ type T20<public T> = T;  // Error
@@ -11063,7 +11063,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS1030: 'in' modifier already seen.
+  × TS(1030): in' modifier already seen.
      ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:99:17]
   98 │ type T20<public T> = T;  // Error
   99 │ type T21<in out in T> = T;  // Error
@@ -11072,7 +11072,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
      ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'out' modifier already seen.
+  × TS(1030): out' modifier already seen.
      ╭─[typescript/types/variance-annotations-with-jsx/input.tsx:100:17]
   99 │ type T21<in out in T> = T;  // Error
  100 │ type T22<in out out T> = T;  // Error
@@ -11081,7 +11081,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
      ╰────
   help: Remove the duplicate modifier.
 
-  × 'public' modifier cannot be used on a type parameter.
+  × TS(1273): 'public' modifier cannot be used on a type parameter.
     ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:98:10]
  97 │ 
  98 │ type T20<public T> = T;  // Error
@@ -11089,7 +11089,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
  99 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS1030: 'in' modifier already seen.
+  × TS(1030): in' modifier already seen.
      ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:99:17]
   98 │ type T20<public T> = T;  // Error
   99 │ type T21<in out in T> = T;  // Error
@@ -11098,7 +11098,7 @@ Expect to Parse: "typescript/types/const-type-parameters-babel-7/input.ts"
      ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'out' modifier already seen.
+  × TS(1030): out' modifier already seen.
      ╭─[typescript/types/variance-annotations-with-jsx-babel-7/input.tsx:100:17]
   99 │ type T21<in out in T> = T;  // Error
  100 │ type T22<in out out T> = T;  // Error

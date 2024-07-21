@@ -59,6 +59,10 @@ impl Reference {
         self.symbol_id = Some(symbol_id);
     }
 
+    pub fn flag(&self) -> &ReferenceFlag {
+        &self.flag
+    }
+
     pub fn flag_mut(&mut self) -> &mut ReferenceFlag {
         &mut self.flag
     }
@@ -76,6 +80,6 @@ impl Reference {
     }
 
     pub fn is_type(&self) -> bool {
-        self.flag.is_type()
+        self.flag.is_type() || self.flag.is_ts_type_query()
     }
 }

@@ -78,8 +78,23 @@ impl<'a> TypeScriptAnnotations<'a> {
                         false
                     } else {
                         decl.specifiers.retain(|specifier| {
-                            !specifier.export_kind.is_type()
-                                && !self.type_identifier_names.contains(&specifier.exported.name())
+                            !(specifier.export_kind.is_type()
+                                || self.type_identifier_names.contains(&specifier.exported.name())
+                                || {
+                                    if let ModuleExportName::IdentifierReference(ident) =
+                                        &specifier.local
+                                    {
+                                        ident.reference_id.get().is_some_and(|id| {
+                                            ctx.symbols().references[id].symbol_id().is_some_and(
+                                                |symbol_id| {
+                                                    ctx.symbols().get_flag(symbol_id).is_type()
+                                                },
+                                            )
+                                        })
+                                    } else {
+                                        false
+                                    }
+                                })
                         });
 
                         !decl.specifiers.is_empty()
@@ -474,38 +489,6 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn transform_jsx_fragment(&mut self, _elem: &mut JSXFragment<'a>) {
         self.has_jsx_fragment = true;
-    }
-
-    pub fn transform_import_declaration(&mut self, decl: &mut ImportDeclaration<'a>) {
-        let Some(specifiers) = &decl.specifiers else {
-            return;
-        };
-        let is_type = decl.import_kind.is_type();
-        for specifier in specifiers {
-            let mut specifier_is_type = is_type;
-            let id = match specifier {
-                ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                    if s.import_kind.is_type() {
-                        specifier_is_type = true;
-                    }
-                    &s.local
-                }
-                ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => &s.local,
-                ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => &s.local,
-            };
-            if specifier_is_type {
-                self.type_identifier_names.insert(id.name.clone());
-            }
-        }
-    }
-
-    pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        let is_type = decl.export_kind.is_type();
-        for specifier in &decl.specifiers {
-            if is_type || specifier.export_kind.is_type() {
-                self.type_identifier_names.insert(specifier.local.name().clone());
-            }
-        }
     }
 
     pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {

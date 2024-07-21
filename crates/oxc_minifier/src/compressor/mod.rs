@@ -15,8 +15,8 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
+use crate::ast_passes::RemoveParens;
 use crate::folder::Folder;
-// use crate::ast_passes::RemoveParens;
 
 pub use self::options::CompressOptions;
 
@@ -24,7 +24,7 @@ pub struct Compressor<'a> {
     ast: AstBuilder<'a>,
     options: CompressOptions,
 
-    // prepass: RemoveParens<'a>,
+    prepass: RemoveParens<'a>,
     folder: Folder<'a>,
 }
 
@@ -34,11 +34,12 @@ impl<'a> Compressor<'a> {
     pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
         let ast = AstBuilder::new(allocator);
         let folder = Folder::new(ast).with_evaluate(options.evaluate);
-        Self { ast, options /* prepass: RemoveParens::new(allocator) */, folder }
+        let prepass = RemoveParens::new(allocator);
+        Self { ast, options, prepass, folder }
     }
 
     pub fn build(mut self, program: &mut Program<'a>) {
-        // self.prepass.build(program);
+        self.prepass.build(program);
         self.visit_program(program);
     }
 

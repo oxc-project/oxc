@@ -61,8 +61,8 @@ impl Rule for NoGlobalAssign {
 
     fn run_once(&self, ctx: &LintContext) {
         let symbol_table = ctx.symbols();
-        for reference_id_list in ctx.scopes().root_unresolved_references().values() {
-            for &reference_id in reference_id_list {
+        for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
+            for reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write() {
                     let name = reference.name();

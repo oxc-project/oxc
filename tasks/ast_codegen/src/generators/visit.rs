@@ -88,7 +88,7 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
                 insert!("// SAFETY:");
                 insert!("// This should be safe as long as `src` is an reference from the allocator.");
                 insert!("// But honestly, I'm not really sure if this is safe.");
-                #[allow(unsafe_code)]
+
                 unsafe {
                     std::mem::transmute(t)
                 }
@@ -122,12 +122,16 @@ fn generate_visit<const MUT: bool>(ctx: &CodegenCtx) -> TokenStream {
 
         /// Syntax tree traversal
         pub trait #trait_name <'a>: Sized {
+            #[inline]
             fn enter_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
+            #[inline]
             fn leave_node(&mut self, kind: #ast_kind_type #ast_kind_life) {}
 
             endl!();
 
+            #[inline]
             fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {}
+            #[inline]
             fn leave_scope(&mut self) {}
 
             endl!();
@@ -254,7 +258,7 @@ impl<'a> VisitBuilder<'a> {
 
         let as_param_type = self.with_ref_pat(&as_type);
         let (extra_params, extra_args) = if ident == "Function" {
-            (quote!(, flags: Option<ScopeFlags>,), quote!(, flags))
+            (quote!(, flags: ScopeFlags,), quote!(, flags))
         } else {
             (TokenStream::default(), TokenStream::default())
         };
@@ -599,7 +603,17 @@ impl<'a> VisitBuilder<'a> {
                     },
                 };
 
-                // This comes first because we would prefer the `enter_scope` to be placed on top of `enter_node`
+                // This comes first because we would prefer the `enter_node` to be placed on top of `enter_scope`
+                if have_enter_scope {
+                    assert_eq!(enter_scope_at, 0);
+                    let scope_enter = &scope_events.0;
+                    result = quote! {
+                        #scope_enter
+                        #result
+                    };
+                    enter_scope_at = ix;
+                }
+
                 #[allow(unreachable_code)]
                 if have_enter_node {
                     // NOTE: this is disabled intentionally <https://github.com/oxc-project/oxc/pull/4147#issuecomment-2220216905>
@@ -611,16 +625,6 @@ impl<'a> VisitBuilder<'a> {
                         #result
                     };
                     enter_node_at = ix;
-                }
-
-                if have_enter_scope {
-                    assert_eq!(enter_scope_at, 0);
-                    let scope_enter = &scope_events.0;
-                    result = quote! {
-                        #scope_enter
-                        #result
-                    };
-                    enter_scope_at = ix;
                 }
 
                 if args_def.is_empty() {
@@ -635,9 +639,7 @@ impl<'a> VisitBuilder<'a> {
             })
             .collect();
 
-        let body = quote!(#(#fields_visits)*);
-
-        let body = match (node_events, enter_node_at) {
+        let with_node_events = |body: TokenStream| match (node_events, enter_node_at) {
             ((enter, leave), 0) => quote! {
                 #enter
                 #body
@@ -649,7 +651,7 @@ impl<'a> VisitBuilder<'a> {
             },
         };
 
-        let body = match (scope_events, enter_scope_at) {
+        let with_scope_events = |body: TokenStream| match (scope_events, enter_scope_at) {
             ((enter, leave), 0) => quote! {
                 #enter
                 #body
@@ -660,6 +662,8 @@ impl<'a> VisitBuilder<'a> {
                 #leave
             },
         };
+
+        let body = with_node_events(with_scope_events(quote!(#(#fields_visits)*)));
 
         // inline if there are 5 or less fields.
         (body, fields_visits.len() <= 5)

@@ -29,7 +29,7 @@ fn labeled_statement_with_multiple_loops_continue_and_break() {
     cfg.ctx(None).default().allow_break().allow_continue();
     cfg.ctx(None).mark_break(c2).mark_continue(c2).resolve_with_upper_label();
 
-    cfg.append_break(AstNodeId::dummy(), A);
+    cfg.append_break(AstNodeId::DUMMY, A);
 
     // labeled block end
     cfg.ctx(A).mark_break(labeled).resolve();

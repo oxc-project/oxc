@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+- d7ab0b8 semantic: [**BREAKING**] Simplify node creation (#4226) (lucab)
+
+### Features
+
+- af4dc01 ast: Align ts ast scope with typescript (#4253) (Dunqing)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+- 92ee774 semantic: Add `ScopeFlags::CatchClause` for use in CatchClause (#4205) (Dunqing)
+
+### Bug Fixes
+
+- 9badac0 semantic: Avoid var hosting insert the var variable to the `CatchClause` scope (#4337) (Dunqing)
+- 95e15b6 semantic: Incorrect resolve references for `ExportSpecifier` (#4320) (Dunqing)
+- c362bf7 semantic: Incorrect resolve references for `TSInterfaceHeritage` (#4311) (Dunqing)
+- 351ecf2 semantic: Incorrect resolve references for `TSTypeQuery` (#4310) (Dunqing)
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+- 22d56bd semantic: Do not resolve references after `FormalParameters` in TS type (#4241) (overlookmotel)
+
+### Performance
+
+- f9d3f2e semantic: Inline ast record functions (#4272) (overlookmotel)
+- 23743db semantic: Do not record ast nodes for cfg if cfg disabled (#4263) (overlookmotel)
+- da69076 semantic: Reduce overhead of cfg recording ast nodes (#4262) (overlookmotel)
+- cb15303 semantic: Reduce memory copies (#4216) (overlookmotel)
+- ef4c1f4 semantic: Reduce lookups (#4214) (overlookmotel)
+- f23e54f semantic: Recycle unresolved references hash maps (#4213) (overlookmotel)
+- 2602ce2 semantic: Reuse existing map of unresolved refs (#4206) (lucab)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- 3e099fe ast: Move `enter_scope` after `visit_binding_identifier` (#4246) (Dunqing)
+- aab7aaa ast/visit: Fire node events as the outermost one. (#4203) (rzvxa)
+- c5731a5 semantic: Remove defunct code setting ScopeFlags twice (#4286) (overlookmotel)
+- 16698bc semantic: Move function/class-specific code into specific visitors (#4278) (overlookmotel)
+- ee16668 semantic: Rename function param (#4277) (overlookmotel)
+- 25f0771 semantic: Alter syntax of `control_flow!` macro (#4275) (overlookmotel)
+- 639fd48 semantic: Comment why extra CFG enabled check (#4274) (overlookmotel)
+- c418bf5 semantic: Directly record `current_node_id` when adding a scope (#4265) (Dunqing)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- 8bfeabf semantic: Simplify adding `SymbolFlags::Export` (#4249) (Dunqing)
+- dc2b3c4 semantic: Add strict mode in scope flags for class definitions (#4156) (Dunqing)
+- 81ed588 semantic: Convert scope fields to IndexVecs (#4208) (lucab)
+- bbe5ded semantic: Set `current_scope_id` to `scope_id` in `enter_scope` (#4193) (Dunqing)
+- 7f1addd semantic: Correct scope in CatchClause (#4192) (Dunqing)
+- fc0b17d syntax: Turn the `AstNodeId::dummy` into a constant field. (#4308) (rzvxa)
+
 ## [0.20.0] - 2024-07-11
 
 - 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)

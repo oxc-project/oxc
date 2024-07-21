@@ -20,6 +20,7 @@ source: crates/oxc_linter/src/tester.rs
  1 │ bar(!foo.length || foo.length)
    ·     ───────────
    ╰────
+  help: Replace `!foo.length` with `foo.length === 0`.
 
   ⚠ eslint-plugin-unicorn(explicit-length-check): Use `.length > 0` when checking length is not zero.
    ╭─[explicit_length_check.tsx:1:20]
@@ -68,3 +69,4 @@ source: crates/oxc_linter/src/tester.rs
  1 │ let foo = arr.length ? 'non-empty' : 'empty'
    ·           ──────────
    ╰────
+  help: Replace `arr.length` with `arr.length > 0`.
