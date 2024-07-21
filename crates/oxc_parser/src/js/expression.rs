@@ -345,9 +345,14 @@ impl<'a> ParserImpl<'a> {
         let (pattern_end, flags) = self.read_regex();
         let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
         let pattern = &self.source_text[pattern_start as usize..pattern_end as usize];
-        if let Err(diagnostic) =
-            PatternParser::new(&self.ast.allocator, self.source_text, ParserOptions::default())
-                .parse()
+        if let Err(diagnostic) = PatternParser::new(
+            self.ast.allocator,
+            self.source_text,
+            ParserOptions::default()
+                .with_span_offset(pattern_start)
+                .with_unicode_flags(flags.contains(RegExpFlags::U), flags.contains(RegExpFlags::V)),
+        )
+        .parse()
         {
             self.error(diagnostic);
         }
