@@ -110,7 +110,7 @@ impl<'a> SemanticBuilder<'a> {
         // This is just an estimate of a good initial size, but certainly better than
         // `Vec`'s default initial capacity of 4.
         let mut unresolved_references = vec![];
-        unresolved_references.resize_with(16, Default::default);
+        unresolved_references.resize_with(16, UnresolvedReferences::default);
 
         let trivias = Trivias::default();
         Self {
@@ -481,11 +481,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
         }
 
-        // Increment scope depth, and ensure stack is large enough that
-        // `self.unresolved_references[self.current_scope_depth]` is initialized
+        // Increment scope depth.
+        // If stack is not large enough, double its size.
+        // This ensures `self.unresolved_references[self.current_scope_depth]` is initialized.
+        // We could just push a single entry to stack, but doubling growth strategy makes this branch
+        // more consistently not taken, so can mark it `#[cold]`.
         self.current_scope_depth += 1;
         if self.unresolved_references.len() <= self.current_scope_depth {
-            self.unresolved_references.push(UnresolvedReferences::default());
+            #[cold]
+            fn grow(builder: &mut SemanticBuilder) {
+                let new_len = builder.unresolved_references.len() * 2;
+                builder.unresolved_references.resize_with(new_len, UnresolvedReferences::default);
+            }
+            grow(self);
         }
     }
 
