@@ -10,17 +10,15 @@ use oxc_syntax::operator::LogicalOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unsafe_optional_chaining_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-unsafe-optional-chaining): Unsafe usage of optional chaining")
+    OxcDiagnostic::warn("Unsafe usage of optional chaining")
         .with_help("If this short-circuits with 'undefined' the evaluation will throw TypeError")
         .with_label(span0)
 }
 
 fn no_unsafe_arithmetic_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(no-unsafe-optional-chaining): Unsafe arithmetic operation on optional chaining",
-    )
-    .with_help("This can result in NaN.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Unsafe arithmetic operation on optional chaining")
+        .with_help("This can result in NaN.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

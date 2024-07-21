@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_dom_node_text_content_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.")
+    OxcDiagnostic::warn("Prefer `.textContent` over `.innerText`.")
         .with_help("Replace `.innerText` with `.textContent`.")
         .with_label(span0)
 }

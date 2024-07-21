@@ -11,11 +11,13 @@ fn no_negation_in_equality_check_diagnostic(
     current_operator: BinaryOperator,
     suggested_operator: BinaryOperator,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(no-negation-in-equality-check): Negated expression is not allowed in equality check.",
-    )
-    .with_help(format!("Remove the negation operator and use '{}' instead of '{}'.", suggested_operator.as_str(), current_operator.as_str()))
-    .with_label(span0)
+    OxcDiagnostic::warn("Negated expression is not allowed in equality check.")
+        .with_help(format!(
+            "Remove the negation operator and use '{}' instead of '{}'.",
+            suggested_operator.as_str(),
+            current_operator.as_str()
+        ))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

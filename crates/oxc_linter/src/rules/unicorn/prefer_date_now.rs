@@ -10,27 +10,21 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_date_now(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`",
-    )
-    .with_help("Change to `Date.now()`.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Prefer `Date.now()` over `new Date()`")
+        .with_help("Change to `Date.now()`.")
+        .with_label(span0)
 }
 
 fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().{x1}()`"
-    ))
-    .with_help("Change to `Date.now()`.")
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Prefer `Date.now()` over `new Date().{x1}()`"))
+        .with_help("Change to `Date.now()`.")
+        .with_label(span0)
 }
 
 fn prefer_date_now_over_number_date_object(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`",
-    )
-    .with_help("Change to `Date.now()`.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Prefer `Date.now()` over `Number(new Date())`")
+        .with_help("Change to `Date.now()`.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

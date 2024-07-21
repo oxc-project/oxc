@@ -9,9 +9,9 @@ use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_restricted_globals(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     let warn_text = if x1.is_empty() {
-        format!("eslint(no-restricted-globals): Unexpected use of '{x0}'.")
+        format!("Unexpected use of '{x0}'.")
     } else {
-        format!("eslint(no-restricted-globals): Unexpected use of '{x0}'. {x1}")
+        format!("Unexpected use of '{x0}'. {x1}")
     };
 
     OxcDiagnostic::warn(warn_text).with_label(span2)

@@ -7,7 +7,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_instanceof_array_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-instanceof-array): Use `Array.isArray()` instead of `instanceof Array`.")
+    OxcDiagnostic::warn("Use `Array.isArray()` instead of `instanceof Array`.")
         .with_help("The instanceof Array check doesn't work across realms/contexts, for example, frames/windows in browsers or the vm module in Node.js.")
         .with_label(span0)
 }

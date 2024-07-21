@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn react_in_jsx_scope_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(react-in-jsx-scope): 'React' must be in scope when using JSX")
+    OxcDiagnostic::warn("'React' must be in scope when using JSX")
         .with_help("When using JSX, `<a />` expands to `React.createElement(\"a\")`. Therefore the `React` variable must be in scope.")
         .with_label(span0)
 }

@@ -9,11 +9,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn consistent_indexed_object_style_diagnostic(a: &str, b: &str, span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "typescript-eslint(consistent-indexed-object-style):A {a} is preferred over an {b}."
-    ))
-    .with_help(format!("A {a} is preferred over an {b}."))
-    .with_label(span)
+    OxcDiagnostic::warn(format!("A {a} is preferred over an {b}."))
+        .with_help(format!("A {a} is preferred over an {b}."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

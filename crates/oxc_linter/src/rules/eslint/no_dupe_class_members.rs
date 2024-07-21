@@ -10,7 +10,7 @@ fn no_dupe_class_members_diagnostic(
     span1: Span,
     span2: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-dupe-class-members): Duplicate class member: {x0:?}"))
+    OxcDiagnostic::warn(format!("Duplicate class member: {x0:?}"))
         .with_help("The last declaration overwrites previous ones, remove one of them or rename if both should be retained")
         .with_labels([
             span1.label(format!("{x0:?} is previously declared here")),

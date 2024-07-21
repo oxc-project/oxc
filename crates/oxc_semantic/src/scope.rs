@@ -198,10 +198,10 @@ impl ScopeTree {
         flags: ScopeFlags,
     ) -> ScopeId {
         let scope_id = self.parent_ids.push(parent_id);
-        _ = self.child_ids.push(vec![]);
-        _ = self.flags.push(flags);
-        _ = self.bindings.push(Bindings::default());
-        _ = self.node_ids.push(node_id);
+        self.child_ids.push(vec![]);
+        self.flags.push(flags);
+        self.bindings.push(Bindings::default());
+        self.node_ids.push(node_id);
 
         // Set this scope as child of parent scope.
         if let Some(parent_id) = parent_id {

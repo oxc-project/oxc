@@ -104,7 +104,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.scope.has_reference(&specifier.local.name)
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                self.scope.has_reference(specifier.name().as_str())
+                self.scope.has_reference(&specifier.name())
             }
         });
         if specifiers.is_empty() {

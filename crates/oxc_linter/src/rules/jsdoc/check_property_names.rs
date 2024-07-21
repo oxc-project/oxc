@@ -10,11 +10,9 @@ use crate::{
 };
 
 fn no_root(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsdoc(check-property-names): No root defined for @property path.",
-    )
-    .with_help(format!("@property path declaration `{x1}` appears before any real property."))
-    .with_label(span0)
+    OxcDiagnostic::warn("No root defined for @property path.")
+        .with_help(format!("@property path declaration `{x1}` appears before any real property."))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -108,11 +106,11 @@ impl Rule for CheckPropertyNames {
                     })
                     .collect::<Vec<_>>();
                 ctx.diagnostic(
-                    OxcDiagnostic::warn(
-                        "eslint-plugin-jsdoc(check-property-names): Duplicate @property found.",
-                    )
-                    .with_help(format!("@property `{type_name}` is duplicated on the same block."))
-                    .with_labels(labels),
+                    OxcDiagnostic::warn("Duplicate @property found.")
+                        .with_help(format!(
+                            "@property `{type_name}` is duplicated on the same block."
+                        ))
+                        .with_labels(labels),
                 );
             }
         }

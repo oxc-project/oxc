@@ -37,7 +37,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         "id": 0,
         "name": "T",
         "node": "TSTypeAliasDeclaration",
-        "references": []
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 0,
+            "name": "T",
+            "node_id": 18
+          }
+        ]
       },
       {
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",

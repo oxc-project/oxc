@@ -9,11 +9,11 @@ use oxc_span::{CompactStr, Span};
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
 fn string_literal(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `{x1}`.")).with_label(span0)
+    OxcDiagnostic::warn(format!("This pattern can be replaced with `{x1}`.")).with_label(span0)
 }
 
 fn use_replace_all(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.")
+    OxcDiagnostic::warn("Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.")
         .with_label(span0)
 }
 

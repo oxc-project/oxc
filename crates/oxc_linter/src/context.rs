@@ -12,10 +12,11 @@ use crate::{
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
     fixer::{FixKind, Message, RuleFix, RuleFixer},
     javascript_globals::GLOBALS,
-    AllowWarnDeny, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
+    AllowWarnDeny, FrameworkFlags, OxlintConfig, OxlintEnv, OxlintGlobals, OxlintSettings,
 };
 
 #[derive(Clone)]
+#[must_use]
 pub struct LintContext<'a> {
     semantic: Rc<Semantic<'a>>,
 
@@ -38,6 +39,7 @@ pub struct LintContext<'a> {
     eslint_config: Arc<OxlintConfig>,
 
     // states
+    current_plugin_prefix: &'static str,
     current_rule_name: &'static str,
 
     /// Current rule severity. Allows for user severity overrides, e.g.
@@ -50,6 +52,7 @@ pub struct LintContext<'a> {
     /// }
     /// ```
     severity: Severity,
+    frameworks: FrameworkFlags,
 }
 
 impl<'a> LintContext<'a> {
@@ -74,33 +77,48 @@ impl<'a> LintContext<'a> {
             fix: FixKind::None,
             file_path: file_path.into(),
             eslint_config: Arc::new(OxlintConfig::default()),
+            current_plugin_prefix: "eslint",
             current_rule_name: "",
             severity: Severity::Warning,
+            frameworks: FrameworkFlags::empty(),
         }
     }
 
     /// Enable/disable automatic code fixes.
-    #[must_use]
     pub fn with_fix(mut self, fix: FixKind) -> Self {
         self.fix = fix;
         self
     }
 
-    #[must_use]
     pub fn with_eslint_config(mut self, eslint_config: &Arc<OxlintConfig>) -> Self {
         self.eslint_config = Arc::clone(eslint_config);
         self
     }
 
-    #[must_use]
+    pub fn with_plugin_name(mut self, plugin: &'static str) -> Self {
+        self.current_plugin_prefix = plugin_name_to_prefix(plugin);
+        self
+    }
+
     pub fn with_rule_name(mut self, name: &'static str) -> Self {
         self.current_rule_name = name;
         self
     }
 
-    #[must_use]
     pub fn with_severity(mut self, severity: AllowWarnDeny) -> Self {
         self.severity = Severity::from(severity);
+        self
+    }
+
+    /// Set [`FrameworkFlags`], overwriting any existing flags.
+    pub fn with_frameworks(mut self, frameworks: FrameworkFlags) -> Self {
+        self.frameworks = frameworks;
+        self
+    }
+
+    /// Add additional [`FrameworkFlags`]
+    pub fn and_frameworks(mut self, frameworks: FrameworkFlags) -> Self {
+        self.frameworks |= frameworks;
         self
     }
 
@@ -182,6 +200,8 @@ impl<'a> LintContext<'a> {
     fn add_diagnostic(&self, message: Message<'a>) {
         if !self.disable_directives.contains(self.current_rule_name, message.span()) {
             let mut message = message;
+            message.error =
+                message.error.with_error_code(self.current_plugin_prefix, self.current_rule_name);
             if message.error.severity != self.severity {
                 message.error = message.error.with_severity(self.severity);
             }
@@ -306,6 +326,10 @@ impl<'a> LintContext<'a> {
         }
     }
 
+    pub fn frameworks(&self) -> FrameworkFlags {
+        self.frameworks
+    }
+
     /// AST nodes
     ///
     /// Shorthand for `self.semantic().nodes()`.
@@ -340,4 +364,34 @@ impl<'a> LintContext<'a> {
     pub fn jsdoc(&self) -> &JSDocFinder<'a> {
         self.semantic().jsdoc()
     }
+
+    // #[inline]
+    // fn plugin_name_to_prefix(&self, plugin_name: &'static str) -> &'static str {
+    //     let plugin_name = if self. plugin_name == "jest" && self.frameworks.contains(FrameworkFlags::Vitest) {
+    //         "vitest"
+    //     } else {
+    //         plugin_name
+    //     };
+    //     PLUGIN_PREFIXES.get(plugin_name).copied().unwrap_or(plugin_name)
+    // }
 }
+
+#[inline]
+fn plugin_name_to_prefix(plugin_name: &'static str) -> &'static str {
+    PLUGIN_PREFIXES.get(plugin_name).copied().unwrap_or(plugin_name)
+}
+
+const PLUGIN_PREFIXES: phf::Map<&'static str, &'static str> = phf::phf_map! {
+    "import" => "eslint-plugin-import",
+    "jest" => "eslint-plugin-jest",
+    "jsdoc" => "eslint-plugin-jsdoc",
+    "jsx_a11y" => "eslint-plugin-jsx-a11y",
+    "nextjs" => "eslint-plugin-next",
+    "promise" => "eslint-plugin-promise",
+    "react_perf" => "eslint-plugin-react-perf",
+    "react" => "eslint-plugin-react",
+    "tree_shaking" => "eslint-plugin-tree-shaking",
+    "typescript" => "typescript-eslint",
+    "unicorn" => "eslint-plugin-unicorn",
+    "vitest" => "eslint-plugin-vitest",
+};

@@ -13,9 +13,11 @@ use crate::{
 };
 
 fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")
-        .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
-        .with_label(span1)
+    OxcDiagnostic::warn(
+        "Disallow using `jest.mock()` factories without an explicit type parameter.",
+    )
+    .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

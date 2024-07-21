@@ -13,7 +13,7 @@ const GLOBAL_THIS: &str = "globalThis";
 const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
 fn no_obj_calls_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-obj-calls): Disallow calling some global objects as functions")
+    OxcDiagnostic::warn("Disallow calling some global objects as functions")
         .with_help(format!("{x0} is not a function."))
         .with_label(span1)
 }

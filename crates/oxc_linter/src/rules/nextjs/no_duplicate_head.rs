@@ -74,7 +74,7 @@ impl Rule for NoDuplicateHead {
         }
 
         ctx.diagnostic(
-            OxcDiagnostic::warn("eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`")
+            OxcDiagnostic::warn("Do not include multiple instances of `<Head/>`")
                 .with_help("Only use a single `<Head />` component in your custom document in `pages/_document.js`. See: https://nextjs.org/docs/messages/no-duplicate-head")
                 .with_labels(labels),
         );

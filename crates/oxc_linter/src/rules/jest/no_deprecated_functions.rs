@@ -9,11 +9,9 @@ use phf::{phf_map, Map};
 use crate::{context::LintContext, rule::Rule};
 
 fn deprecated_function(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions",
-    )
-    .with_help(format!("{x0:?} has been deprecated in favor of {x1:?}"))
-    .with_label(span2)
+    OxcDiagnostic::warn("Disallow use of deprecated functions")
+        .with_help(format!("{x0:?} has been deprecated in favor of {x1:?}"))
+        .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]
