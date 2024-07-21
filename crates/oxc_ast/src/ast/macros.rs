@@ -20,7 +20,7 @@
 ///
 /// ```
 /// inherit_variants! {
-///     #[repr(C, u8)]
+///     #[ast]
 ///     enum Statement<'a> {
 ///         pub enum Statement<'a> {
 ///             BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
@@ -35,7 +35,7 @@
 /// expands to:
 ///
 /// ```
-/// #[repr(C, u8)]
+/// #[ast]
 /// enum Statement<'a> {
 ///     pub enum Statement<'a> {
 ///         BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
@@ -733,7 +733,7 @@ pub(crate) use inherit_variants;
 /// Equality of discriminants is checked with a compile-time assertion.
 ///
 /// # SAFETY
-/// Both enums must be `#[repr(C, u8)]` or using this macro is unsound.
+/// Both enums must be `#[ast]` or using this macro is unsound.
 ///
 /// # Expansion
 ///
@@ -936,7 +936,7 @@ pub(crate) use shared_enum_variants;
 
 /// Macro to get discriminant of an enum.
 /// # SAFETY
-/// Enum must be `#[repr(C, u8)]` or using this macro is unsound.
+/// Enum must be `#[ast]` or using this macro is unsound.
 /// <https://doc.rust-lang.org/std/mem/fn.discriminant.html>
 macro_rules! discriminant {
     ($ty:ident :: $variant:ident) => {{
