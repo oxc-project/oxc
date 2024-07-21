@@ -495,6 +495,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             }
             grow(self);
         }
+
+        // Dummy comment to re-run benchmarks
     }
 
     // NB: Not called for `Program`
