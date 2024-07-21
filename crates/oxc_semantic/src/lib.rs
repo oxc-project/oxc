@@ -10,6 +10,7 @@ mod node;
 mod reference;
 mod scope;
 mod symbol;
+mod unresolved_stack;
 
 pub mod dot;
 
