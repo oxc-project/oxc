@@ -130,6 +130,7 @@ fn for_stmt() {
 fn shorthand() {
     test("let _ = { x }", "let _ = {x};\n");
     test("let { x } = y", "let { x } = y;\n");
+    test("({ x: (x) })", "({x});\n");
     test("({ x } = y)", "({x} = y);\n");
 }
 

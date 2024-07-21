@@ -1554,7 +1554,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
 
         let mut shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
-            if let Expression::Identifier(ident) = &self.value {
+            if let Expression::Identifier(ident) = self.value.without_parenthesized() {
                 if key.name == p.get_identifier_reference_name(ident) {
                     shorthand = true;
                 }
