@@ -127,6 +127,13 @@ fn for_stmt() {
 }
 
 #[test]
+fn shorthand() {
+    test("let _ = { x }", "let _ = {x};\n");
+    test("let { x } = y", "let { x } = y;\n");
+    test("({ x } = y)", "({x} = y);\n");
+}
+
+#[test]
 fn unicode_escape() {
     test("console.log('你好');", "console.log('你好');\n");
     test("console.log('こんにちは');", "console.log('こんにちは');\n");

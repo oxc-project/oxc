@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
@@ -1079,18 +1079,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        if let Some(mangler) = &p.mangler {
-            if let Some(reference_id) = self.reference_id.get() {
-                if let Some(name) = mangler.get_reference_name(reference_id) {
-                    let name = CompactStr::new(name);
-                    p.add_source_mapping_for_name(self.span, &name);
-                    p.print_str(&name);
-                    return;
-                }
-            }
-        }
-        p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(&self.name);
+        let name = p.get_identifier_reference_name(self);
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_str(name);
     }
 }
 
@@ -1103,7 +1094,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_symbol(self.span, self.symbol_id.get(), self.name.as_str());
+        let name = p.get_binding_identifier_name(self);
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_str(name);
     }
 }
 
@@ -1514,7 +1507,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPropertyKind<'a> {
     }
 }
 
-// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
@@ -1559,15 +1551,29 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
                 return;
             }
         }
+
+        let mut shorthand = false;
+        if let PropertyKey::StaticIdentifier(key) = &self.key {
+            if let Expression::Identifier(ident) = &self.value {
+                if key.name == p.get_identifier_reference_name(ident) {
+                    shorthand = true;
+                }
+            }
+        }
+
         if self.computed {
             p.print_char(b'[');
         }
-        self.key.gen(p, ctx);
+        if !shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print_char(b']');
         }
-        p.print_colon();
-        p.print_soft_space();
+        if !shorthand {
+            p.print_colon();
+            p.print_soft_space();
+        }
         self.value.gen_expr(p, Precedence::Assign, Context::default());
     }
 }
@@ -1925,7 +1931,16 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetProperty<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.binding.gen(p, ctx);
+        let ident_name = p.get_identifier_reference_name(&self.binding).to_owned();
+        if ident_name == self.binding.name.as_str() {
+            self.binding.gen(p, ctx);
+        } else {
+            // `({x: a} = y);`
+            p.print_str(self.binding.name.as_str());
+            p.print_colon();
+            p.print_soft_space();
+            p.print_str(&ident_name);
+        }
         if let Some(expr) = &self.init {
             p.print_soft_space();
             p.print_equal();
@@ -2535,19 +2550,32 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
     }
 }
 
-// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         if self.computed {
             p.print_char(b'[');
         }
-        self.key.gen(p, ctx);
+
+        let mut shorthand = false;
+        if let PropertyKey::StaticIdentifier(key) = &self.key {
+            if let BindingPatternKind::BindingIdentifier(ident) = &self.value.kind {
+                if key.name == p.get_binding_identifier_name(ident) {
+                    shorthand = true;
+                }
+            }
+        }
+
+        if !shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print_char(b']');
         }
-        p.print_colon();
-        p.print_soft_space();
+        if !shorthand {
+            p.print_colon();
+            p.print_soft_space();
+        }
         self.value.gen(p, ctx);
     }
 }
