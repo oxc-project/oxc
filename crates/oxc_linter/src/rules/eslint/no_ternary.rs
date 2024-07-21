@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_ternary_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-ternary): Unexpected use of ternary expression")
+    OxcDiagnostic::warn("Unexpected use of ternary expression")
         .with_help("Do not use the ternary expression.")
         .with_label(span0)
 }

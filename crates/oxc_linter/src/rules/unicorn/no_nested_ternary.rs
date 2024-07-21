@@ -6,17 +6,15 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn unparenthesized_nested_ternary(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-nested-ternary): Unexpected nested ternary expression without parentheses.")
+    OxcDiagnostic::warn("Unexpected nested ternary expression without parentheses.")
         .with_help("Add parentheses around the nested ternary expression.")
         .with_label(span0)
 }
 
 fn deeply_nested_ternary(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(no-nested-ternary): Unexpected deeply nested ternary expression.",
-    )
-    .with_help("Avoid nesting ternary expressions for more than one level.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Unexpected deeply nested ternary expression.")
+        .with_help("Avoid nesting ternary expressions for more than one level.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

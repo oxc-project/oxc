@@ -14,11 +14,9 @@ use crate::{
 };
 
 fn no_direct_mutation_state_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-react(no-direct-mutation-state): never mutate this.state directly.",
-    )
-    .with_help("calling setState() afterwards may replace the mutation you made.")
-    .with_label(span0)
+    OxcDiagnostic::warn("never mutate this.state directly.")
+        .with_help("calling setState() afterwards may replace the mutation you made.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

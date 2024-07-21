@@ -18,11 +18,9 @@ use crate::{
 };
 
 fn no_standalone_expect_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(no-standalone-expect): Expect must be inside of a test block.",
-    )
-    .with_help("Did you forget to wrap `expect` in a `test` or `it` block?")
-    .with_label(span0)
+    OxcDiagnostic::warn("Expect must be inside of a test block.")
+        .with_help("Did you forget to wrap `expect` in a `test` or `it` block?")
+        .with_label(span0)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-standalone-expect.md>

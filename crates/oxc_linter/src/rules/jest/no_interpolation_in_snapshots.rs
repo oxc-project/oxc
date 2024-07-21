@@ -10,7 +10,7 @@ use crate::{
 };
 
 fn no_interpolation_in_snapshots_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots")
+    OxcDiagnostic::warn("Do not use string interpolation inside of snapshots")
         .with_help("Remove string interpolation from snapshots")
         .with_label(span0)
 }

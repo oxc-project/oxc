@@ -10,10 +10,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_constructor_return_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(no-constructor-return): Unexpected return statement in constructor.",
-    )
-    .with_label(span)
+    OxcDiagnostic::warn("Unexpected return statement in constructor.").with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -18,19 +18,15 @@ use crate::{
 };
 
 fn expect_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(array-callback-return): Missing return on some path for array method {x0:?}"
-    ))
-    .with_help(format!("Array method {x0:?} needs to have valid return on all code paths"))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("Missing return on some path for array method {x0:?}"))
+        .with_help(format!("Array method {x0:?} needs to have valid return on all code paths"))
+        .with_label(span1)
 }
 
 fn expect_no_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(array-callback-return): Unexpected return for array method {x0:?}"
-    ))
-    .with_help(format!("Array method {x0:?} expects no useless return from the function"))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("Unexpected return for array method {x0:?}"))
+        .with_help(format!("Array method {x0:?} expects no useless return from the function"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

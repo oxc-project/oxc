@@ -529,7 +529,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg - must be above directives as directives are in cfg */
 
-        self.enter_node(kind);
+        // Don't call `enter_node` here as `Program` is a special case - node has no `parent_id`.
+        // Inline the specific logic for `Program` here instead.
+        // This avoids `Nodes::add_node` having to handle the special case.
+        // We can also skip calling `self.enter_kind`, and `self.jsdoc.retrieve_attached_jsdoc`
+        // as they are no-ops for `Program`.
+        self.current_node_id = self.nodes.add_program_node(
+            kind,
+            self.current_scope_id,
+            control_flow!(self, |cfg| cfg.current_node_ix),
+            self.current_node_flags,
+        );
+        self.record_ast_node();
+
         self.enter_scope(
             {
                 let mut flags = ScopeFlags::Top;
@@ -541,6 +553,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             &program.scope_id,
         );
 
+        if let Some(hashbang) = &program.hashbang {
+            self.visit_hashbang(hashbang);
+        }
+
         for directive in &program.directives {
             self.visit_directive(directive);
         }
@@ -551,8 +567,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
 
-        self.leave_node(kind);
         self.leave_scope();
+        self.leave_node(kind);
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -1559,6 +1575,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
         self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
 
+        if let Some(parameters) = &expr.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
+
         self.visit_formal_parameters(&expr.params);
 
         /* cfg */
@@ -1568,6 +1588,10 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             EdgeType::NewFunction
         ));
         /* cfg */
+
+        if let Some(return_type) = &expr.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
 
         self.visit_function_body(&expr.body);
 
@@ -1580,9 +1604,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         });
         /* cfg */
 
-        if let Some(parameters) = &expr.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
         self.leave_node(kind);
         self.leave_scope();
     }

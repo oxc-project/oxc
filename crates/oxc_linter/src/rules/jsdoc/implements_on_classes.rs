@@ -12,7 +12,7 @@ use crate::{
 };
 
 fn implements_on_classes_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function")
+    OxcDiagnostic::warn("`@implements` used on a non-constructor function")
         .with_help("Add `@class` tag or use ES6 class syntax.")
         .with_label(span0)
 }

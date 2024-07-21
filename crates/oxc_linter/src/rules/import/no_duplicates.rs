@@ -51,7 +51,12 @@ impl Rule for NoDuplicates {
                         .iter()
                         .map(|requested_module| LabeledSpan::underline(requested_module.span()))
                         .collect::<Vec<_>>();
-                    ctx.diagnostic(OxcDiagnostic::warn("eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places").with_labels(labels));
+                    ctx.diagnostic(
+                        OxcDiagnostic::warn(
+                            "Forbid repeated import of the same module in multiple places",
+                        )
+                        .with_labels(labels),
+                    );
                 }
             }
         };

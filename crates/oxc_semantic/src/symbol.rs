@@ -120,11 +120,11 @@ impl SymbolTable {
         flag: SymbolFlags,
         scope_id: ScopeId,
     ) -> SymbolId {
-        _ = self.spans.push(span);
-        _ = self.names.push(name);
-        _ = self.flags.push(flag);
-        _ = self.scope_ids.push(scope_id);
-        _ = self.resolved_references.push(vec![]);
+        self.spans.push(span);
+        self.names.push(name);
+        self.flags.push(flag);
+        self.scope_ids.push(scope_id);
+        self.resolved_references.push(vec![]);
         self.redeclare_variables.push(vec![])
     }
 

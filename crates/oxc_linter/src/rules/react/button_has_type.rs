@@ -17,13 +17,13 @@ use crate::{
 };
 
 fn missing_type_prop(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.")
+    OxcDiagnostic::warn("`button` elements must have an explicit `type` attribute.")
         .with_help("Add a `type` attribute to the `button` element.")
         .with_label(span0)
 }
 
 fn invalid_type_prop(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(button-has-type): `button` elements must have a valid `type` attribute.")
+    OxcDiagnostic::warn("`button` elements must have a valid `type` attribute.")
         .with_help("Change the `type` attribute to one of the allowed values: `button`, `submit`, or `reset`.")
         .with_label(span0)
 }

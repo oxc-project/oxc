@@ -12,11 +12,9 @@ use crate::{
 };
 
 fn scope_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(scope): The scope prop can only be used on <th> elements",
-    )
-    .with_help("Must use scope prop only on <th> elements")
-    .with_label(span0)
+    OxcDiagnostic::warn("The scope prop can only be used on <th> elements")
+        .with_help("Must use scope prop only on <th> elements")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -14,7 +14,7 @@ use crate::{
 };
 
 fn no_danger_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop")
+    OxcDiagnostic::warn("Do not use `dangerouslySetInnerHTML` prop")
         .with_help("`dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.")
         .with_label(span0)
 }
@@ -64,7 +64,7 @@ impl Rule for NoDanger {
                 for prop in &obj_expr.properties {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
                         if let Some(prop_name) = obj_prop.key.static_name() {
-                            if prop_name.as_str() == "dangerouslySetInnerHTML" {
+                            if prop_name == "dangerouslySetInnerHTML" {
                                 ctx.diagnostic(no_danger_diagnostic(obj_prop.key.span()));
                             }
                         }

@@ -8,8 +8,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-useless-escape): Unnecessary escape character {x0:?}"))
-        .with_label(span1)
+    OxcDiagnostic::warn(format!("Unnecessary escape character {x0:?}")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

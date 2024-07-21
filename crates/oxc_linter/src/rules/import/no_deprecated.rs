@@ -5,7 +5,7 @@ use oxc_macros::declare_oxc_lint;
 use crate::{context::LintContext, rule::Rule};
 
 // #[derive(Debug, Error, Diagnostic)]
-// #[error("eslint-plugin-import(namespace): ")]
+// #[error("")]
 // #[diagnostic(severity(warning), help(""))]
 // struct NoDeprecatedDiagnostic(CompactStr, #[label] pub Span);
 

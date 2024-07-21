@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unsafe_declaration_merging_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.")
+    OxcDiagnostic::warn("Unsafe declaration merging between classes and interfaces.")
         .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.")
         .with_labels([span0, span1])
 }

@@ -11,17 +11,11 @@ use phf::phf_set;
 use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
 
 fn enforce(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(new-for-builtins): Use `new {x1}()` instead of `{x1}()`"
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Use `new {x1}()` instead of `{x1}()`")).with_label(span0)
 }
 
 fn disallow(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(new-for-builtins): Use `{x1}()` instead of `new {x1}()`"
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("Use `{x1}()` instead of `new {x1}()`")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

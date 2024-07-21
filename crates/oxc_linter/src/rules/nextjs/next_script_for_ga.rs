@@ -17,9 +17,11 @@ use crate::{
 };
 
 fn next_script_for_ga_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-next(next-script-for-ga): Prefer `next/script` component when using the inline script for Google Analytics.")
-        .with_help("See https://nextjs.org/docs/messages/next-script-for-ga")
-        .with_label(span0)
+    OxcDiagnostic::warn(
+        "Prefer `next/script` component when using the inline script for Google Analytics.",
+    )
+    .with_help("See https://nextjs.org/docs/messages/next-script-for-ga")
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

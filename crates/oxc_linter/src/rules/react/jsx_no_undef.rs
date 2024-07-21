@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn jsx_no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX")
+    OxcDiagnostic::warn("Disallow undeclared variables in JSX")
         .with_help(format!("'{x0}' is not defined."))
         .with_label(span1)
 }

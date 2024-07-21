@@ -6,8 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn avoid_new_promise_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-promise(avoid-new): Avoid creating new promises")
-        .with_label(span0)
+    OxcDiagnostic::warn("Avoid creating new promises").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

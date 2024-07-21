@@ -447,21 +447,8 @@ impl TraverseScoping {
     }
 
     fn name_is_unique(&self, name: &str) -> bool {
-        // Check if any bindings in program with this name
-        if self.symbols.names.iter().any(|n| n.as_str() == name) {
-            return false;
-        }
-
-        // Check for unbound references in program with this name
-        !self.symbols.references.iter().any(|reference| {
-            if reference.symbol_id().is_some() {
-                // Skip string comparison on bound references, as they'll also be in `symbols.names`
-                // which already checked above
-                false
-            } else {
-                reference.name().as_str() == name
-            }
-        })
+        !self.scopes.root_unresolved_references().contains_key(name)
+            && !self.symbols.names.iter().any(|n| n.as_str() == name)
     }
 }
 

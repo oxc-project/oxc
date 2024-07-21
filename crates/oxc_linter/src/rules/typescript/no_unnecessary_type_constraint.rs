@@ -11,9 +11,11 @@ fn no_unnecessary_type_constraint_diagnostic(
     span2: Span,
     span3: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(no-unnecessary-type-constraint): constraining the generic type {x0:?} to {x1:?} does nothing and is unnecessary"))
-        .with_help(format!("Remove the unnecessary {x1:?} constraint"))
-        .with_labels([span2, span3])
+    OxcDiagnostic::warn(format!(
+        "constraining the generic type {x0:?} to {x1:?} does nothing and is unnecessary"
+    ))
+    .with_help(format!("Remove the unnecessary {x1:?} constraint"))
+    .with_labels([span2, span3])
 }
 
 #[derive(Debug, Default, Clone)]

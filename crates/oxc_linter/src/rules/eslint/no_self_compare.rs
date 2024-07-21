@@ -6,11 +6,9 @@ use oxc_span::{GetSpan, Span};
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
 
 fn no_self_compare_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(no-self-compare): Disallow comparisons where both sides are exactly the same",
-    )
-    .with_help("If you are testing for NaN, you can use Number.isNaN function.")
-    .with_labels([span0, span1])
+    OxcDiagnostic::warn("Disallow comparisons where both sides are exactly the same")
+        .with_help("If you are testing for NaN, you can use Number.isNaN function.")
+        .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]

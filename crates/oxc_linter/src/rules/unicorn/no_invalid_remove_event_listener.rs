@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_invalid_remove_event_listener_diagnostic(call_span: Span, arg_span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-invalid-remove-event-listener): Invalid `removeEventListener` call.")
+    OxcDiagnostic::warn("Invalid `removeEventListener` call.")
         .with_help("The listener argument should be a function reference.")
         .with_labels([
             call_span.label("`removeEventListener` called here."),

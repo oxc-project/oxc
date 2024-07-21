@@ -13,13 +13,13 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_node_name, get_test_plugin_name,
-        is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, get_node_name, is_type_of_jest_fn_call, JestFnKind,
+        JestGeneralFnKind, PossibleJestNode,
     },
 };
 
-fn expect_expect_diagnostic(x0: TestPluginName, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0}(expect-expect): Test has no assertions"))
+fn expect_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Test has no assertions".to_string())
         .with_help("Add assertion(s) in this Test")
         .with_label(span0)
 }
@@ -122,7 +122,6 @@ fn run<'a>(
 ) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
-        let plugin_name = get_test_plugin_name(ctx);
         let name = get_node_name(&call_expr.callee);
         if is_type_of_jest_fn_call(
             call_expr,
@@ -138,7 +137,7 @@ fn run<'a>(
                 if property_name == "todo" {
                     return;
                 }
-                if property_name == "skip" && plugin_name.eq(&TestPluginName::Vitest) {
+                if property_name == "skip" && ctx.frameworks().is_vitest() {
                     return;
                 }
             }
@@ -150,7 +149,7 @@ fn run<'a>(
                 check_arguments(call_expr, &rule.assert_function_names, &mut visited, ctx);
 
             if !has_assert_function {
-                ctx.diagnostic(expect_expect_diagnostic(plugin_name, call_expr.callee.span()));
+                ctx.diagnostic(expect_expect_diagnostic(call_expr.callee.span()));
             }
         }
     }

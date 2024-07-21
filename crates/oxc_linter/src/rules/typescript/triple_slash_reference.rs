@@ -11,7 +11,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn triple_slash_reference_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(triple-slash-reference): Do not use a triple slash reference for {x0}, use `import` style instead."))
+    OxcDiagnostic::warn(format!("Do not use a triple slash reference for {x0}, use `import` style instead."))
         .with_help("Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.")
         .with_label(span1)
 }
