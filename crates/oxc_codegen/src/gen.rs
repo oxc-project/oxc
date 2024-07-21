@@ -1,7 +1,7 @@
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
@@ -1080,9 +1080,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         let name = p.get_identifier_reference_name(self);
-        let name = CompactStr::new(name);
-        p.add_source_mapping_for_name(self.span, &name);
-        p.print_str(&name);
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_str(name);
     }
 }
 
@@ -1096,9 +1095,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierName<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         let name = p.get_binding_identifier_name(self);
-        let name = CompactStr::new(name);
-        p.add_source_mapping_for_name(self.span, &name);
-        p.print_str(&name);
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_str(name);
     }
 }
 
@@ -1933,16 +1931,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetProperty<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        let ident_name = p.get_identifier_reference_name(&self.binding);
+        let ident_name = p.get_identifier_reference_name(&self.binding).to_owned();
         if ident_name == self.binding.name.as_str() {
             self.binding.gen(p, ctx);
         } else {
             // `({x: a} = y);`
-            let ident_name = CompactStr::new(ident_name);
             p.print_str(self.binding.name.as_str());
             p.print_colon();
             p.print_soft_space();
-            p.print_str(ident_name.as_str());
+            p.print_str(&ident_name);
         }
         if let Some(expr) = &self.init {
             p.print_soft_space();

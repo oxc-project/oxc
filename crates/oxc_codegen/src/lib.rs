@@ -427,22 +427,24 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         }
     }
 
-    fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &str {
+    fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
         if let Some(mangler) = &self.mangler {
             if let Some(reference_id) = reference.reference_id.get() {
                 if let Some(name) = mangler.get_reference_name(reference_id) {
-                    return name;
+                    // SAFETY: Hack the lifetime to be part of the allocator.
+                    return unsafe { std::mem::transmute_copy(&name) };
                 }
             }
         }
         reference.name.as_str()
     }
 
-    fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &str {
+    fn get_binding_identifier_name(&self, ident: &BindingIdentifier<'a>) -> &'a str {
         if let Some(mangler) = &self.mangler {
             if let Some(symbol_id) = ident.symbol_id.get() {
                 let name = mangler.get_symbol_name(symbol_id);
-                return name;
+                // SAFETY: Hack the lifetime to be part of the allocator.
+                return unsafe { std::mem::transmute_copy(&name) };
             }
         }
         ident.name.as_str()
