@@ -210,7 +210,8 @@ strip         = "symbols" # set to `false` for debug information
 debug         = false # set to `true` for debug information
 panic         = "abort" # Let it crash and force ourselves to write safe Rust.
 
-# Faster compile time with thin lto
-[profile.release-thin]
-inherits = "release"
-lto      = "thin"
+# Profile for `cargo coverage`
+[profile.coverage]
+inherits         = "release"
+lto              = "thin" # Faster compile time with thin lto
+debug-assertions = true # Make sure `debug_assert!`s pass
