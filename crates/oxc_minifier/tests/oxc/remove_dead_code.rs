@@ -27,6 +27,8 @@ pub(crate) fn test(source_text: &str, expected: &str) {
 #[test]
 fn dce_if_statement() {
     test("if (true) { foo }", "{ foo }");
+    test("if (false) { } else if (false) { } else { some }", "{ some }");
+    test("if (test) { } else if (false) { } else { some }", "if (test) { } else { some }");
     test("if (true) { foo } else { bar }", "{ foo }");
     test("if (false) { foo } else { bar }", "{ bar }");
 
@@ -61,6 +63,28 @@ fn dce_if_statement() {
         bar;
         ",
         "{foo; return }",
+    );
+    test(
+        "
+        if (test) { 
+            if (false) { 
+            } else if (false) {
+            } else {
+                some 
+            }
+        } else {
+
+        }
+        ",
+        "
+        if (test) { 
+            {
+                some 
+            }
+        } else {
+
+        }
+",
     );
 
     // nested expression

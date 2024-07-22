@@ -48,6 +48,10 @@ watch command:
 example tool *args='':
   just watch 'run -p oxc_{{tool}} --example {{tool}} -- {{args}}'
 
+# Run the example in `parser`, `formatter`, `linter`
+example_with_name tool name *args='':
+  just watch 'run -p oxc_{{tool}} --example {{name}} -- {{args}}'
+
 # Format all files
 fmt:
   cargo fmt

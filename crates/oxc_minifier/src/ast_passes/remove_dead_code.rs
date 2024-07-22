@@ -83,6 +83,10 @@ impl<'a> RemoveDeadCode<'a> {
     #[must_use]
     fn fold_if_statement(&mut self, stmt: &mut Statement<'a>) -> bool {
         let Statement::IfStatement(if_stmt) = stmt else { return false };
+
+        if let Some(ref mut alternate) = if_stmt.alternate {
+            _ = self.fold_if_statement(alternate);
+        }
         match self.fold_expression_and_get_boolean_value(&mut if_stmt.test) {
             Some(true) => {
                 *stmt = self.ast.move_statement(&mut if_stmt.consequent);
@@ -103,7 +107,10 @@ impl<'a> RemoveDeadCode<'a> {
                 };
                 true
             }
-            _ => false,
+            _ => {
+                _ = self.fold_if_statement(&mut if_stmt.consequent);
+                false
+            }
         }
     }
 
