@@ -13,7 +13,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{CompactStr, SourceType, Span};
+use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
 use crate::{
@@ -72,7 +72,7 @@ pub struct SemanticBuilder<'a> {
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
 
-    unresolved_references: UnresolvedReferencesStack,
+    unresolved_references: UnresolvedReferencesStack<'a>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -218,7 +218,12 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
-        self.scope.root_unresolved_references = self.unresolved_references.into_root();
+        self.scope.root_unresolved_references = self
+            .unresolved_references
+            .into_root()
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -367,14 +372,13 @@ impl<'a> SemanticBuilder<'a> {
     /// Declare an unresolved reference in the current scope.
     ///
     /// # Panics
-    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
-        let reference_name = reference.name().clone();
+    pub fn declare_reference(&mut self, name: Atom<'a>, reference: Reference) -> ReferenceId {
         let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
         self.unresolved_references
             .current_mut()
-            .entry(reference_name)
+            .entry(name)
             .or_default()
             .push((reference_id, reference_flag));
         reference_id
@@ -404,7 +408,7 @@ impl<'a> SemanticBuilder<'a> {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
-            if let Some(symbol_id) = bindings.get(&name).copied() {
+            if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flag = self.symbols.get_flag(symbol_id);
 
                 let resolved_references: &mut Vec<_> =
@@ -1908,11 +1912,11 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_identifier(&mut self, ident: &IdentifierReference) {
+    fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flag = self.resolve_reference_usages();
         let name = ident.name.to_compact_str();
         let reference = Reference::new(ident.span, name, self.current_node_id, flag);
-        let reference_id = self.declare_reference(reference);
+        let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1925,7 +1929,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier) {
+    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier<'a>) {
         match self.nodes.parent_kind(self.current_node_id) {
             Some(AstKind::JSXElementName(_)) => {
                 if !ident.name.chars().next().is_some_and(char::is_uppercase) {
@@ -1941,7 +1945,7 @@ impl<'a> SemanticBuilder<'a> {
             self.current_node_id,
             ReferenceFlag::read(),
         );
-        self.declare_reference(reference);
+        self.declare_reference(ident.name.clone(), reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

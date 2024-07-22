@@ -13,7 +13,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
 pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
-pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
+pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
 
 /// Scope Tree
 ///

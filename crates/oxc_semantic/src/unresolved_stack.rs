@@ -1,21 +1,26 @@
 use assert_unchecked::assert_unchecked;
+use oxc_span::Atom;
+use rustc_hash::FxHashMap;
 
-use crate::scope::UnresolvedReferences;
+use crate::scope::UnresolvedReference;
+
+/// The difference with Scope's `UnresolvedReferences` is that this type uses Atom as the key. its clone is very cheap!
+type TempUnresolvedReferences<'a> = FxHashMap<Atom<'a>, Vec<UnresolvedReference>>;
 
 // Stack used to accumulate unresolved refs while traversing scopes.
 // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal
 // to reduce allocations, so the stack grows to maximum scope depth, but never shrinks.
 // See: <https://github.com/oxc-project/oxc/issues/4169>
 // This stack abstraction uses the invariant that stack only grows to avoid bounds checks.
-pub(crate) struct UnresolvedReferencesStack {
-    stack: Vec<UnresolvedReferences>,
+pub(crate) struct UnresolvedReferencesStack<'a> {
+    stack: Vec<TempUnresolvedReferences<'a>>,
     /// Current scope depth.
     /// 0 is global scope. 1 is `Program`.
     /// Incremented on entering a scope, and decremented on exit.
     current_scope_depth: usize,
 }
 
-impl UnresolvedReferencesStack {
+impl<'a> UnresolvedReferencesStack<'a> {
     // Most programs will have at least 1 place where scope depth reaches 16,
     // so initialize `stack` with this length, to reduce reallocations as it grows.
     // This is just an estimate of a good initial size, but certainly better than
@@ -31,7 +36,7 @@ impl UnresolvedReferencesStack {
 
     pub(crate) fn new() -> Self {
         let mut stack = vec![];
-        stack.resize_with(Self::INITIAL_SIZE, UnresolvedReferences::default);
+        stack.resize_with(Self::INITIAL_SIZE, TempUnresolvedReferences::default);
         Self { stack, current_scope_depth: Self::INITIAL_DEPTH }
     }
 
@@ -40,7 +45,7 @@ impl UnresolvedReferencesStack {
 
         // Grow stack if required to ensure `self.stack[self.current_scope_depth]` is in bounds
         if self.stack.len() <= self.current_scope_depth {
-            self.stack.push(UnresolvedReferences::default());
+            self.stack.push(TempUnresolvedReferences::default());
         }
     }
 
@@ -57,7 +62,7 @@ impl UnresolvedReferencesStack {
     }
 
     /// Get unresolved references hash map for current scope
-    pub(crate) fn current_mut(&mut self) -> &mut UnresolvedReferences {
+    pub(crate) fn current_mut(&mut self) -> &mut TempUnresolvedReferences<'a> {
         // SAFETY: `stack.len() > current_scope_depth` initially.
         // Thereafter, `stack` never shrinks, only grows.
         // `current_scope_depth` is only increased in `increment_scope_depth`,
@@ -69,7 +74,7 @@ impl UnresolvedReferencesStack {
     /// Get unresolved references hash maps for current scope, and parent scope
     pub(crate) fn current_and_parent_mut(
         &mut self,
-    ) -> (&mut UnresolvedReferences, &mut UnresolvedReferences) {
+    ) -> (&mut TempUnresolvedReferences<'a>, &mut TempUnresolvedReferences<'a>) {
         // Assert invariants to remove bounds checks in code below.
         // https://godbolt.org/z/vv5Wo5csv
         // SAFETY: `current_scope_depth` starts at 1, and is only decremented
@@ -87,7 +92,7 @@ impl UnresolvedReferencesStack {
         (current, parent)
     }
 
-    pub(crate) fn into_root(self) -> UnresolvedReferences {
+    pub(crate) fn into_root(self) -> TempUnresolvedReferences<'a> {
         // SAFETY: Stack starts with a non-zero size and never shrinks.
         // This assertion removes bounds check in `.next()`.
         unsafe { assert_unchecked!(!self.stack.is_empty()) };
