@@ -208,44 +208,42 @@ impl<'a> Compressor<'a> {
         false
     }
 
-    /// Transforms `typeof foo == "undefined"` into `foo === void 0`
+    /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
     /// Enabled by `compress.typeofs`
     fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>) {
         if !self.options.typeofs {
             return;
         }
-        match expr.operator {
-            BinaryOperator::Equality | BinaryOperator::StrictEquality => {
-                let pair = self.commutative_pair(
-                    (&expr.left, &expr.right),
-                    |a| {
-                        if a.is_specific_string_literal("undefined") {
-                            return Some(());
+        if !matches!(expr.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) {
+            return;
+        }
+        let pair = self.commutative_pair(
+            (&expr.left, &expr.right),
+            |a| a.is_specific_string_literal("undefined").then_some(()),
+            |b| {
+                if let Expression::UnaryExpression(op) = b {
+                    if op.operator == UnaryOperator::Typeof {
+                        if let Expression::Identifier(id) = &op.argument {
+                            return Some((*id).clone());
                         }
-                        None
-                    },
-                    |b| {
-                        if let Expression::UnaryExpression(op) = b {
-                            if op.operator == UnaryOperator::Typeof {
-                                if let Expression::Identifier(id) = &op.argument {
-                                    return Some((*id).clone());
-                                }
-                            }
-                        }
-                        None
-                    },
-                );
-                if let Some((_void_exp, id_ref)) = pair {
-                    let span = expr.span;
-                    let left = self.ast.void_0();
-                    let operator = BinaryOperator::StrictEquality;
-                    let right = self.ast.expression_from_identifier_reference(id_ref);
-                    let cmp = BinaryExpression { span, left, operator, right };
-                    *expr = cmp;
+                    }
                 }
-            }
-            _ => {}
+                None
+            },
+        );
+        let Some((_void_exp, id_ref)) = pair else {
+            return;
         };
+        let argument = self.ast.expression_from_identifier_reference(id_ref);
+        let left = self.ast.unary_expression(SPAN, UnaryOperator::Typeof, argument);
+        let right = self.ast.string_literal(SPAN, "u");
+        let binary_expr = self.ast.binary_expression(
+            expr.span,
+            self.ast.expression_from_unary(left),
+            BinaryOperator::GreaterThan,
+            self.ast.expression_from_string_literal(right),
+        );
+        *expr = binary_expr;
     }
 
     fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
