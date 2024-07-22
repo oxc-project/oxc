@@ -38,7 +38,7 @@ impl UnresolvedReferencesStack {
     pub(crate) fn increment_scope_depth(&mut self) {
         self.current_scope_depth += 1;
 
-        // Grow stack if required to ensure `self.stack[self.depth]` is in bounds
+        // Grow stack if required to ensure `self.stack[self.current_scope_depth]` is in bounds
         if self.stack.len() <= self.current_scope_depth {
             self.stack.push(UnresolvedReferences::default());
         }
