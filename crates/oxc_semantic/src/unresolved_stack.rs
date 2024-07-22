@@ -16,23 +16,24 @@ pub(crate) struct UnresolvedReferencesStack {
 }
 
 impl UnresolvedReferencesStack {
-    // Most programs will have at least 1 place where scope depth reaches 16,
-    // so initialize `stack` with this length, to reduce reallocations as it grows.
-    // This is just an estimate of a good initial size, but certainly better than
-    // `Vec`'s default initial capacity of 4.
-    // SAFETY: Must be >= 2 to ensure soundness of `current_and_parent_mut`.
-    const INITIAL_SIZE: usize = 16;
     // Initial scope depth.
     // Start on 1 (`Program` scope depth).
     // SAFETY: Must be >= 1 to ensure soundness of `current_and_parent_mut`.
     const INITIAL_DEPTH: usize = 1;
-    #[allow(clippy::assertions_on_constants)]
-    const _SIZE_CHECK: () = assert!(Self::INITIAL_SIZE > Self::INITIAL_DEPTH);
+    // SAFETY: Must be >= 2 to ensure soundness of `current_and_parent_mut`.
+    const INITIAL_SIZE: usize = Self::INITIAL_DEPTH + 1;
 
     pub(crate) fn new() -> Self {
         let mut stack = vec![];
         stack.resize_with(Self::INITIAL_SIZE, UnresolvedReferences::default);
         Self { stack, current_scope_depth: Self::INITIAL_DEPTH }
+    }
+
+    pub(crate) fn reserve(&mut self, new_len: usize) {
+        // Do not allow to shrink
+        if new_len > self.stack.len() {
+            self.stack.resize_with(new_len, UnresolvedReferences::default);
+        }
     }
 
     pub(crate) fn increment_scope_depth(&mut self) {

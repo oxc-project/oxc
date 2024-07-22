@@ -2,7 +2,7 @@
 //! These counts can be used to pre-allocate sufficient capacity in `AstNodes`,
 //! `ScopeTree`, and `SymbolTable` to store info for all these items.
 
-use std::cell::Cell;
+use std::{cell::Cell, cmp::max};
 
 use oxc_ast::{
     ast::{
@@ -14,13 +14,14 @@ use oxc_ast::{
 };
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
-#[allow(clippy::struct_field_names)]
 #[derive(Default, Debug)]
 pub struct Counter {
     pub nodes_count: usize,
     pub scopes_count: usize,
     pub symbols_count: usize,
     pub references_count: usize,
+    current_scope_depth: usize,
+    pub max_scope_depth: usize,
 }
 
 impl<'a> Visit<'a> for Counter {
@@ -28,9 +29,17 @@ impl<'a> Visit<'a> for Counter {
     fn enter_node(&mut self, _: AstKind<'a>) {
         self.nodes_count += 1;
     }
+
     #[inline]
     fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.scopes_count += 1;
+
+        self.current_scope_depth += 1;
+        self.max_scope_depth = max(self.max_scope_depth, self.current_scope_depth);
+    }
+    #[inline]
+    fn leave_scope(&mut self) {
+        self.current_scope_depth -= 1;
     }
 
     #[inline]

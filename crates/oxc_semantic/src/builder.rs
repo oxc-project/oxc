@@ -196,6 +196,10 @@ impl<'a> SemanticBuilder<'a> {
             self.scope.reserve(counter.scopes_count);
             self.symbols.reserve(counter.symbols_count, counter.references_count);
 
+            // Reserve capacity in `unresolved_references` stack.
+            // Add 1 for global scope (unbound references).
+            self.unresolved_references.reserve(counter.max_scope_depth + 1);
+
             // Visit AST to generate scopes tree etc
             self.visit_program(program);
 
