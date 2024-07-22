@@ -1,10 +1,6 @@
-mod atom;
-mod atom_class;
-mod atom_escape;
 /// Main entry point for `PatternParser`
 /// All others are just split files to `impl PatternParser`
 mod parse;
-mod shared;
 
 pub use parse::PatternParser;
 
@@ -97,7 +93,7 @@ mod test {
 
         let pattern =
             PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives[0].terms.len(), 15);
+        assert_eq!(pattern.body.body.len(), 15);
 
         let pattern = PatternParser::new(
             &allocator,
@@ -106,7 +102,7 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.alternatives[0].terms.len(), 14);
+        assert_eq!(pattern.body.body.len(), 14);
         let pattern = PatternParser::new(
             &allocator,
             source_text,
@@ -114,6 +110,6 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.alternatives[0].terms.len(), 14);
+        assert_eq!(pattern.body.body.len(), 14);
     }
 }
