@@ -3,12 +3,9 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::{Atom, GetSpan, Span};
 
-use super::{
-    grammar::CoverGrammar, list::SwitchCases, VariableDeclarationContext, VariableDeclarationParent,
-};
+use super::{grammar::CoverGrammar, VariableDeclarationContext, VariableDeclarationParent};
 use crate::{
-    diagnostics, lexer::Kind, list::NormalList, modifiers::Modifiers, Context, ParserImpl,
-    StatementContext,
+    diagnostics, lexer::Kind, modifiers::Modifiers, Context, ParserImpl, StatementContext,
 };
 
 impl<'a> ParserImpl<'a> {
@@ -35,8 +32,8 @@ impl<'a> ParserImpl<'a> {
         &mut self,
         is_top_level: bool,
     ) -> Result<(Vec<'a, Directive<'a>>, Vec<'a, Statement<'a>>)> {
-        let mut directives = self.ast.new_vec();
-        let mut statements = self.ast.new_vec();
+        let mut directives = self.ast.vec();
+        let mut statements = self.ast.vec();
 
         let mut expecting_directives = true;
         while !self.at(Kind::Eof) {
@@ -130,7 +127,7 @@ impl<'a> ParserImpl<'a> {
             if self.eat(Kind::Colon) {
                 let label = LabelIdentifier { span: ident.span, name: ident.name.clone() };
                 let body = self.parse_statement_list_item(StatementContext::Label)?;
-                return Ok(self.ast.labeled_statement(self.end_span(span), label, body));
+                return Ok(self.ast.statement_labeled(self.end_span(span), label, body));
             }
         }
         self.parse_expression_statement(span, expr)
@@ -140,18 +137,18 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_block(&mut self) -> Result<Box<'a, BlockStatement<'a>>> {
         let span = self.start_span();
         self.expect(Kind::LCurly)?;
-        let mut body = self.ast.new_vec();
+        let mut body = self.ast.vec();
         while !self.at(Kind::RCurly) && !self.at(Kind::Eof) {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
             body.push(stmt);
         }
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.block(self.end_span(span), body))
+        Ok(self.ast.alloc_block_statement(self.end_span(span), body))
     }
 
     pub(crate) fn parse_block_statement(&mut self) -> Result<Statement<'a>> {
         let block = self.parse_block()?;
-        Ok(self.ast.block_statement(block))
+        Ok(Statement::BlockStatement(block))
     }
 
     /// Section 14.3.2 Variable Statement
@@ -177,7 +174,7 @@ impl<'a> ParserImpl<'a> {
     fn parse_empty_statement(&mut self) -> Statement<'a> {
         let span = self.start_span();
         self.bump_any(); // bump `;`
-        self.ast.empty_statement(self.end_span(span))
+        self.ast.statement_empty(self.end_span(span))
     }
 
     /// Section 14.5 Expression Statement
@@ -187,7 +184,7 @@ impl<'a> ParserImpl<'a> {
         expression: Expression<'a>,
     ) -> Result<Statement<'a>> {
         self.asi()?;
-        Ok(self.ast.expression_statement(self.end_span(span), expression))
+        Ok(self.ast.statement_expression(self.end_span(span), expression))
     }
 
     /// Section 14.6 If Statement
@@ -200,7 +197,7 @@ impl<'a> ParserImpl<'a> {
             .eat(Kind::Else)
             .then(|| self.parse_statement_list_item(StatementContext::If))
             .transpose()?;
-        Ok(self.ast.if_statement(self.end_span(span), test, consequent, alternate))
+        Ok(self.ast.statement_if(self.end_span(span), test, consequent, alternate))
     }
 
     /// Section 14.7.2 Do-While Statement
@@ -211,7 +208,7 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::While)?;
         let test = self.parse_paren_expression()?;
         self.bump(Kind::Semicolon);
-        Ok(self.ast.do_while_statement(self.end_span(span), body, test))
+        Ok(self.ast.statement_do_while(self.end_span(span), body, test))
     }
 
     /// Section 14.7.3 While Statement
@@ -220,7 +217,7 @@ impl<'a> ParserImpl<'a> {
         self.bump_any(); // bump `while`
         let test = self.parse_paren_expression()?;
         let body = self.parse_statement_list_item(StatementContext::While)?;
-        Ok(self.ast.while_statement(self.end_span(span), test, body))
+        Ok(self.ast.statement_while(self.end_span(span), test, body))
     }
 
     /// Section 14.7.4 For Statement
@@ -354,7 +351,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::for_await(self.end_span(span)));
         }
         let body = self.parse_statement_list_item(StatementContext::For)?;
-        Ok(self.ast.for_statement(self.end_span(span), init, test, update, body))
+        Ok(self.ast.statement_for(self.end_span(span), init, test, update, body))
     }
 
     fn parse_for_in_or_of_loop(
@@ -380,9 +377,9 @@ impl<'a> ParserImpl<'a> {
         let span = self.end_span(span);
 
         if is_for_in {
-            Ok(self.ast.for_in_statement(span, left, right, body))
+            Ok(self.ast.statement_for_in(span, left, right, body))
         } else {
-            Ok(self.ast.for_of_statement(span, r#await, left, right, body))
+            Ok(self.ast.statement_for_of(span, r#await, left, right, body))
         }
     }
 
@@ -397,8 +394,8 @@ impl<'a> ParserImpl<'a> {
         self.asi()?;
         let end_span = self.end_span(span);
         match kind {
-            Kind::Break => Ok(self.ast.break_statement(end_span, label)),
-            Kind::Continue => Ok(self.ast.continue_statement(end_span, label)),
+            Kind::Break => Ok(self.ast.statement_break(end_span, label)),
+            Kind::Continue => Ok(self.ast.statement_continue(end_span, label)),
             _ => unreachable!(),
         }
     }
@@ -423,7 +420,7 @@ impl<'a> ParserImpl<'a> {
                 span.start + 6,
             )));
         }
-        Ok(self.ast.return_statement(self.end_span(span), argument))
+        Ok(self.ast.statement_return(self.end_span(span), argument))
     }
 
     /// Section 14.11 With Statement
@@ -433,7 +430,7 @@ impl<'a> ParserImpl<'a> {
         let object = self.parse_paren_expression()?;
         let body = self.parse_statement_list_item(StatementContext::With)?;
         let span = self.end_span(span);
-        Ok(self.ast.with_statement(span, object, body))
+        Ok(self.ast.statement_with(span, object, body))
     }
 
     /// Section 14.12 Switch Statement
@@ -441,15 +438,11 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any(); // advance `switch`
         let discriminant = self.parse_paren_expression()?;
-        let cases = {
-            let mut switch_cases = SwitchCases::new(self);
-            switch_cases.parse(self)?;
-            switch_cases.elements
-        };
-        Ok(self.ast.switch_statement(self.end_span(span), discriminant, cases))
+        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, Self::parse_switch_case)?;
+        Ok(self.ast.statement_switch(self.end_span(span), discriminant, cases))
     }
 
-    pub(crate) fn parse_switch_case(&mut self) -> Result<SwitchCase<'a>> {
+    pub(crate) fn parse_switch_case(&mut self) -> Result<Option<SwitchCase<'a>>> {
         let span = self.start_span();
         let test = match self.cur_kind() {
             Kind::Default => {
@@ -464,12 +457,12 @@ impl<'a> ParserImpl<'a> {
             _ => return Err(self.unexpected()),
         };
         self.expect(Kind::Colon)?;
-        let mut consequent = self.ast.new_vec();
+        let mut consequent = self.ast.vec();
         while !matches!(self.cur_kind(), Kind::Case | Kind::Default | Kind::RCurly | Kind::Eof) {
             let stmt = self.parse_statement_list_item(StatementContext::StatementList)?;
             consequent.push(stmt);
         }
-        Ok(self.ast.switch_case(self.end_span(span), test, consequent))
+        Ok(Some(self.ast.switch_case(self.end_span(span), test, consequent)))
     }
 
     /// Section 14.14 Throw Statement
@@ -485,7 +478,7 @@ impl<'a> ParserImpl<'a> {
         }
         let argument = self.parse_expr()?;
         self.asi()?;
-        Ok(self.ast.throw_statement(self.end_span(span), argument))
+        Ok(self.ast.statement_throw(self.end_span(span), argument))
     }
 
     /// Section 14.15 Try Statement
@@ -504,7 +497,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::expect_catch_finally(range));
         }
 
-        Ok(self.ast.try_statement(self.end_span(span), block, handler, finalizer))
+        Ok(self.ast.statement_try(self.end_span(span), block, handler, finalizer))
     }
 
     fn parse_catch_clause(&mut self) -> Result<Box<'a, CatchClause<'a>>> {
@@ -519,7 +512,7 @@ impl<'a> ParserImpl<'a> {
         };
         let body = self.parse_block()?;
         let param = pattern.map(|pattern| self.ast.catch_parameter(pattern.kind.span(), pattern));
-        Ok(self.ast.catch_clause(self.end_span(span), param, body))
+        Ok(self.ast.alloc_catch_clause(self.end_span(span), param, body))
     }
 
     /// Section 14.16 Debugger Statement
@@ -527,6 +520,6 @@ impl<'a> ParserImpl<'a> {
         let span = self.start_span();
         self.bump_any();
         self.asi()?;
-        Ok(self.ast.debugger_statement(self.end_span(span)))
+        Ok(self.ast.statement_debugger(self.end_span(span)))
     }
 }

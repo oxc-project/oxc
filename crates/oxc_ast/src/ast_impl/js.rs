@@ -1,12 +1,9 @@
-// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
-// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
-
 use crate::ast::*;
 
-use std::{cell::Cell, fmt, hash::Hash};
+use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
-use oxc_allocator::{Box, Vec};
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_allocator::{Box, FromIn, Vec};
+use oxc_span::{Atom, GetSpan, SourceType, Span};
 use oxc_syntax::{
     operator::UnaryOperator,
     reference::{ReferenceFlag, ReferenceId},
@@ -335,20 +332,20 @@ impl<'a> ObjectExpression<'a> {
 }
 
 impl<'a> PropertyKey<'a> {
-    pub fn static_name(&self) -> Option<CompactStr> {
+    pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
-            Self::StaticIdentifier(ident) => Some(ident.name.to_compact_str()),
-            Self::StringLiteral(lit) => Some(lit.value.to_compact_str()),
-            Self::RegExpLiteral(lit) => Some(lit.regex.to_string().into()),
-            Self::NumericLiteral(lit) => Some(lit.value.to_string().into()),
-            Self::BigIntLiteral(lit) => Some(lit.raw.to_compact_str()),
-            Self::NullLiteral(_) => Some("null".into()),
+            Self::StaticIdentifier(ident) => Some(Cow::Borrowed(ident.name.as_str())),
+            Self::StringLiteral(lit) => Some(Cow::Borrowed(lit.value.as_str())),
+            Self::RegExpLiteral(lit) => Some(Cow::Owned(lit.regex.to_string())),
+            Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
+            Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
+            Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
             Self::TemplateLiteral(lit) => lit
                 .expressions
                 .is_empty()
                 .then(|| lit.quasi())
                 .flatten()
-                .map(|quasi| quasi.to_compact_str()),
+                .map(std::convert::Into::into),
             _ => None,
         }
     }
@@ -372,9 +369,9 @@ impl<'a> PropertyKey<'a> {
         }
     }
 
-    pub fn name(&self) -> Option<CompactStr> {
+    pub fn name(&self) -> Option<Cow<'a, str>> {
         if self.is_private_identifier() {
-            self.private_name().map(|name| name.to_compact_str())
+            self.private_name().map(|name| Cow::Borrowed(name.as_str()))
         } else {
             self.static_name()
         }
@@ -662,6 +659,15 @@ impl<'a> Statement<'a> {
                 | Statement::ForStatement(_)
                 | Statement::WhileStatement(_)
         )
+    }
+}
+
+impl<'a> FromIn<'a, Expression<'a>> for Statement<'a> {
+    fn from_in(expression: Expression<'a>, alloc: &'a oxc_allocator::Allocator) -> Self {
+        Statement::ExpressionStatement(Box::from_in(
+            ExpressionStatement { span: expression.span(), expression },
+            alloc,
+        ))
     }
 }
 
@@ -1036,6 +1042,11 @@ impl<'a> FormalParameter<'a> {
     pub fn is_public(&self) -> bool {
         matches!(self.accessibility, Some(TSAccessibility::Public))
     }
+
+    #[inline]
+    pub fn has_modifier(&self) -> bool {
+        self.accessibility.is_some() || self.readonly || self.r#override
+    }
 }
 
 impl FormalParameterKind {
@@ -1047,6 +1058,9 @@ impl FormalParameterKind {
 impl<'a> FormalParameters<'a> {
     pub fn is_empty(&self) -> bool {
         self.items.is_empty()
+    }
+    pub fn has_parameter(&self) -> bool {
+        !self.is_empty() || self.rest.is_some()
     }
 }
 
@@ -1223,7 +1237,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
-    pub fn static_name(&self) -> Option<CompactStr> {
+    pub fn static_name(&self) -> Option<Cow<'a, str>> {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => None,
             Self::MethodDefinition(def) => def.key.static_name(),
@@ -1266,6 +1280,29 @@ impl<'a> ClassElement<'a> {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
     }
+
+    /// Has this property been marked as abstract?
+    ///
+    /// ```ts
+    /// abstract class Foo {    // <-- not considered
+    ///   foo: string;          // <-- false
+    ///   abstract bar: string; // <-- true
+    /// }
+    /// ```
+    pub fn is_abstract(&self) -> bool {
+        match self {
+            Self::MethodDefinition(method) => method.r#type.is_abstract(),
+            Self::AccessorProperty(accessor) => accessor.r#type.is_abstract(),
+            Self::PropertyDefinition(property) => property.r#type.is_abstract(),
+            Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
+        }
+    }
+}
+
+impl PropertyDefinitionType {
+    pub fn is_abstract(&self) -> bool {
+        matches!(self, Self::TSAbstractPropertyDefinition)
+    }
 }
 
 impl MethodDefinitionKind {
@@ -1292,6 +1329,12 @@ impl MethodDefinitionKind {
             Self::Get => ScopeFlags::GetAccessor | ScopeFlags::Function,
             Self::Set => ScopeFlags::SetAccessor | ScopeFlags::Function,
         }
+    }
+}
+
+impl MethodDefinitionType {
+    pub fn is_abstract(&self) -> bool {
+        matches!(self, Self::TSAbstractMethodDefinition)
     }
 }
 
@@ -1374,18 +1417,15 @@ impl AccessorPropertyType {
 }
 
 impl<'a> ImportDeclarationSpecifier<'a> {
-    pub fn name(&self) -> CompactStr {
+    pub fn local(&self) -> &BindingIdentifier<'a> {
         match self {
-            ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
-            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
-            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                specifier.local.name.to_compact_str()
-            }
+            ImportDeclarationSpecifier::ImportSpecifier(specifier) => &specifier.local,
+            ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => &specifier.local,
+            ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => &specifier.local,
         }
+    }
+    pub fn name(&self) -> Cow<'a, str> {
+        Cow::Borrowed(self.local().name.as_str())
     }
 }
 

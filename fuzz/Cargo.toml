@@ -14,6 +14,8 @@ cargo-fuzz = true
 [[bin]]
 name = "parser"
 path = "fuzz_targets/parser.rs"
+test = false
+doctest = false
 
 [dependencies]
 oxc_allocator = { path = "../crates/oxc_allocator" }

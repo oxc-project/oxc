@@ -4,6 +4,132 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- af4dc01 ast: Align ts ast scope with typescript (#4253) (Dunqing)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+- 92ee774 semantic: Add `ScopeFlags::CatchClause` for use in CatchClause (#4205) (Dunqing)
+
+### Bug Fixes
+
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- 3e099fe ast: Move `enter_scope` after `visit_binding_identifier` (#4246) (Dunqing)
+- aab7aaa ast/visit: Fire node events as the outermost one. (#4203) (rzvxa)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- 7f1addd semantic: Correct scope in CatchClause (#4192) (Dunqing)
+- 1458d81 visit: Add `#[inline]` to empty functions (#4330) (overlookmotel)
+
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Features
+
+- 67fe75e ast, ast_codegen: Pass the `scope_id` to the `enter_scope` event. (#4168) (rzvxa)
+
+### Bug Fixes
+
+- 48947a2 ast: Put `decorators` before everything else. (#4143) (rzvxa)
+
+### Documentation
+
+- bdcc298 ast: Update the note regarding the `ast_codegen` markers. (#4149) (rzvxa)
+
+### Refactor
+
+
+## [0.19.0] - 2024-07-09
+
+- b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)
+
+### Features
+
+- 485c871 ast: Allow conversion from `Expression` into `Statement` with `FromIn` trait. (#4124) (rzvxa)
+
+### Refactor
+
+
+## [0.18.0] - 2024-07-09
+
+- d347aed ast: [**BREAKING**] Generate `ast_builder.rs`. (#3890) (rzvxa)
+
+### Features
+
+- 2f53bdf semantic: Check for abstract ClassElements in non-abstract classes (#4127) (DonIsaac)
+- c4ee9f8 semantic: Check for abstract initializations and implementations (#4125) (Don Isaac)
+
+## [0.17.2] - 2024-07-08
+
+### Features
+
+- e386b62 semantic: Check for invalid type import assignments (#4097) (DonIsaac)
+
+## [0.17.1] - 2024-07-06
+
+### Bug Fixes
+
+- aa585d3 ast_codegen, ast: Visit `ExpressionArrayElement` as `Expression`. (#4061) (rzvxa)
+
+### Refactor
+
+- 8fa98e0 ast: Inline trivial functions and shorten code (#4066) (overlookmotel)
+
+## [0.17.0] - 2024-07-05
+
+- e32b4bc ast: [**BREAKING**] Store trivia comments in a sorted slice (#4045) (Luca Bruno)
+
+- 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_memeber` to `visit_ts_enum_member`. (#4000) (rzvxa)
+
+- 4a0eaa0 ast: [**BREAKING**] Rename `visit_enum` to `visit_ts_enum_declaration`. (#3998) (rzvxa)
+
+- c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
+
+### Features
+
+- 1854a52 ast_codegen: Introduce the `#[span]` hint. (#4012) (rzvxa)
+- 7538af1 ast_codegen: Add visit generator (#3954) (rzvxa)
+
+### Bug Fixes
+
+- 05a047c isolated-declarations: Method following an abstract method gets dropped (#4024) (Dunqing)
+
+### Refactor
+
+- b51f75b ast_codegen: No longer outputs discard variable for empty visitors. (#4008) (rzvxa)
+
+## [0.16.3] - 2024-07-02
+
+### Features
+
+- b257d53 linter: Support report `@typescript-eslint/consistent-type-imports` (#3895) (mysteryven)
+
+### Bug Fixes
+
+- d995f94 semantic: Resolve reference incorrectly when a parameter references a parameter that hasn't been defined yet (#4004) (Dunqing)
+
+### Refactor
+
+- 0fe22a8 ast: Reorder fields to reflect their visit order. (#3994) (rzvxa)
+
+## [0.16.2] - 2024-06-30
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+
+## [0.16.1] - 2024-06-29
+
+### Bug Fixes
+
+- 31e4c3b isolated-declarations: `declare global {}` should be kept even if it is not exported (#3956) (Dunqing)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

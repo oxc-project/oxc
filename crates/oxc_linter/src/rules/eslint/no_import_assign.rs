@@ -9,7 +9,7 @@ use phf::phf_set;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_import_assign_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-import-assign): do not assign to imported bindings")
+    OxcDiagnostic::warn("do not assign to imported bindings")
         .with_help("imported bindings are readonly")
         .with_label(span0)
 }
@@ -52,7 +52,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
 impl Rule for NoImportAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flag(symbol_id).is_import_binding() {
+        if symbol_table.get_flag(symbol_id).is_import() {
             let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));
             for reference in symbol_table.get_resolved_references(symbol_id) {

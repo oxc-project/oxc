@@ -1,15 +1,22 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-fn bad_char_at_comparison_diagnostic(span0: Span, span1: Span, x2: usize) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(bad-char-at-comparison): Invalid comparison with `charAt` method")
+fn bad_char_at_comparison_diagnostic(
+    char_at: Span,
+    compared_string: Span,
+    x2: usize,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid comparison with `charAt` method")
         .with_help("`String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.")
-        .with_labels([LabeledSpan::new_with_span(Some("`charAt` called here".into()), span0), LabeledSpan::new_with_span(Some(format!("And compared with a string of length {x2} here")), span1)])
+        .with_labels([
+            char_at.label("`charAt` called here"),
+            compared_string.label(format!("And compared with a string of length {x2} here")),
+        ])
 }
 
 #[derive(Debug, Default, Clone)]

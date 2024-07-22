@@ -7,3 +7,5 @@ function A() {
 const B = () => { return B };
 
 const C = function () {}
+
+const D = () => `${''}`;

@@ -1,4 +1,4 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
@@ -6,11 +6,10 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_class_assign_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-class-assign): Unexpected re-assignment of class {x0}"))
-        .with_labels([
-            LabeledSpan::new_with_span(Some(format!("{x0} is declared as class here")), span1),
-            LabeledSpan::new_with_span(Some(format!("{x0} is re-assigned here")), span2),
-        ])
+    OxcDiagnostic::warn(format!("Unexpected re-assignment of class {x0}")).with_labels([
+        span1.label(format!("{x0} is declared as class here")),
+        span2.label(format!("{x0} is re-assigned here")),
+    ])
 }
 
 #[derive(Debug, Default, Clone)]

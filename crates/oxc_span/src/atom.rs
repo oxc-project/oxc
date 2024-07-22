@@ -1,5 +1,5 @@
 use std::{
-    borrow::Borrow,
+    borrow::{Borrow, Cow},
     fmt, hash,
     ops::{Deref, Index},
 };
@@ -9,6 +9,7 @@ use compact_str::CompactString;
 use serde::{Serialize, Serializer};
 
 use crate::Span;
+use oxc_allocator::{Allocator, FromIn};
 
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
@@ -58,6 +59,36 @@ impl<'a> Atom<'a> {
     }
 }
 
+impl<'a, 'b> FromIn<'a, &'b Atom<'a>> for Atom<'a> {
+    fn from_in(s: &'b Atom<'a>, _: &'a Allocator) -> Self {
+        Self::from(s.0)
+    }
+}
+
+impl<'a, 'b> FromIn<'a, &'b str> for Atom<'a> {
+    fn from_in(s: &'b str, alloc: &'a Allocator) -> Self {
+        Self::from(oxc_allocator::String::from_str_in(s, alloc).into_bump_str())
+    }
+}
+
+impl<'a> FromIn<'a, String> for Atom<'a> {
+    fn from_in(s: String, alloc: &'a Allocator) -> Self {
+        Self::from_in(s.as_str(), alloc)
+    }
+}
+
+impl<'a> FromIn<'a, &String> for Atom<'a> {
+    fn from_in(s: &String, alloc: &'a Allocator) -> Self {
+        Self::from_in(s.as_str(), alloc)
+    }
+}
+
+impl<'a, 'b> FromIn<'a, Cow<'b, str>> for Atom<'a> {
+    fn from_in(s: Cow<'b, str>, alloc: &'a Allocator) -> Self {
+        Self::from_in(&*s, alloc)
+    }
+}
+
 impl<'a> From<&'a str> for Atom<'a> {
     fn from(s: &'a str) -> Self {
         Self(s)
@@ -75,6 +106,13 @@ impl<'a> From<Atom<'a>> for String {
     #[inline]
     fn from(val: Atom<'a>) -> Self {
         val.into_string()
+    }
+}
+
+impl<'a> From<Atom<'a>> for Cow<'a, str> {
+    #[inline]
+    fn from(value: Atom<'a>) -> Self {
+        Cow::Borrowed(value.as_str())
     }
 }
 
@@ -113,6 +151,17 @@ impl<'a> PartialEq<Atom<'a>> for &str {
 impl<'a> PartialEq<str> for Atom<'a> {
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
+    }
+}
+
+impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
+    fn eq(&self, other: &Atom<'a>) -> bool {
+        self.as_ref() == other.as_str()
+    }
+}
+impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
+    fn eq(&self, other: &&Atom<'a>) -> bool {
+        self.as_ref() == other.as_str()
     }
 }
 
@@ -177,7 +226,7 @@ impl CompactStr {
     #[inline]
     pub const fn new_const(s: &'static str) -> Self {
         assert!(s.len() <= MAX_INLINE_LEN);
-        Self(CompactString::new_inline(s))
+        Self(CompactString::const_new(s))
     }
 
     /// Get string content as a `&str` slice.
@@ -234,6 +283,26 @@ impl From<String> for CompactStr {
     }
 }
 
+impl<'s> From<&'s CompactStr> for Cow<'s, str> {
+    fn from(value: &'s CompactStr) -> Self {
+        Self::Borrowed(value.as_str())
+    }
+}
+
+impl From<CompactStr> for Cow<'_, str> {
+    fn from(value: CompactStr) -> Self {
+        value.0.into()
+    }
+}
+impl From<Cow<'_, str>> for CompactStr {
+    fn from(value: Cow<'_, str>) -> Self {
+        match value {
+            Cow::Borrowed(s) => CompactStr::new(s),
+            Cow::Owned(s) => CompactStr::from(s),
+        }
+    }
+}
+
 impl Deref for CompactStr {
     type Target = str;
 
@@ -263,6 +332,24 @@ impl<T: AsRef<str>> PartialEq<T> for CompactStr {
 impl PartialEq<CompactStr> for &str {
     fn eq(&self, other: &CompactStr) -> bool {
         *self == other.as_str()
+    }
+}
+
+impl PartialEq<CompactStr> for str {
+    fn eq(&self, other: &CompactStr) -> bool {
+        self == other.as_str()
+    }
+}
+
+impl PartialEq<str> for CompactStr {
+    fn eq(&self, other: &str) -> bool {
+        self.as_str() == other
+    }
+}
+
+impl PartialEq<CompactStr> for Cow<'_, str> {
+    fn eq(&self, other: &CompactStr) -> bool {
+        self.as_ref() == other.as_str()
     }
 }
 
@@ -299,5 +386,19 @@ impl Serialize for CompactStr {
         S: Serializer,
     {
         serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::CompactStr;
+
+    #[test]
+    fn test_compactstr_eq() {
+        let foo = CompactStr::new("foo");
+        assert_eq!(foo, "foo");
+        assert_eq!(&foo, "foo");
+        assert_eq!("foo", foo);
+        assert_eq!("foo", &foo);
     }
 }

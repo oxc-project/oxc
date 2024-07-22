@@ -32,7 +32,7 @@ pub struct TraverseAncestry<'a> {
 impl<'a> TraverseAncestry<'a> {
     /// Get parent of current node.
     #[inline]
-    #[allow(unsafe_code)]
+
     pub fn parent(&self) -> &Ancestor<'a> {
         // SAFETY: Stack contains 1 entry initially. Entries are pushed as traverse down the AST,
         // and popped as go back up. So even when visiting `Program`, the initial entry is in the stack.
@@ -131,7 +131,7 @@ impl<'a> TraverseAncestry<'a> {
     ///
     /// This method must not be public outside this crate, or consumer could break safety invariants.
     #[inline]
-    #[allow(unsafe_code)]
+
     pub(crate) unsafe fn pop_stack(&mut self) {
         self.stack.pop().unwrap_unchecked();
     }

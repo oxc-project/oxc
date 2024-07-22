@@ -4,7 +4,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_exports_found(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-import(no-unused-modules): No exports found")
+    OxcDiagnostic::warn("No exports found")
         .with_label(span0)
 }
 

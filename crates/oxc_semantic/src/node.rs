@@ -22,13 +22,14 @@ pub struct AstNode<'a> {
 }
 
 impl<'a> AstNode<'a> {
-    pub fn new(
+    pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
         cfg_id: BasicBlockId,
         flags: NodeFlags,
+        id: AstNodeId,
     ) -> Self {
-        Self { id: AstNodeId::new(0), kind, cfg_id, scope_id, flags }
+        Self { id, kind, scope_id, cfg_id, flags }
     }
 
     pub fn id(&self) -> AstNodeId {
@@ -59,6 +60,9 @@ impl<'a> AstNode<'a> {
 /// Untyped AST nodes flattened into an vec
 #[derive(Debug, Default)]
 pub struct AstNodes<'a> {
+    /// The root node should always point to a `Program`, which is the real
+    /// root of the tree. It isn't possible to statically check for this, so
+    /// users should beware.
     root: Option<AstNodeId>,
     nodes: IndexVec<AstNodeId, AstNode<'a>>,
     parent_ids: IndexVec<AstNodeId, Option<AstNodeId>>,
@@ -116,21 +120,6 @@ impl<'a> AstNodes<'a> {
         self.root
     }
 
-    /// Set the root node,
-    /// SAFETY:
-    /// The root `AstNode` should always point to a `Program` and this should be the real root of
-    /// the tree, It isn't possible to statically check for this so user should think about it before
-    /// using.
-    #[allow(unsafe_code)]
-    pub(super) unsafe fn set_root(&mut self, root: &AstNode<'a>) {
-        match root.kind() {
-            AstKind::Program(_) => {
-                self.root = Some(root.id());
-            }
-            _ => unreachable!("Expected a `Program` node as the root of the tree."),
-        }
-    }
-
     /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
     /// Returns `None` if root node isn't set.
     pub fn root_node(&self) -> Option<&AstNode<'a>> {
@@ -152,11 +141,33 @@ impl<'a> AstNodes<'a> {
         std::iter::successors(Some(ast_node_id), |node_id| parent_ids[*node_id])
     }
 
-    /// Adds an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
-    pub fn add_node(&mut self, node: AstNode<'a>, parent_id: Option<AstNodeId>) -> AstNodeId {
-        let mut node = node;
-        let ast_node_id = self.parent_ids.push(parent_id);
-        node.id = ast_node_id;
+    /// Create and add an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
+    /// Node must not be `Program`. Use `add_program_node` instead.
+    pub fn add_node(
+        &mut self,
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        parent_node_id: AstNodeId,
+        cfg_id: BasicBlockId,
+        flags: NodeFlags,
+    ) -> AstNodeId {
+        let ast_node_id = self.parent_ids.push(Some(parent_node_id));
+        let node = AstNode::new(kind, scope_id, cfg_id, flags, ast_node_id);
+        self.nodes.push(node);
+        ast_node_id
+    }
+
+    /// Create and add an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
+    pub fn add_program_node(
+        &mut self,
+        kind: AstKind<'a>,
+        scope_id: ScopeId,
+        cfg_id: BasicBlockId,
+        flags: NodeFlags,
+    ) -> AstNodeId {
+        let ast_node_id = self.parent_ids.push(None);
+        self.root = Some(ast_node_id);
+        let node = AstNode::new(kind, scope_id, cfg_id, flags, ast_node_id);
         self.nodes.push(node);
         ast_node_id
     }

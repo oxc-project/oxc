@@ -9,6 +9,7 @@ mod class;
 mod declaration;
 mod diagnostics;
 mod r#enum;
+mod formal_parameter_binding_pattern;
 mod function;
 mod inferrer;
 mod literal;
@@ -55,9 +56,9 @@ impl<'a> IsolatedDeclarations<'a> {
     /// Returns `Vec<Error>` if any errors were collected during the transformation.
     pub fn build(mut self, program: &Program<'a>) -> IsolatedDeclarationsReturn<'a> {
         let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
-        let directives = self.ast.new_vec();
+        let directives = self.ast.vec();
         let stmts = self.transform_program(program);
-        let program = self.ast.program(SPAN, source_type, directives, None, stmts);
+        let program = self.ast.program(SPAN, source_type, None, directives, stmts);
         IsolatedDeclarationsReturn { program, errors: self.take_errors() }
     }
 
@@ -97,7 +98,7 @@ impl<'a> IsolatedDeclarations<'a> {
         &mut self,
         stmts: &oxc_allocator::Vec<'a, Statement<'a>>,
     ) -> oxc_allocator::Vec<'a, Statement<'a>> {
-        let mut new_ast_stmts = self.ast.new_vec::<Statement<'a>>();
+        let mut new_ast_stmts = self.ast.vec::<Statement<'a>>();
         for stmt in Self::remove_function_overloads_implementation(self.ast.copy(stmts)) {
             if let Some(decl) = stmt.as_declaration() {
                 if let Some(decl) = self.transform_declaration(decl, false) {
@@ -121,7 +122,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let mut new_stmts = Vec::new();
         let mut variables_declarations = VecDeque::new();
         let mut variable_transformed_indexes = VecDeque::new();
-        let mut transformed_indexes = Vec::new();
+        let mut transformed_indexes = FxHashSet::default();
         // 1. Collect all declarations, module declarations
         // 2. Transform export declarations
         // 3. Collect all bindings / reference from module declarations
@@ -134,13 +135,19 @@ impl<'a> IsolatedDeclarations<'a> {
                             variables_declarations.push_back(
                                 self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                             );
-                            variable_transformed_indexes.push_back(Vec::default());
+                            variable_transformed_indexes.push_back(FxHashSet::default());
                         }
                         Declaration::UsingDeclaration(decl) => {
                             variables_declarations.push_back(
                                 self.ast.copy(&decl.declarations).into_iter().collect::<Vec<_>>(),
                             );
-                            variable_transformed_indexes.push_back(Vec::default());
+                            variable_transformed_indexes.push_back(FxHashSet::default());
+                        }
+                        Declaration::TSModuleDeclaration(decl) => {
+                            if decl.kind.is_global() {
+                                self.scope.visit_ts_module_declaration(decl);
+                                transformed_indexes.insert(new_stmts.len());
+                            }
                         }
                         _ => {}
                     }
@@ -149,7 +156,7 @@ impl<'a> IsolatedDeclarations<'a> {
                 match_module_declaration!(Statement) => {
                     match stmt.to_module_declaration() {
                         ModuleDeclaration::ExportDefaultDeclaration(decl) => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             if let Some((var_decl, new_decl)) =
                                 self.transform_export_default_declaration(decl)
                             {
@@ -159,7 +166,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                     new_stmts.push(Statement::VariableDeclaration(
                                         self.ast.alloc(var_decl),
                                     ));
-                                    transformed_indexes.push(new_stmts.len());
+                                    transformed_indexes.insert(new_stmts.len());
                                 }
 
                                 self.scope.visit_export_default_declaration(&new_decl);
@@ -174,7 +181,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         }
 
                         ModuleDeclaration::ExportNamedDeclaration(decl) => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             if let Some(new_decl) = self.transform_export_named_declaration(decl) {
                                 self.scope.visit_declaration(
                                     new_decl.declaration.as_ref().unwrap_or_else(|| unreachable!()),
@@ -192,7 +199,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             // We must transform this in the end, because we need to know all references
                         }
                         module_declaration => {
-                            transformed_indexes.push(new_stmts.len());
+                            transformed_indexes.insert(new_stmts.len());
                             self.scope.visit_module_declaration(module_declaration);
                         }
                     }
@@ -235,13 +242,13 @@ impl<'a> IsolatedDeclarations<'a> {
 
                         if let Some(decl) = self.transform_variable_declarator(declarator, true) {
                             self.scope.visit_variable_declarator(&decl);
-                            cur_transformed_indexes.push(ii);
+                            cur_transformed_indexes.insert(ii);
                             *declarator = decl;
                         }
                     }
                 } else if let Some(decl) = self.transform_declaration(decl, true) {
                     self.scope.visit_declaration(&decl);
-                    transformed_indexes.push(i);
+                    transformed_indexes.insert(i);
                     *stmt = Statement::from(decl);
                 }
             }
@@ -249,7 +256,7 @@ impl<'a> IsolatedDeclarations<'a> {
 
         // 6. Transform variable/using declarations, import statements, remove unused imports
         // 7. Return transformed statements
-        let mut new_ast_stmts = self.ast.new_vec_with_capacity(transformed_indexes.len());
+        let mut new_ast_stmts = self.ast.vec_with_capacity(transformed_indexes.len());
         for (index, stmt) in new_stmts.into_iter().enumerate() {
             match stmt {
                 _ if transformed_indexes.contains(&index) => {
@@ -265,7 +272,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         let variables_declaration = self
                             .transform_variable_declaration_with_new_declarations(
                                 &decl,
-                                self.ast.new_vec_from_iter(
+                                self.ast.vec_from_iter(
                                     declarations
                                         .into_iter()
                                         .enumerate()
@@ -274,7 +281,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variables_declaration));
-                        transformed_indexes.push(index);
+                        transformed_indexes.insert(index);
                     }
                 }
                 Statement::UsingDeclaration(decl) => {
@@ -287,7 +294,7 @@ impl<'a> IsolatedDeclarations<'a> {
                         let variable_declaration = self
                             .transform_using_declaration_with_new_declarations(
                                 &decl,
-                                self.ast.new_vec_from_iter(
+                                self.ast.vec_from_iter(
                                     declarations
                                         .into_iter()
                                         .enumerate()
@@ -296,7 +303,7 @@ impl<'a> IsolatedDeclarations<'a> {
                                 ),
                             );
                         new_ast_stmts.push(Statement::VariableDeclaration(variable_declaration));
-                        transformed_indexes.push(index);
+                        transformed_indexes.insert(index);
                     }
                 }
                 Statement::ImportDeclaration(decl) => {
@@ -311,15 +318,15 @@ impl<'a> IsolatedDeclarations<'a> {
             }
         }
 
-        if last_transformed_len == transformed_indexes.len() {
+        if !transformed_indexes.is_empty() && last_transformed_len == transformed_indexes.len() {
             need_empty_export_marker = false;
         }
 
         if need_empty_export_marker {
-            let specifiers = self.ast.new_vec();
+            let specifiers = self.ast.vec();
             let kind = ImportOrExportKind::Value;
             let empty_export =
-                self.ast.export_named_declaration(SPAN, None, specifiers, None, kind, None);
+                self.ast.alloc_export_named_declaration(SPAN, None, specifiers, None, kind, None);
             new_ast_stmts
                 .push(Statement::from(ModuleDeclaration::ExportNamedDeclaration(empty_export)));
         }

@@ -4,6 +4,60 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- af4dc01 ast: Align ts ast scope with typescript (#4253) (Dunqing)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+
+### Bug Fixes
+
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- 3e099fe ast: Move `enter_scope` after `visit_binding_identifier` (#4246) (Dunqing)
+- c418bf5 semantic: Directly record `current_node_id` when adding a scope (#4265) (Dunqing)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- fc0b17d syntax: Turn the `AstNodeId::dummy` into a constant field. (#4308) (rzvxa)
+
+## [0.20.0] - 2024-07-11
+
+### Bug Fixes
+
+- 48947a2 ast: Put `decorators` before everything else. (#4143) (rzvxa)
+
+## [0.17.0] - 2024-07-05
+
+- 4a0eaa0 ast: [**BREAKING**] Rename `visit_enum` to `visit_ts_enum_declaration`. (#3998) (rzvxa)
+
+- c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
+
+### Refactor
+
+
+## [0.16.3] - 2024-07-02
+
+### Refactor
+
+- 0fe22a8 ast: Reorder fields to reflect their visit order. (#3994) (rzvxa)
+
+## [0.16.2] - 2024-06-30
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+
+### Performance
+
+- 1eac3d2 semantic: Use `Atom<'a>` for `Reference`s (#3972) (Don Isaac)
+
+### Refactor
+
+- 5845057 transformer: Pass in symbols and scopes (#3978) (Boshen)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

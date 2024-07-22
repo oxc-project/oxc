@@ -10,7 +10,7 @@ use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn bad_bitwise_operator_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(bad-bitwise-operator): Bad bitwise operator")
+    OxcDiagnostic::warn("Bad bitwise operator")
         .with_help(format!(
             "Bitwise operator '{x0}' seems unintended. Did you mean logical operator '{x1}'?"
         ))

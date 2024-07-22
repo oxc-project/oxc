@@ -1,0 +1,83 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/type-reference.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(A)",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 2,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 3,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "A",
+        "node": "Class(A)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 0,
+            "name": "A",
+            "node_id": 8
+          },
+          {
+            "flag": "ReferenceFlag(Read | TSTypeQuery)",
+            "id": 1,
+            "name": "A",
+            "node_id": 13
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 2,
+            "name": "A",
+            "node_id": 17
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 1,
+        "name": "T1",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 2,
+        "name": "T2",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 3,
+        "name": "v",
+        "node": "VariableDeclarator",
+        "references": []
+      }
+    ]
+  }
+]

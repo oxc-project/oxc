@@ -4,6 +4,89 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- e3e663b mangler: Initialize crate and integrate into minifier (#4197) (Boshen)
+
+### Bug Fixes
+
+- bf3d8d3 codegen: Print annotation comment inside parens for new and call expressions (#4290) (Boshen)
+- 084ab76 codegen: Use `ryu-js` for f64 to string (Boshen)
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- c65198f codegen: Choose the right quote for jsx attribute string (#4236) (Boshen)
+- be82c28 codegen: Print `JSXAttributeValue::StringLiteral` directly (#4231) (Boshen)
+- 3df9e69 mangler: No shorthand `BindingProperty`; handle var hoisting and export variables (#4319) (Boshen)
+- 66b455a oxc_codegen: Avoid print same pure comments multiple time (#4230) (IWANABETHATGUY)- 1c117eb Avoid print extra semicolon after accessor property (#4199) (IWANABETHATGUY)
+
+### Refactor
+
+- d1c4be0 codegen: Clean up annotation_comment (Boshen)
+- 06197b8 codegen: Separate tests (Boshen)
+- aa22073 codegen: Improve print API (#4196) (Boshen)
+
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Refactor
+
+
+## [0.18.0] - 2024-07-09
+
+### Features
+
+- 365d9ba oxc_codegen: Generate annotation comments before `CallExpression` and `NewExpression` (#4119) (IWANABETHATGUY)
+
+## [0.17.2] - 2024-07-08
+
+### Bug Fixes
+
+- 5472b7c codegen: 256 indentations level is not enough for codegen (Boshen)
+
+## [0.17.1] - 2024-07-06
+
+### Bug Fixes
+
+- 564a75a codegen: Missing TypeParameters in TSConstructSignature (#4063) (michaelm)
+
+## [0.17.0] - 2024-07-05
+
+### Features
+
+- 7768d23 isolated-declarations: Support optional class methods (#4035) (Egor Blinov)
+
+### Bug Fixes
+
+- aaac2d8 codegen: Preserve parentheses from AST instead calculating from  operator precedence (#4055) (Boshen)
+- 5e5b1b1 codegen: Correct accessibility emit for class formal-parameters/methods/properties (#4042) (Egor Blinov)
+- 7844734 codegen: Missing const keyword in TSTypeParamter (#4022) (Dunqing)
+- 6254a41 codegen: Missing TypeParamters in TSCallSignature (#4021) (Dunqing)
+
+## [0.16.3] - 2024-07-02
+
+### Bug Fixes
+
+- 23038ad codegen: Print `TSFunctionType` inside `TSTypeAssertion` (#3999) (Boshen)
+
+## [0.16.2] - 2024-06-30
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+
+### Bug Fixes
+
+- dac617d codegen: Print some missing typescript attributes (#3980) (Boshen)
+
+## [0.16.1] - 2024-06-29
+
+### Bug Fixes
+
+- 51e54f9 codegen: Should print `TSModuleDeclarationKind` instead of just `module` (#3957) (Dunqing)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

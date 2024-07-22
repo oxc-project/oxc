@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 19/19 (100.00%)
-Positive Passed: 19/19 (100.00%)
-Negative Passed: 10/10 (100.00%)
+AST Parsed     : 24/24 (100.00%)
+Positive Passed: 24/24 (100.00%)
+Negative Passed: 13/13 (100.00%)
 
   × Unexpected token
    ╭─[fail/oxc-169.js:2:1]
@@ -126,6 +126,52 @@ Negative Passed: 10/10 (100.00%)
  5 │ let c = <Apple.Orange></Banana>;
    ·          ────────────   ──────
    ╰────
+
+  × 'readonly' modifier cannot be used here.
+   ╭─[fail/oxc-3948.ts:2:5]
+ 1 │ const x = {
+ 2 │     readonly foo() {
+   ·     ────────
+ 3 │ 
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[fail/oxc-3948.ts:5:5]
+ 4 │     },
+ 5 │     public readonly async bar() {
+   ·     ──────
+ 6 │ 
+   ╰────
+
+  × 'readonly' modifier cannot be used here.
+   ╭─[fail/oxc-3948.ts:5:12]
+ 4 │     },
+ 5 │     public readonly async bar() {
+   ·            ────────
+ 6 │ 
+   ╰────
+
+  × 'public' modifier cannot be used here.
+   ╭─[fail/oxc-3948.ts:8:5]
+ 7 │     },
+ 8 │     public x: 1,
+   ·     ──────
+ 9 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[fail/oxc-4111-1.js:1:35]
+ 1 │ funtransientction as longciiConÞr>ol(cde) {
+   ·                                  ▲
+   ╰────
+  help: Try insert a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[fail/oxc-4212-1.ts:1:16]
+ 1 │ class a { const enum b(); }
+   ·                ▲
+   ╰────
+  help: Try insert a semicolon here
 
   × The keyword 'let' is reserved
    ╭─[fail/oxc.js:1:1]

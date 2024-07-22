@@ -686,6 +686,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSTypeQuery(v) => v.format(p),
             TSType::TSTypeReference(v) => v.format(p),
             TSType::TSUnionType(v) => v.format(p),
+            TSType::TSParenthesizedType(v) => v.format(p),
             TSType::JSDocNullableType(v) => v.format(p),
             TSType::JSDocNonNullableType(v) => v.format(p),
             TSType::JSDocUnknownType(v) => v.format(p),
@@ -917,6 +918,12 @@ impl<'a> Format<'a> for TSTypeReference<'a> {
             parts.push(format!(p, params));
         }
         Doc::Array(parts)
+    }
+}
+
+impl<'a> Format<'a> for TSParenthesizedType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        wrap!(p, self, TSParenthesizedType, { self.type_annotation.format(p) })
     }
 }
 

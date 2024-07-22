@@ -15,23 +15,6 @@ use super::generated_header;
 
 pub struct ImplGetSpanGenerator;
 
-const EDGE_CASES: [&str; 1] = ["BindingPattern"];
-
-fn edge_case(it: &std::cell::Ref<RType>) -> bool {
-    !it.ident().is_some_and(|it| EDGE_CASES.contains(&it.to_string().as_str()))
-}
-
-fn edge_case_impls() -> TokenStream {
-    quote! {
-        endl!();
-        impl<'a> GetSpan for BindingPattern<'a> {
-            fn span(&self) -> Span {
-                self.kind.span()
-            }
-        }
-    }
-}
-
 impl Generator for ImplGetSpanGenerator {
     fn name(&self) -> &'static str {
         "ImplGetSpanGenerator"
@@ -44,7 +27,6 @@ impl Generator for ImplGetSpanGenerator {
             .map(|it| it.borrow())
             .filter(|it| it.visitable())
             .filter(|it| matches!(&**it, RType::Enum(_) | RType::Struct(_)))
-            .filter(edge_case)
             .map(|kind| match &*kind {
                 RType::Enum(it) => impl_enum(it),
                 RType::Struct(it) => impl_struct(it),
@@ -52,23 +34,21 @@ impl Generator for ImplGetSpanGenerator {
             })
             .collect();
 
-        let edge_impls = edge_case_impls();
-
         let header = generated_header!();
 
-        GeneratorOutput::One(quote! {
-            #header
-            insert!("#![allow(clippy::match_same_arms)]");
-            endl!();
+        GeneratorOutput::Stream((
+            "span",
+            quote! {
+                #header
+                insert!("#![allow(clippy::match_same_arms)]");
+                endl!();
 
-            use crate::ast::*;
-            use oxc_span::{GetSpan, Span};
+                use crate::ast::*;
+                use oxc_span::{GetSpan, Span};
 
-            #(#impls)*
-
-            #edge_impls
-
-        })
+                #(#impls)*
+            },
+        ))
     }
 }
 
@@ -96,12 +76,20 @@ fn impl_enum(it @ REnum { item, .. }: &REnum) -> TokenStream {
 fn impl_struct(it @ RStruct { item, .. }: &RStruct) -> TokenStream {
     let typ = it.as_type();
     let generics = &item.generics;
+    let inner_span_hint =
+        item.fields.iter().find(|it| it.attrs.iter().any(|a| a.path().is_ident("span")));
+    let span = if let Some(span_field) = inner_span_hint {
+        let ident = span_field.ident.as_ref().unwrap();
+        quote!(#ident.span())
+    } else {
+        quote!(span)
+    };
     quote! {
         endl!();
         impl #generics GetSpan for #typ {
             #[inline]
             fn span(&self) -> Span {
-                self.span
+                self.#span
             }
         }
     }

@@ -62,8 +62,7 @@
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
-use oxc_semantic::SemanticBuilder;
-use oxc_span::SourceType;
+use oxc_semantic::{ScopeTree, SymbolTable};
 
 pub mod ancestor;
 pub use ancestor::Ancestor;
@@ -137,19 +136,17 @@ mod walk;
 ///     }
 /// }
 /// ```
-#[allow(unsafe_code)]
+
 pub fn traverse_mut<'a, Tr: Traverse<'a>>(
     traverser: &mut Tr,
-    program: &mut Program<'a>,
-    source_text: &'a str,
-    source_type: SourceType,
     allocator: &'a Allocator,
-) {
-    let semantic = SemanticBuilder::new(source_text, source_type).build(program).semantic;
-    let (symbols, scopes) = semantic.into_symbol_table_and_scope_tree();
-
+    program: &mut Program<'a>,
+    symbols: SymbolTable,
+    scopes: ScopeTree,
+) -> (SymbolTable, ScopeTree) {
     let mut ctx = TraverseCtx::new(scopes, symbols, allocator);
     // SAFETY: Walk functions are constructed to avoid unsoundness
     unsafe { walk::walk_program(traverser, program as *mut Program, &mut ctx) };
     debug_assert!(ctx.ancestors_depth() == 1);
+    ctx.scoping.into_symbol_table_and_scope_tree()
 }

@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule, AstNode};
 
 fn prefer_number_properties_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(prefer-number-properties): Use `Number.{x1}` instead of the global `{x1}`"))
+    OxcDiagnostic::warn(format!("Use `Number.{x1}` instead of the global `{x1}`"))
         .with_help(format!("Replace it with `Number.{x1}`"))
         .with_label(span0)
 }

@@ -1,17 +1,12 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
 fn no_global_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(no-global-assign): Read-only global '{x0}' should not be modified."
-    ))
-    .with_labels([LabeledSpan::new_with_span(
-        Some(format!("Read-only global '{x0}' should not be modified.")),
-        span1,
-    )])
+    OxcDiagnostic::warn(format!("Read-only global '{x0}' should not be modified."))
+        .with_label(span1.label(format!("Read-only global '{x0}' should not be modified.")))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -64,8 +59,8 @@ impl Rule for NoGlobalAssign {
 
     fn run_once(&self, ctx: &LintContext) {
         let symbol_table = ctx.symbols();
-        for reference_id_list in ctx.scopes().root_unresolved_references().values() {
-            for &reference_id in reference_id_list {
+        for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
+            for reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write() {
                     let name = reference.name();

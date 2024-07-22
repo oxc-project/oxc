@@ -4,6 +4,127 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+- d7ab0b8 semantic: [**BREAKING**] Simplify node creation (#4226) (lucab)
+
+### Features
+
+- af4dc01 ast: Align ts ast scope with typescript (#4253) (Dunqing)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+- 92ee774 semantic: Add `ScopeFlags::CatchClause` for use in CatchClause (#4205) (Dunqing)
+
+### Bug Fixes
+
+- 9badac0 semantic: Avoid var hosting insert the var variable to the `CatchClause` scope (#4337) (Dunqing)
+- 95e15b6 semantic: Incorrect resolve references for `ExportSpecifier` (#4320) (Dunqing)
+- c362bf7 semantic: Incorrect resolve references for `TSInterfaceHeritage` (#4311) (Dunqing)
+- 351ecf2 semantic: Incorrect resolve references for `TSTypeQuery` (#4310) (Dunqing)
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+- 22d56bd semantic: Do not resolve references after `FormalParameters` in TS type (#4241) (overlookmotel)
+
+### Performance
+
+- f9d3f2e semantic: Inline ast record functions (#4272) (overlookmotel)
+- 23743db semantic: Do not record ast nodes for cfg if cfg disabled (#4263) (overlookmotel)
+- da69076 semantic: Reduce overhead of cfg recording ast nodes (#4262) (overlookmotel)
+- cb15303 semantic: Reduce memory copies (#4216) (overlookmotel)
+- ef4c1f4 semantic: Reduce lookups (#4214) (overlookmotel)
+- f23e54f semantic: Recycle unresolved references hash maps (#4213) (overlookmotel)
+- 2602ce2 semantic: Reuse existing map of unresolved refs (#4206) (lucab)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- 3e099fe ast: Move `enter_scope` after `visit_binding_identifier` (#4246) (Dunqing)
+- aab7aaa ast/visit: Fire node events as the outermost one. (#4203) (rzvxa)
+- c5731a5 semantic: Remove defunct code setting ScopeFlags twice (#4286) (overlookmotel)
+- 16698bc semantic: Move function/class-specific code into specific visitors (#4278) (overlookmotel)
+- ee16668 semantic: Rename function param (#4277) (overlookmotel)
+- 25f0771 semantic: Alter syntax of `control_flow!` macro (#4275) (overlookmotel)
+- 639fd48 semantic: Comment why extra CFG enabled check (#4274) (overlookmotel)
+- c418bf5 semantic: Directly record `current_node_id` when adding a scope (#4265) (Dunqing)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- 8bfeabf semantic: Simplify adding `SymbolFlags::Export` (#4249) (Dunqing)
+- dc2b3c4 semantic: Add strict mode in scope flags for class definitions (#4156) (Dunqing)
+- 81ed588 semantic: Convert scope fields to IndexVecs (#4208) (lucab)
+- bbe5ded semantic: Set `current_scope_id` to `scope_id` in `enter_scope` (#4193) (Dunqing)
+- 7f1addd semantic: Correct scope in CatchClause (#4192) (Dunqing)
+- fc0b17d syntax: Turn the `AstNodeId::dummy` into a constant field. (#4308) (rzvxa)
+
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Features
+
+- 67fe75e ast, ast_codegen: Pass the `scope_id` to the `enter_scope` event. (#4168) (rzvxa)
+
+### Performance
+
+- 2203143 semantic: Store unresolved refs in a stack (#4162) (lucab)
+- fca9706 semantic: Faster search for leading comments (#4140) (Boshen)
+
+### Refactor
+
+- 03ad1e3 semantic: Tweak comment argument type (#4157) (lucab)
+
+## [0.18.0] - 2024-07-09
+
+### Features
+
+- 2f53bdf semantic: Check for abstract ClassElements in non-abstract classes (#4127) (DonIsaac)
+- c4ee9f8 semantic: Check for abstract initializations and implementations (#4125) (Don Isaac)
+
+## [0.17.2] - 2024-07-08
+
+### Features
+
+- e386b62 semantic: Check for invalid type import assignments (#4097) (DonIsaac)
+
+### Bug Fixes
+
+- 0f02608 semantic: Bind `TSImportEqualsDeclaration`s (#4100) (Don Isaac)
+
+### Performance
+
+- 9114c8e semantic: Keep a single map of unresolved references (#4107) (Luca Bruno)
+
+## [0.17.0] - 2024-07-05
+
+- 1df6ac0 ast: [**BREAKING**] Rename `visit_enum_memeber` to `visit_ts_enum_member`. (#4000) (rzvxa)
+
+- 4a0eaa0 ast: [**BREAKING**] Rename `visit_enum` to `visit_ts_enum_declaration`. (#3998) (rzvxa)
+
+- c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
+
+### Refactor
+
+
+## [0.16.3] - 2024-07-02
+
+### Bug Fixes
+
+- d995f94 semantic: Resolve reference incorrectly when a parameter references a parameter that hasn't been defined yet (#4004) (Dunqing)
+
+## [0.16.2] - 2024-06-30
+
+### Performance
+
+- b234ddd semantic: Only check for jsdoc if jsdoc building is enabled (Boshen)
+- 1eac3d2 semantic: Use `Atom<'a>` for `Reference`s (#3972) (Don Isaac)
+
+## [0.16.1] - 2024-06-29
+
+### Features
+
+- f64ad4b semantic: Make jsdoc building optional (turned off by default) (#3955) (Boshen)
+
+### Refactor
+
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+- 15ec254 semantic: Remove the unused `Semantic::build2` function (Boshen)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

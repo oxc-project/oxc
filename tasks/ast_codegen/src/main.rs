@@ -1,10 +1,12 @@
 // TODO: remove me please!
 #![allow(dead_code, unused_imports)]
 mod defs;
+mod fmt;
 mod generators;
 mod linker;
-mod pprint;
+mod markers;
 mod schema;
+mod util;
 
 use std::{
     borrow::Cow,
@@ -16,15 +18,17 @@ use std::{
     rc::Rc,
 };
 
+use bpaf::{Bpaf, Parser};
+use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
-use pprint::pprint;
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
-use generators::{AstGenerator, AstKindGenerator};
+use generators::{AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator};
 use linker::{linker, Linker};
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
+use util::{write_all_to, NormalizeError};
 
 use crate::generators::ImplGetSpanGenerator;
 
@@ -46,37 +50,50 @@ trait Generator {
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput;
 }
 
+type GeneratedStream = (&'static str, TokenStream);
+
 #[derive(Debug, Clone)]
 enum GeneratorOutput {
     None,
-    One(TokenStream),
-    Many(HashMap<String, TokenStream>),
     Info(String),
+    Stream(GeneratedStream),
 }
 
 impl GeneratorOutput {
-    pub fn as_none(&self) {
-        assert!(matches!(self, Self::None));
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
     }
 
-    pub fn as_one(&self) -> &TokenStream {
-        if let Self::One(it) = self {
-            it
-        } else {
-            panic!();
-        }
+    pub fn expect_none(&self) {
+        assert!(self.is_none());
     }
 
-    pub fn as_many(&self) -> &HashMap<String, TokenStream> {
-        if let Self::Many(it) = self {
-            it
-        } else {
-            panic!();
-        }
-    }
-
-    pub fn as_info(&self) -> &String {
+    pub fn to_info(&self) -> &String {
         if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn to_stream(&self) -> &GeneratedStream {
+        if let Self::Stream(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_info(self) -> String {
+        if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_stream(self) -> GeneratedStream {
+        if let Self::Stream(it) = self {
             it
         } else {
             panic!();
@@ -178,83 +195,65 @@ fn files() -> impl std::iter::Iterator<Item = String> {
     vec![path("literal"), path("js"), path("ts"), path("jsx")].into_iter()
 }
 
-fn output_dir() -> Result<String> {
+fn output_dir() -> std::io::Result<String> {
     let dir = format!("{AST_ROOT_DIR}/src/generated");
-    fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    fs::create_dir_all(&dir)?;
     Ok(dir)
+}
+
+fn write_generated_streams(
+    streams: impl IntoIterator<Item = GeneratedStream>,
+) -> std::io::Result<()> {
+    let output_dir = output_dir()?;
+    for (name, stream) in streams {
+        let content = pprint(&stream);
+        let path = format!("{output_dir}/{name}.rs");
+        write_all_to(content.as_bytes(), path)?;
+    }
+    Ok(())
+}
+
+#[derive(Debug, Bpaf)]
+pub struct CliOptions {
+    /// Runs all generators but won't write anything down.
+    #[bpaf(switch)]
+    dry_run: bool,
+    /// Don't run cargo fmt at the end
+    #[bpaf(switch)]
+    no_fmt: bool,
+    /// Path of output `schema.json`.
+    schema: Option<std::path::PathBuf>,
 }
 
 #[allow(clippy::print_stdout)]
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
-    let CodegenResult { outputs, .. } = files()
+    let cli_options = cli_options().run();
+
+    let CodegenResult { outputs, schema } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
-        .with(AstGenerator)
         .with(AstKindGenerator)
+        .with(AstBuilderGenerator)
         .with(ImplGetSpanGenerator)
+        .with(VisitGenerator)
+        .with(VisitMutGenerator)
         .generate()?;
 
-    let output_dir = output_dir()?;
-    let outputs: HashMap<_, _> = outputs.into_iter().collect();
+    let (streams, _): (Vec<_>, Vec<_>) =
+        outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Stream(_)));
 
-    {
-        // write `span.rs` file
-        let output = outputs[ImplGetSpanGenerator.name()].as_one();
-        let span_content = pprint(output);
-
-        let path = format!("{output_dir}/span.rs");
-        let mut file = fs::File::create(path)?;
-
-        file.write_all(span_content.as_bytes())?;
+    if !cli_options.dry_run {
+        write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?;
     }
 
-    {
-        // write `ast_kind.rs` file
-        let output = outputs[AstKindGenerator.name()].as_one();
-        let span_content = pprint(output);
-
-        let path = format!("{output_dir}/ast_kind.rs");
-        let mut file = fs::File::create(path)?;
-
-        file.write_all(span_content.as_bytes())?;
+    if !cli_options.no_fmt {
+        cargo_fmt();
     }
 
-    // NOTE: Print AstKind
-    // println!(
-    //     "{}",
-    //     outputs
-    //         .into_iter()
-    //         .find(|it| it.0 == AstKindGenerator.name())
-    //         .map(|(_, output)| {
-    //             let GeneratorOutput::One(result) = output else { unreachable!() };
-    //             prettyplease::unparse(&parse_file(result.to_string().as_str()).unwrap())
-    //         })
-    //         .unwrap()
-    // );
+    if let CliOptions { schema: Some(schema_path), dry_run: false, .. } = cli_options {
+        let path = schema_path.to_str().expect("invalid path for schema output.");
+        let schema = serde_json::to_string_pretty(&schema).normalize()?;
+        write_all_to(schema.as_bytes(), path)?;
+    }
 
-    // NOTE: Print AST
-    // println!(
-    //     "{}",
-    //     outputs
-    //         .into_iter()
-    //         .find(|it| it.0 == AstGenerator.name())
-    //         .map(|(_, output)| {
-    //             let GeneratorOutput::Many(results) = output else { unreachable!() };
-    //
-    //             results
-    //                 .into_iter()
-    //                 .map(|(k, v)| {
-    //                     format!(
-    //                         "file \"{}\":\n{}",
-    //                         k,
-    //                         prettyplease::unparse(&parse_file(v.to_string().as_str()).unwrap())
-    //                     )
-    //                 })
-    //                 .join("\n //-nextfile")
-    //         })
-    //         .unwrap()
-    // );
-
-    // let schema = serde_json::to_string_pretty(&schema).map_err(|e| e.to_string())?;
-    // println!("{schema}");
     Ok(())
 }

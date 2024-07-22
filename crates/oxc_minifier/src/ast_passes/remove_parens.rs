@@ -26,11 +26,11 @@ impl<'a> RemoveParens<'a> {
 impl<'a> VisitMut<'a> for RemoveParens<'a> {
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        walk_mut::walk_statements_mut(self, stmts);
+        walk_mut::walk_statements(self, stmts);
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.strip_parenthesized_expression(expr);
-        walk_mut::walk_expression_mut(self, expr);
+        walk_mut::walk_expression(self, expr);
     }
 }

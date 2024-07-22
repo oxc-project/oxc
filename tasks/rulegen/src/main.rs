@@ -55,6 +55,9 @@ const NODE_TEST_PATH: &str =
 const TREE_SHAKING_PATH: &str =
     "https://raw.githubusercontent.com/lukastaegert/eslint-plugin-tree-shaking/master/src/rules";
 
+const PROMISE_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/__tests__";
+
 struct TestCase {
     source_text: String,
     code: Option<String>,
@@ -129,8 +132,13 @@ impl TestCase {
     fn output(&self) -> Option<String> {
         let code = format_code_snippet(self.code.as_ref()?);
         let output = format_code_snippet(self.output.as_ref()?);
+        let config = self.config.as_ref().map_or_else(
+            || "None".to_string(),
+            |config| format!("Some(serde_json::json!({config}))"),
+        );
+
         // ("null==null", "null === null", None),
-        Some(format!(r#"({code}, {output}, None)"#))
+        Some(format!(r#"({code}, {output}, {config})"#))
     }
 }
 
@@ -565,6 +573,7 @@ pub enum RuleKind {
     JSDoc,
     Node,
     TreeShaking,
+    Promise,
 }
 
 impl RuleKind {
@@ -581,6 +590,7 @@ impl RuleKind {
             "jsdoc" => Self::JSDoc,
             "n" => Self::Node,
             "tree-shaking" => Self::TreeShaking,
+            "promise" => Self::Promise,
             _ => Self::ESLint,
         }
     }
@@ -601,6 +611,7 @@ impl Display for RuleKind {
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
             Self::Node => write!(f, "eslint-plugin-n"),
             Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
+            Self::Promise => write!(f, "eslint-plugin-promise"),
         }
     }
 }
@@ -627,6 +638,7 @@ fn main() {
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
+        RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::Oxc => String::new(),
     };
 

@@ -11,13 +11,11 @@ use crate::{
 };
 
 fn unexpected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(prefer-es6-class): Components should use createClass instead of ES6 class.")
-        .with_label(span0)
+    OxcDiagnostic::warn("Components should use createClass instead of ES6 class.").with_label(span0)
 }
 
 fn expected_es6_class_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(prefer-es6-class): Components should use es6 class instead of createClass.")
-        .with_label(span0)
+    OxcDiagnostic::warn("Components should use es6 class instead of createClass.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -75,6 +73,10 @@ impl Rule for PreferEs6Class {
                 class_expr.id.as_ref().map_or(class_expr.span, |id| id.span),
             ));
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

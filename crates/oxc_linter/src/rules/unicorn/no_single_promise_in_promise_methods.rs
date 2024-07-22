@@ -4,14 +4,17 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNodeId;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-fn no_single_promise_in_promise_methods_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.{x1}()` is unnecessary."))
-        .with_help("Either use the value directly, or switch to `Promise.resolve(…)`.")
-        .with_label(span0)
+fn no_single_promise_in_promise_methods_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Wrapping single-element array with `Promise.{method_name}()` is unnecessary."
+    ))
+    .with_help("Either use the value directly, or switch to `Promise.resolve(…)`.")
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -62,7 +65,7 @@ impl Rule for NoSinglePromiseInPromiseMethods {
         let Some(first_argument) = call_expr.arguments[0].as_expression() else {
             return;
         };
-        let first_argument = first_argument.without_parenthesized();
+        let first_argument = first_argument.get_inner_expression();
         let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
             return;
         };
@@ -84,32 +87,68 @@ impl Rule for NoSinglePromiseInPromiseMethods {
             .expect("callee is a static property");
 
         let diagnostic = no_single_promise_in_promise_methods_diagnostic(info.0, info.1);
-        ctx.diagnostic_with_fix(diagnostic, |fixer| {
-            let elem_text = fixer.source_range(first.span());
+        if is_fixable(node.id(), ctx) {
+            ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                let elem_text = fixer.source_range(first.span());
 
-            let is_directly_in_await = ctx
-                .semantic()
-                .nodes()
-                // get first non-parenthesis parent node
-                .iter_parents(node.id())
-                .skip(1) // first node is the call expr
-                .find(|parent| !matches!(parent.kind(), AstKind::ParenthesizedExpression(_)))
-                // check if it's an `await ...` expression
-                .is_some_and(|parent| matches!(parent.kind(), AstKind::AwaitExpression(_)));
+                let is_directly_in_await = ctx
+                    .semantic()
+                    .nodes()
+                    // get first non-parenthesis parent node
+                    .iter_parents(node.id())
+                    .skip(1) // first node is the call expr
+                    .find(|parent| !is_ignorable_kind(&parent.kind()))
+                    // check if it's an `await ...` expression
+                    .is_some_and(|parent| matches!(parent.kind(), AstKind::AwaitExpression(_)));
 
-            let call_span = call_expr.span;
+                let call_span = call_expr.span;
 
-            if is_directly_in_await {
-                fixer.replace(call_span, elem_text)
-            } else {
-                fixer.replace(call_span, format!("Promise.resolve({elem_text})"))
-            }
-        });
+                if is_directly_in_await {
+                    fixer.replace(call_span, elem_text)
+                } else {
+                    fixer.replace(call_span, format!("Promise.resolve({elem_text})"))
+                }
+            });
+        } else {
+            ctx.diagnostic(diagnostic);
+        }
     }
 }
 
 fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
     is_method_call(call_expr, Some(&["Promise"]), Some(&["all", "any", "race"]), Some(1), Some(1))
+}
+
+fn is_fixable(call_node_id: AstNodeId, ctx: &LintContext<'_>) -> bool {
+    for parent in ctx.semantic().nodes().iter_parents(call_node_id).skip(1) {
+        match parent.kind() {
+            AstKind::CallExpression(_)
+            | AstKind::VariableDeclarator(_)
+            | AstKind::AssignmentExpression(_)
+            | AstKind::ReturnStatement(_) => return false,
+            AstKind::AwaitExpression(_) => continue,
+            kind if is_ignorable_kind(&kind) => continue,
+            _ => return true,
+        }
+    }
+    true
+}
+
+/// We want to skip:
+///
+/// - parenthesis
+/// - TS type modification expressions (as const, satisfies, non-null
+///   assertions, etc)
+fn is_ignorable_kind(kind: &AstKind<'_>) -> bool {
+    matches!(
+        kind,
+        AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSInstantiationExpression(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSTypeAssertion(_)
+    )
 }
 
 #[test]
@@ -135,6 +174,8 @@ fn test() {
     ];
 
     let fail = vec![
+        "await Promise.all([x])",
+        "await Promise['all']([x])",
         "await Promise.all([(0, promise)])",
         "async function * foo() {await Promise.all([yield promise])}",
         "async function * foo() {await Promise.all([yield* promise])}",
@@ -195,12 +236,25 @@ fn test() {
         "Promise.all([promise])[0] ||= 1",
         "Promise.all([undefined]).then()",
         "Promise.all([null]).then()",
+        "Promise.all([x] as const).then()",
+        "Promise.all([x] satisfies any[]).then()",
+        "Promise.all([x as const]).then()",
+        "Promise.all([x!]).then()",
     ];
 
     let fix = vec![
         ("Promise.all([null]).then()", "Promise.resolve(null).then()", None),
-        ("let x = await Promise.all([foo()])", "let x = await foo()", None),
-        ("let x = await (Promise.all([foo()]))", "let x = await (foo())", None),
+        ("await Promise.all([x]);", "await x;", None),
+        ("await Promise.all([x as Promise<number>]);", "await x as Promise<number>;", None),
+        ("while(true) { await Promise.all([x]); }", "while(true) { await x; }", None),
+        ("const foo = await Promise.all([x])", "const foo = await Promise.all([x])", None),
+        ("const [foo] = await Promise.all([x])", "const [foo] = await Promise.all([x])", None),
+        ("let foo; foo = await Promise.all([x])", "let foo; foo = await Promise.all([x])", None),
+        (
+            "function foo () { return Promise.all([x]); }",
+            "function foo () { return Promise.all([x]); }",
+            None,
+        ),
     ];
 
     Tester::new(NoSinglePromiseInPromiseMethods::NAME, pass, fail)

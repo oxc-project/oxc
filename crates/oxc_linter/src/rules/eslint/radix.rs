@@ -9,22 +9,20 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn missing_parameters(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(radix): Missing parameters.").with_label(span0)
+    OxcDiagnostic::warn("Missing parameters.").with_label(span0)
 }
 
 fn missing_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(radix): Missing radix parameter.").with_label(span0)
+    OxcDiagnostic::warn("Missing radix parameter.").with_label(span0)
 }
 
 fn redundant_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(radix): Redundant radix parameter.").with_label(span0)
+    OxcDiagnostic::warn("Redundant radix parameter.").with_label(span0)
 }
 
 fn invalid_radix(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(radix): Invalid radix parameter, must be an integer between 2 and 36.",
-    )
-    .with_label(span0)
+    OxcDiagnostic::warn("Invalid radix parameter, must be an integer between 2 and 36.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -82,6 +80,17 @@ impl Rule for Radix {
                             && ctx.symbols().get_symbol_id_from_name("Number").is_none()
                         {
                             Self::check_arguments(self, call_expr, ctx);
+                        }
+                    } else if let Expression::ParenthesizedExpression(paren_expr) =
+                        &member_expr.object
+                    {
+                        if let Expression::Identifier(ident) = &paren_expr.expression {
+                            if ident.name == "Number"
+                                && member_expr.property.name == "parseInt"
+                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
+                            {
+                                Self::check_arguments(self, call_expr, ctx);
+                            }
                         }
                     }
                 }
@@ -192,6 +201,7 @@ fn test() {
         ("var Number; Number.parseInt(foo, 10);", Some(json!(["as-needed"]))),
         // ("/* globals parseInt:off */ parseInt(foo);", Some(json!(["always"]))),
         // ("Number.parseInt(foo, 10);", Some(json!(["as-needed"]))), // { globals: { Number: "off" } }
+        (r#"function *f(){ yield(Number).parseInt("10", foo) }"#, None), // { "ecmaVersion": 6 },
     ];
 
     let fail = vec![
@@ -220,6 +230,7 @@ fn test() {
         (r#"Number.parseInt?.("10");"#, None),
         (r#"Number?.parseInt("10");"#, None),
         (r#"(Number?.parseInt)("10");"#, None),
+        ("function *f(){ yield(Number).parseInt() }", None), // { "ecmaVersion": 6 },
     ];
 
     Tester::new(Radix::NAME, pass, fail).test_and_snapshot();

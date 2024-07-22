@@ -15,7 +15,7 @@ use crate::{
 };
 
 fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(autocomplete-valid): `{autocomplete}` is not a valid value for autocomplete."))
+    OxcDiagnostic::warn(format!("`{autocomplete}` is not a valid value for autocomplete."))
         .with_help(format!("Change `{autocomplete}` to a valid value for autocomplete."))
         .with_label(span)
 }

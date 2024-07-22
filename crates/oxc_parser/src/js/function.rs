@@ -5,12 +5,11 @@ use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
 use oxc_span::Span;
 
-use super::{list::FormalParameterList, FunctionKind};
+use super::FunctionKind;
 use crate::{
     diagnostics,
     lexer::Kind,
-    list::SeparatedList,
-    modifiers::{ModifierKind, Modifiers},
+    modifiers::{ModifierFlags, ModifierKind, Modifiers},
     Context, ParserImpl, StatementContext,
 };
 
@@ -41,7 +40,7 @@ impl<'a> ParserImpl<'a> {
         })?;
 
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.function_body(self.end_span(span), directives, statements))
+        Ok(self.ast.alloc_function_body(self.end_span(span), directives, statements))
     }
 
     pub(crate) fn parse_formal_parameters(
@@ -49,11 +48,68 @@ impl<'a> ParserImpl<'a> {
         params_kind: FormalParameterKind,
     ) -> Result<(Option<TSThisParameter<'a>>, Box<'a, FormalParameters<'a>>)> {
         let span = self.start_span();
-        let list: FormalParameterList<'_> = FormalParameterList::parse(self)?;
+        self.expect(Kind::LParen)?;
+        let this_param = if self.ts_enabled() && self.at(Kind::This) {
+            let param = self.parse_ts_this_parameter()?;
+            if !self.at(Kind::RParen) {
+                self.expect(Kind::Comma)?;
+            }
+            Some(param)
+        } else {
+            None
+        };
+        let (list, rest) = self.parse_delimited_list_with_rest(
+            Kind::RParen,
+            Self::parse_formal_parameter,
+            Self::parse_rest_parameter,
+        )?;
+        self.expect(Kind::RParen)?;
         let formal_parameters =
-            self.ast.formal_parameters(self.end_span(span), params_kind, list.elements, list.rest);
-        let this_param = list.this_param;
+            self.ast.alloc_formal_parameters(self.end_span(span), params_kind, list, rest);
         Ok((this_param, formal_parameters))
+    }
+
+    fn parse_parameter_modifiers(&mut self) -> Modifiers<'a> {
+        let modifiers = self.parse_class_element_modifiers(true);
+        self.verify_modifiers(
+            &modifiers,
+            ModifierFlags::ACCESSIBILITY
+                .union(ModifierFlags::READONLY)
+                .union(ModifierFlags::OVERRIDE),
+            diagnostics::cannot_appear_on_a_parameter,
+        );
+        modifiers
+    }
+
+    fn parse_formal_parameter(&mut self) -> Result<FormalParameter<'a>> {
+        let span = self.start_span();
+        self.eat_decorators()?;
+        let modifiers = self.parse_parameter_modifiers();
+        let pattern = self.parse_binding_pattern_with_initializer()?;
+        let decorators = self.consume_decorators();
+        Ok(self.ast.formal_parameter(
+            self.end_span(span),
+            decorators,
+            pattern,
+            modifiers.accessibility(),
+            modifiers.contains_readonly(),
+            modifiers.contains_override(),
+        ))
+    }
+
+    fn parse_rest_parameter(&mut self) -> Result<BindingRestElement<'a>> {
+        let element = self.parse_rest_element()?;
+        if self.at(Kind::Comma) {
+            if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {
+                let span = self.cur_token().span();
+                self.bump_any();
+                self.error(diagnostics::binding_rest_element_trailing_comma(span));
+            }
+            if !self.ctx.has_ambient() {
+                self.error(diagnostics::rest_parameter_last(element.span));
+            }
+        }
+        Ok(element)
     }
 
     pub(crate) fn parse_function(
@@ -109,27 +165,24 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
-        for modifier in modifiers.iter() {
-            if !matches!(modifier.kind, ModifierKind::Declare | ModifierKind::Async) {
-                self.error(diagnostics::modifier_cannot_be_used_here(
-                    modifier.span,
-                    modifier.kind.as_str(),
-                ));
-            }
-        }
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE | ModifierFlags::ASYNC,
+            diagnostics::modifier_cannot_be_used_here,
+        );
 
-        Ok(self.ast.function(
+        Ok(self.ast.alloc_function(
             function_type,
             self.end_span(span),
             id,
             generator,
             r#async,
-            modifiers.is_contains_declare(),
+            modifiers.contains_declare(),
+            type_parameters,
             this_param,
             params,
-            body,
-            type_parameters,
             return_type,
+            body,
         ))
     }
 
@@ -154,7 +207,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.function_declaration(decl))
+        Ok(Statement::FunctionDeclaration(decl))
     }
 
     /// Parse function implementation in Javascript, cursor
@@ -200,7 +253,7 @@ impl<'a> ParserImpl<'a> {
         let function =
             self.parse_function(span, id, r#async, generator, func_kind, &Modifiers::empty())?;
 
-        Ok(self.ast.function_expression(function))
+        Ok(self.ast.expression_from_function(function))
     }
 
     /// Section 15.4 Method Definitions
@@ -262,7 +315,7 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.yield_expression(self.end_span(span), delegate, argument))
+        Ok(self.ast.expression_yield(self.end_span(span), delegate, argument))
     }
 
     // id: None - for AnonymousDefaultExportedFunctionDeclaration

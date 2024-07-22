@@ -1,17 +1,21 @@
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext, globals::VALID_ARIA_PROPS, rule::Rule, utils::get_jsx_attribute_name,
     AstNode,
 };
 
-fn aria_props_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(aria-props): Invalid ARIA prop.")
-        .with_help(format!("`{x1}` is an invalid ARIA attribute."))
-        .with_label(span0)
+fn aria_props_diagnostic(span: Span, prop_name: &str, suggestion: Option<&str>) -> OxcDiagnostic {
+    let mut err = OxcDiagnostic::warn(format!("'{prop_name}' is not a valid ARIA attribute."));
+
+    if let Some(suggestion) = suggestion {
+        err = err.with_help(format!("Did you mean '{suggestion}'?"));
+    }
+
+    err.with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -26,6 +30,8 @@ declare_oxc_lint!(
     /// It may cause the accessibility features of the website to fail, making it difficult
     /// for users with disabilities to use the site effectively.
     ///
+    /// This rule includes fixes for some common typos.
+    ///
     /// ### Example
     /// ```javascript
     /// // Bad
@@ -37,16 +43,34 @@ declare_oxc_lint!(
     AriaProps,
     correctness
 );
+
 impl Rule for AriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = node.kind() {
             let name = get_jsx_attribute_name(&attr.name).to_lowercase();
             if name.starts_with("aria-") && !VALID_ARIA_PROPS.contains(&name) {
-                ctx.diagnostic(aria_props_diagnostic(attr.span, &name));
+                let suggestion = COMMON_TYPOS.get(&name).copied();
+                let diagnostic = aria_props_diagnostic(attr.span, &name, suggestion);
+
+                if let Some(suggestion) = suggestion {
+                    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+                        fixer.replace(attr.name.span(), suggestion)
+                    });
+                } else {
+                    ctx.diagnostic(diagnostic);
+                }
             }
         }
     }
 }
+
+const COMMON_TYPOS: phf::Map<&'static str, &'static str> = phf::phf_map! {
+    "aria-labeledby" => "aria-labelledby",
+    "aria-role" => "role",
+    "aria-sorted" => "aria-sort",
+    "aria-lable" => "aria-label",
+    "aria-value" => "aria-valuenow",
+};
 
 #[test]
 fn test() {
@@ -68,6 +92,8 @@ fn test() {
         r#"<div aria-labeledby="foobar" />"#,
         r#"<div aria-skldjfaria-klajsd="foobar" />"#,
     ];
+    let fix =
+        vec![(r#"<div aria-labeledby="foobar" />"#, r#"<div aria-labelledby="foobar" />"#, None)];
 
-    Tester::new(AriaProps::NAME, pass, fail).test_and_snapshot();
+    Tester::new(AriaProps::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

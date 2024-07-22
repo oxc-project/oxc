@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn jsx_no_undef_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-undef): Disallow undeclared variables in JSX")
+    OxcDiagnostic::warn("Disallow undeclared variables in JSX")
         .with_help(format!("'{x0}' is not defined."))
         .with_label(span1)
 }
@@ -72,6 +72,10 @@ impl Rule for JsxNoUndef {
             }
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[test]
@@ -112,6 +116,16 @@ fn test() {
         ),
         ("var App; var React; enum A { App };  React.render(<App />);", None),
         ("var React; enum A { App }; var App; React.render(<App />);", None),
+        ("var React; import App = require('./app'); React.render(<App />);", None),
+        (
+            "
+        var React;
+        import { Foo } from './foo';
+        import App = Foo.App;
+        React.render(<App />);
+        ",
+            None,
+        ),
     ];
 
     let fail = vec![

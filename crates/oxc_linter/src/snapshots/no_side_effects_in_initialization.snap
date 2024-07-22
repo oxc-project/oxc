@@ -541,18 +541,6 @@ source: crates/oxc_linter/src/tester.rs
    ·            ─
    ╰────
 
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter
-   ╭─[no_side_effects_in_initialization.tsx:1:12]
- 1 │ function x(a){a(); a(); a()}; x(ext)
-   ·            ─
-   ╰────
-
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter
-   ╭─[no_side_effects_in_initialization.tsx:1:12]
- 1 │ function x(a){a(); a(); a()}; x(ext)
-   ·            ─
-   ╰────
-
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter
    ╭─[no_side_effects_in_initialization.tsx:1:12]
  1 │ function x(a){a.y = 1}; x(ext)
@@ -580,30 +568,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:14]
  1 │ function x(){ext = 1}; x(); x(); x()
-   ·              ───
-   ╰────
-
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
-   ╭─[no_side_effects_in_initialization.tsx:1:14]
- 1 │ function x(){ext = 1}; x(); x(); x()
-   ·              ───
-   ╰────
-
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
-   ╭─[no_side_effects_in_initialization.tsx:1:14]
- 1 │ function x(){ext = 1}; x(); x(); x()
-   ·              ───
-   ╰────
-
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
-   ╭─[no_side_effects_in_initialization.tsx:1:14]
- 1 │ function x(){ext = 1}; const y = new x(); y = new x(); y = new x()
-   ·              ───
-   ╰────
-
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
-   ╭─[no_side_effects_in_initialization.tsx:1:14]
- 1 │ function x(){ext = 1}; const y = new x(); y = new x(); y = new x()
    ·              ───
    ╰────
 
@@ -700,18 +664,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `ext`
    ╭─[no_side_effects_in_initialization.tsx:1:16]
  1 │ const x = ()=>{ext()}; x()
-   ·                ───
-   ╰────
-
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
-   ╭─[no_side_effects_in_initialization.tsx:1:16]
- 1 │ const x = ()=>{ext = 1}; x(); x(); x()
-   ·                ───
-   ╰────
-
-  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `ext`
-   ╭─[no_side_effects_in_initialization.tsx:1:16]
- 1 │ const x = ()=>{ext = 1}; x(); x(); x()
    ·                ───
    ╰────
 
@@ -1301,6 +1253,14 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[no_side_effects_in_initialization.tsx:1:21]
  1 │ function* x(){yield ext()}; x()
    ·                     ───
+   ╰────
+
+  ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function
+   ╭─[no_side_effects_in_initialization.tsx:6:13]
+ 5 │           } catch(e) {
+ 6 │             a.map(v => v + 1);
+   ·             ─────
+ 7 │           }
    ╰────
 
   ⚠ eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling member function

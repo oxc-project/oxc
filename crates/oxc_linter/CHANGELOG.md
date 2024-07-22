@@ -4,6 +4,122 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.6.1] - 2024-07-17
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- 1f8968a linter: Add eslint-plugin-promise rules: avoid-new, no-new-statics, params-names (#4293) (Jelle van der Waa)
+- a4dc56c linter: Add fixer for unicorn/no_useless_promise_resolve_reject (#4244) (Burlin)
+- 6fb808f linter: Add typescript-eslint/no-confusing-non-null-assertion (#4224) (Jaden Rodriguez)
+- 126b66c linter: Support eslint-plugin-vitest/valid-describe-callback (#4185) (cinchen)
+- 05b9a73 linter: Support eslint-plugin-vitest/valid-expect (#4183) (cinchen)
+- 3e56b2b linter: Support eslint-plugin-vitest/no-test-prefixes (#4182) (cinchen)
+- 3016f03 linter: Let fixer functions return a `None` fix (#4210) (DonIsaac)
+- bbe6137 linter: Implement unicorn/no-useless-undefined (#4079) (Burlin)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+
+### Bug Fixes
+
+- 9df60da linter: Correct find first non whitespace logic in @typescript-eslint/consistent-type-imports (#4198) (mysteryven)
+- 67240dc linter: Not ignore adjacent spans when fixing (#4217) (mysteryven)
+- dd07a54 linter: Global variables should always check the builtin variables (#4209) (Jelle van der Waa)
+- 351ecf2 semantic: Incorrect resolve references for `TSTypeQuery` (#4310) (Dunqing)
+- 1108f2a semantic: Resolve references to the incorrect symbol (#4280) (Dunqing)
+
+### Performance
+
+- 0fdc88b linter: Optimize no-dupe-keys (#4292) (lucab)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- aa22073 codegen: Improve print API (#4196) (Boshen)
+- b5a8f3c linter: Use get_first_parameter_name from unicorn utils (#4255) (Jelle van der Waa)
+- 7089a3d linter: Split up fixer code into separate files (#4222) (DonIsaac)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+- 7f1addd semantic: Correct scope in CatchClause (#4192) (Dunqing)
+
+## [0.6.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Features
+
+- fb549e1 linter: Add vitest/no-focused-tests rule (#4178) (mysteryven)
+- 6c49007 linter: Add fixer for @typescript-eslint/consistent-type-imports (#3984) (mysteryven)
+- 278c3e9 linter: Add fixer for jsx-a11y/aria-props (#4176) (DonIsaac)
+- 2188144 linter: Eslint-plugin-jest/prefer-hooks-in-order (#4052) (cinchen)
+- cc58614 linter: Better schemas for allow/warn/deny (#4150) (DonIsaac)
+- c5b4be0 linter: Add fixer for prefer-node-protocol (#4129) (DonIsaac)
+- 7ec0c0b linter/eslint: Implement no-label-var (#4087) (Jelle van der Waa)
+
+### Bug Fixes
+
+- ed4c54c eslint/radix: Detect yield Number.parseInt variant (#4110) (Jelle van der Waa)
+- e9ad03b linter: Fixer for no-debugger creates incorrect code (#4184) (DonIsaac)
+- bd69571 linter: Fix top level return panic in eslint/array_callback_return (#4167) (Boshen)
+- c8f5664 linter: Fix panic with unicode in unicorn/prefer_dom_node_dataset (#4166) (Boshen)
+- f2b3273 linter: Fix fixer panic in typescript/consistent_indexed_object_style (#4165) (Boshen)
+- 2334515 linter: Panic in `get_enclosing_function` (#4121) (DonIsaac)
+- 1b91d40 linter: Incorrect fixer for `no-unused-labels` (#4123) (Don Isaac)
+- 1729249 linter: Incorrect fix in `no-single-promise-in-promise-methods` rule; (#4094) (DonIsaac)
+- cc7e893 linter/tree-shaking: Avoid recursive function stackoverflow (#4191) (mysteryven)
+- 28eeee0 parser: Fix asi error diagnostic pointing at invalid text causing crash (#4163) (Boshen)
+- 0f02608 semantic: Bind `TSImportEqualsDeclaration`s (#4100) (Don Isaac)
+
+### Performance
+
+- ddfa343 diagnostic: Use `Cow<'static, str>` over `String` (#4175) (DonIsaac)
+
+### Refactor
+
+- 2687ebc react: Use find_binding helper for finding React binding (#4108) (Jelle van der Waa)
+
+## [0.5.3] - 2024-07-07
+
+### Features
+
+- 1681b11 linter: Eslint-plugin-jest/consistent-test-it (#4053) (cinchen)
+- 6876490 linter: Add rule no-undefined (#4041) (jordan boyer)
+- bf04dee linter: Implement unicorn/no-negation-in-equality-check (#4034) (Nissim Chekroun)
+- aa45604 linter/eslint: Implement no-multi-str (#4038) (Jelle van der Waa)
+
+### Bug Fixes
+
+- 7b2dc3b linter: Fix panic in import/namespace (#4080) (Boshen)
+
+## [0.5.2] - 2024-07-02
+
+### Features
+
+- b257d53 linter: Support report `@typescript-eslint/consistent-type-imports` (#3895) (mysteryven)
+- 2114475 linter: Implement @typescript-eslint/no-dynamic-delete (#3971) (kaykdm)
+- 10a3c9a linter/eslint-plugin-react: Implement no-set-state (#3975) (Jelle van der Waa)
+
+### Bug Fixes
+
+- 432d6d9 linter: Find disabled directives using the message's `Span`. (#4010) (rzvxa)
+- dbbb6fc linter: Global variable check should always check builtin variables (#3973) (Boshen)
+
+
+## [0.5.1] - 2024-06-29
+
+### Features
+
+- f64ad4b semantic: Make jsdoc building optional (turned off by default) (#3955) (Boshen)
+
+### Bug Fixes
+
+- c26975a linter: Only show the filename for max-lines (#3966) (Boshen)
+- 94329e4 linter: Handle useful but empty constructors in no-useless-constructor (#3951) (DonIsaac)
+- 6498a08 linter: No-useless-spread fixer with multiple spread elements (#3950) (DonIsaac)
+
+### Refactor
+
+- 1cca2a8 eslint: Convert with_labels to with_label where applicable (#3946) (Jelle van der Waa)
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+
 ## [0.5.0] - 2024-06-27
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

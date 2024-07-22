@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_ast::{
     ast::{
         ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
@@ -6,7 +8,7 @@ use oxc_ast::{
     AstBuilder, Visit,
 };
 use oxc_span::{Atom, GetSpan, SPAN};
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{diagnostics::type_containing_private_name, IsolatedDeclarations};
 
@@ -63,7 +65,7 @@ impl<'a> FunctionReturnType<'a> {
         let Some(mut expr_type) = transformer.infer_type_from_expression(&expr) else {
             // Avoid report error in parent function
             return if expr.is_function() {
-                Some(transformer.ast.ts_unknown_keyword(SPAN))
+                Some(transformer.ast.ts_type_unknown_keyword(SPAN))
             } else {
                 None
             };
@@ -106,15 +108,15 @@ impl<'a> FunctionReturnType<'a> {
         if visitor.return_statement_count > 1 {
             let types = transformer
                 .ast
-                .new_vec_from_iter([expr_type, transformer.ast.ts_undefined_keyword(SPAN)]);
-            expr_type = transformer.ast.ts_union_type(SPAN, types);
+                .vec_from_iter([expr_type, transformer.ast.ts_type_undefined_keyword(SPAN)]);
+            expr_type = transformer.ast.ts_type_union_type(SPAN, types);
         }
         Some(expr_type)
     }
 }
 
 impl<'a> Visit<'a> for FunctionReturnType<'a> {
-    fn enter_scope(&mut self, _flags: ScopeFlags) {
+    fn enter_scope(&mut self, _flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.scope_depth += 1;
     }
 
@@ -134,11 +136,11 @@ impl<'a> Visit<'a> for FunctionReturnType<'a> {
         }
     }
 
-    fn visit_function(&mut self, _func: &Function<'a>, _flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {
         // We don't care about nested functions
     }
 
-    fn visit_arrow_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {
+    fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {
         // We don't care about nested functions
     }
 

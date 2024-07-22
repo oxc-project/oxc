@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_dom_node_text_content_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`.")
+    OxcDiagnostic::warn("Prefer `.textContent` over `.innerText`.")
         .with_help("Replace `.innerText` with `.textContent`.")
         .with_label(span0)
 }
@@ -123,5 +123,13 @@ fn test() {
         ("for (const [{innerText}] of elements);", None),
     ];
 
-    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).test_and_snapshot();
+    // TODO: implement a fixer for destructuring assignment cases
+    let fix = vec![
+        ("node.innerText;", "node.textContent;"),
+        ("node?.innerText;", "node?.textContent;"),
+        ("node.innerText = 'foo';", "node.textContent = 'foo';"),
+        ("innerText.innerText = 'foo';", "innerText.textContent = 'foo';"),
+    ];
+
+    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

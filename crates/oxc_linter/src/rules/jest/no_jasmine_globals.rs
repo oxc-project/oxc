@@ -11,9 +11,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_jasmine_globals_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-jest(no-jasmine-globals): {x0:?}"))
-        .with_help(format!("{x1:?}"))
-        .with_label(span2)
+    OxcDiagnostic::warn(format!("{x0:?}")).with_help(format!("{x1:?}")).with_label(span2)
 }
 
 /// <https://github.com/jest-community/eslint-plugin-jest/blob/main/docs/rules/no-jasmine-globals.md>
@@ -53,7 +51,7 @@ impl Rule for NoJasmineGlobals {
             .filter(|(key, _)| NON_JASMINE_PROPERTY_NAMES.contains(&key.as_str()));
 
         for (name, reference_ids) in jasmine_references {
-            for &reference_id in reference_ids {
+            for &(reference_id, _) in reference_ids {
                 let reference = symbol_table.get_reference(reference_id);
                 if let Some((error, help)) = get_non_jasmine_property_messages(name) {
                     ctx.diagnostic(no_jasmine_globals_diagnostic(error, help, reference.span()));

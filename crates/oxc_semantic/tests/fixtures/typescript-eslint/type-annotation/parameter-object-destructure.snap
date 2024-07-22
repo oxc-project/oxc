@@ -1,0 +1,58 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-annotation/parameter-object-destructure.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 2,
+        "node": "Function(foo)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "a",
+            "node": "FormalParameter",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 0,
+            "name": "T",
+            "node_id": 15
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 1,
+        "name": "foo",
+        "node": "Function(foo)",
+        "references": []
+      }
+    ]
+  }
+]

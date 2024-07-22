@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_unused_labels_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-unused-labels): Disallow unused labels")
+    OxcDiagnostic::warn("Disallow unused labels")
         .with_help(format!("'{x0}:' is defined but never used."))
         .with_label(span1)
 }
@@ -45,14 +45,13 @@ impl Rule for NoUnusedLabels {
         }
         for id in ctx.semantic().unused_labels() {
             let node = ctx.semantic().nodes().get_node(*id);
-            if let AstKind::LabeledStatement(stmt) = node.kind() {
-                // TODO: Ignore fix where comments exist between label and statement
-                // e.g. A: /* Comment */ function foo(){}
-                ctx.diagnostic_with_fix(
-                    no_unused_labels_diagnostic(stmt.label.name.as_str(), stmt.label.span),
-                    |fixer| fixer.delete_range(stmt.label.span),
-                );
-            }
+            let AstKind::LabeledStatement(stmt) = node.kind() else {
+                continue;
+            };
+            ctx.diagnostic_with_fix(
+                no_unused_labels_diagnostic(stmt.label.name.as_str(), stmt.label.span),
+                |fixer| fixer.replace_with(stmt, &stmt.body),
+            );
         }
     }
 }
@@ -85,6 +84,16 @@ fn test() {
         ("A: /* comment */ foo", None),
         ("A /* comment */: foo", None),
     ];
+    let fix = vec![
+        ("A: var foo = 0;", "var foo = 0;", None),
+        ("A: /* comment */ foo", "foo", None),
+        ("A /* comment */: foo", "foo", None),
+        (
+            "A: for (var i = 0; i < 10; ++i) { B: break A; }",
+            "A: for (var i = 0; i < 10; ++i) { break A; }",
+            None,
+        ),
+    ];
 
-    Tester::new(NoUnusedLabels::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnusedLabels::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

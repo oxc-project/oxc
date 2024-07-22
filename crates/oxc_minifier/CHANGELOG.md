@@ -4,6 +4,72 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- 5d17675 mangler: Add debug mode (#4314) (Boshen)
+- e3e663b mangler: Initialize crate and integrate into minifier (#4197) (Boshen)
+- c818472 minifier: Dce conditional expression `&&` or `||` (#4190) (Boshen)
+
+### Bug Fixes
+
+- e167ef7 codegen: Print parenthesis properly (#4245) (Boshen)
+- f144082 minifier: RemoveDeadCode should visit nested expression (#4268) (underfin)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+
+## [0.20.0] - 2024-07-11
+
+### Features
+
+- 54cd04a minifier: Implement dce with var hoisting (#4160) (Boshen)
+- 44a894a minifier: Implement return statement dce (#4155) (Boshen)
+
+## [0.19.0] - 2024-07-09
+
+- b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)
+
+### Refactor
+
+
+## [0.18.0] - 2024-07-09
+
+- d347aed ast: [**BREAKING**] Generate `ast_builder.rs`. (#3890) (rzvxa)
+
+### Features
+
+- c6c16a5 minifier: Dce all conditional expressions (#4135) (Boshen)
+
+## [0.17.1] - 2024-07-06
+
+### Bug Fixes
+
+- 719fb96 minifier: Omit dce `undefined` which can be a shadowed variable (#4073) (Boshen)
+
+## [0.17.0] - 2024-07-05
+
+### Features
+
+- 0da9dfb minifier: Add constant folding to remove dead code (#4058) (Boshen)
+
+### Bug Fixes
+
+- aaac2d8 codegen: Preserve parentheses from AST instead calculating from  operator precedence (#4055) (Boshen)
+
+### Refactor
+
+- edb557c minifier: Add a folder struct for constant folding (#4057) (Boshen)
+
+## [0.16.2] - 2024-06-30
+
+### Performance
+
+- 1eac3d2 semantic: Use `Atom<'a>` for `Reference`s (#3972) (Don Isaac)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

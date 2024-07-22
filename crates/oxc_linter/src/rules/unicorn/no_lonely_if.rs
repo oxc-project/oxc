@@ -6,9 +6,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_lonely_if_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-lonely-if): Unexpected `if` as the only statement in a `if` block without `else`.")
+    OxcDiagnostic::warn("Unexpected `if` as the only statement in a `if` block without `else`.")
         .with_help("Move the inner `if` test to the outer `if` test.")
-        .with_labels([span0.into(), span1.into()])
+        .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]

@@ -17,8 +17,9 @@ workspace = true
 doctest = false
 
 [[bin]]
-name = "oxc_coverage"
-test = false
+name    = "oxc_coverage"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_allocator             = { workspace = true }

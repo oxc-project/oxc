@@ -7,7 +7,7 @@ use super::{VariableDeclarationContext, VariableDeclarationParent};
 use crate::{
     diagnostics,
     lexer::Kind,
-    modifiers::{ModifierKind, Modifiers},
+    modifiers::{ModifierFlags, Modifiers},
     ParserImpl, StatementContext,
 };
 
@@ -22,7 +22,7 @@ impl<'a> ParserImpl<'a> {
         // let.a = 1, let()[a] = 1
         } else if matches!(peeked, Kind::Dot | Kind::LParen) {
             let expr = self.parse_expr()?;
-            Ok(self.ast.expression_statement(self.end_span(span), expr))
+            Ok(self.ast.statement_expression(self.end_span(span), expr))
         // single statement let declaration: while (0) let
         } else if (stmt_ctx.is_single_statement() && peeked != Kind::LBrack)
             || peeked == Kind::Semicolon
@@ -56,7 +56,7 @@ impl<'a> ParserImpl<'a> {
         };
         self.bump_any();
 
-        let mut declarations = self.ast.new_vec();
+        let mut declarations = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(decl_ctx, kind)?;
             declarations.push(declaration);
@@ -72,20 +72,17 @@ impl<'a> ParserImpl<'a> {
             self.asi()?;
         }
 
-        for modifier in modifiers.iter() {
-            if modifier.kind != ModifierKind::Declare {
-                self.error(diagnostics::modifier_cannot_be_used_here(
-                    modifier.span,
-                    modifier.kind.as_str(),
-                ));
-            }
-        }
+        self.verify_modifiers(
+            modifiers,
+            ModifierFlags::DECLARE,
+            diagnostics::modifier_cannot_be_used_here,
+        );
 
-        Ok(self.ast.variable_declaration(
+        Ok(self.ast.alloc_variable_declaration(
             self.end_span(start_span),
             kind,
             declarations,
-            modifiers.is_contains_declare(),
+            modifiers.contains_declare(),
         ))
     }
 
@@ -116,7 +113,7 @@ impl<'a> ParserImpl<'a> {
             }
             (self.ast.binding_pattern(binding_kind, type_annotation, optional), definite)
         } else {
-            (self.ast.binding_pattern(binding_kind, None, false), false)
+            (self.ast.binding_pattern(binding_kind, Option::<TSTypeAnnotation>::None, false), false)
         };
 
         let init =
@@ -165,7 +162,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         // BindingList[?In, ?Yield, ?Await, ~Pattern]
-        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.new_vec();
+        let mut declarations: oxc_allocator::Vec<'_, VariableDeclarator<'_>> = self.ast.vec();
         loop {
             let declaration = self.parse_variable_declarator(
                 VariableDeclarationContext::new(VariableDeclarationParent::Statement),
@@ -194,6 +191,6 @@ impl<'a> ParserImpl<'a> {
             }
         }
 
-        Ok(self.ast.using_declaration(self.end_span(span), declarations, is_await))
+        Ok(self.ast.using_declaration(self.end_span(span), is_await, declarations))
     }
 }

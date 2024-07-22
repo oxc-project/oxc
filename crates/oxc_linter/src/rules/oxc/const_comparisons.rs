@@ -5,7 +5,7 @@ use oxc_ast::{
     ast::{Expression, NumericLiteral},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
@@ -13,30 +13,28 @@ use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
 fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(const-comparisons): Left-hand side of `&&` operator has no effect.")
+    OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
         .with_help(x2.to_string())
         .with_labels([
-            LabeledSpan::new_with_span(Some("If this evaluates to `true`".into()), span0),
-            LabeledSpan::new_with_span(Some("This will always evaluate to true.".into()), span1),
+            span0.label("If this evaluates to `true`"),
+            span1.label("This will always evaluate to true."),
         ])
 }
 
 fn redundant_right_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(const-comparisons): Right-hand side of `&&` operator has no effect.")
+    OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
         .with_help(x2.to_string())
         .with_labels([
-            LabeledSpan::new_with_span(Some("If this evaluates to `true`".into()), span0),
-            LabeledSpan::new_with_span(Some("This will always evaluate to true.".into()), span1),
+            span0.label("If this evaluates to `true`"),
+            span1.label("This will always evaluate to true."),
         ])
 }
 
 fn impossible(span0: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(const-comparisons): Unexpected constant comparison")
-        .with_help(x4.to_string())
-        .with_labels([
-            LabeledSpan::new_with_span(Some(format!("Requires that {x2}")), span0),
-            LabeledSpan::new_with_span(Some(format!("Requires that {x3}")), span1),
-        ])
+    OxcDiagnostic::warn("Unexpected constant comparison").with_help(x4.to_string()).with_labels([
+        span0.label(format!("Requires that {x2}")),
+        span1.label(format!("Requires that {x3}")),
+    ])
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>

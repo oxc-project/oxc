@@ -201,7 +201,7 @@ pub fn get_enclosing_function<'a, 'b>(
         {
             return Some(current_node);
         }
-        current_node = ctx.nodes().parent_node(current_node.id()).unwrap();
+        current_node = ctx.nodes().parent_node(current_node.id())?;
     }
 }
 

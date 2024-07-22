@@ -18,19 +18,15 @@ use crate::{
 };
 
 fn expect_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(array-callback-return): Missing return on some path for array method {x0:?}"
-    ))
-    .with_help(format!("Array method {x0:?} needs to have valid return on all code paths"))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("Missing return on some path for array method {x0:?}"))
+        .with_help(format!("Array method {x0:?} needs to have valid return on all code paths"))
+        .with_label(span1)
 }
 
 fn expect_no_return(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(array-callback-return): Unexpected return for array method {x0:?}"
-    ))
-    .with_help(format!("Array method {x0:?} expects no useless return from the function"))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("Unexpected return for array method {x0:?}"))
+        .with_help(format!("Array method {x0:?} expects no useless return from the function"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -157,7 +153,7 @@ pub fn get_array_method_name<'a>(
             //  return function() {}
             // }())
             AstKind::ReturnStatement(_) => {
-                let func_node = get_enclosing_function(parent, ctx).unwrap();
+                let Some(func_node) = get_enclosing_function(parent, ctx) else { break };
                 let func_node = outermost_paren(func_node, ctx);
 
                 // the node that calls func_node
@@ -408,6 +404,7 @@ fn test() {
         ("var every = function() {}", None),
         ("foo[`${every}`](function() {})", None),
         ("foo.every(() => true)", None),
+        ("return function() {}", None),
     ];
 
     let fail = vec![

@@ -9,7 +9,7 @@ Mismatch: "declarationRestParameters.ts"
 
 #### "declarationComputedPropertyNames.ts" ####
 //// [declarationComputedPropertyNames.ts] ////
-export module presentNs {
+export namespace presentNs {
 	export const a = Symbol();
 }
 const aliasing = Symbol;
@@ -22,9 +22,9 @@ export type A = {
 	[globalThis.Symbol.unscopables]: number;
 	[aliasing.isConcatSpreadable]: number;
 	[1]: number;
-	['2']: number;
+	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? 'f1' : 'f2']: number;
+	[Math.random() > 0.5 ? "f1" : "f2"]: number;
 };
 export interface B {
 	[missing]: number;
@@ -35,9 +35,9 @@ export interface B {
 	[globalThis.Symbol.unscopables]: number;
 	[aliasing.isConcatSpreadable]: number;
 	[1]: number;
-	['2']: number;
+	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? 'f1' : 'f2']: number;
+	[Math.random() > 0.5 ? "f1" : "f2"]: number;
 }
 export class C {
 	[missing]: number = 1;
@@ -48,9 +48,9 @@ export class C {
 	[globalThis.Symbol.unscopables]: number = 1;
 	[aliasing.isConcatSpreadable]: number = 1;
 	[1]: number = 1;
-	['2']: number = 1;
+	["2"]: number = 1;
 	[missing2]: number = 1;
-	[Math.random() > 0.5 ? 'f1' : 'f2']: number = 1;
+	[Math.random() > 0.5 ? "f1" : "f2"]: number = 1;
 }
 export const D = {
 	[missing]: 1,
@@ -61,13 +61,13 @@ export const D = {
 	[globalThis.Symbol.unscopables]: 1,
 	[aliasing.isConcatSpreadable]: 1,
 	[1]: 1,
-	['2']: 1,
+	["2"]: 1,
 	[missing2]: 1,
-	[Math.random() > 0.5 ? 'f1' : 'f2']: 1
+	[Math.random() > 0.5 ? "f1" : "f2"]: 1
 };
 
 //// [declarationComputedPropertyNames.d.ts] ////
-export declare module presentNs {
+export declare namespace presentNs {
 	export const a: unknown;
 }
 declare const aliasing: unknown;
@@ -80,9 +80,9 @@ export type A = {
 	[globalThis.Symbol.unscopables]: number;
 	[aliasing.isConcatSpreadable]: number;
 	[1]: number;
-	['2']: number;
+	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? 'f1' : 'f2']: number;
+	[Math.random() > 0.5 ? "f1" : "f2"]: number;
 };
 export interface B {
 	[missing]: number;
@@ -93,17 +93,17 @@ export interface B {
 	[globalThis.Symbol.unscopables]: number;
 	[aliasing.isConcatSpreadable]: number;
 	[1]: number;
-	['2']: number;
+	["2"]: number;
 	[missing2]: number;
-	[Math.random() > 0.5 ? 'f1' : 'f2']: number;
+	[Math.random() > 0.5 ? "f1" : "f2"]: number;
 }
 export declare class C {
 	[1]: number;
-	['2']: number;
+	["2"]: number;
 }
 export declare const D: {
 	1: number;
-	'2': number;
+	"2": number;
 };
 export {};
   x TS9010: Variable must have an explicit type annotation with

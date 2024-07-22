@@ -1,14 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_pattern_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-empty-pattern): Disallow empty destructuring patterns.")
+    OxcDiagnostic::warn("Disallow empty destructuring patterns.")
         .with_help("Passing `null` or `undefined` will result in runtime error because `null` and `undefined` cannot be destructured.")
-        .with_labels([LabeledSpan::new_with_span(Some(format!("Empty {x0} binding pattern")), span1)])
+        .with_label(
+            span1.label(format!("Empty {x0} binding pattern")),
+        )
 }
 
 #[derive(Debug, Default, Clone)]

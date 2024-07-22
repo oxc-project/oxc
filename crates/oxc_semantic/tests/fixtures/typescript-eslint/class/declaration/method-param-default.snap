@@ -1,0 +1,74 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declaration/method-param-default.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "id": 2,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 1,
+                "name": "printName",
+                "node": "FormalParameter",
+                "references": [
+                  {
+                    "flag": "ReferenceFlag(Read)",
+                    "id": 0,
+                    "name": "printName",
+                    "node_id": 19
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function)",
+            "id": 3,
+            "node": "Function(<anonymous>)",
+            "symbols": [
+              {
+                "flag": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "printerName",
+                "node": "FormalParameter",
+                "references": [
+                  {
+                    "flag": "ReferenceFlag(Read)",
+                    "id": 0,
+                    "name": "printerName",
+                    "node_id": 35
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(A)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Class)",
+        "id": 0,
+        "name": "A",
+        "node": "Class(A)",
+        "references": []
+      }
+    ]
+  }
+]

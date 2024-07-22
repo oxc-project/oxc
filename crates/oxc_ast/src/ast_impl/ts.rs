@@ -3,9 +3,6 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
-// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
-
 use std::{cell::Cell, hash::Hash};
 
 use oxc_allocator::Vec;
@@ -103,28 +100,13 @@ impl<'a> TSTypeName<'a> {
     }
 }
 
-impl<'a> TSTypeParameter<'a> {
-    pub fn new(
-        span: Span,
-        name: BindingIdentifier<'a>,
-        constraint: Option<TSType<'a>>,
-        default: Option<TSType<'a>>,
-        r#in: bool,
-        out: bool,
-        r#const: bool,
-    ) -> Self {
-        Self { span, name, constraint, default, r#in, out, r#const, scope_id: Cell::default() }
-    }
-}
-
-impl<'a> Hash for TSTypeParameter<'a> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.name.hash(state);
-        self.constraint.hash(state);
-        self.default.hash(state);
-        self.r#in.hash(state);
-        self.out.hash(state);
-        self.r#const.hash(state);
+impl<'a> TSType<'a> {
+    /// Remove nested parentheses from this type.
+    pub fn without_parenthesized(&self) -> &Self {
+        match self {
+            Self::TSParenthesizedType(expr) => expr.type_annotation.without_parenthesized(),
+            _ => self,
+        }
     }
 }
 
@@ -184,6 +166,13 @@ impl<'a> TSModuleBlock<'a> {
     }
 }
 
+impl<'a> TSModuleReference<'a> {
+    /// Returns `true` if this is an [`TSModuleReference::ExternalModuleReference`].
+    pub fn is_external(&self) -> bool {
+        matches!(self, Self::ExternalModuleReference(_))
+    }
+}
+
 impl<'a> Decorator<'a> {
     /// Get the name of the decorator
     /// ```ts
@@ -214,5 +203,70 @@ impl ImportOrExportKind {
 
     pub fn is_type(&self) -> bool {
         matches!(self, Self::Type)
+    }
+}
+
+impl<'a> Hash for TSMappedType<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.type_parameter.hash(state);
+        self.name_type.hash(state);
+        self.type_annotation.hash(state);
+        self.optional.hash(state);
+        self.readonly.hash(state);
+    }
+}
+
+impl<'a> Hash for TSConditionalType<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.check_type.hash(state);
+        self.extends_type.hash(state);
+        self.true_type.hash(state);
+        self.false_type.hash(state);
+    }
+}
+
+impl<'a> Hash for TSInterfaceDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.id.hash(state);
+        self.type_parameters.hash(state);
+        self.extends.hash(state);
+        self.body.hash(state);
+        self.declare.hash(state);
+    }
+}
+
+impl<'a> Hash for TSTypeAliasDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.id.hash(state);
+        self.type_parameters.hash(state);
+        self.type_annotation.hash(state);
+        self.declare.hash(state);
+    }
+}
+
+impl<'a> Hash for TSMethodSignature<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.key.hash(state);
+        self.computed.hash(state);
+        self.optional.hash(state);
+        self.kind.hash(state);
+        self.this_param.hash(state);
+        self.params.hash(state);
+        self.return_type.hash(state);
+        self.type_parameters.hash(state);
+    }
+}
+
+impl<'a> Hash for TSConstructSignatureDeclaration<'a> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.span.hash(state);
+        self.params.hash(state);
+        self.return_type.hash(state);
+        self.type_parameters.hash(state);
     }
 }

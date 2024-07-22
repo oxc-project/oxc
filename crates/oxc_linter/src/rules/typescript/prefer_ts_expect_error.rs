@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`")
+    OxcDiagnostic::warn("Enforce using `@ts-expect-error` over `@ts-ignore`")
         .with_help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
         .with_label(span0)
 }
@@ -45,15 +45,15 @@ impl Rule for PreferTsExpectError {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().trivias().comments();
 
-        for (kind, span) in comments {
-            let raw = span.source_text(ctx.semantic().source_text());
+        for comment in comments {
+            let raw = comment.span.source_text(ctx.semantic().source_text());
 
-            if !is_valid_ts_ignore_present(kind, raw) {
+            if !is_valid_ts_ignore_present(comment.kind, raw) {
                 continue;
             }
 
-            if kind.is_single_line() {
-                let comment_span = Span::new(span.start - 2, span.end);
+            if comment.kind.is_single_line() {
+                let comment_span = Span::new(comment.span.start - 2, comment.span.end);
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,
@@ -61,7 +61,7 @@ impl Rule for PreferTsExpectError {
                     )
                 });
             } else {
-                let comment_span = Span::new(span.start - 2, span.end + 2);
+                let comment_span = Span::new(comment.span.start - 2, comment.span.end + 2);
                 ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
                     fixer.replace(
                         comment_span,
@@ -70,6 +70,10 @@ impl Rule for PreferTsExpectError {
                 });
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

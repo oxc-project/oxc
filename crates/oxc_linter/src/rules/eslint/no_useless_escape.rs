@@ -8,8 +8,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-useless-escape): Unnecessary escape character {x0:?}"))
-        .with_label(span1)
+    OxcDiagnostic::warn(format!("Unnecessary escape character {x0:?}")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -160,7 +159,7 @@ fn check_string(string: &str) -> Vec<usize> {
     for offset in escapes {
         // Safety:
         // The offset comes from a utf8 checked string
-        #[allow(unsafe_code)]
+
         let s = unsafe { std::str::from_utf8_unchecked(&bytes[offset..]) };
         if let Some(c) = s.chars().nth(1) {
             if !(c == quote_char
@@ -186,7 +185,7 @@ fn check_template(string: &str) -> Vec<usize> {
 
     let mut offsets = vec![];
     let mut in_escape = false;
-    let mut prev_char = '`';
+    let mut prev_non_escape_char = '`';
     let mut byte_offset = 1;
 
     let mut chars = string.chars().peekable();
@@ -199,7 +198,7 @@ fn check_template(string: &str) -> Vec<usize> {
             match c {
                 c if c.is_ascii_digit() || c == '`' => { /* noop */ }
                 '{' => {
-                    if prev_char != '$' {
+                    if prev_non_escape_char != '$' {
                         offsets.push(byte_offset - c.len_utf8());
                     }
                 }
@@ -213,10 +212,11 @@ fn check_template(string: &str) -> Vec<usize> {
                 }
                 _ => {}
             }
+            prev_non_escape_char = c;
         } else if c == '\\' {
             in_escape = true;
         } else {
-            prev_char = c;
+            prev_non_escape_char = c;
         }
     }
 
@@ -400,7 +400,7 @@ fn test() {
         ("var foo = '\\#';", "var foo = '#';", None),
         ("var foo = '\\$';", "var foo = '$';", None),
         ("var foo = '\\p';", "var foo = 'p';", None),
-        ("var foo = '\\p\\a\\@';", "var foo = 'p\\a@';", None),
+        ("var foo = '\\p\\a\\@';", "var foo = 'pa@';", None),
         ("<foo attr={\"\\d\"}/>", "<foo attr={\"d\"}/>", None),
         ("var foo = '\\`';", "var foo = '`';", None),
         ("var foo = `\\\"`;", "var foo = `\"`;", None),

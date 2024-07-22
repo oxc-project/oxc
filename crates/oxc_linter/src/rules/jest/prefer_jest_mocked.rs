@@ -10,11 +10,9 @@ use phf::{phf_set, Set};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn use_jest_mocked(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jest(prefer-jest-mocked): Prefer `jest.mocked()` over `fn as jest.Mock`.",
-    )
-    .with_help("Prefer `jest.mocked()`")
-    .with_label(span0)
+    OxcDiagnostic::warn("Prefer `jest.mocked()` over `fn as jest.Mock`.")
+        .with_help("Prefer `jest.mocked()`")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -233,6 +231,7 @@ fn test() {
             "(jest.mocked(foo)).mockReturnValue(1);",
         ),
         // Note: couldn't fix
+        // Todo: this need to fixer support option configuration.
         // (
         //     "(<jest.Mock>foo).mockReturnValue(1);",
         //     "(jest.mocked(foo)).mockReturnValue(1);",
@@ -243,6 +242,7 @@ fn test() {
             "(jest.mocked(foo)).mockReturnValue(1);",
         ),
         // Note: couldn't fix
+        // Todo: this need to fixer support option configuration.
         // (
         //     "(<jest.Mock>foo as unknown).mockReturnValue(1);",
         //     "(jest.mocked(foo) as unknown).mockReturnValue(1);",

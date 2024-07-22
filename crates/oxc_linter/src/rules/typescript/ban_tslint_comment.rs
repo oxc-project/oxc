@@ -7,10 +7,7 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule};
 
 fn ban_tslint_comment_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "typescript-eslint(ban-tslint-comment): tslint comment detected: \"{x0}\""
-    ))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("tslint comment detected: \"{x0}\"")).with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -38,12 +35,16 @@ impl Rule for BanTslintComment {
         let comments = ctx.semantic().trivias().comments();
         let source_text_len = ctx.semantic().source_text().len();
 
-        for (kind, span) in comments {
-            let raw = span.source_text(ctx.semantic().source_text());
+        for comment in comments {
+            let raw = comment.span.source_text(ctx.semantic().source_text());
 
             if is_tslint_comment_directive(raw) {
-                let comment_span =
-                    get_full_comment(source_text_len, span.start, span.end, kind.is_multi_line());
+                let comment_span = get_full_comment(
+                    source_text_len,
+                    comment.span.start,
+                    comment.span.end,
+                    comment.kind.is_multi_line(),
+                );
 
                 ctx.diagnostic_with_fix(
                     ban_tslint_comment_diagnostic(raw.trim(), comment_span),

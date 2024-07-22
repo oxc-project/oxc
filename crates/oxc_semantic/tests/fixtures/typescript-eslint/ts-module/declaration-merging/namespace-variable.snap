@@ -1,0 +1,43 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/declaration-merging/namespace-variable.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
+        "id": 1,
+        "node": "TSModuleDeclaration",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | NameSpaceModule)",
+        "id": 0,
+        "name": "Foo",
+        "node": "TSModuleDeclaration",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "Foo",
+            "node_id": 11
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "usage",
+        "node": "VariableDeclarator",
+        "references": []
+      }
+    ]
+  }
+]

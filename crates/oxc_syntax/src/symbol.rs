@@ -1,10 +1,26 @@
+use std::num::NonZeroU32;
+
 use bitflags::bitflags;
-use oxc_index::define_index_type;
 #[cfg(feature = "serialize")]
 use serde::Serialize;
 
-define_index_type! {
-    pub struct SymbolId = u32;
+use oxc_index::Idx;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct SymbolId(NonZeroU32);
+
+impl Idx for SymbolId {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        // SAFETY: + 1 is always non-zero.
+
+        unsafe { Self(NonZeroU32::new_unchecked(idx as u32 + 1)) }
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize - 1
+    }
 }
 
 #[cfg(feature = "serialize")]
@@ -30,25 +46,26 @@ bitflags! {
         const Class                   = 1 << 5;
         const CatchVariable           = 1 << 6; // try {} catch(catch_variable) {}
         const Function                = 1 << 7;
-        const ImportBinding           = 1 << 8; // Imported ESM binding
+        const Import             = 1 << 8; // Imported ESM binding
+        const TypeImport              = 1 << 9; // Imported ESM type-only binding
         // Type specific symbol flags
-        const TypeAlias               = 1 << 9;
-        const Interface               = 1 << 10;
-        const RegularEnum             = 1 << 11;
-        const ConstEnum               = 1 << 12;
-        const EnumMember              = 1 << 13;
-        const TypeLiteral             = 1 << 14;
-        const TypeParameter           = 1 << 15;
-        const NameSpaceModule         = 1 << 16;
-        const ValueModule             = 1 << 17;
+        const TypeAlias               = 1 << 10;
+        const Interface               = 1 << 11;
+        const RegularEnum             = 1 << 12;
+        const ConstEnum               = 1 << 13;
+        const EnumMember              = 1 << 14;
+        const TypeLiteral             = 1 << 15;
+        const TypeParameter           = 1 << 16;
+        const NameSpaceModule         = 1 << 17;
+        const ValueModule             = 1 << 18;
         // In a dts file or there is a declare flag
-        const Ambient                 = 1 << 18;
+        const Ambient                 = 1 << 19;
 
         const Enum = Self::ConstEnum.bits() | Self::RegularEnum.bits();
 
         const Variable = Self::FunctionScopedVariable.bits() | Self::BlockScopedVariable.bits();
-        const Value = Self::Variable.bits() | Self::Class.bits() | Self::Enum.bits() | Self::ValueModule.bits();
-        const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::TypeLiteral.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
+        const Value = Self::Variable.bits() | Self::Class.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::ValueModule.bits();
+        const Type =  Self::Class.bits() | Self::Interface.bits() | Self::Enum.bits() | Self::EnumMember.bits() | Self::TypeLiteral.bits() | Self::TypeParameter.bits()  |  Self::TypeAlias.bits();
 
         /// Variables can be redeclared, but can not redeclare a block-scoped declaration with the
         /// same name, or any other value that is not a variable, e.g. ValueModule or Class
@@ -59,7 +76,7 @@ bitflags! {
         const BlockScopedVariableExcludes = Self::Value.bits();
 
         const ClassExcludes = (Self::Value.bits() | Self::TypeAlias.bits()) & !Self::ValueModule.bits() ;
-        const ImportBindingExcludes = Self::ImportBinding.bits();
+        const ImportBindingExcludes = Self::Import.bits() | Self::TypeImport.bits();
         // Type specific excludes
         const TypeAliasExcludes = Self::Type.bits();
         const InterfaceExcludes = Self::Type.bits() & !(Self::Interface.bits() | Self::Class.bits());
@@ -77,8 +94,14 @@ impl SymbolFlags {
         self.intersects(Self::Variable)
     }
 
+    /// If true, then the symbol is a type, such as a TypeAlias, Interface, or Enum
     pub fn is_type(&self) -> bool {
-        !self.intersects(Self::Value)
+        self.intersects((Self::TypeImport | Self::Type) - Self::Value)
+    }
+
+    /// If true, then the symbol is a value, such as a Variable, Function, or Class
+    pub fn is_value(&self) -> bool {
+        self.intersects(Self::Value | Self::Import | Self::Function)
     }
 
     pub fn is_const_variable(&self) -> bool {
@@ -105,7 +128,17 @@ impl SymbolFlags {
         self.contains(Self::Export)
     }
 
-    pub fn is_import_binding(&self) -> bool {
-        self.contains(Self::ImportBinding)
+    pub fn is_import(&self) -> bool {
+        self.intersects(Self::Import | Self::TypeImport)
+    }
+
+    /// If true, then the symbol can be referenced by a type
+    pub fn can_be_referenced_by_type(&self) -> bool {
+        self.intersects(Self::Type | Self::TypeImport | Self::Import)
+    }
+
+    /// If true, then the symbol can be referenced by a value
+    pub fn can_be_referenced_by_value(&self) -> bool {
+        self.intersects(Self::Value | Self::Import | Self::Function)
     }
 }

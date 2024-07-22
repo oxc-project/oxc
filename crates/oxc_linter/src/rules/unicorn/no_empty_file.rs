@@ -8,7 +8,7 @@ use crate::{
 };
 
 fn no_empty_file_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")
+    OxcDiagnostic::warn("Empty files are not allowed.")
         .with_help("Delete this file or add some code to it.")
         .with_label(span0)
 }
@@ -58,16 +58,22 @@ impl Rule for NoEmptyFile {
             return;
         }
 
-        ctx.diagnostic(no_empty_file_diagnostic(Span::new(0, 0)));
+        let mut span = program.span;
+        // only show diagnostic for the first 100 characters to avoid huge diagnostic messages with
+        // empty programs containing a bunch of comments.
+        // NOTE: if the enable/disable directives come after the first 100 characters they won't be
+        // respected by this diagnostic.
+        span.end = std::cmp::min(span.end, 100);
+        ctx.diagnostic(no_empty_file_diagnostic(span));
     }
 }
 
 fn has_triple_slash_directive(ctx: &LintContext<'_>) -> bool {
-    for (kind, span) in ctx.semantic().trivias().comments() {
-        if !kind.is_single_line() {
+    for comment in ctx.semantic().trivias().comments() {
+        if !comment.kind.is_single_line() {
             continue;
         }
-        let text = span.source_text(ctx.source_text());
+        let text = comment.span.source_text(ctx.source_text());
         if text.starts_with("///") {
             return true;
         }
@@ -104,6 +110,7 @@ fn test() {
         r"[]",
         r"(() => {})()",
         "(() => {})();",
+        "/* eslint-disable no-empty-file */",
     ];
 
     let fail = vec![

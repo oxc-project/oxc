@@ -48,13 +48,13 @@ declare_oxc_lint!(
 pub struct RoleSupportsAriaProps;
 
 fn default(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {x1} is not supported by the role {x2}."))
+    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}."))
         .with_help(format!("Try to remove invalid attribute {x1}."))
         .with_label(span0)
 }
 
 fn is_implicit_diagnostic(span0: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {x1} is not supported by the role {x2}. This role is implicit on the element {x3}."))
+    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}. This role is implicit on the element {x3}."))
         .with_help(format!("Try to remove invalid attribute {x1}."))
         .with_label(span0)
 }

@@ -17,7 +17,7 @@ mod utils;
 use std::{iter::Peekable, vec};
 
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, AstKind, CommentKind, Trivias};
+use oxc_ast::{ast::Program, AstKind, Comment, Trivias};
 use oxc_span::Span;
 use oxc_syntax::identifier::is_line_terminator;
 
@@ -55,7 +55,7 @@ pub struct Prettier<'a> {
     options: PrettierOptions,
 
     /// A stack of comments that will be carefully placed in the right places.
-    trivias: Peekable<vec::IntoIter<(CommentKind, Span)>>,
+    trivias: Peekable<vec::IntoIter<Comment>>,
 
     /// The stack of AST Nodes
     /// See <https://github.com/prettier/prettier/blob/main/src/common/ast-path.js>
@@ -84,7 +84,7 @@ impl<'a> Prettier<'a> {
             allocator,
             source_text,
             options,
-            trivias: trivias.comments().collect::<Vec<_>>().into_iter().peekable(),
+            trivias: trivias.comments().copied().collect::<Vec<_>>().into_iter().peekable(),
             stack: vec![],
             group_id_builder: GroupIdBuilder::default(),
             args: PrettierArgs::default(),
@@ -133,10 +133,8 @@ impl<'a> Prettier<'a> {
         // SAFETY:
         // This should be safe as long as `src` is an reference from the allocator.
         // But honestly, I'm not really sure if this is safe.
-        #[allow(unsafe_code)]
-        unsafe {
-            std::mem::transmute(t)
-        }
+
+        unsafe { std::mem::transmute(t) }
     }
 
     pub fn semi(&self) -> Option<Doc<'a>> {

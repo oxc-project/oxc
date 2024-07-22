@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_console_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-console): Unexpected console statement.").with_label(span0)
+    OxcDiagnostic::warn("Unexpected console statement.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

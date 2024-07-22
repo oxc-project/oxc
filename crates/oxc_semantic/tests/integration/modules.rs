@@ -180,7 +180,7 @@ fn test_exports_in_namespace() {
             return foo();
         }
         export const x = 2
-    } 
+    }
     ",
     );
     test.has_some_symbol("bar").is_exported().test();
@@ -201,4 +201,17 @@ fn test_export_in_invalid_scope() {
     let SemanticBuilderReturn { semantic, errors } = test.build_with_errors();
     assert!(!errors.is_empty(), "expected an export within a function to produce a check error, but no errors were produced");
     assert!(semantic.module_record().exported_bindings.is_empty());
+}
+
+#[test]
+fn test_import_assignment() {
+    SemanticTester::ts("import Foo = require('./foo')")
+        .has_root_symbol("Foo")
+        .contains_flags(SymbolFlags::Import)
+        .test();
+
+    SemanticTester::ts("import { Foo } from './foo'; import Baz = Foo.Bar.Baz")
+        .has_root_symbol("Baz")
+        .contains_flags(SymbolFlags::Import)
+        .test();
 }

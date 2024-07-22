@@ -171,16 +171,28 @@ impl Case for TransformerTypeScriptCase {
         self.base.skip_test_case() || self.base.should_fail()
     }
 
-    fn run(&mut self) {
+    fn execute(&mut self, source_type: SourceType) -> TestResult {
         let mut options = get_default_transformer_options();
-        let mut source_type = self.base.source_type();
+        let mut source_type = source_type;
         // handle @jsx: react, `react` of behavior is match babel following options
-        if self.base.meta().settings.jsx.last().is_some_and(|jsx| jsx == "react") {
+        if self.base.settings.jsx.last().is_some_and(|jsx| jsx == "react") {
             source_type = source_type.with_module(true);
             options.react.runtime = ReactJsxRuntime::Classic;
         }
-        let result = get_result(self.base.code(), source_type, self.path(), Some(options));
-        self.base.set_result(result);
+        get_result(self.base.code(), source_type, self.path(), Some(options))
+    }
+
+    fn run(&mut self) {
+        let units = self.base.units.clone();
+        for unit in units {
+            self.base.code = unit.content.to_string();
+            let result = self.execute(unit.source_type);
+            if result != TestResult::Passed {
+                self.base.result = result;
+                return;
+            }
+        }
+        self.base.result = TestResult::Passed;
     }
 }
 

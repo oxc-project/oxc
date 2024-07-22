@@ -67,7 +67,7 @@ impl<'a> ReactDisplayName<'a> {
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
                     if let Some(name) = prop.key().static_name() {
-                        FinderRet::Found(ctx.ast.new_atom(&name))
+                        FinderRet::Found(ctx.ast.atom(&name))
                     } else {
                         FinderRet::Stop
                     }
@@ -75,7 +75,7 @@ impl<'a> ReactDisplayName<'a> {
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    FinderRet::Found(ctx.ast.new_atom(&self.ctx.filename))
+                    FinderRet::Found(ctx.ast.atom(&self.ctx.filename))
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_via_statement() => FinderRet::Stop,
@@ -124,14 +124,18 @@ impl<'a> ReactDisplayName<'a> {
         if not_safe {
             return;
         }
-        let object_property = {
-            let kind = PropertyKind::Init;
-            let identifier_name = IdentifierName::new(SPAN, self.ctx.ast.new_atom(DISPLAY_NAME));
-            let key = self.ctx.ast.property_key_identifier(identifier_name);
-            let string_literal = StringLiteral::new(SPAN, name);
-            let value = self.ctx.ast.literal_string_expression(string_literal);
-            self.ctx.ast.object_property(SPAN, kind, key, value, None, false, false, false)
-        };
-        obj_expr.properties.insert(0, ObjectPropertyKind::ObjectProperty(object_property));
+        obj_expr.properties.insert(
+            0,
+            self.ctx.ast.object_property_kind_object_property(
+                SPAN,
+                PropertyKind::Init,
+                self.ctx.ast.property_key_identifier_name(SPAN, DISPLAY_NAME),
+                self.ctx.ast.expression_string_literal(SPAN, name),
+                None,
+                false,
+                false,
+                false,
+            ),
+        );
     }
 }

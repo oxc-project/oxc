@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn require_number_to_fixed_digits_argument_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(require-number-to-fixed-digits-argument): Number method .toFixed() should have an argument")
+    OxcDiagnostic::warn("Number method .toFixed() should have an argument")
         .with_help("It's better to make it clear what the value of the digits argument is when calling Number#toFixed(), instead of relying on the default value of 0.")
         .with_label(span0)
 }
@@ -70,8 +70,8 @@ impl Rule for RequireNumberToFixedDigitsArgument {
                                 let span_source_code =
                                     fixer.source_range(parenthesis_span_without_right_one);
 
-                                formatter.print_str(span_source_code.as_bytes());
-                                formatter.print_str(b"0)");
+                                formatter.print_str(span_source_code);
+                                formatter.print_str("0)");
 
                                 formatter.into_source_text()
                             };

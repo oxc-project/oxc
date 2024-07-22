@@ -25,10 +25,10 @@ mod helpers {
 
 use std::{path::Path, rc::Rc};
 
-use es2015::ES2015;
 use oxc_allocator::{Allocator, Vec};
 use oxc_ast::{ast::*, AstBuilder, Trivias};
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::{ScopeTree, SemanticBuilder, SymbolTable};
 use oxc_span::SourceType;
 use oxc_traverse::{traverse_mut, Traverse, TraverseCtx};
 
@@ -42,9 +42,16 @@ pub use crate::{
 };
 use crate::{
     context::{Ctx, TransformCtx},
+    es2015::ES2015,
     react::React,
     typescript::TypeScript,
 };
+
+pub struct TransformerReturn {
+    pub errors: std::vec::Vec<OxcDiagnostic>,
+    pub symbols: SymbolTable,
+    pub scopes: ScopeTree,
+}
 
 pub struct Transformer<'a> {
     ctx: Ctx<'a>,
@@ -79,20 +86,25 @@ impl<'a> Transformer<'a> {
         }
     }
 
-    /// # Errors
-    ///
-    /// Returns `Vec<Error>` if any errors were collected during the transformation.
-    pub fn build(mut self, program: &mut Program<'a>) -> Result<(), std::vec::Vec<Error>> {
-        let TransformCtx { ast: AstBuilder { allocator }, source_text, source_type, .. } =
-            *self.ctx;
-        traverse_mut(&mut self, program, source_text, source_type, allocator);
+    pub fn build(mut self, program: &mut Program<'a>) -> TransformerReturn {
+        let (symbols, scopes) = SemanticBuilder::new(self.ctx.source_text, self.ctx.source_type)
+            .build(program)
+            .semantic
+            .into_symbol_table_and_scope_tree();
+        let TransformCtx { ast: AstBuilder { allocator }, .. } = *self.ctx;
+        let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
+        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
+    }
 
-        let errors = self.ctx.take_errors();
-        if errors.is_empty() {
-            Ok(())
-        } else {
-            Err(errors)
-        }
+    pub fn build_with_symbols_and_scopes(
+        mut self,
+        symbols: SymbolTable,
+        scopes: ScopeTree,
+        program: &mut Program<'a>,
+    ) -> TransformerReturn {
+        let TransformCtx { ast: AstBuilder { allocator }, .. } = *self.ctx;
+        let (symbols, scopes) = traverse_mut(&mut self, allocator, program, symbols, scopes);
+        TransformerReturn { errors: self.ctx.take_errors(), symbols, scopes }
     }
 }
 
@@ -137,23 +149,6 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_class_body(&mut self, body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_class_body(body);
     }
-
-    fn enter_import_declaration(
-        &mut self,
-        decl: &mut ImportDeclaration<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.x0_typescript.transform_import_declaration(decl);
-    }
-
-    fn enter_export_named_declaration(
-        &mut self,
-        decl: &mut ExportNamedDeclaration<'a>,
-        _ctx: &mut TraverseCtx<'a>,
-    ) {
-        self.x0_typescript.transform_export_named_declaration(decl);
-    }
-
     fn enter_ts_module_declaration(
         &mut self,
         decl: &mut TSModuleDeclaration<'a>,

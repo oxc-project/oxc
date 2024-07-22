@@ -16,7 +16,7 @@ use oxc::{
     span::SourceType,
     transformer::{TransformOptions, Transformer},
 };
-use oxc_linter::{LintContext, Linter};
+use oxc_linter::Linter;
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
 use tsify::Tsify;
@@ -194,8 +194,7 @@ impl Oxc {
         let semantic = Rc::new(semantic_ret.semantic);
         // Only lint if there are not syntax errors
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
-            let lint_ctx = LintContext::new(path.clone().into_boxed_path(), Rc::clone(&semantic));
-            let linter_ret = Linter::default().run(lint_ctx);
+            let linter_ret = Linter::default().run(&path, Rc::clone(&semantic));
             let diagnostics = linter_ret.into_iter().map(|e| Error::from(e.error)).collect();
             self.save_diagnostics(diagnostics);
         }
@@ -205,7 +204,6 @@ impl Oxc {
         if run_options.prettier_format() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
             let printed =
                 Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
@@ -216,7 +214,6 @@ impl Oxc {
         if run_options.prettier_ir() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
             let prettier_doc = Prettier::new(
                 &allocator,
@@ -244,8 +241,9 @@ impl Oxc {
                 options,
             )
             .build(program);
-            if let Err(errs) = result {
-                self.save_diagnostics(errs);
+            if !result.errors.is_empty() {
+                let errors = result.errors.into_iter().map(Error::from).collect::<Vec<_>>();
+                self.save_diagnostics(errors);
             }
         }
 
@@ -339,14 +337,14 @@ impl Oxc {
     fn map_comments(&self, trivias: &Trivias) -> Vec<Comment> {
         trivias
             .comments()
-            .map(|(kind, span)| Comment {
-                r#type: match kind {
+            .map(|comment| Comment {
+                r#type: match comment.kind {
                     CommentKind::SingleLine => CommentType::Line,
                     CommentKind::MultiLine => CommentType::Block,
                 },
-                value: span.source_text(&self.source_text).to_string(),
-                start: span.start,
-                end: span.end,
+                value: comment.span.source_text(&self.source_text).to_string(),
+                start: comment.span.start,
+                end: comment.span.end,
             })
             .collect()
     }

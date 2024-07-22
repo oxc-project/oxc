@@ -2,7 +2,10 @@ use std::sync::Arc;
 
 use rustc_hash::FxHashMap;
 
-use crate::{token::Token, SourceMap};
+use crate::{
+    token::{Token, TokenChunk},
+    SourceMap,
+};
 
 /// The `SourceMapBuilder` is a helper to generate sourcemap.
 #[derive(Debug, Default)]
@@ -14,6 +17,7 @@ pub struct SourceMapBuilder {
     pub(crate) sources_map: FxHashMap<Arc<str>, u32>,
     pub(crate) source_contents: Vec<Arc<str>>,
     pub(crate) tokens: Vec<Token>,
+    pub(crate) token_chunks: Option<Vec<TokenChunk>>,
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -66,6 +70,11 @@ impl SourceMapBuilder {
         self.file = Some(file.into());
     }
 
+    /// Set the `SourceMap::token_chunks` to make the sourcemap to vlq mapping at parallel.
+    pub fn set_token_chunks(&mut self, token_chunks: Vec<TokenChunk>) {
+        self.token_chunks = Some(token_chunks);
+    }
+
     pub fn into_sourcemap(self) -> SourceMap {
         SourceMap::new(
             self.file,
@@ -74,7 +83,7 @@ impl SourceMapBuilder {
             self.sources,
             Some(self.source_contents),
             self.tokens,
-            None,
+            self.token_chunks,
         )
     }
 }

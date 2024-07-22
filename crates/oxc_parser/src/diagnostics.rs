@@ -1,11 +1,24 @@
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use std::borrow::Cow;
+
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
+use crate::modifiers::Modifier;
+
+#[inline]
+fn ts_error<C, M>(code: C, message: M) -> OxcDiagnostic
+where
+    C: Into<Cow<'static, str>>,
+    M: Into<Cow<'static, str>>,
+{
+    OxcDiagnostic::error(message).with_error_code("TS", code)
+}
+
 #[cold]
-pub fn redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+pub fn redeclaration(x0: &str, declare_span: Span, redeclare_span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Identifier `{x0}` has already been declared")).with_labels([
-        LabeledSpan::new_with_span(Some(format!("`{x0}` has already been declared here")), span1),
-        LabeledSpan::new_with_span(Some("It can not be redeclared here".to_string()), span2),
+        declare_span.label(format!("`{x0}` has already been declared here")),
+        redeclare_span.label("It can not be redeclared here"),
     ])
 }
 
@@ -25,9 +38,9 @@ pub fn unexpected_token(span0: Span) -> OxcDiagnostic {
 }
 
 #[cold]
-pub fn expect_token(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+pub fn expect_token(x0: &str, x1: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected `{x0}` but found `{x1}`"))
-        .with_labels([LabeledSpan::new_with_span(Some(format!("`{x0}` expected")), span2)])
+        .with_label(span.label(format!("`{x0}` expected")))
 }
 
 #[cold]
@@ -290,8 +303,8 @@ pub fn empty_parenthesized_expression(span0: Span) -> OxcDiagnostic {
 #[cold]
 pub fn illegal_newline(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Illegal newline after {x0}")).with_labels([
-        LabeledSpan::new_with_span(Some(format!("{x0} starts here")), span1),
-        LabeledSpan::new_with_span(Some("A newline is not expected here".to_string()), span2),
+        span1.label(format!("{x0} starts here")),
+        span2.label("A newline is not expected here"),
     ])
 }
 
@@ -303,13 +316,12 @@ pub fn optional_chain_tagged_template(span0: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn ts_constructor_this_parameter(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS2681: A constructor cannot have a `this` parameter.").with_label(span0)
+    ts_error("2681", "A constructor cannot have a `this` parameter.").with_label(span0)
 }
 
 #[cold]
 pub fn ts_arrow_function_this_parameter(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS2730: An arrow function cannot have a `this` parameter.")
-        .with_label(span0)
+    ts_error("2730", "An arrow function cannot have a `this` parameter.").with_label(span0)
 }
 
 #[cold]
@@ -333,19 +345,20 @@ pub fn expect_catch_finally(span0: Span) -> OxcDiagnostic {
 
 #[cold]
 pub fn a_set_accessor_cannot_have_a_return_type_annotation(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS1095: A 'set' accessor cannot have a return type annotation")
-        .with_label(span0)
+    ts_error("1095", " A 'set' accessor cannot have a return type annotation.").with_label(span0)
 }
 
 #[cold]
 pub fn return_statement_only_in_function_body(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS1108: A 'return' statement can only be used within a function body")
+    ts_error("1108", "A 'return' statement can only be used within a function body.")
         .with_label(span0)
 }
 
 #[cold]
 pub fn jsx_expressions_may_not_use_the_comma_operator(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS18007: JSX expressions may not use the comma operator.")
+    // OxcDiagnostic::error("TS18007: JSX expressions may not use the comma
+    // operator.")
+    ts_error("18007", "JSX expressions may not use the comma operator")
         .with_help("Did you mean to write an array?")
         .with_label(span0)
 }
@@ -387,19 +400,52 @@ pub fn using_declarations_must_be_initialized(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::error("Using declarations must have an initializer.").with_label(span0)
 }
 
+/// TS(1093)
 #[cold]
 pub fn static_constructor(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error("TS1089: `static` modifier cannot appear on a constructor declaration.")
+    ts_error("1089", "`static` modifier cannot appear on a constructor declaration.")
         .with_label(span0)
 }
 
 #[cold]
 pub fn jsx_element_no_match(span0: Span, span1: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::error(format!("Expected corresponding JSX closing tag for '{name}'."))
-        .with_labels([span0.into(), span1.into()])
+        .with_labels([span0, span1])
 }
 
+// ================================= MODIFIERS =================================
+
 #[cold]
-pub fn modifier_cannot_be_used_here(span: Span, name: &str) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("'{name}' modifier cannot be used here.")).with_label(span)
+pub fn modifier_cannot_be_used_here(modifier: &Modifier) -> OxcDiagnostic {
+    OxcDiagnostic::error(format!("'{}' modifier cannot be used here.", modifier.kind))
+        .with_label(modifier.span)
+}
+
+/// TS(1030)
+#[cold]
+pub fn modifier_already_seen(modifier: &Modifier) -> OxcDiagnostic {
+    // OxcDiagnostic::error(format!("TS1030: '{}' modifier already seen.", modifier.kind))
+    ts_error("1030", format!("{}' modifier already seen.", modifier.kind))
+        .with_label(modifier.span)
+        .with_help("Remove the duplicate modifier.")
+}
+
+/// TS(1273)
+#[cold]
+pub fn cannot_appear_on_a_type_parameter(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1273", format!("'{}' modifier cannot be used on a type parameter.", modifier.kind))
+        .with_label(modifier.span)
+}
+
+/// TS(1090)
+pub fn cannot_appear_on_a_parameter(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("1090", format!("'{}' modifier cannot appear on a parameter.", modifier.kind))
+        .with_label(modifier.span)
+}
+
+/// TS(18010)
+#[cold]
+pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDiagnostic {
+    ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
+        .with_label(modifier.span)
 }

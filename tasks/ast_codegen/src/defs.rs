@@ -1,5 +1,5 @@
 use super::{REnum, RStruct, RType};
-use crate::{schema::Inherit, TypeName};
+use crate::{schema::Inherit, util::TypeExt, TypeName};
 use quote::ToTokens;
 use serde::Serialize;
 
@@ -95,7 +95,7 @@ impl From<&Inherit> for EnumInheritDef {
     fn from(inherit: &Inherit) -> Self {
         match inherit {
             Inherit::Linked { super_, variants } => Self {
-                super_name: super_.into(),
+                super_name: super_.get_ident().as_ident().unwrap().to_string(),
                 variants: variants.iter().map(Into::into).collect(),
             },
             Inherit::Unlinked(_) => {

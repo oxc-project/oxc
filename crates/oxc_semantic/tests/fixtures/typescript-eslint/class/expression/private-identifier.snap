@@ -1,0 +1,37 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expression/private-identifier.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flag": "ScopeFlags(StrictMode | Function | Constructor)",
+            "id": 2,
+            "node": "Function(<anonymous>)",
+            "symbols": []
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "Class(<anonymous>)",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "Foo",
+        "node": "VariableDeclarator",
+        "references": []
+      }
+    ]
+  }
+]

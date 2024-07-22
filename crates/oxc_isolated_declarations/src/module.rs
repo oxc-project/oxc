@@ -15,7 +15,7 @@ impl<'a> IsolatedDeclarations<'a> {
         Some(ExportNamedDeclaration {
             span: decl.span(),
             declaration: Some(decl),
-            specifiers: self.ast.new_vec(),
+            specifiers: self.ast.vec(),
             source: None,
             export_kind: ImportOrExportKind::Value,
             with_clause: None,
@@ -23,10 +23,10 @@ impl<'a> IsolatedDeclarations<'a> {
     }
 
     pub fn create_unique_name(&mut self, name: &str) -> Atom<'a> {
-        let mut binding = self.ast.new_atom(name);
+        let mut binding = self.ast.atom(name);
         let mut i = 1;
         while self.scope.has_reference(&binding) {
-            binding = self.ast.new_atom(format!("{name}_{i}").as_str());
+            binding = self.ast.atom(format!("{name}_{i}").as_str());
             i += 1;
         }
         binding
@@ -54,9 +54,7 @@ impl<'a> IsolatedDeclarations<'a> {
                     // declare const _default: Type
                     let kind = VariableDeclarationKind::Const;
                     let name = self.create_unique_name("_default");
-                    let id = self
-                        .ast
-                        .binding_pattern_identifier(BindingIdentifier::new(SPAN, name.clone()));
+                    let id = self.ast.binding_pattern_kind_binding_identifier(SPAN, &name);
                     let type_annotation = self
                         .infer_type_from_expression(expr)
                         .map(|ts_type| self.ast.ts_type_annotation(SPAN, ts_type));
@@ -65,10 +63,9 @@ impl<'a> IsolatedDeclarations<'a> {
                         self.error(default_export_inferred(expr.span()));
                     }
 
-                    let id = BindingPattern { kind: id, type_annotation, optional: false };
-                    let declarations = self
-                        .ast
-                        .new_vec_single(self.ast.variable_declarator(SPAN, kind, id, None, true));
+                    let id = self.ast.binding_pattern(id, type_annotation, false);
+                    let declarations =
+                        self.ast.vec1(self.ast.variable_declarator(SPAN, kind, id, None, true));
 
                     Some((
                         Some(VariableDeclaration {
@@ -78,9 +75,7 @@ impl<'a> IsolatedDeclarations<'a> {
                             declare: self.is_declare(),
                         }),
                         ExportDefaultDeclarationKind::from(
-                            self.ast.identifier_reference_expression(
-                                self.ast.identifier_reference(SPAN, &name),
-                            ),
+                            self.ast.expression_identifier_reference(SPAN, &name),
                         ),
                     ))
                 }
@@ -88,10 +83,8 @@ impl<'a> IsolatedDeclarations<'a> {
         };
 
         declaration.map(|(var_decl, declaration)| {
-            let exported = ModuleExportName::IdentifierName(IdentifierName::new(
-                SPAN,
-                self.ast.new_atom("default"),
-            ));
+            let exported =
+                ModuleExportName::IdentifierName(self.ast.identifier_name(SPAN, "default"));
             (var_decl, ExportDefaultDeclaration { span: decl.span, declaration, exported })
         })
     }
@@ -111,14 +104,14 @@ impl<'a> IsolatedDeclarations<'a> {
                 self.scope.has_reference(&specifier.local.name)
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(_) => {
-                self.scope.has_reference(specifier.name().as_str())
+                self.scope.has_reference(&specifier.name())
             }
         });
         if specifiers.is_empty() {
             // We don't need to print this import statement
             None
         } else {
-            Some(self.ast.import_declaration(
+            Some(self.ast.alloc_import_declaration(
                 decl.span,
                 Some(specifiers),
                 self.ast.copy(&decl.source),

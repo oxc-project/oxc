@@ -1,8 +1,9 @@
 //! Code related to navigating `Token`s from the lexer
 
+use oxc_allocator::Vec;
 use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     diagnostics,
@@ -49,10 +50,8 @@ impl<'a> ParserImpl<'a> {
         let range = self.cur_token().span();
         // SAFETY:
         // range comes from the parser, which are ensured to meeting the criteria of `get_unchecked`.
-        #[allow(unsafe_code)]
-        unsafe {
-            self.source_text.get_unchecked(range.start as usize..range.end as usize)
-        }
+
+        unsafe { self.source_text.get_unchecked(range.start as usize..range.end as usize) }
     }
 
     /// Get current string
@@ -171,7 +170,7 @@ impl<'a> ParserImpl<'a> {
     /// # Errors
     pub(crate) fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
-            let span = Span::new(self.prev_token_end, self.cur_token().start);
+            let span = Span::new(self.prev_token_end, self.prev_token_end);
             return Err(diagnostics::auto_semicolon_insertion(span));
         }
         if self.at(Kind::Semicolon) {
@@ -330,8 +329,106 @@ impl<'a> ParserImpl<'a> {
         result
     }
 
-    pub(crate) fn consume_decorators(&mut self) -> oxc_allocator::Vec<'a, Decorator<'a>> {
+    pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
         let decorators = std::mem::take(&mut self.state.decorators);
-        self.ast.new_vec_from_iter(decorators)
+        self.ast.vec_from_iter(decorators)
+    }
+
+    pub(crate) fn parse_normal_list<F, T>(
+        &mut self,
+        open: Kind,
+        close: Kind,
+        f: F,
+    ) -> Result<Vec<'a, T>>
+    where
+        F: Fn(&mut Self) -> Result<Option<T>>,
+    {
+        self.expect(open)?;
+        let mut list = self.ast.vec();
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if let Some(e) = f(self)? {
+                list.push(e);
+            } else {
+                break;
+            }
+        }
+        self.expect(close)?;
+        Ok(list)
+    }
+
+    pub(crate) fn parse_delimited_list<F, T>(
+        &mut self,
+        close: Kind,
+        separator: Kind,
+        trailing_separator: bool,
+        f: F,
+    ) -> Result<Vec<'a, T>>
+    where
+        F: Fn(&mut Self) -> Result<T>,
+    {
+        let mut list = self.ast.vec();
+        let mut first = true;
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if first {
+                first = false;
+            } else {
+                if !trailing_separator && self.at(separator) && self.peek_at(close) {
+                    break;
+                }
+                self.expect(separator)?;
+                if self.at(close) {
+                    break;
+                }
+            }
+            list.push(f(self)?);
+        }
+        Ok(list)
+    }
+
+    pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(
+        &mut self,
+        close: Kind,
+        parse_element: E,
+        parse_rest: R,
+    ) -> Result<(Vec<'a, A>, Option<B>)>
+    where
+        E: Fn(&mut Self) -> Result<A>,
+        R: Fn(&mut Self) -> Result<B>,
+        B: GetSpan,
+    {
+        let mut list = self.ast.vec();
+        let mut rest = None;
+        let mut first = true;
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if first {
+                first = false;
+            } else {
+                self.expect(Kind::Comma)?;
+                if self.at(close) {
+                    break;
+                }
+            }
+
+            if self.at(Kind::Dot3) {
+                if let Some(r) = rest.replace(parse_rest(self)?) {
+                    self.error(diagnostics::binding_rest_element_last(r.span()));
+                }
+            } else {
+                list.push(parse_element(self)?);
+            }
+        }
+        Ok((list, rest))
     }
 }

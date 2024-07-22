@@ -39,10 +39,8 @@ impl JsonSchema for OxlintRules {
         #[derive(Debug, Clone, JsonSchema)]
         #[serde(untagged)]
         enum DummyRule {
-            #[schemars(range(min = 0, max = 2.0))]
-            Number(usize),
-            String(String),
-            Array(Vec<serde_json::Value>),
+            Toggle(AllowWarnDeny),
+            ToggleAndConfig(Vec<serde_json::Value>),
         }
         gen.subschema_for::<FxHashMap<String, DummyRule>>()
     }

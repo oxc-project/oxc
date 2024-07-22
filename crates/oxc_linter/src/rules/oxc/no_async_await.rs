@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_async_await_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(no-async-await): Unexpected async/await")
+    OxcDiagnostic::warn("Unexpected async/await")
         .with_help("Async/await is not allowed")
         .with_label(span0)
 }

@@ -1,3 +1,5 @@
+use std::cell::Cell;
+
 use oxc_allocator::{Allocator, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
@@ -5,92 +7,108 @@ use oxc_ast::AstBuilder;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{visit::walk::*, Visit};
 use oxc_span::Atom;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::FxHashSet;
 
+/// Declaration scope.
+#[derive(Debug)]
+struct Scope<'a> {
+    type_bindings: FxHashSet<Atom<'a>>,
+    value_bindings: FxHashSet<Atom<'a>>,
+    type_references: FxHashSet<Atom<'a>>,
+    value_references: FxHashSet<Atom<'a>>,
+    flags: ScopeFlags,
+}
+
+impl<'a> Scope<'a> {
+    fn new(flags: ScopeFlags) -> Self {
+        Self {
+            value_bindings: FxHashSet::default(),
+            type_bindings: FxHashSet::default(),
+            type_references: FxHashSet::default(),
+            value_references: FxHashSet::default(),
+            flags,
+        }
+    }
+}
+
+/// Linear tree of declaration scopes.
 pub struct ScopeTree<'a> {
-    type_bindings: Vec<'a, FxHashSet<Atom<'a>>>,
-    value_bindings: Vec<'a, FxHashSet<Atom<'a>>>,
-    type_references: Vec<'a, FxHashSet<Atom<'a>>>,
-    value_references: Vec<'a, FxHashSet<Atom<'a>>>,
-    flags: Vec<'a, ScopeFlags>,
+    levels: Vec<'a, Scope<'a>>,
 }
 
 impl<'a> ScopeTree<'a> {
     pub fn new(allocator: &'a Allocator) -> Self {
         let ast = AstBuilder::new(allocator);
-        let mut scope = Self {
-            type_bindings: ast.new_vec(),
-            value_bindings: ast.new_vec(),
-            type_references: ast.new_vec(),
-            value_references: ast.new_vec(),
-            flags: ast.new_vec(),
-        };
-        scope.enter_scope(ScopeFlags::Top);
-        scope
+        let levels = ast.vec1(Scope::new(ScopeFlags::Top));
+        Self { levels }
     }
 
     pub fn is_ts_module_block_flag(&self) -> bool {
-        self.flags.last().unwrap().contains(ScopeFlags::TsModuleBlock)
+        let scope = self.levels.last().unwrap();
+        scope.flags.contains(ScopeFlags::TsModuleBlock)
     }
 
     pub fn has_reference(&self, name: &str) -> bool {
-        self.value_references.last().is_some_and(|rs| rs.contains(name))
-            || self.type_references.last().is_some_and(|rs| rs.contains(name))
+        // XXX(lucab): this should probably unwrap?
+        let Some(scope) = self.levels.last() else { return false };
+        scope.value_references.contains(name) || scope.type_references.contains(name)
     }
 
     pub fn references_len(&self) -> usize {
-        self.value_references.last().unwrap().len() + self.type_references.last().unwrap().len()
+        let scope = self.levels.last().unwrap();
+        scope.value_references.len() + scope.type_references.len()
     }
 
     fn add_value_binding(&mut self, ident: Atom<'a>) {
-        self.value_bindings.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.value_bindings.insert(ident);
     }
 
     fn add_type_binding(&mut self, ident: Atom<'a>) {
-        self.type_bindings.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.type_bindings.insert(ident);
     }
 
     fn add_value_reference(&mut self, ident: Atom<'a>) {
-        self.value_references.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.value_references.insert(ident);
     }
 
     fn add_type_reference(&mut self, ident: Atom<'a>) {
-        self.type_references.last_mut().unwrap().insert(ident);
+        let scope = self.levels.last_mut().unwrap();
+        scope.type_references.insert(ident);
     }
 
-    /// resolve references in the current scope
-    /// and merge unresolved references to the parent scope
-    /// and remove the current scope
+    /// Resolve references in the current scope, and propagate unresolved ones.
     fn resolve_references(&mut self) {
-        let current_value_bindings = self.value_bindings.pop().unwrap_or_default();
-        let current_value_references = self.value_references.pop().unwrap_or_default();
-        self.type_references
-            .last_mut()
-            .unwrap()
-            .extend(current_value_references.difference(&current_value_bindings).cloned());
+        debug_assert!(self.levels.len() >= 2);
 
-        let current_type_bindings = self.type_bindings.pop().unwrap_or_default();
-        let current_type_references = self.type_references.pop().unwrap_or_default();
-        self.type_references
-            .last_mut()
-            .unwrap()
-            .extend(current_type_references.difference(&current_type_bindings).cloned());
+        // Remove the current scope.
+        let mut current_scope = self.levels.pop().unwrap();
+
+        // Resolve references in the current scope.
+        let current_value_bindings = current_scope.value_bindings;
+        let current_value_references = current_scope.value_references;
+        let val_diff = current_value_references.difference(&current_value_bindings).cloned();
+        current_scope.type_references.extend(val_diff);
+        let current_type_bindings = current_scope.type_bindings;
+        let current_type_references = current_scope.type_references;
+        let type_diff = current_type_references.difference(&current_type_bindings).cloned();
+
+        // Merge unresolved references to the parent scope.
+        self.levels.last_mut().unwrap().type_references.extend(type_diff);
     }
 }
 
 impl<'a> Visit<'a> for ScopeTree<'a> {
-    fn enter_scope(&mut self, flags: ScopeFlags) {
-        self.flags.push(flags);
-        self.value_bindings.push(FxHashSet::default());
-        self.type_bindings.push(FxHashSet::default());
-        self.type_references.push(FxHashSet::default());
-        self.value_references.push(FxHashSet::default());
+    fn enter_scope(&mut self, flags: ScopeFlags, _: &Cell<Option<ScopeId>>) {
+        let scope = Scope::new(flags);
+        self.levels.push(scope);
     }
 
     fn leave_scope(&mut self) {
         self.resolve_references();
-        self.flags.pop();
     }
 
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
@@ -179,6 +197,16 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
 
     // ==================== TSTypeParameter ====================
 
+    fn visit_ts_type_parameter(&mut self, it: &TSTypeParameter<'a>) {
+        self.add_type_binding(it.name.name.clone());
+        if let Some(constraint) = &it.constraint {
+            self.visit_ts_type(constraint);
+        }
+        if let Some(default) = &it.default {
+            self.visit_ts_type(default);
+        }
+    }
+
     /// ```ts
     /// function foo<T>(x: T): T {
     ///             ^^^
@@ -190,8 +218,9 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     /// Because the type parameter is can be used in following nodes
     /// until the end of the function. So we leave the scope in the parent node (Function)
     fn visit_ts_type_parameter_declaration(&mut self, decl: &TSTypeParameterDeclaration<'a>) {
-        self.enter_scope(ScopeFlags::empty());
-        walk_ts_type_parameter_declaration(self, decl);
+        // TODO: doesn't have a scope_id!
+        self.enter_scope(ScopeFlags::empty(), &Cell::default());
+        decl.params.iter().for_each(|param| self.visit_ts_type_parameter(param));
         // exit scope in parent AST node
     }
 
@@ -202,15 +231,15 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         walk_function(self, func, flags);
         if func.type_parameters.is_some() {
             self.leave_scope();
         }
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        walk_arrow_expression(self, expr);
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
+        walk_arrow_function_expression(self, expr);
         if expr.type_parameters.is_some() {
             self.leave_scope();
         }
@@ -261,14 +290,14 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
         }
     }
 
-    /// `type D<T> = { [K in keyof T]: K };`
+    /// `type D = { [key in keyof T]: K };`
     ///             ^^^^^^^^^^^^^^^^^^^^
-    ///                `K` is a type parameter
-    /// We need to add `K` to the scope
+    /// We need to add both `T` and `K` to the scope
     fn visit_ts_mapped_type(&mut self, ty: &TSMappedType<'a>) {
+        // TODO: doesn't have a scope_id!
+        self.enter_scope(ScopeFlags::empty(), &Cell::default());
         // copy from walk_ts_mapped_type
-        self.enter_scope(ScopeFlags::empty());
-        self.add_type_binding(ty.type_parameter.name.name.clone());
+        self.visit_ts_type_parameter(&ty.type_parameter);
         if let Some(name) = &ty.name_type {
             self.visit_ts_type(name);
         }
@@ -283,13 +312,14 @@ impl<'a> Visit<'a> for ScopeTree<'a> {
     ///                                                  `Item` is a type parameter
     /// We need to add `Item` to the scope
     fn visit_conditional_expression(&mut self, expr: &ConditionalExpression<'a>) {
-        self.enter_scope(ScopeFlags::empty());
+        // TODO: doesn't have a scope_id!
+        self.enter_scope(ScopeFlags::empty(), &Cell::default());
         walk_conditional_expression(self, expr);
         self.leave_scope();
     }
 
     fn visit_ts_infer_type(&mut self, ty: &TSInferType<'a>) {
         // copy from walk_ts_infer_type
-        self.add_type_binding(ty.type_parameter.name.name.clone());
+        self.visit_ts_type_parameter(&ty.type_parameter);
     }
 }

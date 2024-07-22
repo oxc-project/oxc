@@ -4,6 +4,94 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+
+### Bug Fixes
+
+- 9a87e41 parser: Avoid crashing on invalid const modifier (#4267) (lucab)
+- 641a78b parser: Fix tests for number parsing (#4254) (overlookmotel)
+
+### Performance
+
+- a8dc4f3 parser: Speed up parsing numbers with `_` separators (#4259) (overlookmotel)
+- b94540d parser: Speed up parsing octal literals (#4258) (overlookmotel)
+- a7b328c parser: Faster parsing decimal numbers (#4257) (overlookmotel)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+
+## [0.20.0] - 2024-07-11
+
+- 5731e39 ast: [**BREAKING**] Store span details inside comment struct (#4132) (Luca Bruno)
+
+### Bug Fixes
+
+- 48947a2 ast: Put `decorators` before everything else. (#4143) (rzvxa)
+- 4a656c3 lexer: Incorrect lexing of large hex/octal/binary literals (#4072) (DonIsaac)
+- 28eeee0 parser: Fix asi error diagnostic pointing at invalid text causing crash (#4163) (Boshen)
+
+### Refactor
+
+
+## [0.19.0] - 2024-07-09
+
+- b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)
+
+### Refactor
+
+
+## [0.18.0] - 2024-07-09
+
+- d347aed ast: [**BREAKING**] Generate `ast_builder.rs`. (#3890) (rzvxa)
+
+### Features
+
+- 3a0f2aa parser: Check for illegal modifiers in modules and namespaces (#4126) (DonIsaac)
+
+## [0.17.1] - 2024-07-06
+
+### Performance
+
+- 7fe2a2f parser: Do not copy comments (#4067) (overlookmotel)
+
+## [0.17.0] - 2024-07-05
+
+- e32b4bc ast: [**BREAKING**] Store trivia comments in a sorted slice (#4045) (Luca Bruno)
+
+### Refactor
+
+- 243c9f3 parser: Use function instead of trait to parse list with rest element (#4028) (Boshen)
+- 1dacb1f parser: Use function instead of trait to parse delimited lists (#4014) (Boshen)
+
+## [0.16.3] - 2024-07-02
+
+### Refactor
+
+- d0eac46 parser: Use function instead of trait to parse normal lists (#4003) (Boshen)
+
+## [0.16.2] - 2024-06-30
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+- 63f36da parser: Parse modifiers with `parse_modifiers` (take 2) (#3977) (DonIsaac)
+
+## [0.16.1] - 2024-06-29
+
+### Features
+
+- 7b38bde parser: Parse modifiers with `parse_modifiers` (#3948) (DonIsaac)
+
+### Refactor
+
+- 2705df9 linter: Improve diagnostic labeling (#3960) (DonIsaac)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

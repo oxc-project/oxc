@@ -8,10 +8,10 @@ license.workspace = true
 [lints]
 workspace = true
 
-
 [[bin]]
-name = "oxc_ast_codegen"
-test = false
+name    = "oxc_ast_codegen"
+test    = false
+doctest = false
 
 [dependencies]
 syn = { workspace = true, features = [
@@ -27,9 +27,9 @@ quote = { workspace = true }
 proc-macro2 = { workspace = true }
 itertools = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 regex = { workspace = true }
 prettyplease = { workspace = true }
 lazy_static = { workspace = true }
-
-[package.metadata.cargo-shear]
-ignored = ["prettyplease"]
+convert_case = { workspace = true }
+bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }

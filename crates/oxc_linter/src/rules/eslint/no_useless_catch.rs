@@ -2,24 +2,20 @@ use oxc_ast::{
     ast::{BindingPatternKind, Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-fn no_useless_catch_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-useless-catch): Unnecessary try/catch wrapper").with_labels([
-        LabeledSpan::new_with_span(Some("is caught here".into()), span0),
-        LabeledSpan::new_with_span(Some("and re-thrown here".into()), span1),
-    ])
+fn no_useless_catch_diagnostic(catch: Span, rethrow: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unnecessary try/catch wrapper")
+        .with_labels([catch.label("is caught here"), rethrow.label("and re-thrown here")])
 }
 
-fn no_useless_catch_finalizer_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-useless-catch): Unnecessary catch clause").with_labels([
-        LabeledSpan::new_with_span(Some("is caught here".into()), span0),
-        LabeledSpan::new_with_span(Some("and re-thrown here".into()), span1),
-    ])
+fn no_useless_catch_finalizer_diagnostic(catch: Span, rethrow: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unnecessary catch clause")
+        .with_labels([catch.label("is caught here"), rethrow.label("and re-thrown here")])
 }
 
 #[derive(Debug, Default, Clone)]

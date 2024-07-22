@@ -9,8 +9,9 @@ license.workspace = true
 workspace = true
 
 [[bin]]
-name = "javascript_globals"
-test = false
+name    = "javascript_globals"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_tasks_common = { workspace = true }

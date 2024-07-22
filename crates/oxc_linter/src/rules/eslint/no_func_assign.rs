@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
@@ -7,8 +7,8 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule};
 
 fn no_func_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-func-assign): '{x0}' is a function."))
-        .with_labels([LabeledSpan::new_with_span(Some(format!("{x0} is re-assigned here")), span1)])
+    OxcDiagnostic::warn(format!("'{x0}' is a function."))
+        .with_label(span1.label(format!("{x0} is re-assigned here")))
 }
 
 #[derive(Debug, Default, Clone)]

@@ -93,7 +93,7 @@ impl Runner for LintRunner {
         let lint_options = LintOptions::default()
             .with_filter(filter)
             .with_config_path(basic_options.config)
-            .with_fix(fix_options.fix)
+            .with_fix(fix_options.fix_kind())
             .with_react_plugin(enable_plugins.react_plugin)
             .with_unicorn_plugin(enable_plugins.unicorn_plugin)
             .with_typescript_plugin(enable_plugins.typescript_plugin)
@@ -104,7 +104,8 @@ impl Runner for LintRunner {
             .with_vitest_plugin(enable_plugins.vitest_plugin)
             .with_jsx_a11y_plugin(enable_plugins.jsx_a11y_plugin)
             .with_nextjs_plugin(enable_plugins.nextjs_plugin)
-            .with_react_perf_plugin(enable_plugins.react_perf_plugin);
+            .with_react_perf_plugin(enable_plugins.react_perf_plugin)
+            .with_promise_plugin(enable_plugins.promise_plugin);
 
         let linter = match Linter::from_options(lint_options) {
             Ok(lint_service) => lint_service,

@@ -4,6 +4,112 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.21.0] - 2024-07-18
+
+### Features
+
+- 83c2c62 codegen: Add option for choosing quotes; remove slow `choose_quot` method (#4219) (Boshen)
+- 20cdb1f semantic: Align class scope with typescript (#4195) (Dunqing)
+
+### Bug Fixes
+
+- 3df9e69 mangler: No shorthand `BindingProperty`; handle var hoisting and export variables (#4319) (Boshen)
+
+### Refactor
+
+- 2c7bb9f ast: Pass final `ScopeFlags` into `visit_function` (#4283) (overlookmotel)
+- ace4f1f semantic: Update the order of `visit_function` and `Visit` fields in the builder to be consistent (#4248) (Dunqing)
+
+## [0.20.0] - 2024-07-11
+
+### Features
+
+- 67fe75e ast, ast_codegen: Pass the `scope_id` to the `enter_scope` event. (#4168) (rzvxa)
+
+### Bug Fixes
+
+- 48947a2 ast: Put `decorators` before everything else. (#4143) (rzvxa)
+
+## [0.19.0] - 2024-07-09
+
+- b936162 ast/ast_builder: [**BREAKING**] Shorter allocator utility method names. (#4122) (rzvxa)
+
+### Refactor
+
+
+## [0.18.0] - 2024-07-09
+
+- d347aed ast: [**BREAKING**] Generate `ast_builder.rs`. (#3890) (rzvxa)
+
+### Features
+
+
+### Bug Fixes
+
+- cb1af04 isolated-declarations: Remove the `async` and `generator` keywords from `MethodDefinition` (#4130) (Dunqing)
+
+## [0.17.2] - 2024-07-08
+
+### Bug Fixes
+
+- 5c31236 isolated-declarations: Keep literal value for readonly property (#4106) (Dunqing)
+- e67c7d1 isolated-declarations: Do not infer type for private parameters (#4105) (Dunqing)
+- 3fcad5e isolated_declarations: Remove nested AssignmentPatterns from inside parameters (#4077) (michaelm)
+- f8d77e4 isolated_declarations: Infer type of template literal expressions as string (#4068) (michaelm)
+
+### Performance
+
+- 7ed27b7 isolated-declarations: Use `FxHashSet` instead of `Vec` to speed up the `contain` (#4074) (Dunqing)
+
+## [0.17.1] - 2024-07-06
+
+### Bug Fixes
+
+- adee728 isolated_declarations: Don't report an error for parameters if they are ObjectPattern or ArrayPattern with an explicit type (#4065) (michaelm)
+- 1b8f208 isolated_declarations: Correct emit for private static methods (#4064) (michaelm)
+
+### Refactor
+
+- 65aee19 isolated-declarations: Reorganize scope tree (#4070) (Luca Bruno)
+
+## [0.17.0] - 2024-07-05
+
+- c98d8aa ast: [**BREAKING**] Rename `visit_arrow_expression` to `visit_arrow_function_expression`. (#3995) (rzvxa)
+
+### Features
+
+- 7768d23 isolated-declarations: Support optional class methods (#4035) (Egor Blinov)
+
+### Bug Fixes
+
+- 3d29e9c isolated-declarations: Eliminate imports incorrectly when they are used in `TSInferType` (#4043) (Dunqing)
+- 02ea19a isolated-declarations: Should emit `export {}` when only having `ImportDeclaration` (#4026) (Dunqing)
+- 7c915f4 isolated-declarations: Binding elements with export should report an error (#4025) (Dunqing)
+- 05a047c isolated-declarations: Method following an abstract method gets dropped (#4024) (Dunqing)
+- c043bec isolated_declarations: Add mapped-type constraint to the scope (#4037) (Egor Blinov)
+- b007553 isolated_declarations: Fix readonly specifier on class constructor params (#4030) (Egor Blinov)
+- da62839 isolated_declarations: Inferring literal types for readonly class fileds (#4027) (Egor Blinov)
+
+### Refactor
+
+
+## [0.16.2] - 2024-06-30
+
+### Features
+
+- dc6d45e ast,codegen: Add `TSParenthesizedType` and print type parentheses correctly (#3979) (Boshen)
+
+### Bug Fixes
+
+- bd1141d isolated-declarations: If declarations is referenced in `declare global` then keep it (#3982) (Dunqing)
+
+## [0.16.1] - 2024-06-29
+
+### Bug Fixes
+
+- 51e54f9 codegen: Should print `TSModuleDeclarationKind` instead of just `module` (#3957) (Dunqing)
+- 31e4c3b isolated-declarations: `declare global {}` should be kept even if it is not exported (#3956) (Dunqing)
+
 ## [0.16.0] - 2024-06-26
 
 - 6796891 ast: [**BREAKING**] Rename all instances of `BigintLiteral` to `BigIntLiteral`. (#3898) (rzvxa)

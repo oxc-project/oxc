@@ -1,20 +1,9 @@
 commit: d8086f14
 
 transformer_typescript Summary:
-AST Parsed     : 5283/5283 (100.00%)
-Positive Passed: 5268/5283 (99.72%)
+AST Parsed     : 6456/6456 (100.00%)
+Positive Passed: 6452/6456 (99.94%)
+Mismatch: "compiler/constEnumNamespaceReferenceCausesNoImport2.ts"
 Mismatch: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
-Mismatch: "compiler/esDecoratorsClassFieldsCrash.ts"
-Mismatch: "compiler/useBeforeDeclaration_classDecorators.2.ts"
-Mismatch: "conformance/classes/propertyMemberDeclarations/autoAccessor10.ts"
-Mismatch: "conformance/classes/propertyMemberDeclarations/autoAccessor2.ts"
-Mismatch: "conformance/classes/propertyMemberDeclarations/autoAccessor9.ts"
-Mismatch: "conformance/classes/propertyMemberDeclarations/autoAccessorAllowedModifiers.ts"
-Mismatch: "conformance/classes/propertyMemberDeclarations/staticAutoAccessors.ts"
-Mismatch: "conformance/classes/propertyMemberDeclarations/staticAutoAccessorsWithDecorators.ts"
-Mismatch: "conformance/decorators/legacyDecorators-contextualTypes.ts"
-Mismatch: "conformance/esDecorators/classDeclaration/classThisReference/esDecorators-classDeclaration-classThisReference.ts"
-Mismatch: "conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticAccessor.ts"
-Mismatch: "conformance/esDecorators/classDeclaration/fields/esDecorators-classDeclaration-fields-staticPrivateAccessor.ts"
-Mismatch: "conformance/esDecorators/classExpression/esDecorators-classExpression-commentPreservation.ts"
-Mismatch: "conformance/esDecorators/esDecorators-contextualTypes.ts"
+Mismatch: "conformance/externalModules/typeOnly/exportDeclaration.ts"
+Mismatch: "conformance/jsx/inline/inlineJsxAndJsxFragPragmaOverridesCompilerOptions.tsx"

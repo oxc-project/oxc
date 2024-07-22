@@ -2,14 +2,11 @@ use bitflags::bitflags;
 use oxc_index::define_index_type;
 
 define_index_type! {
-    pub struct AstNodeId = usize;
+    pub struct AstNodeId = u32;
 }
 
 impl AstNodeId {
-    #[inline]
-    pub fn dummy() -> Self {
-        Self::new(0)
-    }
+    pub const DUMMY: Self = AstNodeId::from_raw_unchecked(0);
 }
 
 #[cfg(feature = "serialize")]
@@ -30,7 +27,6 @@ bitflags! {
         const JSDoc     = 1 << 0; // If the Node has a JSDoc comment attached
         const Class     = 1 << 1; // If Node is inside a class
         const HasYield  = 1 << 2; // If function has yield statement
-        const Parameter = 1 << 3; // If Node is inside a parameter
     }
 }
 
@@ -48,10 +44,5 @@ impl NodeFlags {
     #[inline]
     pub fn has_yield(&self) -> bool {
         self.contains(Self::HasYield)
-    }
-
-    #[inline]
-    pub fn has_parameter(&self) -> bool {
-        self.contains(Self::Parameter)
     }
 }

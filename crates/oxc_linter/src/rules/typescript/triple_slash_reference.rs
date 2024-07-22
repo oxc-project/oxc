@@ -11,7 +11,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn triple_slash_reference_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(triple-slash-reference): Do not use a triple slash reference for {x0}, use `import` style instead."))
+    OxcDiagnostic::warn(format!("Do not use a triple slash reference for {x0}, use `import` style instead."))
         .with_help("Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.")
         .with_label(span1)
 }
@@ -112,8 +112,9 @@ impl Rule for TripleSlashReference {
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
         let mut refs_for_import = HashMap::new();
 
-        for (start, comment) in ctx.semantic().trivias().comments_range(0..comments_range_end) {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end as usize];
+        for comment in ctx.semantic().trivias().comments_range(0..comments_range_end) {
+            let raw = &ctx.semantic().source_text()
+                [comment.span.start as usize..comment.span.end as usize];
             if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)
                     || (group1 == "path" && self.path == PathOption::Never)
@@ -121,12 +122,13 @@ impl Rule for TripleSlashReference {
                 {
                     ctx.diagnostic(triple_slash_reference_diagnostic(
                         &group2,
-                        Span::new(*start - 2, comment.end),
+                        Span::new(comment.span.start - 2, comment.span.end),
                     ));
                 }
 
                 if group1 == "types" && self.types == TypesOption::PreferImport {
-                    refs_for_import.insert(group2, Span::new(*start - 2, comment.end));
+                    refs_for_import
+                        .insert(group2, Span::new(comment.span.start - 2, comment.span.end));
                 }
             }
         }
@@ -159,6 +161,10 @@ impl Rule for TripleSlashReference {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

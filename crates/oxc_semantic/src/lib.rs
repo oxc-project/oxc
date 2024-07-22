@@ -10,6 +10,7 @@ mod node;
 mod reference;
 mod scope;
 mod symbol;
+mod unresolved_stack;
 
 pub mod dot;
 
@@ -273,7 +274,7 @@ mod tests {
             (SourceType::default(), "let a, b; b = a = 1", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b, c; b = c = a", ReferenceFlag::read()),
-            // sequences return last value in sequence
+            // sequences return last read_write in sequence
             (SourceType::default(), "let a, b; b = (0, a++)", ReferenceFlag::read_write()),
             // loops
             (
@@ -300,7 +301,7 @@ mod tests {
                 "let a, b; if (b == a) { true } else { false }",
                 ReferenceFlag::read(),
             ),
-            // identifiers not in last value are also considered a read (at
+            // identifiers not in last read_write are also considered a read (at
             // least, or now)
             (SourceType::default(), "let a, b; b = (a, 0)", ReferenceFlag::read()),
             (SourceType::default(), "let a, b; b = (--a, 0)", ReferenceFlag::read_write()),
