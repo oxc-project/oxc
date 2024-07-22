@@ -193,4 +193,16 @@ impl SymbolTable {
             _ => false,
         }
     }
+
+    pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
+        self.spans.reserve(additional_symbols);
+        self.names.reserve(additional_symbols);
+        self.flags.reserve(additional_symbols);
+        self.scope_ids.reserve(additional_symbols);
+        self.declarations.reserve(additional_symbols);
+        self.resolved_references.reserve(additional_symbols);
+        self.redeclare_variables.reserve(additional_symbols);
+
+        self.references.reserve(additional_references);
+    }
 }

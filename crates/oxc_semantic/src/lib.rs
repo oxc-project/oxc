@@ -2,6 +2,7 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
+mod counter;
 mod diagnostics;
 mod jsdoc;
 mod label;
