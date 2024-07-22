@@ -66,6 +66,10 @@ impl Rule for NoFindDomNode {
         };
         ctx.diagnostic(no_find_dom_node_diagnostic(span));
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[test]

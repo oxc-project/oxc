@@ -74,6 +74,10 @@ impl Rule for JsxNoUselessFragment {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 impl JsxNoUselessFragment {

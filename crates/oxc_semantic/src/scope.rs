@@ -191,7 +191,31 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
+    /// Create scope.
+    /// For root (`Program`) scope, use `add_root_scope`.
     pub fn add_scope(
+        &mut self,
+        parent_id: ScopeId,
+        node_id: AstNodeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let scope_id = self.add_scope_impl(Some(parent_id), node_id, flags);
+
+        // Set this scope as child of parent scope
+        self.child_ids[parent_id].push(scope_id);
+
+        scope_id
+    }
+
+    /// Create root (`Program`) scope.
+    pub fn add_root_scope(&mut self, node_id: AstNodeId, flags: ScopeFlags) -> ScopeId {
+        self.add_scope_impl(None, node_id, flags)
+    }
+
+    // `#[inline]` because almost always called from `add_scope` and want to avoid
+    // overhead of a function call there.
+    #[inline]
+    fn add_scope_impl(
         &mut self,
         parent_id: Option<ScopeId>,
         node_id: AstNodeId,
@@ -202,12 +226,6 @@ impl ScopeTree {
         self.flags.push(flags);
         self.bindings.push(Bindings::default());
         self.node_ids.push(node_id);
-
-        // Set this scope as child of parent scope.
-        if let Some(parent_id) = parent_id {
-            self.child_ids[parent_id].push(scope_id);
-        }
-
         scope_id
     }
 

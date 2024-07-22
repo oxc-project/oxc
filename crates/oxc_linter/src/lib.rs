@@ -116,10 +116,10 @@ impl Linter {
         let ctx = self.create_ctx(path, semantic);
         let semantic = Rc::clone(ctx.semantic());
 
-        let ctx = ctx.with_fix(self.options.fix).with_eslint_config(&self.eslint_config);
         let rules = self
             .rules
             .iter()
+            .filter(|rule| rule.should_run(&ctx))
             .map(|rule| {
                 let rule_name = rule.name();
                 let plugin_name = self.map_jest(rule.plugin_name(), rule_name);

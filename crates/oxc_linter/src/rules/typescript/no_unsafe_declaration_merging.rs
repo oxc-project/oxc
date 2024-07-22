@@ -36,10 +36,6 @@ declare_oxc_lint!(
 
 impl Rule for NoUnsafeDeclarationMerging {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !ctx.source_type().is_typescript() {
-            return;
-        }
-
         match node.kind() {
             AstKind::Class(decl) => {
                 if let Some(ident) = decl.id.as_ref() {
@@ -63,6 +59,10 @@ impl Rule for NoUnsafeDeclarationMerging {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

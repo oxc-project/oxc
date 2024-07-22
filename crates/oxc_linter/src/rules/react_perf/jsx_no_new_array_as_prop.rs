@@ -50,6 +50,10 @@ impl Rule for JsxNoNewArrayAsProp {
             check_jsx_element(jsx_elem, ctx);
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {

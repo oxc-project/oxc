@@ -66,6 +66,10 @@ impl Rule for NoIsMounted {
             }
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[test]
