@@ -22,8 +22,7 @@ pub enum SkipChainExpression<'a> {
 }
 
 pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> SkipChainExpression<'a> {
-    match expr {
-        Expression::ParenthesizedExpression(paren_expr) => skip_chain_expression(&paren_expr.expression),
+    match expr.without_parenthesized() {
         Expression::ChainExpression(chain_expr) => SkipChainExpression::ChainElement(&chain_expr.expression),
         _ => SkipChainExpression::Expression(expr)
     }

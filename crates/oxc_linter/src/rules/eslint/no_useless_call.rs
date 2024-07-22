@@ -63,22 +63,18 @@ fn is_array_argument(_expr: Option<&Argument>) -> bool {
     expr.is_array()
 }
 
-fn is_apply_member(call_expr: &CallExpression, member_expr: &MemberExpression) -> bool {
-    let Some(static_name) = member_expr.static_property_name() else {
-        return false;
-    };
-
-    (static_name == "call" && call_expr.arguments.len() >= 1) || 
-    (static_name == "apply" && call_expr.arguments.len() == 2 && is_array_argument(call_expr.arguments.get(1)))
-}
-
 fn is_call_or_non_variadic_apply(call_expr: &CallExpression) -> bool {
     let skip_expr_callee = skip_chain_expression(&call_expr.callee);
     let Some(member_expr) = get_skip_chain_expr_member_expr(skip_expr_callee) else {
         return false;
     };
 
-    is_apply_member(call_expr, member_expr)
+    let Some(static_name) = member_expr.static_property_name() else {
+        return false;
+    };
+
+    (static_name == "call" && call_expr.arguments.len() >= 1) || 
+    (static_name == "apply" && call_expr.arguments.len() == 2 && is_array_argument(call_expr.arguments.get(1)))
 }
 
 fn is_validate_this_arg(ctx: &LintContext, expected_this: Option<&Expression>, this_arg: &Expression) -> bool {
