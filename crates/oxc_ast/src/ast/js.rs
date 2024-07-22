@@ -235,7 +235,7 @@ pub struct LabelIdentifier<'a> {
 }
 
 /// This Expression
-/// 
+///
 /// Corresponds to the `this` keyword.
 #[ast(visit)]
 #[derive(Debug, Hash)]
@@ -293,7 +293,7 @@ pub struct Elision {
 }
 
 /// Object Expression
-/// 
+///
 /// ## Example
 /// ```ts
 /// const x = { foo: 'foo' }
@@ -318,7 +318,7 @@ pub struct ObjectExpression<'a> {
 #[serde(untagged)]
 pub enum ObjectPropertyKind<'a> {
     /// Object Property
-    /// 
+    ///
     /// ## Example
     /// ```ts
     /// const foo = 'foo'
@@ -326,7 +326,7 @@ pub enum ObjectPropertyKind<'a> {
     /// //          ^^^  ^^^^^^^^^      
     ObjectProperty(Box<'a, ObjectProperty<'a>>),
     /// Object Spread Property
-    /// 
+    ///
     /// ## Example
     /// ```ts
     /// const obj = { foo: 'foo' }
@@ -487,7 +487,7 @@ pub struct StaticMemberExpression<'a> {
 }
 
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
-/// 
+///
 /// ## Example
 /// ```ts
 /// //    _______ object
@@ -508,16 +508,16 @@ pub struct PrivateFieldExpression<'a> {
 }
 
 /// Call Expression
-/// 
+///
 /// ## Examples
 /// ```ts
 /// //        ___ callee
 /// const x = foo(1, 2)
-/// 
+///
 /// //            ^^^^ arguments
 /// const y = foo.bar?.(1, 2)
 /// //               ^ optional
-/// 
+///
 /// const z = foo<number, string>(1, 2)
 /// //            ^^^^^^^^^^^^^^ type parameters
 /// ```
@@ -535,7 +535,7 @@ pub struct CallExpression<'a> {
 }
 
 /// New Expression
-/// 
+///
 /// ## Example
 /// ```ts
 /// //           callee         arguments
@@ -569,9 +569,9 @@ pub struct MetaProperty<'a> {
 }
 
 /// Spread Element
-/// 
+///
 /// An array or object spread. Could be used in unpacking or a declaration.
-/// 
+///
 /// ## Example
 /// ```ts
 /// const [first, ...rest] = arr

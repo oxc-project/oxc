@@ -343,7 +343,7 @@ impl<'a> Deref for ArrayExpression<'a> {
     type Target = Vec<'a, ArrayExpressionElement<'a>>;
 
     fn deref(&self) -> &Self::Target {
-        &self.elements        
+        &self.elements
     }
 }
 

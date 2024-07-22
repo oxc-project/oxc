@@ -1140,10 +1140,10 @@ pub struct TSNonNullExpression<'a> {
 }
 
 /// Decorator
-/// 
+///
 /// Decorators are annotations on classes, methods, properties, and parameters.
 /// They are usually either an [`IdentifierReference`] or an [`CallExpression`].
-/// 
+///
 /// ## Example
 /// ```ts
 /// @Foo                        // class decorator
@@ -1151,7 +1151,7 @@ pub struct TSNonNullExpression<'a> {
 /// class SomeClass {
 ///     @Freeze                 // property decorator
 ///     public x: number;
-/// 
+///
 ///     @MethodDecorator        // method decorator
 ///     public method(
 ///         @LogParam x: number // parameter decorator
@@ -1160,7 +1160,7 @@ pub struct TSNonNullExpression<'a> {
 ///     }  
 /// }
 /// ```
-/// 
+///
 /// [`IdentifierReference`]: crate::ast::js::IdentifierReference
 /// [`CallExpression`]: crate::ast::js::CallExpression
 #[ast(visit)]
