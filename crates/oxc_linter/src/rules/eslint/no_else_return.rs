@@ -30,8 +30,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoElseReturn,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    suspicious,
 );
 
 fn is_safe_from_name_collisions<'a>(ctx: &LintContext<'a>, stmt: &Statement, parent_scope_id: ScopeId) -> bool {
@@ -78,7 +77,7 @@ fn get_else_code_space_token(str: &str, else_code: &str) -> String {
 }
 
 fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic{
-  OxcDiagnostic::warn("eslint(no-else-return): Disallow `else` blocks after `return` statements in `if` statements")
+  OxcDiagnostic::warn("Disallow `else` blocks after `return` statements in `if` statements")
       .with_label(else_stmt.span())
 }
 
@@ -160,7 +159,6 @@ fn check_if_without_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
   let AstKind::IfStatement(if_stmt) = node.kind() else {
     return;
   };
-  let mut consequents: Vec<&Statement> = Vec::new();
   let mut current_node = if_stmt;
   let mut last_alternate;
   let mut last_alternate_prev;
@@ -169,7 +167,9 @@ fn check_if_without_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
     let Some(alternate) = &current_node.alternate else {
       return;
     };
-    consequents.push(&current_node.consequent);
+    if !always_returns(&current_node.consequent) {
+      return;
+    }
     last_alternate_prev = &current_node.consequent;
     last_alternate = alternate;
     match alternate {
@@ -180,10 +180,7 @@ fn check_if_without_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
     }
   }
 
-
-  if consequents.iter().all(|stmt| always_returns(stmt)) {
-    no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
-  }
+  no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
 }
 
 fn is_in_statement_list_parents(node: &AstNode) -> bool{
