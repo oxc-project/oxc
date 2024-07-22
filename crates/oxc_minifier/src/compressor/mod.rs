@@ -53,6 +53,16 @@ impl<'a> Compressor<'a> {
         self.ast.expression_binary(SPAN, left, BinaryOperator::Division, right)
     }
 
+    /// Test `Object.defineProperty(exports, ...)`
+    fn is_object_define_property_exports(expr: &Expression<'a>) -> bool {
+        let Expression::CallExpression(call_expr) = expr else { return false };
+        let Some(Argument::Identifier(ident)) = call_expr.arguments.first() else { return false };
+        if ident.name != "exports" {
+            return false;
+        }
+        call_expr.callee.is_specific_member_access("Object", "defineProperty")
+    }
+
     /* Statements */
 
     /// Remove block from single line blocks
@@ -345,6 +355,10 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        // Bail cjs `Object.defineProperty(exports, ...)`
+        if Self::is_object_define_property_exports(expr) {
+            return;
+        }
         walk_mut::walk_expression(self, expr);
         self.compress_console(expr);
         self.folder.fold_expression(expr);
