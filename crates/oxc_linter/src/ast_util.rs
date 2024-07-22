@@ -16,26 +16,10 @@ use oxc_ast::ast::*;
 
 use crate::context::LintContext;
 
-pub enum SkipChainExpression<'a> {
-    ChainElement(&'a ChainElement<'a>),
-    Expression(&'a Expression<'a>),
-}
-
-pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> SkipChainExpression<'a> {
+pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> Option<&MemberExpression<'a>> {
     match expr.without_parenthesized() {
-        Expression::ChainExpression(chain_expr) => SkipChainExpression::ChainElement(&chain_expr.expression),
-        _ => SkipChainExpression::Expression(expr)
-    }
-}
-
-pub fn get_skip_chain_expr_member_expr(skip_expr_callee: SkipChainExpression) -> Option<&MemberExpression> {
-    match skip_expr_callee {
-        SkipChainExpression::ChainElement(expr) => {
-            expr.as_member_expression()
-        },
-        SkipChainExpression::Expression(expr) => {
-            expr.as_member_expression()
-        }
+        Expression::ChainExpression(chain_expr) => chain_expr.expression.as_member_expression(),
+        expr => expr.as_member_expression()
     }
 }
 

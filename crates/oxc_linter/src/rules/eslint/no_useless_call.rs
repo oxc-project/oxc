@@ -1,9 +1,9 @@
-use oxc_ast::{ast::{Argument, CallExpression, ChainElement, Expression, MemberExpression, StaticMemberExpression}, match_member_expression, visit::walk::walk_expression, AstKind};
+use oxc_ast::{ast::{Argument, CallExpression, Expression}, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::*, context::LintContext, rule::Rule, rules::jest::expect_expect, utils::is_same_reference, AstNode};
+use crate::{ast_util::*, context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessCall;
@@ -64,8 +64,7 @@ fn is_array_argument(_expr: Option<&Argument>) -> bool {
 }
 
 fn is_call_or_non_variadic_apply(call_expr: &CallExpression) -> bool {
-    let skip_expr_callee = skip_chain_expression(&call_expr.callee);
-    let Some(member_expr) = get_skip_chain_expr_member_expr(skip_expr_callee) else {
+    let Some(member_expr) = skip_chain_expression(&call_expr.callee) else {
         return false;
     };
 
@@ -97,13 +96,10 @@ impl Rule for NoUselessCall {
         if !is_call_or_non_variadic_apply(call_expr) {
             return;
         }
-
-        let callee = skip_chain_expression(&call_expr.callee);
-        let Some(callee_member) = get_skip_chain_expr_member_expr(callee) else {
+        let Some(callee_member) = skip_chain_expression(&call_expr.callee) else {
             return;
         };
-        let applied = skip_chain_expression(callee_member.object());
-        let expected_this = match get_skip_chain_expr_member_expr(applied) {
+        let expected_this = match skip_chain_expression(callee_member.object()) {
             Some(member) => Some(member.object()),
             None => None,
         };
