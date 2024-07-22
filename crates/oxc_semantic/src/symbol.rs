@@ -163,7 +163,7 @@ impl SymbolTable {
     pub fn get_resolved_references(
         &self,
         symbol_id: SymbolId,
-    ) -> impl Iterator<Item = &Reference> + '_ {
+    ) -> impl DoubleEndedIterator<Item = &Reference> + '_ {
         self.resolved_references[symbol_id]
             .iter()
             .map(|reference_id| &self.references[*reference_id])

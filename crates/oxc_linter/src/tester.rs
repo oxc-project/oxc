@@ -207,14 +207,27 @@ impl Tester {
 
     pub fn test_and_snapshot(&mut self) {
         self.test();
-        self.snapshot();
+        self.snapshot(None);
     }
 
-    pub fn snapshot(&self) {
+    pub fn test_and_snapshot_with_suffix(&mut self, suffix: &str) {
+        self.test();
+        self.snapshot(Some(suffix));
+    }
+
+    fn snapshot(&self, suffix: Option<&str>) {
         let name = self.rule_name.replace('-', "_");
-        insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        let mut settings = insta::Settings::clone_current();
+
+        settings.set_prepend_module_to_snapshot(false);
+        settings.set_omit_expression(true);
+        if let Some(suffix) = suffix {
+            settings.set_snapshot_suffix(suffix);
+        }
+
+        settings.bind(|| {
             insta::assert_snapshot!(name, self.snapshot);
-        });
+        })
     }
 
     fn test_pass(&mut self) {
