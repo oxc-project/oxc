@@ -7,7 +7,6 @@ use oxc_ast::{
 };
 use oxc_semantic::AstNode;
 use oxc_syntax::operator::LogicalOperator;
-use oxc_span::{GetSpan, Span};
 
 pub use self::boolean::*;
 use crate::LintContext;
