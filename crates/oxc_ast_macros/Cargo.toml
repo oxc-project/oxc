@@ -24,3 +24,5 @@ doctest    = false
 quote = { workspace = true }
 syn = { workspace = true, features = ["full"] }
 proc-macro2 = { workspace = true }
+lazy_static = { workspace = true }
+rustc-hash  = { workspace = true }

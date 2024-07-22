@@ -1,6 +1,12 @@
+mod reorder_fields;
+mod generated {
+    pub mod ast_field_order_data;
+}
+
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TokenStream2;
 use quote::quote;
+use reorder_fields::reorder_fields;
 
 /// returns `#[repr(C, u8)]` if `enum_` has any non-unit variant,
 /// Otherwise it would return `#[repr(u8)]`.
@@ -26,10 +32,16 @@ fn enum_repr(enum_: &syn::ItemEnum) -> TokenStream2 {
 #[allow(clippy::missing_panics_doc)]
 pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as syn::Item);
-
-    let repr = match input {
-        syn::Item::Enum(ref enum_) => enum_repr(enum_),
-        syn::Item::Struct(_) => quote!(#[repr(C)]),
+    let (repr, item) = match input {
+        syn::Item::Enum(enum_) => (enum_repr(&enum_), syn::Item::Enum(enum_)),
+        syn::Item::Struct(mut struct_) => {
+            let id = struct_.ident.to_string();
+            // if we have field ordering data for this type use it to reorder.
+            if let Some(data) = generated::ast_field_order_data::get(id.as_str()) {
+                reorder_fields(&mut struct_, data);
+            };
+            (quote!(#[repr(C)]), syn::Item::Struct(struct_))
+        }
 
         _ => {
             unreachable!()
@@ -39,7 +51,7 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #[derive(::oxc_ast_macros::Ast)]
         #repr
-        #input
+        #item
     };
     TokenStream::from(expanded)
 }

@@ -164,7 +164,16 @@ fn calc_struct_layout(ty: &mut RStruct, ctx: &CodegenCtx) -> Result<PlatformLayo
     fn with_padding(
         layouts: &[KnownLayout],
     ) -> std::result::Result<KnownLayout, std::alloc::LayoutError> {
-        let layouts = layouts.iter().enumerate();
+        // reorder fields
+        let layouts = layouts.iter().enumerate().sorted_by(|a, b| {
+            let (ia, a) = a;
+            let (ib, b) = b;
+            if b.size() == a.size() {
+                Ord::cmp(&ia, &ib)
+            } else {
+                Ord::cmp(&b.size(), &a.size())
+            }
+        });
         let mut offsets = vec![0; layouts.len()];
         let mut output = std::alloc::Layout::from_size_align(0, 1)?;
         let mut niches = 0;

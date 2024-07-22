@@ -1,4 +1,5 @@
 #![allow(clippy::wildcard_imports)]
+#![allow(clippy::inconsistent_struct_constructor)]
 // TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
 // module and the generated one.
 #![allow(clippy::self_named_module_files)]
@@ -24,7 +25,6 @@
 //! [`AssignmentTarget`]: ast::AssignmentTarget
 //! [`oxc_parser`]: <https://docs.rs/oxc_parser>
 //! [`Parser`]: <https://docs.rs/oxc_parser/latest/oxc_parser/struct.Parser.html>
-
 #[cfg(feature = "serialize")]
 mod serialize;
 
@@ -39,6 +39,8 @@ mod trivia;
 mod generated {
     #[cfg(test)]
     pub mod assert_layouts;
+    // TODO: remove me; don't merge to upstream!!
+    pub mod assert_repr_rust_layout;
     pub mod ast_builder;
     pub mod ast_kind;
     pub mod span;

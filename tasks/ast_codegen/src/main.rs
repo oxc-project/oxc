@@ -1,5 +1,4 @@
 const AST_CRATE: &str = "crates/oxc_ast";
-#[allow(dead_code)]
 const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
 
 mod defs;
@@ -22,7 +21,7 @@ use syn::parse_file;
 
 use defs::TypeDef;
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, VisitGenerator,
+    AssertLayouts, AstBuilderGenerator, AstFieldOrder, AstKindGenerator, Generator, VisitGenerator,
     VisitMutGenerator,
 };
 use schema::{Module, REnum, RStruct, RType, Schema};
@@ -265,6 +264,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .pass(CalcLayout)
         .pass(BuildSchema)
         .gen(AssertLayouts)
+        .gen(AstFieldOrder)
         .gen(AstKindGenerator)
         .gen(AstBuilderGenerator)
         .gen(ImplGetSpanGenerator)
