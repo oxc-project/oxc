@@ -9,13 +9,13 @@ use syn::{
     Path, Token, Type, Variant, Visibility,
 };
 
-use crate::{util::NormalizeError, TypeName};
+use crate::{layout::Layout, util::NormalizeError, TypeName};
 
 use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result, TypeDef, TypeRef};
 
 #[derive(Debug, Default, serde::Serialize)]
 pub struct Schema {
-    definitions: Vec<TypeDef>,
+    pub definitions: Vec<TypeDef>,
 }
 
 #[derive(Debug, Clone)]
@@ -33,6 +33,8 @@ impl From<Ident> for Inherit {
 #[derive(Debug, Default, Clone)]
 pub struct EnumMeta {
     pub inherits: Vec<Inherit>,
+    pub layout_32: Layout,
+    pub layout_64: Layout,
     pub visitable: bool,
     pub ast: bool,
 }
@@ -68,6 +70,8 @@ impl From<ItemEnum> for REnum {
 /// Placeholder for now!
 #[derive(Debug, Default, Clone)]
 pub struct StructMeta {
+    pub layout_32: Layout,
+    pub layout_64: Layout,
     pub visitable: bool,
     pub ast: bool,
 }
@@ -166,6 +170,41 @@ impl RType {
         match self {
             RType::Enum(it) => it.meta.ast = value,
             RType::Struct(it) => it.meta.ast = value,
+            _ => return Err("Unsupported type!".to_string()),
+        }
+        Ok(())
+    }
+
+    pub fn layout_32(&self) -> Result<Layout> {
+        match self {
+            RType::Enum(it) => Ok(it.meta.layout_32),
+            RType::Struct(it) => Ok(it.meta.layout_32),
+            _ => Err("Unsupported type!".to_string()),
+        }
+    }
+
+    pub fn layout_64(&self) -> Result<Layout> {
+        match self {
+            RType::Enum(it) => Ok(it.meta.layout_64),
+            RType::Struct(it) => Ok(it.meta.layout_64),
+            _ => Err("Unsupported type!".to_string()),
+        }
+    }
+
+    pub fn layouts(&self) -> Result<(/* 64 */ Layout, /* 32 */ Layout)> {
+        self.layout_64().and_then(|x64| self.layout_32().map(|x32| (x64, x32)))
+    }
+
+    pub fn set_layout(&mut self, layout_64: Layout, layout_32: Layout) -> Result<()> {
+        macro_rules! assign {
+            ($it:ident) => {{
+                $it.meta.layout_32 = layout_32;
+                $it.meta.layout_64 = layout_64;
+            }};
+        }
+        match self {
+            RType::Enum(it) => assign!(it),
+            RType::Struct(it) => assign!(it),
             _ => return Err("Unsupported type!".to_string()),
         }
         Ok(())

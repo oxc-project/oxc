@@ -1,10 +1,14 @@
 const AST_CRATE: &str = "crates/oxc_ast";
+#[allow(dead_code)]
+const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
 
 mod defs;
 mod fmt;
 mod generators;
+mod layout;
 mod linker;
 mod markers;
+mod pass;
 mod schema;
 mod util;
 
@@ -13,12 +17,15 @@ use std::{borrow::Cow, cell::RefCell, collections::HashMap, io::Read, path::Path
 use bpaf::{Bpaf, Parser};
 use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
+use layout::calc_layout;
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
-use generators::{AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator};
-use linker::{linker, Linker};
+use generators::{
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator,
+};
+use linker::linker;
 use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
 use util::{write_all_to, NormalizeError};
 
@@ -125,7 +132,9 @@ impl CodegenCtx {
             }
         }
 
-        let mut me = Self { ty_table, ident_table, schema: Schema::default() }.link(linker)?;
+        let mut me = Self { ty_table, ident_table, schema: Schema::default() }
+            .pass(linker)?
+            .pass(calc_layout)?;
         for m in mods {
             m.build_in(&mut me.schema)?;
         }
@@ -219,6 +228,7 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let CodegenResult { outputs, schema } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
+        .with(AssertLayouts)
         .with(AstKindGenerator)
         .with(AstBuilderGenerator)
         .with(ImplGetSpanGenerator)
