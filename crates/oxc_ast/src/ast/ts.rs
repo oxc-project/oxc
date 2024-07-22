@@ -654,6 +654,7 @@ pub struct TSClassImplements<'a> {
 pub struct TSInterfaceDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
@@ -699,6 +700,17 @@ pub enum TSSignature<'a> {
     TSMethodSignature(Box<'a, TSMethodSignature<'a>>),
 }
 
+/// An index signature within a class, type alias, etc.
+///
+/// ## Example
+/// [playground link](https://oxc-project.github.io/oxc/playground/?code=3YCAAIC9gICAgICAgIC6nsrEgtem3AB/pQsrWlLnujiFhkHVtfeFMq5RMD7X5AzJnZ5R/ecQ5KG1FUFjzXvrxFXH0m6HpS+Ob3TC8gQXeRQygA%3D%3D)
+/// ```ts
+/// type MapOf<T> = {
+/// //   _________ parameters (vec with 1 element)
+///     [K: string]: T
+/// //               - type_annotation
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1127,6 +1139,30 @@ pub struct TSNonNullExpression<'a> {
     pub expression: Expression<'a>,
 }
 
+/// Decorator
+/// 
+/// Decorators are annotations on classes, methods, properties, and parameters.
+/// They are usually either an [`IdentifierReference`] or an [`CallExpression`].
+/// 
+/// ## Example
+/// ```ts
+/// @Foo                        // class decorator
+/// @Bar()                      // class decorator factory
+/// class SomeClass {
+///     @Freeze                 // property decorator
+///     public x: number;
+/// 
+///     @MethodDecorator        // method decorator
+///     public method(
+///         @LogParam x: number // parameter decorator
+///     ) {
+///       // ...
+///     }  
+/// }
+/// ```
+/// 
+/// [`IdentifierReference`]: crate::ast::js::IdentifierReference
+/// [`CallExpression`]: crate::ast::js::CallExpression
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1174,12 +1210,15 @@ pub struct TSInstantiationExpression<'a> {
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
+/// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
+    /// `import { foo } from './foo'`
     Value,
+    /// `import type { foo } from './foo'`
     Type,
 }
 
@@ -1194,6 +1233,7 @@ pub struct JSDocNullableType<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub type_annotation: TSType<'a>,
+    /// Was `?` after the type annotation?
     pub postfix: bool,
 }
 

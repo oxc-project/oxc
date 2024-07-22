@@ -1,6 +1,6 @@
 use crate::ast::*;
 
-use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
+use std::{borrow::Cow, cell::Cell, fmt, hash::Hash, ops::Deref};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
@@ -84,6 +84,12 @@ impl<'a> Expression<'a> {
             )
     }
 
+    /// `true` if this [`Expression`] is a literal expression for a primitive value.
+    ///
+    /// Does not include [`TemplateLiteral`]s, [`object literals`], or [`array literals`].
+    ///
+    /// [`object literals`]: ObjectExpression
+    /// [`array literals`]: ArrayExpression
     pub fn is_literal(&self) -> bool {
         // Note: TemplateLiteral is not `Literal`
         matches!(
@@ -157,6 +163,8 @@ impl<'a> Expression<'a> {
     }
 
     /// Determines whether the given expr is a `null` or `undefined` or `void 0`
+    ///
+    /// Corresponds to a [nullish value check](https://developer.mozilla.org/en-US/docs/Glossary/Nullish).
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() || self.evaluate_to_undefined()
     }
@@ -291,6 +299,12 @@ impl<'a> Hash for IdentifierReference<'a> {
     }
 }
 
+impl<'a> PartialEq<IdentifierReference<'a>> for IdentifierReference<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name
+    }
+}
+
 impl<'a> IdentifierReference<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
@@ -318,6 +332,21 @@ impl<'a> BindingIdentifier<'a> {
     }
 }
 
+impl<'a> Deref for BindingIdentifier<'a> {
+    type Target = Atom<'a>;
+    fn deref(&self) -> &Self::Target {
+        &self.name
+    }
+}
+
+impl<'a> Deref for ArrayExpression<'a> {
+    type Target = Vec<'a, ArrayExpressionElement<'a>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.elements        
+    }
+}
+
 impl<'a> ArrayExpressionElement<'a> {
     pub fn is_elision(&self) -> bool {
         matches!(self, Self::Elision(_))
@@ -325,6 +354,7 @@ impl<'a> ArrayExpressionElement<'a> {
 }
 
 impl<'a> ObjectExpression<'a> {
+    /// Returns `true` if this object has a property named `__proto__`
     pub fn has_proto(&self) -> bool {
         use crate::syntax_directed_operations::PropName;
         self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
@@ -345,7 +375,7 @@ impl<'a> PropertyKey<'a> {
                 .is_empty()
                 .then(|| lit.quasi())
                 .flatten()
-                .map(std::convert::Into::into),
+                .map(|quasi| Cow::Borrowed(quasi.as_str())),
             _ => None,
         }
     }
@@ -1149,6 +1179,17 @@ impl<'a> Class<'a> {
         }
     }
 
+    /// Get the name of the [`Class`].
+    ///
+    /// ```ts
+    /// class Foo { /* ... */ } // Foo
+    /// // Not all classes have names, e.g.
+    /// var Foo = class {}
+    /// ```
+    pub fn name(&self) -> Option<&Atom<'a>> {
+        self.id.as_ref().map(|id| &id.name)
+    }
+
     /// `true` if this [`Class`] is an expression.
     ///
     /// For example,
@@ -1176,6 +1217,13 @@ impl<'a> Class<'a> {
     }
 }
 
+impl<'a> Deref for ClassBody<'a> {
+    type Target = Vec<'a, ClassElement<'a>>;
+    fn deref(&self) -> &Self::Target {
+        &self.body
+    }
+}
+
 impl<'a> Hash for Class<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.r#type.hash(state);
@@ -1192,6 +1240,8 @@ impl<'a> Hash for Class<'a> {
 }
 
 impl<'a> ClassElement<'a> {
+    /// Returns `true` if this [`ClassElement`] is a static block or has a
+    /// static modifier.
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
@@ -1246,6 +1296,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    /// Returns `true` if this [`ClassElement`] is a property or accessor
     pub fn is_property(&self) -> bool {
         matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }
@@ -1297,6 +1348,30 @@ impl<'a> ClassElement<'a> {
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
         }
     }
+
+    pub fn is_constructor(&self) -> bool {
+        matches!(self, Self::MethodDefinition(method) if method.kind.is_constructor())
+    }
+
+    /// Try to cast this [`ClassElement`] into a [`MethodDefinition`].
+    ///
+    /// Returns [`None`] if `self` is any other kind of [`ClassElement`].
+    pub fn as_method(&self) -> Option<&MethodDefinition<'a>> {
+        match self {
+            Self::MethodDefinition(method) => Some(method),
+            _ => None,
+        }
+    }
+
+    /// Try to cast this [`ClassElement`] into a [`PropertyDefinition`].
+    ///
+    /// Returns [`None`] if `self` is any other kind of [`ClassElement`].
+    pub fn as_property(&self) -> Option<&PropertyDefinition<'a>> {
+        match self {
+            Self::PropertyDefinition(property) => Some(property),
+            _ => None,
+        }
+    }
 }
 
 impl PropertyDefinitionType {
@@ -1306,28 +1381,32 @@ impl PropertyDefinitionType {
 }
 
 impl MethodDefinitionKind {
+    #[inline]
     pub fn is_constructor(&self) -> bool {
         matches!(self, Self::Constructor)
     }
 
+    #[inline]
     pub fn is_method(&self) -> bool {
         matches!(self, Self::Method)
     }
 
+    #[inline]
     pub fn is_set(&self) -> bool {
         matches!(self, Self::Set)
     }
 
+    #[inline]
     pub fn is_get(&self) -> bool {
         matches!(self, Self::Get)
     }
 
-    pub fn scope_flags(self) -> ScopeFlags {
+    pub const fn scope_flags(self) -> ScopeFlags {
         match self {
-            Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
+            Self::Constructor => ScopeFlags::Constructor.union(ScopeFlags::Function),
             Self::Method => ScopeFlags::Function,
-            Self::Get => ScopeFlags::GetAccessor | ScopeFlags::Function,
-            Self::Set => ScopeFlags::SetAccessor | ScopeFlags::Function,
+            Self::Get => ScopeFlags::GetAccessor.union(ScopeFlags::Function),
+            Self::Set => ScopeFlags::SetAccessor.union(ScopeFlags::Function),
         }
     }
 }
