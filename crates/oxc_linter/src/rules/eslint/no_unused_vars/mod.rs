@@ -1,3 +1,5 @@
+mod allowed;
+mod binding_pattern;
 mod diagnostic;
 mod options;
 mod symbol;
@@ -174,7 +176,6 @@ impl Rule for NoUnusedVars {
                 if !is_ignored {
                     ctx.diagnostic(diagnostic::imported(&symbol));
                 }
-                return;
             }
             AstKind::VariableDeclarator(decl) => {
                 if decl.kind.is_var() && self.vars.is_local() && symbol.is_root() {
@@ -187,21 +188,33 @@ impl Rule for NoUnusedVars {
                         diagnostic::declared(&symbol)
                     };
                 ctx.diagnostic(report);
-                return;
             }
-            _ => {}
-        }
-        match (is_ignored, is_used) {
-            (true, true) => {
-                // TODO: report unused ignore pattern
+            AstKind::FormalParameter(param) => {
+                if self.is_allowed_argument(ctx.semantic().as_ref(), &symbol, param) {
+                    return;
+                }
+                ctx.diagnostic(diagnostic::param(&symbol));
             }
-            (false, false) => {
-                // TODO: choose correct diagnostic
-                ctx.diagnostic(diagnostic::declared(&symbol));
-                // self.report_unused(&symbol, ctx);
+            AstKind::CatchParameter(_) => ctx.diagnostic(diagnostic::declared(&symbol)),
+            unknown => {
+                debug_assert!(
+                    false,
+                    "NoUnusedVars::run_on_symbol - unhandled AstKind: {:?}",
+                    unknown.debug_name()
+                )
             }
-            _ => { /* no violation */ }
-        }
+        };
+        // match (is_ignored, is_used) {
+        //     (true, true) => {
+        //         // TODO: report unused ignore pattern
+        //     }
+        //     (false, false) => {
+        //         // TODO: choose correct diagnostic
+        //         ctx.diagnostic(diagnostic::declared(&symbol));
+        //         // self.report_unused(&symbol, ctx);
+        //     }
+        //     _ => { /* no violation */ }
+        // }
     }
 
     fn should_run(&self, ctx: &LintContext) -> bool {

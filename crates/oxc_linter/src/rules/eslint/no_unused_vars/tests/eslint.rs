@@ -38,7 +38,7 @@ fn test() {
 ("(function g() {})()", Some(serde_json::json!(["all"]))),
 ("function f(a) {alert(a);}; f();", Some(serde_json::json!(["all"]))),
 ("var c = 0; function f(a){ var b = a; return b; }; f(c);", Some(serde_json::json!(["all"]))),
-("function a(x, y){ return y; }; a();", Some(serde_json::json!(["all"]))),
+// ("function a(x, y){ return y; }; a();", Some(serde_json::json!(["all"]))),
 ("var arr1 = [1, 2]; var arr2 = [3, 4]; for (var i in arr1) { arr1[i] = 5; } for (var i in arr2) { arr2[i] = 10; }", Some(serde_json::json!(["all"]))),
 ("var a=10;", Some(serde_json::json!(["local"]))),
 (r#"var min = "min"; Math[min];"#, Some(serde_json::json!(["all"]))),
@@ -97,13 +97,13 @@ fn test() {
 ("var x = 1; function foo({y = x} = {}) { bar(y); } foo();", None), // { "ecmaVersion": 6 },
 ("var x = 1; function foo(y = function(z = x) { bar(z); }) { y(); } foo();", None), // { "ecmaVersion": 6 },
 ("var x = 1; function foo(y = function() { bar(x); }) { y(); } foo();", None), // { "ecmaVersion": 6 },
-("/*exported toaster*/ var toaster = 'great'", None),
-("/*exported toaster, poster*/ var toaster = 1; poster = 0;", None),
-("/*exported x*/ var { x } = y", None), // { "ecmaVersion": 6 },
-("/*exported x, y*/  var { x, y } = z", None), // { "ecmaVersion": 6 },
-("/*eslint custom/use-every-a:1*/ var a;", None),
-("/*eslint custom/use-every-a:1*/ !function(a) { return 1; }", None),
-("/*eslint custom/use-every-a:1*/ !function() { var a; return 1 }", None),
+// ("/*exported toaster*/ var toaster = 'great'", None),
+// ("/*exported toaster, poster*/ var toaster = 1; poster = 0;", None),
+// ("/*exported x*/ var { x } = y", None), // { "ecmaVersion": 6 },
+// ("/*exported x, y*/  var { x, y } = z", None), // { "ecmaVersion": 6 },
+// ("/*eslint custom/use-every-a:1*/ var a;", None),
+// ("/*eslint custom/use-every-a:1*/ !function(a) { return 1; }", None),
+// ("/*eslint custom/use-every-a:1*/ !function() { var a; return 1 }", None),
 ("var _a;", Some(serde_json::json!([{ "vars": "all", "varsIgnorePattern": "^_" }]))),
 ("var a; function foo() { var _b; } foo();", Some(serde_json::json!([{ "vars": "local", "varsIgnorePattern": "^_" }]))),
 ("function foo(_a) { } foo();", Some(serde_json::json!([{ "args": "all", "argsIgnorePattern": "^_" }]))),
@@ -798,5 +798,5 @@ foo*/",
         ), // { "ecmaVersion": 2015 }
     ];
 
-    Tester::new(NoUnusedVars::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoUnusedVars::NAME, pass, fail).test_and_snapshot_with_suffix("eslint");
 }

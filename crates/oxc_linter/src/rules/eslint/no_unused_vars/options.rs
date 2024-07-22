@@ -222,6 +222,20 @@ pub enum ArgsOption {
     /// Do not check arguments
     None,
 }
+impl ArgsOption {
+    #[inline]
+    pub const fn is_after_used(&self) -> bool {
+        matches!(self, Self::AfterUsed)
+    }
+    #[inline]
+    pub const fn is_all(&self) -> bool {
+        matches!(self, Self::All)
+    }
+    #[inline]
+    pub const fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
+}
 
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]

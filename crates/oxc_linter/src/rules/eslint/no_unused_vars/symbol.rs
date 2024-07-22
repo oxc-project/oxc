@@ -1,6 +1,6 @@
 use std::fmt;
 
-use oxc_ast::AstKind;
+use oxc_ast::{ast::BindingIdentifier, AstKind};
 use oxc_semantic::{
     AstNode, AstNodeId, AstNodes, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
     SymbolTable,
@@ -87,16 +87,6 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 }
 
-// impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
-//     fn eq(&self, other: &IdentifierReference<'a>) -> bool {
-//         let Some(reference_id) = other.reference_id.get() else {
-//             return false;
-//         };
-//         let reference = self.symbols().get_reference(reference_id);
-//         reference.symbol_id().is_some_and(|symbol_id| self.id == symbol_id)
-//     }
-// }
-
 impl<'s, 'a> Symbol<'s, 'a> {
     /// Is this [`Symbol`] exported?
     ///
@@ -124,6 +114,21 @@ impl<'s, 'a> Symbol<'s, 'a> {
             }
         }
         false
+    }
+}
+
+// impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
+//     fn eq(&self, other: &IdentifierReference<'a>) -> bool {
+//         let Some(reference_id) = other.reference_id.get() else {
+//             return false;
+//         };
+//         let reference = self.symbols().get_reference(reference_id);
+//         reference.symbol_id().is_some_and(|symbol_id| self.id == symbol_id)
+//     }
+// }
+impl<'a> PartialEq<BindingIdentifier<'a>> for Symbol<'_, 'a> {
+    fn eq(&self, id: &BindingIdentifier<'a>) -> bool {
+        id.symbol_id.get().is_some_and(|id| self.id == id)
     }
 }
 

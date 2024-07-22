@@ -24,7 +24,7 @@ fn pronoun_for_symbol(symbol_flags: SymbolFlags) -> &'static str {
     }
 }
 
-/// 'x' is declared but never used.
+/// Variable 'x' is declared but never used.
 pub fn declared(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
     let verb = if symbol.flags().is_catch_variable() { "caught" } else { "declared" };
     let pronoun = pronoun_for_symbol(symbol.flags());
@@ -35,7 +35,7 @@ pub fn declared(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
         .with_help("Consider removing this declaration.")
 }
 
-/// 'x' is assigned a value but never used.
+/// Variable 'x' is assigned a value but never used.
 pub fn assign(symbol: &Symbol<'_, '_>, assign_span: Span) -> OxcDiagnostic {
     let pronoun = pronoun_for_symbol(symbol.flags());
     let name = symbol.name();
@@ -48,7 +48,16 @@ pub fn assign(symbol: &Symbol<'_, '_>, assign_span: Span) -> OxcDiagnostic {
         .with_help("Did you mean to use this variable?")
 }
 
-/// 'x' imported but never used.
+/// Parameter 'x' is declared but never used.
+pub fn param(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
+    let name = symbol.name();
+
+    OxcDiagnostic::error(format!("Parameter '{name}' is declared but never used."))
+        .with_label(symbol.span().label(format!("'{name}' is declared here")))
+        .with_help("Consider removing this parameter.")
+}
+
+/// Identifier 'x' imported but never used.
 pub fn imported(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
     let pronoun = pronoun_for_symbol(symbol.flags());
     let name = symbol.name();

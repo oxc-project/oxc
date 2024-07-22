@@ -1,30 +1,29 @@
 //! Test cases created by oxc maintainers
 
-use crate::{tester::Tester, RuleMeta as _};
-
 use super::NoUnusedVars;
+use crate::{tester::Tester, RuleMeta as _};
+use serde_json::json;
 
 #[test]
 fn test_simple_variables() {
-    let pass = vec![
-        "let a = 1; console.log(a)",
-        "let a = 1; let b = a + 1; console.log(b)"
-        ];
+    let pass = vec!["let a = 1; console.log(a)", "let a = 1; let b = a + 1; console.log(b)"];
     let fail = vec!["let a = 1", "let a = 1; a = 2"];
 
-    Tester::new(NoUnusedVars::NAME, pass, fail).test_and_snapshot_with_suffix("oxc_simple_variables");
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .test_and_snapshot_with_suffix("oxc_simple_variables");
 }
 
 #[test]
 fn test_catch() {
     let pass = vec![
         // lb
-        "try {} catch (e) { throw e }",
-        "try {} catch { }",
+        ("try {} catch (e) { throw e }", None),
+        ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
+        ("try {} catch { }", None),
     ];
     let fail = vec![
         // lb
-        "try {} catch (e) { }",
+        ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "all" }]))),
     ];
 
     Tester::new(NoUnusedVars::NAME, pass, fail).test_and_snapshot_with_suffix("oxc_catch");
@@ -70,4 +69,18 @@ fn test_exports() {
 
     // these are mostly pass[] cases, so do not snapshot
     Tester::new(NoUnusedVars::NAME, pass, fail).test();
+}
+
+#[test]
+fn test_arguments() {
+    let pass = vec![
+        ("function foo(a) { return a } foo()", None),
+        ("function foo(a, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+    ];
+    let fail = vec![
+        ("function foo(a) {} foo()", None),
+        ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail).test_and_snapshot_with_suffix("oxc_arguments");
 }
