@@ -16,12 +16,9 @@ pub(crate) struct UnresolvedReferencesStack {
 }
 
 impl UnresolvedReferencesStack {
-    // Most programs will have at least 1 place where scope depth reaches 16,
-    // so initialize `stack` with this length, to reduce reallocations as it grows.
-    // This is just an estimate of a good initial size, but certainly better than
-    // `Vec`'s default initial capacity of 4.
+    // This is just an estimate of a good initial size.
     // SAFETY: Must be >= 2 to ensure soundness of `current_and_parent_mut`.
-    const INITIAL_SIZE: usize = 16;
+    const INITIAL_SIZE: usize = 4;
     // Initial scope depth.
     // Start on 1 (`Program` scope depth).
     // SAFETY: Must be >= 1 to ensure soundness of `current_and_parent_mut`.
