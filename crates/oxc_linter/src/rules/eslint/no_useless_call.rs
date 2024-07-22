@@ -1,4 +1,4 @@
-use oxc_ast::{ast::{Argument, CallExpression, ChainElement, Expression, StaticMemberExpression}, match_member_expression, visit::walk::walk_expression, AstKind};
+use oxc_ast::{ast::{Argument, CallExpression, ChainElement, Expression, MemberExpression, StaticMemberExpression}, match_member_expression, visit::walk::walk_expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -19,10 +19,35 @@ declare_oxc_lint!(
     ///
     /// ### Example
     /// ```javascript
+    /// // error
+    /// // These are same as `foo(1, 2, 3);`
+    /// foo.call(undefined, 1, 2, 3);
+    /// foo.apply(undefined, [1, 2, 3]);
+    /// foo.call(null, 1, 2, 3);
+    /// foo.apply(null, [1, 2, 3]);
+    /// 
+    /// // These are same as `obj.foo(1, 2, 3);`
+    /// obj.foo.call(obj, 1, 2, 3);
+    /// obj.foo.apply(obj, [1, 2, 3]);
+    /// 
+    /// // success
+    /// // The `this` binding is different.
+    /// foo.call(obj, 1, 2, 3);
+    /// foo.apply(obj, [1, 2, 3]);
+    /// obj.foo.call(null, 1, 2, 3);
+    /// obj.foo.apply(null, [1, 2, 3]);
+    /// obj.foo.call(otherObj, 1, 2, 3);
+    /// obj.foo.apply(otherObj, [1, 2, 3]);
+    ///
+    /// // The argument list is variadic.
+    /// // Those are warned by the `prefer-spread` rule.
+    /// foo.apply(undefined, args);
+    /// foo.apply(null, args);
+    /// obj.foo.apply(obj, args);
+    /// 
     /// ```
     NoUselessCall,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+    suspicious,
 );
 
 fn no_useless_call_diagnostic(span1: Span) -> OxcDiagnostic {
@@ -38,27 +63,28 @@ fn is_array_argument(_expr: Option<&Argument>) -> bool {
     expr.is_array()
 }
 
-fn is_apply_member(call_expr: &CallExpression, member_expr: &StaticMemberExpression) -> bool {
-    (member_expr.property.name == "call" && call_expr.arguments.len() >= 1) || 
-    (member_expr.property.name == "apply" && call_expr.arguments.len() == 2 && is_array_argument(call_expr.arguments.get(1)))
-}
-
-fn is_call_or_non_variadic_apply(call_expr: &CallExpression, ctx: &LintContext) -> bool {
-    let skip_expr_callee = skip_chain_expression(&call_expr.callee);
-    let Some(static_member_expr) = get_skip_chain_expression_static_member_expression(skip_expr_callee) else {
+fn is_apply_member(call_expr: &CallExpression, member_expr: &MemberExpression) -> bool {
+    let Some(static_name) = member_expr.static_property_name() else {
         return false;
     };
 
-    is_apply_member(call_expr, static_member_expr)
+    (static_name == "call" && call_expr.arguments.len() >= 1) || 
+    (static_name == "apply" && call_expr.arguments.len() == 2 && is_array_argument(call_expr.arguments.get(1)))
 }
 
-fn is_validate_this_arg(ctx: &LintContext, expected_this: Option<&Expression>, this_arg: &Argument) -> bool {
+fn is_call_or_non_variadic_apply(call_expr: &CallExpression) -> bool {
+    let skip_expr_callee = skip_chain_expression(&call_expr.callee);
+    let Some(member_expr) = get_skip_chain_expr_member_expr(skip_expr_callee) else {
+        return false;
+    };
+
+    is_apply_member(call_expr, member_expr)
+}
+
+fn is_validate_this_arg(ctx: &LintContext, expected_this: Option<&Expression>, this_arg: &Expression) -> bool {
     match expected_this {
         Some(expected_this) => {
-            let Some(this) = this_arg.as_expression() else {
-                return false;
-            };
-            is_same_reference(skip_parenthesized_expression(expected_this), skip_parenthesized_expression(this), ctx)
+            is_same_reference(expected_this.without_parenthesized(), this_arg.without_parenthesized(), ctx)
         }
         None => {
             this_arg.is_null_or_undefined()
@@ -71,8 +97,9 @@ impl Rule for NoUselessCall {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        if !is_call_or_non_variadic_apply(call_expr, ctx) {
-            return
+
+        if !is_call_or_non_variadic_apply(call_expr) {
+            return;
         }
 
         let callee = skip_chain_expression(&call_expr.callee);
@@ -87,10 +114,12 @@ impl Rule for NoUselessCall {
         let Some(this_arg) = call_expr.arguments.get(0) else {
             return;
         };
+        let Some(this_expr) = this_arg.as_expression() else {
+            return;
+        };
 
-
-        if is_validate_this_arg(ctx, expected_this, this_arg) {
-            ctx.diagnostic(no_useless_call_diagnostic(call_expr.span))
+        if is_validate_this_arg(ctx, expected_this, this_expr) {
+            ctx.diagnostic(no_useless_call_diagnostic(call_expr.callee.span()))
         }
     }
 }

@@ -219,30 +219,41 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
     false
 }
 
+fn is_same_expression_elements<T>(
+    left: &[T],
+    right: &[T],
+    ctx: &LintContext,
+    as_expression: fn(&T) -> Option<&Expression>,
+) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    for (left, right) in left.iter().zip(right.iter()) {
+        match (as_expression(left), as_expression(right)) {
+            (Some(left), Some(right)) => {
+                if !is_same_reference(left, right, ctx) {
+                    return false
+                }
+            },
+            _ => return false,
+        }
+    }
+
+    return  true;
+}
+
 fn is_same_array_expression(
     left: &ArrayExpression,
     right: &ArrayExpression,
     ctx: &LintContext,
 ) -> bool {
-    if left.elements.len() != right.elements.len() {
-        return false;
-    }
-
-    for (left, right) in left.elements.iter().zip(right.elements.iter()) {
-        match (left, right) {
-            (ArrayExpressionElement::SpreadElement(left), ArrayExpressionElement::SpreadElement(right)) => {
-                if !is_same_reference(&left.argument, &right.argument, ctx) {
-                    return false
-                }
-            }
-            (left, right) => {
-                if !is_same_reference(left.as_expression().unwrap(), right.as_expression().unwrap(), ctx) {
-                    return false
-                }
-            },
+    return is_same_expression_elements(&left.elements, &right.elements, ctx, |el| {
+        match el {
+            ArrayExpressionElement::SpreadElement(expr) => Some(&expr.argument),
+            expr => expr.as_expression(),
         }
-    }
-    return true;
+    })
 }
 
 pub fn is_same_call_expression(
@@ -258,30 +269,12 @@ pub fn is_same_call_expression(
         return false;
     }
 
-    if left.arguments.len() != right.arguments.len() {
-        return false;
-    }
-
-    if left.arguments.len() != right.arguments.len() {
-        return false;
-    }
-
-    for (left, right) in left.arguments.iter().zip(right.arguments.iter()) {
-        match (left, right) {
-            (Argument::SpreadElement(left), Argument::SpreadElement(right)) => {
-                if !is_same_reference(&left.argument, &right.argument, ctx) {
-                    return false
-                }
-            }
-            (left, right) => {
-                if !is_same_reference(left.as_expression().unwrap(), right.as_expression().unwrap(), ctx) {
-                    return false
-                }
-            }
+    is_same_expression_elements(&left.arguments, &right.arguments, ctx, |el| {
+        match el {
+            Argument::SpreadElement(expr) => Some(&expr.argument),
+            expr => expr.as_expression(),
         }
-    }
-
-    return true
+    })
 }
 
 pub fn is_same_member_expression(

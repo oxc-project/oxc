@@ -21,13 +21,6 @@ pub enum SkipChainExpression<'a> {
     Expression(&'a Expression<'a>),
 }
 
-pub fn skip_parenthesized_expression<'a>(expr: &'a Expression<'a>) -> &Expression<'a> {
-    match expr {
-        Expression::ParenthesizedExpression(paren_expr) => &paren_expr.expression,
-        _ => expr
-    }
-}
-
 pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> SkipChainExpression<'a> {
     match expr {
         Expression::ParenthesizedExpression(paren_expr) => skip_chain_expression(&paren_expr.expression),
@@ -36,44 +29,13 @@ pub fn skip_chain_expression<'a>(expr: &'a Expression<'a>) -> SkipChainExpressio
     }
 }
 
-pub fn get_skip_chain_expression_static_member_expression(skip_expr_callee: SkipChainExpression) -> Option<&StaticMemberExpression> {
-    match skip_expr_callee {
-        SkipChainExpression::ChainElement(expr) => {
-           match expr {
-                ChainElement::StaticMemberExpression(member_expr) => {
-                    Some(member_expr)
-                },
-                _ => None,
-           }
-        },
-        SkipChainExpression::Expression(expr) => {
-            match expr {
-                Expression::StaticMemberExpression(member_expr) => {
-                    Some(member_expr)
-                },
-                _ => None,
-            }
-        }
-    }
-}
-
 pub fn get_skip_chain_expr_member_expr(skip_expr_callee: SkipChainExpression) -> Option<&MemberExpression> {
     match skip_expr_callee {
         SkipChainExpression::ChainElement(expr) => {
-            match expr {
-                match_member_expression!(ChainElement) => {
-                    Some(expr.to_member_expression())
-                },
-                _ => None,
-           }
+            expr.as_member_expression()
         },
         SkipChainExpression::Expression(expr) => {
-            match expr {
-                match_member_expression!(Expression) => {
-                    Some(expr.to_member_expression())
-                },
-                _ => None,
-            }
+            expr.as_member_expression()
         }
     }
 }
@@ -138,10 +100,6 @@ pub trait IsConstant<'a, 'b> {
 
 pub trait IsArray {
     fn is_array(&self) -> bool;
-}
-
-pub trait IsNullOrUnderfined {
-    fn is_null_or_undefined(&self) -> bool;
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
@@ -244,17 +202,6 @@ impl IsArray for Argument<'_> {
     fn is_array(&self) -> bool {
         match self {
             Argument::ArrayExpression(_) => true,
-            _ => false
-        }
-    }
-}
-
-impl IsNullOrUnderfined for Argument<'_> {
-    fn is_null_or_undefined(&self) -> bool {
-        match self {
-            Argument::NullLiteral(_) => true,
-            Argument::Identifier(ident) => ident.name == "undefined",
-            Argument::UnaryExpression(unary_expr) => unary_expr.operator == UnaryOperator::Void,
             _ => false
         }
     }
