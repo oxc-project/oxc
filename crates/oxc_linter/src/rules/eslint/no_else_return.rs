@@ -41,7 +41,6 @@ fn is_safe_from_name_collisions(
     match stmt {
         Statement::BlockStatement(block) => {
             let block_scope_id = block.scope_id.get().unwrap();
-
             let bindings = scopes.get_bindings(block_scope_id);
             let parent_bindings = scopes.get_bindings(parent_scope_id);
 
@@ -64,17 +63,16 @@ fn is_safe_from_name_collisions(
     }
 }
 
-fn replace_block(str: &str) -> String {
-    let mut res = String::from(str);
-    let len = res.len();
-    if &str[0..1] == "{" && &str[len - 1..len] == "}" {
-        res = String::from(&res[1..len - 1]);
+fn replace_block(s: &str) -> String {
+    if s.starts_with('{') && s.ends_with('}') && s.len() > 1 {
+        s[1..s.len() - 1].to_string()
+    } else {
+        s.to_string()
     }
-    res
 }
 
-fn get_else_code_space_token(str: &str, else_code: &str) -> String {
-    return String::from(str).replacen("else ", "", 1).replace(else_code, "");
+fn get_else_code_space_token(s: &str, else_code: &str) -> String {
+    s.replacen("else ", "", 1).replace(else_code, "")
 }
 
 fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
@@ -100,7 +98,7 @@ fn no_else_return_diagnostic_fix(
     let else_code = ctx.source_range(span);
     let else_code_prev_token =
         get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
-    let fix_else_code = format!("{}{}", else_code_prev_token, replace_block(else_code));
+    let fix_else_code = else_code_prev_token + &replace_block(else_code);
 
     ctx.diagnostic_with_fix(no_else_return_diagnostic(else_stmt), |fixer| {
         fixer.replace(Span::new(prev_span.end, span.end), fix_else_code)
