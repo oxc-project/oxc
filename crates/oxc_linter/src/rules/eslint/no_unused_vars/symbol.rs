@@ -1,6 +1,9 @@
 use std::fmt;
 
-use oxc_ast::{ast::BindingIdentifier, AstKind};
+use oxc_ast::{
+    ast::{BindingIdentifier, IdentifierReference},
+    AstKind,
+};
 use oxc_semantic::{
     AstNode, AstNodeId, AstNodes, Reference, ScopeId, ScopeTree, Semantic, SymbolFlags, SymbolId,
     SymbolTable,
@@ -85,6 +88,15 @@ impl<'s, 'a> Symbol<'s, 'a> {
     pub fn iter_parents(&self) -> impl Iterator<Item = &AstNode<'a>> + '_ {
         self.nodes().iter_parents(self.declaration_id()).skip(1)
     }
+    pub fn iter_relevant_parents(
+        &self,
+        node_id: AstNodeId,
+    ) -> impl Iterator<Item = &AstNode<'a>> + Clone + '_ {
+        self.nodes()
+            .iter_parents(node_id)
+            .skip(1)
+            .filter(|n| !matches!(n.kind(), AstKind::ParenthesizedExpression(_)))
+    }
 }
 
 impl<'s, 'a> Symbol<'s, 'a> {
@@ -117,15 +129,20 @@ impl<'s, 'a> Symbol<'s, 'a> {
     }
 }
 
-// impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
-//     fn eq(&self, other: &IdentifierReference<'a>) -> bool {
-//         let Some(reference_id) = other.reference_id.get() else {
-//             return false;
-//         };
-//         let reference = self.symbols().get_reference(reference_id);
-//         reference.symbol_id().is_some_and(|symbol_id| self.id == symbol_id)
-//     }
-// }
+impl<'a> PartialEq<IdentifierReference<'a>> for Symbol<'_, 'a> {
+    fn eq(&self, other: &IdentifierReference<'a>) -> bool {
+        // cheap: no resolved reference means its a global reference
+        let Some(reference_id) = other.reference_id.get() else {
+            return false;
+        };
+        // TODO: which is cheaper; a symbol_id check or a name check?
+        // if self.name() == other.name {
+        //     return true;
+        // }
+        let reference = self.symbols().get_reference(reference_id);
+        reference.symbol_id().is_some_and(|symbol_id| self.id == symbol_id)
+    }
+}
 impl<'a> PartialEq<BindingIdentifier<'a>> for Symbol<'_, 'a> {
     fn eq(&self, id: &BindingIdentifier<'a>) -> bool {
         id.symbol_id.get().is_some_and(|id| self.id == id)

@@ -237,9 +237,16 @@ impl ArgsOption {
     }
 }
 
-#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct CaughtErrors(bool);
+
+impl Default for CaughtErrors {
+    fn default() -> Self {
+        Self::all()
+    }
+}
+
 impl CaughtErrors {
     pub const fn all() -> Self {
         Self(true)
@@ -519,7 +526,7 @@ mod tests {
         assert!(rule.vars_ignore_pattern.is_none());
         assert_eq!(rule.args, ArgsOption::AfterUsed);
         assert!(rule.args_ignore_pattern.is_none());
-        assert_eq!(rule.caught_errors, CaughtErrors::none());
+        assert_eq!(rule.caught_errors, CaughtErrors::all());
         assert!(rule.caught_errors_ignore_pattern.is_none());
         assert!(rule.destructured_array_ignore_pattern.is_none());
         assert!(!rule.ignore_rest_siblings);

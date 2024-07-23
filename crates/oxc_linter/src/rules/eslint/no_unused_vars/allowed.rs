@@ -3,13 +3,17 @@
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind};
 use oxc_semantic::Semantic;
+use oxc_syntax::operator::UnaryOperator;
+
+use crate::rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding};
 
 use super::binding_pattern::CheckBinding;
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
 
 impl<'s, 'a> Symbol<'s, 'a> {
-    /// Returns `true` if this function is a callback passed to another function
-    pub fn is_function_callback(&self) -> bool {
+    /// Returns `true` if this function is a callback passed to another
+    /// function. Includes IIFEs.
+    pub fn is_callback_or_iife(&self) -> bool {
         debug_assert!(self.declaration().kind().is_function_like());
 
         for parent in self.iter_parents() {
@@ -19,6 +23,10 @@ impl<'s, 'a> Symbol<'s, 'a> {
                 }
                 AstKind::CallExpression(_) => {
                     return true;
+                }
+                // !function() {}; is an IIFE
+                AstKind::UnaryExpression(expr) => {
+                    return expr.operator == UnaryOperator::LogicalNot;
                 }
                 _ => {
                     return false;
@@ -56,8 +64,50 @@ impl<'s, 'a> Symbol<'s, 'a> {
 
         false
     }
+
+    fn is_declared_in_for_of_loop(&self) -> bool {
+        for parent in self.iter_parents() {
+            match parent.kind() {
+                AstKind::ParenthesizedExpression(_)
+                | AstKind::VariableDeclaration(_)
+                | AstKind::BindingIdentifier(_)
+                | AstKind::SimpleAssignmentTarget(_)
+                | AstKind::AssignmentTarget(_) => continue,
+                AstKind::ForInStatement(ForInStatement { body, .. })
+                | AstKind::ForOfStatement(ForOfStatement { body, .. }) => match body {
+                    Statement::ReturnStatement(_) => return true,
+                    Statement::BlockStatement(b) => {
+                        return b
+                            .body
+                            .first()
+                            .is_some_and(|s| matches!(s, Statement::ReturnStatement(_)))
+                    }
+                    _ => return false,
+                },
+                _ => return false,
+            }
+        }
+
+        false
+    }
 }
+
 impl NoUnusedVars {
+    pub(super) fn is_allowed_class(&self, class: &Class<'_>) -> bool {
+        if self.ignore_class_with_static_init_block
+            && class.body.body.iter().any(|el| matches!(el, ClassElement::StaticBlock(_)))
+        {
+            return true;
+        }
+
+        false
+    }
+
+    #[allow(clippy::unused_self)]
+    pub(super) fn is_allowed_function(&self, symbol: &Symbol<'_, '_>) -> bool {
+        symbol.is_callback_or_iife() || symbol.is_function_assigned_to_same_name_variable()
+    }
+
     /// Returns `true` if this unused variable declaration should be allowed
     /// (i.e. not reported)
     pub(super) fn is_allowed_variable_declaration<'a>(
@@ -69,10 +119,17 @@ impl NoUnusedVars {
             return true;
         }
 
+        // allow unused iterators, since they're required for valid syntax
+        if symbol.is_declared_in_for_of_loop() {
+            return true;
+        }
+
         // check if res is an array/object unpacking pattern that should be ignored
         matches!(decl.id.check_unused_binding_pattern(self, symbol), Some(res) if res.is_ignore())
     }
 
+    /// Returns `true` if this unused parameter should be allowed (i.e. not
+    /// reported)
     pub(super) fn is_allowed_argument<'a>(
         &self,
         semantic: &Semantic<'a>,
@@ -86,17 +143,13 @@ impl NoUnusedVars {
 
         // find FormalParameters. Should be the next parent of param, but this
         // is safer.
-        let Some((params, params_id)) = symbol
-            .iter_parents()
-            .filter_map(|p| {
-                if let AstKind::FormalParameters(params) = p.kind() {
-                    Some((params, p.id()))
-                } else {
-                    None
-                }
-            })
-            .next()
-        else {
+        let Some((params, params_id)) = symbol.iter_parents().find_map(|p| {
+            if let AstKind::FormalParameters(params) = p.kind() {
+                Some((params, p.id()))
+            } else {
+                None
+            }
+        }) else {
             debug_assert!(false, "FormalParameter should always have a parent FormalParameters");
             return false;
         };
@@ -116,8 +169,15 @@ impl NoUnusedVars {
         }
 
         // Parameters are always checked. Must be done after above checks,
-        // because in those cases a parameter is required
-        if self.args.is_none() {
+        // because in those cases a parameter is required. However, even if
+        // `args` is `all`, it may be ignored using `ignoreRestSiblings` or `destructuredArrayIgnorePattern`.
+        if self.args.is_all() {
+            if param.pattern.kind.is_destructuring_pattern() {
+                // allow unpacked parameters that are ignored via destructuredArrayIgnorePattern
+                let maybe_unused_binding_pattern =
+                    param.pattern.check_unused_binding_pattern(self, symbol);
+                return maybe_unused_binding_pattern.map_or(false, |res| res.is_ignore());
+            }
             return false;
         }
 
@@ -131,7 +191,7 @@ impl NoUnusedVars {
         // check if this is a positional argument - unused non-positional
         // arguments are never allowed
         if param.pattern.kind.is_destructuring_pattern() {
-            // allow unpacked parameters that are ignored
+            // allow unpacked parameters that are ignored via destructuredArrayIgnorePattern
             let maybe_unused_binding_pattern =
                 param.pattern.check_unused_binding_pattern(self, symbol);
             return maybe_unused_binding_pattern.map_or(false, |res| res.is_ignore());
@@ -154,15 +214,7 @@ impl NoUnusedVars {
             return false;
         }
 
-        params.items.iter().skip(position + 1).any(|p| {
-            let Some(id) = p.pattern.get_binding_identifier() else {
-                return false;
-            };
-            let Some(symbol_id) = id.symbol_id.get() else {
-                return false;
-            };
-            let symbol = Symbol::new(semantic, symbol_id);
-            symbol.has_usages()
-        })
+        let ctx = BindingContext { options: self, semantic };
+        params.items.iter().skip(position + 1).any(|p| p.pattern.has_any_used_binding(ctx))
     }
 }

@@ -9,6 +9,7 @@ mod usage;
 
 use std::ops::Deref;
 
+use binding_pattern::CheckBinding as _;
 use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -159,11 +160,19 @@ impl Rule for NoUnusedVars {
         }
 
         let is_used = self.is_used(&symbol);
-        if is_used {
-            if is_ignored {
-                // TODO: report unused ignore pattern
-            }
-            return;
+        match (is_used, is_ignored) {
+            (true, true) => {
+                ctx.diagnostic(diagnostic::used_ignored(&symbol));
+                return;
+            },
+            // not used but ignored, no violation
+            (false, true)
+            // used and not ignored, no violation
+            | (true, false) => {
+                return
+            },
+            // needs acceptance check and/or reporting
+            (false, false) => {}
         }
 
         match symbol.declaration().kind() {
@@ -196,40 +205,36 @@ impl Rule for NoUnusedVars {
                 ctx.diagnostic(diagnostic::param(&symbol));
             }
             AstKind::Function(_) => {
-                if symbol.is_function_callback()
-                    || symbol.is_function_assigned_to_same_name_variable()
+                if self.is_allowed_function(&symbol) {
+                    return;
+                }
+                ctx.diagnostic(diagnostic::declared(&symbol));
+            }
+            AstKind::Class(class) => {
+                if self.is_allowed_class(class) {
+                    return;
+                }
+                ctx.diagnostic(diagnostic::declared(&symbol));
+            }
+            AstKind::CatchParameter(e) => {
+                if e.pattern
+                    .check_unused_binding_pattern(self, &symbol)
+                    .is_some_and(|res| res.is_ignore())
                 {
                     return;
                 }
                 ctx.diagnostic(diagnostic::declared(&symbol));
             }
             _ => ctx.diagnostic(diagnostic::declared(&symbol)),
-            // unknown => {
-            //     debug_assert!(
-            //         false,
-            //         "NoUnusedVars::run_on_symbol - unhandled AstKind: {:?}",
-            //         unknown.debug_name()
-            //     )
-            // }
         };
-        // match (is_ignored, is_used) {
-        //     (true, true) => {
-        //         // TODO: report unused ignore pattern
-        //     }
-        //     (false, false) => {
-        //         // TODO: choose correct diagnostic
-        //         ctx.diagnostic(diagnostic::declared(&symbol));
-        //         // self.report_unused(&symbol, ctx);
-        //     }
-        //     _ => { /* no violation */ }
-        // }
     }
 
     fn should_run(&self, ctx: &LintContext) -> bool {
         // ignore .d.ts and vue files.
         // 1. declarations have side effects (they get merged together)
-        // 2. vue scripts delare variables that get used in the template, which
+        // 2. vue scripts declare variables that get used in the template, which
         //    we can't detect
-        !ctx.source_type().is_typescript_definition() && !ctx.file_path().ends_with(".vue")
+        !ctx.source_type().is_typescript_definition()
+            && !ctx.file_path().extension().is_some_and(|ext| ext == "vue")
     }
 }
