@@ -4,25 +4,6 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
-## [0.22.0] - 2024-07-23
-
-- 85a7cea semantic: [**BREAKING**] Remove name from `reference` (#4329) (Dunqing)
-
-- f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)
-
-### Bug Fixes
-
-- aece1df ast: Visit `Program`s `hashbang` field first (#4368) (overlookmotel)
-
-### Performance
-
-- e70c67b semantic: Remove a branch from `add_scope` (#4384) (overlookmotel)
-- 7eb2864 traverse: Speed up finding UID binding name (#4356) (overlookmotel)
-
-### Refactor
-
-- 5f1c7ec ast: Rename the `visited_node` marker to `ast`. (#4289) (rzvxa)
-
 ## [0.21.0] - 2024-07-18
 
 ### Features

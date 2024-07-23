@@ -37,6 +37,17 @@ declare_oxc_lint!(
     /// // it.skip('foo', () => {});
     /// // test.skip('foo', () => {});
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-commented-out-tests.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-commented-out-tests": "error"
+    ///   }
+    /// }
+    /// ```
     NoCommentedOutTests,
     suspicious
 );
@@ -69,7 +80,7 @@ impl Rule for NoCommentedOutTests {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("// foo('bar', function () {})", None),
         ("describe('foo', function () {})", None),
         ("it('foo', function () {})", None),
@@ -120,7 +131,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("// fdescribe('foo', function () {})", None),
         ("// describe['skip']('foo', function () {})", None),
         ("// describe['skip']('foo', function () {})", None),
@@ -170,5 +181,46 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoCommentedOutTests::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        r#"// foo("bar", function () {})"#,
+        r#"describe("foo", function () {})"#,
+        r#"it("foo", function () {})"#,
+        r#"describe.only("foo", function () {})"#,
+        r#"it.only("foo", function () {})"#,
+        r#"it.concurrent("foo", function () {})"#,
+        r#"test("foo", function () {})"#,
+        r#"test.only("foo", function () {})"#,
+        r#"test.concurrent("foo", function () {})"#,
+        r"var appliedSkip = describe.skip; appliedSkip.apply(describe)",
+        r"var calledSkip = it.skip; calledSkip.call(it)",
+        r"({ f: function () {} }).f()",
+        r"(a || b).f()",
+        r"itHappensToStartWithIt()",
+        r"testSomething()",
+        r"// latest(dates)",
+        r"// TODO: unify with Git implementation from Shipit (?)",
+        "#!/usr/bin/env node#",
+    ];
+
+    let fail_vitest = vec![
+        r"// describe(\'foo\', function () {})\'",
+        r#"// test.concurrent("foo", function () {})"#,
+        r#"// test["skip"]("foo", function () {})"#,
+        r#"// xdescribe("foo", function () {})"#,
+        r#"// xit("foo", function () {})"#,
+        r#"// fit("foo", function () {})"#,
+        r#"
+            // test(
+            //   "foo", function () {}
+            // )
+        "#,
+    ];
+
+    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
+    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+
+    Tester::new(NoCommentedOutTests::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }
