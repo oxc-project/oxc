@@ -9,6 +9,20 @@ source: crates/oxc_linter/src/tester.rs
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:33]
+ 1 │ const Foo = () => <Item config={Object.create(null)} />
+   ·                                 ───────────────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:38]
+ 1 │ const Foo = ({ x }) => <Item config={Object.assign({}, x)} />
+   ·                                      ────────────────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
    ╭─[jsx_no_new_object_as_prop.tsx:1:34]
  1 │ const Foo = () => (<Item config={new Object()} />)
    ·                                  ────────────
@@ -47,5 +61,25 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[jsx_no_new_object_as_prop.tsx:1:98]
  1 │ const Foo = () => (<Item config={this.props.config || (this.props.default ? this.props.default : {})} />)
    ·                                                                                                  ──
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:27]
+ 1 │ const Foo = () => { const x = {}; return <Bar x={x} /> }
+   ·                           ┬   ─┬                 ┬
+   ·                           │    │                 ╰── And used here
+   ·                           │    ╰── And assigned a new value here
+   ·                           ╰── The prop was declared here
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-object-as-prop): JSX attribute values should not contain objects created in the same scope.
+   ╭─[jsx_no_new_object_as_prop.tsx:1:16]
+ 1 │ const Foo = ({ x = {} }) => <Item x={x} />
+   ·                ┬   ─┬                ┬
+   ·                │    │                ╰── And used here
+   ·                │    ╰── And assigned a new value here
+   ·                ╰── The prop was declared here
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
