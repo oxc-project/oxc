@@ -20,13 +20,15 @@ use crate::{
 };
 
 fn describe_repeat(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.")
+    OxcDiagnostic::warn("Describe block title is used multiple times in the same describe block.")
         .with_help("Change the title of describe block.")
         .with_label(span0)
 }
 
 fn test_repeat(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.").with_help("Change the title of test.").with_label(span0)
+    OxcDiagnostic::warn("Test title is used multiple times in the same describe block.")
+        .with_help("Change the title of test.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -7,7 +7,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unsafe_declaration_merging_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-unsafe-declaration-merging): Unsafe declaration merging between classes and interfaces.")
+    OxcDiagnostic::warn("Unsafe declaration merging between classes and interfaces.")
         .with_help("The TypeScript compiler doesn't check whether properties are initialized, which can cause lead to TypeScript not detecting code that will cause runtime errors.")
         .with_labels([span0, span1])
 }
@@ -36,10 +36,6 @@ declare_oxc_lint!(
 
 impl Rule for NoUnsafeDeclarationMerging {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !ctx.source_type().is_typescript() {
-            return;
-        }
-
         match node.kind() {
             AstKind::Class(decl) => {
                 if let Some(ident) = decl.id.as_ref() {
@@ -63,6 +59,10 @@ impl Rule for NoUnsafeDeclarationMerging {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

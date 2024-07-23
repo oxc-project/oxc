@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     ast::{Expression, MemberExpression},
     AstKind,
@@ -10,16 +12,17 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, parse_expect_jest_fn_call,
-        ExpectError, PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, parse_expect_jest_fn_call, ExpectError, PossibleJestNode,
     },
     AstNode,
 };
 
-fn valid_expect_diagnostic(x0: TestPluginName, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0}(valid-expect): {x1:?}"))
-        .with_help(format!("{x2:?}"))
-        .with_label(span3)
+fn valid_expect_diagnostic<S: Into<Cow<'static, str>>>(
+    x1: S,
+    x2: &'static str,
+    span3: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(x1).with_help(x2).with_label(span3)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -121,7 +124,6 @@ impl Rule for ValidExpect {
 
 impl ValidExpect {
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let plugin_name = get_test_plugin_name(ctx);
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -137,17 +139,17 @@ impl ValidExpect {
         match jest_fn_call.expect_error {
             Some(ExpectError::MatcherNotFound) => {
                 let (error, help) = Message::MatcherNotFound.details();
-                ctx.diagnostic(valid_expect_diagnostic(plugin_name, error, help, reporting_span));
+                ctx.diagnostic(valid_expect_diagnostic(error, help, reporting_span));
                 return;
             }
             Some(ExpectError::MatcherNotCalled) => {
                 let (error, help) = Message::MatcherNotCalled.details();
-                ctx.diagnostic(valid_expect_diagnostic(plugin_name, error, help, reporting_span));
+                ctx.diagnostic(valid_expect_diagnostic(error, help, reporting_span));
                 return;
             }
             Some(ExpectError::ModifierUnknown) => {
                 let (error, help) = Message::ModifierUnknown.details();
-                ctx.diagnostic(valid_expect_diagnostic(plugin_name, error, help, reporting_span));
+                ctx.diagnostic(valid_expect_diagnostic(error, help, reporting_span));
                 return;
             }
             None => {}
@@ -164,7 +166,7 @@ impl ValidExpect {
                 if self.min_args > 1 { "s" } else { "" }
             );
             let help = "Remove the extra arguments.";
-            ctx.diagnostic(valid_expect_diagnostic(plugin_name, &error, help, call_expr.span));
+            ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
             return;
         }
         if call_expr.arguments.len() > self.max_args {
@@ -174,7 +176,7 @@ impl ValidExpect {
                 if self.max_args > 1 { "s" } else { "" }
             );
             let help = "Add the missing arguments.";
-            ctx.diagnostic(valid_expect_diagnostic(plugin_name, &error, help, call_expr.span));
+            ctx.diagnostic(valid_expect_diagnostic(error, help, call_expr.span));
             return;
         }
 
@@ -222,7 +224,7 @@ impl ValidExpect {
                 span = call_expr.span;
                 Message::PromisesWithAsyncAssertionsMustBeAwaited.details()
             };
-            ctx.diagnostic(valid_expect_diagnostic(plugin_name, error, help, span));
+            ctx.diagnostic(valid_expect_diagnostic(error, help, span));
         }
     }
 }

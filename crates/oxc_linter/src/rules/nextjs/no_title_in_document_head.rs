@@ -9,7 +9,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_title_in_document_head_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-next(no-title-in-document-head): Prevent usage of `<title>` with `Head` component from `next/document`.")
+    OxcDiagnostic::warn("Prevent usage of `<title>` with `Head` component from `next/document`.")
         .with_help("See https://nextjs.org/docs/messages/no-title-in-document-head")
         .with_label(span0)
 }

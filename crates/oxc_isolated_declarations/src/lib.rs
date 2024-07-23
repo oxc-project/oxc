@@ -58,7 +58,7 @@ impl<'a> IsolatedDeclarations<'a> {
         let source_type = SourceType::default().with_module(true).with_typescript_definition(true);
         let directives = self.ast.vec();
         let stmts = self.transform_program(program);
-        let program = self.ast.program(SPAN, source_type, directives, None, stmts);
+        let program = self.ast.program(SPAN, source_type, None, directives, stmts);
         IsolatedDeclarationsReturn { program, errors: self.take_errors() }
     }
 

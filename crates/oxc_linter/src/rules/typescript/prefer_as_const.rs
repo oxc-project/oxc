@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_as_const_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.")
+    OxcDiagnostic::warn("Expected a `const` assertion instead of a literal type annotation.")
         .with_help("You should use `as const` instead of type annotation.")
         .with_label(span0)
 }
@@ -79,6 +79,10 @@ impl Rule for PreferAsConst {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

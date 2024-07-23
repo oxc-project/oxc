@@ -7,24 +7,15 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, MemberExpressionElement, ParsedGeneralJestFnCall,
-        PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        MemberExpressionElement, ParsedGeneralJestFnCall, PossibleJestNode,
     },
 };
 
-fn no_focused_tests_diagnostic(span0: Span, x1: TestPluginName) -> OxcDiagnostic {
-    match x1 {
-        TestPluginName::Jest => {
-            OxcDiagnostic::warn(format!("{x1}(no-focused-tests): Unexpected focused test."))
-                .with_help("Remove focus from test.")
-                .with_label(span0)
-        }
-        TestPluginName::Vitest => {
-            OxcDiagnostic::warn(format!("{x1}(no-focused-tests): Focused tests are not allowed."))
-                .with_label(span0)
-        }
-    }
+fn no_focused_tests_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected focused test.")
+        .with_help("Remove focus from test.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -75,18 +66,13 @@ declare_oxc_lint!(
 
 impl Rule for NoFocusedTests {
     fn run_once(&self, ctx: &LintContext) {
-        let plugin_name = get_test_plugin_name(ctx);
         for node in &collect_possible_jest_call_node(ctx) {
-            run(node, plugin_name, ctx);
+            run(node, ctx);
         }
     }
 }
 
-fn run<'a>(
-    possible_jest_node: &PossibleJestNode<'a, '_>,
-    plugin_name: TestPluginName,
-    ctx: &LintContext<'a>,
-) {
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
@@ -101,13 +87,10 @@ fn run<'a>(
 
     if name.starts_with('f') {
         ctx.diagnostic_with_fix(
-            no_focused_tests_diagnostic(
-                Span::new(
-                    call_expr.span.start,
-                    call_expr.span.start + u32::try_from(name.len()).unwrap_or(1),
-                ),
-                plugin_name,
-            ),
+            no_focused_tests_diagnostic(Span::new(
+                call_expr.span.start,
+                call_expr.span.start + u32::try_from(name.len()).unwrap_or(1),
+            )),
             |fixer| fixer.delete_range(Span::sized(call_expr.span.start, 1)),
         );
 
@@ -116,16 +99,13 @@ fn run<'a>(
 
     let only_node = members.iter().find(|member| member.is_name_equal("only"));
     if let Some(only_node) = only_node {
-        ctx.diagnostic_with_fix(
-            no_focused_tests_diagnostic(only_node.span, plugin_name),
-            |fixer| {
-                let mut span = only_node.span.expand_left(1);
-                if !matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
-                    span = span.expand_right(1);
-                }
-                fixer.delete_range(span)
-            },
-        );
+        ctx.diagnostic_with_fix(no_focused_tests_diagnostic(only_node.span), |fixer| {
+            let mut span = only_node.span.expand_left(1);
+            if !matches!(only_node.element, MemberExpressionElement::IdentName(_)) {
+                span = span.expand_right(1);
+            }
+            fixer.delete_range(span)
+        });
     }
 }
 

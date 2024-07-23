@@ -9,9 +9,11 @@ use crate::{
 };
 
 fn require_property_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsdoc(require-property): The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.")
-        .with_help("Consider adding a `@property` tag or replacing it with a more specific type.")
-        .and_label(span)
+    OxcDiagnostic::warn(
+        "The `@typedef` and `@namespace` tags must include a `@property` tag with the type Object.",
+    )
+    .with_help("Consider adding a `@property` tag or replacing it with a more specific type.")
+    .and_label(span)
 }
 
 #[derive(Debug, Default, Clone)]

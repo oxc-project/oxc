@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn prefer_enum_initializers_diagnostic(x0: &str, x1: usize, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(prefer-enum-initializers): The value of the member {x0:?} should be explicitly defined."))
+    OxcDiagnostic::warn(format!("The value of the member {x0:?} should be explicitly defined."))
         .with_help(format!("Can be fixed to {x0:?} = {x1:?}."))
         .with_label(span2)
 }
@@ -50,6 +50,10 @@ impl Rule for PreferEnumInitializers {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

@@ -7,24 +7,28 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule};
 
 fn comment(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(ban-ts-comment): Do not use @ts-{x0} because it alters compilation errors.")).with_label(span1)
+    OxcDiagnostic::warn(format!("Do not use @ts-{x0} because it alters compilation errors."))
+        .with_label(span1)
 }
 
 fn ignore_instead_of_expect_error(span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(ban-ts-comment): Use \"@ts-expect-error\" instead of @ts-ignore, as \"@ts-ignore\" will do nothing if the following line is error-free.")
+    OxcDiagnostic::warn("Use \"@ts-expect-error\" instead of @ts-ignore, as \"@ts-ignore\" will do nothing if the following line is error-free.")
         .with_help("Replace \"@ts-ignore\" with \"@ts-expect-error\".")
         .with_label(span1)
 }
 
 fn comment_requires_description(x0: &str, x1: u64, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-        "typescript-eslint(ban-ts-comment): Include a description after the @ts-{x0} directive to explain why the @ts-{x0} is necessary. The description must be {x1} characters or longer."
+        "Include a description after the @ts-{x0} directive to explain why the @ts-{x0} is necessary. The description must be {x1} characters or longer."
     ))
     .with_label(span2)
 }
 
 fn comment_description_not_match_pattern(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("typescript-eslint(ban-ts-comment): The description for the @ts-{x0} directive must match the {x1} format.")).with_label(span2)
+    OxcDiagnostic::warn(format!(
+        "The description for the @ts-{x0} directive must match the {x1} format."
+    ))
+    .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -199,6 +203,10 @@ impl Rule for BanTsComment {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

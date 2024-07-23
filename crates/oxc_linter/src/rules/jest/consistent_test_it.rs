@@ -11,30 +11,21 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, parse_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        ParsedJestFnCallNew, PossibleJestNode,
     },
 };
 
-fn consistent_method(x0: TestPluginName, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
-    ))
-    .with_help(format!("Prefer using {x1:?} instead of {x2:?}"))
-    .with_label(span0)
+fn consistent_method(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce `test` and `it` usage conventions".to_string())
+        .with_help(format!("Prefer using {x1:?} instead of {x2:?}"))
+        .with_label(span0)
 }
 
-fn consistent_method_within_describe(
-    x0: TestPluginName,
-    x1: &str,
-    x2: &str,
-    span0: Span,
-) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "{x0}(consistent-test-it): Enforce `test` and `it` usage conventions",
-    ))
-    .with_help(format!("Prefer using {x1:?} instead of {x2:?} within describe"))
-    .with_label(span0)
+fn consistent_method_within_describe(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce `test` and `it` usage conventions".to_string())
+        .with_help(format!("Prefer using {x1:?} instead of {x2:?} within describe"))
+        .with_label(span0)
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -201,13 +192,12 @@ impl Rule for ConsistentTestIt {
     }
 
     fn run_once(&self, ctx: &LintContext) {
-        let plugin_name = get_test_plugin_name(ctx);
         let mut describe_nesting_hash: FxHashMap<ScopeId, i32> = FxHashMap::default();
         let mut possible_jest_nodes = collect_possible_jest_call_node(ctx);
         possible_jest_nodes.sort_by_key(|n| n.node.id());
 
         for possible_jest_node in &possible_jest_nodes {
-            self.run(&mut describe_nesting_hash, plugin_name, possible_jest_node, ctx);
+            self.run(&mut describe_nesting_hash, possible_jest_node, ctx);
         }
     }
 }
@@ -216,7 +206,6 @@ impl ConsistentTestIt {
     fn run<'a>(
         &self,
         describe_nesting_hash: &mut FxHashMap<ScopeId, i32>,
-        plugin_name: TestPluginName,
         possible_jest_node: &PossibleJestNode<'a, '_>,
         ctx: &LintContext<'a>,
     ) {
@@ -248,7 +237,7 @@ impl ConsistentTestIt {
                 &fn_to_str,
             ) {
                 ctx.diagnostic_with_fix(
-                    consistent_method(plugin_name, &fn_to_str, &opposite_test_keyword, span),
+                    consistent_method(&fn_to_str, &opposite_test_keyword, span),
                     |fixer| fixer.replace(span, prefer_test_name),
                 );
             }
@@ -268,7 +257,6 @@ impl ConsistentTestIt {
             ) {
                 ctx.diagnostic_with_fix(
                     consistent_method_within_describe(
-                        plugin_name,
                         &describe_to_str,
                         &opposite_test_keyword,
                         span,

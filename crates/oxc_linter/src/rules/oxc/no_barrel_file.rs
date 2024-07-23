@@ -97,7 +97,7 @@ impl Rule for NoBarrelFile {
         let threshold = self.threshold;
         if total >= threshold {
             let diagnostic = OxcDiagnostic::warn(format!(
-                "oxc(no-barrel-file): Barrel file detected, {total} modules are loaded."
+                "Barrel file detected, {total} modules are loaded."
             ))
             .with_help(format!("Loading {total} modules is slow for runtimes and bundlers.\nThe configured threshold is {threshold}.\nSee also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>."))
             .with_labels(labels);

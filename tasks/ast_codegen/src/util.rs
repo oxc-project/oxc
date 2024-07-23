@@ -5,6 +5,19 @@ use syn::{GenericArgument, Ident, PathArguments, Type, TypePath};
 
 use crate::{CodegenCtx, TypeRef};
 
+pub trait NormalizeError<T> {
+    fn normalize(self) -> crate::Result<T>;
+}
+
+impl<T, E> NormalizeError<T> for Result<T, E>
+where
+    E: ToString,
+{
+    fn normalize(self) -> crate::Result<T> {
+        self.map_err(|e| e.to_string())
+    }
+}
+
 pub trait TokenStreamExt {
     fn replace_ident(self, needle: &str, replace: &Ident) -> TokenStream;
 }

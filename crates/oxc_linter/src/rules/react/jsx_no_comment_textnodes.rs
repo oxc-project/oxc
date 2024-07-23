@@ -8,7 +8,8 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn jsx_no_comment_textnodes_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-comment-textnodes): Comments inside children section of tag should be placed inside braces").with_label(span0)
+    OxcDiagnostic::warn("Comments inside children section of tag should be placed inside braces")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -58,6 +59,10 @@ impl Rule for JsxNoCommentTextnodes {
         if control_patterns(&jsx_text.value) {
             ctx.diagnostic(jsx_no_comment_textnodes_diagnostic(jsx_text.span));
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

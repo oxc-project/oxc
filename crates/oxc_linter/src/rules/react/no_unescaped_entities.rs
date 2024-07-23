@@ -7,10 +7,7 @@ use phf::{phf_map, Map};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_unescaped_entities_diagnostic(span0: Span, x1: char, x2: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-react(no-unescaped-entities): `{x1}` can be escaped with {x2}"
-    ))
-    .with_label(span0)
+    OxcDiagnostic::warn(format!("`{x1}` can be escaped with {x2}")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -63,6 +60,10 @@ impl Rule for NoUnescapedEntities {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

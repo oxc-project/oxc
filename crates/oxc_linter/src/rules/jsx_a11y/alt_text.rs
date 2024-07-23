@@ -17,13 +17,13 @@ use crate::{
 };
 
 fn missing_alt_prop(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): Missing `alt` attribute.")
+    OxcDiagnostic::warn("Missing `alt` attribute.")
         .with_help("Must have `alt` prop, either with meaningful text, or an empty string for decorative images.")
         .with_label(span0)
 }
 
 fn missing_alt_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): Invalid `alt` value.")
+    OxcDiagnostic::warn("Invalid `alt` value.")
         .with_help(
             "Must have meaningful value for `alt` prop. Use alt=\"\" for presentational images.",
         )
@@ -31,39 +31,37 @@ fn missing_alt_value(span0: Span) -> OxcDiagnostic {
 }
 
 fn aria_label_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): Missing value for aria-label attribute.")
+    OxcDiagnostic::warn("Missing value for aria-label attribute.")
         .with_help("The aria-label attribute must have a value. The alt attribute is preferred over aria-label for images.")
         .with_label(span0)
 }
 
 fn aria_labelled_by_value(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(alt-text): Missing value for aria-labelledby attribute.",
-    )
-    .with_help("The alt attribute is preferred over aria-labelledby for images.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Missing value for aria-labelledby attribute.")
+        .with_help("The alt attribute is preferred over aria-labelledby for images.")
+        .with_label(span0)
 }
 
 fn prefer_alt(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): ARIA used where native HTML could suffice.")
+    OxcDiagnostic::warn("ARIA used where native HTML could suffice.")
         .with_help("Prefer alt=\"\" over presentational role. Native HTML attributes should be preferred for accessibility before resorting to ARIA attributes.")
         .with_label(span0)
 }
 
 fn object(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): Missing alternative text.")
+    OxcDiagnostic::warn("Missing alternative text.")
         .with_help("Embedded <object> elements must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
         .with_label(span0)
 }
 
 fn area(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): Missing alternative text.")
+    OxcDiagnostic::warn("Missing alternative text.")
         .with_help("Each area of an image map must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
         .with_label(span0)
 }
 
 fn input_type_image(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(alt-text): Missing alternative text.")
+    OxcDiagnostic::warn("Missing alternative text.")
         .with_help("<input> elements with type=\"image\" must have a text alternative through the `alt`, `aria-label`, or `aria-labelledby` prop.")
         .with_label(span0)
 }

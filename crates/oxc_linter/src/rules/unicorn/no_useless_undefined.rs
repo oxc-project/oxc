@@ -8,10 +8,8 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 fn warn() -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-unicorn(no-useless-undefined): Do not use useless `undefined`.",
-    )
-    .with_help("Consider removing `undefined` or using `null` instead.")
+    OxcDiagnostic::warn("Do not use useless `undefined`.")
+        .with_help("Consider removing `undefined` or using `null` instead.")
 }
 fn no_useless_undefined_diagnostic(span0: Span) -> OxcDiagnostic {
     warn().with_label(span0)

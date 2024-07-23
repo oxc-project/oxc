@@ -4,16 +4,12 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_test_plugin_name, TestPluginName},
-};
+use crate::{context::LintContext, rule::Rule};
 
-fn no_commented_out_tests_diagnostic(x0: TestPluginName, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0}(no-commented-out-tests): Some tests seem to be commented"))
+fn no_commented_out_tests_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Some tests seem to be commented")
         .with_help("Remove or uncomment this comment")
-        .with_label(span1)
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -73,10 +69,9 @@ impl Rule for NoCommentedOutTests {
                 None
             }
         });
-        let plugin_name = get_test_plugin_name(ctx);
 
         for span in commented_tests {
-            ctx.diagnostic(no_commented_out_tests_diagnostic(plugin_name, span));
+            ctx.diagnostic(no_commented_out_tests_diagnostic(span));
         }
     }
 }

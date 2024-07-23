@@ -7,11 +7,9 @@ use serde::Deserialize;
 use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
 
 fn empty_tags_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.",
-    )
-    .with_help(format!("`@{x1}` tag should not have body."))
-    .with_label(span0)
+    OxcDiagnostic::warn("Expects the void tags to be empty of any content.")
+        .with_help(format!("`@{x1}` tag should not have body."))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

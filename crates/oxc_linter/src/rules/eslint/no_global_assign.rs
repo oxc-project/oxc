@@ -5,10 +5,8 @@ use oxc_span::{CompactStr, Span};
 use crate::{context::LintContext, rule::Rule};
 
 fn no_global_assign_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(no-global-assign): Read-only global '{x0}' should not be modified."
-    ))
-    .with_label(span1.label(format!("Read-only global '{x0}' should not be modified.")))
+    OxcDiagnostic::warn(format!("Read-only global '{x0}' should not be modified."))
+        .with_label(span1.label(format!("Read-only global '{x0}' should not be modified.")))
 }
 
 #[derive(Debug, Default, Clone)]
@@ -65,8 +63,10 @@ impl Rule for NoGlobalAssign {
             for reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
                 if reference.is_write() {
-                    let name = reference.name();
-                    if !self.excludes.contains(name) && ctx.env_contains_var(name) {
+                    let name = ctx.semantic().reference_name(reference);
+                    if !self.excludes.contains(&CompactStr::from(name))
+                        && ctx.env_contains_var(name)
+                    {
                         ctx.diagnostic(no_global_assign_diagnostic(name, reference.span()));
                     }
                 }

@@ -13,11 +13,11 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn needs_more_children(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.").with_label(span0)
+    OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span0)
 }
 
 fn child_of_html_element(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.").with_label(span0)
+    OxcDiagnostic::warn("Passing a fragment to a HTML element is useless.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -73,6 +73,10 @@ impl Rule for JsxNoUselessFragment {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

@@ -13,9 +13,11 @@ use phf::phf_set;
 use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
 
 fn void_dom_elements_no_children_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.")
-        .with_help(format!("Void DOM element <{x0:?} /> cannot receive children."))
-        .with_label(span1)
+    OxcDiagnostic::warn(
+        "Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.",
+    )
+    .with_help(format!("Void DOM element <{x0:?} /> cannot receive children."))
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -134,6 +136,10 @@ impl Rule for VoidDomElementsNoChildren {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

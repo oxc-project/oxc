@@ -7,14 +7,12 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_empty_interface_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(no-empty-interface): an empty interface is equivalent to `{}`",
-    )
-    .with_label(span0)
+    OxcDiagnostic::warn("an empty interface is equivalent to `{}`").with_label(span0)
 }
 
 fn no_empty_interface_extend_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-empty-interface): an interface declaring no members is equivalent to its supertype").with_label(span0)
+    OxcDiagnostic::warn("an interface declaring no members is equivalent to its supertype")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -69,6 +67,10 @@ impl Rule for NoEmptyInterface {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

@@ -7,7 +7,7 @@ use serde_json::{Number, Value};
 
 use crate::{
     config::OxlintConfig, fixer::FixKind, rules::RULES, utils::is_jest_rule_adapted_to_vitest,
-    RuleCategory, RuleEnum, RuleWithSeverity,
+    FrameworkFlags, RuleCategory, RuleEnum, RuleWithSeverity,
 };
 
 #[derive(Debug)]
@@ -33,6 +33,8 @@ pub struct LintOptions {
     pub nextjs_plugin: bool,
     pub react_perf_plugin: bool,
     pub promise_plugin: bool,
+
+    pub framework_hints: FrameworkFlags,
 }
 
 impl Default for LintOptions {
@@ -53,6 +55,8 @@ impl Default for LintOptions {
             nextjs_plugin: false,
             react_perf_plugin: false,
             promise_plugin: false,
+
+            framework_hints: FrameworkFlags::default(),
         }
     }
 }

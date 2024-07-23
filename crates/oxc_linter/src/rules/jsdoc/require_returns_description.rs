@@ -11,11 +11,9 @@ use crate::{
 };
 
 fn missing_description_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsdoc(require-returns-description): Missing JSDoc `@returns` description.",
-    )
-    .with_help("Add description comment to `@returns` tag.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Missing JSDoc `@returns` description.")
+        .with_help("Add description comment to `@returns` tag.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

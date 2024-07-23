@@ -8,11 +8,9 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule};
 
 fn max_classes_per_file_diagnostic(total: usize, max: usize, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint(max-classes-per-file): File has too many classes ({total}). Maximum allowed is {max}",
-    ))
-    .with_help("Reduce the number of classes in this file")
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("File has too many classes ({total}). Maximum allowed is {max}",))
+        .with_help("Reduce the number of classes in this file")
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

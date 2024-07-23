@@ -9,9 +9,9 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn consistent_type_definitions_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(consistent-type-definitions):")
+    OxcDiagnostic::warn(format!("Use an `{x0}` instead of a `{x1}`"))
         .with_help(format!("Use an `{x0}` instead of a `{x1}`"))
-        .with_label(span2.label(format!("Use an `{x0}` instead of a `{x1}`")))
+        .with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -213,6 +213,10 @@ impl Rule for ConsistentTypeDefinitions {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

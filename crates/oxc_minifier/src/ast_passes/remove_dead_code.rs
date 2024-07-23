@@ -44,7 +44,7 @@ impl<'a> RemoveDeadCode<'a> {
     fn dead_code_elimintation(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         // Fold if statements
         for stmt in stmts.iter_mut() {
-            if self.fold_if_statement(stmt) {}
+            self.fold_if_statement(stmt);
         }
 
         // Remove code after `return` and `throw` statements
@@ -80,13 +80,20 @@ impl<'a> RemoveDeadCode<'a> {
         }
     }
 
-    #[must_use]
-    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>) -> bool {
-        let Statement::IfStatement(if_stmt) = stmt else { return false };
+    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>) {
+        let Statement::IfStatement(if_stmt) = stmt else { return };
+
+        // Descend and remove `else` blocks first.
+        if let Some(alternate) = &mut if_stmt.alternate {
+            self.fold_if_statement(alternate);
+            if matches!(alternate, Statement::EmptyStatement(_)) {
+                if_stmt.alternate = None;
+            }
+        }
+
         match self.fold_expression_and_get_boolean_value(&mut if_stmt.test) {
             Some(true) => {
                 *stmt = self.ast.move_statement(&mut if_stmt.consequent);
-                true
             }
             Some(false) => {
                 *stmt = if let Some(alternate) = &mut if_stmt.alternate {
@@ -95,15 +102,12 @@ impl<'a> RemoveDeadCode<'a> {
                     // Keep hoisted `vars` from the consequent block.
                     let mut keep_var = KeepVar::new(self.ast);
                     keep_var.visit_statement(&if_stmt.consequent);
-                    if let Some(stmt) = keep_var.get_variable_declaration_statement() {
-                        stmt
-                    } else {
-                        self.ast.statement_empty(SPAN)
-                    }
+                    keep_var
+                        .get_variable_declaration_statement()
+                        .unwrap_or_else(|| self.ast.statement_empty(SPAN))
                 };
-                true
             }
-            _ => false,
+            None => {}
         }
     }
 
