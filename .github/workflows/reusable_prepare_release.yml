@@ -13,15 +13,6 @@ on:
       version:
         value: ${{ jobs.run.outputs.version }}
 
-env:
-  CARGO_INCREMENTAL: 0
-  RUSTFLAGS: "-D warnings"
-
-permissions:
-  pull-requests: write
-  contents: write
-  actions: write
-
 jobs:
   run:
     name: Prepare Release
@@ -56,10 +47,10 @@ jobs:
       - uses: peter-evans/create-pull-request@v6
         id: pr
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # bot account with PAT required for triggering workflow runs
+          # See https://github.com/peter-evans/create-pull-request/blob/main/docs/concepts-guidelines.md#triggering-further-workflow-runs
+          token: ${{ secrets.OXC_BOT_PAT }}
           commit-message: Release ${{ inputs.name }}
-          committer: Boshen <Boshen@users.noreply.github.com>
-          author: Boshen <Boshen@users.noreply.github.com>
           branch: release/${{ inputs.name }}
           branch-suffix: timestamp
           base: main
