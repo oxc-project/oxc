@@ -33,6 +33,7 @@ jobs:
       - name: Run
         id: run
         run: |
+          cargo ck
           cargo release-oxc update --release ${{ inputs.name }}
           echo "VERSION=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
           {
