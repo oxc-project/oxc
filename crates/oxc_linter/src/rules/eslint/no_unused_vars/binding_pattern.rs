@@ -107,8 +107,7 @@ impl<'a> CheckBinding<'a> for ObjectPattern<'a> {
         return self
             .rest
             .as_ref()
-            .map(|rest| rest.check_unused_binding_pattern(options, symbol))
-            .flatten();
+            .and_then(|rest| rest.check_unused_binding_pattern(options, symbol));
     }
 }
 
@@ -150,7 +149,7 @@ impl<'a> CheckBinding<'a> for ArrayPattern<'a> {
                     .destructured_array_ignore_pattern
                     .as_ref()
                     .is_some_and(|pattern| pattern.is_match(symbol.name()));
-                return res | is_ignorable;
+                res | is_ignorable
             });
 
             if res.is_some() {

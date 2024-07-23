@@ -70,7 +70,7 @@ impl NoUnusedVars {
         }
 
         // check if res is an array/object unpacking pattern that should be ignored
-        matches!(decl.id.check_unused_binding_pattern(&*self, symbol), Some(res) if res.is_ignore())
+        matches!(decl.id.check_unused_binding_pattern(self, symbol), Some(res) if res.is_ignore())
     }
 
     pub(super) fn is_allowed_argument<'a>(
@@ -104,7 +104,7 @@ impl NoUnusedVars {
         // arguments inside setters are allowed
         // (1 to skip self, then the next should be a function or method) = 2
         let maybe_method_or_fn =
-            semantic.nodes().iter_parents(params_id).nth(2).map(|node| node.kind());
+            semantic.nodes().iter_parents(params_id).nth(2).map(oxc_semantic::AstNode::kind);
         if matches!(
             maybe_method_or_fn,
             Some(
@@ -131,7 +131,10 @@ impl NoUnusedVars {
         // check if this is a positional argument - unused non-positional
         // arguments are never allowed
         if param.pattern.kind.is_destructuring_pattern() {
-            return false;
+            // allow unpacked parameters that are ignored
+            let maybe_unused_binding_pattern =
+                param.pattern.check_unused_binding_pattern(self, symbol);
+            return maybe_unused_binding_pattern.map_or(false, |res| res.is_ignore());
         }
 
         // find the index of the parameter in the parameters list. We want to
