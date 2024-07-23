@@ -28,7 +28,9 @@ oxc_index    = { workspace = true }
 itertools    = { workspace = true }
 
 [dev-dependencies]
-oxc_codegen   = { workspace = true }
+# Using `path` instead of `workspace = true` Workaround for https://github.com/rust-lang/cargo/issues/4242
+# ref: https://github.com/rust-lang/futures-rs/pull/2305
+oxc_codegen   = { path = "../oxc_codegen" }
 oxc_parser    = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
