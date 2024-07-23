@@ -31,7 +31,7 @@ declare_oxc_lint!(
 
 fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!(
-            "typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
+            "Confusing combinations of non-null assertion and equal test like \"a! {op_str} b\", which looks very similar to not equal \"a !{op_str} b\"."
     ))
     .with_help("Remove the \"!\", or prefix the \"=\" with it.")
     .with_label(span)
@@ -39,7 +39,7 @@ fn not_need_no_confusing_non_null_assertion_diagnostic(op_str: &str, span: Span)
 
 fn wrap_up_no_confusing_non_null_assertion_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
-        "typescript-eslint(no-confusing-non-null-assertion): Confusing combinations of non-null assertion and equal test like \"a! = b\", which looks very similar to not equal \"a != b\"."
+        "Confusing combinations of non-null assertion and equal test like \"a! = b\", which looks very similar to not equal \"a != b\"."
     )
     .with_help("Wrap left-hand side in parentheses to avoid putting non-null assertion \"!\" and \"=\" together.")
     .with_label(span)
@@ -91,6 +91,10 @@ impl Rule for NoConfusingNonNullAssertion {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

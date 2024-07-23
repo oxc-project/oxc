@@ -7,8 +7,8 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, ParsedGeneralJestFnCall, PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        ParsedGeneralJestFnCall, PossibleJestNode,
     },
 };
 
@@ -63,15 +63,8 @@ declare_oxc_lint!(
     correctness
 );
 
-fn no_disabled_tests_diagnostic(
-    x0: TestPluginName,
-    x1: &str,
-    x2: &str,
-    span3: Span,
-) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0}(no-disabled-tests): {x1:?}"))
-        .with_help(format!("{x2:?}"))
-        .with_label(span3)
+fn no_disabled_tests_diagnostic(x1: &'static str, x2: &'static str, span3: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(x1).with_help(x2).with_label(span3)
 }
 
 enum Message {
@@ -98,19 +91,13 @@ impl Message {
 
 impl Rule for NoDisabledTests {
     fn run_once(&self, ctx: &LintContext) {
-        let plugin_name = get_test_plugin_name(ctx);
-
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
-            run(possible_jest_node, plugin_name, ctx);
+            run(possible_jest_node, ctx);
         }
     }
 }
 
-fn run<'a>(
-    possible_jest_node: &PossibleJestNode<'a, '_>,
-    plugin_name: TestPluginName,
-    ctx: &LintContext<'a>,
-) {
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
         if let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) {
@@ -125,12 +112,7 @@ fn run<'a>(
                 && members.iter().all(|member| member.is_name_unequal("todo"))
             {
                 let (error, help) = Message::MissingFunction.details();
-                ctx.diagnostic(no_disabled_tests_diagnostic(
-                    plugin_name,
-                    error,
-                    help,
-                    call_expr.span,
-                ));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
                 return;
             }
 
@@ -142,12 +124,7 @@ fn run<'a>(
                 } else {
                     Message::DisabledTestWithX.details()
                 };
-                ctx.diagnostic(no_disabled_tests_diagnostic(
-                    plugin_name,
-                    error,
-                    help,
-                    call_expr.callee.span(),
-                ));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
                 return;
             }
 
@@ -159,12 +136,7 @@ fn run<'a>(
                 } else {
                     Message::DisabledTestWithSkip.details()
                 };
-                ctx.diagnostic(no_disabled_tests_diagnostic(
-                    plugin_name,
-                    error,
-                    help,
-                    call_expr.callee.span(),
-                ));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.callee.span()));
             }
         } else if let Expression::Identifier(ident) = &call_expr.callee {
             if ident.name.as_str() == "pending"
@@ -172,12 +144,7 @@ fn run<'a>(
             {
                 // `describe('foo', function () { pending() })`
                 let (error, help) = Message::Pending.details();
-                ctx.diagnostic(no_disabled_tests_diagnostic(
-                    plugin_name,
-                    error,
-                    help,
-                    call_expr.span,
-                ));
+                ctx.diagnostic(no_disabled_tests_diagnostic(error, help, call_expr.span));
             }
         }
     }

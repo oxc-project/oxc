@@ -8,13 +8,13 @@ use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_extra_double_negation_cast_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-extra-boolean-cast): Redundant double negation")
+    OxcDiagnostic::warn("Redundant double negation")
         .with_help("Remove the double negation as it will already be coerced to a boolean")
         .with_label(span0)
 }
 
 fn no_extra_boolean_cast_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-extra-boolean-cast): Redundant Boolean call")
+    OxcDiagnostic::warn("Redundant Boolean call")
         .with_help("Remove the Boolean call as it will already be coerced to a boolean")
         .with_label(span0)
 }

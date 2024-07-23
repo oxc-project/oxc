@@ -18,7 +18,7 @@ use crate::{
 };
 
 fn use_jest_spy_on(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.")
+    OxcDiagnostic::warn("Suggest using `jest.spyOn()`.")
         .with_help("Use jest.spyOn() instead")
         .with_label(span0)
 }

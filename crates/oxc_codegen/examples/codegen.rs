@@ -57,7 +57,7 @@ fn main() -> std::io::Result<()> {
         }
         let printed = CodeGenerator::new()
             .enable_comment(
-                &source_text,
+                &printed,
                 ret.trivias.clone(),
                 CommentOptions { preserve_annotate_comments: true },
             )

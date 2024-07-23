@@ -6,8 +6,10 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_prototype_builtins_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-prototype-builtins): do not access Object.prototype method {x0:?} from target object"))
-        .with_help(format!("to avoid prototype pollution, use `Object.prototype.{x0}.call` instead"))
+    OxcDiagnostic::warn(format!("do not access Object.prototype method {x0:?} from target object"))
+        .with_help(format!(
+            "to avoid prototype pollution, use `Object.prototype.{x0}.call` instead"
+        ))
         .with_label(span1)
 }
 

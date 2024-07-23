@@ -13,26 +13,22 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
     AstNode,
 };
 
-fn describe_repeat(x0: TestPluginName, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("
-      {x0}(no-identical-title): Describe block title is used multiple times in the same describe block.",
-    ))
-    .with_help("Change the title of describe block.")
-    .with_label(span1)
+fn describe_repeat(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Describe block title is used multiple times in the same describe block.")
+        .with_help("Change the title of describe block.")
+        .with_label(span0)
 }
 
-fn test_repeat(x0: TestPluginName, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "{x0}(no-identical-title): Test title is used multiple times in the same describe block.",
-    ))
-    .with_help("Change the title of test.")
-    .with_label(span1)
+fn test_repeat(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Test title is used multiple times in the same describe block.")
+        .with_help("Change the title of test.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -112,15 +108,14 @@ impl Rule for NoIdenticalTitle {
             for i in 1..kind_and_spans.len() {
                 let (span, kind, parent_id) = kind_and_spans[i];
                 let (_, prev_kind, prev_parent) = kind_and_spans[i - 1];
-                let plugin_name = get_test_plugin_name(ctx);
 
                 if kind == prev_kind && parent_id == prev_parent {
                     match kind {
                         JestFnKind::General(JestGeneralFnKind::Describe) => {
-                            ctx.diagnostic(describe_repeat(plugin_name, span));
+                            ctx.diagnostic(describe_repeat(span));
                         }
                         JestFnKind::General(JestGeneralFnKind::Test) => {
-                            ctx.diagnostic(test_repeat(plugin_name, span));
+                            ctx.diagnostic(test_repeat(span));
                         }
                         _ => {}
                     }

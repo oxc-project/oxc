@@ -17,13 +17,15 @@ use crate::{
 };
 
 fn this_refs_deprecated(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(no-string-refs): Using this.refs is deprecated.")
+    OxcDiagnostic::warn("Using this.refs is deprecated.")
         .with_help("Using this.xxx instead of this.refs.xxx")
         .with_label(span0)
 }
 
 fn string_in_ref_deprecated(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.").with_help("Using reference callback instead").with_label(span0)
+    OxcDiagnostic::warn("Using string literals in ref attributes is deprecated.")
+        .with_help("Using reference callback instead")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -124,6 +126,10 @@ impl Rule for NoStringRefs {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

@@ -37,18 +37,18 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
         ctx.set_current_scope_id(scope_id);
     }
     traverser.enter_program(&mut *node, ctx);
-    ctx.push_stack(Ancestor::ProgramDirectives(ancestor::ProgramWithoutDirectives(node)));
+    ctx.push_stack(Ancestor::ProgramHashbang(ancestor::ProgramWithoutHashbang(node)));
+    if let Some(field) =
+        &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_HASHBANG) as *mut Option<Hashbang>)
+    {
+        walk_hashbang(traverser, field as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ProgramDirectives);
     for item in (*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_DIRECTIVES)
         as *mut Vec<Directive>))
         .iter_mut()
     {
         walk_directive(traverser, item as *mut _, ctx);
-    }
-    if let Some(field) =
-        &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_HASHBANG) as *mut Option<Hashbang>)
-    {
-        ctx.retag_stack(AncestorType::ProgramHashbang);
-        walk_hashbang(traverser, field as *mut _, ctx);
     }
     ctx.retag_stack(AncestorType::ProgramBody);
     walk_statements(
@@ -2392,29 +2392,22 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
         ctx.set_current_scope_id(scope_id);
     }
     traverser.enter_arrow_function_expression(&mut *node, ctx);
-    ctx.push_stack(Ancestor::ArrowFunctionExpressionParams(
-        ancestor::ArrowFunctionExpressionWithoutParams(node),
+    ctx.push_stack(Ancestor::ArrowFunctionExpressionTypeParameters(
+        ancestor::ArrowFunctionExpressionWithoutTypeParameters(node),
     ));
+    if let Some(field) = &mut *((node as *mut u8)
+        .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
+        as *mut Option<Box<TSTypeParameterDeclaration>>)
+    {
+        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
+    }
+    ctx.retag_stack(AncestorType::ArrowFunctionExpressionParams);
     walk_formal_parameters(
         traverser,
         (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_PARAMS)
             as *mut Box<FormalParameters>)) as *mut _,
         ctx,
     );
-    ctx.retag_stack(AncestorType::ArrowFunctionExpressionBody);
-    walk_function_body(
-        traverser,
-        (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
-            as *mut Box<FunctionBody>)) as *mut _,
-        ctx,
-    );
-    if let Some(field) = &mut *((node as *mut u8)
-        .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_TYPE_PARAMETERS)
-        as *mut Option<Box<TSTypeParameterDeclaration>>)
-    {
-        ctx.retag_stack(AncestorType::ArrowFunctionExpressionTypeParameters);
-        walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
-    }
     if let Some(field) = &mut *((node as *mut u8)
         .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_RETURN_TYPE)
         as *mut Option<Box<TSTypeAnnotation>>)
@@ -2422,6 +2415,13 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
         ctx.retag_stack(AncestorType::ArrowFunctionExpressionReturnType);
         walk_ts_type_annotation(traverser, (&mut **field) as *mut _, ctx);
     }
+    ctx.retag_stack(AncestorType::ArrowFunctionExpressionBody);
+    walk_function_body(
+        traverser,
+        (&mut **((node as *mut u8).add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_BODY)
+            as *mut Box<FunctionBody>)) as *mut _,
+        ctx,
+    );
     ctx.pop_stack();
     traverser.exit_arrow_function_expression(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {

@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn prefer_array_flat_map_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.")
+    OxcDiagnostic::warn("`Array.flatMap` performs `Array.map` and `Array.flat` in one step.")
         .with_help("Prefer `.flatMap(…)` over `.map(…).flat()`.")
         .with_label(span0)
 }

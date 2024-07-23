@@ -77,12 +77,12 @@ impl VisitMut<'_> for SpecParser {
                                     options.single_quote = literal.value;
                                 }
                             }
-                            Expression::NumericLiteral(literal) => match name.as_str() {
+                            Expression::NumericLiteral(literal) => match name.as_ref() {
                                 "printWidth" => options.print_width = literal.value as usize,
                                 "tabWidth" => options.tab_width = literal.value as usize,
                                 _ => {}
                             },
-                            Expression::StringLiteral(literal) => match name.as_str() {
+                            Expression::StringLiteral(literal) => match name.as_ref() {
                                 "trailingComma" => {
                                     options.trailing_comma =
                                         TrailingComma::from_str(literal.value.as_str()).unwrap();

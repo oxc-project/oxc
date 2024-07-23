@@ -11,9 +11,11 @@ use phf::{phf_set, Set};
 use crate::{context::LintContext, rule::Rule, utils::get_next_script_import_local_name};
 
 fn no_unwanted_polyfillio_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. {x0} already shipped with Next.js."))
-        .with_help("See https://nextjs.org/docs/messages/no-unwanted-polyfillio")
-        .with_label(span1)
+    OxcDiagnostic::warn(format!(
+        "No duplicate polyfills from Polyfill.io are allowed. {x0} already shipped with Next.js."
+    ))
+    .with_help("See https://nextjs.org/docs/messages/no-unwanted-polyfillio")
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -10,7 +10,7 @@ use rustc_hash::{FxBuildHasher, FxHashMap};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_dupe_keys_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-dupe-keys): Disallow duplicate keys in object literals")
+    OxcDiagnostic::warn("Disallow duplicate keys in object literals")
         .with_help("Consider removing the duplicated key")
         .with_labels([span0, span1])
 }

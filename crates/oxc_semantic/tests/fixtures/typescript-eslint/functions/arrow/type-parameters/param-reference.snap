@@ -12,17 +12,24 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
         "node": "ArrowFunctionExpression",
         "symbols": [
           {
-            "flag": "SymbolFlags(FunctionScopedVariable)",
-            "id": 1,
-            "name": "a",
-            "node": "FormalParameter",
-            "references": []
-          },
-          {
             "flag": "SymbolFlags(TypeParameter)",
-            "id": 2,
+            "id": 1,
             "name": "T",
             "node": "TSTypeParameter",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 14
+              }
+            ]
+          },
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "a",
+            "node": "FormalParameter",
             "references": []
           }
         ]

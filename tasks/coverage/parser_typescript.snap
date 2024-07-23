@@ -5028,7 +5028,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[compiler/ambientWithStatements.ts:11:5]
  10 │     L: var y;
  11 │     return;
@@ -5150,7 +5150,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  4 │ }
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[compiler/asiReturn.ts:2:1]
  1 │ // This should be an error for using a return outside a function, but ASI should work properly
  2 │ return
@@ -6586,7 +6586,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1090: 'static' modifier cannot appear on a parameter.
+  × TS(1090): 'static' modifier cannot appear on a parameter.
    ╭─[compiler/constructorArgsErrors1.ts:2:18]
  1 │ class foo {
  2 │     constructor (static a: number) {
@@ -6594,7 +6594,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  3 │     }
    ╰────
 
-  × TS1090: 'static' modifier cannot appear on a parameter.
+  × TS(1090): 'static' modifier cannot appear on a parameter.
    ╭─[compiler/constructorArgsErrors2.ts:2:25]
  1 │ class foo {
  2 │     constructor (public static a: number) {
@@ -6750,7 +6750,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  2 │ export default Foo
    ╰────
 
-  × TS1030: 'declare' modifier already seen.
+  × TS(1030): declare' modifier already seen.
    ╭─[compiler/declareAlreadySeen.ts:2:13]
  1 │ module M {
  2 │     declare declare var x;
@@ -6759,7 +6759,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'declare' modifier already seen.
+  × TS(1030): declare' modifier already seen.
    ╭─[compiler/declareAlreadySeen.ts:3:13]
  2 │     declare declare var x;
  3 │     declare declare function f();
@@ -6768,7 +6768,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'declare' modifier already seen.
+  × TS(1030): declare' modifier already seen.
    ╭─[compiler/declareAlreadySeen.ts:5:13]
  4 │ 
  5 │     declare declare module N { }  
@@ -6777,7 +6777,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'declare' modifier already seen.
+  × TS(1030): declare' modifier already seen.
    ╭─[compiler/declareAlreadySeen.ts:7:13]
  6 │ 
  7 │     declare declare class C { }
@@ -7754,7 +7754,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  4 │ }
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[compiler/fileWithNextLine3.ts:3:1]
  2 │ // 0.  It should be counted as a space and should not trigger ASI
  3 │ return0; 
@@ -9042,7 +9042,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ·                ────────
    ╰────
 
-  × TS1090: 'declare' modifier cannot appear on a parameter.
+  × TS(1090): 'declare' modifier cannot appear on a parameter.
    ╭─[compiler/modifierOnParameter1.ts:2:16]
  1 │ class C {
  2 │    constructor(declare p) { }
@@ -9282,14 +9282,14 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  12 │ 
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[compiler/multiLinePropertyAccessAndArrowFunctionIndent1.ts:1:1]
  1 │ return this.edit(role)
    · ──────
  2 │     .then((role: Role) =>
    ╰────
 
-  × TS1030: 'public' modifier already seen.
+  × TS(1030): public' modifier already seen.
    ╭─[compiler/multipleClassPropertyModifiersErrors.ts:2:9]
  1 │ class C {
  2 │     public public p1;
@@ -9298,7 +9298,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'private' modifier already seen.
+  × TS(1030): private' modifier already seen.
    ╭─[compiler/multipleClassPropertyModifiersErrors.ts:3:10]
  2 │     public public p1;
  3 │     private private p2;
@@ -11419,7 +11419,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  26 │             // Errors on fifth-seventh
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[compiler/switchStatementsWithMultipleDefaults.ts:27:22]
  26 │             // Errors on fifth-seventh
  27 │             default: return;
@@ -12797,7 +12797,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  5 │         return 1;
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/classes/classStaticBlock/classStaticBlock7.ts:5:9]
  4 │         yield 1;
  5 │         return 1;
@@ -12813,7 +12813,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  25 │ 
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[conformance/classes/classStaticBlock/classStaticBlock7.ts:36:13]
  35 │         static {
  36 │             return 1;
@@ -12895,7 +12895,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  9 │ }
    ╰────
 
-  × TS1030: 'readonly' modifier already seen.
+  × TS(1030): readonly' modifier already seen.
    ╭─[conformance/classes/constructorDeclarations/constructorParameters/readonlyReadonly.ts:2:14]
  1 │ class C {
  2 │     readonly readonly x: number;
@@ -13713,7 +13713,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  25 │ a = b;                                    // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:2:5]
  1 │ class A {
  2 │     public #foo = 3;         // Error
@@ -13721,7 +13721,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  3 │     private #bar = 3;        // Error
    ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:3:5]
  2 │     public #foo = 3;         // Error
  3 │     private #bar = 3;        // Error
@@ -13729,7 +13729,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  4 │     protected #baz = 3;      // Error
    ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:4:5]
  3 │     private #bar = 3;        // Error
  4 │     protected #baz = 3;      // Error
@@ -13737,7 +13737,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  5 │     readonly #qux = 3;       // OK
    ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
    ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:8:5]
  7 │ 
  8 │     public #fooMethod() { return  3; }         // Error
@@ -13745,7 +13745,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  9 │     private #barMethod() { return  3; }        // Error
    ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:9:5]
   8 │     public #fooMethod() { return  3; }         // Error
   9 │     private #barMethod() { return  3; }        // Error
@@ -13753,7 +13753,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  10 │     protected #bazMethod() { return  3; }      // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:10:5]
   9 │     private #barMethod() { return  3; }        // Error
  10 │     protected #bazMethod() { return  3; }      // Error
@@ -13761,7 +13761,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  11 │     readonly #quxMethod() { return  3; }       // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:17:5]
  16 │ 
  17 │     public get #fooProp() { return  3; }         // Error
@@ -13769,7 +13769,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  18 │     public set #fooProp(value: number) {  }      // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:18:5]
  17 │     public get #fooProp() { return  3; }         // Error
  18 │     public set #fooProp(value: number) {  }      // Error
@@ -13777,7 +13777,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  19 │     private get #barProp() { return  3; }        // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:19:5]
  18 │     public set #fooProp(value: number) {  }      // Error
  19 │     private get #barProp() { return  3; }        // Error
@@ -13785,7 +13785,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  20 │     private set #barProp(value: number) {  }     // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:20:5]
  19 │     private get #barProp() { return  3; }        // Error
  20 │     private set #barProp(value: number) {  }     // Error
@@ -13793,7 +13793,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  21 │     protected get #bazProp() { return  3; }      // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:21:5]
  20 │     private set #barProp(value: number) {  }     // Error
  21 │     protected get #bazProp() { return  3; }      // Error
@@ -13801,7 +13801,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  22 │     protected set #bazProp(value: number) {  }   // Error
     ╰────
 
-  × An accessibility modifier cannot be used with a private identifier.
+  × TS(18010): An accessibility modifier cannot be used with a private identifier.
     ╭─[conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:22:5]
  21 │     protected get #bazProp() { return  3; }      // Error
  22 │     protected set #bazProp(value: number) {  }   // Error
@@ -13857,7 +13857,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1030: 'public' modifier already seen.
+  × TS(1030): public' modifier already seen.
     ╭─[conformance/classes/propertyMemberDeclarations/accessibilityModifiers.ts:42:12]
  41 │     private protected get getter() { return 0; }
  42 │     public public set setter(a: number) { }
@@ -13889,7 +13889,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  10 │     c
     ╰────
 
-  × TS1030: 'accessor' modifier already seen.
+  × TS(1030): accessor' modifier already seen.
    ╭─[conformance/classes/propertyMemberDeclarations/autoAccessorDisallowedModifiers.ts:2:14]
  1 │ abstract class C1 {
  2 │     accessor accessor a: any;
@@ -18290,7 +18290,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ·  ─
    ╰────
 
-  × TS18007: JSX expressions may not use the comma operator.
+  × TS(18007): JSX expressions may not use the comma operator
     ╭─[conformance/jsx/jsxParsingError1.tsx:11:30]
  10 │ const class2 = "bar";
  11 │ const elem = <div className={class1, class2}/>;
@@ -18454,7 +18454,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1030: 'override' modifier already seen.
+  × TS(1030): override' modifier already seen.
     ╭─[conformance/override/override5.ts:22:14]
  21 │ 
  22 │     override override oop: number;
@@ -18463,7 +18463,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'override' modifier already seen.
+  × TS(1030): override' modifier already seen.
     ╭─[conformance/override/override7.ts:19:14]
  18 │ 
  19 │     override override oop: number;
@@ -18603,7 +18603,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1030: 'public' modifier already seen.
+  × TS(1030): public' modifier already seen.
    ╭─[conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration6.ts:2:10]
  1 │ class C {
  2 │   public public constructor() { }
@@ -18912,7 +18912,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ·                             ─
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/ModuleElements/parserErrorRecovery_ModuleElement1.ts:1:1]
  1 │ return foo;
    · ──────
@@ -19133,7 +19133,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Try insert a semicolon here
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/parser/ecmascript5/ErrorRecovery/parserStatementIsNotAMemberVariableDeclaration1.ts:1:1]
  1 │ return {
    · ──────
@@ -19510,7 +19510,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  3 │ }
    ╰────
 
-  × TS1030: 'public' modifier already seen.
+  × TS(1030): public' modifier already seen.
    ╭─[conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessorDeclaration7.ts:2:12]
  1 │ class C {
  2 │     public public get Foo() { }
@@ -19519,7 +19519,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'public' modifier already seen.
+  × TS(1030): public' modifier already seen.
    ╭─[conformance/parser/ecmascript5/MemberFunctionDeclarations/parserMemberFunctionDeclaration1.ts:2:12]
  1 │ class C {
  2 │     public public Foo() { }
@@ -19593,7 +19593,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  13 │ }
     ╰────
 
-  × TS1030: 'public' modifier already seen.
+  × TS(1030): public' modifier already seen.
    ╭─[conformance/parser/ecmascript5/MemberVariableDeclarations/parserMemberVariableDeclaration1.ts:2:10]
  1 │ class C {
  2 │   public public Foo;
@@ -20211,13 +20211,13 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  4 │   while (true) {
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement1.ts:1:1]
  1 │ return;
    · ──────
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/parser/ecmascript5/Statements/ReturnStatements/parserReturnStatement2.ts:2:4]
  1 │ {
  2 │    return;
@@ -20323,13 +20323,13 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  2 │ }
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/parser/ecmascript5/Statements/parserReturnStatement1.d.ts:1:1]
  1 │ return;
    · ──────
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/parser/ecmascript5/Statements/parserWithStatement2.ts:2:3]
  1 │ with (1)
  2 │   return;
@@ -20530,7 +20530,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ·          ──
    ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
    ╭─[conformance/parser/ecmascript5/parserNotRegex1.ts:3:5]
  2 │   {
  3 │     return true;
@@ -22906,7 +22906,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  2 │ let o8 = { ...*o };
    ╰────
 
-  × TS2681: A constructor cannot have a `this` parameter.
+  × TS(2681): A constructor cannot have a `this` parameter.
      ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:158:17]
  157 │ class ThisConstructor {
  158 │     constructor(this: ThisConstructor, private n: number) {
@@ -22914,7 +22914,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  159 │     }
      ╰────
 
-  × TS2681: A constructor cannot have a `this` parameter.
+  × TS(2681): A constructor cannot have a `this` parameter.
      ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:162:9]
  161 │ interface ThisConstructorInterface {
  162 │     new(this: ThisConstructor, n: number);
@@ -22922,7 +22922,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  163 │ }
      ╰────
 
-  × TS2681: A constructor cannot have a `this` parameter.
+  × TS(2681): A constructor cannot have a `this` parameter.
      ╭─[conformance/types/thisType/thisTypeInFunctionsNegative.ts:164:31]
  163 │ }
  164 │ var thisConstructorType: new (this: number) => number;
@@ -22977,7 +22977,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  19 │ const a9 = (f<number>)<number>;  // Error, no applicable signatures
     ╰────
 
-  × 'public' modifier cannot be used on a type parameter.
+  × TS(1273): 'public' modifier cannot be used on a type parameter.
     ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:95:10]
  94 │ 
  95 │ type T20<public T> = T;  // Error
@@ -22985,7 +22985,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
  96 │ type T21<in out in T> = T;  // Error
     ╰────
 
-  × TS1030: 'in' modifier already seen.
+  × TS(1030): in' modifier already seen.
     ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:96:17]
  95 │ type T20<public T> = T;  // Error
  96 │ type T21<in out in T> = T;  // Error
@@ -22994,7 +22994,7 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
     ╰────
   help: Remove the duplicate modifier.
 
-  × TS1030: 'out' modifier already seen.
+  × TS(1030): out' modifier already seen.
     ╭─[conformance/types/typeParameters/typeParameterLists/varianceAnnotations.ts:97:17]
  96 │ type T21<in out in T> = T;  // Error
  97 │ type T22<in out out T> = T;  // Error

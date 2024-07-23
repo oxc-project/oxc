@@ -141,6 +141,7 @@ mod typescript {
     pub mod no_empty_interface;
     pub mod no_explicit_any;
     pub mod no_extra_non_null_assertion;
+    pub mod no_extraneous_class;
     pub mod no_import_type_side_effects;
     pub mod no_misused_new;
     pub mod no_namespace;
@@ -571,6 +572,7 @@ oxc_macros::declare_all_lint_rules! {
     typescript::no_non_null_asserted_nullish_coalescing,
     typescript::no_confusing_non_null_assertion,
     typescript::no_dynamic_delete,
+    typescript::no_extraneous_class,
     jest::consistent_test_it,
     jest::expect_expect,
     jest::max_expects,

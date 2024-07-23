@@ -6,19 +6,11 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, parse_expect_jest_fn_call,
-        PossibleJestNode, TestPluginName,
-    },
+    utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-fn no_alias_methods_diagnostic(
-    x0: TestPluginName,
-    x1: &str,
-    x2: &str,
-    span3: Span,
-) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0}(no-alias-methods): Unexpected alias {x1:?}"))
+fn no_alias_methods_diagnostic(x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected alias {x1:?}"))
         .with_help(format!("Replace {x1:?} with its canonical name of {x2:?}"))
         .with_label(span3)
 }
@@ -96,10 +88,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                     span.end -= 1;
                 }
 
-                let plugin_name = get_test_plugin_name(ctx);
-
                 ctx.diagnostic_with_fix(
-                    no_alias_methods_diagnostic(plugin_name, name, canonical_name, matcher.span),
+                    no_alias_methods_diagnostic(name, canonical_name, matcher.span),
                     // || Fix::new(canonical_name, Span::new(start, end)),
                     |fixer| fixer.replace(span, canonical_name),
                 );

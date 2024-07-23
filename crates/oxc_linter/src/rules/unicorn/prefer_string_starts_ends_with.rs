@@ -1,19 +1,24 @@
 use oxc_ast::{
-    ast::{Expression, MemberExpression, RegExpFlags, RegExpLiteral},
+    ast::{CallExpression, Expression, MemberExpression, RegExpFlags, RegExpLiteral},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+    AstNode,
+};
 
 fn starts_with(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#startsWith over a regex with a caret.").with_label(span0)
+    OxcDiagnostic::warn("Prefer String#startsWith over a regex with a caret.").with_label(span0)
 }
 
 fn ends_with(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-string-starts-ends-with): Prefer String#endsWith over a regex with a dollar sign.").with_label(span0)
+    OxcDiagnostic::warn("Prefer String#endsWith over a regex with a dollar sign.").with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -74,15 +79,54 @@ impl Rule for PreferStringStartsEndsWith {
 
         match err_kind {
             ErrorKind::StartsWith => {
-                ctx.diagnostic(starts_with(member_expr.span()));
+                ctx.diagnostic_with_fix(starts_with(member_expr.span()), |fixer| {
+                    do_fix(fixer, err_kind, call_expr, regex)
+                });
             }
             ErrorKind::EndsWith => {
-                ctx.diagnostic(ends_with(member_expr.span()));
+                ctx.diagnostic_with_fix(ends_with(member_expr.span()), |fixer| {
+                    do_fix(fixer, err_kind, call_expr, regex)
+                });
             }
         }
     }
 }
 
+fn do_fix<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    err_kind: ErrorKind,
+    call_expr: &CallExpression<'a>,
+    regex: &RegExpLiteral,
+) -> RuleFix<'a> {
+    let Some(target_span) = can_replace(call_expr) else { return fixer.noop() };
+    let pattern = &regex.regex.pattern;
+    let (argument, method) = match err_kind {
+        ErrorKind::StartsWith => (pattern.trim_start_matches('^'), "startsWith"),
+        ErrorKind::EndsWith => (pattern.trim_end_matches('$'), "endsWith"),
+    };
+    let fix_text = format!(r#"{}.{}("{}")"#, fixer.source_range(target_span), method, argument);
+
+    fixer.replace(call_expr.span, fix_text)
+}
+fn can_replace(call_expr: &CallExpression) -> Option<Span> {
+    if call_expr.arguments.len() != 1 {
+        return None;
+    }
+
+    let arg = &call_expr.arguments[0];
+    let expr = arg.as_expression()?;
+    match expr.without_parenthesized() {
+        Expression::StringLiteral(s) => Some(s.span),
+        Expression::TemplateLiteral(s) => Some(s.span),
+        Expression::Identifier(ident) => Some(ident.span),
+        Expression::StaticMemberExpression(m) => Some(m.span),
+        Expression::ComputedMemberExpression(m) => Some(m.span),
+        Expression::CallExpression(c) => Some(c.span),
+        _ => None,
+    }
+}
+
+#[derive(Clone, Copy)]
 enum ErrorKind {
     StartsWith,
     EndsWith,
@@ -211,5 +255,24 @@ fn test() {
         r"if (/#$/i.test(hex)) {}",
     ];
 
-    Tester::new(PreferStringStartsEndsWith::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("/^foo/.test(x)", r#"x.startsWith("foo")"#, None),
+        ("/foo$/.test(x)", r#"x.endsWith("foo")"#, None),
+        ("/^foo/.test(x.y)", r#"x.y.startsWith("foo")"#, None),
+        ("/foo$/.test(x.y)", r#"x.y.endsWith("foo")"#, None),
+        ("/^foo/.test('x')", r#"'x'.startsWith("foo")"#, None),
+        ("/foo$/.test('x')", r#"'x'.endsWith("foo")"#, None),
+        ("/^foo/.test(`x${y}`)", r#"`x${y}`.startsWith("foo")"#, None),
+        ("/foo$/.test(`x${y}`)", r#"`x${y}`.endsWith("foo")"#, None),
+        ("/^foo/.test(String(x))", r#"String(x).startsWith("foo")"#, None),
+        ("/foo$/.test(String(x))", r#"String(x).endsWith("foo")"#, None),
+        // should not get fixed
+        ("/^foo/.test(new String('bar'))", "/^foo/.test(new String('bar'))", None),
+        ("/^foo/.test(x as string)", "/^foo/.test(x as string)", None),
+        ("/^foo/.test(5)", "/^foo/.test(5)", None),
+        ("/^foo/.test(x?.y)", "/^foo/.test(x?.y)", None),
+        ("/^foo/.test(x + y)", "/^foo/.test(x + y)", None),
+    ];
+
+    Tester::new(PreferStringStartsEndsWith::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

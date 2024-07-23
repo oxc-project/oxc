@@ -14,7 +14,7 @@ use crate::{
 };
 
 fn iframe_has_title_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsx-a11y(iframe-has-title): Missing `title` attribute for the `iframe` element.")
+    OxcDiagnostic::warn("Missing `title` attribute for the `iframe` element.")
         .with_help("Provide title property for iframe element.")
         .with_label(span0)
 }

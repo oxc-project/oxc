@@ -6,9 +6,11 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn switch_case_braces_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(switch-case-braces):  Empty switch case shouldn't have braces and not-empty case should have braces around it.")
-        .with_help("There is less visual clutter for empty cases and proper scope for non-empty cases.")
-        .with_label(span0)
+    OxcDiagnostic::warn(
+        " Empty switch case shouldn't have braces and not-empty case should have braces around it.",
+    )
+    .with_help("There is less visual clutter for empty cases and proper scope for non-empty cases.")
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

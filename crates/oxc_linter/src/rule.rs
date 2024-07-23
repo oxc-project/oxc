@@ -22,6 +22,17 @@ pub trait Rule: Sized + Default + fmt::Debug {
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
     fn run_once(&self, _ctx: &LintContext) {}
+
+    /// Check if a rule should be run at all.
+    ///
+    /// You usually do not need to implement this function. If you do, use it to
+    /// enable rules on a file-by-file basis. Do not check if plugins are
+    /// enabled/disabled; this is handled by the [`linter`].
+    ///
+    /// [`linter`]: crate::Linter
+    fn should_run(&self, _ctx: &LintContext) -> bool {
+        true
+    }
 }
 
 pub trait RuleMeta {

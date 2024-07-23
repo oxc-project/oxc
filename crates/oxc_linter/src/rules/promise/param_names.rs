@@ -10,7 +10,8 @@ use regex::Regex;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn param_names_diagnostic(span0: Span, x0: &str) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint-plugin-promise(param-names): Promise constructor parameters must be named to match `{x0}`")).with_label(span0)
+    OxcDiagnostic::warn(format!("Promise constructor parameters must be named to match `{x0}`"))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

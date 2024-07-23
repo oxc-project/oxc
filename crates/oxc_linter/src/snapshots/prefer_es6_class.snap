@@ -2,7 +2,7 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-react(prefer-es6-class): Components should use es6 class instead of createClass.
-   ╭─[prefer_es_6_class.tsx:2:25]
+   ╭─[prefer_es6_class.tsx:2:25]
  1 │ 
  2 │             var Hello = createReactClass({
    ·                         ────────────────
@@ -10,7 +10,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(prefer-es6-class): Components should use es6 class instead of createClass.
-   ╭─[prefer_es_6_class.tsx:2:25]
+   ╭─[prefer_es6_class.tsx:2:25]
  1 │ 
  2 │             var Hello = createReactClass({
    ·                         ────────────────
@@ -18,7 +18,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(prefer-es6-class): Components should use createClass instead of ES6 class.
-   ╭─[prefer_es_6_class.tsx:2:19]
+   ╭─[prefer_es6_class.tsx:2:19]
  1 │ 
  2 │             class Hello extends React.Component {
    ·                   ─────

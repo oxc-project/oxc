@@ -719,9 +719,9 @@ dependencies = [
 
 [[package]]
 name = "handlebars"
-version = "5.1.2"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d08485b96a0e6393e9e4d1b8d48cf74ad6c063cd905eb33f42c1ce3f0377539b"
+checksum = "5226a0e122dc74917f3a701484482bed3ee86d016c7356836abbaa033133a157"
 dependencies = [
  "log",
  "pest",
@@ -934,7 +934,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e310b3a6b5907f99202fcdb4960ff45b93735d7c7d96b760fcff8db2dc0e103d"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -1560,9 +1560,13 @@ dependencies = [
 name = "oxc_mangler"
 version = "0.21.0"
 dependencies = [
+ "insta",
  "itertools 0.13.0",
+ "oxc_allocator",
  "oxc_ast",
+ "oxc_codegen",
  "oxc_index",
+ "oxc_parser",
  "oxc_semantic",
  "oxc_span",
 ]
@@ -1708,6 +1712,7 @@ dependencies = [
 name = "oxc_semantic"
 version = "0.21.0"
 dependencies = [
+ "assert-unchecked",
  "indexmap",
  "insta",
  "itertools 0.13.0",

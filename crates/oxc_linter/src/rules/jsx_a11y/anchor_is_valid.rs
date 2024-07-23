@@ -14,27 +14,21 @@ use crate::{
 };
 
 fn missing_href_attribute(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(anchor-is-valid): Missing `href` attribute for the `a` element.",
-    )
-    .with_help("Provide an href for the `a` element.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Missing `href` attribute for the `a` element.")
+        .with_help("Provide an href for the `a` element.")
+        .with_label(span0)
 }
 
 fn incorrect_href(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(anchor-is-valid): Use an incorrect href for the 'a' element.",
-    )
-    .with_help("Provide a correct href for the `a` element.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Use an incorrect href for the 'a' element.")
+        .with_help("Provide a correct href for the `a` element.")
+        .with_label(span0)
 }
 
 fn cant_be_anchor(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsx-a11y(anchor-is-valid):  The a element has `href` and `onClick`.",
-    )
-    .with_help("Use a `button` element instead of an `a` element.")
-    .with_label(span0)
+    OxcDiagnostic::warn(" The a element has `href` and `onClick`.")
+        .with_help("Use a `button` element instead of an `a` element.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

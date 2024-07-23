@@ -12,7 +12,10 @@ use crate::{
 };
 
 fn prefer_includes_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.").with_label(span0)
+    OxcDiagnostic::warn(
+        "Prefer `includes()` over `indexOf()` when checking for existence or non-existence.",
+    )
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]

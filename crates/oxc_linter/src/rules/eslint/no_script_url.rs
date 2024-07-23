@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn no_script_url_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-script-url): Script URL is a form of eval")
+    OxcDiagnostic::warn("Script URL is a form of eval")
         .with_help("Disallow `javascript:` urls")
         .with_label(span0)
 }
