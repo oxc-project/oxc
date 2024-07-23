@@ -82,6 +82,10 @@ fn test() {
 			  declare module bar {}
 			}
 			      ",
+        "declare global {
+            module foo {}
+        }
+        ",
     ];
 
     let fix = vec![
