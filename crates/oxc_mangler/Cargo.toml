@@ -28,7 +28,7 @@ oxc_index    = { workspace = true }
 itertools    = { workspace = true }
 
 [dev-dependencies]
-oxc_codegen   = { workspace = true }
+oxc_codegen   = { path = "../oxc_codegen" }
 oxc_parser    = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
