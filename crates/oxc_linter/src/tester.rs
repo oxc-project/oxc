@@ -227,7 +227,7 @@ impl Tester {
 
         settings.bind(|| {
             insta::assert_snapshot!(name, self.snapshot);
-        })
+        });
     }
 
     fn test_pass(&mut self) {
