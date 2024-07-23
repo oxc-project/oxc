@@ -54,7 +54,7 @@ pub enum RootNode<'a> {
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>),
     CharacterClass(Box<'a, CharacterClass<'a>>),
     CapturingGroup(Box<'a, CapturingGroup<'a>>),
-    LookaroundGroup(Box<'a, LookaroundGroup<'a>>),
+    LookAroundGroup(Box<'a, LookAroundGroup<'a>>),
     IgnoreGroup(Box<'a, IgnoreGroup<'a>>),
     IndexedReference(IndexedReference),
     NamedReference(Box<'a, NamedReference<'a>>),
@@ -70,16 +70,16 @@ pub enum AssertionKind {
     Start,
     End,
     Boundary,
-    NotBoundary,
+    NegativeBoundary,
 }
 
 #[derive(Debug)]
 pub struct Quantifier<'a> {
     pub span: Span,
+    pub min: usize,
+    pub max: Option<usize>,
     pub greedy: bool,
-    pub max: u32,
-    pub min: u32,
-    pub body: Vec<'a, RootNode<'a>>,
+    pub body: RootNode<'a>,
 }
 
 #[derive(Debug)]
@@ -162,10 +162,10 @@ pub struct CapturingGroup<'a> {
 }
 
 #[derive(Debug)]
-pub struct LookaroundGroup<'a> {
+pub struct LookAroundGroup<'a> {
     pub span: Span,
     pub kind: LookAroundGroupKind,
-    pub body: Vec<'a, RootNode<'a>>,
+    pub body: Disjunction<'a>,
 }
 #[derive(Debug)]
 pub enum LookAroundGroupKind {
