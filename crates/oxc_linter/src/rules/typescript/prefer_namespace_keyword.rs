@@ -36,24 +36,21 @@ declare_oxc_lint!(
 impl Rule for PreferNamespaceKeyword {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
-        if module.id.is_string_literal() {
-            return;
-        }
-        let TSModuleDeclarationName::Identifier(_) = &module.id else { return };
-        if module.kind != TSModuleDeclarationKind::Module {
+        if module.id.is_string_literal()
+            || !matches!(module.id, TSModuleDeclarationName::Identifier(_))
+            || module.kind != TSModuleDeclarationKind::Module
+        {
             return;
         }
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_start = module.span.start;
-            let span_start_with_declare = span_start + "declare ".len() as u32;
             let span_size = "module".len() as u32;
-            let span = if module.declare {
-                Span::sized(span_start_with_declare, span_size)
+            let span_start = if module.declare {
+                module.span.start + "declare ".len() as u32
             } else {
-                Span::sized(span_start, span_size)
+                module.span.start
             };
-            fixer.replace(span, "namespace")
+            fixer.replace(Span::sized(span_start, span_size), "namespace")
         });
     }
 
