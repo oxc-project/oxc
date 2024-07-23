@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.22.0] - 2024-07-22
+
+- f68b659 ast: [**BREAKING**] Reorder fields of `ArrowFunctionExpression` (#4364) (Dunqing)
+
+### Features
+
+- d345b84 ast: Add `#[ast]` attribute to non-visited AST types. (#4309) (rzvxa)
+- 3c0c709 linter: Add typescript-eslint/no-extraneous-class (#4357) (Jaden Rodriguez)
+
+### Bug Fixes
+
+- aece1df ast: Visit `Program`s `hashbang` field first (#4368) (overlookmotel)
+
+### Performance
+- a207923 Replace some CompactStr usages with Cows (#4377) (DonIsaac)
+
+### Refactor
+
+- d213773 ast: Replace serde rename "lowercase" with "camelCase" (#4376) (overlookmotel)
+- abfccbd ast: Reduce `#[cfg_attr]` boilerplate in AST type defs (#4375) (overlookmotel)
+- 5f1c7ec ast: Rename the `visited_node` marker to `ast`. (#4289) (rzvxa)
+- 59aea73 ast: Scope is created only if CatchClause has param (#4346) (Dunqing)
+- 7a3e925 ast_codegen: Better visit marker parsing. (#4371) (rzvxa)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

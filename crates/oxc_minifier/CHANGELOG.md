@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.22.0] - 2024-07-22
+
+### Features
+
+- 0deb027 minfier: Dce `if (xxx) else if (false) { REMOVE }` (#4407) (Boshen)
+- e33ec18 minifier: Compress `typeof foo == "undefined"` into `typeof foo > "u"` (#4412) (Boshen)
+
+### Bug Fixes
+
+- 267f7c4 minifier: Skip `Object.defineProperty(exports, ...)` for `cjs-module-lexer` (#4409) (Boshen)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features
