@@ -489,7 +489,8 @@ impl NoUnusedVarsOptions {
             | AstKind::ImportSpecifier(_)
             | AstKind::ImportNamespaceSpecifier(_)
             | AstKind::ImportDefaultSpecifier(_)
-            | AstKind::ModuleDeclaration(_) => self.is_ignored_var(declared_binding),
+            | AstKind::ModuleDeclaration(_)
+            | AstKind::TSTypeParameter(_) => self.is_ignored_var(declared_binding),
             AstKind::CatchClause(_) | AstKind::CatchParameter(_) => {
                 self.is_ignored_catch_err(declared_binding)
             }

@@ -136,7 +136,9 @@ impl Tester {
         self
     }
 
-    /// Change the extension of the path
+    /// Change the extension of the path. `ext` should not have a leading dot.
+    ///
+    /// Defaults to `"tsx"`.
     pub fn change_rule_path_extension(mut self, ext: &str) -> Self {
         self.rule_path = self.rule_path.with_extension(ext);
         self

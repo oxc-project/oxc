@@ -1,0 +1,129 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Identifier 'ClassDecoratorFactory' is imported but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ import { ClassDecoratorFactory } from 'decorators'; export class Foo {}
+   ·          ──────────┬──────────
+   ·                    ╰── 'ClassDecoratorFactory' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Foo' is imported but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ import { Foo, Bar } from 'foo';
+   ·          ─┬─
+   ·           ╰── 'Foo' is imported here
+ 2 │         function baz<Foo>(): Foo {}
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Nullable' is imported but never used.
+   ╭─[no_unused_vars.ts:2:20]
+ 1 │ 
+ 2 │           import { Nullable } from 'nullable';
+   ·                    ────┬───
+   ·                        ╰── 'Nullable' is imported here
+ 3 │           const a: string = 'hello';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'SomeOther' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { SomeOther } from 'other';
+   ·                    ────┬────
+   ·                        ╰── 'SomeOther' is imported here
+ 4 │           const a: Nullable<string> = 'hello';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           class A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           class A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           class A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           export interface A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           export interface A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Nullable' is imported but never used.
+   ╭─[no_unused_vars.ts:2:20]
+ 1 │ 
+ 2 │           import { Nullable } from 'nullable';
+   ·                    ────┬───
+   ·                        ╰── 'Nullable' is imported here
+ 3 │           function foo(a: string) {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Nullable' is imported but never used.
+   ╭─[no_unused_vars.ts:2:20]
+ 1 │ 
+ 2 │           import { Nullable } from 'nullable';
+   ·                    ────┬───
+   ·                        ╰── 'Nullable' is imported here
+ 3 │           function foo(): string | null {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'SomeOther' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { SomeOther } from 'some';
+   ·                    ────┬────
+   ·                        ╰── 'SomeOther' is imported here
+ 4 │           import { Another } from 'some';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'SomeOther' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { SomeOther } from 'some';
+   ·                    ────┬────
+   ·                        ╰── 'SomeOther' is imported here
+ 4 │           import { Another } from 'some';
+   ╰────
+  help: Consider removing this import.
