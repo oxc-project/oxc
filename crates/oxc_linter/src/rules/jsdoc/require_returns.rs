@@ -20,14 +20,12 @@ use crate::{
 };
 
 fn missing_returns_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-jsdoc(require-returns): Missing JSDoc `@returns` declaration for function.",
-    )
-    .with_help("Add `@returns` tag to the JSDoc comment.")
-    .with_label(span0)
+    OxcDiagnostic::warn("Missing JSDoc `@returns` declaration for function.")
+        .with_help("Add `@returns` tag to the JSDoc comment.")
+        .with_label(span0)
 }
 fn duplicate_returns_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jsdoc(require-returns): Duplicate `@returns` tags.")
+    OxcDiagnostic::warn("Duplicate `@returns` tags.")
         .with_help("Remove redundunt `@returns` tag.")
         .with_label(span0)
 }

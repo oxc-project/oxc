@@ -127,14 +127,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Remove focus from test.
 
-  ⚠ eslint-plugin-vitest(no-focused-tests): Focused tests are not allowed.
+  ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
    ╭─[no_focused_tests.tsx:3:16]
  2 │             import { it } from 'vitest'; 
  3 │             it.only("test", () => {});
    ·                ────
  4 │             
    ╰────
-  help: Delete this code.
+  help: Remove focus from test.
 
   ⚠ eslint-plugin-jest(no-focused-tests): Unexpected focused test.
    ╭─[no_focused_tests.tsx:1:10]

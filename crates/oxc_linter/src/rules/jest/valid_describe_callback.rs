@@ -10,20 +10,17 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
-        JestFnKind, JestGeneralFnKind, PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
     },
 };
 
 fn valid_describe_callback_diagnostic(
-    x0: TestPluginName,
-    x1: &str,
-    x2: &str,
+    x1: &'static str,
+    x2: &'static str,
     span3: Span,
 ) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0}(valid-describe-callback): {x1:?}"))
-        .with_help(format!("{x2:?}"))
-        .with_label(span3)
+    OxcDiagnostic::warn(x1).with_help(x2).with_label(span3)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -167,8 +164,7 @@ fn find_first_return_stmt_span(function_body: &FunctionBody) -> Option<Span> {
 
 fn diagnostic(ctx: &LintContext, span: Span, message: Message) {
     let (error, help) = message.details();
-    let plugin_name = get_test_plugin_name(ctx);
-    ctx.diagnostic(valid_describe_callback_diagnostic(plugin_name, error, help, span));
+    ctx.diagnostic(valid_describe_callback_diagnostic(error, help, span));
 }
 
 #[derive(Clone, Copy)]

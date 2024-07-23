@@ -26,7 +26,7 @@ declare_oxc_lint!(
 );
 
 fn no_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("typescript-eslint(no-non-null-assertion): Forbidden non-null assertion.")
+    OxcDiagnostic::warn("Forbidden non-null assertion.")
         .with_help("Consider using the optional chain operator `?.` instead. This operator includes runtime checks, so it is safer than the compile-only non-null assertion operator.")
         .with_label(span0)
 }
@@ -35,6 +35,10 @@ impl Rule for NoNonNullAssertion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::TSNonNullExpression(expr) = node.kind() else { return };
         ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span));
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

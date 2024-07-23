@@ -2,6 +2,7 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
+mod counter;
 mod diagnostics;
 mod jsdoc;
 mod label;
@@ -10,6 +11,7 @@ mod node;
 mod reference;
 mod scope;
 mod symbol;
+mod unresolved_stack;
 
 pub mod dot;
 
@@ -136,6 +138,15 @@ impl<'a> Semantic<'a> {
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+    }
+
+    pub fn reference_name(&self, reference: &Reference) -> &str {
+        let node = self.nodes.get_node(reference.node_id());
+        match node.kind() {
+            AstKind::IdentifierReference(id) => id.name.as_str(),
+            AstKind::JSXIdentifier(id) => id.name.as_str(),
+            _ => unreachable!(),
+        }
     }
 }
 

@@ -9,15 +9,15 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, get_test_plugin_name, is_type_of_jest_fn_call,
-        parse_expect_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode, TestPluginName,
+        collect_possible_jest_call_node, is_type_of_jest_fn_call, parse_expect_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode,
     },
 };
 
-fn no_conditional_expect_diagnostic(x0: TestPluginName, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("{x0}(no-conditional-expect): Unexpected conditional expect"))
+fn no_conditional_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected conditional expect")
         .with_help("Avoid calling `expect` conditionally`")
-        .with_label(span1)
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -90,9 +90,8 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 
         // When first visiting the node, we assume it's not in a conditional block.
         let has_condition_or_catch = check_parents(node, &mut visited, InConditional(false), ctx);
-        let plugin_name = get_test_plugin_name(ctx);
         if matches!(has_condition_or_catch, InConditional(true)) {
-            ctx.diagnostic(no_conditional_expect_diagnostic(plugin_name, jest_fn_call.head.span));
+            ctx.diagnostic(no_conditional_expect_diagnostic(jest_fn_call.head.span));
         }
     }
 }

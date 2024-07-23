@@ -66,7 +66,7 @@ function generateWalkForStruct(type, types) {
             scopeEnterField = visitedFields.find(field => field.name === enterFieldName);
             assert(
                 scopeEnterField,
-                `\`visited_node\` attr says to enter scope before field '${enterFieldName}' `
+                `\`ast\` attr says to enter scope before field '${enterFieldName}' `
                 + `in '${type.name}', but that field is not visited`
             );
             if (scopeEnterField === visitedFields[0]) scopeEnterField = undefined;

@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::is_in_app_dir, AstNode};
 
 fn no_head_element_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-next(no-head-element): Do not use `<head>` element. Use `<Head />` from `next/head` instead.")
+    OxcDiagnostic::warn("Do not use `<head>` element. Use `<Head />` from `next/head` instead.")
         .with_help("See https://nextjs.org/docs/messages/no-head-element")
         .with_label(span0)
 }

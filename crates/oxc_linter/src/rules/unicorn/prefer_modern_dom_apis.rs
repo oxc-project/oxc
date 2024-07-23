@@ -10,10 +10,7 @@ use phf::phf_map;
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
 fn prefer_modern_dom_apis_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `{x0}` over `{x1}`."
-    ))
-    .with_label(span2)
+    OxcDiagnostic::warn(format!("Prefer using `{x0}` over `{x1}`.")).with_label(span2)
 }
 
 #[derive(Debug, Default, Clone)]

@@ -26,3 +26,10 @@ oxc_ast      = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_index    = { workspace = true }
 itertools    = { workspace = true }
+
+[dev-dependencies]
+oxc_codegen   = { workspace = true }
+oxc_parser    = { workspace = true }
+oxc_span      = { workspace = true }
+oxc_allocator = { workspace = true }
+insta         = { workspace = true }

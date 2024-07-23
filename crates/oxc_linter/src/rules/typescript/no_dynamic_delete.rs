@@ -28,11 +28,9 @@ declare_oxc_lint!(
 );
 
 fn no_dynamic_delete_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "typescript-eslint(no-dynamic-delete): Do not delete dynamically computed property keys.",
-    )
-    .with_help("Disallow using the `delete` operator on computed key expressions")
-    .with_label(span0)
+    OxcDiagnostic::warn("Do not delete dynamically computed property keys.")
+        .with_help("Disallow using the `delete` operator on computed key expressions")
+        .with_label(span0)
 }
 
 impl Rule for NoDynamicDelete {

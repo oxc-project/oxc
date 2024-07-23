@@ -120,11 +120,11 @@ impl SymbolTable {
         flag: SymbolFlags,
         scope_id: ScopeId,
     ) -> SymbolId {
-        _ = self.spans.push(span);
-        _ = self.names.push(name);
-        _ = self.flags.push(flag);
-        _ = self.scope_ids.push(scope_id);
-        _ = self.resolved_references.push(vec![]);
+        self.spans.push(span);
+        self.names.push(name);
+        self.flags.push(flag);
+        self.scope_ids.push(scope_id);
+        self.resolved_references.push(vec![]);
         self.redeclare_variables.push(vec![])
     }
 
@@ -192,5 +192,17 @@ impl SymbolTable {
             }
             _ => false,
         }
+    }
+
+    pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
+        self.spans.reserve(additional_symbols);
+        self.names.reserve(additional_symbols);
+        self.flags.reserve(additional_symbols);
+        self.scope_ids.reserve(additional_symbols);
+        self.declarations.reserve(additional_symbols);
+        self.resolved_references.reserve(additional_symbols);
+        self.redeclare_variables.reserve(additional_symbols);
+
+        self.references.reserve(additional_references);
     }
 }

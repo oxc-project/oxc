@@ -10,11 +10,9 @@ use crate::{
 };
 
 fn require_to_throw_message_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "eslint-plugin-jest(require-to-throw-message): Require a message for {x0:?}."
-    ))
-    .with_help(format!("Add an error message to {x0:?}"))
-    .with_label(span1)
+    OxcDiagnostic::warn(format!("Require a message for {x0:?}."))
+        .with_help(format!("Add an error message to {x0:?}"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]

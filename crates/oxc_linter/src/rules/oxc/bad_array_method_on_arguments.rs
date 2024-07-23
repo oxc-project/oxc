@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn bad_array_method_on_arguments_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("oxc(bad-array-method-on-arguments): Bad array method on arguments")
+    OxcDiagnostic::warn("Bad array method on arguments")
         .with_help(format!(
             "The 'arguments' object does not have '{x0}()' method. If an array method was intended, consider converting the 'arguments' object to an array or using ES6 rest parameter instead."
         ))

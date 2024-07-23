@@ -1,23 +1,12 @@
 use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElement, MemberExpression},
+    ast::{Expression, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::SymbolId;
+use oxc_span::{GetSpan, Span};
 
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_prop_value, is_constructor_matching_name},
-    AstNode,
-};
-
-fn jsx_no_new_function_as_prop_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.")
-        .with_help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).")
-        .with_label(span0)
-}
+use crate::utils::{is_constructor_matching_name, ReactPerfRule};
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoNewFunctionAsProp;
@@ -39,27 +28,31 @@ declare_oxc_lint!(
     perf
 );
 
-impl Rule for JsxNoNewFunctionAsProp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_elem) = node.kind() {
-            check_jsx_element(jsx_elem, ctx);
-        }
-    }
-}
+impl ReactPerfRule for JsxNoNewFunctionAsProp {
+    const MESSAGE: &'static str =
+        "JSX attribute values should not contain functions created in the same scope.";
 
-fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    for item in &jsx_elem.opening_element.attributes {
-        match get_prop_value(item) {
-            None => return,
-            Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                if let Some(expr) = container.expression.as_expression() {
-                    if let Some(span) = check_expression(expr) {
-                        ctx.diagnostic(jsx_no_new_function_as_prop_diagnostic(span));
-                    }
-                }
+    fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
+        check_expression(expr)
+    }
+
+    fn check_for_violation_on_ast_kind(
+        &self,
+        kind: &AstKind<'_>,
+        _symbol_id: SymbolId,
+    ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
+        match kind {
+            AstKind::VariableDeclarator(decl)
+                if decl.init.as_ref().and_then(check_expression).is_some() =>
+            {
+                // don't report init span, b/c thats usually an arrow
+                // function expression which gets quite large. It also
+                // doesn't add any value.
+                Some((decl.id.span(), None))
             }
-            _ => {}
-        };
+            AstKind::Function(f) => Some((f.id.as_ref().map_or(f.span, GetSpan::span), None)),
+            _ => None,
+        }
     }
 }
 
@@ -102,22 +95,19 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"<Item callback={this.props.callback} />",
-        r"<Item promise={new Promise()} />",
-        r"<Item onClick={bind(foo)} />",
-        r"<Item prop={0} />",
-        r"var a;<Item prop={a} />",
-        r"var a;a = 1;<Item prop={a} />",
-        r"var a;<Item prop={a} />",
+        r"const Foo = () => <Item callback={this.props.callback} />",
+        r"const Foo = () => (<Item promise={new Promise()} />)",
+        r"const Foo = () => (<Item onClick={bind(foo)} />)",
+        r"const Foo = () => (<Item prop={0} />)",
+        r"const Foo = () => { var a; return <Item prop={a} /> }",
+        r"const Foo = () => { var a;a = 1; return <Item prop={a} /> }",
+        r"const Foo = () => { var a;<Item prop={a} /> }",
         r"function foo ({prop1 = function(){}, prop2}) {
             return <Comp prop={prop2} />
           }",
         r"function foo ({prop1, prop2 = function(){}}) {
             return <Comp prop={prop1} />
           }",
-    ];
-
-    let fail = vec![
         r"<Item prop={function(){return true}} />",
         r"<Item prop={() => true} />",
         r"<Item prop={new Function('a', 'alert(a)')}/>",
@@ -127,6 +117,65 @@ fn test() {
         r"<Item callback={this.props.callback ? this.props.callback : function() {}} />",
         r"<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />",
         r"<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />",
+        r"
+        import { FC, useCallback } from 'react';
+        export const Foo: FC = props => {
+            const onClick = useCallback(
+                e => { props.onClick?.(e) },
+                [props.onClick]
+            );
+            return <button onClick={onClick} />
+        }",
+        r"
+        import React from 'react'
+        function onClick(e: React.MouseEvent) {
+            window.location.navigate(e.target.href)
+        }
+        export default function Foo() {
+            return <a onClick={onClick} />
+        }
+        ",
+    ];
+
+    let fail = vec![
+        r"const Foo = () => (<Item prop={function(){return true}} />)",
+        r"const Foo = () => (<Item prop={() => true} />)",
+        r"const Foo = () => (<Item prop={new Function('a', 'alert(a)')}/>)",
+        r"const Foo = () => (<Item prop={Function()}/>)",
+        r"const Foo = () => (<Item onClick={this.clickHandler.bind(this)} />)",
+        r"const Foo = () => (<Item callback={this.props.callback || function() {}} />)",
+        r"const Foo = () => (<Item callback={this.props.callback ? this.props.callback : function() {}} />)",
+        r"const Foo = () => (<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />)",
+        r"const Foo = () => (<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />)",
+        r"
+        const Foo = ({ onClick }) => {
+            const _onClick = onClick.bind(this)
+            return <button onClick={_onClick} />
+        }",
+        r"
+        const Foo = () => {
+            function onClick(e) {
+                window.location.navigate(e.target.href)
+            }
+            return <a onClick={onClick} />
+        }
+        ",
+        r"
+        const Foo = () => {
+            const onClick = (e) => {
+                window.location.navigate(e.target.href)
+            }
+            return <a onClick={onClick} />
+        }
+        ",
+        r"
+        const Foo = () => {
+            const onClick = function (e) {
+                window.location.navigate(e.target.href)
+            }
+            return <a onClick={onClick} />
+        }
+        ",
     ];
 
     Tester::new(JsxNoNewFunctionAsProp::NAME, pass, fail)

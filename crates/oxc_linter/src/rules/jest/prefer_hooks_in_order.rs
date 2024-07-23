@@ -9,17 +9,14 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_test_plugin_name, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedJestFnCallNew, PossibleJestNode, TestPluginName,
+        parse_jest_fn_call, JestFnKind, JestGeneralFnKind, ParsedJestFnCallNew, PossibleJestNode,
     },
 };
 
-fn reorder_hooks(x0: TestPluginName, x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!(
-        "{x0}(prefer-hooks-in-order): Prefer having hooks in a consistent order.",
-    ))
-    .with_help(format!("{x1:?} hooks should be before any {x2:?} hooks"))
-    .with_label(span0)
+fn reorder_hooks(x1: &str, x2: &str, span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer having hooks in a consistent order.")
+        .with_help(format!("{x1:?} hooks should be before any {x2:?} hooks"))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -191,14 +188,8 @@ impl PreferHooksInOrder {
             let Some(previous_hook_name) = hook_orders.get(previous_hook_pos) else {
                 return;
             };
-            let plugin_name = get_test_plugin_name(ctx);
 
-            ctx.diagnostic(reorder_hooks(
-                plugin_name,
-                &hook_name,
-                previous_hook_name,
-                call_expr.span,
-            ));
+            ctx.diagnostic(reorder_hooks(&hook_name, previous_hook_name, call_expr.span));
             return;
         }
 

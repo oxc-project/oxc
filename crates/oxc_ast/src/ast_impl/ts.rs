@@ -3,9 +3,6 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
-// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
-
 use std::{cell::Cell, hash::Hash};
 
 use oxc_allocator::Vec;

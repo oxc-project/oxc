@@ -1,0 +1,89 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:1:1]
+ 1 │ class Foo {}
+   · ────────────
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
+   ╭─[no_extraneous_class.tsx:5:14]
+ 4 │               constructor() {
+ 5 │                 class Bar {
+   ·                       ───
+ 6 │                   static PROP = 2;
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
+    ╭─[no_extraneous_class.tsx:10:17]
+  9 │             }
+ 10 │             export class Bar {
+    ·                          ───
+ 11 │               public static helper(): void {}
+    ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.
+   ╭─[no_extraneous_class.tsx:2:10]
+ 1 │ 
+ 2 │             class Foo {
+   ·                   ───
+ 3 │               constructor() {}
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:8:8]
+ 7 │               constructor() {
+ 8 │                 class nestedClass {}
+   ·                 ────────────────────
+ 9 │               }
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
+   ╭─[no_extraneous_class.tsx:2:19]
+ 1 │     
+ 2 │ ╭─▶             export default class {
+ 3 │ │                 static hello() {}
+ 4 │ ╰─▶             }
+ 5 │                       
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:2:4]
+ 1 │     
+ 2 │ ╭─▶             @FooDecorator
+ 3 │ ╰─▶             class Foo {}
+ 4 │                       
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.
+   ╭─[no_extraneous_class.tsx:3:10]
+ 2 │             @FooDecorator
+ 3 │             class Foo {
+   ·                   ───
+ 4 │               constructor(foo: Foo) {
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected empty class.
+   ╭─[no_extraneous_class.tsx:2:4]
+ 1 │ 
+ 2 │             abstract class Foo {}
+   ·             ─────────────────────
+ 3 │                   
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only static properties.
+   ╭─[no_extraneous_class.tsx:2:19]
+ 1 │ 
+ 2 │             abstract class Foo {
+   ·                            ───
+ 3 │               static property: string;
+   ╰────
+
+  ⚠ typescript-eslint(no-extraneous-class): Unexpected class with only a constructor.
+   ╭─[no_extraneous_class.tsx:2:19]
+ 1 │ 
+ 2 │             abstract class Foo {
+   ·                            ───
+ 3 │               constructor() {}
+   ╰────

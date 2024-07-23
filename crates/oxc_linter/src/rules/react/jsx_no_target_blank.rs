@@ -14,19 +14,19 @@ use oxc_span::{GetSpan, Span};
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn target_blank_without_noreferrer(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
+    OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
 .with_help("add rel=`noreferrer` to the element")
 .with_label(span0)
 }
 
 fn target_blank_without_noopener(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
+    OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
 .with_help("add rel=`noreferrer` or rel=`noopener` to the element")
 .with_label(span0)
 }
 
 fn explicit_props_in_spread_attributes(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
+    OxcDiagnostic::warn("all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
 .with_help("add rel=`noreferrer` to the element")
 .with_label(span0)
 }
@@ -242,6 +242,10 @@ impl Rule for JsxNoTargetBlank {
                 .and_then(|val| val.get("allowReferrer").and_then(serde_json::Value::as_bool))
                 .unwrap_or(false),
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

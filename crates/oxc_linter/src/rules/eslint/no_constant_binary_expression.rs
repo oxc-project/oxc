@@ -49,29 +49,29 @@ declare_oxc_lint!(
 );
 
 fn constant_short_circuit(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(format!("eslint(no-constant-binary-expression): Unexpected constant {x0:?} on the left-hand side of a {x1:?} expression"))
-        .with_help("This expression always evaluates to the constant on the left-hand side")
-        .with_label(span2)
-}
-
-fn constant_binary_operand(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(no-constant-binary-expression): Unexpected constant binary expression",
-    )
-    .with_help(format!("This compares constantly with the {x0}-hand side of the {x1}"))
+    OxcDiagnostic::warn(format!(
+        "Unexpected constant {x0:?} on the left-hand side of a {x1:?} expression"
+    ))
+    .with_help("This expression always evaluates to the constant on the left-hand side")
     .with_label(span2)
 }
 
+fn constant_binary_operand(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected constant binary expression")
+        .with_help(format!("This compares constantly with the {x0}-hand side of the {x1}"))
+        .with_label(span2)
+}
+
 fn constant_always_new(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint(no-constant-binary-expression): Unexpected comparison to newly constructed object",
-    )
-    .with_help("These two values can never be equal")
-    .with_label(span0)
+    OxcDiagnostic::warn("Unexpected comparison to newly constructed object")
+        .with_help("These two values can never be equal")
+        .with_label(span0)
 }
 
 fn constant_both_always_new(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint(no-constant-binary-expression): Unexpected comparison of two newly constructed objects").with_help("These two values can never be equal").with_label(span0)
+    OxcDiagnostic::warn("Unexpected comparison of two newly constructed objects")
+        .with_help("These two values can never be equal")
+        .with_label(span0)
 }
 
 impl Rule for NoConstantBinaryExpression {

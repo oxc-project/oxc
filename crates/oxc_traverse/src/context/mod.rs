@@ -351,11 +351,10 @@ impl<'a> TraverseCtx<'a> {
     /// This is a shortcut for `ctx.scoping.create_bound_reference`.
     pub fn create_bound_reference(
         &mut self,
-        name: CompactStr,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        self.scoping.create_bound_reference(name, symbol_id, flag)
+        self.scoping.create_bound_reference(symbol_id, flag)
     }
 
     /// Create an `IdentifierReference` bound to a `SymbolId`.

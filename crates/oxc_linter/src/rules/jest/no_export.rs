@@ -5,7 +5,7 @@ use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, utils::is_jest_file};
 
 fn no_export_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-export): Do not export from a test file.")
+    OxcDiagnostic::warn("Do not export from a test file.")
         .with_help("If you want to share code between tests, move it into a separate file and import it from there.")
         .with_label(span0)
 }
