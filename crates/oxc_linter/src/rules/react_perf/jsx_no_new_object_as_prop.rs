@@ -1,23 +1,12 @@
-use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElement},
-    AstKind,
-};
-use oxc_diagnostics::OxcDiagnostic;
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::SymbolId;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_prop_value, is_constructor_matching_name},
-    AstNode,
+    ast_util::is_method_call,
+    utils::{find_initialized_binding, is_constructor_matching_name, ReactPerfRule},
 };
-
-fn jsx_no_new_object_as_prop_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("JSX attribute values should not contain objects created in the same scope.")
-        .with_help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).")
-        .with_label(span0)
-}
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoNewObjectAsProp;
@@ -43,31 +32,33 @@ declare_oxc_lint!(
     perf
 );
 
-impl Rule for JsxNoNewObjectAsProp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_elem) = node.kind() {
-            check_jsx_element(jsx_elem, ctx);
-        }
+impl ReactPerfRule for JsxNoNewObjectAsProp {
+    const MESSAGE: &'static str =
+        "JSX attribute values should not contain objects created in the same scope.";
+
+    fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
+        check_expression(expr)
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
-        ctx.source_type().is_jsx()
-    }
-}
-
-fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    for item in &jsx_elem.opening_element.attributes {
-        match get_prop_value(item) {
-            None => return,
-            Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                if let Some(expr) = container.expression.as_expression() {
-                    if let Some(span) = check_expression(expr) {
-                        ctx.diagnostic(jsx_no_new_object_as_prop_diagnostic(span));
-                    }
+    fn check_for_violation_on_ast_kind(
+        &self,
+        kind: &AstKind<'_>,
+        symbol_id: SymbolId,
+    ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
+        match kind {
+            AstKind::VariableDeclarator(decl) => {
+                if let Some(init_span) = decl.init.as_ref().and_then(check_expression) {
+                    return Some((decl.id.span(), Some(init_span)));
                 }
+                None
             }
-            _ => {}
-        };
+            AstKind::FormalParameter(param) => {
+                let (id, init) = find_initialized_binding(&param.pattern, symbol_id)?;
+                let init_span = check_expression(init)?;
+                Some((id.span(), Some(init_span)))
+            }
+            _ => None,
+        }
     }
 }
 
@@ -75,7 +66,15 @@ fn check_expression(expr: &Expression) -> Option<Span> {
     match expr.without_parenthesized() {
         Expression::ObjectExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
-            if is_constructor_matching_name(&expr.callee, "Object") {
+            if is_constructor_matching_name(&expr.callee, "Object")
+                || is_method_call(
+                    expr.as_ref(),
+                    Some(&["Object"]),
+                    Some(&["assign", "create"]),
+                    None,
+                    None,
+                )
+            {
                 Some(expr.span)
             } else {
                 None
@@ -102,16 +101,49 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![r"<Item config={staticConfig} />"];
+    let pass = vec![
+        r"<Item config={staticConfig} />",
+        r"<Item config={{}} />",
+        r"<Item config={'foo'} />",
+        r"const Foo = () => <Item config={staticConfig} />",
+        r"const Foo = (props) => <Item {...props} />",
+        r"const Foo = (props) => <Item x={props.x} />",
+        r"const Foo = ({ x = 5 }) => <Item x={x} />",
+        r"const x = {}; const Foo = () => <Bar x={x} />",
+        r"const DEFAULT_X = {}; const Foo = ({ x = DEFAULT_X }) => <Bar x={x} />",
+        r"
+        import { FC, useMemo } from 'react';
+        import { Bar } from './bar';
+        export const Foo: FC = () => {
+            const x = useMemo(() => ({ foo: 'bar' }), []);
+            return <Bar prop={x} />
+        }
+        ",
+        r"
+        import { FC, useMemo } from 'react';
+        import { Bar } from './bar';
+        export const Foo: FC = () => {
+            const x = useMemo(() => ({ foo: 'bar' }), []);
+            const y = x;
+            return <Bar prop={y} />
+        }
+        ",
+        // new arr, not an obj
+        r"const Foo = () => <Item arr={[]} />",
+    ];
 
     let fail = vec![
-        r"<Item config={{}} />",
-        r"<Item config={new Object()} />",
-        r"<Item config={Object()} />",
-        r"<div style={{display: 'none'}} />",
-        r"<Item config={this.props.config || {}} />",
-        r"<Item config={this.props.config ? this.props.config : {}} />",
-        r"<Item config={this.props.config || (this.props.default ? this.props.default : {})} />",
+        r"const Foo = () => <Item config={{}} />",
+        r"const Foo = () => <Item config={Object.create(null)} />",
+        r"const Foo = ({ x }) => <Item config={Object.assign({}, x)} />",
+        r"const Foo = () => (<Item config={new Object()} />)",
+        r"const Foo = () => (<Item config={Object()} />)",
+        r"const Foo = () => (<div style={{display: 'none'}} />)",
+        r"const Foo = () => (<Item config={this.props.config || {}} />)",
+        r"const Foo = () => (<Item config={this.props.config ? this.props.config : {}} />)",
+        r"const Foo = () => (<Item config={this.props.config || (this.props.default ? this.props.default : {})} />)",
+        r"const Foo = () => { const x = {}; return <Bar x={x} /> }",
+        r"const Foo = ({ x = {} }) => <Item x={x} />",
     ];
 
     Tester::new(JsxNoNewObjectAsProp::NAME, pass, fail)
