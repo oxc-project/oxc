@@ -1,15 +1,13 @@
+use crate::{context::LintContext, rule::Rule, AstNode};
+use oxc_ast::{ast::Statement, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeId, ScopeTree};
 use oxc_span::{GetSpan, Span};
-use oxc_ast::{
-  ast::Statement, AstKind
-};
-use crate::{context::LintContext,  rule::Rule, AstNode};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoElseReturn {
-  allow_else_if: bool
+    allow_else_if: bool,
 }
 
 declare_oxc_lint!(
@@ -33,197 +31,206 @@ declare_oxc_lint!(
     suspicious,
 );
 
-fn is_safe_from_name_collisions<'a>(ctx: &LintContext<'a>, stmt: &Statement, parent_scope_id: ScopeId) -> bool {
-  let scopes: &ScopeTree = ctx.scopes();
+fn is_safe_from_name_collisions(
+    ctx: &LintContext,
+    stmt: &Statement,
+    parent_scope_id: ScopeId,
+) -> bool {
+    let scopes: &ScopeTree = ctx.scopes();
 
-  
-  match stmt {
-    Statement::BlockStatement(block) => {
-      let block_scope_id = block.scope_id.get().unwrap();
+    match stmt {
+        Statement::BlockStatement(block) => {
+            let block_scope_id = block.scope_id.get().unwrap();
 
-      let bindings = scopes.get_bindings(block_scope_id);
-      let parent_bindings: Vec<_> = scopes.get_bindings(parent_scope_id)
-        .iter()
-        .filter(|(_, symbol_id)| {
-          bindings.iter().find(|(_, bindings_symbol_id)| symbol_id == bindings_symbol_id).is_none()
-        })
-        .collect();
-      
-      if bindings.iter().any(|(name, _)| {
-        parent_bindings.iter().any(|(parent_name, _)| name == parent_name)
-      }) {
-        return false;
-      }
-      
-      true
-    },
-    Statement::FunctionDeclaration(_) => false,
-    _ => true
-  }
+            let bindings = scopes.get_bindings(block_scope_id);
+            let parent_bindings: Vec<_> = scopes
+                .get_bindings(parent_scope_id)
+                .iter()
+                .filter(|(_, symbol_id)| {
+                    bindings
+                        .iter()
+                        .find(|(_, bindings_symbol_id)| symbol_id == bindings_symbol_id)
+                        .is_none()
+                })
+                .collect();
+
+            if bindings
+                .iter()
+                .any(|(name, _)| parent_bindings.iter().any(|(parent_name, _)| name == parent_name))
+            {
+                return false;
+            }
+
+            true
+        }
+        Statement::FunctionDeclaration(_) => false,
+        _ => true,
+    }
 }
 
 fn replace_block(str: &str) -> String {
-  let mut res = String::from(str);
-  let len = res.len();
-  if &str[0..1] == "{" && &str[len-1..len] == "}" {
-    res = String::from(&res[1..len-1]);
-  }
-  res
+    let mut res = String::from(str);
+    let len = res.len();
+    if &str[0..1] == "{" && &str[len - 1..len] == "}" {
+        res = String::from(&res[1..len - 1]);
+    }
+    res
 }
 
 fn get_else_code_space_token(str: &str, else_code: &str) -> String {
-  let res = String::from(str).replacen("else ", "", 1).replace(else_code, "");
-  res
+    return String::from(str).replacen("else ", "", 1).replace(else_code, "");
 }
 
-fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic{
-  OxcDiagnostic::warn("Disallow `else` blocks after `return` statements in `if` statements")
-      .with_label(else_stmt.span())
+fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow `else` blocks after `return` statements in `if` statements")
+        .with_label(else_stmt.span())
 }
 
-fn no_else_return_diagnostic_fix<'a>(ctx: &LintContext<'a>, else_stmt_prev: &Statement, else_stmt: &Statement, if_block_node: &AstNode) {
-  let parent_scope_id = if_block_node.scope_id();
+fn no_else_return_diagnostic_fix(
+    ctx: &LintContext,
+    else_stmt_prev: &Statement,
+    else_stmt: &Statement,
+    if_block_node: &AstNode,
+) {
+    let parent_scope_id = if_block_node.scope_id();
 
-  if !is_safe_from_name_collisions(ctx, else_stmt, parent_scope_id) {
-    return ctx.diagnostic(no_else_return_diagnostic(else_stmt));
-  };
+    if !is_safe_from_name_collisions(ctx, else_stmt, parent_scope_id) {
+        return ctx.diagnostic(no_else_return_diagnostic(else_stmt));
+    };
 
-  let prev_span = else_stmt_prev.span();
-  let span = else_stmt.span();
+    let prev_span = else_stmt_prev.span();
+    let span = else_stmt.span();
 
-  let else_code = ctx.source_range(span);
-  let else_code_prev_token = get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
-  let fix_else_code = format!("{}{}", else_code_prev_token, replace_block(else_code));
+    let else_code = ctx.source_range(span);
+    let else_code_prev_token =
+        get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
+    let fix_else_code = format!("{}{}", else_code_prev_token, replace_block(else_code));
 
-  ctx.diagnostic_with_fix(
-    no_else_return_diagnostic(else_stmt),
-    |fixer| {
-      fixer.replace(Span::new(prev_span.end, span.end), fix_else_code)
-  })
+    ctx.diagnostic_with_fix(no_else_return_diagnostic(else_stmt), |fixer| {
+        fixer.replace(Span::new(prev_span.end, span.end), fix_else_code)
+    })
 }
 
 fn check_for_return(node: &Statement) -> bool {
-  match node {
-    Statement::ReturnStatement(_) => true,
-    _ => false
-  }
+    match node {
+        Statement::ReturnStatement(_) => true,
+        _ => false,
+    }
 }
 
 fn naive_has_return(node: &Statement) -> bool {
-  match node {
-    Statement::BlockStatement(block) => {
-      let Some(last_child) = block.body.last() else {
-        return false;
-      };
-      check_for_return(last_child)
-    },
-    node => check_for_return(node)
-  }
+    match node {
+        Statement::BlockStatement(block) => {
+            let Some(last_child) = block.body.last() else {
+                return false;
+            };
+            check_for_return(last_child)
+        }
+        node => check_for_return(node),
+    }
 }
 
 fn check_for_return_or_if(node: &Statement) -> bool {
-  match node {
-    Statement::ReturnStatement(_) => true,
-    Statement::IfStatement(if_stmt) => {
-      let Some(alternate) = &if_stmt.alternate else {
-        return false;
-      };
-      naive_has_return(&alternate) && naive_has_return(&if_stmt.consequent)
+    match node {
+        Statement::ReturnStatement(_) => true,
+        Statement::IfStatement(if_stmt) => {
+            let Some(alternate) = &if_stmt.alternate else {
+                return false;
+            };
+            naive_has_return(&alternate) && naive_has_return(&if_stmt.consequent)
+        }
+        _ => false,
     }
-    _ => false
-  }
-
 }
 
 fn always_returns(stmt: &Statement) -> bool {
-  match stmt {
-    Statement::BlockStatement(block) => block.body.iter().any(check_for_return_or_if),
-    node => check_for_return_or_if(node)
-  }
+    match stmt {
+        Statement::BlockStatement(block) => block.body.iter().any(check_for_return_or_if),
+        node => check_for_return_or_if(node),
+    }
 }
 
-fn check_if_with_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
-  let AstKind::IfStatement(if_stmt) = node.kind() else {
-    return;
-  };
-  let Some(alternate) = &if_stmt.alternate else {
-    return;
-  };
-  
-  if always_returns(&if_stmt.consequent) {
-    no_else_return_diagnostic_fix(ctx, &if_stmt.consequent, alternate, node);
-  }
-}
-
-fn check_if_without_else<'a>(ctx: &LintContext<'a>, node: &AstNode) {
-  let AstKind::IfStatement(if_stmt) = node.kind() else {
-    return;
-  };
-  let mut current_node = if_stmt;
-  let mut last_alternate;
-  let mut last_alternate_prev;
-
-  loop {
-    let Some(alternate) = &current_node.alternate else {
-      return;
+fn check_if_with_else(ctx: &LintContext, node: &AstNode) {
+    let AstKind::IfStatement(if_stmt) = node.kind() else {
+        return;
     };
-    if !always_returns(&current_node.consequent) {
-      return;
-    }
-    last_alternate_prev = &current_node.consequent;
-    last_alternate = alternate;
-    match alternate {
-      Statement::IfStatement(if_stmt) => {
-        current_node = if_stmt;
-      },
-      _ => break,
-    }
-  }
+    let Some(alternate) = &if_stmt.alternate else {
+        return;
+    };
 
-  no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
+    if always_returns(&if_stmt.consequent) {
+        no_else_return_diagnostic_fix(ctx, &if_stmt.consequent, alternate, node);
+    }
 }
 
-fn is_in_statement_list_parents(node: &AstNode) -> bool{
-  match node.kind() {
-    AstKind::Program(_) => true,
-    AstKind::BlockStatement(_) => true,
-    AstKind::StaticBlock(_) => true,
-    AstKind::SwitchCase(_) => true,
-    AstKind::FunctionBody(_) => true,
-    _ => false
-  }
+fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
+    let AstKind::IfStatement(if_stmt) = node.kind() else {
+        return;
+    };
+    let mut current_node = if_stmt;
+    let mut last_alternate;
+    let mut last_alternate_prev;
+
+    loop {
+        let Some(alternate) = &current_node.alternate else {
+            return;
+        };
+        if !always_returns(&current_node.consequent) {
+            return;
+        }
+        last_alternate_prev = &current_node.consequent;
+        last_alternate = alternate;
+        match alternate {
+            Statement::IfStatement(if_stmt) => {
+                current_node = if_stmt;
+            }
+            _ => break,
+        }
+    }
+
+    no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
+}
+
+fn is_in_statement_list_parents(node: &AstNode) -> bool {
+    match node.kind() {
+        AstKind::Program(_) => true,
+        AstKind::BlockStatement(_) => true,
+        AstKind::StaticBlock(_) => true,
+        AstKind::SwitchCase(_) => true,
+        AstKind::FunctionBody(_) => true,
+        _ => false,
+    }
 }
 
 impl Rule for NoElseReturn {
-  fn from_configuration(value: serde_json::Value) -> Self {
-    let Some(value) = value.get(0) else { 
-      return Self {
-        allow_else_if: true
-      } 
-    };
-    Self {
-      allow_else_if: value.get("allowElseIf").and_then(serde_json::Value::as_bool).unwrap_or(true),
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let Some(value) = value.get(0) else { return Self { allow_else_if: true } };
+        Self {
+            allow_else_if: value
+                .get("allowElseIf")
+                .and_then(serde_json::Value::as_bool)
+                .unwrap_or(true),
+        }
     }
-  }
 
-  fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-    let AstKind::IfStatement(_) = node.kind() else {
-      return;
-    };
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::IfStatement(_) = node.kind() else {
+            return;
+        };
 
-    let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-      return;
-    };
+        let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
 
-    if !is_in_statement_list_parents(parent_node) {
-      return;
+        if !is_in_statement_list_parents(parent_node) {
+            return;
+        }
+        if self.allow_else_if {
+            check_if_without_else(ctx, node);
+        } else {
+            check_if_with_else(ctx, node);
+        }
     }
-    if self.allow_else_if {
-      check_if_without_else(ctx, node);
-    } else {
-      check_if_with_else(ctx, node);
-    }
-	}
 }
 
 #[test]
