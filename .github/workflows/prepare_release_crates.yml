@@ -17,6 +17,7 @@ jobs:
         with:
           cache-key: warm
           tools: cargo-release-oxc
+      - run: cargo ck
       - run: cargo release-oxc publish --release crates --dry-run
 
   prepare:
