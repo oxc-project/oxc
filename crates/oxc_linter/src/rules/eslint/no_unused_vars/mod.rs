@@ -178,9 +178,9 @@ impl Rule for NoUnusedVars {
                 }
             }
             AstKind::VariableDeclarator(decl) => {
-                if decl.kind.is_var() && self.vars.is_local() && symbol.is_root() {
+                if self.is_allowed_variable_declaration(&symbol, decl) {
                     return;
-                }
+                };
                 let report =
                     if let Some(last_write) = symbol.references().rev().find(|r| r.is_write()) {
                         diagnostic::assign(&symbol, last_write.span())
@@ -195,14 +195,22 @@ impl Rule for NoUnusedVars {
                 }
                 ctx.diagnostic(diagnostic::param(&symbol));
             }
-            AstKind::CatchParameter(_) => ctx.diagnostic(diagnostic::declared(&symbol)),
-            unknown => {
-                debug_assert!(
-                    false,
-                    "NoUnusedVars::run_on_symbol - unhandled AstKind: {:?}",
-                    unknown.debug_name()
-                )
+            AstKind::Function(_) => {
+                if symbol.is_function_callback()
+                    || symbol.is_function_assigned_to_same_name_variable()
+                {
+                    return;
+                }
+                ctx.diagnostic(diagnostic::declared(&symbol));
             }
+            _ => ctx.diagnostic(diagnostic::declared(&symbol)),
+            // unknown => {
+            //     debug_assert!(
+            //         false,
+            //         "NoUnusedVars::run_on_symbol - unhandled AstKind: {:?}",
+            //         unknown.debug_name()
+            //     )
+            // }
         };
         // match (is_ignored, is_used) {
         //     (true, true) => {

@@ -7,7 +7,72 @@ use oxc_semantic::Semantic;
 use super::binding_pattern::CheckBinding;
 use super::{options::ArgsOption, NoUnusedVars, Symbol};
 
+impl<'s, 'a> Symbol<'s, 'a> {
+    /// Returns `true` if this function is a callback passed to another function
+    pub fn is_function_callback(&self) -> bool {
+        debug_assert!(self.declaration().kind().is_function_like());
+
+        for parent in self.iter_parents() {
+            match parent.kind() {
+                AstKind::MemberExpression(_) | AstKind::ParenthesizedExpression(_) => {
+                    continue;
+                }
+                AstKind::CallExpression(_) => {
+                    return true;
+                }
+                _ => {
+                    return false;
+                }
+            }
+        }
+
+        false
+    }
+
+    /// ```ts
+    /// var foo = function foo() {};
+    /// //                 ^^^ does not have a read reference, needs manual check
+    /// foo()
+    /// ```
+    pub fn is_function_assigned_to_same_name_variable(&self) -> bool {
+        debug_assert!(self.declaration().kind().is_function_like());
+
+        for parent in self.iter_parents() {
+            match parent.kind() {
+                AstKind::MemberExpression(_) | AstKind::ParenthesizedExpression(_) => {
+                    continue;
+                }
+                AstKind::VariableDeclarator(decl) => {
+                    return decl
+                        .id
+                        .get_binding_identifier()
+                        .is_some_and(|id| id.name == self.name())
+                }
+                _ => {
+                    return false;
+                }
+            }
+        }
+
+        false
+    }
+}
 impl NoUnusedVars {
+    /// Returns `true` if this unused variable declaration should be allowed
+    /// (i.e. not reported)
+    pub(super) fn is_allowed_variable_declaration<'a>(
+        &self,
+        symbol: &Symbol<'_, 'a>,
+        decl: &VariableDeclarator<'a>,
+    ) -> bool {
+        if decl.kind.is_var() && self.vars.is_local() && symbol.is_root() {
+            return true;
+        }
+
+        // check if res is an array/object unpacking pattern that should be ignored
+        matches!(decl.id.check_unused_binding_pattern(&*self, symbol), Some(res) if res.is_ignore())
+    }
+
     pub(super) fn is_allowed_argument<'a>(
         &self,
         semantic: &Semantic<'a>,

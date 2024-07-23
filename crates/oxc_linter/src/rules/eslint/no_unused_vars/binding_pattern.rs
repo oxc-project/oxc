@@ -142,7 +142,17 @@ impl<'a> CheckBinding<'a> for ArrayPattern<'a> {
             let Some(el) = el.as_ref() else {
                 continue;
             };
-            let res = el.check_unused_binding_pattern(options, symbol);
+            // const [a, _b, c] = arr; console.log(a, b)
+            // here, res will contain data for _b, and we want to check if it
+            // can be ignored (if it matches destructuredArrayIgnorePattern)
+            let res = el.check_unused_binding_pattern(options, symbol).map(|res| {
+                let is_ignorable = options
+                    .destructured_array_ignore_pattern
+                    .as_ref()
+                    .is_some_and(|pattern| pattern.is_match(symbol.name()));
+                return res | is_ignorable;
+            });
+
             if res.is_some() {
                 return res;
             }
