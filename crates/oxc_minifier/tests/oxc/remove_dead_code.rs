@@ -30,6 +30,30 @@ fn dce_if_statement() {
     test("if (true) { foo } else { bar }", "{ foo }");
     test("if (false) { foo } else { bar }", "{ bar }");
 
+    test("if (xxx) { foo } else if (false) { bar }", "if (xxx) { foo }");
+    test("if (xxx) { foo } else if (false) { bar } else { baz }", "if (xxx) { foo } else { baz }");
+    test("if (xxx) { foo } else if (false) { bar } else if (false) { baz }", "if (xxx) { foo }");
+    test(
+        "if (xxx) { foo } else if (false) { bar } else if (false) { baz } else { quaz }",
+        "if (xxx) { foo } else { quaz }",
+    );
+    test(
+        "if (xxx) { foo } else if (true) { bar } else if (false) { baz }",
+        "if (xxx) { foo } else { bar }",
+    );
+    test(
+        "if (xxx) { foo } else if (false) { bar } else if (true) { baz }",
+        "if (xxx) { foo } else { baz }",
+    );
+    test(
+        "if (xxx) { foo } else if (true) { bar } else if (true) { baz }",
+        "if (xxx) { foo } else { bar }",
+    );
+    test(
+        "if (xxx) { foo } else if (false) { var a; var b; } else if (false) { var c; var d; }",
+        "if (xxx) { foo } else var c, d;",
+    );
+
     test("if (!false) { foo }", "{ foo }");
     test("if (!true) { foo } else { bar }", "{ bar }");
 

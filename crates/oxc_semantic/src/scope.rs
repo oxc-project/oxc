@@ -13,7 +13,7 @@ type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
 type Bindings = FxIndexMap<CompactStr, SymbolId>;
 pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
-pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
+pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
 
 /// Scope Tree
 ///
@@ -32,6 +32,8 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    const ROOT_SCOPE_ID: ScopeId = ScopeId::from_usize_unchecked(0);
+
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
@@ -80,8 +82,8 @@ impl ScopeTree {
     }
 
     #[inline]
-    pub fn root_scope_id(&self) -> ScopeId {
-        ScopeId::new(0)
+    pub const fn root_scope_id(&self) -> ScopeId {
+        Self::ROOT_SCOPE_ID
     }
 
     pub fn root_flags(&self) -> ScopeFlags {
@@ -235,5 +237,13 @@ impl ScopeTree {
 
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
         self.bindings[scope_id].shift_remove(name);
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.parent_ids.reserve(additional);
+        self.child_ids.reserve(additional);
+        self.flags.reserve(additional);
+        self.bindings.reserve(additional);
+        self.node_ids.reserve(additional);
     }
 }

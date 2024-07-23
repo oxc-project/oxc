@@ -52,13 +52,13 @@ impl Rule for NoUndef {
         for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
             for reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
-                let name = reference.name();
+                let name = ctx.semantic().reference_name(reference);
 
                 if ctx.env_contains_var(name) {
                     continue;
                 }
 
-                if ctx.globals().is_enabled(name.as_str()) {
+                if ctx.globals().is_enabled(name) {
                     continue;
                 }
 
