@@ -2,43 +2,43 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
-   ╭─[jsx_no_new_array_as_prop.tsx:1:13]
- 1 │ <Item list={[]} />
-   ·             ──
-   ╰────
-  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
-
-  ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
-   ╭─[jsx_no_new_array_as_prop.tsx:1:13]
- 1 │ <Item list={new Array()} />
-   ·             ───────────
-   ╰────
-  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
-
-  ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
-   ╭─[jsx_no_new_array_as_prop.tsx:1:13]
- 1 │ <Item list={Array()} />
-   ·             ───────
-   ╰────
-  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
-
-  ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
    ╭─[jsx_no_new_array_as_prop.tsx:1:32]
- 1 │ <Item list={this.props.list || []} />
+ 1 │ const Foo = () => (<Item list={[]} />)
    ·                                ──
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
-   ╭─[jsx_no_new_array_as_prop.tsx:1:49]
- 1 │ <Item list={this.props.list ? this.props.list : []} />
-   ·                                                 ──
+   ╭─[jsx_no_new_array_as_prop.tsx:1:32]
+ 1 │ const Foo = () => (<Item list={new Array()} />)
+   ·                                ───────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
-   ╭─[jsx_no_new_array_as_prop.tsx:1:67]
- 1 │ <Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />
-   ·                                                                   ──
+   ╭─[jsx_no_new_array_as_prop.tsx:1:32]
+ 1 │ const Foo = () => (<Item list={Array()} />)
+   ·                                ───────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
+   ╭─[jsx_no_new_array_as_prop.tsx:1:51]
+ 1 │ const Foo = () => (<Item list={this.props.list || []} />)
+   ·                                                   ──
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
+   ╭─[jsx_no_new_array_as_prop.tsx:1:68]
+ 1 │ const Foo = () => (<Item list={this.props.list ? this.props.list : []} />)
+   ·                                                                    ──
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.
+   ╭─[jsx_no_new_array_as_prop.tsx:1:86]
+ 1 │ const Foo = () => (<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />)
+   ·                                                                                      ──
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).

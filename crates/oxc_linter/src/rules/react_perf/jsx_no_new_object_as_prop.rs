@@ -45,6 +45,9 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoNewObjectAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if node.scope_id() == ctx.scopes().root_scope_id() {
+            return;
+        }
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
         }
@@ -102,16 +105,20 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![r"<Item config={staticConfig} />"];
+    let pass = vec![
+        r"<Item config={staticConfig} />",
+        r"<Item config={{}} />",
+        r"const Foo = () => <Item config={staticConfig} />",
+    ];
 
     let fail = vec![
-        r"<Item config={{}} />",
-        r"<Item config={new Object()} />",
-        r"<Item config={Object()} />",
-        r"<div style={{display: 'none'}} />",
-        r"<Item config={this.props.config || {}} />",
-        r"<Item config={this.props.config ? this.props.config : {}} />",
-        r"<Item config={this.props.config || (this.props.default ? this.props.default : {})} />",
+        r"const Foo = () => <Item config={{}} />",
+        r"const Foo = () => (<Item config={new Object()} />)",
+        r"const Foo = () => (<Item config={Object()} />)",
+        r"const Foo = () => (<div style={{display: 'none'}} />)",
+        r"const Foo = () => (<Item config={this.props.config || {}} />)",
+        r"const Foo = () => (<Item config={this.props.config ? this.props.config : {}} />)",
+        r"const Foo = () => (<Item config={this.props.config || (this.props.default ? this.props.default : {})} />)",
     ];
 
     Tester::new(JsxNoNewObjectAsProp::NAME, pass, fail)

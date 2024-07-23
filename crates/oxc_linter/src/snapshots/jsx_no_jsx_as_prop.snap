@@ -2,29 +2,29 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
-   ╭─[jsx_no_jsx_as_prop.tsx:1:12]
- 1 │ <Item jsx={<SubItem />} />
-   ·            ───────────
+   ╭─[jsx_no_jsx_as_prop.tsx:1:31]
+ 1 │ const Foo = () => (<Item jsx={<SubItem />} />)
+   ·                               ───────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
-   ╭─[jsx_no_jsx_as_prop.tsx:1:30]
- 1 │ <Item jsx={this.props.jsx || <SubItem />} />
-   ·                              ───────────
+   ╭─[jsx_no_jsx_as_prop.tsx:1:49]
+ 1 │ const Foo = () => (<Item jsx={this.props.jsx || <SubItem />} />)
+   ·                                                 ───────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
-   ╭─[jsx_no_jsx_as_prop.tsx:1:46]
- 1 │ <Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />
-   ·                                              ───────────
+   ╭─[jsx_no_jsx_as_prop.tsx:1:65]
+ 1 │ const Foo = () => (<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />)
+   ·                                                                 ───────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX.
-   ╭─[jsx_no_jsx_as_prop.tsx:1:77]
- 1 │ <Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />
-   ·                                                                             ───────────
+   ╭─[jsx_no_jsx_as_prop.tsx:1:96]
+ 1 │ const Foo = () => (<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />)
+   ·                                                                                                ───────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).

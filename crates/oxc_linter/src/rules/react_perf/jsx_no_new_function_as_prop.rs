@@ -41,6 +41,9 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoNewFunctionAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if node.scope_id() == ctx.scopes().root_scope_id() {
+            return;
+        }
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
         }
@@ -106,22 +109,19 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r"<Item callback={this.props.callback} />",
-        r"<Item promise={new Promise()} />",
-        r"<Item onClick={bind(foo)} />",
-        r"<Item prop={0} />",
-        r"var a;<Item prop={a} />",
-        r"var a;a = 1;<Item prop={a} />",
-        r"var a;<Item prop={a} />",
+        r"const Foo = () => <Item callback={this.props.callback} />",
+        r"const Foo = () => (<Item promise={new Promise()} />)",
+        r"const Foo = () => (<Item onClick={bind(foo)} />)",
+        r"const Foo = () => (<Item prop={0} />)",
+        r"const Foo = () => { var a; return <Item prop={a} /> }",
+        r"const Foo = () => { var a;a = 1; return <Item prop={a} /> }",
+        r"const Foo = () => { var a;<Item prop={a} /> }",
         r"function foo ({prop1 = function(){}, prop2}) {
             return <Comp prop={prop2} />
           }",
         r"function foo ({prop1, prop2 = function(){}}) {
             return <Comp prop={prop1} />
           }",
-    ];
-
-    let fail = vec![
         r"<Item prop={function(){return true}} />",
         r"<Item prop={() => true} />",
         r"<Item prop={new Function('a', 'alert(a)')}/>",
@@ -131,6 +131,18 @@ fn test() {
         r"<Item callback={this.props.callback ? this.props.callback : function() {}} />",
         r"<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />",
         r"<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />",
+    ];
+
+    let fail = vec![
+        r"const Foo = () => (<Item prop={function(){return true}} />)",
+        r"const Foo = () => (<Item prop={() => true} />)",
+        r"const Foo = () => (<Item prop={new Function('a', 'alert(a)')}/>)",
+        r"const Foo = () => (<Item prop={Function()}/>)",
+        r"const Foo = () => (<Item onClick={this.clickHandler.bind(this)} />)",
+        r"const Foo = () => (<Item callback={this.props.callback || function() {}} />)",
+        r"const Foo = () => (<Item callback={this.props.callback ? this.props.callback : function() {}} />)",
+        r"const Foo = () => (<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />)",
+        r"const Foo = () => (<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />)",
     ];
 
     Tester::new(JsxNoNewFunctionAsProp::NAME, pass, fail)

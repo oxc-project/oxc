@@ -46,6 +46,9 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoNewArrayAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if node.scope_id() == ctx.scopes().root_scope_id() {
+            return;
+        }
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
         }
@@ -103,15 +106,24 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![r"<Item list={this.props.list} />"];
-
-    let fail = vec![
+    let pass = vec![
+        r"<Item list={this.props.list} />",
+        r"const Foo = () => <Item list={this.props.list} />",
         r"<Item list={[]} />",
         r"<Item list={new Array()} />",
         r"<Item list={Array()} />",
         r"<Item list={this.props.list || []} />",
         r"<Item list={this.props.list ? this.props.list : []} />",
         r"<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />",
+    ];
+
+    let fail = vec![
+        r"const Foo = () => (<Item list={[]} />)",
+        r"const Foo = () => (<Item list={new Array()} />)",
+        r"const Foo = () => (<Item list={Array()} />)",
+        r"const Foo = () => (<Item list={this.props.list || []} />)",
+        r"const Foo = () => (<Item list={this.props.list ? this.props.list : []} />)",
+        r"const Foo = () => (<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />)",
     ];
 
     Tester::new(JsxNoNewArrayAsProp::NAME, pass, fail)

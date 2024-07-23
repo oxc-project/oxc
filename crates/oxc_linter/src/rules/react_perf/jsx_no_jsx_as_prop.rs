@@ -38,6 +38,9 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoJsxAsProp {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        if node.scope_id() == ctx.scopes().root_scope_id() {
+            return;
+        }
         if let AstKind::JSXElement(jsx_elem) = node.kind() {
             check_jsx_element(jsx_elem, ctx);
         }
@@ -81,13 +84,20 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![r"<Item callback={this.props.jsx} />"];
-
-    let fail = vec![
+    let pass = vec![
+        r"<Item callback={this.props.jsx} />",
+        r"const Foo = () => <Item callback={this.props.jsx} />",
         r"<Item jsx={<SubItem />} />",
         r"<Item jsx={this.props.jsx || <SubItem />} />",
         r"<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />",
         r"<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />",
+    ];
+
+    let fail = vec![
+        r"const Foo = () => (<Item jsx={<SubItem />} />)",
+        r"const Foo = () => (<Item jsx={this.props.jsx || <SubItem />} />)",
+        r"const Foo = () => (<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />)",
+        r"const Foo = () => (<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />)",
     ];
 
     Tester::new(JsxNoJsxAsProp::NAME, pass, fail).with_react_perf_plugin(true).test_and_snapshot();
