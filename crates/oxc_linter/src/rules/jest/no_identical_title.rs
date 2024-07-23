@@ -13,20 +13,26 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        collect_possible_jest_call_node, get_test_plugin_name, parse_general_jest_fn_call,
+        JestFnKind, JestGeneralFnKind, PossibleJestNode, TestPluginName,
     },
     AstNode,
 };
 
-fn describe_repeat(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.")
-        .with_help("Change the title of describe block.")
-        .with_label(span0)
+fn describe_repeat(x0: TestPluginName, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("
+      {x0}(no-identical-title): Describe block title is used multiple times in the same describe block.",
+    ))
+    .with_help("Change the title of describe block.")
+    .with_label(span1)
 }
 
-fn test_repeat(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.").with_help("Change the title of test.").with_label(span0)
+fn test_repeat(x0: TestPluginName, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "{x0}(no-identical-title): Test title is used multiple times in the same describe block.",
+    ))
+    .with_help("Change the title of test.")
+    .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -53,6 +59,17 @@ declare_oxc_lint!(
     ///    // Has the same title as a previous test suite
     ///    // ...
     ///  });
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-identical-title.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-identical-title": "error"
+    ///   }
+    /// }
     /// ```
     NoIdenticalTitle,
     style
@@ -95,14 +112,15 @@ impl Rule for NoIdenticalTitle {
             for i in 1..kind_and_spans.len() {
                 let (span, kind, parent_id) = kind_and_spans[i];
                 let (_, prev_kind, prev_parent) = kind_and_spans[i - 1];
+                let plugin_name = get_test_plugin_name(ctx);
 
                 if kind == prev_kind && parent_id == prev_parent {
                     match kind {
                         JestFnKind::General(JestGeneralFnKind::Describe) => {
-                            ctx.diagnostic(describe_repeat(span));
+                            ctx.diagnostic(describe_repeat(plugin_name, span));
                         }
                         JestFnKind::General(JestGeneralFnKind::Test) => {
-                            ctx.diagnostic(test_repeat(span));
+                            ctx.diagnostic(test_repeat(plugin_name, span));
                         }
                         _ => {}
                     }
@@ -157,7 +175,7 @@ fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<AstNodeId> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("it(); it();", None),
         ("describe(); describe();", None),
         ("describe('foo', () => {}); it('foo', () => {});", None),
@@ -359,7 +377,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             "
               describe('foo', () => {
@@ -461,5 +479,63 @@ fn test() {
         // ),
     ];
 
-    Tester::new(NoIdenticalTitle::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        "
+            suite('parent', () => {
+                suite('child 1', () => {
+                    test('grand child 1', () => {})
+                })
+                suite('child 2', () => {
+                    test('grand child 1', () => {})
+                })
+            })
+        ",
+        "it(); it();",
+        r#"test("two", () => {});"#,
+        "
+            fdescribe('a describe', () => {
+                test('a test', () => {
+                    expect(true).toBe(true);
+                });
+            });
+            fdescribe('another describe', () => {
+                test('a test', () => {
+                    expect(true).toBe(true);
+                });
+            });
+        ",
+        "
+            suite('parent', () => {
+                suite('child 1', () => {
+                    test('grand child 1', () => {})
+                })
+                suite('child 2', () => {
+                    test('grand child 1', () => {})
+                })
+            })
+        ",
+    ];
+
+    let fail_vitest = vec![
+        "
+            describe('foo', () => {
+                it('works', () => {});
+                it('works', () => {});
+            });
+        ",
+        "
+            xdescribe('foo', () => {
+                it('works', () => {});
+                it('works', () => {});
+            });
+        ",
+    ];
+
+    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
+    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+
+    Tester::new(NoIdenticalTitle::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }
