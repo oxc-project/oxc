@@ -8,7 +8,20 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prepare_release:
+  check:
+    name: Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: Boshen/setup-rust@main
+        with:
+          cache-key: warm
+          tools: cargo-release-oxc
+      - run: cargo ck
+      - run: cargo release-oxc publish --release crates --dry-run
+
+  prepare:
+    needs: check
     name: Prepare Release Crates
     uses: ./.github/workflows/reusable_prepare_release.yml
     with:

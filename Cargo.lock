@@ -1560,13 +1560,9 @@ dependencies = [
 name = "oxc_mangler"
 version = "0.21.0"
 dependencies = [
- "insta",
  "itertools 0.13.0",
- "oxc_allocator",
  "oxc_ast",
- "oxc_codegen",
  "oxc_index",
- "oxc_parser",
  "oxc_semantic",
  "oxc_span",
 ]

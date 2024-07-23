@@ -1,7 +1,8 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
 ---
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
  2 │                 it('foo', () => {
  3 │                     something && expect(something).toHaveBeenCalled();
@@ -10,7 +11,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:31]
  2 │                 it('foo', () => {
  3 │                     a || b && expect(something).toHaveBeenCalled();
@@ -19,7 +20,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
  2 │                 it('foo', () => {
  3 │                     (a || b) && expect(something).toHaveBeenCalled();
@@ -28,7 +29,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:32]
  2 │                 it('foo', () => {
  3 │                     a || (b && expect(something).toHaveBeenCalled());
@@ -37,7 +38,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:31]
  2 │                 it('foo', () => {
  3 │                     a && b && expect(something).toHaveBeenCalled();
@@ -46,7 +47,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:31]
  2 │                 it('foo', () => {
  3 │                     a && b || expect(something).toHaveBeenCalled();
@@ -55,7 +56,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
  2 │                 it('foo', () => {
  3 │                     (a && b) || expect(something).toHaveBeenCalled();
@@ -64,7 +65,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
  2 │                 function getValue() {
  3 │                     something && expect(something).toHaveBeenCalled();
@@ -73,7 +74,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
  2 │                 it('foo', () => {
  3 │                     something || expect(something).toHaveBeenCalled();
@@ -82,7 +83,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
  2 │                 it.each``('foo', () => {
  3 │                     something || expect(something).toHaveBeenCalled();
@@ -91,7 +92,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
  2 │                 it.each()('foo', () => {
  3 │                     something || expect(something).toHaveBeenCalled();
@@ -100,7 +101,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:34]
  2 │                 function getValue() {
  3 │                     something || expect(something).toHaveBeenCalled();
@@ -109,7 +110,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
  2 │                 it('foo', () => {
  3 │                     something ? expect(something).toHaveBeenCalled() : noop();
@@ -118,7 +119,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:33]
  2 │                 function getValue() {
  3 │                     something ? expect(something).toHaveBeenCalled() : noop();
@@ -127,7 +128,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
  2 │                 it('foo', () => {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
@@ -136,7 +137,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
  2 │                 it.each``('foo', () => {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
@@ -145,7 +146,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
  2 │                 it.each()('foo', () => {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
@@ -154,7 +155,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:42]
  2 │                 function getValue() {
  3 │                     something ? noop() : expect(something).toHaveBeenCalled();
@@ -163,7 +164,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:25]
  6 │                     default:
  7 │                         expect(something).toHaveBeenCalled();
@@ -172,7 +173,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:25]
  4 │                     case 'value':
  5 │                         expect(something).toHaveBeenCalled();
@@ -181,7 +182,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:25]
  4 │                     case 'value':
  5 │                         expect(something).toHaveBeenCalled();
@@ -190,7 +191,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:25]
  4 │                     case 'value':
  5 │                         expect(something).toHaveBeenCalled();
@@ -199,7 +200,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:25]
  6 │                     default:
  7 │                         expect(something).toHaveBeenCalled();
@@ -208,7 +209,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:25]
  3 │                     if(doSomething) {
  4 │                         expect(something).toHaveBeenCalled();
@@ -217,7 +218,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
  5 │                     } else {
  6 │                         expect(something).toHaveBeenCalled();
@@ -226,7 +227,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
  5 │                     } else {
  6 │                         expect(something).toHaveBeenCalled();
@@ -235,7 +236,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
  5 │                     } else {
  6 │                         expect(something).toHaveBeenCalled();
@@ -244,7 +245,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:25]
  3 │                     if(doSomething) {
  4 │                         expect(something).toHaveBeenCalled();
@@ -253,7 +254,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
  5 │                     } else {
  6 │                     expect(something).toHaveBeenCalled();
@@ -262,7 +263,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
  5 │                     } catch (err) {
  6 │                     expect(err).toMatch('Error');
@@ -271,7 +272,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
  5 │                     } catch (err) {
  6 │                     expect(err).toMatch('Error');
@@ -280,7 +281,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
  5 │                     } catch (err) {
  6 │                         expect(err).toMatch('Error');
@@ -289,7 +290,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
  5 │                     } catch (err) {
  6 │                         expect(err).toMatch('Error');
@@ -298,7 +299,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:25]
  5 │                     } catch (err) {
  6 │                         expect(err).toMatch('Error');
@@ -307,7 +308,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:21]
  5 │                     } catch {
  6 │                     expect(something).toHaveBeenCalled();
@@ -316,7 +317,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:37]
  4 │                     .then(() => { throw new Error('oh noes!'); })
  5 │                     .catch(error => expect(error).toBeInstanceOf(Error));
@@ -325,7 +326,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
     ╭─[no_conditional_expect.tsx:9:37]
   8 │                     .then(() => { throw new Error('oh noes!'); })
   9 │                     .catch(error => expect(error).toBeInstanceOf(Error));
@@ -334,7 +335,7 @@ source: crates/oxc_linter/src/tester.rs
     ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:37]
  6 │                     .then(() => { throw new Error('oh noes!'); })
  7 │                     .catch(error => expect(error).toBeInstanceOf(Error))
@@ -343,7 +344,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:37]
  4 │                     .then(() => { throw new Error('oh noes!'); })
  5 │                     .catch(error => expect(error).toBeInstanceOf(Error))
@@ -352,7 +353,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:6:32]
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
  6 │                         .catch(error => expect(error).toBeInstanceOf(Error));
@@ -361,7 +362,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:32]
  4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
  5 │                         .catch(error => expect(error).toBeInstanceOf(Error))
@@ -370,7 +371,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:32]
  3 │                       await Promise.resolve()
  4 │                         .catch(error => expect(error).toBeInstanceOf(Error))
@@ -379,7 +380,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:4:37]
  3 │                     await Promise.resolve()
  4 │                     .catch(error => expect(error).toBeInstanceOf(Error))
@@ -388,7 +389,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:5:37]
  4 │                     .then(() => { throw new Error('oh noes!'); })
  5 │                     .catch(error => expect(error).toBeInstanceOf(Error));
@@ -397,7 +398,7 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:3:54]
  2 │                 it('works', async () => {
  3 │                     await somePromise.catch(error => expect(error).toBeInstanceOf(Error));
@@ -406,11 +407,83 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Avoid calling `expect` conditionally`
 
-  ⚠ eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
    ╭─[no_conditional_expect.tsx:7:25]
  6 │                     if (vnode._nextDom) {
  7 │                         expect.fail('vnode should not have _nextDom:' + vnode._nextDom);
    ·                         ──────
  8 │                     }
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:30]
+ 2 │             it('foo', () => {
+ 3 │                 something && expect(something).toHaveBeenCalled();
+   ·                              ──────
+ 4 │             })
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:28]
+ 2 │             it('foo', () => {
+ 3 │                 a || (b && expect(something).toHaveBeenCalled());
+   ·                            ──────
+ 4 │             })
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:30]
+ 2 │             it.each``('foo', () => {
+ 3 │                 something || expect(something).toHaveBeenCalled();
+   ·                              ──────
+ 4 │             });
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:30]
+ 2 │             it.each()('foo', () => {
+ 3 │                 something || expect(something).toHaveBeenCalled();
+   ·                              ──────
+ 4 │             })
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:30]
+ 2 │             function getValue() {
+ 3 │                 something || expect(something).toHaveBeenCalled();
+   ·                              ──────
+ 4 │             }
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:29]
+ 2 │             it('foo', () => {
+ 3 │                 something ? expect(something).toHaveBeenCalled() : noop();
+   ·                             ──────
+ 4 │             })
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:29]
+ 2 │             function getValue() {
+ 3 │                 something ? expect(something).toHaveBeenCalled() : noop();
+   ·                             ──────
+ 4 │             }
+   ╰────
+  help: Avoid calling `expect` conditionally`
+
+  ⚠ eslint-plugin-vitest(no-conditional-expect): Unexpected conditional expect
+   ╭─[no_conditional_expect.tsx:3:38]
+ 2 │             it('foo', () => {
+ 3 │                 something ? noop() : expect(something).toHaveBeenCalled();
+   ·                                      ──────
+ 4 │             })
    ╰────
   help: Avoid calling `expect` conditionally`
