@@ -36,8 +36,8 @@ impl<'alloc, T> Box<'alloc, T> {
 }
 
 impl<'alloc, T> Box<'alloc, T> {
-    pub fn new_in(x: T, alloc: &Allocator) -> Self {
-        Self(alloc.alloc(x).into(), PhantomData)
+    pub fn new_in(value: T, allocator: &Allocator) -> Self {
+        Self(allocator.alloc(value).into(), PhantomData)
     }
 
     /// Create a fake `Box` with a dangling pointer.
