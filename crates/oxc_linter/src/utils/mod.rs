@@ -19,6 +19,7 @@ pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
         "expect-expect",
         "no-alias-methods",
         "no-conditional-expect",
+        "no-commented-out-tests",
         "no-disabled-tests",
         "no-focused-tests",
         "no-test-prefixes",
