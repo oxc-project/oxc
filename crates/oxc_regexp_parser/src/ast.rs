@@ -86,18 +86,19 @@ pub struct Quantifier<'a> {
 pub struct Value {
     pub span: Span,
     pub kind: ValueKind,
-    pub code_point: u32,
+    pub value: u32,
 }
 #[derive(Debug)]
 pub enum ValueKind {
     ControlLetter,
     HexadecimalEscape,
+    Identifier,
     Null,
     Octal,
     SingleEscape,
     Symbol,
-    UnicodeCodePointEscape,
     UnicodeEscape,
+    UnicodeCodePointEscape, // TODO: Should distinguish from `UnicodeEscape`?
 }
 
 #[derive(Debug)]
@@ -124,7 +125,8 @@ pub enum CharacterClassEscapeKind {
 pub struct UnicodePropertyEscape<'a> {
     pub span: Span,
     pub negative: bool,
-    pub value: SpanAtom<'a>,
+    pub name: SpanAtom<'a>,
+    pub value: Option<SpanAtom<'a>>,
 }
 
 #[derive(Debug)]
