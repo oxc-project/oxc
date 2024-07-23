@@ -43,20 +43,16 @@ fn is_safe_from_name_collisions(
             let block_scope_id = block.scope_id.get().unwrap();
 
             let bindings = scopes.get_bindings(block_scope_id);
-            let parent_bindings: Vec<_> = scopes
-                .get_bindings(parent_scope_id)
-                .iter()
-                .filter(|(_, symbol_id)| {
-                    bindings
-                        .iter()
-                        .find(|(_, bindings_symbol_id)| symbol_id == bindings_symbol_id)
-                        .is_none()
-                })
-                .collect();
+            let parent_bindings = scopes.get_bindings(parent_scope_id);
 
             if bindings
                 .iter()
-                .any(|(name, _)| parent_bindings.iter().any(|(parent_name, _)| name == parent_name))
+                .any(|(name, symbol_id)| {
+                    let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name) else {
+                        return false;
+                    };
+                    parent_name == name && symbol_id != parent_symbol_id
+                })
             {
                 return false;
             }
