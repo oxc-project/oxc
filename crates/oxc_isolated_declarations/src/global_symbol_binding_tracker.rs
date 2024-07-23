@@ -89,6 +89,30 @@ impl<'a> Visit<'a> for GlobalSymbolBindingTracker {
         // Optimization: we don't need to traverse down into types.
     }
 
+    fn visit_statement(&mut self, statement: &Statement<'a>) {
+        // Optimizations: Only try to visit parts of statements containing other statements.
+        match statement {
+            Statement::TSEnumDeclaration(_)
+            | Statement::TSTypeAliasDeclaration(_)
+            | Statement::TSInterfaceDeclaration(_) => (),
+            Statement::WhileStatement(stmt) => walk_statement(self, &stmt.body),
+            Statement::DoWhileStatement(stmt) => walk_statement(self, &stmt.body),
+            Statement::ForStatement(stmt) => walk_statement(self, &stmt.body),
+            Statement::ForInStatement(stmt) => walk_statement(self, &stmt.body),
+            Statement::ForOfStatement(stmt) => walk_statement(self, &stmt.body),
+            Statement::IfStatement(stmt) => {
+                walk_statement(self, &stmt.consequent);
+                if let Some(alt) = &stmt.alternate {
+                    walk_statement(self, alt);
+                }
+            }
+            Statement::SwitchStatement(stmt) => {
+                walk_switch_cases(self, &stmt.cases);
+            }
+            _ => walk_statement(self, statement),
+        }
+    }
+
     fn visit_binding_pattern(&mut self, pattern: &BindingPattern<'a>) {
         if let BindingPatternKind::BindingIdentifier(ident) = &pattern.kind {
             self.handle_name_binding(&ident.name);
@@ -96,15 +120,83 @@ impl<'a> Visit<'a> for GlobalSymbolBindingTracker {
         walk_binding_pattern(self, pattern);
     }
 
+    fn visit_assignment_pattern(&mut self, it: &AssignmentPattern<'a>) {
+        // If the left side of the assignment already has a type annotation, we don't need to visit the right side.
+        if it.left.type_annotation.is_some() {
+            self.visit_binding_pattern(&it.left);
+            return;
+        }
+        walk_assignment_pattern(self, it);
+    }
+
+    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
+        // If the variable already has a type annotation, we don't need to visit the initial value.
+        if decl.id.type_annotation.is_some() {
+            self.visit_binding_pattern(&decl.id);
+        } else {
+            walk_variable_declarator(self, decl);
+        }
+    }
+
+    fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
+        // If the left side of the assignment is a member expression, it won't affect emitted declarations.
+        if it.left.is_member_expression() {
+            return;
+        }
+        walk_assignment_expression(self, it);
+    }
+
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
+        // Async and generator functions always need explicit declarations.
+        if func.generator || func.r#async {
+            return;
+        }
+
+        if let Some(id) = func.id.as_ref() {
+            self.handle_name_binding(&id.name);
+        }
+
+        // If the function already has a return type annotation, we don't need to visit the body.
+        if func.return_type.is_some() {
+            return;
+        }
+
+        walk_function(self, func, flags);
+    }
+
+    fn visit_arrow_function_expression(&mut self, func: &ArrowFunctionExpression<'a>) {
+        // If the arrow function already has a return type annotation, we don't need to visit the body.
+        if func.return_type.is_some() {
+            return;
+        }
+
+        walk_arrow_function_expression(self, func);
+    }
+
+    fn visit_expression(&mut self, expr: &Expression<'a>) {
+        match expr {
+            Expression::ArrowFunctionExpression(_)
+            | Expression::Identifier(_)
+            | Expression::ArrayExpression(_)
+            | Expression::AssignmentExpression(_)
+            | Expression::ClassExpression(_)
+            | Expression::FunctionExpression(_)
+            | Expression::ObjectExpression(_)
+            | Expression::ParenthesizedExpression(_) => {
+                // Expressions whose types can be inferred, but excluding trivial ones
+                // whose types will never contain a Symbol computed property.
+                walk_expression(self, expr);
+            }
+            _ => (),
+        }
+    }
+
     fn visit_declaration(&mut self, declaration: &Declaration<'a>) {
         match declaration {
-            Declaration::VariableDeclaration(_) | Declaration::UsingDeclaration(_) => {
-                // handled in BindingPattern
-            }
-            Declaration::FunctionDeclaration(decl) => {
-                if let Some(id) = decl.id.as_ref() {
-                    self.handle_name_binding(&id.name);
-                }
+            Declaration::VariableDeclaration(_)
+            | Declaration::UsingDeclaration(_)
+            | Declaration::FunctionDeclaration(_) => {
+                // handled in BindingPattern and Function
             }
             Declaration::ClassDeclaration(decl) => {
                 if let Some(id) = decl.id.as_ref() {
@@ -125,7 +217,7 @@ impl<'a> Visit<'a> for GlobalSymbolBindingTracker {
                 return;
             }
             Declaration::TSTypeAliasDeclaration(_) | Declaration::TSInterfaceDeclaration(_) => {
-                return
+                return;
             }
         }
         walk_declaration(self, declaration);
