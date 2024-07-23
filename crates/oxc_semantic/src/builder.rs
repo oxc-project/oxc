@@ -13,13 +13,14 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{CompactStr, SourceType, Span};
+use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 
 use crate::{
     binder::Binder,
     checker,
     class::ClassTableBuilder,
+    counter::Counter,
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
@@ -71,7 +72,7 @@ pub struct SemanticBuilder<'a> {
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
 
-    unresolved_references: UnresolvedReferencesStack,
+    unresolved_references: UnresolvedReferencesStack<'a>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -178,7 +179,37 @@ impl<'a> SemanticBuilder<'a> {
             let scope_id = self.scope.add_root_scope(AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
+            // Count the number of nodes, scopes, symbols, and references.
+            // Use these counts to reserve sufficient capacity in `AstNodes`, `ScopeTree`
+            // and `SymbolTable` to store them.
+            // This means that as we traverse the AST and fill up these structures with data,
+            // they never need to grow and reallocate - which is an expensive operation as it
+            // involves copying all the memory from the old allocation to the new one.
+            // For large source files, these structures are very large, so growth is very costly
+            // as it involves copying massive chunks of memory.
+            // Avoiding this growth produces up to 30% perf boost on our benchmarks.
+            // TODO: It would be even more efficient to calculate counts in parser to avoid
+            // this extra AST traversal.
+            let mut counter = Counter::default();
+            counter.visit_program(program);
+            self.nodes.reserve(counter.nodes_count);
+            self.scope.reserve(counter.scopes_count);
+            self.symbols.reserve(counter.symbols_count, counter.references_count);
+
+            // Visit AST to generate scopes tree etc
             self.visit_program(program);
+
+            // Check that `Counter` got accurate counts
+            debug_assert_eq!(self.nodes.len(), counter.nodes_count);
+            debug_assert_eq!(self.scope.len(), counter.scopes_count);
+            debug_assert_eq!(self.symbols.references.len(), counter.references_count);
+            // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
+            // can result in only a single symbol.
+            // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
+            // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
+            // It's allocating with *not enough* capacity which is costly, as then the `Vec`
+            // will grow and reallocate.
+            debug_assert!(self.symbols.len() <= counter.symbols_count);
 
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
@@ -187,7 +218,12 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
-        self.scope.root_unresolved_references = self.unresolved_references.into_root();
+        self.scope.root_unresolved_references = self
+            .unresolved_references
+            .into_root()
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -336,14 +372,13 @@ impl<'a> SemanticBuilder<'a> {
     /// Declare an unresolved reference in the current scope.
     ///
     /// # Panics
-    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
-        let reference_name = reference.name().clone();
+    pub fn declare_reference(&mut self, name: Atom<'a>, reference: Reference) -> ReferenceId {
         let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
         self.unresolved_references
             .current_mut()
-            .entry(reference_name)
+            .entry(name)
             .or_default()
             .push((reference_id, reference_flag));
         reference_id
@@ -373,7 +408,7 @@ impl<'a> SemanticBuilder<'a> {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
-            if let Some(symbol_id) = bindings.get(&name).copied() {
+            if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flag = self.symbols.get_flag(symbol_id);
 
                 let resolved_references: &mut Vec<_> =
@@ -1877,11 +1912,10 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_identifier(&mut self, ident: &IdentifierReference) {
+    fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flag = self.resolve_reference_usages();
-        let name = ident.name.to_compact_str();
-        let reference = Reference::new(ident.span, name, self.current_node_id, flag);
-        let reference_id = self.declare_reference(reference);
+        let reference = Reference::new(ident.span, self.current_node_id, flag);
+        let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1894,7 +1928,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier) {
+    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier<'a>) {
         match self.nodes.parent_kind(self.current_node_id) {
             Some(AstKind::JSXElementName(_)) => {
                 if !ident.name.chars().next().is_some_and(char::is_uppercase) {
@@ -1904,13 +1938,8 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(
-            ident.span,
-            ident.name.to_compact_str(),
-            self.current_node_id,
-            ReferenceFlag::read(),
-        );
-        self.declare_reference(reference);
+        let reference = Reference::new(ident.span, self.current_node_id, ReferenceFlag::read());
+        self.declare_reference(ident.name.clone(), reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

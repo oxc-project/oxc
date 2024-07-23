@@ -171,6 +171,11 @@ impl<'a> AstNodes<'a> {
         self.nodes.push(node);
         ast_node_id
     }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.nodes.reserve(additional);
+        self.parent_ids.reserve(additional);
+    }
 }
 
 #[derive(Debug)]

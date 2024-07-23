@@ -263,12 +263,10 @@ impl TraverseScoping {
     /// Create a reference bound to a `SymbolId`
     pub fn create_bound_reference(
         &mut self,
-        name: CompactStr,
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference =
-            Reference::new_with_symbol_id(SPAN, name, AstNodeId::DUMMY, symbol_id, flag);
+        let reference = Reference::new_with_symbol_id(SPAN, AstNodeId::DUMMY, symbol_id, flag);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.resolved_references[symbol_id].push(reference_id);
         reference_id
@@ -282,7 +280,7 @@ impl TraverseScoping {
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> IdentifierReference<'a> {
-        let reference_id = self.create_bound_reference(name.to_compact_str(), symbol_id, flag);
+        let reference_id = self.create_bound_reference(symbol_id, flag);
         IdentifierReference {
             span,
             name,
@@ -297,7 +295,7 @@ impl TraverseScoping {
         name: CompactStr,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new(SPAN, name.clone(), AstNodeId::DUMMY, flag);
+        let reference = Reference::new(SPAN, AstNodeId::DUMMY, flag);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, (reference_id, flag));
         reference_id
@@ -330,7 +328,7 @@ impl TraverseScoping {
         flag: ReferenceFlag,
     ) -> ReferenceId {
         if let Some(symbol_id) = symbol_id {
-            self.create_bound_reference(name, symbol_id, flag)
+            self.create_bound_reference(symbol_id, flag)
         } else {
             self.create_unbound_reference(name, flag)
         }

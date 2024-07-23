@@ -21,6 +21,8 @@ jobs:
     uses: ./.github/workflows/reusable_prepare_release.yml
     with:
       name: oxlint
+    secrets:
+      OXC_BOT_PAT : ${{ secrets.OXC_BOT_PAT }}
 
   ecosystem-ci:
     needs: prepare
