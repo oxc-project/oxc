@@ -4,33 +4,6 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
-## [0.22.0] - 2024-07-22
-
-- 85a7cea semantic: [**BREAKING**] Remove name from `reference` (#4329) (Dunqing)
-
-### Bug Fixes
-
-- bc8d4e5 semantic: Correct comment (#4410) (overlookmotel)
-- 6ffce86 semantic: Align `visit_arrow_function_expression` field visit order with ast (#4366) (Dunqing)
-- f8565ae transformer/typescript: Unexpectedly removed class binding from ExportNamedDeclaration (#4351) (Dunqing)
-
-### Performance
-
-- 1b51511 semantic: Use `Atom` instead of `CompactStr` for `UnresolvedReferencesStack` (#4401) (Dunqing)
-- 40f9356 semantic: Calculate number of nodes, scopes, symbols, references before visiting AST (#4367) (Dunqing)
-- da13d93 semantic: Remove bounds checks on unresolved references stack (#4390) (overlookmotel)
-- e70c67b semantic: Remove a branch from `add_scope` (#4384) (overlookmotel)
-- 402006f semantic: Simplify logic in `enter_scope` + `leave_scope` (#4383) (overlookmotel)
-- 7469e01 semantic: Remove branch from `Nodes::add_node` (#4361) (overlookmotel)- a207923 Replace some CompactStr usages with Cows (#4377) (DonIsaac)
-
-### Refactor
-
-- 58f6ec2 ast: Enter node before scope (#4347) (Dunqing)
-- 5d77b36 semantic: `visit_program` visit `hashbang` field (#4370) (overlookmotel)
-- f7b9ada semantic: `Program` visitor leave scope before node (#4369) (overlookmotel)
-- 729b288 semantic: Shorten code (#4358) (overlookmotel)
-- 21d0eee semantic: Use error codes for ts diagnostics (#4336) (DonIsaac)
-
 ## [0.21.0] - 2024-07-18
 
 - d7ab0b8 semantic: [**BREAKING**] Simplify node creation (#4226) (lucab)
