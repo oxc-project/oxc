@@ -1066,27 +1066,26 @@ impl<'a> PatternParser<'a> {
     }
 
     // ```
-    // IdentityEscape[UnicodeMode] ::
+    // IdentityEscape[UnicodeMode, NamedCaptureGroups] ::
     //   [+UnicodeMode] SyntaxCharacter
     //   [+UnicodeMode] /
-    //   [~UnicodeMode] SourceCharacter but not UnicodeIDContinue
+    //   [~UnicodeMode] SourceCharacterIdentityEscape[?NamedCaptureGroups]
+    //
+    // SourceCharacterIdentityEscape[NamedCaptureGroups] ::
+    //   [~NamedCaptureGroups] SourceCharacter but not c
+    //   [+NamedCaptureGroups] SourceCharacter but not one of c or k
     // ```
+    // (Annex B)
     fn consume_identity_escape(&mut self) -> Option<u32> {
         let cp = self.reader.peek()?;
 
-        if self.state.unicode_mode {
-            if unicode::is_syntax_character(cp) {
-                self.reader.advance();
-                return Some(cp);
-            }
-
-            if cp == '/' as u32 {
-                self.reader.advance();
-                return Some(cp);
-            }
+        if self.state.unicode_mode && (unicode::is_syntax_character(cp) || cp == '/' as u32) {
+            self.reader.advance();
+            return Some(cp);
         }
 
-        if !self.state.unicode_mode && !unicode::is_id_continue(cp) {
+        // `NamedCaptureGroups` is always enabled
+        if !self.state.unicode_mode && (cp != 'c' as u32 && cp != 'k' as u32) {
             self.reader.advance();
             return Some(cp);
         }
