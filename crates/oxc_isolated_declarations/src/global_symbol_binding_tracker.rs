@@ -119,17 +119,17 @@ impl<'a> Visit<'a> for GlobalSymbolBindingTracker {
         walk_binding_pattern(self, pattern);
     }
 
-    fn visit_assignment_pattern(&mut self, it: &AssignmentPattern<'a>) {
+    fn visit_assignment_pattern(&mut self, pattern: &AssignmentPattern<'a>) {
         // If the left side of the assignment already has a type annotation, we don't need to visit the right side.
-        if it.left.type_annotation.is_some() {
-            self.visit_binding_pattern(&it.left);
+        if pattern.left.type_annotation.is_some() {
+            self.visit_binding_pattern(&pattern.left);
             return;
         }
-        walk_assignment_pattern(self, it);
+        walk_assignment_pattern(self, pattern);
     }
 
     fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
-        // If the variable already has a type annotation, we don't need to visit the initial value.
+        // If the variable already has a type annotation, we don't need to visit the initializer.
         if decl.id.type_annotation.is_some() {
             self.visit_binding_pattern(&decl.id);
         } else {
@@ -137,12 +137,12 @@ impl<'a> Visit<'a> for GlobalSymbolBindingTracker {
         }
     }
 
-    fn visit_assignment_expression(&mut self, it: &AssignmentExpression<'a>) {
+    fn visit_assignment_expression(&mut self, expr: &AssignmentExpression<'a>) {
         // If the left side of the assignment is a member expression, it won't affect emitted declarations.
-        if it.left.is_member_expression() {
+        if expr.left.is_member_expression() {
             return;
         }
-        walk_assignment_expression(self, it);
+        walk_assignment_expression(self, expr);
     }
 
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
