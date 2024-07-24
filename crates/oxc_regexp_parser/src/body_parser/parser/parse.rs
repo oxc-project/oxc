@@ -393,34 +393,10 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
-            return Err(OxcDiagnostic::error("Incomplete quantifier"));
+            return Err(OxcDiagnostic::error("Unterminated quantifier"));
         }
 
         Ok(None)
-    }
-
-    // ```
-    // DecimalDigits[Sep] ::
-    //   DecimalDigit
-    //   DecimalDigits[?Sep] DecimalDigit
-    //   [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
-    // ```
-    // ([Sep] is disabled for `QuantifierPrefix`, skip it)
-    fn consume_decimal_digits(&mut self) -> Option<usize> {
-        let checkpoint = self.reader.checkpoint();
-
-        let mut value = 0;
-        while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digits(cp)) {
-            // `- '0' as u32`: convert code point to digit
-            value = (10 * value) + (cp - '0' as u32) as usize;
-            self.reader.advance();
-        }
-
-        if self.reader.checkpoint() != checkpoint {
-            return Some(value);
-        }
-
-        None
     }
 
     // ```
@@ -545,91 +521,7 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        Err(OxcDiagnostic::error("Invalid property name"))
-    }
-
-    // ```
-    // UnicodePropertyValueExpression ::
-    //   UnicodePropertyName = UnicodePropertyValue
-    //   LoneUnicodePropertyNameOrValue
-    // ```
-    /// Returns: `(name, value, is_strings_related_unicode_property)`
-    fn consume_unicode_property_value_expression(
-        &mut self,
-    ) -> Result<Option<(SpanAtom<'a>, Option<SpanAtom<'a>>, bool)>> {
-        let checkpoint = self.reader.checkpoint();
-
-        // UnicodePropertyName=UnicodePropertyValue
-        if let Some(name) = self.consume_unicode_property_name() {
-            if self.reader.eat('=') {
-                if let Some(value) = self.consume_unicode_property_value() {
-                    if unicode_property::is_valid_unicode_property(&name, &value) {
-                        return Ok(Some((name, Some(value), false)));
-                    }
-
-                    return Err(OxcDiagnostic::error("Invalid property name"));
-                }
-            }
-        }
-        self.reader.rewind(checkpoint);
-
-        // LoneUnicodePropertyNameOrValue
-        if let Some(name_or_value) = self.consume_unicode_property_value() {
-            if unicode_property::is_valid_unicode_property("General_Category", &name_or_value) {
-                return Ok(Some(("General_Category".into(), Some(name_or_value), false)));
-            }
-
-            if unicode_property::is_valid_lone_unicode_property(&name_or_value) {
-                return Ok(Some((name_or_value, None, false)));
-            }
-
-            if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
-                // Early errors:
-                // It is a Syntax Error
-                // - if the enclosing Pattern does not have a [UnicodeSetsMode] parameter
-                // - and the source text matched by LoneUnicodePropertyNameOrValue is a binary property of strings
-                //   - listed in the “Property name” column of Table 68.
-                if !self.state.unicode_sets_mode {
-                    return Err(OxcDiagnostic::error("Syntax Error"));
-                }
-
-                return Ok(Some((name_or_value, None, true)));
-            }
-
-            return Err(OxcDiagnostic::error("Invalid property name"));
-        }
-
-        Ok(None)
-    }
-
-    fn consume_unicode_property_name(&mut self) -> Option<SpanAtom<'a>> {
-        let span_start = self.reader.span_position();
-
-        let checkpoint = self.reader.checkpoint();
-        while unicode::is_unicode_property_name_character(self.reader.peek()?) {
-            self.reader.advance();
-        }
-
-        if checkpoint == self.reader.checkpoint() {
-            return None;
-        }
-
-        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
-    }
-
-    fn consume_unicode_property_value(&mut self) -> Option<SpanAtom<'a>> {
-        let span_start = self.reader.span_position();
-
-        let checkpoint = self.reader.checkpoint();
-        while unicode::is_unicode_property_value_character(self.reader.peek()?) {
-            self.reader.advance();
-        }
-
-        if checkpoint == self.reader.checkpoint() {
-            return None;
-        }
-
-        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
+        Err(OxcDiagnostic::error("Unterminated unicode property escape"))
     }
 
     // ```
@@ -729,6 +621,114 @@ impl<'a> PatternParser<'a> {
     }
 
     // ---
+
+    // ```
+    // DecimalDigits[Sep] ::
+    //   DecimalDigit
+    //   DecimalDigits[?Sep] DecimalDigit
+    //   [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
+    // ```
+    // ([Sep] is disabled for `QuantifierPrefix`, skip it)
+    fn consume_decimal_digits(&mut self) -> Option<usize> {
+        let checkpoint = self.reader.checkpoint();
+
+        let mut value = 0;
+        while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digits(cp)) {
+            // `- '0' as u32`: convert code point to digit
+            value = (10 * value) + (cp - '0' as u32) as usize;
+            self.reader.advance();
+        }
+
+        if self.reader.checkpoint() != checkpoint {
+            return Some(value);
+        }
+
+        None
+    }
+
+    // ```
+    // UnicodePropertyValueExpression ::
+    //   UnicodePropertyName = UnicodePropertyValue
+    //   LoneUnicodePropertyNameOrValue
+    // ```
+    /// Returns: `(name, value, is_strings_related_unicode_property)`
+    fn consume_unicode_property_value_expression(
+        &mut self,
+    ) -> Result<Option<(SpanAtom<'a>, Option<SpanAtom<'a>>, bool)>> {
+        let checkpoint = self.reader.checkpoint();
+
+        // UnicodePropertyName=UnicodePropertyValue
+        if let Some(name) = self.consume_unicode_property_name() {
+            if self.reader.eat('=') {
+                if let Some(value) = self.consume_unicode_property_value() {
+                    if unicode_property::is_valid_unicode_property(&name, &value) {
+                        return Ok(Some((name, Some(value), false)));
+                    }
+
+                    return Err(OxcDiagnostic::error("Invalid property name"));
+                }
+            }
+        }
+        self.reader.rewind(checkpoint);
+
+        // LoneUnicodePropertyNameOrValue
+        if let Some(name_or_value) = self.consume_unicode_property_value() {
+            if unicode_property::is_valid_unicode_property("General_Category", &name_or_value) {
+                return Ok(Some(("General_Category".into(), Some(name_or_value), false)));
+            }
+
+            if unicode_property::is_valid_lone_unicode_property(&name_or_value) {
+                return Ok(Some((name_or_value, None, false)));
+            }
+
+            if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
+                // Early errors:
+                // It is a Syntax Error
+                // - if the enclosing Pattern does not have a [UnicodeSetsMode] parameter
+                // - and the source text matched by LoneUnicodePropertyNameOrValue is a binary property of strings
+                //   - listed in the “Property name” column of Table 68.
+                if !self.state.unicode_sets_mode {
+                    return Err(OxcDiagnostic::error("Syntax Error"));
+                }
+
+                return Ok(Some((name_or_value, None, true)));
+            }
+
+            return Err(OxcDiagnostic::error("Invalid property name"));
+        }
+
+        Ok(None)
+    }
+
+    fn consume_unicode_property_name(&mut self) -> Option<SpanAtom<'a>> {
+        let span_start = self.reader.span_position();
+
+        let checkpoint = self.reader.checkpoint();
+        while unicode::is_unicode_property_name_character(self.reader.peek()?) {
+            self.reader.advance();
+        }
+
+        if checkpoint == self.reader.checkpoint() {
+            return None;
+        }
+
+        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
+    }
+
+    fn consume_unicode_property_value(&mut self) -> Option<SpanAtom<'a>> {
+        let span_start = self.reader.span_position();
+
+        let checkpoint = self.reader.checkpoint();
+        while unicode::is_unicode_property_value_character(self.reader.peek()?) {
+            self.reader.advance();
+        }
+
+        if checkpoint == self.reader.checkpoint() {
+            return None;
+        }
+
+        Some(SpanAtom::from(&self.source_text[span_start..self.reader.span_position()]))
+    }
 
     // ```
     // GroupName[UnicodeMode] ::
@@ -938,6 +938,7 @@ impl<'a> PatternParser<'a> {
                 self.reader.advance();
                 return Some(cp);
             }
+
             if cp == '/' as u32 {
                 self.reader.advance();
                 return Some(cp);
