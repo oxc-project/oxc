@@ -76,8 +76,8 @@ pub enum AssertionKind {
 #[derive(Debug)]
 pub struct Quantifier<'a> {
     pub span: Span,
-    pub min: usize,
-    pub max: Option<usize>,
+    pub min: u32,
+    pub max: Option<u32>,
     pub greedy: bool,
     pub body: RootNode<'a>,
 }

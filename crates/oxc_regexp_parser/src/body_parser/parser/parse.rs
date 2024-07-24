@@ -355,7 +355,7 @@ impl<'a> PatternParser<'a> {
     // ```
     /// Returns: ((min, max), greedy)
     #[allow(clippy::type_complexity)]
-    fn consume_quantifier(&mut self) -> Result<Option<((usize, Option<usize>), bool)>> {
+    fn consume_quantifier(&mut self) -> Result<Option<((u32, Option<u32>), bool)>> {
         let is_greedy = |reader: &mut Reader| !reader.eat('?');
 
         if self.reader.eat('*') {
@@ -409,7 +409,14 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_atom_escape(&mut self, span_start: usize) -> Result<Option<ast::RootNode<'a>>> {
         // `DecimalEscape`: \1 means indexed reference
-        // TODO
+        if let Some(index) = self.consume_decimal_escape() {
+            // TODO: Check `CapturingGroupNumber` <= `CountLeftCapturingParensWithin`
+
+            return Ok(Some(ast::RootNode::IndexedReference(ast::IndexedReference {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                index,
+            })));
+        }
 
         // `CharacterClassEscape`: \d, \p{...}
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
@@ -445,6 +452,21 @@ impl<'a> PatternParser<'a> {
         }
 
         Err(OxcDiagnostic::error("Invalid atom escape"))
+    }
+
+    // ```
+    // DecimalEscape ::
+    //   NonZeroDigit DecimalDigits[~Sep]opt [lookahead ∉ DecimalDigit]
+    // ```
+    fn consume_decimal_escape(&mut self) -> Option<u32> {
+        if let Some(index) = self.consume_decimal_digits() {
+            // \0 is `CharacterEscape`, not `DecimalEscape`
+            if index != 0 {
+                return Some(index);
+            }
+        }
+
+        None
     }
 
     // ```
@@ -627,14 +649,14 @@ impl<'a> PatternParser<'a> {
     //   DecimalDigits[?Sep] DecimalDigit
     //   [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
     // ```
-    // ([Sep] is disabled for `QuantifierPrefix`, skip it)
-    fn consume_decimal_digits(&mut self) -> Option<usize> {
+    // ([Sep] is disabled for `QuantifierPrefix` and `DecimalEscape` skip it)
+    fn consume_decimal_digits(&mut self) -> Option<u32> {
         let checkpoint = self.reader.checkpoint();
 
         let mut value = 0;
         while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digit(cp)) {
             // `- '0' as u32`: convert code point to digit
-            value = (10 * value) + (cp - '0' as u32) as usize;
+            value = (10 * value) + (cp - '0' as u32);
             self.reader.advance();
         }
 
