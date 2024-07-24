@@ -15,10 +15,6 @@ pub fn is_octal_digit(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| c.is_ascii_digit() && c < '8')
 }
 
-pub fn is_id_continue(cp: u32) -> bool {
-    char::from_u32(cp).map_or(false, unicode_id_start::is_id_continue)
-}
-
 pub fn is_valid_unicode(cp: u32) -> bool {
     (0..=0x0010_ffff).contains(&cp)
 }

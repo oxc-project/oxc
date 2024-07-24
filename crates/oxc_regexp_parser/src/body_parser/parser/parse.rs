@@ -263,7 +263,7 @@ impl<'a> PatternParser<'a> {
     fn parse_atom(&mut self) -> Result<Option<ast::RootNode<'a>>> {
         let span_start = self.reader.span_position();
 
-        // `PatternCharacter`
+        // PatternCharacter
         if let Some(cp) = self.reader.peek().filter(|&cp| !unicode::is_syntax_character(cp)) {
             self.reader.advance();
 
@@ -274,21 +274,21 @@ impl<'a> PatternParser<'a> {
             })));
         }
 
-        // `.`
+        // .
         if self.reader.eat('.') {
             return Ok(Some(ast::RootNode::Dot(ast::Dot {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
             })));
         }
 
-        // `\ AtomEscape`
+        // \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
         if self.reader.eat('\\') {
             if let Some(atom_escape) = self.parse_atom_escape(span_start)? {
                 return Ok(Some(atom_escape));
             }
         }
 
-        // `CharacterClass`
+        // CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
         // TODO
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
@@ -296,8 +296,8 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::RootNode::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
-        // `( GroupSpecifier Disjunction )`
-        // `( Disjunction )`
+        // ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
             return Ok(Some(ast::RootNode::CapturingGroup(Box::new_in(
                 capturing_group,
@@ -322,25 +322,54 @@ impl<'a> PatternParser<'a> {
     fn parse_extended_atom(&mut self) -> Result<Option<ast::RootNode<'a>>> {
         let span_start = self.reader.span_position();
 
-        // `.`
+        // .
         if self.reader.eat('.') {
             return Ok(Some(ast::RootNode::Dot(ast::Dot {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
             })));
         }
 
-        // `\ AtomEscape`
-        // `\ [lookahead = c]`
-        // `CharacterClass`
-        // `( GroupSpecifieropt Disjunction )`
-        // `(?: Disjunction )`
-        // `InvalidBracedQuantifier`
-        // `ExtendedPatternCharacter`
+        // \ AtomEscape[~UnicodeMode, ?NamedCaptureGroups]
+        if self.reader.eat('\\') {
+            if let Some(atom_escape) = self.parse_atom_escape(span_start)? {
+                return Ok(Some(atom_escape));
+            }
+
+            // \ [lookahead = c]
+            if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
+                return Ok(Some(ast::RootNode::Value(ast::Value {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::ValueKind::Symbol,
+                    value: '\\' as u32,
+                })));
+            }
+
+            return Err(OxcDiagnostic::error("Invalid escape"));
+        }
+
+        // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
         // TODO
 
-        if self.reader.eat('👻') {
-            return Err(OxcDiagnostic::error("WIP..."));
+        // (?: Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        if let Some(ignore_group) = self.parse_ignore_group()? {
+            return Ok(Some(ast::RootNode::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
+
+        // ( GroupSpecifier[~UnicodeMode]opt Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        if let Some(capturing_group) = self.parse_capturing_group()? {
+            return Ok(Some(ast::RootNode::CapturingGroup(Box::new_in(
+                capturing_group,
+                self.allocator,
+            ))));
+        }
+
+        // InvalidBracedQuantifier
+        // TODO
+
+        // ExtendedPatternCharacter
+        // TODO
+
         Ok(None)
     }
 
@@ -411,8 +440,9 @@ impl<'a> PatternParser<'a> {
     //   CharacterEscape[?UnicodeMode, ?NamedCaptureGroups]
     //   [+NamedCaptureGroups] k GroupName[?UnicodeMode]
     // ```
+    // (Annex B)
     fn parse_atom_escape(&mut self, span_start: usize) -> Result<Option<ast::RootNode<'a>>> {
-        // `DecimalEscape`: \1 means indexed reference
+        // DecimalEscape: \1 means indexed reference
         if let Some(index) = self.consume_decimal_escape() {
             // TODO: Check `CapturingGroupNumber` <= `CountLeftCapturingParensWithin`
 
@@ -422,7 +452,7 @@ impl<'a> PatternParser<'a> {
             })));
         }
 
-        // `CharacterClassEscape`: \d, \p{...}
+        // CharacterClassEscape: \d, \p{...}
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
             return Ok(Some(ast::RootNode::CharacterClassEscape(character_class_escape)));
         }
@@ -435,12 +465,12 @@ impl<'a> PatternParser<'a> {
             ))));
         }
 
-        // `CharacterEscape`: \n, \cM, \0, etc...
+        // CharacterEscape: \n, \cM, \0, etc...
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
             return Ok(Some(ast::RootNode::Value(character_escape)));
         }
 
-        // `k GroupName`: \k<name> means named reference
+        // k GroupName: \k<name> means named reference
         if self.reader.eat('k') {
             if let Some(name) = self.consume_group_name()? {
                 return Ok(Some(ast::RootNode::NamedReference(Box::new_in(
@@ -464,7 +494,7 @@ impl<'a> PatternParser<'a> {
     // ```
     fn consume_decimal_escape(&mut self) -> Option<u32> {
         if let Some(index) = self.consume_decimal_digits() {
-            // \0 is `CharacterEscape`, not `DecimalEscape`
+            // \0 is CharacterEscape, not DecimalEscape
             if index != 0 {
                 return Some(index);
             }
@@ -655,7 +685,7 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.span_position();
 
         if self.reader.eat('(') {
-            // `GroupSpecifier` is optional
+            // GroupSpecifier is optional
             if self.reader.eat('?') {
                 if let Some(name) = self.consume_group_name()? {
                     let disjunction = self.parse_disjunction()?;
