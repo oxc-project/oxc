@@ -318,6 +318,11 @@ impl<'a> IdentifierReference<'a> {
             reference_flag: ReferenceFlag::Read,
         }
     }
+
+    #[inline]
+    pub fn reference_id(&self) -> Option<ReferenceId> {
+        self.reference_id.get()
+    }
 }
 
 impl<'a> Hash for BindingIdentifier<'a> {

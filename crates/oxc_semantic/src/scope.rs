@@ -32,6 +32,8 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    const ROOT_SCOPE_ID: ScopeId = ScopeId::from_usize_unchecked(0);
+
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
@@ -80,8 +82,8 @@ impl ScopeTree {
     }
 
     #[inline]
-    pub fn root_scope_id(&self) -> ScopeId {
-        ScopeId::new(0)
+    pub const fn root_scope_id(&self) -> ScopeId {
+        Self::ROOT_SCOPE_ID
     }
 
     pub fn root_flags(&self) -> ScopeFlags {
