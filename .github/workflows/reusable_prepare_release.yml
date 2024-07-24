@@ -7,6 +7,9 @@ on:
         required: true
         type: string
         description: "The name defined in oxc_release.toml"
+    secrets:
+      OXC_BOT_PAT :
+        required: true
     outputs:
       pull-request-number:
         value: ${{ jobs.run.outputs.pull-request-number }}

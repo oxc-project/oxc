@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.22.0] - 2024-07-23
+
+### Features
+- 6068e6b Add error codes to OxcDiagnostic (#4334) (DonIsaac)
+
+### Refactor
+
+- 7a75e0f linter: Use diagnostic codes in lint rules (#4349) (DonIsaac)
+- a2eabe1 parser: Use error codes for ts diagnostics (#4335) (DonIsaac)
+
 ## [0.20.0] - 2024-07-11
 
 ### Performance

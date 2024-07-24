@@ -26,3 +26,5 @@ jobs:
     uses: ./.github/workflows/reusable_prepare_release.yml
     with:
       name: crates
+    secrets:
+      OXC_BOT_PAT : ${{ secrets.OXC_BOT_PAT }}
