@@ -440,6 +440,10 @@ mod promise {
     pub mod param_names;
 }
 
+mod vitest {
+    pub mod require_local_test_context_for_concurrent_snapshots;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
@@ -835,4 +839,5 @@ oxc_macros::declare_all_lint_rules! {
     promise::avoid_new,
     promise::no_new_statics,
     promise::param_names,
+    vitest::require_local_test_context_for_concurrent_snapshots,
 }
