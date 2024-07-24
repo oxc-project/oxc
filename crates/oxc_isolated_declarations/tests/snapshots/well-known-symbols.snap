@@ -24,36 +24,36 @@ export declare function bar(Symbol: {}, globalThis: {}): {};
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[21:6]
- 20 |   export const foo = {
- 21 |     [Symbol.iterator]: (): void => {},
+    ,-[40:6]
+ 39 |   export const foo = {
+ 40 |     [Symbol.iterator]: (): void => {},
     :      ^^^^^^^^^^^^^^^
- 22 |     [globalThis.Symbol.iterator]: (): void => {},
+ 41 |     [globalThis.Symbol.iterator]: (): void => {},
     `----
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[22:6]
- 21 |     [Symbol.iterator]: (): void => {},
- 22 |     [globalThis.Symbol.iterator]: (): void => {},
+    ,-[41:6]
+ 40 |     [Symbol.iterator]: (): void => {},
+ 41 |     [globalThis.Symbol.iterator]: (): void => {},
     :      ^^^^^^^^^^^^^^^^^^^^^^^^^^
- 23 |   }
+ 42 |   }
     `----
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[28:6]
- 27 |   return {
- 28 |     [Symbol.iterator]: (): void => {},
+    ,-[47:6]
+ 46 |   return {
+ 47 |     [Symbol.iterator]: (): void => {},
     :      ^^^^^^^^^^^^^^^
- 29 |     [globalThis.Symbol.iterator]: (): void => {},
+ 48 |     [globalThis.Symbol.iterator]: (): void => {},
     `----
 
   x TS9038: Computed property names on class or object literals cannot be
   | inferred with --isolatedDeclarations.
-    ,-[29:6]
- 28 |     [Symbol.iterator]: (): void => {},
- 29 |     [globalThis.Symbol.iterator]: (): void => {},
+    ,-[48:6]
+ 47 |     [Symbol.iterator]: (): void => {},
+ 48 |     [globalThis.Symbol.iterator]: (): void => {},
     :      ^^^^^^^^^^^^^^^^^^^^^^^^^^
- 30 |   }
+ 49 |   }
     `----
