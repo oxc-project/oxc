@@ -442,7 +442,6 @@ mod promise {
 
 mod vitest {
     pub mod no_import_node_test;
-    pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
 oxc_macros::declare_all_lint_rules! {
@@ -841,5 +840,4 @@ oxc_macros::declare_all_lint_rules! {
     promise::no_new_statics,
     promise::param_names,
     vitest::no_import_node_test,
-    vitest::require_local_test_context_for_concurrent_snapshots,
 }
