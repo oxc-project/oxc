@@ -365,10 +365,22 @@ impl<'a> PatternParser<'a> {
         }
 
         // InvalidBracedQuantifier
-        // TODO
+        if self.consume_quantifier()?.is_some() {
+            return Err(OxcDiagnostic::error("Invalid braced quantifier"));
+        }
 
         // ExtendedPatternCharacter
-        // TODO
+        if let Some(cp) =
+            self.reader.peek().filter(|&cp| unicode::is_extended_pattern_character(cp))
+        {
+            self.reader.advance();
+
+            return Ok(Some(ast::RootNode::Value(ast::Value {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::ValueKind::Symbol,
+                value: cp,
+            })));
+        }
 
         Ok(None)
     }
