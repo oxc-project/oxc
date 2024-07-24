@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.22.0] - 2024-07-23
+
+### Bug Fixes
+- ea33f94 Impl PartialEq<str> for CompactStr (#4352) (DonIsaac)
+
+### Performance
+- a207923 Replace some CompactStr usages with Cows (#4377) (DonIsaac)
+
 ## [0.18.0] - 2024-07-09
 
 ### Features
