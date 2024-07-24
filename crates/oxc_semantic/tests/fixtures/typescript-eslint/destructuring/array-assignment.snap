@@ -31,7 +31,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/a
         "references": [
           {
             "flag": "ReferenceFlag(Write)",
-            "id": 0,
+            "id": 1,
             "name": "b",
             "node_id": 20
           }
@@ -45,7 +45,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/destructuring/a
         "references": [
           {
             "flag": "ReferenceFlag(Write)",
-            "id": 0,
+            "id": 2,
             "name": "c",
             "node_id": 24
           }

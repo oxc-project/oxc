@@ -54,13 +54,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "references": [
           {
             "flag": "ReferenceFlag(Type)",
-            "id": 0,
+            "id": 1,
             "name": "T",
             "node_id": 21
           },
           {
             "flag": "ReferenceFlag(Type)",
-            "id": 1,
+            "id": 2,
             "name": "T",
             "node_id": 25
           }

@@ -25,13 +25,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "id": 1,
             "name": "foo",
             "node_id": 15
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "id": 3,
             "name": "foo",
             "node_id": 21
           }
@@ -51,7 +51,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "id": 2,
             "name": "a",
             "node_id": 20
           }

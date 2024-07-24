@@ -39,7 +39,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-assertion/
         "references": [
           {
             "flag": "ReferenceFlag(Type)",
-            "id": 0,
+            "id": 1,
             "name": "T",
             "node_id": 14
           }
