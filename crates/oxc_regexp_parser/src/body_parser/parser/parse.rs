@@ -563,7 +563,7 @@ impl<'a> PatternParser<'a> {
 
         // e.g. \0
         if self.reader.peek().map_or(false, |cp| cp == '0' as u32)
-            && self.reader.peek2().map_or(true, |cp| !unicode::is_decimal_digits(cp))
+            && self.reader.peek2().map_or(true, |cp| !unicode::is_decimal_digit(cp))
         {
             self.reader.advance();
 
@@ -598,8 +598,7 @@ impl<'a> PatternParser<'a> {
 
         // e.g. \18
         if !self.state.unicode_mode {
-            // TODO: consume_legacy_octal_escape_sequence
-            if let Some(cp) = None {
+            if let Some(cp) = self.consume_legacy_octal_escape_sequence() {
                 return Ok(Some(ast::Value {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
                     kind: ast::ValueKind::Octal,
@@ -633,7 +632,7 @@ impl<'a> PatternParser<'a> {
         let checkpoint = self.reader.checkpoint();
 
         let mut value = 0;
-        while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digits(cp)) {
+        while let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_decimal_digit(cp)) {
             // `- '0' as u32`: convert code point to digit
             value = (10 * value) + (cp - '0' as u32) as usize;
             self.reader.advance();
@@ -922,6 +921,55 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(None)
+    }
+
+    // ```
+    // LegacyOctalEscapeSequence ::
+    //   0 [lookahead ∈ { 8, 9 }]
+    //   NonZeroOctalDigit [lookahead ∉ OctalDigit]
+    //   ZeroToThree OctalDigit [lookahead ∉ OctalDigit]
+    //   FourToSeven OctalDigit
+    //   ZeroToThree OctalDigit OctalDigit
+    // ```
+    fn consume_legacy_octal_escape_sequence(&mut self) -> Option<u32> {
+        if let Some(first) = self.consume_octal_digit() {
+            // 0 [lookahead ∈ { 8, 9 }]
+            if first == 0
+                && self.reader.peek().filter(|&cp| cp == '8' as u32 || cp == '9' as u32).is_some()
+            {
+                return Some(first);
+            }
+
+            if let Some(second) = self.consume_octal_digit() {
+                if let Some(third) = self.consume_octal_digit() {
+                    // ZeroToThree OctalDigit OctalDigit
+                    if first <= 3 {
+                        return Some(first * 64 + second * 8 + third);
+                    }
+                }
+
+                // ZeroToThree OctalDigit [lookahead ∉ OctalDigit]
+                // FourToSeven OctalDigit
+                return Some(first * 8 + second);
+            }
+
+            // NonZeroOctalDigit [lookahead ∉ OctalDigit]
+            return Some(first);
+        }
+
+        None
+    }
+
+    fn consume_octal_digit(&mut self) -> Option<u32> {
+        let cp = self.reader.peek()?;
+
+        if unicode::is_octal_digit(cp) {
+            self.reader.advance();
+            // `- '0' as u32`: convert code point to digit
+            return Some(cp - '0' as u32);
+        }
+
+        None
     }
 
     // ```

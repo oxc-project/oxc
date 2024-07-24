@@ -7,12 +7,12 @@ pub fn is_syntax_character(cp: u32) -> bool {
     })
 }
 
-pub fn is_decimal_digits(cp: u32) -> bool {
+pub fn is_decimal_digit(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| c.is_ascii_digit())
 }
 
-pub fn is_non_zero_digit(cp: u32) -> bool {
-    char::from_u32(cp).map_or(false, |c| c != '0' && c.is_ascii_digit())
+pub fn is_octal_digit(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, |c| c.is_ascii_digit() && c < '8')
 }
 
 pub fn is_id_continue(cp: u32) -> bool {
