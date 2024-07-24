@@ -47,7 +47,7 @@ declare_oxc_lint!(
 impl Rule for NoImportNodeTest {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ImportDeclaration(import_decl) = node.kind() {
-            if import_decl.source.value.eq("node:test") {
+            if import_decl.source.value == "node:test" {
                 let span = import_decl.source.span;
 
                 ctx.diagnostic_with_fix(no_import_node_test(span), |fixer| {
