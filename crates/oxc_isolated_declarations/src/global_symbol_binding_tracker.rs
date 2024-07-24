@@ -8,7 +8,6 @@ use oxc_span::{Atom, GetSpan, Span};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 use rustc_hash::FxHashSet;
 
-/// Linear tree of declaration scopes.
 pub struct GlobalSymbolBindingTracker {
     depth: u8,
     symbol_binding_depth: Option<u8>,
