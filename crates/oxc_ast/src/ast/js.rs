@@ -194,7 +194,7 @@ pub struct IdentifierReference<'a> {
     /// Flags indicating how the reference is used.
     ///
     /// This gets set in the bind step of semantic analysis, and will always be
-    /// [`ReferenceFlag::empty`] immediately after parsing.
+    /// [`ReferenceFlag::None`] immediately after parsing.
     #[serde(skip)]
     pub reference_flag: ReferenceFlag,
 }
@@ -323,7 +323,7 @@ pub enum ObjectPropertyKind<'a> {
     /// ```ts
     /// const foo = 'foo'
     /// const x = { foo, bar: 'bar' }
-    /// //          ^^^  ^^^^^^^^^      
+    /// //          ^^^  ^^^^^^^^^^      
     ObjectProperty(Box<'a, ObjectProperty<'a>>),
     /// Object Spread Property
     ///
@@ -519,7 +519,7 @@ pub struct PrivateFieldExpression<'a> {
 /// //               ^ optional
 ///
 /// const z = foo<number, string>(1, 2)
-/// //            ^^^^^^^^^^^^^^ type parameters
+/// //            ^^^^^^^^^^^^^^ type_parameters
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
@@ -542,7 +542,7 @@ pub struct CallExpression<'a> {
 /// //              ↓↓↓         ↓↓↓↓         
 /// const foo = new Foo<number>(1, 2)
 /// //                 ↑↑↑↑↑↑↑↑
-/// //                 type parameters
+/// //                 type_parameters
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
@@ -1768,7 +1768,6 @@ pub struct ClassBody<'a> {
 ///
 ///   accessor z() { return 5 } // ClassElement::AccessorProperty
 ///
-///
 ///   // These are all ClassElement::MethodDefinitions
 ///   get y() { return 5 }
 ///   set y(value) { }
@@ -2092,10 +2091,10 @@ pub struct ImportSpecifier<'a> {
     /// ## Example
     /// ```ts
     /// // local and imported name are the same
-    /// import { Foo } from 'foo'
+    /// import { Foo } from 'foo';
     /// //       ^^^
     /// // imports can be renamed, changing the local name
-    /// import { Foo as Bar } from 'foo'
+    /// import { Foo as Bar } from 'foo';
     /// //              ^^^
     /// ```
     pub local: BindingIdentifier<'a>,
@@ -2106,7 +2105,7 @@ pub struct ImportSpecifier<'a> {
 ///
 /// ## Example
 /// ```ts
-/// import local from "source"
+/// import local from "source";
 /// ```
 ///
 #[ast(visit)]
@@ -2124,7 +2123,7 @@ pub struct ImportDefaultSpecifier<'a> {
 ///
 /// ## Example
 /// ```ts
-/// import * as local from "source"
+/// import * as local from "source";
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]

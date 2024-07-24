@@ -1216,9 +1216,9 @@ pub struct TSInstantiationExpression<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
-    /// `import { foo } from './foo'`
+    /// `import { foo } from './foo'`;
     Value,
-    /// `import type { foo } from './foo'`
+    /// `import type { foo } from './foo'`;
     Type,
 }
 

@@ -299,12 +299,6 @@ impl<'a> Hash for IdentifierReference<'a> {
     }
 }
 
-impl<'a> PartialEq<IdentifierReference<'a>> for IdentifierReference<'a> {
-    fn eq(&self, other: &Self) -> bool {
-        self.name == other.name
-    }
-}
-
 impl<'a> IdentifierReference<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, reference_id: Cell::default(), reference_flag: ReferenceFlag::default() }
@@ -375,12 +369,9 @@ impl<'a> PropertyKey<'a> {
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit
-                .expressions
-                .is_empty()
-                .then(|| lit.quasi())
-                .flatten()
-                .map(|quasi| Cow::Borrowed(quasi.as_str())),
+            Self::TemplateLiteral(lit) => {
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
+            }
             _ => None,
         }
     }
@@ -1386,32 +1377,28 @@ impl PropertyDefinitionType {
 }
 
 impl MethodDefinitionKind {
-    #[inline]
     pub fn is_constructor(&self) -> bool {
         matches!(self, Self::Constructor)
     }
 
-    #[inline]
     pub fn is_method(&self) -> bool {
         matches!(self, Self::Method)
     }
 
-    #[inline]
     pub fn is_set(&self) -> bool {
         matches!(self, Self::Set)
     }
 
-    #[inline]
     pub fn is_get(&self) -> bool {
         matches!(self, Self::Get)
     }
 
-    pub const fn scope_flags(self) -> ScopeFlags {
+    pub fn scope_flags(self) -> ScopeFlags {
         match self {
-            Self::Constructor => ScopeFlags::Constructor.union(ScopeFlags::Function),
+            Self::Constructor => ScopeFlags::Constructor | ScopeFlags::Function,
             Self::Method => ScopeFlags::Function,
-            Self::Get => ScopeFlags::GetAccessor.union(ScopeFlags::Function),
-            Self::Set => ScopeFlags::SetAccessor.union(ScopeFlags::Function),
+            Self::Get => ScopeFlags::GetAccessor | ScopeFlags::Function,
+            Self::Set => ScopeFlags::SetAccessor | ScopeFlags::Function,
         }
     }
 }
