@@ -94,6 +94,10 @@ impl SymbolFlags {
         self.intersects(Self::Variable)
     }
 
+    pub fn is_type_parameter(&self) -> bool {
+        self.contains(Self::TypeParameter)
+    }
+
     /// If true, then the symbol is a type, such as a TypeAlias, Interface, or Enum
     pub fn is_type(&self) -> bool {
         self.intersects((Self::TypeImport | Self::Type) - Self::Value)
@@ -116,6 +120,18 @@ impl SymbolFlags {
         self.contains(Self::Class)
     }
 
+    pub fn is_interface(&self) -> bool {
+        self.contains(Self::Interface)
+    }
+
+    pub fn is_type_alias(&self) -> bool {
+        self.contains(Self::TypeAlias)
+    }
+
+    pub fn is_enum(&self) -> bool {
+        self.intersects(Self::Enum)
+    }
+
     pub fn is_catch_variable(&self) -> bool {
         self.contains(Self::CatchVariable)
     }
@@ -130,6 +146,10 @@ impl SymbolFlags {
 
     pub fn is_import(&self) -> bool {
         self.intersects(Self::Import | Self::TypeImport)
+    }
+
+    pub fn is_type_import(&self) -> bool {
+        self.contains(Self::TypeImport)
     }
 
     /// If true, then the symbol can be referenced by a type
