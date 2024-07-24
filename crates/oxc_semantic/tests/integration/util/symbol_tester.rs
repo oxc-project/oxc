@@ -6,6 +6,7 @@ use oxc_span::CompactStr;
 
 use super::{Expect, SemanticTester};
 
+#[must_use]
 pub struct SymbolTester<'a> {
     parent: &'a SemanticTester<'a>,
     /// Reference to semantic analysis results, from [`SemanticTester`]
@@ -94,7 +95,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     /// Checks if the resolved symbol contains all flags in `flags`, using [`SymbolFlags::contains()`]
-    #[must_use]
     pub fn contains_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -113,7 +113,6 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
-    #[must_use]
     pub fn intersects_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -132,22 +131,18 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
-    #[must_use]
     pub fn has_number_of_reads(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, Reference::is_read)
     }
 
-    #[must_use]
     pub fn has_number_of_writes(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, Reference::is_write)
     }
 
-    #[must_use]
     pub fn has_number_of_references(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, |_| true)
     }
 
-    #[must_use]
     pub fn has_number_of_references_where<F>(mut self, ref_count: usize, filter: F) -> Self
     where
         F: FnMut(&Reference) -> bool,
@@ -176,7 +171,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_exported(mut self) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -195,7 +189,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_not_exported(mut self) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -214,7 +207,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_in_scope(mut self, expected_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();
         self.test_result = match self.test_result {
@@ -235,7 +227,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_not_in_scope(mut self, excluded_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();
         self.test_result = match self.test_result {

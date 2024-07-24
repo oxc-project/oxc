@@ -13,6 +13,7 @@ use oxc_semantic::{dot::DebugDot, Semantic, SemanticBuilder, SemanticBuilderRetu
 use oxc_span::SourceType;
 pub use symbol_tester::SymbolTester;
 
+#[must_use]
 pub struct SemanticTester<'a> {
     allocator: Allocator,
     source_type: SourceType,
@@ -57,26 +58,22 @@ impl<'a> SemanticTester<'a> {
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
-    #[must_use]
     pub fn with_typescript(mut self, yes: bool) -> Self {
         self.source_type = SourceType::default().with_typescript(yes);
         self
     }
 
     /// Mark the [`SourceType`] as JSX
-    #[must_use]
     pub fn with_jsx(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_jsx(yes);
         self
     }
 
-    #[must_use]
     pub fn with_module(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_module(yes);
         self
     }
 
-    #[must_use]
     pub fn with_cfg(mut self, yes: bool) -> Self {
         self.cfg = yes;
         self
@@ -94,7 +91,6 @@ impl<'a> SemanticTester<'a> {
     /// // Not allowed in TS
     /// T::ts("function foo(a, a) { }").expect_errors(true).has_root_symbol("foo").test()
     /// ```
-    #[must_use]
     pub fn expect_errors(mut self, yes: bool) -> Self {
         self.expect_errors = yes;
         self
