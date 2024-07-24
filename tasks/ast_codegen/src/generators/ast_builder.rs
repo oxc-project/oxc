@@ -277,7 +277,7 @@ fn generate_struct_builder_fn(ty: &RStruct, ctx: &CodegenCtx) -> TokenStream {
         endl!();
         #[inline]
         pub fn #alloc_fn_name #generic_params (self, #(#params),*) -> Box<'a, #as_type> #where_clause {
-            self.#fn_name(#(#args),*).into_in(self.allocator)
+            Box::new_in(self.#fn_name(#(#args),*), self.allocator)
         }
     }
 }
