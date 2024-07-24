@@ -147,6 +147,9 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Enable or disable building a [`ControlFlowGraph`].
+    ///
+    /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     #[must_use]
     pub fn with_cfg(mut self, cfg: bool) -> Self {
         self.cfg = if cfg { Some(ControlFlowGraphBuilder::default()) } else { None };

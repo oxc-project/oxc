@@ -113,7 +113,7 @@ fn test_types_simple() {
         .has_some_symbol("T")
         .contains_flags(SymbolFlags::TypeParameter)
         .has_number_of_references(1)
-        .has_number_of_references_where(1, oxc_semantic::Reference::is_type)
+        .has_number_of_references_where(1, Reference::is_type)
         .test();
 
     SemanticTester::ts("function foo<T>(a: T): void {}")
