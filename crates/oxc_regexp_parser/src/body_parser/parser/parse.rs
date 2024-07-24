@@ -290,10 +290,20 @@ impl<'a> PatternParser<'a> {
 
         // `CharacterClass`
         // TODO
-        // `( GroupSpecifieropt Disjunction )`
-        // TODO
-        // `(?: Disjunction )`
-        // TODO
+
+        // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+        if let Some(ignore_group) = self.parse_ignore_group()? {
+            return Ok(Some(ast::RootNode::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
+        }
+
+        // `( GroupSpecifier Disjunction )`
+        // `( Disjunction )`
+        if let Some(capturing_group) = self.parse_capturing_group()? {
+            return Ok(Some(ast::RootNode::CapturingGroup(Box::new_in(
+                capturing_group,
+                self.allocator,
+            ))));
+        }
 
         Ok(None)
     }
@@ -320,17 +330,11 @@ impl<'a> PatternParser<'a> {
         }
 
         // `\ AtomEscape`
-        // TODO
         // `\ [lookahead = c]`
-        // TODO
         // `CharacterClass`
-        // TODO
         // `( GroupSpecifieropt Disjunction )`
-        // TODO
         // `(?: Disjunction )`
-        // TODO
         // `InvalidBracedQuantifier`
-        // TODO
         // `ExtendedPatternCharacter`
         // TODO
 
@@ -635,6 +639,73 @@ impl<'a> PatternParser<'a> {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind: ast::ValueKind::Identifier,
                 value: cp,
+            }));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //
+    // GroupSpecifier[UnicodeMode] ::
+    //   ? GroupName[?UnicodeMode]
+    // ```
+    fn parse_capturing_group(&mut self) -> Result<Option<ast::CapturingGroup<'a>>> {
+        let span_start = self.reader.span_position();
+
+        if self.reader.eat('(') {
+            // `GroupSpecifier` is optional
+            if self.reader.eat('?') {
+                if let Some(name) = self.consume_group_name()? {
+                    let disjunction = self.parse_disjunction()?;
+
+                    if self.reader.eat(')') {
+                        return Ok(Some(ast::CapturingGroup {
+                            span: self.span_factory.create(span_start, self.reader.span_position()),
+                            name: Some(name),
+                            body: disjunction,
+                        }));
+                    }
+                }
+
+                return Err(OxcDiagnostic::error("Unterminated capturing group name"));
+            }
+
+            let disjunction = self.parse_disjunction()?;
+            if self.reader.eat(')') {
+                return Ok(Some(ast::CapturingGroup {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    name: None,
+                    body: disjunction,
+                }));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated capturing group"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // ```
+    fn parse_ignore_group(&mut self) -> Result<Option<ast::IgnoreGroup<'a>>> {
+        let span_start = self.reader.span_position();
+
+        if self.reader.eat3('(', '?', ':') {
+            let disjunction = self.parse_disjunction()?;
+
+            if !self.reader.eat(')') {
+                return Err(OxcDiagnostic::error("Unterminated ignore group"));
+            }
+
+            return Ok(Some(ast::IgnoreGroup {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                // TODO: Stage3 ModifierFlags
+                enabling_modifiers: None,
+                disabling_modifiers: None,
+                body: disjunction,
             }));
         }
 

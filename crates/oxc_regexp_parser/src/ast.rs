@@ -160,7 +160,7 @@ pub struct CharacterClassRange {
 pub struct CapturingGroup<'a> {
     pub span: Span,
     pub name: Option<SpanAtom<'a>>,
-    pub body: Vec<'a, RootNode<'a>>,
+    pub body: Disjunction<'a>,
 }
 
 #[derive(Debug)]
@@ -182,7 +182,7 @@ pub struct IgnoreGroup<'a> {
     pub span: Span,
     pub enabling_modifiers: Option<ModifierFlags>,
     pub disabling_modifiers: Option<ModifierFlags>,
-    pub body: Vec<'a, RootNode<'a>>,
+    pub body: Disjunction<'a>,
 }
 #[derive(Debug)]
 pub struct ModifierFlags {
