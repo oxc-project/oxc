@@ -1,4 +1,5 @@
 use oxc_span::Atom;
+use oxc_syntax::scope::ScopeId;
 
 use super::{ast::*, AstKind};
 
@@ -90,6 +91,34 @@ impl<'a> AstKind<'a> {
         match self {
             Self::IdentifierReference(ident) => ident.name == name,
             _ => false,
+        }
+    }
+
+    /// If this node is a container, get the [`ScopeId`] it creates.
+    ///
+    /// Will always be none if semantic analysis has not been run.
+    pub fn get_container_scope_id(self) -> Option<ScopeId> {
+        match self {
+            Self::Program(p) => p.scope_id.get(),
+            Self::BlockStatement(b) => b.scope_id.get(),
+            Self::ForStatement(f) => f.scope_id.get(),
+            Self::ForInStatement(f) => f.scope_id.get(),
+            Self::ForOfStatement(f) => f.scope_id.get(),
+            Self::SwitchStatement(switch) => switch.scope_id.get(),
+            Self::CatchClause(catch) => catch.scope_id.get(),
+            Self::Function(f) => f.scope_id.get(),
+            Self::ArrowFunctionExpression(f) => f.scope_id.get(),
+            Self::Class(class) => class.scope_id.get(),
+            Self::StaticBlock(b) => b.scope_id.get(),
+            Self::TSEnumDeclaration(e) => e.scope_id.get(),
+            Self::TSConditionalType(e) => e.scope_id.get(),
+            Self::TSTypeAliasDeclaration(e) => e.scope_id.get(),
+            Self::TSInterfaceDeclaration(e) => e.scope_id.get(),
+            Self::TSMethodSignature(e) => e.scope_id.get(),
+            Self::TSConstructSignatureDeclaration(e) => e.scope_id.get(),
+            Self::TSModuleDeclaration(e) => e.scope_id.get(),
+            Self::TSMappedType(e) => e.scope_id.get(),
+            _ => None,
         }
     }
 
@@ -232,6 +261,9 @@ impl<'a> AstKind<'a> {
             Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(_) => "SimpleAssignmentTarget".into(),
+            Self::AssignmentTargetPattern(_) => "AssignmentTargetPattern".into(),
+            Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
+            Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
