@@ -730,7 +730,9 @@ pub struct LogicalExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Conditional Expression
+/// `bar ? 1 : 2` in `const foo = bar ? 1 : 2;`
+///
+/// Represents a conditional expression, which can include a test, a consequent, and an alternate.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
