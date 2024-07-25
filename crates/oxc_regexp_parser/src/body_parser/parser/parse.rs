@@ -137,11 +137,11 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.span_position();
         if let Some(assertion) = self.parse_assertion()? {
             // `QuantifiableAssertion` = (Negative)Lookahead: `(?=...)` or `(?!...)`
-            if let ast::RootNode::LookAroundGroup(look_around) = &assertion {
+            if let ast::RootNode::LookAroundAssertion(look_around) = &assertion {
                 if matches!(
                     look_around.kind,
-                    ast::LookAroundGroupKind::Lookahead
-                        | ast::LookAroundGroupKind::NegativeLookahead
+                    ast::LookAroundAssertionKind::Lookahead
+                        | ast::LookAroundAssertionKind::NegativeLookahead
                 ) {
                     if let Some(((min, max), greedy)) = self.consume_quantifier()? {
                         return Ok(Some(ast::RootNode::Quantifier(Box::new_in(
@@ -205,32 +205,32 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.span_position();
 
         let kind = if self.reader.eat('^') {
-            Some(ast::AssertionKind::Start)
+            Some(ast::BoundaryAssertionKind::Start)
         } else if self.reader.eat('$') {
-            Some(ast::AssertionKind::End)
+            Some(ast::BoundaryAssertionKind::End)
         } else if self.reader.eat2('\\', 'b') {
-            Some(ast::AssertionKind::Boundary)
+            Some(ast::BoundaryAssertionKind::Boundary)
         } else if self.reader.eat2('\\', 'B') {
-            Some(ast::AssertionKind::NegativeBoundary)
+            Some(ast::BoundaryAssertionKind::NegativeBoundary)
         } else {
             None
         };
 
         if let Some(kind) = kind {
-            return Ok(Some(ast::RootNode::Assertion(ast::Assertion {
+            return Ok(Some(ast::RootNode::BoundaryAssertion(ast::BoundaryAssertion {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind,
             })));
         }
 
         let kind = if self.reader.eat3('(', '?', '=') {
-            Some(ast::LookAroundGroupKind::Lookahead)
+            Some(ast::LookAroundAssertionKind::Lookahead)
         } else if self.reader.eat3('(', '?', '!') {
-            Some(ast::LookAroundGroupKind::NegativeLookahead)
+            Some(ast::LookAroundAssertionKind::NegativeLookahead)
         } else if self.reader.eat4('(', '?', '<', '=') {
-            Some(ast::LookAroundGroupKind::Lookbehind)
+            Some(ast::LookAroundAssertionKind::Lookbehind)
         } else if self.reader.eat4('(', '?', '<', '!') {
-            Some(ast::LookAroundGroupKind::NegativeLookbehind)
+            Some(ast::LookAroundAssertionKind::NegativeLookbehind)
         } else {
             None
         };
@@ -242,8 +242,8 @@ impl<'a> PatternParser<'a> {
                 return Err(OxcDiagnostic::error("Unterminated lookaround group"));
             }
 
-            return Ok(Some(ast::RootNode::LookAroundGroup(Box::new_in(
-                ast::LookAroundGroup {
+            return Ok(Some(ast::RootNode::LookAroundAssertion(Box::new_in(
+                ast::LookAroundAssertion {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
                     kind,
                     body: disjunction,
@@ -271,9 +271,9 @@ impl<'a> PatternParser<'a> {
         if let Some(cp) = self.reader.peek().filter(|&cp| !unicode::is_syntax_character(cp)) {
             self.reader.advance();
 
-            return Ok(Some(ast::RootNode::Value(ast::Value {
+            return Ok(Some(ast::RootNode::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
-                kind: ast::ValueKind::Symbol,
+                kind: ast::CharacterKind::Symbol,
                 value: cp,
             })));
         }
@@ -341,9 +341,9 @@ impl<'a> PatternParser<'a> {
 
             // \ [lookahead = c]
             if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
-                return Ok(Some(ast::RootNode::Value(ast::Value {
+                return Ok(Some(ast::RootNode::Character(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
-                    kind: ast::ValueKind::Symbol,
+                    kind: ast::CharacterKind::Symbol,
                     value: '\\' as u32,
                 })));
             }
@@ -375,9 +375,9 @@ impl<'a> PatternParser<'a> {
 
         // ExtendedPatternCharacter
         if let Some(cp) = self.consume_extended_pattern_character() {
-            return Ok(Some(ast::RootNode::Value(ast::Value {
+            return Ok(Some(ast::RootNode::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
-                kind: ast::ValueKind::Symbol,
+                kind: ast::CharacterKind::Symbol,
                 value: cp,
             })));
         }
@@ -420,7 +420,7 @@ impl<'a> PatternParser<'a> {
 
         // CharacterEscape: \n, \cM, \0, etc...
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
-            return Ok(Some(ast::RootNode::Value(character_escape)));
+            return Ok(Some(ast::RootNode::Character(character_escape)));
         }
 
         // k GroupName: \k<name> means named reference
@@ -529,14 +529,14 @@ impl<'a> PatternParser<'a> {
     //   IdentityEscape[?UnicodeMode, ?NamedCaptureGroups]
     // ```
     // (Annex B)
-    fn parse_character_escape(&mut self, span_start: usize) -> Result<Option<ast::Value>> {
+    fn parse_character_escape(&mut self, span_start: usize) -> Result<Option<ast::Character>> {
         // e.g. \n
         if let Some(cp) = self.reader.peek().and_then(unicode::map_control_escape) {
             self.reader.advance();
 
-            return Ok(Some(ast::Value {
+            return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
-                kind: ast::ValueKind::SingleEscape,
+                kind: ast::CharacterKind::SingleEscape,
                 value: cp,
             }));
         }
@@ -546,9 +546,9 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('c') {
             if let Some(cp) = self.reader.peek().and_then(unicode::map_c_ascii_letter) {
                 self.reader.advance();
-                return Ok(Some(ast::Value {
+                return Ok(Some(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
-                    kind: ast::ValueKind::ControlLetter,
+                    kind: ast::CharacterKind::ControlLetter,
                     value: cp,
                 }));
             }
@@ -561,9 +561,9 @@ impl<'a> PatternParser<'a> {
         {
             self.reader.advance();
 
-            return Ok(Some(ast::Value {
+            return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
-                kind: ast::ValueKind::Null,
+                kind: ast::CharacterKind::Null,
                 value: 0x0000,
             }));
         }
@@ -571,9 +571,9 @@ impl<'a> PatternParser<'a> {
         // e.g. \x41
         if self.reader.eat('x') {
             if let Some(cp) = self.consume_fixed_hex_digits(2) {
-                return Ok(Some(ast::Value {
+                return Ok(Some(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
-                    kind: ast::ValueKind::HexadecimalEscape,
+                    kind: ast::CharacterKind::HexadecimalEscape,
                     value: cp,
                 }));
             }
@@ -583,9 +583,9 @@ impl<'a> PatternParser<'a> {
 
         // e.g. \u{1f600}
         if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence()? {
-            return Ok(Some(ast::Value {
+            return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
-                kind: ast::ValueKind::UnicodeEscape,
+                kind: ast::CharacterKind::UnicodeEscape,
                 value: cp,
             }));
         }
@@ -593,9 +593,9 @@ impl<'a> PatternParser<'a> {
         // e.g. \18
         if !self.state.unicode_mode {
             if let Some(cp) = self.consume_legacy_octal_escape_sequence() {
-                return Ok(Some(ast::Value {
+                return Ok(Some(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
-                    kind: ast::ValueKind::Octal,
+                    kind: ast::CharacterKind::Octal,
                     value: cp,
                 }));
             }
@@ -603,9 +603,9 @@ impl<'a> PatternParser<'a> {
 
         // e.g. \.
         if let Some(cp) = self.consume_identity_escape() {
-            return Ok(Some(ast::Value {
+            return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
-                kind: ast::ValueKind::Identifier,
+                kind: ast::CharacterKind::Identifier,
                 value: cp,
             }));
         }

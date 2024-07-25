@@ -46,31 +46,45 @@ pub struct Alternative<'a> {
 
 #[derive(Debug)]
 pub enum RootNode<'a> {
-    Assertion(Assertion),
+    BoundaryAssertion(BoundaryAssertion),
+    LookAroundAssertion(Box<'a, LookAroundAssertion<'a>>),
     Quantifier(Box<'a, Quantifier<'a>>),
-    Value(Value),
+    Character(Character),
     Dot(Dot),
     CharacterClassEscape(CharacterClassEscape),
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>),
     CharacterClass(Box<'a, CharacterClass<'a>>),
     CapturingGroup(Box<'a, CapturingGroup<'a>>),
-    LookAroundGroup(Box<'a, LookAroundGroup<'a>>),
     IgnoreGroup(Box<'a, IgnoreGroup<'a>>),
     IndexedReference(IndexedReference),
     NamedReference(Box<'a, NamedReference<'a>>),
 }
 
 #[derive(Debug)]
-pub struct Assertion {
+pub struct BoundaryAssertion {
     pub span: Span,
-    pub kind: AssertionKind,
+    pub kind: BoundaryAssertionKind,
 }
 #[derive(Debug)]
-pub enum AssertionKind {
+pub enum BoundaryAssertionKind {
     Start,
     End,
     Boundary,
     NegativeBoundary,
+}
+
+#[derive(Debug)]
+pub struct LookAroundAssertion<'a> {
+    pub span: Span,
+    pub kind: LookAroundAssertionKind,
+    pub body: Disjunction<'a>,
+}
+#[derive(Debug)]
+pub enum LookAroundAssertionKind {
+    Lookahead,
+    NegativeLookahead,
+    Lookbehind,
+    NegativeLookbehind,
 }
 
 #[derive(Debug)]
@@ -83,13 +97,13 @@ pub struct Quantifier<'a> {
 }
 
 #[derive(Debug)]
-pub struct Value {
+pub struct Character {
     pub span: Span,
-    pub kind: ValueKind,
+    pub kind: CharacterKind,
     pub value: u32,
 }
 #[derive(Debug)]
-pub enum ValueKind {
+pub enum CharacterKind {
     ControlLetter,
     HexadecimalEscape,
     Identifier,
@@ -127,6 +141,7 @@ pub struct UnicodePropertyEscape<'a> {
     pub negative: bool,
     pub name: SpanAtom<'a>,
     pub value: Option<SpanAtom<'a>>,
+    // TODO: Should add strings related flag?
 }
 
 #[derive(Debug)]
@@ -147,13 +162,13 @@ pub enum CharacterClassBody<'a> {
     CharacterClassRange(Box<'a, CharacterClassRange>),
     CharacterClassEscape(CharacterClassEscape),
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>),
-    Value(Value),
+    Character(Character),
 }
 #[derive(Debug)]
 pub struct CharacterClassRange {
     pub span: Span,
-    pub min: Value,
-    pub max: Value,
+    pub min: Character,
+    pub max: Character,
 }
 
 #[derive(Debug)]
@@ -161,20 +176,6 @@ pub struct CapturingGroup<'a> {
     pub span: Span,
     pub name: Option<SpanAtom<'a>>,
     pub body: Disjunction<'a>,
-}
-
-#[derive(Debug)]
-pub struct LookAroundGroup<'a> {
-    pub span: Span,
-    pub kind: LookAroundGroupKind,
-    pub body: Disjunction<'a>,
-}
-#[derive(Debug)]
-pub enum LookAroundGroupKind {
-    Lookahead,
-    NegativeLookahead,
-    Lookbehind,
-    NegativeLookbehind,
 }
 
 #[derive(Debug)]
