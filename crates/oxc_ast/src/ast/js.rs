@@ -862,7 +862,9 @@ macro_rules! match_assignment_target_pattern {
 }
 pub use match_assignment_target_pattern;
 
-// See serializer in serialize.rs
+/// `[a, b]` in `[a, b] = arr;`
+///
+/// Represents an array assignment target, which can include elements and a rest element.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
