@@ -11,16 +11,6 @@ pub fn is_syntax_character(cp: u32) -> bool {
     })
 }
 
-// ```
-// ExtendedPatternCharacter ::
-//   SourceCharacter but not one of ^ $ \ . * + ? ( ) [ |
-// ```
-pub fn is_extended_pattern_character(cp: u32) -> bool {
-    char::from_u32(cp).map_or(false, |c| {
-        !matches!(c, '^' | '$' | '\\' | '.' | '*' | '+' | '?' | '(' | ')' | '[' | '|')
-    })
-}
-
 pub fn is_decimal_digit(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| c.is_ascii_digit())
 }

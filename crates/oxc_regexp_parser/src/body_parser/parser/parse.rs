@@ -160,19 +160,19 @@ impl<'a> PatternParser<'a> {
         }
 
         match (self.parse_extended_atom()?, self.consume_quantifier()?) {
-            (Some(atom), Some(((min, max), greedy))) => {
+            (Some(extended_atom), Some(((min, max), greedy))) => {
                 Ok(Some(ast::RootNode::Quantifier(Box::new_in(
                     ast::Quantifier {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         min,
                         max,
                         greedy,
-                        body: atom,
+                        body: extended_atom,
                     },
                     self.allocator,
                 ))))
             }
-            (Some(atom), None) => Ok(Some(atom)),
+            (Some(extended_atom), None) => Ok(Some(extended_atom)),
             (None, Some(_)) => {
                 Err(OxcDiagnostic::error("Lone `Quantifier`, expected `ExtendedAtom`"))
             }
@@ -370,75 +370,12 @@ impl<'a> PatternParser<'a> {
         }
 
         // ExtendedPatternCharacter
-        if let Some(cp) =
-            self.reader.peek().filter(|&cp| unicode::is_extended_pattern_character(cp))
-        {
-            self.reader.advance();
-
+        if let Some(cp) = self.consume_extended_pattern_character() {
             return Ok(Some(ast::RootNode::Value(ast::Value {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind: ast::ValueKind::Symbol,
                 value: cp,
             })));
-        }
-
-        Ok(None)
-    }
-
-    // ```
-    // Quantifier ::
-    //   QuantifierPrefix
-    //   QuantifierPrefix ?
-    //
-    // QuantifierPrefix ::
-    //   *
-    //   +
-    //   ?
-    //   { DecimalDigits[~Sep] }
-    //   { DecimalDigits[~Sep] ,}
-    //   { DecimalDigits[~Sep] , DecimalDigits[~Sep] }
-    // ```
-    /// Returns: ((min, max), greedy)
-    #[allow(clippy::type_complexity)]
-    fn consume_quantifier(&mut self) -> Result<Option<((u32, Option<u32>), bool)>> {
-        let is_greedy = |reader: &mut Reader| !reader.eat('?');
-
-        if self.reader.eat('*') {
-            return Ok(Some(((0, None), is_greedy(&mut self.reader))));
-        }
-        if self.reader.eat('+') {
-            return Ok(Some(((1, None), is_greedy(&mut self.reader))));
-        }
-        if self.reader.eat('?') {
-            return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
-        }
-
-        if self.reader.eat('{') {
-            if let Some(min) = self.consume_decimal_digits() {
-                if self.reader.eat('}') {
-                    return Ok(Some(((min, Some(min)), is_greedy(&mut self.reader))));
-                }
-
-                if self.reader.eat(',') {
-                    if self.reader.eat('}') {
-                        return Ok(Some(((min, None), is_greedy(&mut self.reader))));
-                    }
-
-                    if let Some(max) = self.consume_decimal_digits() {
-                        if self.reader.eat('}') {
-                            if max < min {
-                                return Err(OxcDiagnostic::error(
-                                    "Numbers out of order in braced quantifier",
-                                ));
-                            }
-
-                            return Ok(Some(((min, Some(max)), is_greedy(&mut self.reader))));
-                        }
-                    }
-                }
-            }
-
-            return Err(OxcDiagnostic::error("Unterminated quantifier"));
         }
 
         Ok(None)
@@ -498,21 +435,6 @@ impl<'a> PatternParser<'a> {
         }
 
         Err(OxcDiagnostic::error("Invalid atom escape"))
-    }
-
-    // ```
-    // DecimalEscape ::
-    //   NonZeroDigit DecimalDigits[~Sep]opt [lookahead ∉ DecimalDigit]
-    // ```
-    fn consume_decimal_escape(&mut self) -> Option<u32> {
-        if let Some(index) = self.consume_decimal_digits() {
-            // \0 is CharacterEscape, not DecimalEscape
-            if index != 0 {
-                return Some(index);
-            }
-        }
-
-        None
     }
 
     // ```
@@ -755,6 +677,80 @@ impl<'a> PatternParser<'a> {
     }
 
     // ---
+
+    // ```
+    // Quantifier ::
+    //   QuantifierPrefix
+    //   QuantifierPrefix ?
+    //
+    // QuantifierPrefix ::
+    //   *
+    //   +
+    //   ?
+    //   { DecimalDigits[~Sep] }
+    //   { DecimalDigits[~Sep] ,}
+    //   { DecimalDigits[~Sep] , DecimalDigits[~Sep] }
+    // ```
+    /// Returns: ((min, max), greedy)
+    #[allow(clippy::type_complexity)]
+    fn consume_quantifier(&mut self) -> Result<Option<((u32, Option<u32>), bool)>> {
+        let is_greedy = |reader: &mut Reader| !reader.eat('?');
+
+        if self.reader.eat('*') {
+            return Ok(Some(((0, None), is_greedy(&mut self.reader))));
+        }
+        if self.reader.eat('+') {
+            return Ok(Some(((1, None), is_greedy(&mut self.reader))));
+        }
+        if self.reader.eat('?') {
+            return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
+        }
+
+        if self.reader.eat('{') {
+            if let Some(min) = self.consume_decimal_digits() {
+                if self.reader.eat('}') {
+                    return Ok(Some(((min, Some(min)), is_greedy(&mut self.reader))));
+                }
+
+                if self.reader.eat(',') {
+                    if self.reader.eat('}') {
+                        return Ok(Some(((min, None), is_greedy(&mut self.reader))));
+                    }
+
+                    if let Some(max) = self.consume_decimal_digits() {
+                        if self.reader.eat('}') {
+                            if max < min {
+                                return Err(OxcDiagnostic::error(
+                                    "Numbers out of order in braced quantifier",
+                                ));
+                            }
+
+                            return Ok(Some(((min, Some(max)), is_greedy(&mut self.reader))));
+                        }
+                    }
+                }
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated quantifier"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // DecimalEscape ::
+    //   NonZeroDigit DecimalDigits[~Sep]opt [lookahead ∉ DecimalDigit]
+    // ```
+    fn consume_decimal_escape(&mut self) -> Option<u32> {
+        if let Some(index) = self.consume_decimal_digits() {
+            // \0 is CharacterEscape, not DecimalEscape
+            if index != 0 {
+                return Some(index);
+            }
+        }
+
+        None
+    }
 
     // ```
     // DecimalDigits[Sep] ::
@@ -1133,6 +1129,32 @@ impl<'a> PatternParser<'a> {
         }
 
         None
+    }
+
+    // ```
+    // ExtendedPatternCharacter ::
+    //   SourceCharacter but not one of ^ $ \ . * + ? ( ) [ |
+    // ```
+    fn consume_extended_pattern_character(&mut self) -> Option<u32> {
+        let cp = self.reader.peek()?;
+
+        if cp == '^' as u32
+            || cp == '$' as u32
+            || cp == '\\' as u32
+            || cp == '.' as u32
+            || cp == '*' as u32
+            || cp == '+' as u32
+            || cp == '?' as u32
+            || cp == '(' as u32
+            || cp == ')' as u32
+            || cp == '[' as u32
+            || cp == '|' as u32
+        {
+            return None;
+        }
+
+        self.reader.advance();
+        Some(cp)
     }
 
     fn consume_hex_digits(&mut self) -> Option<u32> {
