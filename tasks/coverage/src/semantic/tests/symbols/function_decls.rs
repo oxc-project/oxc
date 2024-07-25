@@ -24,7 +24,7 @@ impl SymbolTestCase for FunctionDecls {
         let flags = semantic.symbols().get_flag(symbol_id);
 
         // check function declarations. Function expressions are not BlockScopedVariables
-        if flags.is_function() && flags.contains(SymbolFlags::BlockScopedVariable){
+        if flags.is_function() && flags.contains(SymbolFlags::BlockScopedVariable) {
             let decl = semantic.nodes().get_node(semantic.symbols().get_declaration(symbol_id));
             if matches!(decl.kind(), AstKind::Function(_)) {
                 TestResult::Passed
