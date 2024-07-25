@@ -689,7 +689,7 @@ pub struct UnaryExpression<'a> {
 
 /// `1 + 1` in `const two = 1 + 1;`
 ///
-/// Represents a binary expression, which can include a left, an operator, and a right.
+/// Represents a binary expression, which can include a left expression, an operator, and a right expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -719,7 +719,7 @@ pub struct PrivateInExpression<'a> {
 
 /// `||` in `const foo = bar || 2;`
 ///
-/// Represents a logical expression, which can include a left, an operator, and a right. The following syntaxes are supported. `||`, `&&` and `??`
+/// Represents a logical expression, which can include a left expression, an operator, and a right expression. The following syntaxes are supported. `||`, `&&` and `??`
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
