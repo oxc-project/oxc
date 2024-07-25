@@ -71,6 +71,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     // avoid same symbols appear in multi-scopes
                     builder.scope.remove_binding(*scope_id, &name);
                     builder.scope.add_binding(target_scope_id, name, symbol_id);
+                    builder.symbols.scope_ids[symbol_id] = target_scope_id;
                     break;
                 }
             }
