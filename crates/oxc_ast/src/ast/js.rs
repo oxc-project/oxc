@@ -687,7 +687,9 @@ pub struct UnaryExpression<'a> {
     pub argument: Expression<'a>,
 }
 
-/// Binary Expression
+/// `1 + 1` in `const two = 1 + 1;`
+///
+/// Represents a binary expression, which can include a left, an operator, and a right.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
