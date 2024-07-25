@@ -41,14 +41,17 @@ pub struct Disjunction<'a> {
 #[derive(Debug)]
 pub struct Alternative<'a> {
     pub span: Span,
-    pub body: Vec<'a, RootNode<'a>>,
+    pub body: Vec<'a, Term<'a>>,
 }
 
 #[derive(Debug)]
-pub enum RootNode<'a> {
+pub enum Term<'a> {
+    // Assertion, QuantifiableAssertion
     BoundaryAssertion(BoundaryAssertion),
     LookAroundAssertion(Box<'a, LookAroundAssertion<'a>>),
+    // Quantifier
     Quantifier(Box<'a, Quantifier<'a>>),
+    // Atom, ExtendedAtom
     Character(Character),
     Dot(Dot),
     CharacterClassEscape(CharacterClassEscape),
@@ -93,7 +96,7 @@ pub struct Quantifier<'a> {
     pub min: u32,
     pub max: Option<u32>,
     pub greedy: bool,
-    pub body: RootNode<'a>,
+    pub body: Term<'a>,
 }
 
 #[derive(Debug)]

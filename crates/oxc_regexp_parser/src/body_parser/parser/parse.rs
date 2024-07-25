@@ -101,7 +101,7 @@ impl<'a> PatternParser<'a> {
     //   [~UnicodeMode] ExtendedAtom[?NamedCaptureGroups]
     // ```
     // (Annex B)
-    fn parse_term(&mut self) -> Result<Option<ast::RootNode<'a>>> {
+    fn parse_term(&mut self) -> Result<Option<ast::Term<'a>>> {
         // [+UnicodeMode] Assertion
         // [+UnicodeMode] Atom Quantifier
         // [+UnicodeMode] Atom
@@ -113,7 +113,7 @@ impl<'a> PatternParser<'a> {
             let span_start = self.reader.span_position();
             return match (self.parse_atom()?, self.consume_quantifier()?) {
                 (Some(atom), Some(((min, max), greedy))) => {
-                    Ok(Some(ast::RootNode::Quantifier(Box::new_in(
+                    Ok(Some(ast::Term::Quantifier(Box::new_in(
                         ast::Quantifier {
                             span: self.span_factory.create(span_start, self.reader.span_position()),
                             greedy,
@@ -137,14 +137,14 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.span_position();
         if let Some(assertion) = self.parse_assertion()? {
             // `QuantifiableAssertion` = (Negative)Lookahead: `(?=...)` or `(?!...)`
-            if let ast::RootNode::LookAroundAssertion(look_around) = &assertion {
+            if let ast::Term::LookAroundAssertion(look_around) = &assertion {
                 if matches!(
                     look_around.kind,
                     ast::LookAroundAssertionKind::Lookahead
                         | ast::LookAroundAssertionKind::NegativeLookahead
                 ) {
                     if let Some(((min, max), greedy)) = self.consume_quantifier()? {
-                        return Ok(Some(ast::RootNode::Quantifier(Box::new_in(
+                        return Ok(Some(ast::Term::Quantifier(Box::new_in(
                             ast::Quantifier {
                                 span: self
                                     .span_factory
@@ -165,7 +165,7 @@ impl<'a> PatternParser<'a> {
 
         match (self.parse_extended_atom()?, self.consume_quantifier()?) {
             (Some(extended_atom), Some(((min, max), greedy))) => {
-                Ok(Some(ast::RootNode::Quantifier(Box::new_in(
+                Ok(Some(ast::Term::Quantifier(Box::new_in(
                     ast::Quantifier {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         min,
@@ -201,7 +201,7 @@ impl<'a> PatternParser<'a> {
     //   (?! Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     // (Annex B)
-    fn parse_assertion(&mut self) -> Result<Option<ast::RootNode<'a>>> {
+    fn parse_assertion(&mut self) -> Result<Option<ast::Term<'a>>> {
         let span_start = self.reader.span_position();
 
         let kind = if self.reader.eat('^') {
@@ -217,7 +217,7 @@ impl<'a> PatternParser<'a> {
         };
 
         if let Some(kind) = kind {
-            return Ok(Some(ast::RootNode::BoundaryAssertion(ast::BoundaryAssertion {
+            return Ok(Some(ast::Term::BoundaryAssertion(ast::BoundaryAssertion {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind,
             })));
@@ -242,7 +242,7 @@ impl<'a> PatternParser<'a> {
                 return Err(OxcDiagnostic::error("Unterminated lookaround group"));
             }
 
-            return Ok(Some(ast::RootNode::LookAroundAssertion(Box::new_in(
+            return Ok(Some(ast::Term::LookAroundAssertion(Box::new_in(
                 ast::LookAroundAssertion {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
                     kind,
@@ -264,14 +264,14 @@ impl<'a> PatternParser<'a> {
     //   ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     //   (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
-    fn parse_atom(&mut self) -> Result<Option<ast::RootNode<'a>>> {
+    fn parse_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
         let span_start = self.reader.span_position();
 
         // PatternCharacter
         if let Some(cp) = self.reader.peek().filter(|&cp| !unicode::is_syntax_character(cp)) {
             self.reader.advance();
 
-            return Ok(Some(ast::RootNode::Character(ast::Character {
+            return Ok(Some(ast::Term::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind: ast::CharacterKind::Symbol,
                 value: cp,
@@ -280,7 +280,7 @@ impl<'a> PatternParser<'a> {
 
         // .
         if self.reader.eat('.') {
-            return Ok(Some(ast::RootNode::Dot(ast::Dot {
+            return Ok(Some(ast::Term::Dot(ast::Dot {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
             })));
         }
@@ -297,13 +297,13 @@ impl<'a> PatternParser<'a> {
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::RootNode::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
+            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
         // ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::RootNode::CapturingGroup(Box::new_in(
+            return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
                 capturing_group,
                 self.allocator,
             ))));
@@ -323,12 +323,12 @@ impl<'a> PatternParser<'a> {
     //   InvalidBracedQuantifier
     //   ExtendedPatternCharacter
     // ```
-    fn parse_extended_atom(&mut self) -> Result<Option<ast::RootNode<'a>>> {
+    fn parse_extended_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
         let span_start = self.reader.span_position();
 
         // .
         if self.reader.eat('.') {
-            return Ok(Some(ast::RootNode::Dot(ast::Dot {
+            return Ok(Some(ast::Term::Dot(ast::Dot {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
             })));
         }
@@ -341,7 +341,7 @@ impl<'a> PatternParser<'a> {
 
             // \ [lookahead = c]
             if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
-                return Ok(Some(ast::RootNode::Character(ast::Character {
+                return Ok(Some(ast::Term::Character(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
                     kind: ast::CharacterKind::Symbol,
                     value: '\\' as u32,
@@ -356,13 +356,13 @@ impl<'a> PatternParser<'a> {
 
         // (?: Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
-            return Ok(Some(ast::RootNode::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
+            return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
         // ( GroupSpecifier[~UnicodeMode]opt Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
-            return Ok(Some(ast::RootNode::CapturingGroup(Box::new_in(
+            return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
                 capturing_group,
                 self.allocator,
             ))));
@@ -375,7 +375,7 @@ impl<'a> PatternParser<'a> {
 
         // ExtendedPatternCharacter
         if let Some(cp) = self.consume_extended_pattern_character() {
-            return Ok(Some(ast::RootNode::Character(ast::Character {
+            return Ok(Some(ast::Term::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind: ast::CharacterKind::Symbol,
                 value: cp,
@@ -394,12 +394,12 @@ impl<'a> PatternParser<'a> {
     //   [+NamedCaptureGroups] k GroupName[?UnicodeMode]
     // ```
     // (Annex B)
-    fn parse_atom_escape(&mut self, span_start: usize) -> Result<Option<ast::RootNode<'a>>> {
+    fn parse_atom_escape(&mut self, span_start: usize) -> Result<Option<ast::Term<'a>>> {
         // DecimalEscape: \1 means indexed reference
         if let Some(index) = self.consume_decimal_escape() {
             // TODO: Check `CapturingGroupNumber` <= `CountLeftCapturingParensWithin`
 
-            return Ok(Some(ast::RootNode::IndexedReference(ast::IndexedReference {
+            return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 index,
             })));
@@ -407,12 +407,12 @@ impl<'a> PatternParser<'a> {
 
         // CharacterClassEscape: \d, \p{...}
         if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-            return Ok(Some(ast::RootNode::CharacterClassEscape(character_class_escape)));
+            return Ok(Some(ast::Term::CharacterClassEscape(character_class_escape)));
         }
         if let Some(unicode_property_escape) =
             self.parse_character_class_escape_unicode(span_start)?
         {
-            return Ok(Some(ast::RootNode::UnicodePropertyEscape(Box::new_in(
+            return Ok(Some(ast::Term::UnicodePropertyEscape(Box::new_in(
                 unicode_property_escape,
                 self.allocator,
             ))));
@@ -420,13 +420,13 @@ impl<'a> PatternParser<'a> {
 
         // CharacterEscape: \n, \cM, \0, etc...
         if let Some(character_escape) = self.parse_character_escape(span_start)? {
-            return Ok(Some(ast::RootNode::Character(character_escape)));
+            return Ok(Some(ast::Term::Character(character_escape)));
         }
 
         // k GroupName: \k<name> means named reference
         if self.reader.eat('k') {
             if let Some(name) = self.consume_group_name()? {
-                return Ok(Some(ast::RootNode::NamedReference(Box::new_in(
+                return Ok(Some(ast::Term::NamedReference(Box::new_in(
                     ast::NamedReference {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         name,
