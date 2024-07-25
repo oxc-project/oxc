@@ -1951,6 +1951,19 @@ pub struct PrivateIdentifier<'a> {
     pub name: Atom<'a>,
 }
 
+/// Class Static Block
+///
+/// See: [MDN - Static initialization blocks](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Static_initialization_blocks)
+///
+/// ## Example
+///
+/// ```ts
+/// class Foo {
+///     static {
+///         this.someStaticProperty = 5;
+///     }
+/// }
+/// ```
 #[ast(visit)]
 #[scope(flags(ScopeFlags::ClassStaticBlock))]
 #[derive(Debug)]
@@ -1963,6 +1976,29 @@ pub struct StaticBlock<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+/// ES6 Module Declaration
+///
+/// An ESM import or export statement.
+///
+/// ## Example
+///
+/// ```ts
+/// // ImportDeclaration
+/// import { foo } from 'foo';
+/// import bar from 'bar';
+/// import * as baz from 'baz';
+///
+/// // Not a ModuleDeclaration
+/// export const a = 5;
+///
+/// const b = 6;
+///
+/// export { b };             // ExportNamedDeclaration
+/// export default b;         // ExportDefaultDeclaration
+/// export * as c from './c'; // ExportAllDeclaration
+/// export = b;               // TSExportAssignment
+/// export as namespace d;    // TSNamespaceExportDeclaration
+/// ```
 #[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -2169,9 +2205,13 @@ pub enum ImportAttributeKey<'a> {
 /// Named Export Declaration
 ///
 /// ## Example
+///
 /// ```ts
-/// export { Foo };
-/// export type { Bar };
+/// //       ________ specifiers
+/// export { Foo, Bar };
+/// export type { Baz } from 'baz';
+/// //     ^^^^              ^^^^^
+/// // export_kind           source
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
@@ -2190,7 +2230,9 @@ pub struct ExportNamedDeclaration<'a> {
 }
 
 /// Export Default Declaration
+///
 /// ## Example
+///
 /// ```ts
 /// export default HoistableDeclaration
 /// export default ClassDeclaration
@@ -2207,6 +2249,15 @@ pub struct ExportDefaultDeclaration<'a> {
     pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
+/// Export All Declaration
+///
+/// ## Example
+///
+/// ```ts
+/// //          _______ exported
+/// export * as numbers from '../numbers.js';
+/// //                       ^^^^^^^^^^^^^^^ source
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -2214,6 +2265,7 @@ pub struct ExportDefaultDeclaration<'a> {
 pub struct ExportAllDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// If this declaration is re-named
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
     /// Will be `Some(vec![])` for empty assertion
@@ -2221,6 +2273,17 @@ pub struct ExportAllDeclaration<'a> {
     pub export_kind: ImportOrExportKind, // `export type *`
 }
 
+/// Export Specifier
+///
+/// Each [`ExportSpecifier`] is one of the named exports in an [`ExportNamedDeclaration`].
+///
+/// ## Example
+///
+/// ```ts
+/// //       ____ export_kind
+/// import { type Foo as Bar } from './foo';
+/// //   exported ^^^    ^^^ local
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
