@@ -124,7 +124,7 @@ fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintCon
 
         if ((ident.name == "Object" && OBJECT_MUTATION_METHODS.contains(property_name))
             || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(property_name)))
-            && !ctx.scopes().has_binding(current_node.scope_id(), &ident.name)
+            && ident.reference_id.get().is_some_and(|id| !ctx.symbols().has_binding(id))
         {
             return expr
                 .arguments

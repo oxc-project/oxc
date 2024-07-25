@@ -36,8 +36,9 @@ pub struct SymbolTable {
     /// Pointer to the AST Node where this symbol is declared
     pub declarations: IndexVec<SymbolId, AstNodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
-    pub references: IndexVec<ReferenceId, Reference>,
     pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
+
+    pub references: IndexVec<ReferenceId, Reference>,
 }
 
 impl SymbolTable {

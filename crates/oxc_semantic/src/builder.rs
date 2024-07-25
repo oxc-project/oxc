@@ -15,6 +15,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,
@@ -27,7 +28,7 @@ use crate::{
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
-    scope::{ScopeFlags, ScopeId, ScopeTree},
+    scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     unresolved_stack::UnresolvedReferencesStack,
     JSDocFinder, Semantic,
@@ -66,6 +67,7 @@ pub struct SemanticBuilder<'a> {
     // to value like
     pub namespace_stack: Vec<SymbolId>,
     current_reference_flag: ReferenceFlag,
+    pub hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -114,6 +116,7 @@ impl<'a> SemanticBuilder<'a> {
             function_stack: vec![],
             namespace_stack: vec![],
             nodes: AstNodes::default(),
+            hoisting_variables: FxHashMap::default(),
             scope,
             symbols: SymbolTable::default(),
             unresolved_references: UnresolvedReferencesStack::new(),
@@ -357,14 +360,16 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn check_redeclaration(
-        &mut self,
+        &self,
         scope_id: ScopeId,
         span: Span,
         name: &str,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scope.get_binding(scope_id, name)?;
+        let symbol_id = self.scope.get_binding(scope_id, name).or_else(|| {
+            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+        })?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(redeclaration(name, symbol_span, span));
@@ -496,10 +501,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         scope_id.set(Some(self.current_scope_id));
 
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            // Clone the `CatchClause` bindings and add them to the current scope.
-            // to make it easier to check redeclare errors.
-            let bindings = self.scope.get_bindings(parent_scope_id).clone();
-            self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
+            // Move all bindings from parent scope to current scope
+            // to make it easier to resole references and check redeclare errors.
+            let parent_bindings =
+                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
+            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
         }
 
         self.unresolved_references.increment_scope_depth();

@@ -67,7 +67,12 @@ impl Rule for PreferDomNodeTextContent {
             if identifier.name == "innerText"
                 && matches!(parent_node_kind, AstKind::PropertyKey(_))
                 && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
-                    || matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)))
+                    || matches!(
+                        grand_parent_node_kind,
+                        AstKind::ObjectAssignmentTarget(_)
+                            | AstKind::SimpleAssignmentTarget(_)
+                            | AstKind::AssignmentTarget(_)
+                    ))
             {
                 ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
                 return;
@@ -77,8 +82,13 @@ impl Rule for PreferDomNodeTextContent {
         // `({innerText} = node)`
         if let AstKind::IdentifierReference(identifier_ref) = node.kind() {
             if identifier_ref.name == "innerText"
-                && matches!(parent_node_kind, AstKind::AssignmentTarget(_))
-                && matches!(grand_parent_node_kind, AstKind::AssignmentExpression(_))
+                && matches!(
+                    parent_node_kind,
+                    AstKind::ObjectAssignmentTarget(_)
+                        | AstKind::AssignmentTarget(_)
+                        | AstKind::SimpleAssignmentTarget(_)
+                )
+                && matches!(grand_parent_node_kind, AstKind::AssignmentTargetPattern(_))
             {
                 ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
             }
