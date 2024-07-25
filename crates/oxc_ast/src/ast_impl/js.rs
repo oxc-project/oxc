@@ -1160,17 +1160,6 @@ impl<'a> Class<'a> {
         }
     }
 
-    /// Get the name of the [`Class`].
-    ///
-    /// ```ts
-    /// class Foo { /* ... */ } // Foo
-    /// // Not all classes have names, e.g.
-    /// var Foo = class {}
-    /// ```
-    pub fn name(&self) -> Option<&Atom<'a>> {
-        self.id.as_ref().map(|id| &id.name)
-    }
-
     /// `true` if this [`Class`] is an expression.
     ///
     /// For example,
@@ -1320,30 +1309,6 @@ impl<'a> ClassElement<'a> {
             Self::AccessorProperty(accessor) => accessor.r#type.is_abstract(),
             Self::PropertyDefinition(property) => property.r#type.is_abstract(),
             Self::StaticBlock(_) | Self::TSIndexSignature(_) => false,
-        }
-    }
-
-    pub fn is_constructor(&self) -> bool {
-        matches!(self, Self::MethodDefinition(method) if method.kind.is_constructor())
-    }
-
-    /// Try to cast this [`ClassElement`] into a [`MethodDefinition`].
-    ///
-    /// Returns [`None`] if `self` is any other kind of [`ClassElement`].
-    pub fn as_method(&self) -> Option<&MethodDefinition<'a>> {
-        match self {
-            Self::MethodDefinition(method) => Some(method),
-            _ => None,
-        }
-    }
-
-    /// Try to cast this [`ClassElement`] into a [`PropertyDefinition`].
-    ///
-    /// Returns [`None`] if `self` is any other kind of [`ClassElement`].
-    pub fn as_property(&self) -> Option<&PropertyDefinition<'a>> {
-        match self {
-            Self::PropertyDefinition(property) => Some(property),
-            _ => None,
         }
     }
 }
