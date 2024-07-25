@@ -39,6 +39,10 @@ impl<'a> PatternParser<'a> {
 
         let result = self.parse_disjunction()?;
 
+        if self.reader.peek().is_some() {
+            return Err(OxcDiagnostic::error("Could not parse the entire pattern"));
+        }
+
         // TODO: Revisit `should_reparse`
 
         Ok(ast::Pattern { span: self.span_factory.create(0, self.source_text.len()), body: result })

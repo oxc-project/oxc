@@ -15,6 +15,7 @@ mod test {
         let allocator = Allocator::default();
 
         for (source_text, options) in &[
+            ("", ParserOptions::default()),
             ("a", ParserOptions::default()),
             ("a+", ParserOptions::default()),
             ("a*", ParserOptions::default()),
@@ -36,6 +37,8 @@ mod test {
             (r"\n\cM\0\x41\u1f60\.\/", ParserOptions::default()),
             (r"\u{1f600}", ParserOptions::default().with_unicode_flags(true, false)),
             ("(?:abc)", ParserOptions::default()),
+            ("a]", ParserOptions::default()),
+            ("a}", ParserOptions::default()),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_ok(),
@@ -49,11 +52,10 @@ mod test {
         let allocator = Allocator::default();
 
         for (source_text, options) in &[
-            ("", ParserOptions::default()),
             ("a)", ParserOptions::default()),
             (r"b\", ParserOptions::default()),
-            ("c]", ParserOptions::default()),
-            ("d}", ParserOptions::default()),
+            ("c]", ParserOptions::default().with_unicode_flags(true, false)),
+            ("d}", ParserOptions::default().with_unicode_flags(true, false)),
             ("e|+", ParserOptions::default()),
             ("f|{", ParserOptions::default()),
             ("g{", ParserOptions::default()),
@@ -91,10 +93,6 @@ mod test {
         let allocator = Allocator::default();
         let source_text = "このEmoji🥹の数が変わる";
 
-        let pattern =
-            PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.body.body.len(), 15);
-
         let pattern = PatternParser::new(
             &allocator,
             source_text,
@@ -102,7 +100,7 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.body.body.len(), 14);
+        assert_eq!(pattern.body.body[0].body.len(), 14);
         let pattern = PatternParser::new(
             &allocator,
             source_text,
@@ -110,6 +108,10 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.body.body.len(), 14);
+        assert_eq!(pattern.body.body[0].body.len(), 14);
+
+        let pattern =
+            PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
+        assert_eq!(pattern.body.body[0].body.len(), 15);
     }
 }
