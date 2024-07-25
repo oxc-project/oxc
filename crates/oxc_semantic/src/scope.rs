@@ -11,7 +11,7 @@ use crate::{symbol::SymbolId, AstNodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
-type Bindings = FxIndexMap<CompactStr, SymbolId>;
+pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
 pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
 pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
 
