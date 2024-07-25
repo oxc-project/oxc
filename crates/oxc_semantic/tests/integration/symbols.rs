@@ -1,4 +1,4 @@
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::{Reference, SymbolFlags};
 
 use crate::util::SemanticTester;
 
@@ -55,6 +55,18 @@ fn test_var_read_write() {
         .has_number_of_writes(1)
         .test();
 
+    SemanticTester::js("let x = 0; let foo = (0, x++)")
+        .has_some_symbol("x")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let x = 0; x++")
+        .has_some_symbol("x")
+        .has_number_of_reads(0)
+        .has_number_of_writes(1)
+        .test();
+
     SemanticTester::js("let a; let b = 1 + (0, ((a)));")
         .has_some_symbol("a")
         .has_number_of_reads(1)
@@ -95,6 +107,20 @@ fn test_types_simple() {
     test.has_root_symbol("T")
         .contains_flags(SymbolFlags::TypeAlias)
         .has_number_of_references(1)
+        .test();
+
+    SemanticTester::ts("function foo<T>(): T { }")
+        .has_some_symbol("T")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .has_number_of_references_where(1, Reference::is_type)
+        .test();
+
+    SemanticTester::ts("function foo<T>(a: T): void {}")
+        .has_some_symbol("T")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .has_number_of_references_where(1, Reference::is_type)
         .test();
 }
 
