@@ -1,6 +1,6 @@
 use crate::ast::*;
 
-use std::{borrow::Cow, cell::Cell, fmt, hash::Hash, ops::Deref};
+use std::{borrow::Cow, cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::{Box, FromIn, Vec};
 use oxc_span::{Atom, GetSpan, SourceType, Span};
@@ -328,21 +328,6 @@ impl<'a> Hash for BindingIdentifier<'a> {
 impl<'a> BindingIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
-    }
-}
-
-impl<'a> Deref for BindingIdentifier<'a> {
-    type Target = Atom<'a>;
-    fn deref(&self) -> &Self::Target {
-        &self.name
-    }
-}
-
-impl<'a> Deref for ArrayExpression<'a> {
-    type Target = Vec<'a, ArrayExpressionElement<'a>>;
-
-    fn deref(&self) -> &Self::Target {
-        &self.elements
     }
 }
 
@@ -1210,13 +1195,6 @@ impl<'a> Class<'a> {
 
     pub fn is_typescript_syntax(&self) -> bool {
         self.declare || self.r#abstract
-    }
-}
-
-impl<'a> Deref for ClassBody<'a> {
-    type Target = Vec<'a, ClassElement<'a>>;
-    fn deref(&self) -> &Self::Target {
-        &self.body
     }
 }
 
