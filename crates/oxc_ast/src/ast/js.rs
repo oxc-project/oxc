@@ -745,7 +745,9 @@ pub struct ConditionalExpression<'a> {
     pub alternate: Expression<'a>,
 }
 
-/// Assignment Expression
+/// `foo = 1` in `let foo; foo = 1;`
+///
+/// Represents an assignment expression, which can include an operator, a target, and a expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
