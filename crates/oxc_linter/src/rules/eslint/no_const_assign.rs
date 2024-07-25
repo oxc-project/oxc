@@ -34,13 +34,14 @@ declare_oxc_lint!(
 
 impl Rule for NoConstAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
-        let symbol_table = ctx.semantic().symbols();
+        let semantic = &**ctx.semantic();
+        let symbol_table = semantic.symbols();
         if symbol_table.get_flag(symbol_id).is_const_variable() {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
                     ctx.diagnostic(no_const_assign_diagnostic(
                         symbol_table.get_name(symbol_id),
-                        symbol_table.get_span(symbol_id),
+                        semantic.symbol_span(symbol_id),
                         ctx.semantic().reference_span(reference),
                     ));
                 }

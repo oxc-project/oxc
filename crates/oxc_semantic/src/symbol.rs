@@ -33,7 +33,6 @@ export type IndexVec<I, T> = Array<T>;
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
-    pub spans: IndexVec<SymbolId, Span>,
     pub names: IndexVec<SymbolId, CompactStr>,
     pub flags: IndexVec<SymbolId, SymbolFlags>,
     pub scope_ids: IndexVec<SymbolId, ScopeId>,
@@ -49,7 +48,7 @@ pub struct SymbolTable {
 
 impl SymbolTable {
     pub fn len(&self) -> usize {
-        self.spans.len()
+        self.names.len()
     }
 
     pub fn is_empty(&self) -> bool {
@@ -57,17 +56,11 @@ impl SymbolTable {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.spans.iter_enumerated().map(|(symbol_id, _)| symbol_id)
+        self.flags.iter_enumerated().map(|(symbol_id, _)| symbol_id)
     }
 
     pub fn iter_rev(&self) -> impl Iterator<Item = SymbolId> + '_ {
-        self.spans.iter_enumerated().rev().map(|(symbol_id, _)| symbol_id)
-    }
-
-    pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
-        self.spans
-            .iter_enumerated()
-            .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
+        self.flags.iter_enumerated().rev().map(|(symbol_id, _)| symbol_id)
     }
 
     pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
@@ -78,10 +71,6 @@ impl SymbolTable {
                 None
             }
         })
-    }
-
-    pub fn get_span(&self, symbol_id: SymbolId) -> Span {
-        self.spans[symbol_id]
     }
 
     pub fn get_name(&self, symbol_id: SymbolId) -> &str {
@@ -113,10 +102,6 @@ impl SymbolTable {
         self.scope_ids[symbol_id]
     }
 
-    pub fn get_scope_id_from_span(&self, span: Span) -> Option<ScopeId> {
-        self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
-    }
-
     pub fn get_scope_id_from_name(&self, name: &str) -> Option<ScopeId> {
         self.get_symbol_id_from_name(name).map(|symbol_id| self.get_scope_id(symbol_id))
     }
@@ -127,13 +112,11 @@ impl SymbolTable {
 
     pub fn create_symbol(
         &mut self,
-        span: Span,
         name: CompactStr,
         flag: SymbolFlags,
         scope_id: ScopeId,
         node_id: AstNodeId,
     ) -> SymbolId {
-        self.spans.push(span);
         self.names.push(name);
         self.flags.push(flag);
         self.scope_ids.push(scope_id);
@@ -210,7 +193,6 @@ impl SymbolTable {
     }
 
     pub fn reserve(&mut self, additional_symbols: usize, additional_references: usize) {
-        self.spans.reserve(additional_symbols);
         self.names.reserve(additional_symbols);
         self.flags.reserve(additional_symbols);
         self.scope_ids.reserve(additional_symbols);

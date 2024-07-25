@@ -7,7 +7,7 @@ use oxc_ast::{
     visit::{walk, Visit},
 };
 use oxc_semantic::{AstNodeId, Reference, ScopeTree, SymbolTable};
-use oxc_span::{Atom, CompactStr, Span, SPAN};
+use oxc_span::{Atom, CompactStr, Span};
 use oxc_syntax::{
     reference::{ReferenceFlag, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -245,8 +245,7 @@ impl TraverseScoping {
         let name = CompactStr::new(&self.find_uid_name(name));
 
         // Add binding to scope
-        let symbol_id =
-            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, AstNodeId::DUMMY);
+        let symbol_id = self.symbols.create_symbol(name.clone(), flags, scope_id, AstNodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
         symbol_id
     }

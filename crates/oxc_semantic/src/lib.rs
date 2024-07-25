@@ -136,6 +136,10 @@ impl<'a> Semantic<'a> {
         self.nodes.get_node(self.symbols.get_declaration(symbol_id))
     }
 
+    pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
+        self.symbol_declaration(symbol_id).kind().span()
+    }
+
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
     }
@@ -152,6 +156,21 @@ impl<'a> Semantic<'a> {
     pub fn reference_span(&self, reference: &Reference) -> Span {
         let node = self.nodes.get_node(reference.node_id());
         node.kind().span()
+    }
+
+    pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
+        self.symbols.declarations.iter_enumerated().find_map(|(symbol_id, &node_id)| {
+            let inner_span = self.nodes.kind(node_id).span();
+            if inner_span == span {
+                Some(symbol_id)
+            } else {
+                None
+            }
+        })
+    }
+
+    pub fn get_scope_id_from_span(&self, span: Span) -> Option<ScopeId> {
+        self.get_symbol_id_from_span(span).map(|symbol_id| self.symbols.get_scope_id(symbol_id))
     }
 }
 

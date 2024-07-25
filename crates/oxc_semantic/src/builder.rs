@@ -13,7 +13,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_span::{Atom, CompactStr, GetSpan, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
 use rustc_hash::FxHashMap;
 
@@ -343,13 +343,8 @@ impl<'a> SemanticBuilder<'a> {
 
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id = self.symbols.create_symbol(
-            span,
-            name.clone(),
-            includes,
-            scope_id,
-            self.current_node_id,
-        );
+        let symbol_id =
+            self.symbols.create_symbol(name.clone(), includes, scope_id, self.current_node_id);
         self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -376,7 +371,8 @@ impl<'a> SemanticBuilder<'a> {
             self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
         })?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
-            let symbol_span = self.symbols.get_span(symbol_id);
+            let declaration_node_id = self.symbols.get_declaration(symbol_id);
+            let symbol_span = self.nodes.kind(declaration_node_id).span();
             self.error(redeclaration(name, symbol_span, span));
         }
         Some(symbol_id)
@@ -401,14 +397,12 @@ impl<'a> SemanticBuilder<'a> {
     pub fn declare_shadow_symbol(
         &mut self,
         name: &str,
-        span: Span,
         scope_id: ScopeId,
         includes: SymbolFlags,
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
         let symbol_id = self.symbols.create_symbol(
-            span,
             name.clone(),
             includes,
             self.current_scope_id,

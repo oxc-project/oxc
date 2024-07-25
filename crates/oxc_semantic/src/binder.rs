@@ -254,8 +254,7 @@ impl<'a> Binder<'a> for CatchParameter<'a> {
         // unless CatchParameter is CatchParameter : BindingIdentifier
         if let BindingPatternKind::BindingIdentifier(ident) = &self.pattern.kind {
             let includes = SymbolFlags::FunctionScopedVariable | SymbolFlags::CatchVariable;
-            let symbol_id =
-                builder.declare_shadow_symbol(&ident.name, ident.span, current_scope_id, includes);
+            let symbol_id = builder.declare_shadow_symbol(&ident.name, current_scope_id, includes);
             ident.symbol_id.set(Some(symbol_id));
         } else {
             self.pattern.bound_names(&mut |ident| {

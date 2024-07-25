@@ -60,7 +60,7 @@ impl Rule for NoShadowRestrictedNames {
                 }
             }
 
-            let span = ctx.symbols().get_span(symbol_id);
+            let span = ctx.semantic().symbol_span(symbol_id);
             ctx.diagnostic(no_shadow_restricted_names_diagnostic(name, span));
 
             for &span in ctx.symbols().get_redeclarations(symbol_id) {
