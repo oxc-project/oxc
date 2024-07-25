@@ -8,7 +8,7 @@ use oxc_ast::{
     syntax_directed_operations::{BoundNames, IsSimpleParameterList},
     AstKind,
 };
-use oxc_span::SourceType;
+use oxc_span::{GetSpan, SourceType};
 
 use crate::{scope::ScopeFlags, symbol::SymbolFlags, SemanticBuilder};
 
@@ -382,7 +382,7 @@ impl<'a> Binder<'a> for TSModuleDeclaration<'a> {
         // is made inside a the scope of a module that the symbol is modified
         let ambient = if self.declare { SymbolFlags::Ambient } else { SymbolFlags::None };
         builder.declare_symbol(
-            self.span,
+            self.id.span(),
             self.id.name().as_str(),
             SymbolFlags::NameSpaceModule | ambient,
             SymbolFlags::None,
