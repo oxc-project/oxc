@@ -7,6 +7,7 @@ use oxc_span::SourceType;
 pub use self::meta::{MetaData, Phase, TestFlag};
 use crate::{
     project_root,
+    semantic::default_runner,
     suite::{Case, Suite, TestResult},
 };
 
@@ -139,35 +140,6 @@ impl Case for Test262Case {
     }
 
     fn check_semantic(&self, semantic: &oxc_semantic::Semantic<'_>) -> Option<TestResult> {
-        if are_all_identifiers_resolved(semantic) {
-            None
-        } else {
-            Some(TestResult::ParseError("Unset symbol / reference".to_string(), true))
-        }
+        Some(default_runner().test(semantic).into())
     }
-}
-
-fn are_all_identifiers_resolved(semantic: &oxc_semantic::Semantic<'_>) -> bool {
-    use oxc_ast::AstKind;
-    use oxc_semantic::AstNode;
-
-    let ast_nodes = semantic.nodes();
-    let has_non_resolved = ast_nodes.iter().any(|node| {
-        match node.kind() {
-            AstKind::BindingIdentifier(id) => {
-                let mut parents = ast_nodes.iter_parents(node.id()).map(AstNode::kind);
-                parents.next(); // Exclude BindingIdentifier itself
-                if let (Some(AstKind::Function(_)), Some(AstKind::IfStatement(_))) =
-                    (parents.next(), parents.next())
-                {
-                    return false;
-                }
-                id.symbol_id.get().is_none()
-            }
-            AstKind::IdentifierReference(ref_id) => ref_id.reference_id.get().is_none(),
-            _ => false,
-        }
-    });
-
-    !has_non_resolved
 }
