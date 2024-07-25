@@ -702,7 +702,9 @@ pub struct BinaryExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Private Identifier in Shift Expression
+/// `#brand in obj` in `class Foo { #brand; static isFoo(obj) { return #brand in obj; } }`
+///
+/// Represents a private in expression, which can include a private identifier, an operator, and a expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
