@@ -155,6 +155,24 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    pub fn does_not_contain_flags(mut self, flags: SymbolFlags) -> Self {
+        self.test_result = match self.test_result {
+            Ok(symbol_id) => {
+                let found_flags = self.semantic.symbols().get_flag(symbol_id);
+                if found_flags.contains(flags) {
+                    Err(OxcDiagnostic::error(format!(
+                        "Expected {} to not contain flags {:?}, but it had {:?}",
+                        self.target_symbol_name, flags, found_flags
+                    )))
+                } else {
+                    Ok(symbol_id)
+                }
+            }
+            err => err,
+        };
+        self
+    }
+
     /// Check that this symbol has a certain number of read [`Reference`]s
     ///
     /// References that are both read and write are counted.
@@ -292,11 +310,16 @@ impl<'a> SymbolTester<'a> {
     }
 
     /// Complete the test case. Will panic if any of the previously applied
-    /// assertions failed.
-    pub fn test(self) {
-        let res: Result<_, _> = self.into();
+    /// assertions failed. If all assertions pass, this function will return
+    /// the [`SymbolId`] of the target symbol.
+    ///
+    /// # Panics
+    /// - If any of the previously applied assertions failed.
+    /// - If the symbol could not be found in the semantic analysis results.
+    pub fn test(self) -> SymbolId {
+        let res: Result<SymbolId, _> = self.into();
 
-        res.unwrap();
+        res.unwrap()
     }
 }
 
@@ -344,9 +367,9 @@ impl<'a> Expect<(Rc<Semantic<'a>>, SymbolId), Result<(), OxcDiagnostic>> for Sym
     }
 }
 
-impl<'a> From<SymbolTester<'a>> for Result<(), Error> {
+impl<'a> From<SymbolTester<'a>> for Result<SymbolId, Error> {
     fn from(val: SymbolTester<'a>) -> Self {
         let source_code = val.parent.source_text.to_string();
-        val.test_result.map(|_| {}).map_err(|e| e.with_source_code(source_code))
+        val.test_result.map_err(|e| e.with_source_code(source_code))
     }
 }

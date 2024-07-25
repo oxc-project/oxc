@@ -38,6 +38,15 @@ fn test_function_expressions() {
 }
 
 #[test]
+fn test_function_iifes() {
+    SemanticTester::ts("(function foo() {})(); foo()")
+        .has_some_symbol("foo")
+        .contains_flags(SymbolFlags::Function)
+        .has_number_of_references(0)
+        .test();
+}
+
+#[test]
 fn test_var_simple() {
     SemanticTester::js("let x; { let y; }")
         .has_some_symbol("x")

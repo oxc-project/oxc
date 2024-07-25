@@ -1,4 +1,5 @@
-use oxc_semantic::ScopeFlags;
+use oxc_ast::AstKind;
+use oxc_semantic::{ScopeFlags, SymbolFlags};
 
 use crate::util::{Expect, SemanticTester};
 
@@ -104,6 +105,60 @@ fn test_switch_case() {
     .has_root_symbol("foo")
     .has_number_of_references(1)
     .test();
+}
+
+#[allow(clippy::disallowed_names)]
+#[test]
+fn test_function_scopes() {
+    let test = SemanticTester::ts("function foo() { return foo() }");
+    let foo_id = test
+        .has_root_symbol("foo")
+        .contains_flags(SymbolFlags::Function)
+        .contains_flags(SymbolFlags::BlockScopedVariable)
+        .has_number_of_reads(1)
+        .test();
+
+    let semantic = test.build();
+    let root_id = semantic.scopes().root_scope_id();
+    let foo_scope_id = semantic.symbols().get_scope_id(foo_id);
+    assert_eq!(foo_scope_id, root_id, "Expected fn foo to be in the root scope.");
+
+    let foo_node = semantic.nodes().get_node(semantic.symbols().get_declaration(foo_id));
+    let AstKind::Function(foo) = foo_node.kind() else {
+        panic!("Expected foo's declaration node to be a FunctionDeclaration");
+    };
+    assert!(foo.is_declaration(), "Expected foo's declaration node to be a FunctionDeclaration");
+    assert_eq!(foo_node.scope_id(), root_id, "Expected fn foo to be in the root scope.");
+    assert_ne!(
+        foo.scope_id.get().unwrap(),
+        root_id,
+        "function bodies should not be the root scope"
+    );
+
+    let binding_id = semantic
+        .scopes()
+        .get_binding(root_id, "foo")
+        .expect("Expected to find a binding for fn foo");
+    assert_eq!(binding_id, foo_id);
+
+    // =========================================================================
+
+    let test = SemanticTester::ts("(function foo() { return foo() })()");
+    let foo_id = test
+        .has_some_symbol("foo")
+        .contains_flags(SymbolFlags::Function)
+        .does_not_contain_flags(SymbolFlags::BlockScopedVariable)
+        .has_number_of_reads(1)
+        .test();
+
+    let semantic = test.build();
+    let root_id = semantic.scopes().root_scope_id();
+
+    let foo_node = semantic.nodes().get_node(semantic.symbols().get_declaration(foo_id));
+    let foo_scope_id = semantic.symbols().get_scope_id(foo_id);
+    assert_eq!(foo_node.scope_id(), root_id);
+    // FIXME: These should be equal
+    assert_ne!(foo_node.scope_id(), foo_scope_id);
 }
 
 #[test]
