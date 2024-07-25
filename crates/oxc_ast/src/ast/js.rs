@@ -715,7 +715,9 @@ pub struct PrivateInExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Binary Logical Operators
+/// `||` in `const foo = bar || 2;`
+///
+/// Represents a logical expression, which can include a left, an operator, and a right. The following syntaxes are supported. `||`, `&&` and `??`
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
