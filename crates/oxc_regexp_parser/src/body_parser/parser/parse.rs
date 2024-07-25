@@ -223,9 +223,9 @@ impl<'a> PatternParser<'a> {
             Some(ast::LookAroundGroupKind::Lookahead)
         } else if self.reader.eat3('(', '?', '!') {
             Some(ast::LookAroundGroupKind::NegativeLookahead)
-        } else if self.reader.eat3('(', '<', '=') {
+        } else if self.reader.eat4('(', '?', '<', '=') {
             Some(ast::LookAroundGroupKind::Lookbehind)
-        } else if self.reader.eat3('(', '<', '!') {
+        } else if self.reader.eat4('(', '?', '<', '!') {
             Some(ast::LookAroundGroupKind::NegativeLookbehind)
         } else {
             None

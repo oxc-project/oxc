@@ -69,6 +69,9 @@ impl<'a> Reader<'a> {
     pub fn peek3(&self) -> Option<u32> {
         self.peek_nth(2)
     }
+    pub fn peek4(&self) -> Option<u32> {
+        self.peek_nth(3)
+    }
 
     // NOTE: Consider `peek(ch: char): bool` style API?
 
@@ -92,6 +95,20 @@ impl<'a> Reader<'a> {
             && self.peek2() == Some(ch2 as u32)
             && self.peek3() == Some(ch3 as u32)
         {
+            self.advance();
+            self.advance();
+            self.advance();
+            return true;
+        }
+        false
+    }
+    pub fn eat4(&mut self, ch: char, ch2: char, ch3: char, ch4: char) -> bool {
+        if self.peek() == Some(ch as u32)
+            && self.peek2() == Some(ch2 as u32)
+            && self.peek3() == Some(ch3 as u32)
+            && self.peek4() == Some(ch4 as u32)
+        {
+            self.advance();
             self.advance();
             self.advance();
             self.advance();
