@@ -128,7 +128,7 @@ pub struct JSXOpeningFragment {
     pub span: Span,
 }
 
-//// JSX Closing Fragment (`</>`)
+/// JSX Closing Fragment (`</>`)
 #[ast]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
