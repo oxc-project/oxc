@@ -1,4 +1,5 @@
 use oxc_ast::AstKind;
+use oxc_semantic::SymbolFlags;
 
 use crate::{
     semantic::{SymbolTestCase, TestName},
@@ -22,7 +23,8 @@ impl SymbolTestCase for FunctionDecls {
     ) -> crate::suite::TestResult {
         let flags = semantic.symbols().get_flag(symbol_id);
 
-        if flags.is_function() {
+        // check function declarations. Function expressions are not BlockScopedVariables
+        if flags.is_function() && flags.contains(SymbolFlags::BlockScopedVariable){
             let decl = semantic.nodes().get_node(semantic.symbols().get_declaration(symbol_id));
             if matches!(decl.kind(), AstKind::Function(_)) {
                 TestResult::Passed

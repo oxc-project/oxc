@@ -4,6 +4,92 @@ parser_test262 Summary:
 AST Parsed     : 45859/45859 (100.00%)
 Positive Passed: 0/45859 (0.00%)
 Negative Passed: 0/3929 (0.00%)
+Expected valid semantics: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/inner-block-var-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/block-scope/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/module-code/export-default-asyncfunction-declaration-binding-exists.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/module-code/export-default-asyncgenerator-declaration-binding-exists.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/module-code/export-default-function-declaration-binding-exists.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/module-code/export-default-generator-declaration-binding-exists.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/module-code/parse-err-hoist-lex-fun.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/module-code/parse-err-hoist-lex-gen.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/class-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/const-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/let-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-async-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
+Expected valid semantics: "language/statements/try/early-catch-function.js"
+	Declaration for symbol flagged as a function does not point to a Function AST node.
 Expected valid semantics: "annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js"
 	AST Node Function(f) has an unbound identifier
 Expected valid semantics: "annexB/language/function-code/if-decl-else-decl-a-func-block-scoping.js"
