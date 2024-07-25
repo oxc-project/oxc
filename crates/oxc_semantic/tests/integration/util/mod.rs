@@ -13,10 +13,17 @@ use oxc_semantic::{dot::DebugDot, Semantic, SemanticBuilder, SemanticBuilderRetu
 use oxc_span::SourceType;
 pub use symbol_tester::SymbolTester;
 
+#[must_use]
 pub struct SemanticTester<'a> {
+    /// Memory arena that AST and [`Semantic`] will store data in.
     allocator: Allocator,
+    /// Source type of the test case.
     source_type: SourceType,
+    /// The source text of the test case.
     source_text: &'a str,
+    /// Build a [`ControlFlowGraph`]?
+    ///
+    /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     cfg: bool,
     /// Expect semantic analysis to produce errors.
     ///
@@ -46,6 +53,10 @@ impl<'a> SemanticTester<'a> {
         Self::new(source_text, SourceType::default().with_module(true))
     }
 
+    /// Create a new tester for some source text.
+    ///
+    /// You may find one of the other factory methods, like
+    /// [`SemanticTester::ts`] or [`SemanticTester::js`], more convenient.
     pub fn new(source_text: &'a str, source_type: SourceType) -> Self {
         Self {
             allocator: Allocator::default(),
@@ -57,30 +68,33 @@ impl<'a> SemanticTester<'a> {
     }
 
     /// Set the [`SourceType`] to TypeScript (or JavaScript, using `false`)
-    #[must_use]
     pub fn with_typescript(mut self, yes: bool) -> Self {
         self.source_type = SourceType::default().with_typescript(yes);
         self
     }
 
     /// Mark the [`SourceType`] as JSX
-    #[must_use]
+    ///
+    /// If the source is currently TypeScript, it will become TSX.
     pub fn with_jsx(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_jsx(yes);
         self
     }
 
-    #[must_use]
+    /// Mark the [`SourceType`] as an ESM module.
     pub fn with_module(mut self, yes: bool) -> Self {
         self.source_type = self.source_type.with_module(yes);
         self
     }
 
-    #[must_use]
+    /// Enable or disable building a [`ControlFlowGraph`].
+    ///
+    /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     pub fn with_cfg(mut self, yes: bool) -> Self {
         self.cfg = yes;
         self
     }
+
     /// The program being tested is expected to produce errors during semantic analysis.
     ///
     /// By default, programs are expected to be error-free.
@@ -94,7 +108,6 @@ impl<'a> SemanticTester<'a> {
     /// // Not allowed in TS
     /// T::ts("function foo(a, a) { }").expect_errors(true).has_root_symbol("foo").test()
     /// ```
-    #[must_use]
     pub fn expect_errors(mut self, yes: bool) -> Self {
         self.expect_errors = yes;
         self
@@ -205,6 +218,16 @@ impl<'a> SemanticTester<'a> {
         ClassTester::has_class(self.build(), name)
     }
 
+    /// Check if semantic analysis produces an error matching `message`.
+    ///
+    /// Matching is done using `.contains()`.
+    ///
+    /// ## Fails
+    /// - If [`parsing`] produces errors
+    /// - If [`SemanticBuilder`] finishes without producing any errors.
+    /// - If [`SemanticBuilder`] finishes with errors, but none of them match `message`
+    ///
+    /// [`parsing`]: oxc_parser::Parser::parse
     pub fn has_error(&self, message: &str) {
         let SemanticBuilderReturn { errors, .. } = self.build_with_errors();
         assert!(
