@@ -246,6 +246,7 @@ impl TraverseScoping {
 
         // Add binding to scope
         let symbol_id = self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id);
+        self.symbols.add_declaration(AstNodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
