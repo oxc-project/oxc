@@ -108,6 +108,10 @@ impl Rule for PreferLiteralEnumMember {
 
         ctx.diagnostic(prefer_literal_enum_member_diagnostic(decl.span));
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 #[test]

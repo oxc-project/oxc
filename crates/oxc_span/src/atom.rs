@@ -109,6 +109,13 @@ impl<'a> From<Atom<'a>> for String {
     }
 }
 
+impl<'a> From<Atom<'a>> for Cow<'a, str> {
+    #[inline]
+    fn from(value: Atom<'a>) -> Self {
+        Cow::Borrowed(value.as_str())
+    }
+}
+
 impl<'a> Deref for Atom<'a> {
     type Target = str;
 
@@ -144,6 +151,17 @@ impl<'a> PartialEq<Atom<'a>> for &str {
 impl<'a> PartialEq<str> for Atom<'a> {
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
+    }
+}
+
+impl<'a> PartialEq<Atom<'a>> for Cow<'_, str> {
+    fn eq(&self, other: &Atom<'a>) -> bool {
+        self.as_ref() == other.as_str()
+    }
+}
+impl<'a> PartialEq<&Atom<'a>> for Cow<'_, str> {
+    fn eq(&self, other: &&Atom<'a>) -> bool {
+        self.as_ref() == other.as_str()
     }
 }
 
@@ -265,6 +283,26 @@ impl From<String> for CompactStr {
     }
 }
 
+impl<'s> From<&'s CompactStr> for Cow<'s, str> {
+    fn from(value: &'s CompactStr) -> Self {
+        Self::Borrowed(value.as_str())
+    }
+}
+
+impl From<CompactStr> for Cow<'_, str> {
+    fn from(value: CompactStr) -> Self {
+        value.0.into()
+    }
+}
+impl From<Cow<'_, str>> for CompactStr {
+    fn from(value: Cow<'_, str>) -> Self {
+        match value {
+            Cow::Borrowed(s) => CompactStr::new(s),
+            Cow::Owned(s) => CompactStr::from(s),
+        }
+    }
+}
+
 impl Deref for CompactStr {
     type Target = str;
 
@@ -306,6 +344,12 @@ impl PartialEq<CompactStr> for str {
 impl PartialEq<str> for CompactStr {
     fn eq(&self, other: &str) -> bool {
         self.as_str() == other
+    }
+}
+
+impl PartialEq<CompactStr> for Cow<'_, str> {
+    fn eq(&self, other: &CompactStr) -> bool {
+        self.as_ref() == other.as_str()
     }
 }
 

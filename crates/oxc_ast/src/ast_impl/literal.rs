@@ -1,8 +1,5 @@
 //! Literals
 
-// NB: `#[visited_node]` attribute on AST nodes does not do anything to the code in this file.
-// It is purely a marker for codegen used in `oxc_traverse`. See docs in that crate.
-
 // Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
 #![allow(non_snake_case)]
 

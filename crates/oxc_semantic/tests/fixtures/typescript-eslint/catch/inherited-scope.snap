@@ -33,15 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/inherited
         "flag": "ScopeFlags(StrictMode | CatchClause)",
         "id": 2,
         "node": "CatchClause",
-        "symbols": [
-          {
-            "flag": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-            "id": 1,
-            "name": "e",
-            "node": "CatchParameter",
-            "references": []
-          }
-        ]
+        "symbols": []
       }
     ],
     "flag": "ScopeFlags(StrictMode | Top)",

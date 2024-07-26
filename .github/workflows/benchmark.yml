@@ -22,6 +22,7 @@ on:
       - 'napi/parser/**/*.js'
       - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
+      - 'rust-toolchain.toml'
       - '.github/workflows/benchmark.yml'
       - 'tasks/benchmark/codspeed/*.mjs'
   push:
@@ -32,6 +33,7 @@ on:
       - 'napi/parser/**/*.js'
       - 'napi/parser/**/*.mjs'
       - 'Cargo.lock'
+      - 'rust-toolchain.toml'
       - '.github/workflows/benchmark.yml'
       - 'tasks/benchmark/codspeed/*.mjs'
 

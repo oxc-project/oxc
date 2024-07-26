@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use oxc_ast::ast::Program;
-use oxc_index::{index_vec, IndexVec};
+use oxc_index::{index_vec, Idx, IndexVec};
 use oxc_semantic::{ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::CompactStr;
 
@@ -104,24 +104,8 @@ impl ManglerBuilder {
             let mut slot = parent_max_slot;
 
             if !bindings.is_empty() {
-                let mut parent_bindings = None;
-
                 // `bindings` are stored in order, traverse and increment slot
                 for symbol_id in bindings.values() {
-                    // omit var hoisting because var symbols are added to every parent scope
-                    if symbol_table.get_flag(*symbol_id).is_function_scoped_declaration()
-                        && parent_bindings.is_none()
-                    {
-                        parent_bindings = scope_tree
-                            .get_parent_id(scope_id)
-                            .map(|parent_scope_id| scope_tree.get_bindings(parent_scope_id));
-                    }
-                    if let Some(parent_bindings) = &parent_bindings {
-                        if parent_bindings.values().contains(symbol_id) {
-                            continue;
-                        }
-                    }
-
                     slots[*symbol_id] = slot;
                     slot += 1;
                 }

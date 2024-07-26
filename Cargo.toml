@@ -19,6 +19,7 @@ rust-version = "1.74"
 absolute_paths_not_starting_with_crate = "warn"
 non_ascii_idents                       = "warn"
 unit-bindings                          = "warn"
+unexpected_cfgs                        = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(coverage_nightly)'] }
 
 [workspace.lints.clippy]
 all        = { level = "warn", priority = -1 }
@@ -69,30 +70,31 @@ missing_const_for_fn = "allow"
 # cargo
 cargo                   = { level = "warn", priority = -1 }
 multiple_crate_versions = "allow"
-cargo_common_metadata   = "allow" # TODO: fix this
+cargo_common_metadata   = "allow" # FIXME
+doc_lazy_continuation   = "allow" # FIXME
 
 [workspace.dependencies]
 # publish = true
-oxc                       = { version = "0.21.0", path = "crates/oxc" }
-oxc_allocator             = { version = "0.21.0", path = "crates/oxc_allocator" }
-oxc_ast                   = { version = "0.21.0", path = "crates/oxc_ast" }
-oxc_codegen               = { version = "0.21.0", path = "crates/oxc_codegen" }
-oxc_diagnostics           = { version = "0.21.0", path = "crates/oxc_diagnostics" }
-oxc_index                 = { version = "0.21.0", path = "crates/oxc_index" }
-oxc_minifier              = { version = "0.21.0", path = "crates/oxc_minifier" }
-oxc_mangler               = { version = "0.21.0", path = "crates/oxc_mangler" }
-oxc_parser                = { version = "0.21.0", path = "crates/oxc_parser" }
-oxc_semantic              = { version = "0.21.0", path = "crates/oxc_semantic" }
-oxc_span                  = { version = "0.21.0", path = "crates/oxc_span" }
-oxc_syntax                = { version = "0.21.0", path = "crates/oxc_syntax" }
-oxc_transformer           = { version = "0.21.0", path = "crates/oxc_transformer" }
-oxc_sourcemap             = { version = "0.21.0", path = "crates/oxc_sourcemap" }
-oxc_ast_macros            = { version = "0.21.0", path = "crates/oxc_ast_macros" }
-oxc_traverse              = { version = "0.21.0", path = "crates/oxc_traverse" }
-oxc_module_lexer          = { version = "0.21.0", path = "crates/oxc_module_lexer" }
-oxc_cfg                   = { version = "0.21.0", path = "crates/oxc_cfg" }
-oxc_isolated_declarations = { version = "0.21.0", path = "crates/oxc_isolated_declarations" }
-oxc_transform_napi        = { version = "0.21.0", path = "napi/transform" }
+oxc                       = { version = "0.22.0", path = "crates/oxc" }
+oxc_allocator             = { version = "0.22.0", path = "crates/oxc_allocator" }
+oxc_ast                   = { version = "0.22.0", path = "crates/oxc_ast" }
+oxc_codegen               = { version = "0.22.0", path = "crates/oxc_codegen" }
+oxc_diagnostics           = { version = "0.22.0", path = "crates/oxc_diagnostics" }
+oxc_index                 = { version = "0.22.0", path = "crates/oxc_index" }
+oxc_minifier              = { version = "0.22.0", path = "crates/oxc_minifier" }
+oxc_mangler               = { version = "0.22.0", path = "crates/oxc_mangler" }
+oxc_parser                = { version = "0.22.0", path = "crates/oxc_parser" }
+oxc_semantic              = { version = "0.22.0", path = "crates/oxc_semantic" }
+oxc_span                  = { version = "0.22.0", path = "crates/oxc_span" }
+oxc_syntax                = { version = "0.22.0", path = "crates/oxc_syntax" }
+oxc_transformer           = { version = "0.22.0", path = "crates/oxc_transformer" }
+oxc_sourcemap             = { version = "0.22.0", path = "crates/oxc_sourcemap" }
+oxc_ast_macros            = { version = "0.22.0", path = "crates/oxc_ast_macros" }
+oxc_traverse              = { version = "0.22.0", path = "crates/oxc_traverse" }
+oxc_module_lexer          = { version = "0.22.0", path = "crates/oxc_module_lexer" }
+oxc_cfg                   = { version = "0.22.0", path = "crates/oxc_cfg" }
+oxc_isolated_declarations = { version = "0.22.0", path = "crates/oxc_isolated_declarations" }
+oxc_transform_napi        = { version = "0.22.0", path = "napi/transform" }
 
 # publish = false
 oxc_macros       = { path = "crates/oxc_macros" }
@@ -104,85 +106,86 @@ napi        = "3.0.0-alpha"
 napi-derive = "3.0.0-alpha"
 napi-build  = "2.1.3"
 
-assert-unchecked    = "0.1.2"
 allocator-api2      = "0.2.18"
-bpaf                = "0.9.12"
+assert-unchecked    = "0.1.2"
+base64              = "0.22.1"
+base64-simd         = "0.8"
 bitflags            = "2.5.0"
+bpaf                = "0.9.12"
 bumpalo             = "3.16.0"
+cfg-if              = "1.0.0"
+compact_str         = "0.8.0"
+console             = "0.15.8"
 convert_case        = "0.6.0"
+criterion2          = { version = "0.11.0", default-features = false }
+daachorse           = { version = "1.0.0" }
 dashmap             = "6.0.0"
+encoding_rs         = "0.8.34"
+encoding_rs_io      = "0.1.7"
+env_logger          = { version = "0.11.3", default-features = false }
 flate2              = "1.0.30"
 futures             = "0.3.30"
 glob                = "0.3.1"
+globset             = "0.4.14"
+handlebars          = "6.0.0"
+humansize           = "2.1.3"
 ignore              = "0.4.22"
+indexmap            = "2.2.6"
+insta               = "1.39.0"
 itertools           = "0.13.0"
 jemallocator        = "0.5.4"
+json-strip-comments = "1.0.2"
+language-tags       = "0.3.2"
 lazy_static         = "1.4.0"
+log                 = "0.4.21"
+memchr              = "2.7.2"
 memoffset           = "0.9.1"
 miette              = { version = "7.2.0", features = ["fancy-no-syscall"] }
 mimalloc            = "0.1.42"
+mime_guess          = "2.0.4"
+nonmax              = "0.5.5"
 num-bigint          = "0.4.5"
 num-traits          = "0.2.19"
+once_cell           = "1.19.0"
+ouroboros           = "0.18.4"
+owo-colors          = "4.0.0"
+oxc_resolver        = "1.8.2"
+oxc-browserslist    = "1.0.1"
+petgraph            = "0.6.5"
 phf                 = "0.11.2"
 pico-args           = "0.5.0"
+prettyplease        = "0.2.20"
 proc-macro2         = "1.0.85"
 project-root        = "0.2.2"
 quote               = "1.0.36"
 rayon               = "1.10.0"
 regex               = "1.10.5"
+ropey               = "1.6.1"
+rust-lapper         = "1.1.0"
 rustc-hash          = "2.*"
 ryu-js              = "1.0.1"
-ropey               = "1.6.1"
+saphyr              = "0.0.1"
+schemars            = "0.8.21"
 seq-macro           = "0.3.5"
 serde               = "1.0.203"
 serde_json          = "1.0.117"
+serde-wasm-bindgen  = "0.6.5"
+similar             = "2.5.0"
+static_assertions   = "1.1.0"
 syn                 = { version = "2.0.58", default-features = false }
 tempfile            = "3.10.1"
+textwrap            = "0.16.1"
 tokio               = "1.38.0"
 tower-lsp           = "0.20.0"
+tracing-subscriber  = "0.3.18"
 trybuild            = "1.0.96"
+tsify               = "0.4.5"
 unicode-id-start    = "1" # Relaxed version so the user can decide which unicode version to use.
+unicode-width       = "0.1.13"
 ureq                = { version = "2.9.6", default-features = false }
 url                 = "2.5.2"
 walkdir             = "2.5.0"
-indexmap            = "2.2.6"
-static_assertions   = "1.1.0"
-tracing-subscriber  = "0.3.18"
-insta               = "1.39.0"
-mime_guess          = "2.0.4"
-language-tags       = "0.3.2"
-tsify               = "0.4.5"
 wasm-bindgen        = "0.2.92"
-serde-wasm-bindgen  = "0.6.5"
-handlebars          = "5.1.2"
-base64              = "0.22.1"
-compact_str         = "0.8.0"
-console             = "0.15.8"
-encoding_rs         = "0.8.34"
-encoding_rs_io      = "0.1.7"
-env_logger          = { version = "0.11.3", default-features = false }
-globset             = "0.4.14"
-humansize           = "2.1.3"
-json-strip-comments = "1.0.2"
-log                 = "0.4.21"
-memchr              = "2.7.2"
-once_cell           = "1.19.0"
-ouroboros           = "0.18.4"
-owo-colors          = "4.0.0"
-oxc_resolver        = "1.8.2"
-petgraph            = "0.6.5"
-rust-lapper         = "1.1.0"
-similar             = "2.5.0"
-textwrap            = "0.16.1"
-unicode-width       = "0.1.13"
-saphyr              = "0.0.1"
-base64-simd         = "0.8"
-cfg-if              = "1.0.0"
-schemars            = "0.8.21"
-oxc-browserslist    = "1.0.1"
-prettyplease        = "0.2.20"
-criterion2          = { version = "0.11.0", default-features = false }
-daachorse           = { version = "1.0.0" }
 
 [workspace.metadata.cargo-shear]
 ignored = ["napi", "oxc_transform_napi", "prettyplease"]
@@ -210,7 +213,8 @@ strip         = "symbols" # set to `false` for debug information
 debug         = false # set to `true` for debug information
 panic         = "abort" # Let it crash and force ourselves to write safe Rust.
 
-# Faster compile time with thin lto
-[profile.release-thin]
-inherits = "release"
-lto      = "thin"
+# Profile for `cargo coverage`
+[profile.coverage]
+inherits         = "release"
+lto              = "thin" # Faster compile time with thin lto
+debug-assertions = true # Make sure `debug_assert!`s pass

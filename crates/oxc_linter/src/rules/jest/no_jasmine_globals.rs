@@ -54,7 +54,11 @@ impl Rule for NoJasmineGlobals {
             for &(reference_id, _) in reference_ids {
                 let reference = symbol_table.get_reference(reference_id);
                 if let Some((error, help)) = get_non_jasmine_property_messages(name) {
-                    ctx.diagnostic(no_jasmine_globals_diagnostic(error, help, reference.span()));
+                    ctx.diagnostic(no_jasmine_globals_diagnostic(
+                        error,
+                        help,
+                        ctx.semantic().reference_span(reference),
+                    ));
                 }
             }
         }

@@ -36,6 +36,10 @@ impl Rule for NoNonNullAssertion {
         let AstKind::TSNonNullExpression(expr) = node.kind() else { return };
         ctx.diagnostic(no_non_null_assertion_diagnostic(expr.span));
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 #[test]

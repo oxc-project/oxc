@@ -17,7 +17,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/attribute-s
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 0,
+            "id": 1,
             "name": "x",
             "node_id": 12
           }

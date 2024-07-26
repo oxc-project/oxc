@@ -249,6 +249,10 @@ impl Rule for ExplicitFunctionReturnType {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 impl ExplicitFunctionReturnType {
@@ -316,19 +320,19 @@ impl ExplicitFunctionReturnType {
                 let Some(name) = def.key.name() else { return false };
                 def.key.is_identifier()
                     && !def.computed
-                    && self.allowed_names.contains(name.as_str())
+                    && self.allowed_names.contains(name.as_ref())
             }
             AstKind::PropertyDefinition(def) => {
                 let Some(name) = def.key.name() else { return false };
                 def.key.is_identifier()
                     && !def.computed
-                    && self.allowed_names.contains(name.as_str())
+                    && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
                 let Some(name) = prop.key.name() else { return false };
                 prop.key.is_identifier()
                     && !prop.computed
-                    && self.allowed_names.contains(name.as_str())
+                    && self.allowed_names.contains(name.as_ref())
             }
             _ => false,
         }

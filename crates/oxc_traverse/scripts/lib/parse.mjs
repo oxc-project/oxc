@@ -72,7 +72,8 @@ class Lines {
 function parseFile(code, filename, types) {
     const lines = Lines.fromCode(code, filename);
     while (!lines.isEnd()) {
-        if (lines.current() !== '#[visited_node]') {
+        // if not #[ast(visit, ..)]
+        if (!/^#\[ast\(.*visit.*\)\]/.test(lines.current())) {
             lines.next();
             continue;
         }
@@ -87,7 +88,7 @@ function parseFile(code, filename, types) {
             match = lines.next().match(/^pub (enum|struct) ((.+?)(?:<'a>)?) \{/);
             if (match) break;
         }
-        lines.position().assert(match, `Could not find enum or struct after #[visited_node]`);
+        lines.position().assert(match, `Could not find enum or struct after #[ast]`);
         const [, kind, rawName, name] = match;
 
         // Find end of struct / enum

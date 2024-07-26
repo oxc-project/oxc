@@ -71,6 +71,10 @@ impl Rule for PreferTsExpectError {
             }
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 fn get_last_comment_line(comment: CommentKind, raw: &str) -> String {

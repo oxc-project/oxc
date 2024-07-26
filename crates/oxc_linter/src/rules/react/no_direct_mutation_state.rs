@@ -117,6 +117,10 @@ impl Rule for NoDirectMutationState {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 // check current node is this.state.xx

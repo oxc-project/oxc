@@ -1,25 +1,55 @@
-use std::num::NonZeroU32;
-
 use bitflags::bitflags;
+use nonmax::NonMaxU32;
 #[cfg(feature = "serialize")]
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use oxc_index::Idx;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[cfg_attr(feature = "serialize", derive(Serialize))]
-pub struct SymbolId(NonZeroU32);
+pub struct SymbolId(NonMaxU32);
 
 impl Idx for SymbolId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
-        // SAFETY: + 1 is always non-zero.
-
-        unsafe { Self(NonZeroU32::new_unchecked(idx as u32 + 1)) }
+        Self(NonMaxU32::new(idx as u32).unwrap())
     }
 
     fn index(self) -> usize {
-        self.0.get() as usize - 1
+        self.0.get() as usize
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl Serialize for SymbolId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u32(self.0.get())
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct RedeclarationId(NonMaxU32);
+
+impl Idx for RedeclarationId {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        Self(NonMaxU32::new(idx as u32).unwrap())
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl Serialize for RedeclarationId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u32(self.0.get())
     }
 }
 
@@ -28,6 +58,7 @@ impl Idx for SymbolId {
 const TS_APPEND_CONTENT: &'static str = r#"
 export type SymbolId = number;
 export type SymbolFlags = unknown;
+export type RedeclarationId = unknown;
 "#;
 
 bitflags! {
@@ -94,6 +125,10 @@ impl SymbolFlags {
         self.intersects(Self::Variable)
     }
 
+    pub fn is_type_parameter(&self) -> bool {
+        self.contains(Self::TypeParameter)
+    }
+
     /// If true, then the symbol is a type, such as a TypeAlias, Interface, or Enum
     pub fn is_type(&self) -> bool {
         self.intersects((Self::TypeImport | Self::Type) - Self::Value)
@@ -116,6 +151,18 @@ impl SymbolFlags {
         self.contains(Self::Class)
     }
 
+    pub fn is_interface(&self) -> bool {
+        self.contains(Self::Interface)
+    }
+
+    pub fn is_type_alias(&self) -> bool {
+        self.contains(Self::TypeAlias)
+    }
+
+    pub fn is_enum(&self) -> bool {
+        self.intersects(Self::Enum)
+    }
+
     pub fn is_catch_variable(&self) -> bool {
         self.contains(Self::CatchVariable)
     }
@@ -130,6 +177,10 @@ impl SymbolFlags {
 
     pub fn is_import(&self) -> bool {
         self.intersects(Self::Import | Self::TypeImport)
+    }
+
+    pub fn is_type_import(&self) -> bool {
+        self.contains(Self::TypeImport)
     }
 
     /// If true, then the symbol can be referenced by a type

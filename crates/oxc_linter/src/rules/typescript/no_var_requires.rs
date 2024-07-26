@@ -34,9 +34,6 @@ declare_oxc_lint!(
 
 impl Rule for NoVarRequires {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !ctx.source_type().is_typescript() {
-            return;
-        }
         let AstKind::CallExpression(expr) = node.kind() else {
             return;
         };
@@ -67,6 +64,10 @@ impl Rule for NoVarRequires {
                 ctx.diagnostic(no_var_requires_diagnostic(node.kind().span()));
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

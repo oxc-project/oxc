@@ -127,7 +127,7 @@ impl GetMethod for ClassElement<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
             ClassElement::MethodDefinition(def) => def.key.static_name().map(|name| Method {
-                name,
+                name: name.into(),
                 r#static: def.r#static,
                 call_signature: false,
                 kind: get_kind_from_key(&def.key),
@@ -142,7 +142,7 @@ impl GetMethod for TSSignature<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
             TSSignature::TSMethodSignature(sig) => sig.key.static_name().map(|name| Method {
-                name: name.clone(),
+                name: name.into(),
                 r#static: false,
                 call_signature: false,
                 kind: get_kind_from_key(&sig.key),
@@ -318,6 +318,10 @@ impl Rule for AdjacentOverloadSignatures {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

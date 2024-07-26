@@ -64,6 +64,10 @@ impl Rule for NoExtraNonNullAssertion {
             ctx.diagnostic(no_extra_non_null_assertion_diagnostic(Span::new(end, end)));
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 #[test]

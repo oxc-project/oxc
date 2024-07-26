@@ -719,9 +719,9 @@ dependencies = [
 
 [[package]]
 name = "handlebars"
-version = "5.1.2"
+version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d08485b96a0e6393e9e4d1b8d48cf74ad6c063cd905eb33f42c1ce3f0377539b"
+checksum = "5226a0e122dc74917f3a701484482bed3ee86d016c7356836abbaa033133a157"
 dependencies = [
  "log",
  "pest",
@@ -934,7 +934,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e310b3a6b5907f99202fcdb4960ff45b93735d7c7d96b760fcff8db2dc0e103d"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -1154,6 +1154,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nonmax"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "610a5acd306ec67f907abe5567859a3c693fb9886eb1f012ab8f2a47bef3db51"
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1273,7 +1279,7 @@ checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
 name = "oxc"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1310,7 +1316,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1320,7 +1326,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "bitflags 2.6.0",
  "num-bigint",
@@ -1354,7 +1360,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.21.0"
+version = "0.22.0"
 
 [[package]]
 name = "oxc_benchmark"
@@ -1379,7 +1385,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "bitflags 2.6.0",
  "itertools 0.13.0",
@@ -1390,7 +1396,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "base64",
  "bitflags 2.6.0",
@@ -1445,7 +1451,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "miette",
  "owo-colors",
@@ -1455,14 +1461,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "insta",
  "oxc_allocator",
@@ -1526,6 +1532,7 @@ dependencies = [
  "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
+ "oxc_index",
  "oxc_macros",
  "oxc_parser",
  "oxc_resolver",
@@ -1558,7 +1565,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "itertools 0.13.0",
  "oxc_ast",
@@ -1569,7 +1576,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "insta",
  "num-bigint",
@@ -1603,7 +1610,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_module_lexer"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1613,7 +1620,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
@@ -1706,8 +1713,9 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
+ "assert-unchecked",
  "indexmap",
  "insta",
  "itertools 0.13.0",
@@ -1729,7 +1737,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -1741,7 +1749,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "compact_str",
  "miette",
@@ -1753,10 +1761,11 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "bitflags 2.6.0",
  "dashmap 6.0.1",
+ "nonmax",
  "oxc_index",
  "oxc_span",
  "phf",
@@ -1797,7 +1806,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "napi",
  "napi-build",
@@ -1813,7 +1822,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "dashmap 6.0.1",
  "indexmap",
@@ -1835,7 +1844,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.21.0"
+version = "0.22.0"
 dependencies = [
  "compact_str",
  "memoffset",
@@ -1852,6 +1861,7 @@ name = "oxc_wasm"
 version = "0.0.0"
 dependencies = [
  "oxc",
+ "oxc_index",
  "oxc_linter",
  "oxc_prettier",
  "serde",

@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use oxc_ast::{
     ast::{ArrowFunctionExpression, Function},
     AstKind,
@@ -8,7 +10,6 @@ use oxc_cfg::{
 };
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodeId, AstNodes};
-use oxc_span::CompactStr;
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
@@ -191,7 +192,7 @@ impl Rule for RulesOfHooks {
                 //         useState(0);
                 //     }
                 // }
-                if ident.is_some_and(|name| !is_react_component_or_hook_name(name.as_str()))
+                if ident.is_some_and(|name| !is_react_component_or_hook_name(&name))
                     || is_export_default(nodes, parent_func.id())
                 {
                     return ctx.diagnostic(diagnostics::function_error(
@@ -352,7 +353,9 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
             (
                 node.id(),
                 match node.kind() {
-                    AstKind::Function(func) => func.id.as_ref().map(|it| it.name.to_compact_str()),
+                    AstKind::Function(func) => {
+                        func.id.as_ref().map(|it| Cow::Borrowed(it.name.as_str()))
+                    }
                     AstKind::ArrowFunctionExpression(_) => {
                         get_declaration_identifier(nodes, node.id())
                     }
@@ -362,8 +365,7 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
         })
         .any(|(id, ident)| {
             ident.is_some_and(|name| {
-                is_react_component_or_hook_name(name.as_str())
-                    || is_memo_or_forward_ref_callback(nodes, id)
+                is_react_component_or_hook_name(&name) || is_memo_or_forward_ref_callback(nodes, id)
             })
         })
 }
@@ -371,12 +373,12 @@ fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: AstNodeId) -
 fn get_declaration_identifier<'a>(
     nodes: &'a AstNodes<'a>,
     node_id: AstNodeId,
-) -> Option<CompactStr> {
+) -> Option<Cow<'a, str>> {
     nodes.ancestors(node_id).map(|id| nodes.kind(id)).find_map(|kind| {
         match kind {
             // const useHook = () => {};
             AstKind::VariableDeclaration(decl) if decl.declarations.len() == 1 => {
-                decl.declarations[0].id.get_identifier().map(|id| id.to_compact_str())
+                decl.declarations[0].id.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
             }
             // useHook = () => {};
             AstKind::AssignmentExpression(expr)
@@ -387,7 +389,7 @@ fn get_declaration_identifier<'a>(
             // const {useHook = () => {}} = {};
             // ({useHook = () => {}} = {});
             AstKind::AssignmentPattern(patt) => {
-                patt.left.get_identifier().map(|id| id.to_compact_str())
+                patt.left.get_identifier().map(|id| Cow::Borrowed(id.as_str()))
             }
             // { useHook: () => {} }
             // { useHook() {} }

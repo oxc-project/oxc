@@ -2,22 +2,22 @@ use itertools::Itertools;
 use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
-use crate::{schema::RType, util::TypeExt, CodegenCtx, Generator, GeneratorOutput, TypeRef};
+use crate::{
+    markers::get_visit_markers, schema::RType, util::TypeExt, CodegenCtx, Generator,
+    GeneratorOutput, TypeRef,
+};
 
 use super::generated_header;
 
 pub struct AstKindGenerator;
 
-pub const BLACK_LIST: [&str; 65] = [
+pub const BLACK_LIST: [&str; 62] = [
     "Expression",
     "ObjectPropertyKind",
     "TemplateElement",
     "ComputedMemberExpression",
     "StaticMemberExpression",
     "PrivateFieldExpression",
-    "AssignmentTargetPattern",
-    "ArrayAssignmentTarget",
-    "ObjectAssignmentTarget",
     "AssignmentTargetRest",
     "AssignmentTargetMaybeDefault",
     "AssignmentTargetProperty",
@@ -91,35 +91,27 @@ pub fn process_types(ty: &TypeRef) -> Vec<(Ident, Type)> {
             .item
             .variants
             .iter()
-            .filter_map(|it| {
-                it.attrs
-                    .iter()
-                    .find(|it| it.path().is_ident("visit_as"))
-                    .map(|attr| (it, attr))
-                    .map(|(it, attr)| {
-                        assert!(
-                            it.fields.len() == 1,
-                            "visit_as only supports single argument fields."
-                        );
-                        let field = it.fields.iter().next().unwrap();
-                        let type_name = field.ty.get_ident().inner_ident();
-                        (attr.parse_args().unwrap(), parse_quote!(#type_name<'a>))
-                    })
+            .map(|it| (it, get_visit_markers(&it.attrs).transpose().unwrap()))
+            .filter(|(_, markers)| markers.as_ref().is_some_and(|mk| mk.visit_as.is_some()))
+            .filter_map(|(it, markers)| {
+                markers.map(|markers| {
+                    let field = it.fields.iter().next().unwrap();
+                    let type_name = field.ty.get_ident().inner_ident();
+                    (markers.visit_as.expect("Already checked"), parse_quote!(#type_name<'a>))
+                })
             })
             .collect_vec(),
         RType::Struct(struct_) => struct_
             .item
             .fields
             .iter()
-            .filter_map(|it| {
-                it.attrs
-                    .iter()
-                    .find(|it| it.path().is_ident("visit_as"))
-                    .map(|attr| (it, attr))
-                    .map(|(field, attr)| {
-                        let type_name = field.ty.get_ident().inner_ident();
-                        (attr.parse_args().unwrap(), parse_quote!(#type_name<'a>))
-                    })
+            .map(|it| (it, get_visit_markers(&it.attrs).transpose().unwrap()))
+            .filter(|(_, markers)| markers.as_ref().is_some_and(|mk| mk.visit_as.is_some()))
+            .filter_map(|(field, markers)| {
+                markers.map(|markers| {
+                    let type_name = field.ty.get_ident().inner_ident();
+                    (markers.visit_as.expect("Already checked"), parse_quote!(#type_name<'a>))
+                })
             })
             .collect_vec(),
         _ => panic!(),
