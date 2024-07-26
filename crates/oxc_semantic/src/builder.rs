@@ -1759,6 +1759,7 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
