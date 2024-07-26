@@ -6,6 +6,31 @@ use oxc_span::CompactStr;
 
 use super::{Expect, SemanticTester};
 
+/// Test a symbol in the [`Semantic`] analysis results.
+///
+/// To use this, chain together assertions about the symbol, such as
+/// [`SymbolTester::contains_flags`], [`SymbolTester::has_number_of_reads`],
+/// etc., then finish the chain off with a call to [`SymbolTester::test`].
+///
+/// You will never create this struct manually. Instead, use one of
+/// [`SemanticTester`]'s factories, such as [`SemanticTester::has_root_symbol`].
+///
+/// # Example
+/// ```
+/// use oxc_semantic::{SymbolFlags, Semantic};
+/// use super::SemanticTester;
+///
+/// #[test]
+/// fn my_test() {
+///   SemanticTester::js("let x = 0; let foo = (0, x++)")
+///     .has_some_symbol("x")                  // find a symbol named "x" at any scope
+///     .contains_flags(SymbolFlags::Variable) // check that it's a variable
+///     .has_number_of_reads(1)                // check read references
+///     .has_number_of_writes(1)               // check write references
+///     .test();                               // finish the test. Will panic if any assertions failed.
+/// }
+///```
+#[must_use]
 pub struct SymbolTester<'a> {
     parent: &'a SemanticTester<'a>,
     /// Reference to semantic analysis results, from [`SemanticTester`]
@@ -94,7 +119,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     /// Checks if the resolved symbol contains all flags in `flags`, using [`SymbolFlags::contains()`]
-    #[must_use]
     pub fn contains_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -113,7 +137,6 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
-    #[must_use]
     pub fn intersects_flags(mut self, flags: SymbolFlags) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -132,22 +155,27 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
-    #[must_use]
+    /// Check that this symbol has a certain number of read [`Reference`]s
+    ///
+    /// References that are both read and write are counted.
     pub fn has_number_of_reads(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, Reference::is_read)
     }
 
-    #[must_use]
+    /// Check that this symbol has a certain number of write [`Reference`]s.
+    ///
+    /// References that are both read and write are counted.
     pub fn has_number_of_writes(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, Reference::is_write)
     }
 
-    #[must_use]
+    /// Check that this symbol has a certain number of [`Reference`]s of any kind.
     pub fn has_number_of_references(self, ref_count: usize) -> Self {
         self.has_number_of_references_where(ref_count, |_| true)
     }
 
-    #[must_use]
+    /// Check that this symbol has a certain number of [`Reference`]s that meet
+    /// some criteria established by a predicate.
     pub fn has_number_of_references_where<F>(mut self, ref_count: usize, filter: F) -> Self
     where
         F: FnMut(&Reference) -> bool,
@@ -175,8 +203,13 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    /// Check that this symbol is exported.
+    ///
+    /// Export status is checked using the symbol's [`SymbolFlags`], not by
+    /// checking the [`oxc_semantic::ModuleRecord`].
+    ///
+    /// For the inverse of this assertion, use [`SymbolTester::is_not_exported`].
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_exported(mut self) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -194,8 +227,13 @@ impl<'a> SymbolTester<'a> {
         self
     }
 
+    /// Check that this symbol is not exported.
+    ///
+    /// Export status is checked using the symbol's [`SymbolFlags`], not by
+    /// checking the [`oxc_semantic::ModuleRecord`].
+    ///
+    /// For the inverse of this assertion, use [`SymbolTester::is_exported`].
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_not_exported(mut self) -> Self {
         self.test_result = match self.test_result {
             Ok(symbol_id) => {
@@ -214,7 +252,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_in_scope(mut self, expected_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();
         self.test_result = match self.test_result {
@@ -235,7 +272,6 @@ impl<'a> SymbolTester<'a> {
     }
 
     #[allow(clippy::wrong_self_convention)]
-    #[must_use]
     pub fn is_not_in_scope(mut self, excluded_flags: ScopeFlags) -> Self {
         let target_name: &str = self.target_symbol_name.as_ref();
         self.test_result = match self.test_result {

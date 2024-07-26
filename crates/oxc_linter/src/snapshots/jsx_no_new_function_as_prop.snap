@@ -2,64 +2,122 @@
 source: crates/oxc_linter/src/tester.rs
 ---
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:13]
- 1 │ <Item prop={function(){return true}} />
-   ·             ───────────────────────
+   ╭─[jsx_no_new_function_as_prop.tsx:1:32]
+ 1 │ const Foo = () => (<Item prop={function(){return true}} />)
+   ·                                ───────────────────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:13]
- 1 │ <Item prop={() => true} />
-   ·             ──────────
+   ╭─[jsx_no_new_function_as_prop.tsx:1:32]
+ 1 │ const Foo = () => (<Item prop={() => true} />)
+   ·                                ──────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:13]
- 1 │ <Item prop={new Function('a', 'alert(a)')}/>
-   ·             ─────────────────────────────
+   ╭─[jsx_no_new_function_as_prop.tsx:1:32]
+ 1 │ const Foo = () => (<Item prop={new Function('a', 'alert(a)')}/>)
+   ·                                ─────────────────────────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:13]
- 1 │ <Item prop={Function()}/>
-   ·             ──────────
+   ╭─[jsx_no_new_function_as_prop.tsx:1:32]
+ 1 │ const Foo = () => (<Item prop={Function()}/>)
+   ·                                ──────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:16]
- 1 │ <Item onClick={this.clickHandler.bind(this)} />
-   ·                ────────────────────────────
+   ╭─[jsx_no_new_function_as_prop.tsx:1:35]
+ 1 │ const Foo = () => (<Item onClick={this.clickHandler.bind(this)} />)
+   ·                                   ────────────────────────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:40]
- 1 │ <Item callback={this.props.callback || function() {}} />
-   ·                                        ─────────────
-   ╰────
-  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
-
-  ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:61]
- 1 │ <Item callback={this.props.callback ? this.props.callback : function() {}} />
-   ·                                                             ─────────────
+   ╭─[jsx_no_new_function_as_prop.tsx:1:59]
+ 1 │ const Foo = () => (<Item callback={this.props.callback || function() {}} />)
+   ·                                                           ─────────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
    ╭─[jsx_no_new_function_as_prop.tsx:1:80]
- 1 │ <Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />
-   ·                                                                                ────────────
+ 1 │ const Foo = () => (<Item callback={this.props.callback ? this.props.callback : function() {}} />)
+   ·                                                                                ─────────────
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
 
   ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
-   ╭─[jsx_no_new_function_as_prop.tsx:1:69]
- 1 │ <Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />
-   ·                                                                     ────────────
+   ╭─[jsx_no_new_function_as_prop.tsx:1:99]
+ 1 │ const Foo = () => (<Item prop={this.props.callback || this.props.callback ? this.props.callback : function(){}} />)
+   ·                                                                                                   ────────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
+   ╭─[jsx_no_new_function_as_prop.tsx:1:88]
+ 1 │ const Foo = () => (<Item prop={this.props.callback || (this.props.cb ? this.props.cb : function(){})} />)
+   ·                                                                                        ────────────
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
+   ╭─[jsx_no_new_function_as_prop.tsx:3:19]
+ 2 │         const Foo = ({ onClick }) => {
+ 3 │             const _onClick = onClick.bind(this)
+   ·                   ────┬───
+   ·                       ╰── The prop was declared here
+ 4 │             return <button onClick={_onClick} />
+   ·                                     ────┬───
+   ·                                         ╰── And used here
+ 5 │         }
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
+   ╭─[jsx_no_new_function_as_prop.tsx:3:22]
+ 2 │         const Foo = () => {
+ 3 │             function onClick(e) {
+   ·                      ───┬───
+   ·                         ╰── The prop was declared here
+ 4 │                 window.location.navigate(e.target.href)
+ 5 │             }
+ 6 │             return <a onClick={onClick} />
+   ·                                ───┬───
+   ·                                   ╰── And used here
+ 7 │         }
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
+   ╭─[jsx_no_new_function_as_prop.tsx:3:19]
+ 2 │         const Foo = () => {
+ 3 │             const onClick = (e) => {
+   ·                   ───┬───
+   ·                      ╰── The prop was declared here
+ 4 │                 window.location.navigate(e.target.href)
+ 5 │             }
+ 6 │             return <a onClick={onClick} />
+   ·                                ───┬───
+   ·                                   ╰── And used here
+ 7 │         }
+   ╰────
+  help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).
+
+  ⚠ eslint-plugin-react-perf(jsx-no-new-function-as-prop): JSX attribute values should not contain functions created in the same scope.
+   ╭─[jsx_no_new_function_as_prop.tsx:3:19]
+ 2 │         const Foo = () => {
+ 3 │             const onClick = function (e) {
+   ·                   ───┬───
+   ·                      ╰── The prop was declared here
+ 4 │                 window.location.navigate(e.target.href)
+ 5 │             }
+ 6 │             return <a onClick={onClick} />
+   ·                                ───┬───
+   ·                                   ╰── And used here
+ 7 │         }
    ╰────
   help: simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array).

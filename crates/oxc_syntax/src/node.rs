@@ -1,12 +1,59 @@
 use bitflags::bitflags;
-use oxc_index::define_index_type;
 
-define_index_type! {
-    pub struct AstNodeId = u32;
-}
+use nonmax::NonMaxU32;
+#[cfg(feature = "serialize")]
+use serde::{Serialize, Serializer};
+
+use oxc_index::Idx;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+pub struct AstNodeId(NonMaxU32);
 
 impl AstNodeId {
-    pub const DUMMY: Self = AstNodeId::from_raw_unchecked(0);
+    pub const DUMMY: Self = AstNodeId::new(0);
+
+    /// Create `AstNodeId` from `u32`.
+    ///
+    /// # Panics
+    /// Panics if `idx` is `u32::MAX`.
+    pub const fn new(idx: u32) -> Self {
+        // We could use `NonMaxU32::new(idx).unwrap()` but `Option::unwrap` is not a const function
+        // and we want this function to be
+        assert!(idx != u32::MAX);
+        // SAFETY: We have checked that `idx` is not `u32::MAX`
+        unsafe { Self::new_unchecked(idx) }
+    }
+
+    /// Create `AstNodeId` from `u32` unchecked.
+    ///
+    /// # SAFETY
+    /// `idx` must not be `u32::MAX`.
+    #[allow(clippy::missing_safety_doc, clippy::unnecessary_safety_comment)]
+    pub const unsafe fn new_unchecked(idx: u32) -> Self {
+        // SAFETY: Caller must ensure `idx` is not `u32::MAX`
+        Self(NonMaxU32::new_unchecked(idx))
+    }
+}
+
+impl Idx for AstNodeId {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        Self(NonMaxU32::new(idx as u32).unwrap())
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl Serialize for AstNodeId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        serializer.serialize_u32(self.0.get())
+    }
 }
 
 #[cfg(feature = "serialize")]

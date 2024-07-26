@@ -66,7 +66,7 @@ impl Rule for NoRedeclare {
                 AstKind::VariableDeclarator(var) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
                         if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                            for span in ctx.symbols().get_redeclarations(symbol_id) {
                                 self.report_diagnostic(ctx, *span, ident);
                             }
                         }
@@ -75,7 +75,7 @@ impl Rule for NoRedeclare {
                 AstKind::FormalParameter(param) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                         if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                            for span in ctx.symbols().get_redeclarations(symbol_id) {
                                 self.report_diagnostic(ctx, *span, ident);
                             }
                         }

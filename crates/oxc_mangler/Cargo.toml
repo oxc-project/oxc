@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_mangler"
-version                = "0.21.0"
+version                = "0.22.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -26,10 +26,3 @@ oxc_ast      = { workspace = true }
 oxc_semantic = { workspace = true }
 oxc_index    = { workspace = true }
 itertools    = { workspace = true }
-
-[dev-dependencies]
-oxc_codegen   = { workspace = true }
-oxc_parser    = { workspace = true }
-oxc_span      = { workspace = true }
-oxc_allocator = { workspace = true }
-insta         = { workspace = true }

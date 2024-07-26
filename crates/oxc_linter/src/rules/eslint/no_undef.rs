@@ -1,7 +1,7 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -52,13 +52,13 @@ impl Rule for NoUndef {
         for reference_id_list in ctx.scopes().root_unresolved_references_ids() {
             for reference_id in reference_id_list {
                 let reference = symbol_table.get_reference(reference_id);
-                let name = reference.name();
+                let name = ctx.semantic().reference_name(reference);
 
                 if ctx.env_contains_var(name) {
                     continue;
                 }
 
-                if ctx.globals().is_enabled(name.as_str()) {
+                if ctx.globals().is_enabled(name) {
                     continue;
                 }
 
@@ -67,7 +67,7 @@ impl Rule for NoUndef {
                     continue;
                 }
 
-                ctx.diagnostic(no_undef_diagnostic(name, reference.span()));
+                ctx.diagnostic(no_undef_diagnostic(name, node.kind().span()));
             }
         }
     }
