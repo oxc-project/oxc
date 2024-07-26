@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 #[cfg(feature = "concurrent")]
 use rayon::prelude::*;
 
@@ -26,37 +28,43 @@ pub fn encode(sourcemap: &SourceMap) -> JSONSourceMap {
 // Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
 // It will escape the string to avoid invalid JSON string.
 pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
-    let mut buf = String::new();
-    buf.push_str("{\"version\":3,");
+    let mut contents = PreAllocatedString::new(
+        10 + sourcemap.names.len() * 2
+            + sourcemap.sources.len() * 2
+            + if let Some(x) = &sourcemap.x_google_ignore_list { x.len() * 2 } else { 0 },
+    );
+    contents.push("{\"version\":3,".into());
     if let Some(file) = sourcemap.get_file() {
-        buf.push_str("\"file\":\"");
-        buf.push_str(file);
-        buf.push_str("\",");
+        contents.push("\"file\":\"".into());
+        contents.push(file.into());
+        contents.push("\",".into());
     }
     if let Some(source_root) = sourcemap.get_source_root() {
-        buf.push_str("\"sourceRoot\":\"");
-        buf.push_str(source_root);
-        buf.push_str("\",");
+        contents.push("\"sourceRoot\":\"".into());
+        contents.push(source_root.into());
+        contents.push("\",".into());
     }
-    buf.push_str("\"names\":[");
-    let names = sourcemap
-        .names
-        .iter()
-        .map(|x| serde_json::to_string(x.as_ref()))
-        .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
-        .map_err(Error::from)?;
-    buf.push_str(&names.join(","));
-    buf.push_str("],\"sources\":[");
-    let sources = sourcemap
-        .sources
-        .iter()
-        .map(|x| serde_json::to_string(x.as_ref()))
-        .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
-        .map_err(Error::from)?;
-    buf.push_str(&sources.join(","));
+    contents.push("\"names\":[".into());
+    for n in &sourcemap.names {
+        contents.push(serde_json::to_string(n.as_ref())?.into());
+        contents.push(",".into());
+    }
+    if !sourcemap.names.is_empty() {
+        // Remove the last `,`.
+        contents.pop();
+    }
+    contents.push(Cow::Borrowed("],\"sources\":["));
+    for s in &sourcemap.sources {
+        contents.push(serde_json::to_string(s.as_ref())?.into());
+        contents.push(",".into());
+    }
+    if !sourcemap.sources.is_empty() {
+        // Remove the last `,`.
+        contents.pop();
+    }
     // Quote `source_content` at parallel.
     if let Some(source_contents) = &sourcemap.source_contents {
-        buf.push_str("],\"sourcesContent\":[");
+        contents.push("],\"sourcesContent\":[".into());
         cfg_if::cfg_if! {
             if #[cfg(feature = "concurrent")] {
                 let quote_source_contents = source_contents
@@ -72,18 +80,24 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
                     .map_err(Error::from)?;
             }
         };
-        buf.push_str(&quote_source_contents.join(","));
+
+        contents.push(quote_source_contents.join(",").into());
     }
     if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
-        buf.push_str("],\"x_google_ignoreList\":[");
-        let x_google_ignore_list =
-            x_google_ignore_list.iter().map(ToString::to_string).collect::<Vec<_>>();
-        buf.push_str(&x_google_ignore_list.join(","));
+        contents.push("],\"x_google_ignoreList\":[".into());
+        for ignore in x_google_ignore_list {
+            contents.push(ignore.to_string().into());
+            contents.push(",".into());
+        }
+        if !x_google_ignore_list.is_empty() {
+            // Remove the last `,`.
+            contents.pop();
+        }
     }
-    buf.push_str("],\"mappings\":\"");
-    buf.push_str(&serialize_sourcemap_mappings(sourcemap));
-    buf.push_str("\"}");
-    Ok(buf)
+    contents.push("],\"mappings\":\"".into());
+    contents.push(serialize_sourcemap_mappings(sourcemap).into());
+    contents.push("\"}".into());
+    Ok(contents.consume())
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -115,8 +129,6 @@ fn serialize_sourcemap_mappings(sm: &SourceMap) -> String {
 }
 
 fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
-    let mut rv = String::new();
-
     let TokenChunk {
         start,
         end,
@@ -127,6 +139,10 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
         mut prev_name_id,
         mut prev_source_id,
     } = *token_chunk;
+
+    let capacity = ((end - start) * 10) as usize;
+
+    let mut rv = String::with_capacity(capacity);
 
     for (idx, token) in tokens[start as usize..end as usize].iter().enumerate() {
         let index = start as usize + idx;
@@ -184,6 +200,41 @@ fn encode_vlq(out: &mut String, num: i64) {
         if num == 0 {
             break;
         }
+    }
+}
+
+/// A helper for pre-allocate string buffer.
+///
+/// Pre-allocate a Cow<'a, str> buffer, and push the segment into it.
+/// Finally, convert it to a pre-allocated length String.
+struct PreAllocatedString<'a> {
+    buf: Vec<Cow<'a, str>>,
+    len: usize,
+}
+
+impl<'a> PreAllocatedString<'a> {
+    fn new(max_segments: usize) -> Self {
+        Self { buf: Vec::with_capacity(max_segments), len: 0 }
+    }
+
+    #[inline]
+    fn push(&mut self, s: Cow<'a, str>) {
+        self.len += s.len();
+        self.buf.push(s);
+    }
+
+    #[inline]
+    fn pop(&mut self) {
+        if let Some(s) = self.buf.pop() {
+            self.len -= s.len();
+        }
+    }
+
+    #[inline]
+    fn consume(self) -> String {
+        let mut buf = String::with_capacity(self.len);
+        buf.extend(self.buf);
+        buf
     }
 }
 
