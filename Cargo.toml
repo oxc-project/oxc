@@ -121,6 +121,7 @@ lazy_static         = "1.4.0"
 memoffset           = "0.9.1"
 miette              = { version = "7.2.0", features = ["fancy-no-syscall"] }
 mimalloc            = "0.1.42"
+nonmax              = "0.5.5"
 num-bigint          = "0.4.5"
 num-traits          = "0.2.19"
 phf                 = "0.11.2"
