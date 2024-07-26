@@ -17,14 +17,13 @@ use talc::{ClaimOnOom, Span, Talc, Talck};
 // exhibits the property of determinism that we require. There are probably other viable options.
 
 /// 1 GiB memory limit
-const ARENA_SIZE: usize = 0x40000000;
+const ARENA_SIZE: usize = 0x4000_0000;
 
 static mut ARENA: [u8; ARENA_SIZE] = [0; ARENA_SIZE];
 
 #[global_allocator]
-static GLOBAL: Talck<spin::Mutex<()>, ClaimOnOom> = Talc::new(unsafe {
-    // if we're in a hosted environment, the Rust runtime may allocate before
-    // main() is called, so we need to initialize the arena automatically
-    ClaimOnOom::new(Span::from_const_array(core::ptr::addr_of!(ARENA)))
+static GLOBAL: Talck<spin::Mutex<()>, ClaimOnOom> = Talc::new({
+    // SAFETY: Copied from `talc`'s docs https://github.com/SFBdragon/talc#setup
+    unsafe { ClaimOnOom::new(Span::from_const_array(core::ptr::addr_of!(ARENA))) }
 })
 .lock();
