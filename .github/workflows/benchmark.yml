@@ -333,6 +333,6 @@ jobs:
         uses: geekyeggo/delete-artifact@v5
         with:
           name: |
-            result-*
+            # result-*
             benchmark-linter
           failOnError: false
