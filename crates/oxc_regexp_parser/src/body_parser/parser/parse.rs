@@ -293,7 +293,12 @@ impl<'a> PatternParser<'a> {
         }
 
         // CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
-        // TODO
+        if let Some(character_class) = self.parse_character_class()? {
+            return Ok(Some(ast::Term::CharacterClass(Box::new_in(
+                character_class,
+                self.allocator,
+            ))));
+        }
 
         // (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
@@ -611,6 +616,73 @@ impl<'a> PatternParser<'a> {
         }
 
         Ok(None)
+    }
+
+    // ```
+    // CharacterClass[UnicodeMode, UnicodeSetsMode] ::
+    //   [ [lookahead ≠ ^] ClassContents[?UnicodeMode, ?UnicodeSetsMode] ]
+    //   [^ ClassContents[?UnicodeMode, ?UnicodeSetsMode] ]
+    // ```
+    fn parse_character_class(&mut self) -> Result<Option<ast::CharacterClass<'a>>> {
+        let span_start = self.reader.span_position();
+
+        if self.reader.eat('[') {
+            let negative = self.reader.eat('^');
+            let (kind, body) = self.parse_class_contents()?;
+
+            if self.reader.eat(']') {
+                return Ok(Some(ast::CharacterClass {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    negative,
+                    kind,
+                    body,
+                }));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated character class"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ClassContents[UnicodeMode, UnicodeSetsMode] ::
+    //   [empty]
+    //   [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
+    //   [+UnicodeSetsMode] ClassSetExpression
+    // ```
+    fn parse_class_contents(
+        &mut self,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        // [empty]
+        if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+            return Ok((ast::CharacterClassContentsKind::Union, Vec::new_in(self.allocator)));
+        }
+
+        // [+UnicodeSetsMode] ClassSetExpression
+        if self.state.unicode_sets_mode {
+            return Err(OxcDiagnostic::error("TODO: ClassSetExpression"));
+        }
+
+        // [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
+        let nonempty_class_ranges = self.parse_nonempty_class_ranges()?;
+        Ok((ast::CharacterClassContentsKind::Union, nonempty_class_ranges))
+    }
+
+    // ```
+    // NonemptyClassRanges[UnicodeMode] ::
+    //   ClassAtom[?UnicodeMode]
+    //   ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
+    //   ClassAtom[?UnicodeMode] - ClassAtom[?UnicodeMode] ClassContents[?UnicodeMode, ~UnicodeSetsMode]
+    // ```
+    fn parse_nonempty_class_ranges(&mut self) -> Result<Vec<'a, ast::CharacterClassContents<'a>>> {
+        let body = Vec::new_in(self.allocator);
+
+        if body.len() == 99 {
+            return Err(OxcDiagnostic::error("TODO"));
+        }
+
+        Ok(body)
     }
 
     // ```

@@ -151,17 +151,20 @@ pub struct UnicodePropertyEscape<'a> {
 pub struct CharacterClass<'a> {
     pub span: Span,
     pub negative: bool,
-    pub kind: CharacterClassKind,
-    pub body: Vec<'a, CharacterClassBody<'a>>,
+    pub kind: CharacterClassContentsKind,
+    pub body: Vec<'a, CharacterClassContents<'a>>,
 }
 #[derive(Debug)]
-pub enum CharacterClassKind {
+pub enum CharacterClassContentsKind {
+    // NonemptyClassRanges
+    Ranges,
+    // ClassSetExpression
     Union,
     Intersection,
     Subtraction,
 }
 #[derive(Debug)]
-pub enum CharacterClassBody<'a> {
+pub enum CharacterClassContents<'a> {
     CharacterClassRange(Box<'a, CharacterClassRange>),
     CharacterClassEscape(CharacterClassEscape),
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>),
