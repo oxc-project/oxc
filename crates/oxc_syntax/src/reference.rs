@@ -13,9 +13,9 @@ pub struct ReferenceId(NonZeroU32);
 impl Idx for ReferenceId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
-        // SAFETY: + 1 is always non-zero.
-
-        unsafe { Self(NonZeroU32::new_unchecked(idx as u32 + 1)) }
+        // NB: We can't use `NonZeroU32::new_unchecked(idx as u32 + 1)`
+        // because if `idx == u32::MAX`, `+ 1` would make it wrap around back to 0
+        Self(NonZeroU32::new(idx as u32 + 1).unwrap())
     }
 
     fn index(self) -> usize {
