@@ -1,5 +1,6 @@
 target/
 **/*.rs.bk
+.idea
 
 /node_modules/
 /website/node_modules/
