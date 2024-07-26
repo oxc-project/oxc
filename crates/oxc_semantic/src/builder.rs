@@ -1932,7 +1932,7 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flag = self.resolve_reference_usages();
-        let reference = Reference::new(ident.span, self.current_node_id, flag);
+        let reference = Reference::new(self.current_node_id, flag);
         let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
@@ -1956,7 +1956,7 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(ident.span, self.current_node_id, ReferenceFlag::read());
+        let reference = Reference::new(self.current_node_id, ReferenceFlag::read());
         self.declare_reference(ident.name.clone(), reference);
     }
 

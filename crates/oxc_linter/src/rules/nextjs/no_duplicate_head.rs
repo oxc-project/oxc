@@ -1,7 +1,6 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::Reference;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -65,7 +64,7 @@ impl Rule for NoDuplicateHead {
                 let kind = nodes.ancestors(r.node_id()).nth(2).map(|node_id| nodes.kind(node_id));
                 matches!(kind, Some(AstKind::JSXOpeningElement(_)))
             })
-            .map(Reference::span)
+            .map(|reference| ctx.semantic().reference_span(reference))
             .map(LabeledSpan::underline)
             .collect::<Vec<_>>();
 

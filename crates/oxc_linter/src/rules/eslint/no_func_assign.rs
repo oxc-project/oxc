@@ -40,7 +40,7 @@ impl Rule for NoFuncAssign {
                 if reference.is_write() {
                     ctx.diagnostic(no_func_assign_diagnostic(
                         symbol_table.get_name(symbol_id),
-                        reference.span(),
+                        ctx.semantic().reference_span(reference),
                     ));
                 }
             }
