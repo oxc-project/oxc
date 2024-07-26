@@ -1532,6 +1532,7 @@ dependencies = [
  "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
+ "oxc_index",
  "oxc_macros",
  "oxc_parser",
  "oxc_resolver",
@@ -1860,6 +1861,7 @@ name = "oxc_wasm"
 version = "0.0.0"
 dependencies = [
  "oxc",
+ "oxc_index",
  "oxc_linter",
  "oxc_prettier",
  "serde",

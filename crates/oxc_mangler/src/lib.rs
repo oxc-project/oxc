@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use oxc_ast::ast::Program;
-use oxc_index::{index_vec, IndexVec};
+use oxc_index::{index_vec, Idx, IndexVec};
 use oxc_semantic::{ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::CompactStr;
 

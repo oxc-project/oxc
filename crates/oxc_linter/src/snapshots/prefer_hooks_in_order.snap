@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
 ---
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:6:21]
@@ -139,15 +140,6 @@ source: crates/oxc_linter/src/tester.rs
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:10:25]
-  9 │                         afterEach(() => {});
- 10 │                         beforeEach(() => {});
-    ·                         ────────────────────
- 11 │                         afterEach(() => {});
-    ╰────
-  help: "beforeEach" hooks should be before any "afterEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:5:21]
  4 │                     afterAll(() => {});
  5 │                     beforeAll(() => {});
@@ -155,6 +147,15 @@ source: crates/oxc_linter/src/tester.rs
  6 │ 
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:10:25]
+  9 │                         afterEach(() => {});
+ 10 │                         beforeEach(() => {});
+    ·                         ────────────────────
+ 11 │                         afterEach(() => {});
+    ╰────
+  help: "beforeEach" hooks should be before any "afterEach" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:23:29]
@@ -185,16 +186,6 @@ source: crates/oxc_linter/src/tester.rs
   help: "afterEach" hooks should be before any "afterAll" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:7:21]
-  6 │     
-  7 │ ╭─▶                     beforeAll(() => {
-  8 │ │                           createMyDatabase();
-  9 │ ╰─▶                     });
- 10 │     
-    ╰────
-  help: "beforeAll" hooks should be before any "beforeEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:38:25]
  37 │     
  38 │ ╭─▶                         beforeEach(() => {
@@ -203,6 +194,16 @@ source: crates/oxc_linter/src/tester.rs
  41 │     
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:7:21]
+  6 │     
+  7 │ ╭─▶                     beforeAll(() => {
+  8 │ │                           createMyDatabase();
+  9 │ ╰─▶                     });
+ 10 │     
+    ╰────
+  help: "beforeAll" hooks should be before any "beforeEach" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:6:17]
@@ -342,15 +343,6 @@ source: crates/oxc_linter/src/tester.rs
   help: "beforeAll" hooks should be before any "beforeEach" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:10:21]
-  9 │                     afterEach(() => {});
- 10 │                     beforeEach(() => {});
-    ·                     ────────────────────
- 11 │                     afterEach(() => {});
-    ╰────
-  help: "beforeEach" hooks should be before any "afterEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
    ╭─[prefer_hooks_in_order.tsx:5:17]
  4 │                 afterAll(() => {});
  5 │                 beforeAll(() => {});
@@ -358,6 +350,15 @@ source: crates/oxc_linter/src/tester.rs
  6 │ 
    ╰────
   help: "beforeAll" hooks should be before any "afterAll" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:10:21]
+  9 │                     afterEach(() => {});
+ 10 │                     beforeEach(() => {});
+    ·                     ────────────────────
+ 11 │                     afterEach(() => {});
+    ╰────
+  help: "beforeEach" hooks should be before any "afterEach" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:23:25]
@@ -388,16 +389,6 @@ source: crates/oxc_linter/src/tester.rs
   help: "afterEach" hooks should be before any "afterAll" hooks
 
   ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
-    ╭─[prefer_hooks_in_order.tsx:7:17]
-  6 │     
-  7 │ ╭─▶                 beforeAll(() => {
-  8 │ │                       createMyDatabase();
-  9 │ ╰─▶                 });
- 10 │     
-    ╰────
-  help: "beforeAll" hooks should be before any "beforeEach" hooks
-
-  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
     ╭─[prefer_hooks_in_order.tsx:38:21]
  37 │     
  38 │ ╭─▶                     beforeEach(() => {
@@ -406,3 +397,13 @@ source: crates/oxc_linter/src/tester.rs
  41 │                     
     ╰────
   help: "beforeEach" hooks should be before any "afterEach" hooks
+
+  ⚠ eslint-plugin-vitest(prefer-hooks-in-order): Prefer having hooks in a consistent order.
+    ╭─[prefer_hooks_in_order.tsx:7:17]
+  6 │     
+  7 │ ╭─▶                 beforeAll(() => {
+  8 │ │                       createMyDatabase();
+  9 │ ╰─▶                 });
+ 10 │     
+    ╰────
+  help: "beforeAll" hooks should be before any "beforeEach" hooks
