@@ -32,7 +32,7 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
-    const ROOT_SCOPE_ID: ScopeId = ScopeId::from_usize_unchecked(0);
+    const ROOT_SCOPE_ID: ScopeId = ScopeId::new(0);
 
     pub fn len(&self) -> usize {
         self.parent_ids.len()

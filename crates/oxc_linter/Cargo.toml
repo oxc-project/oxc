@@ -26,6 +26,7 @@ oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
 oxc_cfg         = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_index       = { workspace = true }
 oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }

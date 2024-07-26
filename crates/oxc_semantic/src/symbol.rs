@@ -5,7 +5,7 @@ use oxc_index::IndexVec;
 use oxc_span::{CompactStr, Span};
 pub use oxc_syntax::{
     scope::ScopeId,
-    symbol::{SymbolFlags, SymbolId},
+    symbol::{RedeclarationId, SymbolFlags, SymbolId},
 };
 #[cfg(feature = "serialize")]
 use serde::Serialize;
@@ -26,6 +26,10 @@ export type IndexVec<I, T> = Array<T>;
 /// Symbol Table
 ///
 /// `SoA` (Struct of Arrays) for memory efficiency.
+///
+/// Most symbols won't have redeclarations, so instead of storing `Vec<Span>` directly in
+/// `redeclare_variables` (32 bytes per symbol), store `Option<RedeclarationId>` (4 bytes).
+/// That ID indexes into `redeclarations` where the actual `Vec<Span>` is stored.
 #[derive(Debug, Default)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify), serde(rename_all = "camelCase"))]
 pub struct SymbolTable {
@@ -36,8 +40,11 @@ pub struct SymbolTable {
     /// Pointer to the AST Node where this symbol is declared
     pub declarations: IndexVec<SymbolId, AstNodeId>,
     pub resolved_references: IndexVec<SymbolId, Vec<ReferenceId>>,
+    redeclarations: IndexVec<SymbolId, Option<RedeclarationId>>,
+
+    redeclaration_spans: IndexVec<RedeclarationId, Vec<Span>>,
+
     pub references: IndexVec<ReferenceId, Reference>,
-    pub redeclare_variables: IndexVec<SymbolId, Vec<Span>>,
 }
 
 impl SymbolTable {
@@ -89,8 +96,13 @@ impl SymbolTable {
         self.flags[symbol_id]
     }
 
-    pub fn get_redeclare_variables(&self, symbol_id: SymbolId) -> &Vec<Span> {
-        &self.redeclare_variables[symbol_id]
+    pub fn get_redeclarations(&self, symbol_id: SymbolId) -> &[Span] {
+        if let Some(redeclaration_id) = self.redeclarations[symbol_id] {
+            &self.redeclaration_spans[redeclaration_id]
+        } else {
+            static EMPTY: &[Span] = &[];
+            EMPTY
+        }
     }
 
     pub fn union_flag(&mut self, symbol_id: SymbolId, includes: SymbolFlags) {
@@ -119,21 +131,24 @@ impl SymbolTable {
         name: CompactStr,
         flag: SymbolFlags,
         scope_id: ScopeId,
+        node_id: AstNodeId,
     ) -> SymbolId {
         self.spans.push(span);
         self.names.push(name);
         self.flags.push(flag);
         self.scope_ids.push(scope_id);
-        self.resolved_references.push(vec![]);
-        self.redeclare_variables.push(vec![])
-    }
-
-    pub fn add_declaration(&mut self, node_id: AstNodeId) {
         self.declarations.push(node_id);
+        self.resolved_references.push(vec![]);
+        self.redeclarations.push(None)
     }
 
-    pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.redeclare_variables[symbol_id].push(span);
+    pub fn add_redeclaration(&mut self, symbol_id: SymbolId, span: Span) {
+        if let Some(redeclaration_id) = self.redeclarations[symbol_id] {
+            self.redeclaration_spans[redeclaration_id].push(span);
+        } else {
+            let redeclaration_id = self.redeclaration_spans.push(vec![span]);
+            self.redeclarations[symbol_id] = Some(redeclaration_id);
+        };
     }
 
     pub fn create_reference(&mut self, reference: Reference) -> ReferenceId {
@@ -201,7 +216,7 @@ impl SymbolTable {
         self.scope_ids.reserve(additional_symbols);
         self.declarations.reserve(additional_symbols);
         self.resolved_references.reserve(additional_symbols);
-        self.redeclare_variables.reserve(additional_symbols);
+        self.redeclarations.reserve(additional_symbols);
 
         self.references.reserve(additional_references);
     }

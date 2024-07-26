@@ -41,7 +41,7 @@ impl Rule for NoConstAssign {
                     ctx.diagnostic(no_const_assign_diagnostic(
                         symbol_table.get_name(symbol_id),
                         symbol_table.get_span(symbol_id),
-                        reference.span(),
+                        ctx.semantic().reference_span(reference),
                     ));
                 }
             }
