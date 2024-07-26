@@ -19,11 +19,14 @@ use talc::{ClaimOnOom, Span, Talc, Talck};
 /// 1 GiB memory limit
 const ARENA_SIZE: usize = 0x4000_0000;
 
-static mut ARENA: [u8; ARENA_SIZE] = [0; ARENA_SIZE];
+#[repr(align(64))]
+struct AlignedBytes([u8; ARENA_SIZE]);
+
+static mut ARENA: AlignedBytes = AlignedBytes([0; ARENA_SIZE]);
 
 #[global_allocator]
 static GLOBAL: Talck<spin::Mutex<()>, ClaimOnOom> = Talc::new({
     // SAFETY: Copied from `talc`'s docs https://github.com/SFBdragon/talc#setup
-    unsafe { ClaimOnOom::new(Span::from_const_array(core::ptr::addr_of!(ARENA))) }
+    unsafe { ClaimOnOom::new(Span::from_const_array(core::ptr::addr_of!(ARENA.0))) }
 })
 .lock();
