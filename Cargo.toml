@@ -171,8 +171,10 @@ serde               = "1.0.203"
 serde_json          = "1.0.117"
 serde-wasm-bindgen  = "0.6.5"
 similar             = "2.5.0"
+spin                = "0.9.8"
 static_assertions   = "1.1.0"
 syn                 = { version = "2.0.58", default-features = false }
+talc                = { version = "4.4.1", default-features = false, features = ["lock_api"] }
 tempfile            = "3.10.1"
 textwrap            = "0.16.1"
 tokio               = "1.38.0"

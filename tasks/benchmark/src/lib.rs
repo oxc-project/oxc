@@ -1,39 +1,30 @@
-use std::alloc::{GlobalAlloc, Layout, System};
-
 pub use criterion::*;
+use talc::{ClaimOnOom, Span, Talc, Talck};
+
+// Global allocator for use in benchmarks.
+//
+// `talc` crate provides a global allocator which uses a provided block of memory to allocate from.
+// Talc is quite a simple allocator, so my assumption is that it behaves deterministically.
+// (not as simple as Bumpalo - it keeps a free list, and it will free memory on drop)
+//
+// The memory block which all allocations are made from is allocated up front, so no calls to global
+// allocator will be made during benchmark runs.
+//
+// Combine these two properties, and we should have completely deterministic allocation behavior
+// in benchmarks, which hopefully will reduce variance to zero (at least for single-threaded code).
+//
+// NB: The allocator doesn't have to be `talc` specifically. It was just one allocator I found which
+// exhibits the property of determinism that we require. There are probably other viable options.
+
+/// 1 GiB memory limit
+const ARENA_SIZE: usize = 0x40000000;
+
+static mut ARENA: [u8; ARENA_SIZE] = [0; ARENA_SIZE];
 
 #[global_allocator]
-static GLOBAL: NeverGrowInPlaceAllocator = NeverGrowInPlaceAllocator;
-
-/// Global allocator for use in benchmarks.
-///
-/// A thin wrapper around Rust's default [`System`] allocator. It passes through `alloc`
-/// and `dealloc` methods to [`System`], but does not implement [`GlobalAlloc::realloc`].
-///
-/// Rationale for this is:
-///
-/// `realloc` for default [`System`] allocator calls `libc::realloc`, which may either:
-/// 1. allow the allocation to grow in place. or
-/// 2. create a new allocation, and copy memory from old allocation to the new one.
-///
-/// Whether allocations can grow in place or not depends on the state of the operating system's
-/// memory tables, and so is inherently non-deterministic. Using default `System` allocator
-/// therefore produces large and unpredictable variance in benchmarks.
-///
-/// By not providing a `realloc` method, this custom allocator delegates to the default
-/// [`GlobalAlloc::realloc`] implementation which *never* grows in place.
-/// It therefore represents the "worse case scenario" for memory allocation performance.
-/// This behavior is consistent and predictable, and therefore stabilizes benchmark results.
-pub struct NeverGrowInPlaceAllocator;
-
-/// SAFETY: Methods simply delegate to `System` allocator
-#[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
-unsafe impl GlobalAlloc for NeverGrowInPlaceAllocator {
-    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-        System.alloc(layout)
-    }
-
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
-        System.dealloc(ptr, layout);
-    }
-}
+static GLOBAL: Talck<spin::Mutex<()>, ClaimOnOom> = Talc::new(unsafe {
+    // if we're in a hosted environment, the Rust runtime may allocate before
+    // main() is called, so we need to initialize the arena automatically
+    ClaimOnOom::new(Span::from_const_array(core::ptr::addr_of!(ARENA)))
+})
+.lock();

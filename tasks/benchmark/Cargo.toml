@@ -82,6 +82,8 @@ oxc_sourcemap             = { workspace = true, features = ["concurrent"], optio
 oxc_isolated_declarations = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
+spin       = { workspace = true }
+talc       = { workspace = true }
 
 # Only for NAPI benchmark
 serde      = { workspace = true, optional = true }
