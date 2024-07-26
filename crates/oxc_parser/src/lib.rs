@@ -572,3 +572,5 @@ mod test {
         assert_eq!(ret.program.body.len(), 2);
     }
 }
+
+// Dummy comment to run benchmarks
