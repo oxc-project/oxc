@@ -132,52 +132,54 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
 
     let capacity = ((end - start) * 10) as usize;
 
-    let mut rv = String::with_capacity(capacity);
+    let mut rv_str = String::with_capacity(capacity);
+    // SAFETY: We only push ASCII bytes to `rv`, so we can't produce an invalid UTF-8 string
+    let rv = unsafe { rv_str.as_mut_vec() };
 
     for (idx, token) in tokens[start as usize..end as usize].iter().enumerate() {
         let index = start as usize + idx;
         if token.get_dst_line() != prev_dst_line {
             prev_dst_col = 0;
             while token.get_dst_line() != prev_dst_line {
-                rv.push(';');
+                rv.push(b';');
                 prev_dst_line += 1;
             }
         } else if index > 0 {
             if Some(token) == tokens.get(index - 1) {
                 continue;
             }
-            rv.push(',');
+            rv.push(b',');
         }
 
-        encode_vlq_diff(&mut rv, token.get_dst_col(), prev_dst_col);
+        encode_vlq_diff(rv, token.get_dst_col(), prev_dst_col);
         prev_dst_col = token.get_dst_col();
 
         if let Some(source_id) = token.get_source_id() {
-            encode_vlq_diff(&mut rv, source_id, prev_source_id);
+            encode_vlq_diff(rv, source_id, prev_source_id);
             prev_source_id = source_id;
-            encode_vlq_diff(&mut rv, token.get_src_line(), prev_src_line);
+            encode_vlq_diff(rv, token.get_src_line(), prev_src_line);
             prev_src_line = token.get_src_line();
-            encode_vlq_diff(&mut rv, token.get_src_col(), prev_src_col);
+            encode_vlq_diff(rv, token.get_src_col(), prev_src_col);
             prev_src_col = token.get_src_col();
             if let Some(name_id) = token.get_name_id() {
-                encode_vlq_diff(&mut rv, name_id, prev_name_id);
+                encode_vlq_diff(rv, name_id, prev_name_id);
                 prev_name_id = name_id;
             }
         }
     }
 
-    rv
+    rv_str
 }
 
 #[inline]
-fn encode_vlq_diff(out: &mut String, a: u32, b: u32) {
+fn encode_vlq_diff(out: &mut Vec<u8>, a: u32, b: u32) {
     encode_vlq(out, i64::from(a) - i64::from(b));
 }
 
 const B64_CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn encode_vlq(out: &mut String, num: i64) {
+fn encode_vlq(out: &mut Vec<u8>, num: i64) {
     let mut num = if num < 0 { ((-num) << 1) + 1 } else { num << 1 };
 
     loop {
@@ -186,7 +188,7 @@ fn encode_vlq(out: &mut String, num: i64) {
         if num > 0 {
             digit |= 1 << 5;
         }
-        out.push(B64_CHARS[digit as usize] as char);
+        out.push(B64_CHARS[digit as usize]);
         if num == 0 {
             break;
         }
