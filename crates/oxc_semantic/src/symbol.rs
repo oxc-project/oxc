@@ -64,10 +64,10 @@ impl SymbolTable {
         self.spans.iter_enumerated().rev().map(|(symbol_id, _)| symbol_id)
     }
 
-    pub fn get_symbol_id_from_span(&self, span: &Span) -> Option<SymbolId> {
+    pub fn get_symbol_id_from_span(&self, span: Span) -> Option<SymbolId> {
         self.spans
             .iter_enumerated()
-            .find_map(|(symbol, inner_span)| if inner_span == span { Some(symbol) } else { None })
+            .find_map(|(symbol, &inner_span)| if inner_span == span { Some(symbol) } else { None })
     }
 
     pub fn get_symbol_id_from_name(&self, name: &str) -> Option<SymbolId> {
@@ -113,7 +113,7 @@ impl SymbolTable {
         self.scope_ids[symbol_id]
     }
 
-    pub fn get_scope_id_from_span(&self, span: &Span) -> Option<ScopeId> {
+    pub fn get_scope_id_from_span(&self, span: Span) -> Option<ScopeId> {
         self.get_symbol_id_from_span(span).map(|symbol_id| self.get_scope_id(symbol_id))
     }
 
