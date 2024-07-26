@@ -513,6 +513,7 @@ impl<'a> PatternParser<'a> {
                     return Ok(Some(ast::UnicodePropertyEscape {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         negative,
+                        strings: is_strings_related,
                         name,
                         value,
                     }));

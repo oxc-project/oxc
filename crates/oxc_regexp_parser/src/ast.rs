@@ -142,9 +142,9 @@ pub enum CharacterClassEscapeKind {
 pub struct UnicodePropertyEscape<'a> {
     pub span: Span,
     pub negative: bool,
+    pub strings: bool,
     pub name: SpanAtom<'a>,
     pub value: Option<SpanAtom<'a>>,
-    // TODO: Should add strings related flag?
 }
 
 #[derive(Debug)]
