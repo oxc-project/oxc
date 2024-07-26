@@ -26,7 +26,7 @@ declare_oxc_lint!(
     /// For projects still using custom modules / namespaces, it's preferred to refer to them as namespaces.
     ///
     /// ### Example
-    /// ```javascript
+    /// ```typescript
     /// module Example {}
     /// ```
     PreferNamespaceKeyword,
