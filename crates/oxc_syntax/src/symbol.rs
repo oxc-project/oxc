@@ -23,11 +23,29 @@ impl Idx for SymbolId {
     }
 }
 
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[cfg_attr(feature = "serialize", derive(Serialize))]
+pub struct RedeclarationId(NonZeroU32);
+
+impl Idx for RedeclarationId {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_usize(idx: usize) -> Self {
+        // SAFETY: + 1 is always non-zero.
+
+        unsafe { Self(NonZeroU32::new_unchecked(idx as u32 + 1)) }
+    }
+
+    fn index(self) -> usize {
+        self.0.get() as usize - 1
+    }
+}
+
 #[cfg(feature = "serialize")]
 #[wasm_bindgen::prelude::wasm_bindgen(typescript_custom_section)]
 const TS_APPEND_CONTENT: &'static str = r#"
 export type SymbolId = number;
 export type SymbolFlags = unknown;
+export type RedeclarationId = unknown;
 "#;
 
 bitflags! {

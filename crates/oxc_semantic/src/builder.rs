@@ -465,7 +465,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.symbols.add_redeclare_variable(symbol_id, span);
+        self.symbols.add_redeclaration(symbol_id, span);
     }
 
     fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {

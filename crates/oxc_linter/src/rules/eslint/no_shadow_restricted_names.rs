@@ -64,7 +64,7 @@ impl Rule for NoShadowRestrictedNames {
             }
 
             check_and_diagnostic(name, ctx.symbols().get_span(symbol_id), ctx);
-            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+            for span in ctx.symbols().get_redeclarations(symbol_id) {
                 check_and_diagnostic(name, *span, ctx);
             }
         });
