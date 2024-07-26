@@ -120,17 +120,15 @@ impl SymbolTable {
         name: CompactStr,
         flag: SymbolFlags,
         scope_id: ScopeId,
+        node_id: AstNodeId,
     ) -> SymbolId {
         self.spans.push(span);
         self.names.push(name);
         self.flags.push(flag);
         self.scope_ids.push(scope_id);
+        self.declarations.push(node_id);
         self.resolved_references.push(vec![]);
         self.redeclare_variables.push(vec![])
-    }
-
-    pub fn add_declaration(&mut self, node_id: AstNodeId) {
-        self.declarations.push(node_id);
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {

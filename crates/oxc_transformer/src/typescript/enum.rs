@@ -80,8 +80,8 @@ impl<'a> TypeScriptEnum<'a> {
             enum_name.to_compact_str(),
             SymbolFlags::FunctionScopedVariable,
             func_scope_id,
+            AstNodeId::DUMMY,
         );
-        ctx.symbols_mut().add_declaration(AstNodeId::DUMMY);
         let ident = BindingIdentifier {
             span: decl.id.span,
             name: decl.id.name.clone(),

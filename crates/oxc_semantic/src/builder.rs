@@ -343,8 +343,13 @@ impl<'a> SemanticBuilder<'a> {
 
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            scope_id,
+            self.current_node_id,
+        );
         self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -402,9 +407,13 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            self.current_scope_id,
+            self.current_node_id,
+        );
         self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
         symbol_id
     }
