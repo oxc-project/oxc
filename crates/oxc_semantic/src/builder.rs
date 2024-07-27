@@ -1787,6 +1787,11 @@ impl<'a> SemanticBuilder<'a> {
                 //          ^^^^^^^^
                 self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
             }
+            AstKind::TSTypeParameterInstantiation(_) => {
+                // type A<T> = typeof a<T>;
+                //                     ^^^ avoid treat T as a value and TSTypeQuery
+                self.current_reference_flag -= ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
