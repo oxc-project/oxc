@@ -33,36 +33,27 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
             + sourcemap.sources.len() * 2
             + if let Some(x) = &sourcemap.x_google_ignore_list { x.len() * 2 } else { 0 },
     );
+
     contents.push("{\"version\":3,".into());
     if let Some(file) = sourcemap.get_file() {
         contents.push("\"file\":\"".into());
         contents.push(file.into());
         contents.push("\",".into());
     }
+
     if let Some(source_root) = sourcemap.get_source_root() {
         contents.push("\"sourceRoot\":\"".into());
         contents.push(source_root.into());
         contents.push("\",".into());
     }
+
     contents.push("\"names\":[".into());
-    for n in &sourcemap.names {
-        contents.push(serde_json::to_string(n.as_ref())?.into());
-        contents.push(",".into());
-    }
-    if !sourcemap.names.is_empty() {
-        // Remove the last `,`.
-        contents.pop();
-    }
+    contents.push_list(sourcemap.names.iter().map(to_json_string))?;
+
     contents.push(Cow::Borrowed("],\"sources\":["));
-    for s in &sourcemap.sources {
-        contents.push(serde_json::to_string(s.as_ref())?.into());
-        contents.push(",".into());
-    }
-    if !sourcemap.sources.is_empty() {
-        // Remove the last `,`.
-        contents.pop();
-    }
-    // Quote `source_content` at parallel.
+    contents.push_list(sourcemap.sources.iter().map(to_json_string))?;
+
+    // Quote `source_content` in parallel
     if let Some(source_contents) = &sourcemap.source_contents {
         contents.push("],\"sourcesContent\":[".into());
         cfg_if::cfg_if! {
@@ -83,21 +74,22 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
 
         contents.push(quote_source_contents.join(",").into());
     }
+
     if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
         contents.push("],\"x_google_ignoreList\":[".into());
-        for ignore in x_google_ignore_list {
-            contents.push(ignore.to_string().into());
-            contents.push(",".into());
-        }
-        if !x_google_ignore_list.is_empty() {
-            // Remove the last `,`.
-            contents.pop();
-        }
+        contents.push_list(x_google_ignore_list.iter().map(|ignore| Ok(ignore.to_string())))?;
     }
+
     contents.push("],\"mappings\":\"".into());
     contents.push(serialize_sourcemap_mappings(sourcemap).into());
     contents.push("\"}".into());
+
     Ok(contents.consume())
+}
+
+#[inline]
+fn to_json_string<S: AsRef<str>>(s: S) -> Result<String> {
+    serde_json::to_string(s.as_ref()).map_err(Error::from)
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -224,10 +216,21 @@ impl<'a> PreAllocatedString<'a> {
     }
 
     #[inline]
-    fn pop(&mut self) {
-        if let Some(s) = self.buf.pop() {
-            self.len -= s.len();
+    fn push_list<I>(&mut self, mut iter: I) -> Result<()>
+    where
+        I: Iterator<Item = Result<String>>,
+    {
+        let Some(first) = iter.next() else {
+            return Ok(());
+        };
+        self.push(Cow::Owned(first?));
+
+        for other in iter {
+            self.push(Cow::Borrowed(","));
+            self.push(Cow::Owned(other?));
         }
+
+        Ok(())
     }
 
     #[inline]
