@@ -4452,8 +4452,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSExportAssignment<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::TSExportAssignment;
+        visitor.enter_node(kind);
         visitor.visit_expression(&mut it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]

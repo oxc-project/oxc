@@ -4207,8 +4207,10 @@ pub mod walk {
         visitor: &mut V,
         it: &TSExportAssignment<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::TSExportAssignment(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_expression(&it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]
