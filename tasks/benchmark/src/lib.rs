@@ -22,7 +22,8 @@ const ARENA_SIZE: usize = 0x4000_0000;
 #[repr(align(64))]
 struct AlignedBytes([u8; ARENA_SIZE]);
 
-static mut ARENA: AlignedBytes = AlignedBytes([0; ARENA_SIZE]);
+// Initialize with 1s to ensure memory pages are allocated and filled for whole arena
+static mut ARENA: AlignedBytes = AlignedBytes([1; ARENA_SIZE]);
 
 #[global_allocator]
 static GLOBAL: Talck<spin::Mutex<()>, ClaimOnOom> = Talc::new({
