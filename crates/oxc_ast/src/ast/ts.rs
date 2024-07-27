@@ -47,6 +47,20 @@ pub struct TSThisParameter<'a> {
 /// Enum Declaration
 ///
 /// `const_opt` enum `BindingIdentifier` { `EnumBody_opt` }
+///
+/// ## Examples
+///
+/// ```ts
+/// enum Foo {
+///     A,
+///     B
+/// }
+/// // `Bar` has `r#const` set to `true`
+/// const enum Bar {
+///     A,
+///     B
+/// }
+/// ```
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -63,6 +77,19 @@ pub struct TSEnumDeclaration<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+/// Enum Member
+///
+/// ## Example
+///
+/// ```ts
+/// enum Foo {
+/// //  _ id
+///     A = 1,
+/// //      ^ initializer
+///     B // initializer will be `None`
+///
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -96,16 +123,43 @@ pub enum TSEnumMemberName<'a> {
 }
 }
 
+/// TypeScript Type Annotation
+///
+/// An annotation on a variable declaration, parameter, etc.
+///
+/// ## Example
+/// ```ts
+/// const x: number = 1;
+/// //     ^^^^^^^^
+///
+/// function foo(x: number): number { return x; }
+/// //            ^^^^^^^^ ^^^^^^^^
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct TSTypeAnnotation<'a> {
     #[serde(flatten)]
+    /// starts at the `:` token and ends at the end of the type annotation
     pub span: Span,
     pub type_annotation: TSType<'a>,
 }
 
+/// TypeScript Literal Type
+///
+/// A type that is a literal value. Wraps a [`TSLiteral`].
+///
+/// ## Example
+/// ```ts
+/// const x: 'foo' = 'foo';
+/// //       ^^^^^
+///
+/// type NonZero<N> = N extends 0 ? never : N;
+/// //                          ^
+/// type Three = NonZero<3>;
+/// //                   ^
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -131,6 +185,10 @@ pub enum TSLiteral<'a> {
     UnaryExpression(Box<'a, UnaryExpression<'a>>),
 }
 
+/// TypeScript Type
+///
+/// This is the root-level type for TypeScript types, kind of like [`Expression`] is for
+/// expressions.
 #[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -226,7 +284,13 @@ macro_rules! match_ts_type {
 }
 pub use match_ts_type;
 
-/// `SomeType extends OtherType ? TrueType : FalseType;`
+/// TypeScript Conditional Type
+///
+/// ## Example
+///
+/// ```ts
+/// SomeType extends OtherType ? TrueType : FalseType;
+/// ```
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/conditional-types.html#handbook-content>
 #[ast(visit)]
@@ -244,7 +308,13 @@ pub struct TSConditionalType<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
-/// string | string[] | (() => string) | { s: string }
+/// TypeScript Union Type
+///
+/// ## Example
+///
+/// ```ts
+///  string | string[] | (() => string) | { s: string }
+/// ```
 ///
 /// <https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes-func.html#unions>
 #[ast(visit)]
@@ -280,7 +350,12 @@ pub struct TSParenthesizedType<'a> {
     pub type_annotation: TSType<'a>,
 }
 
-/// keyof unique readonly
+/// TypeScript Type Operators
+///
+/// Includes
+/// - `keyof`
+/// - `unique`
+/// - `readonly`
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/keyof-types.html>
 #[ast(visit)]
@@ -304,7 +379,15 @@ pub enum TSTypeOperatorOperator {
     Readonly,
 }
 
-/// `let myArray: string[] = ["hello", "world"];`
+/// TypeScript Array Type
+///
+/// Does not include tuple types, which are stored as [`TSTupleType`].
+///
+/// ## Example
+///
+/// ```ts
+/// let myArray: string[] = ["hello", "world"];
+/// ```
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#the-array-type>
 #[ast(visit)]
@@ -317,7 +400,15 @@ pub struct TSArrayType<'a> {
     pub element_type: TSType<'a>,
 }
 
-/// `type I1 = Person["age" | "name"];`
+/// TypeScript Index Access Type
+///
+/// This is the type equivalent to expression member access.
+///
+/// ## Example
+///
+/// ```ts
+/// type I1 = Person["age" | "name"];
+/// ```
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/indexed-access-types.html#handbook-content>
 #[ast(visit)]
@@ -331,7 +422,13 @@ pub struct TSIndexedAccessType<'a> {
     pub index_type: TSType<'a>,
 }
 
+/// TypeScript Tuple Type
+///
+/// ## Example
+///
+/// ```ts
 /// type `StringNumberPair` = [string, number];
+/// ```
 ///
 /// <https://www.typescriptlang.org/docs/handbook/2/objects.html#tuple-types>
 #[ast(visit)]
@@ -380,6 +477,8 @@ inherit_variants! {
 /// TS Tuple Element
 ///
 /// Inherits variants from [`TSType`]. See [`ast` module docs] for explanation of inheritance.
+///
+/// See [`TSNamedTupleMember`] for named tuple elements.
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
@@ -654,6 +753,7 @@ pub struct TSClassImplements<'a> {
 pub struct TSInterfaceDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The identifier (name) of the interface.
     pub id: BindingIdentifier<'a>,
     #[scope(enter_before)]
     pub extends: Option<Vec<'a, TSInterfaceHeritage<'a>>>,
@@ -699,6 +799,17 @@ pub enum TSSignature<'a> {
     TSMethodSignature(Box<'a, TSMethodSignature<'a>>),
 }
 
+/// An index signature within a class, type alias, etc.
+///
+/// ## Example
+/// [playground link](https://oxc-project.github.io/oxc/playground/?code=3YCAAIC9gICAgICAgIC6nsrEgtem3AB/pQsrWlLnujiFhkHVtfeFMq5RMD7X5AzJnZ5R/ecQ5KG1FUFjzXvrxFXH0m6HpS+Ob3TC8gQXeRQygA%3D%3D)
+/// ```ts
+/// type MapOf<T> = {
+/// //   _________ parameters (vec with 1 element)
+///     [K: string]: T
+/// //               - type_annotation
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1127,6 +1238,30 @@ pub struct TSNonNullExpression<'a> {
     pub expression: Expression<'a>,
 }
 
+/// Decorator
+///
+/// Decorators are annotations on classes, methods, properties, and parameters.
+/// They are usually either an [`IdentifierReference`] or an [`CallExpression`].
+///
+/// ## Example
+/// ```ts
+/// @Foo                        // class decorator
+/// @Bar()                      // class decorator factory
+/// class SomeClass {
+///     @Freeze                 // property decorator
+///     public x: number;
+///
+///     @MethodDecorator        // method decorator
+///     public method(
+///         @LogParam x: number // parameter decorator
+///     ) {
+///       // ...
+///     }  
+/// }
+/// ```
+///
+/// [`IdentifierReference`]: crate::ast::js::IdentifierReference
+/// [`CallExpression`]: crate::ast::js::CallExpression
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1174,12 +1309,15 @@ pub struct TSInstantiationExpression<'a> {
     pub type_parameters: Box<'a, TSTypeParameterInstantiation<'a>>,
 }
 
+/// See [TypeScript - Type-Only Imports and Exports](https://www.typescriptlang.org/docs/handbook/release-notes/typescript-3-8.html)
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
+    /// `import { foo } from './foo'`;
     Value,
+    /// `import type { foo } from './foo'`;
     Type,
 }
 
@@ -1194,6 +1332,7 @@ pub struct JSDocNullableType<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub type_annotation: TSType<'a>,
+    /// Was `?` after the type annotation?
     pub postfix: bool,
 }
 
