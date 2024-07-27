@@ -87,7 +87,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                                         ident.reference_id.get().is_some_and(|id| {
                                             ctx.symbols().references[id].symbol_id().is_some_and(
                                                 |symbol_id| {
-                                                    ctx.symbols().get_flag(symbol_id).is_type()
+                                                    !ctx.symbols().get_flag(symbol_id).is_value()
                                                 },
                                             )
                                         })
