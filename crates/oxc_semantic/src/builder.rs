@@ -436,11 +436,21 @@ impl<'a> SemanticBuilder<'a> {
                 references.retain(|(id, flag)| {
                     if flag.is_type() && symbol_flag.can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.can_be_referenced_by_value()
+                        || flag.is_ts_type_query() && symbol_flag.is_import()
                     {
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                         if symbol_flag.is_value() && !flag.is_type_only() {
                             *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                        }
+
+                        // import type { T } from './mod'; type A = typeof T
+                        //                                                 ^ can reference type-only import
+                        // If symbol is type-import, we need to replace the ReferenceFlag::Value with ReferenceFlag::Type
+                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
+                            let reference_flag = self.symbols.references[*id].flag_mut();
+                            *reference_flag -= ReferenceFlag::Value;
+                            *reference_flag |= ReferenceFlag::Type;
                         }
 
                         self.symbols.references[*id].set_symbol_id(symbol_id);
