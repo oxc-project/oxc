@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.22.1] - 2024-07-27
+
+### Features
+
+- e2735ca span: Add `contains_inclusive` method (#4491) (DonIsaac)
+
 ## [0.22.0] - 2024-07-23
 
 ### Bug Fixes
