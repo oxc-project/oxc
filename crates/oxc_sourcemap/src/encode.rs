@@ -28,12 +28,12 @@ pub fn encode(sourcemap: &SourceMap) -> JSONSourceMap {
 // Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
 // It will escape the string to avoid invalid JSON string.
 pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
-    let mut contents = PreAllocatedString::new(
-        10 + sourcemap.names.len() * 2
-            + sourcemap.sources.len() * 2
-            + sourcemap.source_contents.as_ref().map_or(0, |sources| sources.len() * 2 + 1)
-            + if let Some(x) = &sourcemap.x_google_ignore_list { x.len() * 2 } else { 0 },
-    );
+    let max_segments = 12
+        + sourcemap.names.len() * 2
+        + sourcemap.sources.len() * 2
+        + sourcemap.source_contents.as_ref().map_or(0, |sources| sources.len() * 2 + 1)
+        + sourcemap.x_google_ignore_list.as_ref().map_or(0, |x| x.len() * 2 + 1);
+    let mut contents = PreAllocatedString::new(max_segments);
 
     contents.push("{\"version\":3,".into());
     if let Some(file) = sourcemap.get_file() {
@@ -51,7 +51,7 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
     contents.push("\"names\":[".into());
     contents.push_list(sourcemap.names.iter().map(to_json_string))?;
 
-    contents.push(Cow::Borrowed("],\"sources\":["));
+    contents.push("],\"sources\":[".into());
     contents.push_list(sourcemap.sources.iter().map(to_json_string))?;
 
     // Quote `source_content` in parallel
@@ -78,6 +78,9 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
     contents.push("],\"mappings\":\"".into());
     contents.push(serialize_sourcemap_mappings(sourcemap).into());
     contents.push("\"}".into());
+
+    // Check we calculated number of segments required correctly
+    debug_assert!(contents.num_segments() <= max_segments);
 
     Ok(contents.consume())
 }
@@ -233,6 +236,10 @@ impl<'a> PreAllocatedString<'a> {
         let mut buf = String::with_capacity(self.len);
         buf.extend(self.buf);
         buf
+    }
+
+    fn num_segments(&self) -> usize {
+        self.buf.len()
     }
 }
 
