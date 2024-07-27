@@ -1822,6 +1822,13 @@ impl<'a> SemanticBuilder<'a> {
                     }
                 }
             }
+            AstKind::TSExportAssignment(export) => {
+                // export = a;
+                //          ^ can reference value or type
+                if export.expression.is_identifier_reference() {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
+                }
+            }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
             }
