@@ -1675,7 +1675,8 @@ impl<'a> SemanticBuilder<'a> {
                         func.id.is_some()
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
-                    _ => true,
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
+                    _ => false,
                 } {
                     self.current_symbol_flags |= SymbolFlags::Export;
                 }
