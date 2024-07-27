@@ -31,6 +31,7 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
     let mut contents = PreAllocatedString::new(
         10 + sourcemap.names.len() * 2
             + sourcemap.sources.len() * 2
+            + sourcemap.source_contents.as_ref().map_or(0, |sources| sources.len() * 2 + 1)
             + if let Some(x) = &sourcemap.x_google_ignore_list { x.len() * 2 } else { 0 },
     );
 
@@ -58,21 +59,15 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
         contents.push("],\"sourcesContent\":[".into());
         cfg_if::cfg_if! {
             if #[cfg(feature = "concurrent")] {
-                let quote_source_contents = source_contents
+                let quoted_source_contents: Vec<_> = source_contents
                     .par_iter()
-                    .map(|x| serde_json::to_string(x.as_ref()))
-                    .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
-                    .map_err(Error::from)?;
+                    .map(to_json_string)
+                    .collect();
+                contents.push_list(quoted_source_contents.into_iter())?;
             } else {
-                let quote_source_contents = source_contents
-                    .iter()
-                    .map(|x| serde_json::to_string(x.as_ref()))
-                    .collect::<std::result::Result<Vec<_>, serde_json::Error>>()
-                    .map_err(Error::from)?;
+                contents.push_list(source_contents.iter().map(to_json_string))?;
             }
         };
-
-        contents.push(quote_source_contents.join(",").into());
     }
 
     if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
