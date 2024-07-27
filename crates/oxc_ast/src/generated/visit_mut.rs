@@ -4396,10 +4396,12 @@ pub mod walk_mut {
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
+                visitor.visit_ts_interface_declaration(it)
+            }
             match_expression!(ExportDefaultDeclarationKind) => {
                 visitor.visit_expression(it.to_expression_mut())
             }
-            _ => {}
         }
     }
 
