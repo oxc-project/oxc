@@ -1731,8 +1731,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UnaryExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let mut ctx = ctx;
-        let wrap_in = self.operator == BinaryOperator::In && ctx.intersects(Context::FORBID_IN);
-        let wrap = precedence >= self.precedence() || wrap_in;
+        let wrap = precedence >= self.precedence()
+            || (self.operator == BinaryOperator::In && ctx.intersects(Context::FORBID_IN));
         if wrap {
             ctx &= Context::FORBID_IN.not();
         }
@@ -2333,7 +2333,14 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXOpeningElement<'a> {
         p.print_char(b'<');
         self.name.gen(p, ctx);
         for attr in &self.attributes {
-            p.print_hard_space();
+            match attr {
+                JSXAttributeItem::Attribute(_) => {
+                    p.print_hard_space();
+                }
+                JSXAttributeItem::SpreadAttribute(_) => {
+                    p.print_soft_space();
+                }
+            }
             attr.gen(p, ctx);
         }
         if self.self_closing {
