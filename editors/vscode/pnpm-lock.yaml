@@ -12,7 +12,7 @@ dependencies:
 devDependencies:
   '@types/node':
     specifier: ^20.14.2
-    version: 20.14.11
+    version: 20.14.13
   '@types/vscode':
     specifier: 1.80.0
     version: 1.80.0
@@ -27,13 +27,13 @@ devDependencies:
     version: 0.23.0
   ovsx:
     specifier: ^0.9.1
-    version: 0.9.1
+    version: 0.9.2
   prettier:
     specifier: ^3.3.1
     version: 3.3.3
   typescript:
     specifier: ^5.4.5
-    version: 5.5.3
+    version: 5.5.4
 
 packages:
 
@@ -391,8 +391,8 @@ packages:
     dev: true
     optional: true
 
-  /@types/node@20.14.11:
-    resolution: {integrity: sha512-kprQpL8MMeszbz6ojB5/tU8PLN4kesnN8Gjzw349rDlNgsSzg90lAVj3llK99Dh7JON+t9AuscPPFW6mPbTnSA==}
+  /@types/node@20.14.13:
+    resolution: {integrity: sha512-+bHoGiZb8UiQ0+WEtmph2IWQCjIqg8MDZMAV+ppRRhUZnquF5mQkP/9vpSwJClEiSM/C7fZZExPzfU0vJTyp8w==}
     dependencies:
       undici-types: 5.26.5
     dev: true
@@ -1380,8 +1380,8 @@ packages:
       is-wsl: 2.2.0
     dev: true
 
-  /ovsx@0.9.1:
-    resolution: {integrity: sha512-faORiHeVdRFXVjvwjGvsGdfw49ocUZwUvjrrObZDzhlkKkrUS8L2afeXF8goeuv1YbTV8lmFfBYAt0C4FaoVuQ==}
+  /ovsx@0.9.2:
+    resolution: {integrity: sha512-kh3xdwv7kl715VqaVdn4HZvvnPEePWKhGdd3XtL6Yagiu7JDU0S52ElN4N1asFaG/gzx7nifflD0Azehv+MGHg==}
     engines: {node: '>= 16'}
     hasBin: true
     dependencies:
@@ -1696,8 +1696,8 @@ packages:
       underscore: 1.13.6
     dev: true
 
-  /typescript@5.5.3:
-    resolution: {integrity: sha512-/hreyEujaB0w76zKo6717l3L0o/qEUtRgdvUBvlkhoWeOVMjMuHNHk0BRBzikzuGDqNmPQbg5ifMEqsHLiIUcQ==}
+  /typescript@5.5.4:
+    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
     engines: {node: '>=14.17'}
     hasBin: true
     dev: true
