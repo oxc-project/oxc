@@ -14,10 +14,7 @@ use std::{borrow::Cow, ops::Range};
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
-    ast::{
-        BindingIdentifier, BlockStatement, Directive, Expression, IdentifierReference, Program,
-        Statement,
-    },
+    ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
     Comment, Trivias,
 };
 use oxc_mangler::Mangler;
@@ -392,7 +389,10 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
-            p.print_directives_and_statements(None, &stmt.body, ctx);
+            for stmt in &stmt.body {
+                p.print_semicolon_if_needed();
+                stmt.gen(p, ctx);
+            }
         });
         self.needs_semicolon = false;
     }
@@ -498,33 +498,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.print_char(self.quote);
         f(self, self.quote);
         self.print_char(self.quote);
-    }
-
-    fn print_directives_and_statements(
-        &mut self,
-        directives: Option<&[Directive]>,
-        statements: &[Statement<'_>],
-        ctx: Context,
-    ) {
-        if let Some(directives) = directives {
-            if directives.is_empty() {
-                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
-                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
-                        self.print_semicolon();
-                        self.print_soft_newline();
-                    }
-                }
-            } else {
-                for directive in directives {
-                    directive.gen(self, ctx);
-                    self.print_semicolon_if_needed();
-                }
-            }
-        }
-        for stmt in statements {
-            self.print_semicolon_if_needed();
-            stmt.gen(self, ctx);
-        }
     }
 
     fn add_source_mapping(&mut self, position: u32) {
