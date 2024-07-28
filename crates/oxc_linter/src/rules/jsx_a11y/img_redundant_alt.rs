@@ -1,3 +1,4 @@
+use once_cell::sync::OnceCell;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
@@ -23,10 +24,11 @@ fn img_redundant_alt_diagnostic(span0: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub struct ImgRedundantAltConfig {
     types_to_validate: Vec<String>,
     redundant_words: Vec<String>,
+    regex: OnceCell<Regex>,
 }
 
 impl std::ops::Deref for ImgRedundantAlt {
@@ -45,7 +47,17 @@ impl Default for ImgRedundantAltConfig {
                 .map(|&s| s.to_string())
                 .collect(),
             redundant_words: REDUNDANT_WORDS.iter().map(|&s| s.to_string()).collect(),
+            regex: OnceCell::new(),
         }
+    }
+}
+
+impl ImgRedundantAltConfig {
+    fn get_regex(&self) -> &Regex {
+        self.regex.get_or_init(|| {
+            let pattern = format!(r"(?i)\b({})\b", self.redundant_words.join("|"));
+            Regex::new(&pattern).unwrap()
+        })
     }
 }
 
@@ -144,7 +156,7 @@ impl Rule for ImgRedundantAlt {
             JSXAttributeValue::StringLiteral(lit) => {
                 let alt_text = lit.value.as_str();
 
-                if is_redundant_alt_text(alt_text, &self.redundant_words) {
+                if self.is_redundant_alt_text(alt_text) {
                     ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
@@ -152,7 +164,7 @@ impl Rule for ImgRedundantAlt {
                 JSXExpression::StringLiteral(lit) => {
                     let alt_text = lit.value.as_str();
 
-                    if is_redundant_alt_text(alt_text, &self.redundant_words) {
+                    if self.is_redundant_alt_text(alt_text) {
                         ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }
@@ -160,7 +172,7 @@ impl Rule for ImgRedundantAlt {
                     for quasi in &lit.quasis {
                         let alt_text = quasi.value.raw.as_str();
 
-                        if is_redundant_alt_text(alt_text, &self.redundant_words) {
+                        if self.is_redundant_alt_text(alt_text) {
                             ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                         }
                     }
@@ -172,10 +184,12 @@ impl Rule for ImgRedundantAlt {
     }
 }
 
-fn is_redundant_alt_text(alt_text: &str, redundant_words: &[String]) -> bool {
-    let regexp = Regex::new(&format!(r"(?i)\b({})\b", redundant_words.join("|"),)).unwrap();
+impl ImgRedundantAlt {
+    fn is_redundant_alt_text(&self, alt_text: &str) -> bool {
+        let regexp = self.get_regex();
 
-    regexp.is_match(alt_text)
+        regexp.is_match(alt_text)
+    }
 }
 
 #[test]
