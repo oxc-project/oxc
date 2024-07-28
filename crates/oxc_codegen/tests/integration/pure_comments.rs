@@ -178,7 +178,7 @@ const builtInSymbols = new Set(
   Object.getOwnPropertyNames(Symbol)
     .filter(key => key !== "arguments" && key !== "caller")
 )"#,
-        "const builtInSymbols = new Set(/*#__PURE__*/ (Object.getOwnPropertyNames(Symbol)).filter((key) => key !== \"arguments\" && key !== \"caller\"));\n",
+        "const builtInSymbols = new Set(/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).filter((key) => key !== \"arguments\" && key !== \"caller\"));\n",
     );
 
     test("(/* @__PURE__ */ new Foo()).bar();\n", "(/* @__PURE__ */ new Foo()).bar();\n");

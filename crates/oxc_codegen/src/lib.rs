@@ -409,7 +409,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::lowest(), Context::default());
+        expr.gen_expr(self, Precedence::Lowest, Context::empty());
     }
 
     fn print_expressions<T: GenExpr<MINIFY>>(

@@ -146,11 +146,10 @@ fn test_array() {
 fn test_splat() {
     test("[...(a, b)]", "[...(a, b)];\n");
     test("x(...(a, b))", "x(...(a, b));\n");
-    // test("({...(a, b)})", "({ ...(a, b) });\n");
+    test("({...(a, b)})", "({ ...(a, b) });\n");
 }
 
 #[test]
-#[ignore]
 fn test_new() {
     test("new x", "new x();\n");
     test("new x()", "new x();\n");
@@ -167,49 +166,48 @@ fn test_new() {
     test("new (foo()[bar])", "new (foo())[bar]();\n");
     test("new (foo())[bar]", "new (foo())[bar]();\n");
 
-    test("new (import('foo').bar)", "new (import(\"foo\");).bar();\n");
-    test("new (import('foo')).bar", "new (import(\"foo\");).bar();\n");
-    test("new (import('foo')[bar])", "new (import(\"foo\");)[bar]();\n");
-    test("new (import('foo'))[bar]", "new (import(\"foo\");)[bar]();\n");
+    test("new (import('foo').bar)", "new (import(\"foo\")).bar();\n");
+    test("new (import('foo')).bar", "new (import(\"foo\")).bar();\n");
+    test("new (import('foo')[bar])", "new (import(\"foo\"))[bar]();\n");
+    test("new (import('foo'))[bar]", "new (import(\"foo\"))[bar]();\n");
 
-    test_minify("new x", "new x;");
-    test_minify("new x.y", "new x.y;");
-    test_minify("(new x).y", "new x().y;");
-    test_minify("new x().y", "new x().y;");
-    test_minify("new x() + y", "new x+y;");
-    test_minify("new x() ** 2", "new x**2;");
+    // test_minify("new x", "new x;");
+    // test_minify("new x.y", "new x.y;");
+    // test_minify("(new x).y", "new x().y;");
+    // test_minify("new x().y", "new x().y;");
+    // test_minify("new x() + y", "new x+y;");
+    // test_minify("new x() ** 2", "new x**2;");
 
     // Test preservation of Webpack-specific comments
-    test(
-        "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
-        "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
-    );
-    test(
-        "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
-        "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
-    );
-    test(
-        "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
-        "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
-    );
-    test(
-        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
-        "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    );
-    test(
-        "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
-        "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
-    ); // Not currently handled
-    test(
-        "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
-        "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
-    );
-    test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
-		"new Worker(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
+    // test(
+    // "new Worker(// webpackFoo: 1\n // webpackBar: 2\n 'path');",
+    // "new Worker(\n  // webpackFoo: 1\n  // webpackBar: 2\n  \"path\"\n);\n",
+    // );
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ /* webpackBar: 2 */ 'path');",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  /* webpackBar: 2 */\n  \"path\"\n);\n",
+    // );
+    // test(
+    // "new Worker(\n    /* multi\n     * line\n     * webpackBar: */ 'path');",
+    // "new Worker(\n  /* multi\n   * line\n   * webpackBar: */\n  \"path\"\n);\n",
+    // );
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */);",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+    // );
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ 'path' /* webpackBar:2 */ ,);",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n);\n",
+    // ); // Not currently handled
+    // test(
+    // "new Worker(/* webpackFoo: 1 */ 'path', /* webpackBar:2 */ );",
+    // "new Worker(\n  /* webpackFoo: 1 */\n  \"path\"\n  /* webpackBar:2 */\n);\n",
+    // );
+    // test( "new Worker(new URL('path', /* webpackFoo: these can go anywhere */ import.meta.url))",
+    // "new Worker(new URL(\n  \"path\",\n  /* webpackFoo: these can go anywhere */\n  import.meta.url\n));\n");
 }
 
 #[test]
-#[ignore]
 fn test_call() {
     test("x()()()", "x()()();\n");
     test("x().y()[z]()", "x().y()[z]();\n");
@@ -354,19 +352,19 @@ fn test_template() {
     test("await (tag`${x}`)", "await tag`${x}`;\n");
     test("(await tag)`${x}`", "(await tag)`${x}`;\n");
 
-    // test("new tag`x`", "new tag`x`();\n");
-    // test("new (tag`x`)", "new tag`x`();\n");
-    // test("new tag()`x`", "new tag()`x`;\n");
-    // test("(new tag)`x`", "new tag()`x`;\n");
+    test("new tag`x`", "new tag`x`();\n");
+    test("new (tag`x`)", "new tag`x`();\n");
+    test("new tag()`x`", "new tag()`x`;\n");
+    test("(new tag)`x`", "new tag()`x`;\n");
     // test_minify("new tag`x`", "new tag`x`;");
     // test_minify("new (tag`x`)", "new tag`x`;");
     // test_minify("new tag()`x`", "new tag()`x`;");
     // test_minify("(new tag)`x`", "new tag()`x`;");
 
-    // test("new tag`${x}`", "new tag`${x}`();\n");
-    // test("new (tag`${x}`)", "new tag`${x}`();\n");
-    // test("new tag()`${x}`", "new tag()`${x}`;\n");
-    // test("(new tag)`${x}`", "new tag()`${x}`;\n");
+    test("new tag`${x}`", "new tag`${x}`();\n");
+    test("new (tag`${x}`)", "new tag`${x}`();\n");
+    test("new tag()`${x}`", "new tag()`${x}`;\n");
+    test("(new tag)`${x}`", "new tag()`${x}`;\n");
     // test_minify("new tag`${x}`", "new tag`${x}`;");
     // test_minify("new (tag`${x}`)", "new tag`${x}`;");
     // test_minify("new tag()`${x}`", "new tag()`${x}`;");
@@ -497,17 +495,17 @@ fn test_pure_comment() {
 
     test("new (function() {})", "new function() {}();\n");
     test("new (function() {})()", "new function() {}();\n");
-    // test("/*@__PURE__*/new (function() {})()", "/* @__PURE__ */ new function() {}();\n");
+    test("/*@__PURE__*/new (function() {})()", "/*@__PURE__*/ new function() {}();\n");
 
-    // test("export default (function() { foo() })", "export default (function() {\n  foo();\n});\n");
-    // test(
-    // "export default (function() { foo() })()",
-    // "export default (function() {\n  foo();\n})();\n",
-    // );
-    // test(
-    // "export default /*@__PURE__*/(function() { foo() })()",
-    // "export default /* @__PURE__ */ (function() {\n  foo();\n})();\n",
-    // );
+    test("export default (function() { foo() })", "export default (function() {\n\tfoo();\n});\n");
+    test(
+        "export default (function() { foo() })()",
+        "export default (function() {\n\tfoo();\n})();\n",
+    );
+    test(
+        "export default /*@__PURE__*/(function() { foo() })()",
+        "export default /*@__PURE__*/ (function() {\n\tfoo();\n})();\n",
+    );
 }
 
 #[test]
