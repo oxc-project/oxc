@@ -23,8 +23,7 @@ use syn::parse_file;
 
 use defs::TypeDef;
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstFieldOrder, AstKindGenerator, VisitGenerator,
-    VisitMutGenerator,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator,
 };
 use schema::{Module, REnum, RStruct, RType, Schema};
 use util::{write_all_to, NormalizeError};
@@ -50,6 +49,7 @@ trait Generator {
 }
 
 type GeneratedStream = (/* output path */ PathBuf, TokenStream);
+type DataStream = (/* output path */ PathBuf, Vec<u8>);
 
 // TODO: remove me
 #[allow(dead_code)]
@@ -58,6 +58,7 @@ enum GeneratorOutput {
     None,
     Err(String),
     Info(Vec<u8>),
+    Data(DataStream),
     Stream(GeneratedStream),
 }
 
@@ -80,6 +81,14 @@ impl GeneratorOutput {
         }
     }
 
+    pub fn to_data(&self) -> &DataStream {
+        if let Self::Data(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
     pub fn to_stream(&self) -> &GeneratedStream {
         if let Self::Stream(it) = self {
             it
@@ -90,6 +99,14 @@ impl GeneratorOutput {
 
     pub fn into_info(self) -> Vec<u8> {
         if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_data(self) -> DataStream {
+        if let Self::Data(it) = self {
             it
         } else {
             panic!();
@@ -214,6 +231,13 @@ fn write_generated_streams(
     Ok(())
 }
 
+fn write_data_streams(streams: impl IntoIterator<Item = DataStream>) -> std::io::Result<()> {
+    for (path, content) in streams {
+        write_all_to(&content, path.into_os_string().to_str().unwrap())?;
+    }
+    Ok(())
+}
+
 #[derive(Debug, Bpaf)]
 pub struct CliOptions {
     /// Runs all generators but won't write anything down.
@@ -236,7 +260,6 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .pass("early layout", CalcLayout)
         .pass("build early schema", BuildSchema)
         .gen(AssertLayouts("assert_unordered_layouts.rs"))
-        .gen(AstFieldOrder)
         .gen(AstKindGenerator)
         .gen(AstBuilderGenerator)
         .gen(ImplGetSpanGenerator)
@@ -244,11 +267,15 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .gen(VisitMutGenerator)
         .generate()?;
 
-    let (streams, _): (Vec<_>, Vec<_>) =
+    let (streams, outputs): (Vec<_>, Vec<_>) =
         outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Stream(_)));
+
+    let (binaries, _): (Vec<_>, Vec<_>) =
+        outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Data(_)));
 
     if !cli_options.dry_run {
         write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?;
+        write_data_streams(binaries.into_iter().map(|it| it.1.into_data()))?;
     }
 
     if !cli_options.no_fmt {

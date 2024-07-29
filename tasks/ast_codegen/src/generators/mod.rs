@@ -1,6 +1,5 @@
 mod assert_layouts;
 mod ast_builder;
-mod ast_field_order;
 mod ast_kind;
 mod impl_get_span;
 mod visit;
@@ -43,7 +42,6 @@ pub(crate) use insert;
 
 pub use assert_layouts::AssertLayouts;
 pub use ast_builder::AstBuilderGenerator;
-pub use ast_field_order::AstFieldOrder;
 pub use ast_kind::AstKindGenerator;
 pub use impl_get_span::ImplGetSpanGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
