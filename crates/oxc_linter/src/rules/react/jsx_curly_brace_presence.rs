@@ -1,5 +1,11 @@
 use oxc_allocator::Vec;
-use oxc_ast::{ast::*, AstKind};
+use oxc_ast::{
+    ast::{
+        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName,
+        JSXExpressionContainer,
+    },
+    AstKind,
+};
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
@@ -9,20 +15,15 @@ use serde_json::Value;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.",
-    )
-    .with_labels([span.into()])
+    OxcDiagnostic::warn("Curly braces are unnecessary here.").with_label(span)
 }
 fn jsx_curly_brace_presence_necessary_diagnostic(span: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn(
-        "eslint-plugin-react(jsx-curly-brace-presence): Curly braces are required here.",
-    )
-    .with_help("Wrap this value in curly braces")
-    .with_labels([LabeledSpan::new_primary_with_span(
-        Some("Wrap this value in curly braces".into()),
-        span,
-    )])
+    OxcDiagnostic::warn("Curly braces are required here.")
+        .with_help("Wrap this value in curly braces")
+        .with_labels([LabeledSpan::new_primary_with_span(
+            Some("Wrap this value in curly braces".into()),
+            span,
+        )])
 }
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -63,7 +64,7 @@ impl Allowed {
 /// sufficient or enforce JSX expressions on literals in JSX children or
 /// attributes (`react/jsx-curly-brace-presence`)
 ///
-///	🔧 This rule is automatically fixable by the [`--fix` CLI option](https://oxc-project.github.io/docs/guide/usage/linter/cli.html#fix-problems).
+/// 🔧 This rule is automatically fixable by the [`--fix` CLI option](https://oxc-project.github.io/docs/guide/usage/linter/cli.html#fix-problems).
 ///
 /// This rule allows you to enforce curly braces or disallow unnecessary
 /// curly braces in JSX props and/or children.
@@ -73,7 +74,7 @@ impl Allowed {
 /// and [this page about JSX
 /// gotchas](https://github.com/facebook/react/blob/v15.4.0-rc.3/docs/docs/02.3-jsx-gotchas.md#html-entities).
 ///
-///	## Rule Details
+/// ## Rule Details
 ///
 /// By default, this rule will check for and warn about unnecessary curly
 /// braces in both JSX props and children. For the sake of backwards
@@ -90,128 +91,128 @@ impl Allowed {
 /// to omit curly braces around prop values that are JSX elements is
 /// obscure, and intentionally undocumented, and should not be relied upon.
 ///
-///	## Rule Options
+/// ## Rule Options
 ///
-///	```js
-///	...
-///	"react/jsx-curly-brace-presence": [<enabled>, { "props": <string>, "children": <string>, "propElementValues": <string> }]
-///	...
-///	```
+/// ```js
+/// ...
+/// "react/jsx-curly-brace-presence": [<enabled>, { "props": <string>, "children": <string>, "propElementValues": <string> }]
+/// ...
+/// ```
 ///
-///	or alternatively
+/// or alternatively
 ///
-///	```js
-///	...
-///	"react/jsx-curly-brace-presence": [<enabled>, <string>]
-///	...
-///	```
+/// ```js
+/// ...
+/// "react/jsx-curly-brace-presence": [<enabled>, <string>]
+/// ...
+/// ```
 ///
-///	### Valid options for `<string>`
+/// ### Valid options for `<string>`
 ///
 /// They are `always`, `never` and `ignore` for checking on JSX props and
 /// children.
 ///
-///	- `always`: always enforce curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements
-///	- `never`: never allow unnecessary curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements
-///	- `ignore`: ignore the rule for JSX props, children, and/or JSX prop values that are JSX Elements
+/// - `always`: always enforce curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements
+/// - `never`: never allow unnecessary curly braces inside JSX props, children, and/or JSX prop values that are JSX Elements
+/// - `ignore`: ignore the rule for JSX props, children, and/or JSX prop values that are JSX Elements
 ///
-///	If passed in the option to fix, this is how a style violation will get fixed
+/// If passed in the option to fix, this is how a style violation will get fixed
 ///
-///	- `always`: wrap a JSX attribute in curly braces/JSX expression and/or a JSX child the same way but also with double quotes
-///	- `never`: get rid of curly braces from a JSX attribute and/or a JSX child
+/// - `always`: wrap a JSX attribute in curly braces/JSX expression and/or a JSX child the same way but also with double quotes
+/// - `never`: get rid of curly braces from a JSX attribute and/or a JSX child
 ///
-///	- All fixing operations use double quotes.
+/// - All fixing operations use double quotes.
 ///
-///	For examples:
+/// For examples:
 ///
-///	Examples of **incorrect** code for this rule, when configured with `{ props: "always", children: "always" }`:
+/// Examples of **incorrect** code for this rule, when configured with `{ props: "always", children: "always" }`:
 ///
-///	```jsx
-///	<App>Hello world</App>;
-///	<App prop='Hello world'>{'Hello world'}</App>;
-///	```
+/// ```jsx
+/// <App>Hello world</App>;
+/// <App prop='Hello world'>{'Hello world'}</App>;
+/// ```
 ///
-///	They can be fixed to:
+/// They can be fixed to:
 ///
-///	```jsx
-///	<App>{"Hello world"}</App>;
-///	<App prop={"Hello world"}>{'Hello world'}</App>;
-///	```
+/// ```jsx
+/// <App>{"Hello world"}</App>;
+/// <App prop={"Hello world"}>{'Hello world'}</App>;
+/// ```
 ///
-///	Examples of **incorrect** code for this rule, when configured with `{ props: "never", children: "never" }`:
+/// Examples of **incorrect** code for this rule, when configured with `{ props: "never", children: "never" }`:
 ///
-///	```jsx
-///	<App>{'Hello world'}</App>;
-///	<App prop={'Hello world'} attr={"foo"} />;
-///	```
+/// ```jsx
+/// <App>{'Hello world'}</App>;
+/// <App prop={'Hello world'} attr={"foo"} />;
+/// ```
 ///
-///	They can be fixed to:
+/// They can be fixed to:
 ///
-///	```jsx
-///	<App>Hello world</App>;
-///	<App prop="Hello world" attr="foo" />;
-///	```
+/// ```jsx
+/// <App>Hello world</App>;
+/// <App prop="Hello world" attr="foo" />;
+/// ```
 ///
-///	Examples of **incorrect** code for this rule, when configured with `{ props: "always", children: "always", "propElementValues": "always" }`:
+/// Examples of **incorrect** code for this rule, when configured with `{ props: "always", children: "always", "propElementValues": "always" }`:
 ///
-///	```jsx
-///	<App prop=<div /> />;
-///	```
+/// ```jsx
+/// <App prop=<div /> />;
+/// ```
 ///
-///	They can be fixed to:
+/// They can be fixed to:
 ///
-///	```jsx
-///	<App prop={<div />} />;
-///	```
+/// ```jsx
+/// <App prop={<div />} />;
+/// ```
 ///
-///	Examples of **incorrect** code for this rule, when configured with `{ props: "never", children: "never", "propElementValues": "never" }`:
+/// Examples of **incorrect** code for this rule, when configured with `{ props: "never", children: "never", "propElementValues": "never" }`:
 ///
-///	```jsx
-///	<App prop={<div />} />;
-///	```
+/// ```jsx
+/// <App prop={<div />} />;
+/// ```
 ///
-///	They can be fixed to:
+/// They can be fixed to:
 ///
-///	```jsx
-///	<App prop=<div /> />;
-///	```
+/// ```jsx
+/// <App prop=<div /> />;
+/// ```
 ///
-///	### Alternative syntax
+/// ### Alternative syntax
 ///
-///	The options are also `always`, `never`, and `ignore` for the same meanings.
+/// The options are also `always`, `never`, and `ignore` for the same meanings.
 ///
 /// In this syntax, only a string is provided and the default will be set to
 /// that option for checking on both JSX props and children.
 ///
-///	For examples:
+/// For examples:
 ///
-///	Examples of **incorrect** code for this rule, when configured with `"always"`:
+/// Examples of **incorrect** code for this rule, when configured with `"always"`:
 ///
-///	```jsx
-///	<App>Hello world</App>;
-///	<App prop='Hello world' attr="foo">Hello world</App>;
-///	```
+/// ```jsx
+/// <App>Hello world</App>;
+/// <App prop='Hello world' attr="foo">Hello world</App>;
+/// ```
 ///
-///	They can be fixed to:
+/// They can be fixed to:
 ///
-///	```jsx
-///	<App>{"Hello world"}</App>;
-///	<App prop={"Hello world"} attr={"foo"}>{"Hello world"}</App>;
-///	```
+/// ```jsx
+/// <App>{"Hello world"}</App>;
+/// <App prop={"Hello world"} attr={"foo"}>{"Hello world"}</App>;
+/// ```
 ///
-///	Examples of **incorrect** code for this rule, when configured with `"never"`:
+/// Examples of **incorrect** code for this rule, when configured with `"never"`:
 ///
-///	```jsx
-///	<App prop={'foo'} attr={"bar"}>{'Hello world'}</App>;
-///	```
+/// ```jsx
+/// <App prop={'foo'} attr={"bar"}>{'Hello world'}</App>;
+/// ```
 ///
-///	It can fixed to:
+/// It can fixed to:
 ///
-///	```jsx
-///	<App prop="foo" attr="bar">Hello world</App>;
-///	```
+/// ```jsx
+/// <App prop="foo" attr="bar">Hello world</App>;
+/// ```
 ///
-///	## Edge cases
+/// ## Edge cases
 ///
 /// The fix also deals with template literals, strings with quotes, and
 /// strings with escapes characters.
@@ -220,32 +221,32 @@ impl Allowed {
 ///   template literal inside a JSX expression has no expression, it will
 ///   throw a warning and be fixed with double quotes. For example:
 ///
-///	```jsx
-///	<App prop={`Hello world`}>{`Hello world`}</App>;
-///	```
+/// ```jsx
+/// <App prop={`Hello world`}>{`Hello world`}</App>;
+/// ```
 ///
-///	will be warned and fixed to:
+/// will be warned and fixed to:
 ///
-///	```jsx
-///	<App prop="Hello world">Hello world</App>;
-///	```
+/// ```jsx
+/// <App prop="Hello world">Hello world</App>;
+/// ```
 ///
 /// - If the rule is set to enforce curly braces and the strings have
 ///   quotes, it will be fixed with double quotes for JSX children and the
 ///   normal way for JSX attributes. Also, double quotes will be escaped in
 ///   the fix.
 ///
-///	For example:
+/// For example:
 ///
-///	```jsx
-///	<App prop='Hello "foo" world'>Hello 'foo' "bar" world</App>;
-///	```
+/// ```jsx
+/// <App prop='Hello "foo" world'>Hello 'foo' "bar" world</App>;
+/// ```
 ///
-///	will warned and fixed to:
+/// will warned and fixed to:
 ///
-///	```jsx
-///	<App prop={"Hello \"foo\" world"}>{"Hello 'foo' \"bar\" world"}</App>;
-///	```
+/// ```jsx
+/// <App prop={"Hello \"foo\" world"}>{"Hello 'foo' \"bar\" world"}</App>;
+/// ```
 ///
 /// - If the rule is set to get rid of unnecessary curly braces(JSX
 ///   expression) and there are characters that need to be escaped in its JSX
@@ -254,22 +255,22 @@ impl Allowed {
 ///   anything that looks like HTML entity names, the code will not be warned
 ///   because the fix may make the code less readable.
 ///
-///	Examples of **correct** code for this rule, even when configured with `"never"`:
+/// Examples of **correct** code for this rule, even when configured with `"never"`:
 ///
-///	```jsx
-///	<Color text={"\u00a0"} />
-///	<App>{"Hello \u00b7 world"}</App>;
-///	<style type="text/css">{'.main { margin-top: 0; }'}</style>;
-///	/**
-///	 * there's no way to inject a whitespace into jsx without a container so this
-///	 * will always be allowed.
-///	 */
-///	<App>{' '}</App>
-///	<App>{'     '}</App>
-///	<App>{/* comment */ <Bpp />}</App> // the comment makes the container necessary
-///	```
+/// ```jsx
+/// <Color text={"\u00a0"} />
+/// <App>{"Hello \u00b7 world"}</App>;
+/// <style type="text/css">{'.main { margin-top: 0; }'}</style>;
+/// /**
+///  * there's no way to inject a whitespace into jsx without a container so this
+///  * will always be allowed.
+///  */
+/// <App>{' '}</App>
+/// <App>{'     '}</App>
+/// <App>{/* comment */ <Bpp />}</App> // the comment makes the container necessary
+/// ```
 ///
-///	## When Not To Use It
+/// ## When Not To Use It
 ///
 /// You should turn this rule off if you are not concerned about maintaining
 /// consistency regarding the use of curly braces in JSX props and/or
@@ -518,7 +519,7 @@ impl Rule for JsxCurlyBracePresence {
         match value {
             Value::String(s) => {
                 let allowed = Allowed::try_from(s.as_str())
-				.map_err(|_| Error::msg(
+				.map_err(|()| Error::msg(
 					r#"Invalid string config for eslint-plugin-react/jsx-curly-brace-presence: only "always", "never", or "ignored" are allowed. "#
 				)).unwrap();
                 Self { props: allowed, children: allowed, prop_element_values: allowed }
@@ -551,7 +552,13 @@ impl Rule for JsxCurlyBracePresence {
                 el.opening_element.attributes.iter().for_each(|attr| {
                     self.check_jsx_attribute(ctx, attr, node);
                 });
-                // el.children.iter().for_each(|child| self.check_jsx_child(ctx, child, node));
+                // el.children.iter().for_each(|child| self.check_jsx_child(ctx,
+                // child, node));
+                if self.children.is_never()
+                    && matches!(&el.opening_element.name, JSXElementName::Identifier(ident) if ident.name == "script")
+                {
+                    return;
+                }
                 self.check_jsx_child(ctx, &el.children, node);
             }
             AstKind::JSXFragment(fragment) => {
@@ -562,6 +569,10 @@ impl Rule for JsxCurlyBracePresence {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 impl JsxCurlyBracePresence {
@@ -571,17 +582,22 @@ impl JsxCurlyBracePresence {
         children: &Vec<'a, JSXChild<'a>>,
         node: &AstNode<'a>,
     ) {
-        children.iter().for_each(|child| match child {
-            JSXChild::ExpressionContainer(container) => {
-                self.check_expression_container(ctx, &container, node, false);
-            }
-            JSXChild::Text(text) => {
-                if self.children.is_always() && children.len() == 1 && !is_whitespace(&text.value) {
-                    ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(text.span));
+        for child in children {
+            match child {
+                JSXChild::ExpressionContainer(container) => {
+                    self.check_expression_container(ctx, container, node, false);
                 }
+                JSXChild::Text(text) => {
+                    if self.children.is_always()
+                        && children.len() == 1
+                        && !is_whitespace(&text.value)
+                    {
+                        ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(text.span));
+                    }
+                }
+                _ => {}
             }
-            _ => {}
-        });
+        }
     }
 
     fn check_jsx_attribute<'a>(
@@ -614,7 +630,7 @@ impl JsxCurlyBracePresence {
             }
             JSXAttributeValue::StringLiteral(string) => {
                 if self.props.is_always() {
-                    ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(string.span))
+                    ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(string.span));
                 }
             }
             _ => {}
@@ -645,14 +661,12 @@ impl JsxCurlyBracePresence {
             Expression::JSXFragment(_) | Expression::JSXElement(_) => {
                 if is_prop {
                     if self.prop_element_values.is_never() {
-                        report_unneccessary_curly(ctx, container, node, inner.span());
+                        report_unnecessary_curly(ctx, container, node, inner.span());
                     }
-                } else {
-                    if self.children.is_never()
-                        && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
-                    {
-                        report_unneccessary_curly(ctx, container, node, inner.span());
-                    }
+                } else if self.children.is_never()
+                    && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
+                {
+                    report_unnecessary_curly(ctx, container, node, inner.span());
                 }
             }
             Expression::StringLiteral(string) => {
@@ -660,7 +674,7 @@ impl JsxCurlyBracePresence {
                     if is_allowed_string_like(ctx, &string.value, container, node.id(), is_prop) {
                         return;
                     }
-                    report_unneccessary_curly(ctx, container, node, string.span);
+                    report_unnecessary_curly(ctx, container, node, string.span);
                 }
             }
             Expression::TemplateLiteral(template) => {
@@ -669,7 +683,7 @@ impl JsxCurlyBracePresence {
                     if is_allowed_string_like(ctx, &string, container, node.id(), is_prop) {
                         return;
                     }
-                    report_unneccessary_curly(ctx, container, node, template.span);
+                    report_unnecessary_curly(ctx, container, node, template.span);
                 }
             }
             _ => {}
@@ -684,13 +698,14 @@ fn is_allowed_string_like<'a>(
     node_id: AstNodeId,
     is_prop: bool,
 ) -> bool {
-    is_whitespace(dbg!(s))
-        || dbg!(is_line_break(s))
-        || dbg!(!is_prop && (contains_disallowed_jsx_text_chars(s) || contains_html_entity(s)))
-        || dbg!(s.trim() != s.as_str())
-        || dbg!(contains_multiline_comment(s))
-        || dbg!(is_prop && contains_quote_characters(s))
-        || dbg!(has_adjacent_jsx_expression_containers(ctx, container, node_id))
+    is_whitespace(s)
+        || is_line_break(s)
+        || !is_prop && (contains_disallowed_jsx_text_chars(s) || contains_html_entity(s))
+        || s.trim() != s.as_str()
+        || contains_multiline_comment(s)
+        || is_prop && contains_quote_characters(s)
+        // || !is_prop && (contains_quote_characters(s) && !stars_and_ends_with_quote(s))
+        || has_adjacent_jsx_expression_containers(ctx, container, node_id)
 }
 fn is_whitespace(s: &Atom<'_>) -> bool {
     s.chars().all(char::is_whitespace)
@@ -708,19 +723,26 @@ fn contains_multiline_comment(s: &Atom<'_>) -> bool {
 fn contains_quote_characters(s: &Atom<'_>) -> bool {
     s.chars().any(|c| matches!(c, '"' | '\''))
 }
+// fn stars_and_ends_with_quote(s: &Atom<'_>) -> bool {
+//     match s.chars().next() {
+//         Some('"') => s.ends_with('"'),
+//         Some('\'') => s.ends_with('\''),
+//         _ => false,
+//     }
+// }
 fn contains_html_entity(s: &Atom<'_>) -> bool {
     let and = s.find('&');
     let semi = s.find(';');
     matches!((and, semi), (Some(and), Some(semi)) if and < semi)
 }
 
-fn report_unneccessary_curly<'a>(
+fn report_unnecessary_curly<'a>(
     ctx: &LintContext<'a>,
     container: &JSXExpressionContainer<'a>,
     node: &AstNode<'a>,
     inner_span: Span,
 ) {
-    ctx.diagnostic(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span))
+    ctx.diagnostic(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span));
     // ctx.diagnostic_with_fix(diagnostic, || todo!());
 }
 
@@ -782,7 +804,7 @@ fn has_adjacent_jsx_expression_containers<'a>(
         .into_iter()
         // [prev id, next id] -> [prev node, next node], removing out-of-bounds indices
         .filter_map(|idx| idx.and_then(|idx| children.get(idx)))
-        .any(|child| child.is_expression_container())
+        .any(oxc_ast::ast::JSXChild::is_expression_container)
 }
 
 #[test]
@@ -817,7 +839,7 @@ fn test_debug() {
         // ("<App prop={`foo`} />", Some(json!([{ "props": "never" }]))),
     ];
 
-    Tester::new(JsxCurlyBracePresence::NAME, pass, fail).test()
+    Tester::new(JsxCurlyBracePresence::NAME, pass, fail).test();
 }
 
 #[test]
@@ -876,8 +898,7 @@ fn test() {
         ("<App prop='bar'>foo</App>", None),
         ("<App prop={true}>foo</App>", None),
         ("<App prop>foo</App>", None),
-        // NOTE: causes parser to panic
-        // ("<App prop='bar'>{'foo \n bar'}</App>", None),
+        (r"<App prop='bar'>{'foo \n bar'}</App>", None),
         ("<App prop={ ' ' }/>", None),
         ("<MyComponent prop='bar'>foo</MyComponent>", Some(json!([{ "props": "never" }]))),
         (r#"<MyComponent prop="bar">foo</MyComponent>"#, Some(json!([{ "props": "never" }]))),

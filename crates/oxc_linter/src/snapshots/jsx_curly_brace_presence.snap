@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: jsx_curly_brace_presence
 ---
   ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:12]
@@ -303,6 +302,18 @@ expression: jsx_curly_brace_presence
    ·              ╰── Wrap this value in curly braces
    ╰────
   help: Wrap this value in curly braces
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{'foo "bar"'}</App>
+   ·       ───────────
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:7]
+ 1 │ <App>{"foo 'bar'"}</App>
+   ·       ───────────
+   ╰────
 
   × Unterminated string
    ╭─[jsx_curly_brace_presence.tsx:2:22]
