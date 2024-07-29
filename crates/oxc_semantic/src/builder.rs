@@ -442,6 +442,9 @@ impl<'a> SemanticBuilder<'a> {
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                         if symbol_flag.is_value() && !flag.is_type_only() {
                             *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                        } else {
+                            // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
+                            *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Value;
                         }
 
                         // import type { T } from './mod'; type A = typeof T
