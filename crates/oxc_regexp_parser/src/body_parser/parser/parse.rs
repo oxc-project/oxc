@@ -1334,6 +1334,8 @@ impl<'a> PatternParser<'a> {
     //   [+UnicodeMode] u{ CodePoint }
     // ```
     fn consume_reg_exp_unicode_escape_sequence(&mut self) -> Result<Option<u32>> {
+        let checkpoint = self.reader.checkpoint();
+
         if !self.reader.eat('u') {
             return Ok(None);
         }
@@ -1397,7 +1399,12 @@ impl<'a> PatternParser<'a> {
             self.reader.rewind(checkpoint);
         }
 
-        Err(OxcDiagnostic::error("Invalid unicode escape"))
+        if self.state.unicode_mode {
+            return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
+        }
+
+        self.reader.rewind(checkpoint);
+        Ok(None)
     }
 
     // ```
