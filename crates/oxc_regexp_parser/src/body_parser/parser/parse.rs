@@ -239,7 +239,7 @@ impl<'a> PatternParser<'a> {
             let disjunction = self.parse_disjunction()?;
 
             if !self.reader.eat(')') {
-                return Err(OxcDiagnostic::error("Unterminated lookaround group"));
+                return Err(OxcDiagnostic::error("Unterminated lookaround assertion"));
             }
 
             return Ok(Some(ast::Term::LookAroundAssertion(Box::new_in(
