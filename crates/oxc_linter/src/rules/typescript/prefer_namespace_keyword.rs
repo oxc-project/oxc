@@ -44,9 +44,9 @@ impl Rule for PreferNamespaceKeyword {
         }
 
         ctx.diagnostic_with_fix(prefer_namespace_keyword_diagnostic(module.span), |fixer| {
-            let span_size = "module".len() as u32;
+            let span_size = u32::try_from("module".len()).unwrap_or(6);
             let span_start = if module.declare {
-                module.span.start + "declare ".len() as u32
+                module.span.start + u32::try_from("declare ".len()).unwrap_or(8)
             } else {
                 module.span.start
             };
