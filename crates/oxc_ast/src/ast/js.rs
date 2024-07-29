@@ -983,6 +983,9 @@ pub struct SequenceExpression<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
+/// `super` in `class C extends B { constructor() { super(); } }`
+///
+/// Represents a super expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
