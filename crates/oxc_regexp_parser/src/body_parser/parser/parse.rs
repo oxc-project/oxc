@@ -647,8 +647,8 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if MayContainStrings of the ClassContents is true.
             if negative
                 && body.iter().any(|item| match item {
-                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_propery_escape) => {
-                        unicode_propery_escape.strings
+                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
+                        unicode_property_escape.strings
                     }
                     _ => false,
                 })
