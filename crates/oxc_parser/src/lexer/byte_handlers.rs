@@ -9,15 +9,19 @@ use crate::diagnostics;
 /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
 /// * Only `BYTE_HANDLERS` for ASCII characters may use the `ascii_byte_handler!()` macro.
 pub(super) unsafe fn handle_byte(byte: u8, lexer: &mut Lexer) -> Kind {
-    BYTE_HANDLERS[byte as usize](lexer)
+    BYTE_HANDLERS.0[byte as usize](lexer)
 }
 
 type ByteHandler = unsafe fn(&mut Lexer<'_>) -> Kind;
 
+#[repr(align(128))]
+struct AlignedByteHandlers([ByteHandler; 256]);
+
 /// Lookup table mapping any incoming byte to a handler function defined below.
 /// <https://github.com/ratel-rust/ratel-core/blob/master/ratel/src/lexer/mod.rs>
+/// Aligned on 128, so fits cleanly into pairs of cache lines.
 #[rustfmt::skip]
-static BYTE_HANDLERS: [ByteHandler; 256] = [
+static BYTE_HANDLERS: AlignedByteHandlers = AlignedByteHandlers([
 //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F    //
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, SPS, LIN, ISP, ISP, LIN, ERR, ERR, // 0
     ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, ERR, // 1
@@ -35,7 +39,7 @@ static BYTE_HANDLERS: [ByteHandler; 256] = [
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // D
     UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, UNI, // E
     UNI, UNI, UNI, UNI, UNI, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, UER, // F
-];
+]);
 
 /// Macro for defining a byte handler.
 ///
