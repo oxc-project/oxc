@@ -1001,7 +1001,9 @@ pub struct Super {
     pub span: Span,
 }
 
-/// Await Expression
+/// `await` in `await foo();`
+///
+/// Represents an await expression, which can include an argument.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
