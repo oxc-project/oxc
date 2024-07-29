@@ -1113,7 +1113,9 @@ pub struct Directive<'a> {
     pub directive: Atom<'a>,
 }
 
-/// Hashbang
+/// `#! /usr/bin/env node` in `#! /usr/bin/env node`
+///
+/// Represents a hashbang directive, which can include a value.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
