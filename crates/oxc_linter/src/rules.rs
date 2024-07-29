@@ -441,6 +441,10 @@ mod promise {
     pub mod param_names;
 }
 
+mod vitest {
+    pub mod no_import_node_test;
+}
+
 oxc_macros::declare_all_lint_rules! {
     eslint::array_callback_return,
     eslint::constructor_super,
@@ -837,4 +841,5 @@ oxc_macros::declare_all_lint_rules! {
     promise::avoid_new,
     promise::no_new_statics,
     promise::param_names,
+    vitest::no_import_node_test,
 }
