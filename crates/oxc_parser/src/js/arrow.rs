@@ -34,7 +34,7 @@ impl<'a> ParserImpl<'a> {
         {
             let span = self.start_span();
             self.bump_any(); // bump `async`
-            let expr = self.parse_binary_expression_or_higher(Precedence::lowest())?;
+            let expr = self.parse_binary_expression_or_higher(Precedence::Comma)?;
             return self
                 .parse_simple_arrow_function_expression(span, expr, /* async */ true)
                 .map(Some);

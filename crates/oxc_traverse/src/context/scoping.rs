@@ -245,7 +245,8 @@ impl TraverseScoping {
         let name = CompactStr::new(&self.find_uid_name(name));
 
         // Add binding to scope
-        let symbol_id = self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id);
+        let symbol_id =
+            self.symbols.create_symbol(SPAN, name.clone(), flags, scope_id, AstNodeId::DUMMY);
         self.scopes.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -266,7 +267,7 @@ impl TraverseScoping {
         symbol_id: SymbolId,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new_with_symbol_id(SPAN, AstNodeId::DUMMY, symbol_id, flag);
+        let reference = Reference::new_with_symbol_id(AstNodeId::DUMMY, symbol_id, flag);
         let reference_id = self.symbols.create_reference(reference);
         self.symbols.resolved_references[symbol_id].push(reference_id);
         reference_id
@@ -295,7 +296,7 @@ impl TraverseScoping {
         name: CompactStr,
         flag: ReferenceFlag,
     ) -> ReferenceId {
-        let reference = Reference::new(SPAN, AstNodeId::DUMMY, flag);
+        let reference = Reference::new(AstNodeId::DUMMY, flag);
         let reference_id = self.symbols.create_reference(reference);
         self.scopes.add_root_unresolved_reference(name, (reference_id, flag));
         reference_id

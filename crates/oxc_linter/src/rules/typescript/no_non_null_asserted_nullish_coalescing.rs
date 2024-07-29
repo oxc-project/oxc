@@ -60,7 +60,7 @@ fn has_assignment_before_node(
     let symbol_table = ctx.semantic().symbols();
 
     for reference in symbol_table.get_resolved_references(symbol_id) {
-        if reference.is_write() && reference.span().end < parent_span_end {
+        if reference.is_write() && ctx.semantic().reference_span(reference).end < parent_span_end {
             return true;
         }
     }

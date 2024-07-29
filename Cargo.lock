@@ -503,9 +503,9 @@ dependencies = [
 
 [[package]]
 name = "env_logger"
-version = "0.11.3"
+version = "0.11.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38b35839ba51819680ba087cd351788c9a3c476841207e0b8cee0b04722343b9"
+checksum = "e13fa619b91fb2381732789fc5de83b45675e882f66623b7d8cb4f643017018d"
 dependencies = [
  "env_filter",
  "humantime",
@@ -1079,13 +1079,14 @@ dependencies = [
 
 [[package]]
 name = "mio"
-version = "0.8.11"
+version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4a650543ca06a924e8b371db273b2756685faae30f8487da1b56505a8f78b0c"
+checksum = "4569e456d394deccd22ce1c1913e6ea0e54519f577285001215d33557431afe4"
 dependencies = [
+ "hermit-abi",
  "libc",
  "wasi",
- "windows-sys 0.48.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1157,6 +1158,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "nonmax"
+version = "0.5.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "610a5acd306ec67f907abe5567859a3c693fb9886eb1f012ab8f2a47bef3db51"
+
+[[package]]
 name = "nu-ansi-term"
 version = "0.46.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1198,16 +1205,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
-]
-
-[[package]]
-name = "num_cpus"
-version = "1.16.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4161fcb6d602d4d2081af7c3a45852d875a03dd337a6bfdd6e06407b61342a43"
-dependencies = [
- "hermit-abi",
- "libc",
 ]
 
 [[package]]
@@ -1276,7 +1273,7 @@ checksum = "caff54706df99d2a78a5a4e3455ff45448d81ef1bb63c22cd14052ca0e993a3f"
 
 [[package]]
 name = "oxc"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1313,7 +1310,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_allocator"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "allocator-api2",
  "bumpalo",
@@ -1323,7 +1320,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "bitflags 2.6.0",
  "num-bigint",
@@ -1357,7 +1354,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_ast_macros"
-version = "0.22.0"
+version = "0.22.1"
 
 [[package]]
 name = "oxc_benchmark"
@@ -1382,7 +1379,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_cfg"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "bitflags 2.6.0",
  "itertools 0.13.0",
@@ -1393,7 +1390,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_codegen"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "base64",
  "bitflags 2.6.0",
@@ -1448,7 +1445,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_diagnostics"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "miette",
  "owo-colors",
@@ -1458,14 +1455,14 @@ dependencies = [
 
 [[package]]
 name = "oxc_index"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "oxc_isolated_declarations"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "insta",
  "oxc_allocator",
@@ -1529,6 +1526,7 @@ dependencies = [
  "oxc_cfg",
  "oxc_codegen",
  "oxc_diagnostics",
+ "oxc_index",
  "oxc_macros",
  "oxc_parser",
  "oxc_resolver",
@@ -1561,7 +1559,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_mangler"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "itertools 0.13.0",
  "oxc_ast",
@@ -1572,7 +1570,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_minifier"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "insta",
  "num-bigint",
@@ -1606,7 +1604,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_module_lexer"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "oxc_allocator",
  "oxc_ast",
@@ -1616,7 +1614,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_parser"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "assert-unchecked",
  "bitflags 2.6.0",
@@ -1709,7 +1707,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_semantic"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "assert-unchecked",
  "indexmap",
@@ -1733,7 +1731,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_sourcemap"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "base64-simd",
  "cfg-if",
@@ -1745,7 +1743,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_span"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "compact_str",
  "miette",
@@ -1757,10 +1755,11 @@ dependencies = [
 
 [[package]]
 name = "oxc_syntax"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "bitflags 2.6.0",
  "dashmap 6.0.1",
+ "nonmax",
  "oxc_index",
  "oxc_span",
  "phf",
@@ -1801,7 +1800,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transform_napi"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "napi",
  "napi-build",
@@ -1817,7 +1816,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_transformer"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "dashmap 6.0.1",
  "indexmap",
@@ -1839,7 +1838,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_traverse"
-version = "0.22.0"
+version = "0.22.1"
 dependencies = [
  "compact_str",
  "memoffset",
@@ -1856,6 +1855,7 @@ name = "oxc_wasm"
 version = "0.0.0"
 dependencies = [
  "oxc",
+ "oxc_index",
  "oxc_linter",
  "oxc_prettier",
  "serde",
@@ -2427,12 +2427,13 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.120"
+version = "1.0.121"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e0d21c9a8cae1235ad58a00c11cb40d4b1e5c784f1ef2c537876ed6ffd8b7c5"
+checksum = "4ab380d7d9f22ef3f21ad3e6c1ebe8e4fc7a2000ccba2e4d71fc96f15b2cb609"
 dependencies = [
  "indexmap",
  "itoa",
+ "memchr",
  "ryu",
  "serde",
 ]
@@ -2672,28 +2673,27 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 
 [[package]]
 name = "tokio"
-version = "1.38.1"
+version = "1.39.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb2caba9f80616f438e09748d5acda951967e1ea58508ef53d9c6402485a46df"
+checksum = "daa4fb1bc778bd6f04cbfc4bb2d06a7396a8f299dc33ea1900cedaa316f467b1"
 dependencies = [
  "backtrace",
  "bytes",
  "libc",
  "mio",
- "num_cpus",
  "parking_lot",
  "pin-project-lite",
  "signal-hook-registry",
  "socket2",
  "tokio-macros",
- "windows-sys 0.48.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
 name = "tokio-macros"
-version = "2.3.0"
+version = "2.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f5ae998a069d4b5aba8ee9dad856af7d520c3699e6159b185c2acd48155d39a"
+checksum = "693d596312e88961bc67d7f1f97af8a70227d9f90c31bba5806eec004978d752"
 dependencies = [
  "proc-macro2",
  "quote",

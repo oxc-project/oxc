@@ -1,6 +1,5 @@
 #![allow(unused)]
 // mod closure;
-// mod esbuild;
 mod mangler;
 mod oxc;
 // mod tdewolff;

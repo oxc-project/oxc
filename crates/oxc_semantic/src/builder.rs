@@ -15,6 +15,7 @@ use oxc_cfg::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,
@@ -27,7 +28,7 @@ use crate::{
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
-    scope::{ScopeFlags, ScopeId, ScopeTree},
+    scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
     unresolved_stack::UnresolvedReferencesStack,
     JSDocFinder, Semantic,
@@ -66,6 +67,7 @@ pub struct SemanticBuilder<'a> {
     // to value like
     pub namespace_stack: Vec<SymbolId>,
     current_reference_flag: ReferenceFlag,
+    pub hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
     // builders
     pub nodes: AstNodes<'a>,
@@ -114,6 +116,7 @@ impl<'a> SemanticBuilder<'a> {
             function_stack: vec![],
             namespace_stack: vec![],
             nodes: AstNodes::default(),
+            hoisting_variables: FxHashMap::default(),
             scope,
             symbols: SymbolTable::default(),
             unresolved_references: UnresolvedReferencesStack::new(),
@@ -147,6 +150,9 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Enable or disable building a [`ControlFlowGraph`].
+    ///
+    /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     #[must_use]
     pub fn with_cfg(mut self, cfg: bool) -> Self {
         self.cfg = if cfg { Some(ControlFlowGraphBuilder::default()) } else { None };
@@ -337,8 +343,13 @@ impl<'a> SemanticBuilder<'a> {
 
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            scope_id,
+            self.current_node_id,
+        );
         self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -354,14 +365,16 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn check_redeclaration(
-        &mut self,
+        &self,
         scope_id: ScopeId,
         span: Span,
         name: &str,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scope.get_binding(scope_id, name)?;
+        let symbol_id = self.scope.get_binding(scope_id, name).or_else(|| {
+            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+        })?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(redeclaration(name, symbol_span, span));
@@ -394,9 +407,13 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            self.current_scope_id,
+            self.current_node_id,
+        );
         self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
         symbol_id
     }
@@ -419,11 +436,21 @@ impl<'a> SemanticBuilder<'a> {
                 references.retain(|(id, flag)| {
                     if flag.is_type() && symbol_flag.can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.can_be_referenced_by_value()
+                        || flag.is_ts_type_query() && symbol_flag.is_import()
                     {
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                         if symbol_flag.is_value() && !flag.is_type_only() {
                             *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                        }
+
+                        // import type { T } from './mod'; type A = typeof T
+                        //                                                 ^ can reference type-only import
+                        // If symbol is type-import, we need to replace the ReferenceFlag::Value with ReferenceFlag::Type
+                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
+                            let reference_flag = self.symbols.references[*id].flag_mut();
+                            *reference_flag -= ReferenceFlag::Value;
+                            *reference_flag |= ReferenceFlag::Type;
                         }
 
                         self.symbols.references[*id].set_symbol_id(symbol_id);
@@ -448,7 +475,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.symbols.add_redeclare_variable(symbol_id, span);
+        self.symbols.add_redeclaration(symbol_id, span);
     }
 
     fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
@@ -493,10 +520,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         scope_id.set(Some(self.current_scope_id));
 
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            // Clone the `CatchClause` bindings and add them to the current scope.
-            // to make it easier to check redeclare errors.
-            let bindings = self.scope.get_bindings(parent_scope_id).clone();
-            self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
+            // Move all bindings from parent scope to current scope
+            // to make it easier to resole references and check redeclare errors.
+            let parent_bindings =
+                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
+            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
         }
 
         self.unresolved_references.increment_scope_depth();
@@ -1657,7 +1685,8 @@ impl<'a> SemanticBuilder<'a> {
                         func.id.is_some()
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
-                    _ => true,
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
+                    _ => false,
                 } {
                     self.current_symbol_flags |= SymbolFlags::Export;
                 }
@@ -1741,6 +1770,7 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -1767,6 +1797,11 @@ impl<'a> SemanticBuilder<'a> {
                 //          ^^^^^^^^
                 self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
             }
+            AstKind::TSTypeParameterInstantiation(_) => {
+                // type A<T> = typeof a<T>;
+                //                     ^^^ avoid treat T as a value and TSTypeQuery
+                self.current_reference_flag -= ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
@@ -1785,6 +1820,13 @@ impl<'a> SemanticBuilder<'a> {
                             self.current_reference_flag = ReferenceFlag::Type;
                         }
                     }
+                }
+            }
+            AstKind::TSExportAssignment(export) => {
+                // export = a;
+                //          ^ can reference value or type
+                if export.expression.is_identifier_reference() {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
                 }
             }
             AstKind::IdentifierReference(ident) => {
@@ -1914,7 +1956,7 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flag = self.resolve_reference_usages();
-        let reference = Reference::new(ident.span, self.current_node_id, flag);
+        let reference = Reference::new(self.current_node_id, flag);
         let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
@@ -1938,7 +1980,7 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(ident.span, self.current_node_id, ReferenceFlag::read());
+        let reference = Reference::new(self.current_node_id, ReferenceFlag::read());
         self.declare_reference(ident.name.clone(), reference);
     }
 

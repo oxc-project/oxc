@@ -41,7 +41,9 @@ impl Rule for NoExAssign {
         if symbol_table.get_flag(symbol_id).is_catch_variable() {
             for reference in symbol_table.get_resolved_references(symbol_id) {
                 if reference.is_write() {
-                    ctx.diagnostic(no_ex_assign_diagnostic(reference.span()));
+                    ctx.diagnostic(no_ex_assign_diagnostic(
+                        ctx.semantic().reference_span(reference),
+                    ));
                 }
             }
         }
