@@ -552,8 +552,6 @@ impl Rule for JsxCurlyBracePresence {
                 el.opening_element.attributes.iter().for_each(|attr| {
                     self.check_jsx_attribute(ctx, attr, node);
                 });
-                // el.children.iter().for_each(|child| self.check_jsx_child(ctx,
-                // child, node));
                 if self.children.is_never()
                     && matches!(&el.opening_element.name, JSXElementName::Identifier(ident) if ident.name == "script")
                 {
@@ -562,8 +560,6 @@ impl Rule for JsxCurlyBracePresence {
                 self.check_jsx_child(ctx, &el.children, node);
             }
             AstKind::JSXFragment(fragment) => {
-                // fragment.children.iter().for_each(|child|
-                // self.check_jsx_child(ctx, child, node));
                 self.check_jsx_child(ctx, &fragment.children, node);
             }
             _ => {}
@@ -619,9 +615,6 @@ impl JsxCurlyBracePresence {
                 if self.prop_element_values.is_always() {
                     ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(el.span));
                 }
-                // if self.prop_element_values.is_ignore() {
-                //     return;
-                // }
             }
             JSXAttributeValue::Fragment(fragment) => {
                 if self.prop_element_values.is_always() {
@@ -635,17 +628,6 @@ impl JsxCurlyBracePresence {
             }
             _ => {}
         }
-        // match node.kind() {
-        //     AstKind::JSXExpressionContainer(expr) => {
-        //         if should_check_for_unnecessary_curly(ctx, node_id, expr) {
-        //             todo!()
-        //         }
-        //     }
-        //     AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
-        //         todo!()
-        //     }
-        //     _ => { /* noop */ }
-        // }
     }
     fn check_expression_container<'a>(
         &self,
@@ -711,24 +693,26 @@ fn is_allowed_string_like<'a>(
         || is_line_break(s)
         || contains_html_entity(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
-        // || is_prop && (contains_disallowed_jsx_text_chars(s) || contains_html_entity(s))
         || s.trim() != s
         || contains_multiline_comment(s)
         || contains_line_break_literal(s)
         || contains_utf8_escape(s)
         || is_prop && contains_quote_characters(s)
-        // || !is_prop && (contains_quote_characters(s) && !stars_and_ends_with_quote(s))
         || has_adjacent_jsx_expression_containers(ctx, container, node_id)
 }
+
 fn is_whitespace(s: &str) -> bool {
     s.chars().all(char::is_whitespace)
 }
+
 fn is_line_break(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '\n' | '\r')) || s.trim().is_empty()
 }
+
 fn contains_line_break_literal(s: &str) -> bool {
     s.chars().zip(s.chars().skip(1)).any(|tuple| matches!(tuple, ('\\', 'n' | 'r')))
 }
+
 fn contains_disallowed_jsx_text_chars(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '<' | '>' | '{' | '}' | '\\'))
 }
@@ -736,19 +720,15 @@ fn contains_disallowed_jsx_text_chars(s: &str) -> bool {
 fn contains_multiline_comment(s: &str) -> bool {
     s.contains("/*") || s.contains("*/")
 }
+
 fn contains_quote_characters(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '"' | '\''))
 }
+
 fn contains_utf8_escape(s: &str) -> bool {
     s.chars().zip(s.chars().skip(1)).any(|tuple| matches!(tuple, ('\\', 'u')))
 }
-// fn stars_and_ends_with_quote(s: &str) -> bool {
-//     match s.chars().next() {
-//         Some('"') => s.ends_with('"'),
-//         Some('\'') => s.ends_with('\''),
-//         _ => false,
-//     }
-// }
+
 fn contains_html_entity(s: &str) -> bool {
     let and = s.find('&');
     let semi = s.find(';');
@@ -762,7 +742,6 @@ fn report_unnecessary_curly<'a>(
     inner_span: Span,
 ) {
     ctx.diagnostic(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span));
-    // ctx.diagnostic_with_fix(diagnostic, || todo!());
 }
 
 fn should_check_for_unnecessary_curly<'a>(
@@ -1181,6 +1160,7 @@ fn test() {
         ("<MyComponent>foo bar \r </MyComponent>", Some(json!([{ "children": "always" }]))),
         ("<MyComponent>foo bar 'foo'</MyComponent>", Some(json!([{ "children": "always" }]))),
         (r#"<MyComponent>foo bar "foo"</MyComponent>"#, Some(json!([{ "children": "always" }]))),
+        // NOTE: Not sure how to handle this case
         // ("<MyComponent>foo bar <App/></MyComponent>", Some(json!([{ "children": "always" }]))),
         ("<MyComponent>foo \n bar</MyComponent>", Some(json!([{ "children": "always" }]))),
         ("<MyComponent>foo \\u1234 bar</MyComponent>", Some(json!([{ "children": "always" }]))),
@@ -1220,6 +1200,7 @@ fn test() {
 			      ",
             Some(json!([{ "children": "always" }])),
         ),
+        // NOTE: Not sure how to handle this case
         // (
         //     "
         // 	        <App>
