@@ -647,8 +647,8 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if MayContainStrings of the ClassContents is true.
             if negative
                 && body.iter().any(|item| match item {
-                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_propery_escape) => {
-                        unicode_propery_escape.strings
+                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
+                        unicode_property_escape.strings
                     }
                     _ => false,
                 })
@@ -1026,6 +1026,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
         }
 
+        let checkpoint = self.reader.checkpoint();
         if self.reader.eat('{') {
             if let Some(min) = self.consume_decimal_digits() {
                 if self.reader.eat('}') {
@@ -1053,7 +1054,7 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
-            return Err(OxcDiagnostic::error("Unterminated quantifier"));
+            self.reader.rewind(checkpoint);
         }
 
         Ok(None)
