@@ -1,8 +1,8 @@
 use oxc_allocator::Vec;
 use oxc_ast::{
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement, JSXElementName,
-        JSXExpressionContainer, JSXFragment,
+        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName,
+        JSXExpressionContainer,
     },
     AstKind,
 };
@@ -47,16 +47,12 @@ impl TryFrom<&str> for Allowed {
 }
 
 impl Allowed {
-    pub fn is_never(&self) -> bool {
+    pub fn is_never(self) -> bool {
         matches!(self, Self::Never)
     }
     #[inline]
-    pub fn is_always(&self) -> bool {
+    pub fn is_always(self) -> bool {
         matches!(self, Self::Always)
-    }
-    #[inline]
-    pub fn is_ignore(&self) -> bool {
-        matches!(self, Self::Ignore)
     }
 }
 
@@ -645,18 +641,18 @@ impl JsxCurlyBracePresence {
                     && self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
                 {
-                    report_unnecessary_curly(ctx, container, node, inner.span());
+                    report_unnecessary_curly(ctx, container, inner.span());
                 }
             }
             Expression::JSXElement(el) => {
                 if is_prop {
                     if self.prop_element_values.is_never() && el.closing_element.is_none() {
-                        report_unnecessary_curly(ctx, container, node, inner.span());
+                        report_unnecessary_curly(ctx, container, inner.span());
                     }
                 } else if self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
                 {
-                    report_unnecessary_curly(ctx, container, node, inner.span());
+                    report_unnecessary_curly(ctx, container, inner.span());
                 }
             }
             Expression::StringLiteral(string) => {
@@ -665,7 +661,7 @@ impl JsxCurlyBracePresence {
                     if is_allowed_string_like(ctx, raw, container, node.id(), is_prop) {
                         return;
                     }
-                    report_unnecessary_curly(ctx, container, node, string.span);
+                    report_unnecessary_curly(ctx, container, string.span);
                 }
             }
             Expression::TemplateLiteral(template) => {
@@ -674,7 +670,7 @@ impl JsxCurlyBracePresence {
                     if is_allowed_string_like(ctx, string.as_str(), container, node.id(), is_prop) {
                         return;
                     }
-                    report_unnecessary_curly(ctx, container, node, template.span);
+                    report_unnecessary_curly(ctx, container, template.span);
                 }
             }
             _ => {}
@@ -738,33 +734,9 @@ fn contains_html_entity(s: &str) -> bool {
 fn report_unnecessary_curly<'a>(
     ctx: &LintContext<'a>,
     container: &JSXExpressionContainer<'a>,
-    node: &AstNode<'a>,
     inner_span: Span,
 ) {
     ctx.diagnostic(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span));
-}
-
-fn should_check_for_unnecessary_curly<'a>(
-    ctx: &LintContext<'a>,
-    node_id: AstNodeId,
-    container: &JSXExpressionContainer<'a>,
-) -> bool {
-    let nodes = ctx.semantic().nodes();
-    // only attr={' '} and attr={` `} are checked
-
-    // curlies contain a string-y literal
-    let Some(expr) = container.expression.as_expression() else { return false };
-    if !matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_)) {
-        return false;
-    }
-
-    // container is used in a JSX attribute
-    let Some(parent) = nodes.parent_node(node_id) else { return false };
-    let AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) = parent.kind() else {
-        return false;
-    };
-
-    todo!()
 }
 
 fn has_adjacent_jsx_expression_containers<'a>(
@@ -788,11 +760,6 @@ fn has_adjacent_jsx_expression_containers<'a>(
             return false;
         }
     };
-    // let children = match dbg!(parent) {
-    //     AstKind::JSXElement(el) => &el.children,
-    //     AstKind::JSXFragment(fragment) => &fragment.children,
-    //     _ => return false,
-    // };
     let Some(this_container_idx) = children.iter().position(|child| child.span() == container.span)
     else {
         return false;
