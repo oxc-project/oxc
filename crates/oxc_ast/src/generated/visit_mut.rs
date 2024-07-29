@@ -4396,10 +4396,12 @@ pub mod walk_mut {
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
+                visitor.visit_ts_interface_declaration(it)
+            }
             match_expression!(ExportDefaultDeclarationKind) => {
                 visitor.visit_expression(it.to_expression_mut())
             }
-            _ => {}
         }
     }
 
@@ -4450,8 +4452,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSExportAssignment<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::TSExportAssignment;
+        visitor.enter_node(kind);
         visitor.visit_expression(&mut it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]

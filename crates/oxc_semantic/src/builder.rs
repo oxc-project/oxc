@@ -436,11 +436,21 @@ impl<'a> SemanticBuilder<'a> {
                 references.retain(|(id, flag)| {
                     if flag.is_type() && symbol_flag.can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.can_be_referenced_by_value()
+                        || flag.is_ts_type_query() && symbol_flag.is_import()
                     {
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                         if symbol_flag.is_value() && !flag.is_type_only() {
                             *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                        }
+
+                        // import type { T } from './mod'; type A = typeof T
+                        //                                                 ^ can reference type-only import
+                        // If symbol is type-import, we need to replace the ReferenceFlag::Value with ReferenceFlag::Type
+                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
+                            let reference_flag = self.symbols.references[*id].flag_mut();
+                            *reference_flag -= ReferenceFlag::Value;
+                            *reference_flag |= ReferenceFlag::Type;
                         }
 
                         self.symbols.references[*id].set_symbol_id(symbol_id);
@@ -1675,7 +1685,8 @@ impl<'a> SemanticBuilder<'a> {
                         func.id.is_some()
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
-                    _ => true,
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
+                    _ => false,
                 } {
                     self.current_symbol_flags |= SymbolFlags::Export;
                 }
@@ -1759,6 +1770,7 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -1785,6 +1797,11 @@ impl<'a> SemanticBuilder<'a> {
                 //          ^^^^^^^^
                 self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
             }
+            AstKind::TSTypeParameterInstantiation(_) => {
+                // type A<T> = typeof a<T>;
+                //                     ^^^ avoid treat T as a value and TSTypeQuery
+                self.current_reference_flag -= ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
@@ -1803,6 +1820,13 @@ impl<'a> SemanticBuilder<'a> {
                             self.current_reference_flag = ReferenceFlag::Type;
                         }
                     }
+                }
+            }
+            AstKind::TSExportAssignment(export) => {
+                // export = a;
+                //          ^ can reference value or type
+                if export.expression.is_identifier_reference() {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
                 }
             }
             AstKind::IdentifierReference(ident) => {

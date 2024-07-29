@@ -381,6 +381,7 @@ impl<'a> AstKind<'a> {
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
             Self::TSModuleReference(_) => "TSModuleReference".into(),
+            Self::TSExportAssignment(_) => "TSExportAssignment".into(),
         }
     }
 }
