@@ -1126,7 +1126,9 @@ pub struct Hashbang<'a> {
     pub value: Atom<'a>,
 }
 
-/// Block Statement
+/// `{ let foo = 1; }` in `if(true) { let foo = 1; }`
+///
+/// Represents a block statement, which can include a body.
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
