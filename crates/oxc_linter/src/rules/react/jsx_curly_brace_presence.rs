@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_diagnostics::{Error, LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, GetSpan as _, Span};
+use oxc_span::{GetSpan as _, Span};
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -671,7 +671,8 @@ impl JsxCurlyBracePresence {
             }
             Expression::StringLiteral(string) => {
                 if allowed.is_never() {
-                    if is_allowed_string_like(ctx, &string.value, container, node.id(), is_prop) {
+                    let raw = ctx.source_range(string.span().shrink_left(1).shrink_right(1));
+                    if is_allowed_string_like(ctx, raw, container, node.id(), is_prop) {
                         return;
                     }
                     report_unnecessary_curly(ctx, container, node, string.span);
@@ -680,7 +681,7 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template) => {
                 if allowed.is_never() && template.is_no_substitution_template() {
                     let string = template.quasi().unwrap();
-                    if is_allowed_string_like(ctx, &string, container, node.id(), is_prop) {
+                    if is_allowed_string_like(ctx, string.as_str(), container, node.id(), is_prop) {
                         return;
                     }
                     report_unnecessary_curly(ctx, container, node, template.span);
@@ -693,7 +694,7 @@ impl JsxCurlyBracePresence {
 
 fn is_allowed_string_like<'a>(
     ctx: &LintContext<'a>,
-    s: &Atom<'a>,
+    s: &'a str,
     container: &JSXExpressionContainer<'a>,
     node_id: AstNodeId,
     is_prop: bool,
@@ -701,36 +702,40 @@ fn is_allowed_string_like<'a>(
     is_whitespace(s)
         || is_line_break(s)
         || !is_prop && (contains_disallowed_jsx_text_chars(s) || contains_html_entity(s))
-        || s.trim() != s.as_str()
+        || s.trim() != s
         || contains_multiline_comment(s)
+        || contains_utf8_escape(s)
         || is_prop && contains_quote_characters(s)
         // || !is_prop && (contains_quote_characters(s) && !stars_and_ends_with_quote(s))
         || has_adjacent_jsx_expression_containers(ctx, container, node_id)
 }
-fn is_whitespace(s: &Atom<'_>) -> bool {
+fn is_whitespace(s: &str) -> bool {
     s.chars().all(char::is_whitespace)
 }
-fn is_line_break(s: &Atom<'_>) -> bool {
+fn is_line_break(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '\n' | '\r')) || s.trim().is_empty()
 }
-fn contains_disallowed_jsx_text_chars(s: &Atom<'_>) -> bool {
+fn contains_disallowed_jsx_text_chars(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '<' | '>' | '{' | '}' | '\\'))
 }
 
-fn contains_multiline_comment(s: &Atom<'_>) -> bool {
+fn contains_multiline_comment(s: &str) -> bool {
     s.contains("/*") || s.contains("*/")
 }
-fn contains_quote_characters(s: &Atom<'_>) -> bool {
+fn contains_quote_characters(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '"' | '\''))
 }
-// fn stars_and_ends_with_quote(s: &Atom<'_>) -> bool {
+fn contains_utf8_escape(s: &str) -> bool {
+    s.chars().zip(s.chars().skip(1)).any(|tuple| matches!(tuple, ('\\', 'u')))
+}
+// fn stars_and_ends_with_quote(s: &str) -> bool {
 //     match s.chars().next() {
 //         Some('"') => s.ends_with('"'),
 //         Some('\'') => s.ends_with('\''),
 //         _ => false,
 //     }
 // }
-fn contains_html_entity(s: &Atom<'_>) -> bool {
+fn contains_html_entity(s: &str) -> bool {
     let and = s.find('&');
     let semi = s.find(';');
     matches!((and, semi), (Some(and), Some(semi)) if and < semi)
@@ -934,11 +939,11 @@ fn test() {
         ),
         (r#"<MyComponent>{"div { margin-top: 0; }"}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"<Foo />"}</MyComponent>"#, Some(json!(["never"]))),
-        // (r#"<MyComponent prop={"Hello \u1026 world"}>bar</MyComponent>"#, Some(json!(["never"]))),
-        // (r#"<MyComponent>{"Hello \u1026 world"}</MyComponent>"#, Some(json!(["never"]))),
+        (r#"<MyComponent prop={"Hello \u1026 world"}>bar</MyComponent>"#, Some(json!(["never"]))),
+        (r#"<MyComponent>{"Hello \u1026 world"}</MyComponent>"#, Some(json!(["never"]))),
         // (r#"<MyComponent prop={"Hello &middot; world"}>bar</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"Hello &middot; world"}</MyComponent>"#, Some(json!(["never"]))),
-        // (r#"<MyComponent>{"Hello \n world"}</MyComponent>"#, Some(json!(["never"]))),
+        (r#"<MyComponent>{"Hello \n world"}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"space after "}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{" space before"}</MyComponent>"#, Some(json!(["never"]))),
         ("<MyComponent>{`space after `}</MyComponent>", Some(json!(["never"]))),
