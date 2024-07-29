@@ -55,6 +55,7 @@ mod test {
             (r"[\[\]\-]", ParserOptions::default()),
             ("[a-z0-9]", ParserOptions::default()),
             ("[a-a]", ParserOptions::default()),
+            (r"[\d-\D]", ParserOptions::default()),
         ] {
             let res = PatternParser::new(&allocator, source_text, *options).parse();
             if let Err(err) = res {
@@ -92,12 +93,16 @@ mod test {
             (r"\p{Script=", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\ka", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\k<", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"\k<>", ParserOptions::default()),
+            (r"\k<>", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\k<a", ParserOptions::default().with_unicode_flags(true, false)),
             ("a(?:", ParserOptions::default()),
             ("(a", ParserOptions::default()),
             ("(?<a>", ParserOptions::default()),
             ("(?=a){1}", ParserOptions::default().with_unicode_flags(true, false)),
             ("(?!a){1}", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"[\d-\D]", ParserOptions::default().with_unicode_flags(true, false)),
+            ("[z-a]", ParserOptions::default()),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),

@@ -380,6 +380,7 @@ impl<'a> PatternParser<'a> {
 
         // InvalidBracedQuantifier
         if self.consume_quantifier()?.is_some() {
+            // (Annex B) [SS:EE] It is a Syntax Error if any source text is matched by this production.
             return Err(OxcDiagnostic::error("Invalid braced quantifier"));
         }
 
@@ -445,6 +446,7 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
+            // [SS:EE] It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
             return Err(OxcDiagnostic::error("Invalid named reference"));
         }
 
@@ -720,6 +722,11 @@ impl<'a> PatternParser<'a> {
                 ast::CharacterClassContents::Character(to),
             ) = (&class_atom, &class_atom_to)
             {
+                // [SS:EE] It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
+                if to.value < from.value {
+                    return Err(OxcDiagnostic::error("Character class range out of order"));
+                }
+
                 body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
                     ast::CharacterClassRange {
                         span: from.span.merge(&to.span),
@@ -729,6 +736,8 @@ impl<'a> PatternParser<'a> {
                     self.allocator,
                 )));
             } else {
+                // [SS:EE] It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
+                // (Annex B)
                 if self.state.unicode_mode {
                     return Err(OxcDiagnostic::error("Invalid character class range"));
                 }
@@ -1009,6 +1018,7 @@ impl<'a> PatternParser<'a> {
                     if let Some(max) = self.consume_decimal_digits() {
                         if self.reader.eat('}') {
                             if max < min {
+                                // [SS:EE] It is a Syntax Error if the MV of the first DecimalDigits is strictly greater than the MV of the second DecimalDigits.
                                 return Err(OxcDiagnostic::error(
                                     "Numbers out of order in braced quantifier",
                                 ));
