@@ -1026,6 +1026,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
         }
 
+        let checkpoint = self.reader.checkpoint();
         if self.reader.eat('{') {
             if let Some(min) = self.consume_decimal_digits() {
                 if self.reader.eat('}') {
@@ -1053,7 +1054,7 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
-            return Err(OxcDiagnostic::error("Unterminated quantifier"));
+            self.reader.rewind(checkpoint);
         }
 
         Ok(None)
