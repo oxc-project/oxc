@@ -880,7 +880,9 @@ pub struct ArrayAssignmentTarget<'a> {
     pub trailing_comma: Option<Span>,
 }
 
-// See serializer in serialize.rs
+/// `{ foo }` in `({ foo } = obj);`
+///
+/// Represents an object assignment target, which can include properties and a rest element.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
@@ -946,7 +948,9 @@ pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>),
 }
 
-/// Assignment Property - Identifier Reference
+/// `foo` in `({ foo } = obj);`
+///
+/// Represents an assignment target property identifier, which can include a binding and an init expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -958,7 +962,9 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub init: Option<Expression<'a>>,
 }
 
-/// Assignment Property - Property Name
+/// `foo: bar` in `({ foo: bar } = obj);`
+///
+/// Represents an assignment target property property, which can include a name and a binding.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
