@@ -380,7 +380,9 @@ impl<'a> PatternParser<'a> {
 
         // InvalidBracedQuantifier
         if self.consume_quantifier()?.is_some() {
-            // (Annex B) [SS:EE] It is a Syntax Error if any source text is matched by this production.
+            // [SS:EE] ExtendedAtom :: InvalidBracedQuantifier
+            // It is a Syntax Error if any source text is matched by this production.
+            // (Annex B)
             return Err(OxcDiagnostic::error("Invalid braced quantifier"));
         }
 
@@ -446,7 +448,8 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            // [SS:EE] It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
+            // [SS:EE] AtomEscape :: k GroupName
+            // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
             return Err(OxcDiagnostic::error("Invalid named reference"));
         }
 
@@ -722,7 +725,9 @@ impl<'a> PatternParser<'a> {
                 ast::CharacterClassContents::Character(to),
             ) = (&class_atom, &class_atom_to)
             {
-                // [SS:EE] It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
+                // [SS:EE] NonemptyClassRanges :: ClassAtom - ClassAtom ClassContents
+                // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
+                // It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
                 if to.value < from.value {
                     return Err(OxcDiagnostic::error("Character class range out of order"));
                 }
@@ -736,7 +741,9 @@ impl<'a> PatternParser<'a> {
                     self.allocator,
                 )));
             } else {
-                // [SS:EE] It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
+                // [SS:EE] NonemptyClassRanges :: ClassAtom - ClassAtom ClassContents
+                // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
+                // It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
                 // (Annex B)
                 if self.state.unicode_mode {
                     return Err(OxcDiagnostic::error("Invalid character class range"));
@@ -1018,7 +1025,8 @@ impl<'a> PatternParser<'a> {
                     if let Some(max) = self.consume_decimal_digits() {
                         if self.reader.eat('}') {
                             if max < min {
-                                // [SS:EE] It is a Syntax Error if the MV of the first DecimalDigits is strictly greater than the MV of the second DecimalDigits.
+                                // [SS:EE] QuantifierPrefix :: { DecimalDigits , DecimalDigits }
+                                // It is a Syntax Error if the MV of the first DecimalDigits is strictly greater than the MV of the second DecimalDigits.
                                 return Err(OxcDiagnostic::error(
                                     "Numbers out of order in braced quantifier",
                                 ));
@@ -1211,6 +1219,63 @@ impl<'a> PatternParser<'a> {
 
         if self.reader.eat('\\') {
             if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence()? {
+                // [SS:EE] RegExpIdentifierStart :: \ RegExpUnicodeEscapeSequence
+                // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierStartChar lexical grammar production.
+                if !unicode::is_identifier_start_char(cp) {
+                    return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
+                }
+
+                return Ok(Some(cp));
+            }
+        }
+
+        if !self.state.unicode_mode {
+            if let Some(lead_surrogate) =
+                self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
+            {
+                if let Some(trail_surrogate) =
+                    self.reader.peek2().filter(|&cp| unicode::is_trail_surrogate(cp))
+                {
+                    self.reader.advance();
+                    self.reader.advance();
+                    let cp = unicode::combine_surrogate_pair(lead_surrogate, trail_surrogate);
+
+                    // [SS:EE] RegExpIdentifierStart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
+                    // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierStart is not matched by the UnicodeIDStart lexical grammar production.
+                    if !unicode::is_unicode_id_start(cp) {
+                        return Err(OxcDiagnostic::error("Invalid surrogate pair"));
+                    }
+
+                    return Ok(Some(cp));
+                }
+            }
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // RegExpIdentifierPart[UnicodeMode] ::
+    //   IdentifierPartChar
+    //   \ RegExpUnicodeEscapeSequence[+UnicodeMode]
+    //   [~UnicodeMode] UnicodeLeadSurrogate UnicodeTrailSurrogate
+    // ```
+    fn consume_reg_exp_idenfigier_part(&mut self) -> Result<Option<u32>> {
+        if let Some(cp) = self.reader.peek() {
+            if unicode::is_identifier_part_char(cp) {
+                self.reader.advance();
+                return Ok(Some(cp));
+            }
+        }
+
+        if self.reader.eat('\\') {
+            if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence()? {
+                // [SS:EE] RegExpIdentifierPart :: \ RegExpUnicodeEscapeSequence
+                // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierPartChar lexical grammar production.
+                if !unicode::is_identifier_part_char(cp) {
+                    return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
+                }
+
                 return Ok(Some(cp));
             }
         }
@@ -1225,10 +1290,14 @@ impl<'a> PatternParser<'a> {
                     self.reader.advance();
                     self.reader.advance();
 
-                    return Ok(Some(unicode::combine_surrogate_pair(
-                        lead_surrogate,
-                        trail_surrogate,
-                    )));
+                    let cp = unicode::combine_surrogate_pair(lead_surrogate, trail_surrogate);
+                    // [SS:EE] RegExpIdentifierPart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
+                    // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierPart is not matched by the UnicodeIDContinue lexical grammar production.
+                    if !unicode::is_unicode_id_continue(cp) {
+                        return Err(OxcDiagnostic::error("Invalid surrogate pair"));
+                    }
+
+                    return Ok(Some(cp));
                 }
             }
         }
@@ -1310,47 +1379,6 @@ impl<'a> PatternParser<'a> {
         }
 
         Err(OxcDiagnostic::error("Invalid unicode escape"))
-    }
-
-    // ```
-    // RegExpIdentifierPart[UnicodeMode] ::
-    //   IdentifierPartChar
-    //   \ RegExpUnicodeEscapeSequence[+UnicodeMode]
-    //   [~UnicodeMode] UnicodeLeadSurrogate UnicodeTrailSurrogate
-    // ```
-    fn consume_reg_exp_idenfigier_part(&mut self) -> Result<Option<u32>> {
-        if let Some(cp) = self.reader.peek() {
-            if unicode::is_identifier_part_char(cp) {
-                self.reader.advance();
-                return Ok(Some(cp));
-            }
-        }
-
-        if self.reader.eat('\\') {
-            if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence()? {
-                return Ok(Some(cp));
-            }
-        }
-
-        if !self.state.unicode_mode {
-            if let Some(lead_surrogate) =
-                self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
-            {
-                if let Some(trail_surrogate) =
-                    self.reader.peek2().filter(|&cp| unicode::is_trail_surrogate(cp))
-                {
-                    self.reader.advance();
-                    self.reader.advance();
-
-                    return Ok(Some(unicode::combine_surrogate_pair(
-                        lead_surrogate,
-                        trail_surrogate,
-                    )));
-                }
-            }
-        }
-
-        Ok(None)
     }
 
     // ```

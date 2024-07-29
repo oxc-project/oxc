@@ -43,6 +43,13 @@ pub fn is_unicode_property_value_character(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| c.is_ascii_alphanumeric() || c == '_')
 }
 
+pub fn is_unicode_id_start(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, unicode_id_start::is_id_start)
+}
+pub fn is_unicode_id_continue(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, unicode_id_start::is_id_continue)
+}
+
 pub fn is_identifier_start_char(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| unicode_id_start::is_id_start(c) || c == '$' || c == '_')
 }
