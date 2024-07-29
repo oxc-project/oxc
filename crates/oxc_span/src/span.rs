@@ -132,6 +132,30 @@ impl Span {
         self.start == SPAN.start && self.end == SPAN.end
     }
 
+    /// Check if this [`Span`] contains another [`Span`].
+    ///
+    /// [`Span`]s that start & end at the same position as this [`Span`] are
+    /// considered contained.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use oxc_span::Span;
+    /// let span = Span::new(5, 10);
+    ///
+    /// assert!(span.contains_inclusive(span)); // always true for itself
+    /// assert!(span.contains_inclusive(Span::new(5, 5)));
+    /// assert!(span.contains_inclusive(Span::new(6, 10)));
+    /// assert!(span.contains_inclusive(Span::empty(5)));
+    ///
+    /// assert!(!span.contains_inclusive(Span::new(4, 10)));
+    /// assert!(!span.contains_inclusive(Span::empty(0)));
+    /// ```
+    #[inline]
+    pub const fn contains_inclusive(self, span: Span) -> bool {
+        self.start <= span.start && span.end <= self.end
+    }
+
     /// Create a [`Span`] covering the maximum range of two [`Span`]s.
     ///
     /// # Example
@@ -364,5 +388,20 @@ mod test {
     fn test_ordering_greater() {
         assert!(Span::new(0, 1) > Span::new(0, 0));
         assert!(Span::new(2, 5) > Span::new(0, 3));
+    }
+
+    #[test]
+    fn test_contains() {
+        let span = Span::new(5, 10);
+
+        assert!(span.contains_inclusive(span));
+        assert!(span.contains_inclusive(Span::new(5, 5)));
+        assert!(span.contains_inclusive(Span::new(10, 10)));
+        assert!(span.contains_inclusive(Span::new(6, 9)));
+
+        assert!(!span.contains_inclusive(Span::new(0, 0)));
+        assert!(!span.contains_inclusive(Span::new(4, 10)));
+        assert!(!span.contains_inclusive(Span::new(5, 11)));
+        assert!(!span.contains_inclusive(Span::new(4, 11)));
     }
 }

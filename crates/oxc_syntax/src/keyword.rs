@@ -2,7 +2,7 @@ use phf::{phf_set, Set};
 
 #[inline]
 pub fn is_reserved_keyword_or_global_object(s: &str) -> bool {
-    is_reserved_keyword(s) || is_reserved_keyword(s)
+    is_reserved_keyword(s) || is_global_object(s)
 }
 
 #[inline]

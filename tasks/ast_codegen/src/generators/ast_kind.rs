@@ -11,7 +11,7 @@ use super::generated_header;
 
 pub struct AstKindGenerator;
 
-pub const BLACK_LIST: [&str; 62] = [
+pub const BLACK_LIST: [&str; 61] = [
     "Expression",
     "ObjectPropertyKind",
     "TemplateElement",
@@ -62,7 +62,6 @@ pub const BLACK_LIST: [&str; 62] = [
     "TSImportAttributeName",
     "TSFunctionType",
     "TSConstructorType",
-    "TSExportAssignment",
     "TSNamespaceExportDeclaration",
     "JSDocNullableType",
     "JSDocNonNullableType",

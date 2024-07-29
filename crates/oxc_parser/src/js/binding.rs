@@ -89,7 +89,6 @@ impl<'a> ParserImpl<'a> {
     }
 
     fn parse_rest_binding(&mut self) -> Result<BindingRestElement<'a>> {
-        // self.eat_decorators()?;
         let elem = self.parse_rest_element()?;
         if self.at(Kind::Comma) {
             if matches!(self.peek_kind(), Kind::RCurly | Kind::RBrack) {

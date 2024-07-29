@@ -343,8 +343,13 @@ impl<'a> SemanticBuilder<'a> {
 
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            scope_id,
+            self.current_node_id,
+        );
         self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -402,9 +407,13 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            self.current_scope_id,
+            self.current_node_id,
+        );
         self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
         symbol_id
     }
@@ -427,14 +436,27 @@ impl<'a> SemanticBuilder<'a> {
                 references.retain(|(id, flag)| {
                     if flag.is_type() && symbol_flag.can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.can_be_referenced_by_value()
+                        || flag.is_ts_type_query() && symbol_flag.is_import()
                     {
+                        let reference = &mut self.symbols.references[*id];
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                         if symbol_flag.is_value() && !flag.is_type_only() {
-                            *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                            *reference.flag_mut() -= ReferenceFlag::Type;
+                        } else {
+                            // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
+                            *reference.flag_mut() -= ReferenceFlag::Value;
                         }
 
-                        self.symbols.references[*id].set_symbol_id(symbol_id);
+                        // import type { T } from './mod'; type A = typeof T
+                        //                                                 ^ can reference type-only import
+                        // If symbol is type-import, we need to replace the ReferenceFlag::Value with ReferenceFlag::Type
+                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
+                            *reference.flag_mut() -= ReferenceFlag::Value;
+                            *reference.flag_mut() |= ReferenceFlag::Type;
+                        }
+
+                        reference.set_symbol_id(symbol_id);
                         resolved_references.push(*id);
                         false
                     } else {
@@ -456,7 +478,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.symbols.add_redeclare_variable(symbol_id, span);
+        self.symbols.add_redeclaration(symbol_id, span);
     }
 
     fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
@@ -1666,7 +1688,8 @@ impl<'a> SemanticBuilder<'a> {
                         func.id.is_some()
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
-                    _ => true,
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
+                    _ => false,
                 } {
                     self.current_symbol_flags |= SymbolFlags::Export;
                 }
@@ -1750,6 +1773,7 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -1776,6 +1800,11 @@ impl<'a> SemanticBuilder<'a> {
                 //          ^^^^^^^^
                 self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
             }
+            AstKind::TSTypeParameterInstantiation(_) => {
+                // type A<T> = typeof a<T>;
+                //                     ^^^ avoid treat T as a value and TSTypeQuery
+                self.current_reference_flag -= ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
@@ -1794,6 +1823,13 @@ impl<'a> SemanticBuilder<'a> {
                             self.current_reference_flag = ReferenceFlag::Type;
                         }
                     }
+                }
+            }
+            AstKind::TSExportAssignment(export) => {
+                // export = a;
+                //          ^ can reference value or type
+                if export.expression.is_identifier_reference() {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
                 }
             }
             AstKind::IdentifierReference(ident) => {
@@ -1923,7 +1959,7 @@ impl<'a> SemanticBuilder<'a> {
 
     fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flag = self.resolve_reference_usages();
-        let reference = Reference::new(ident.span, self.current_node_id, flag);
+        let reference = Reference::new(self.current_node_id, flag);
         let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
@@ -1947,7 +1983,7 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(ident.span, self.current_node_id, ReferenceFlag::read());
+        let reference = Reference::new(self.current_node_id, ReferenceFlag::read());
         self.declare_reference(ident.name.clone(), reference);
     }
 

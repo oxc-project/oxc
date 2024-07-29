@@ -22,5 +22,5 @@ pub(crate) fn test(source_text: &str, expected: &str, config: ReplaceGlobalDefin
 #[test]
 fn replace_global_definitions() {
     let config = ReplaceGlobalDefinesConfig::new(&[("id", "text"), ("str", "'text'")]).unwrap();
-    test("id, str", "text,'text'", config);
+    test("id, str", "text,'text';", config);
 }

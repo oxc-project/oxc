@@ -74,7 +74,7 @@ impl Rule for NoImportAssign {
                             || matches!(parent_parent_kind, AstKind::ChainExpression(_) if ctx.nodes().parent_kind(parent_parent_node.id()).is_some_and(is_unary_expression_with_delete_operator))
                         {
                             if let Some((span, _)) = expr.static_property_info() {
-                                if span != reference.span() {
+                                if span != ctx.semantic().reference_span(reference) {
                                     return ctx
                                         .diagnostic(no_import_assign_diagnostic(expr.span()));
                                 }
@@ -87,7 +87,9 @@ impl Rule for NoImportAssign {
                     || (is_namespace_specifier
                         && is_argument_of_well_known_mutation_function(reference.node_id(), ctx))
                 {
-                    ctx.diagnostic(no_import_assign_diagnostic(reference.span()));
+                    ctx.diagnostic(no_import_assign_diagnostic(
+                        ctx.semantic().reference_span(reference),
+                    ));
                 }
             }
         }

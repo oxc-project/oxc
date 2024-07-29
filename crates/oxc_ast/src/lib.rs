@@ -5,12 +5,25 @@
 
 //! # Oxc AST
 //!
+//! Abstract Syntax Tree nodes for Oxc. Supports both TypeScript and JavaScript.
+//!
 //! This is almost similar to [estree](https://github.com/estree/estree) except a few places:
-//! * `Identifier` is replaced with explicit `BindingIdentifier`, `IdentifierReference`, `IdentifierName` per spec
-//! * `AssignmentExpression`.`left` `Pattern` is replaced with `AssignmentTarget`
+//! * `Identifier` is replaced with explicit [`BindingIdentifier`], [`IdentifierReference`], [`IdentifierName`] per spec
+//! * `AssignmentExpression`.`left` `Pattern` is replaced with [`AssignmentTarget`]
+//!
+//! ## Parsing
+//!
+//! You can obtain an AST by parsing source code with a [`Parser`] from [`oxc_parser`].
 //!
 //! ## Cargo Features
 //! * `"serde"` enables support for serde serialization
+//!
+//! [`BindingIdentifier`]: ast::BindingIdentifier
+//! [`IdentifierReference`]: ast::IdentifierReference
+//! [`IdentifierName`]: ast::IdentifierName
+//! [`AssignmentTarget`]: ast::AssignmentTarget
+//! [`oxc_parser`]: <https://docs.rs/oxc_parser>
+//! [`Parser`]: <https://docs.rs/oxc_parser/latest/oxc_parser/struct.Parser.html>
 
 #[cfg(feature = "serialize")]
 mod serialize;

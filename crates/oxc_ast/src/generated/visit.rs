@@ -4154,10 +4154,12 @@ pub mod walk {
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
+                visitor.visit_ts_interface_declaration(it)
+            }
             match_expression!(ExportDefaultDeclarationKind) => {
                 visitor.visit_expression(it.to_expression())
             }
-            _ => {}
         }
     }
 
@@ -4205,8 +4207,10 @@ pub mod walk {
         visitor: &mut V,
         it: &TSExportAssignment<'a>,
     ) {
-        // NOTE: AstKind doesn't exists!
+        let kind = AstKind::TSExportAssignment(visitor.alloc(it));
+        visitor.enter_node(kind);
         visitor.visit_expression(&it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]

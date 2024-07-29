@@ -99,7 +99,7 @@ impl Rule for Namespace {
             }
 
             let Some(symbol_id) =
-                ctx.semantic().symbols().get_symbol_id_from_span(&entry.local_name.span())
+                ctx.semantic().symbols().get_symbol_id_from_span(entry.local_name.span())
             else {
                 return;
             };
