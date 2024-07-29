@@ -3,7 +3,6 @@ use std::borrow::Cow;
 #[cfg(feature = "concurrent")]
 use rayon::prelude::*;
 
-use crate::Error;
 use crate::JSONSourceMap;
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
 /// It is a helper for encode `SourceMap` to vlq sourcemap string, but here some different.
@@ -27,7 +26,7 @@ pub fn encode(sourcemap: &SourceMap) -> JSONSourceMap {
 
 // Here using `serde_json` to serialize `names` / `source_contents` / `sources`.
 // It will escape the string to avoid invalid JSON string.
-pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String, Error> {
+pub fn encode_to_string(sourcemap: &SourceMap) -> String {
     let max_segments = 12
         + sourcemap.names.len() * 2
         + sourcemap.sources.len() * 2
@@ -49,11 +48,10 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String, Error> {
     }
 
     contents.push("\"names\":[".into());
-    contents.push_list(sourcemap.names.iter().map(escape_json_string))?;
+    contents.push_list(sourcemap.names.iter().map(escape_json_string));
 
     contents.push("],\"sources\":[".into());
-
-    contents.push_list(sourcemap.sources.iter().map(escape_json_string))?;
+    contents.push_list(sourcemap.sources.iter().map(escape_json_string));
 
     // Quote `source_content` in parallel
     if let Some(source_contents) = &sourcemap.source_contents {
@@ -64,7 +62,7 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String, Error> {
                     .par_iter()
                     .map(escape_json_string)
                     .collect();
-                contents.push_list(quoted_source_contents.into_iter())?;
+                contents.push_list(quoted_source_contents.into_iter());
             } else {
                 contents.push_list(source_contents.iter().map(escape_json_string));
             }
@@ -73,8 +71,7 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String, Error> {
 
     if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
         contents.push("],\"x_google_ignoreList\":[".into());
-        contents
-            .push_list(x_google_ignore_list.iter().map(std::string::ToString::to_string).map(Ok))?;
+        contents.push_list(x_google_ignore_list.iter().map(ToString::to_string));
     }
 
     contents.push("],\"mappings\":\"".into());
@@ -84,7 +81,7 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String, Error> {
     // Check we calculated number of segments required correctly
     debug_assert!(contents.num_segments() <= max_segments);
 
-    Ok(contents.consume())
+    contents.consume()
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -211,20 +208,19 @@ impl<'a> PreAllocatedString<'a> {
     }
 
     #[inline]
-    fn push_list<I>(&mut self, mut iter: I) -> Result<(), Error>
+    fn push_list<I>(&mut self, mut iter: I)
     where
-        I: Iterator<Item = Result<String, Error>>,
+        I: Iterator<Item = String>,
     {
         let Some(first) = iter.next() else {
-            return Ok(());
+            return;
         };
-        self.push(Cow::Owned(first?));
+        self.push(Cow::Owned(first));
 
         for other in iter {
             self.push(Cow::Borrowed(","));
-            self.push(Cow::Owned(other?));
+            self.push(Cow::Owned(other));
         }
-        Ok(())
     }
 
     #[inline]
@@ -239,12 +235,14 @@ impl<'a> PreAllocatedString<'a> {
     }
 }
 
-fn escape_json_string<S: AsRef<str>>(s: S) -> Result<String, Error> {
+fn escape_json_string<S: AsRef<str>>(s: S) -> String {
     let s = s.as_ref();
     let mut escaped_buf = Vec::with_capacity(s.len() * 2 + 2);
-    serde::Serialize::serialize(s, &mut serde_json::Serializer::new(&mut escaped_buf))?;
+    // This call is infallible as only error it can return is if the writer errors.
+    // Writing to a `Vec<u8>` is infallible, so that's not possible here.
+    serde::Serialize::serialize(s, &mut serde_json::Serializer::new(&mut escaped_buf)).unwrap();
     // Safety: `escaped_buf` is valid utf8.
-    Ok(unsafe { String::from_utf8_unchecked(escaped_buf) })
+    unsafe { String::from_utf8_unchecked(escaped_buf) }
 }
 
 #[test]
@@ -267,7 +265,7 @@ fn test_escape_json_string() {
     for (c, expected) in FIXTURES {
         let mut input = String::new();
         input.push(*c);
-        assert_eq!(escape_json_string(input).unwrap(), *expected);
+        assert_eq!(escape_json_string(input), *expected);
     }
 }
 
@@ -281,7 +279,7 @@ fn test_encode() {
         "mappings": "AAAA,GAAIA,GAAI,EACR,IAAIA,GAAK,EAAG,CACVC,MAAM"
     }"#;
     let sm = SourceMap::from_json_string(input).unwrap();
-    let sm2 = SourceMap::from_json_string(&sm.to_json_string().unwrap()).unwrap();
+    let sm2 = SourceMap::from_json_string(&sm.to_json_string()).unwrap();
 
     for (tok1, tok2) in sm.get_tokens().zip(sm2.get_tokens()) {
         assert_eq!(tok1, tok2);
@@ -302,7 +300,7 @@ fn test_encode_escape_string() {
     );
     sm.set_x_google_ignore_list(vec![0]);
     assert_eq!(
-        sm.to_json_string().unwrap(),
+        sm.to_json_string(),
         r#"{"version":3,"names":["name_length_greater_than_16_\u0000"],"sources":["\u0000"],"sourcesContent":["emoji-👀-\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
     );
 }
