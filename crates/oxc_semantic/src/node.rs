@@ -94,9 +94,9 @@ impl<'a> AstNodes<'a> {
     ///
     /// The first node produced by this iterator is the first parent of the node
     /// pointed to by `node_id`. The last node will usually be a `Program`.
+    #[inline]
     pub fn iter_parents(&self, node_id: AstNodeId) -> impl Iterator<Item = &AstNode<'a>> + '_ {
-        let curr = Some(self.get_node(node_id));
-        AstNodeParentIter { curr, nodes: self }
+        AstNodeParentIter { current_node_id: Some(node_id), nodes: self }
     }
 
     #[inline]
@@ -197,7 +197,7 @@ impl<'a> AstNodes<'a> {
 
 #[derive(Debug)]
 pub struct AstNodeParentIter<'s, 'a> {
-    curr: Option<&'s AstNode<'a>>,
+    current_node_id: Option<AstNodeId>,
     nodes: &'s AstNodes<'a>,
 }
 
@@ -205,9 +205,11 @@ impl<'s, 'a> Iterator for AstNodeParentIter<'s, 'a> {
     type Item = &'s AstNode<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let next = self.curr;
-        self.curr = self.curr.and_then(|curr| self.nodes.parent_node(curr.id()));
-
-        next
+        if let Some(node_id) = self.current_node_id {
+            self.current_node_id = self.nodes.parent_ids[node_id];
+            Some(self.nodes.get_node(node_id))
+        } else {
+            None
+        }
     }
 }
