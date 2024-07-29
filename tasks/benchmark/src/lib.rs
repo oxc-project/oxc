@@ -19,7 +19,8 @@ use talc::{ClaimOnOom, Span, Talc, Talck};
 /// 1 GiB memory limit
 const ARENA_SIZE: usize = 0x4000_0000;
 
-#[repr(align(64))]
+// `align(64)` to specify alignment, `C` to ensure array itself is aligned (no padding before)
+#[repr(C, align(64))]
 struct AlignedBytes([u8; ARENA_SIZE]);
 
 static mut ARENA: AlignedBytes = AlignedBytes([0; ARENA_SIZE]);
