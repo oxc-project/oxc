@@ -41,7 +41,7 @@ impl ScopeTree {
 
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.len() == 0
+        self.parent_ids.is_empty()
     }
 
     pub fn ancestors(&self, scope_id: ScopeId) -> impl Iterator<Item = ScopeId> + '_ {

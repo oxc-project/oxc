@@ -87,7 +87,7 @@ impl<'a> AstNodes<'a> {
 
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.nodes.len() == 0
+        self.nodes.is_empty()
     }
 
     /// Walk up the AST, iterating over each parent node.
