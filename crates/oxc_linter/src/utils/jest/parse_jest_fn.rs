@@ -533,7 +533,7 @@ fn get_node_chain<'a>(params: &NodeChainParams<'a>) -> Vec<KnownMemberExpression
 }
 
 // sorted list for binary search.
-const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 51] = [
+const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 57] = [
     ["afterAll", "", "", ""],
     ["afterEach", "", "", ""],
     ["beforeAll", "", "", ""],
@@ -546,6 +546,13 @@ const VALID_JEST_FN_CALL_CHAINS: [[&str; 4]; 51] = [
     ["describe", "skip", "each", ""],
     ["fdescribe", "", "", ""],
     ["fdescribe", "each", "", ""],
+    // vitest
+    ["describe", "concurrent", "", ""],
+    ["describe", "concurrent", "each", ""],
+    ["describe", "concurrent", "only", "each"],
+    ["describe", "concurrent", "skip", "each"],
+    ["describe", "sequential", "", ""],
+    ["describe", "shuffle", "", ""],
     ["fit", "", "", ""],
     ["fit", "each", "", ""],
     ["fit", "failing", "", ""],

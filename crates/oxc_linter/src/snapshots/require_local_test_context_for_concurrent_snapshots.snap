@@ -1,0 +1,86 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
+---
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(true).toMatchSnapshot() })
+   ·                                      ──────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(true).toMatchInlineSnapshot("true") })
+   ·                                      ──────────────────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:66]
+ 1 │ describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchSnapshot() }) })
+   ·                                                                  ──────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:66]
+ 1 │ describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })
+   ·                                                                  ──────────────────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:43]
+ 1 │ it.concurrent("something", (context) => { expect(true).toMatchSnapshot() })
+   ·                                           ──────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:3:21]
+ 2 │                 it.concurrent("something", () => {
+ 3 │                     expect(true).toMatchSnapshot();
+   ·                     ──────────────────────────────
+ 4 │ 
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:5:21]
+ 4 │ 
+ 5 │                     expect(true).toMatchSnapshot();
+   ·                     ──────────────────────────────
+ 6 │                 })
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:5:21]
+ 4 │ 
+ 5 │                     expect(true).toMatchSnapshot();
+   ·                     ──────────────────────────────
+ 6 │                 })
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(true).toMatchFileSnapshot("./test/basic.output.html") })
+   ·                                      ────────────────────────────────────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingSnapshot() })
+   ·                                      ────────────────────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
+
+  ⚠ eslint-plugin-vitest(require-local-test-context-for-concurrent-snapshots): disallow importing `node:test`
+   ╭─[require_local_test_context_for_concurrent_snapshots.tsx:1:38]
+ 1 │ it.concurrent("should fail", () => { expect(foo()).toThrowErrorMatchingInlineSnapshot("bar") })
+   ·                                      ───────────────────────────────────────────────────────
+   ╰────
+  help: Import from `vitest` instead of `node:test`
