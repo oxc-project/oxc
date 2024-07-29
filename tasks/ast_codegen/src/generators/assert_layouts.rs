@@ -9,16 +9,17 @@ use crate::{
 
 use super::generated_header;
 
-pub struct AssertLayouts;
+pub struct AssertLayouts(pub &'static str);
 
 impl Generator for AssertLayouts {
     fn name(&self) -> &'static str {
-        stringify!(AssertLayouts)
+        self.0
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
         let (assertions_64, assertions_32) = ctx
             .schema
+            .borrow()
             .definitions
             .iter()
             .map(|def| {
@@ -52,7 +53,7 @@ impl Generator for AssertLayouts {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            output(crate::AST_CRATE, "assert_layouts.rs"),
+            output(crate::AST_CRATE, self.0),
             quote! {
                 #header
 

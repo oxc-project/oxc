@@ -298,12 +298,12 @@ impl Module {
         Ok(self)
     }
 
-    pub fn build_in(self, schema: &mut Schema) -> Result<()> {
+    pub fn build_in(&self, schema: &mut Schema) -> Result<()> {
         if !self.loaded {
             return Err(String::from(LOAD_ERROR));
         }
 
-        schema.definitions.extend(self.items.into_iter().filter_map(|it| (&*it.borrow()).into()));
+        schema.definitions.extend(self.items.iter().filter_map(|it| (&*it.borrow()).into()));
         Ok(())
     }
 }

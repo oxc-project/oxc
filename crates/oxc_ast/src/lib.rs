@@ -38,7 +38,7 @@ mod trivia;
 
 mod generated {
     #[cfg(debug_assertions)]
-    pub mod assert_layouts;
+    pub mod assert_unordered_layouts;
     pub mod ast_builder;
     pub mod ast_kind;
     pub mod span;

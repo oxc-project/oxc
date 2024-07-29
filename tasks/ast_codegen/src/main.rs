@@ -6,27 +6,27 @@ mod defs;
 mod fmt;
 mod generators;
 mod layout;
-mod linker;
 mod markers;
-mod pass;
+mod passes;
 mod schema;
 mod util;
 
-use std::{borrow::Cow, cell::RefCell, collections::HashMap, io::Read, path::PathBuf, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, io::Read, path::PathBuf, rc::Rc};
 
 use bpaf::{Bpaf, Parser};
 use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
-use layout::calc_layout;
+// use layout::calc_layout;
+use passes::{BuildSchema, CalcLayout, Linker, Pass, PassGenerator};
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator,
+    AssertLayouts, AstBuilderGenerator, AstFieldOrder, AstKindGenerator, VisitGenerator,
+    VisitMutGenerator,
 };
-use linker::linker;
-use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
+use schema::{Module, REnum, RStruct, RType, Schema};
 use util::{write_all_to, NormalizeError};
 
 use crate::generators::ImplGetSpanGenerator;
@@ -56,7 +56,8 @@ type GeneratedStream = (/* output path */ PathBuf, TokenStream);
 #[derive(Debug, Clone)]
 enum GeneratorOutput {
     None,
-    Info(String),
+    Err(String),
+    Info(Vec<u8>),
     Stream(GeneratedStream),
 }
 
@@ -71,7 +72,7 @@ impl GeneratorOutput {
         assert!(self.is_none());
     }
 
-    pub fn to_info(&self) -> &String {
+    pub fn to_info(&self) -> &[u8] {
         if let Self::Info(it) = self {
             it
         } else {
@@ -87,7 +88,7 @@ impl GeneratorOutput {
         }
     }
 
-    pub fn into_info(self) -> String {
+    pub fn into_info(self) -> Vec<u8> {
         if let Self::Info(it) = self {
             it
         } else {
@@ -107,7 +108,8 @@ impl GeneratorOutput {
 struct CodegenCtx {
     ty_table: TypeTable,
     ident_table: IdentTable,
-    schema: Schema,
+    schema: RefCell<Schema>,
+    mods: RefCell<Vec<Module>>,
 }
 
 struct CodegenResult {
@@ -116,7 +118,7 @@ struct CodegenResult {
 }
 
 impl CodegenCtx {
-    fn new(mods: Vec<Module>) -> Result<Self> {
+    fn new(mods: Vec<Module>) -> Self {
         // worst case len
         let len = mods.iter().fold(0, |acc, it| acc + it.items.len());
         let defs = mods.iter().flat_map(|it| it.items.iter());
@@ -132,13 +134,7 @@ impl CodegenCtx {
             }
         }
 
-        let mut me = Self { ty_table, ident_table, schema: Schema::default() }
-            .pass(linker)?
-            .pass(calc_layout)?;
-        for m in mods {
-            m.build_in(&mut me.schema)?;
-        }
-        Ok(me)
+        Self { ty_table, ident_table, mods: RefCell::new(mods), schema: RefCell::default() }
     }
 
     fn find(&self, key: &TypeName) -> Option<TypeRef> {
@@ -161,7 +157,15 @@ impl AstCodegen {
     }
 
     #[must_use]
-    fn with<G>(mut self, generator: G) -> Self
+    fn pass<P>(self, name: &'static str, pass: P) -> Self
+    where
+        P: Pass + 'static,
+    {
+        self.gen(PassGenerator::new(name, pass))
+    }
+
+    #[must_use]
+    fn gen<G>(mut self, generator: G) -> Self
     where
         G: Generator + 'static,
     {
@@ -180,7 +184,7 @@ impl AstCodegen {
             .map_ok(Module::analyze)
             .collect::<Result<Result<Vec<_>>>>()??;
 
-        let ctx = CodegenCtx::new(modules)?;
+        let ctx = CodegenCtx::new(modules);
 
         let outputs = self
             .generators
@@ -188,7 +192,7 @@ impl AstCodegen {
             .map(|mut gen| (gen.name(), gen.generate(&ctx)))
             .collect_vec();
 
-        Ok(CodegenResult { outputs, schema: ctx.schema })
+        Ok(CodegenResult { outputs, schema: ctx.schema.into_inner() })
     }
 }
 
@@ -228,12 +232,16 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let CodegenResult { outputs, schema } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
-        .with(AssertLayouts)
-        .with(AstKindGenerator)
-        .with(AstBuilderGenerator)
-        .with(ImplGetSpanGenerator)
-        .with(VisitGenerator)
-        .with(VisitMutGenerator)
+        .pass("link", Linker)
+        .pass("early layout", CalcLayout)
+        .pass("build early schema", BuildSchema)
+        .gen(AssertLayouts("assert_unordered_layouts.rs"))
+        .gen(AstFieldOrder)
+        .gen(AstKindGenerator)
+        .gen(AstBuilderGenerator)
+        .gen(ImplGetSpanGenerator)
+        .gen(VisitGenerator)
+        .gen(VisitMutGenerator)
         .generate()?;
 
     let (streams, _): (Vec<_>, Vec<_>) =
