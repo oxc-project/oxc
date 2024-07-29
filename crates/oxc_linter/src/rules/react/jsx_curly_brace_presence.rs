@@ -701,9 +701,12 @@ fn is_allowed_string_like<'a>(
 ) -> bool {
     is_whitespace(s)
         || is_line_break(s)
-        || !is_prop && (contains_disallowed_jsx_text_chars(s) || contains_html_entity(s))
+        || contains_html_entity(s)
+        || !is_prop && contains_disallowed_jsx_text_chars(s)
+        // || is_prop && (contains_disallowed_jsx_text_chars(s) || contains_html_entity(s))
         || s.trim() != s
         || contains_multiline_comment(s)
+        || contains_line_break_literal(s)
         || contains_utf8_escape(s)
         || is_prop && contains_quote_characters(s)
         // || !is_prop && (contains_quote_characters(s) && !stars_and_ends_with_quote(s))
@@ -714,6 +717,9 @@ fn is_whitespace(s: &str) -> bool {
 }
 fn is_line_break(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '\n' | '\r')) || s.trim().is_empty()
+}
+fn contains_line_break_literal(s: &str) -> bool {
+    s.chars().zip(s.chars().skip(1)).any(|tuple| matches!(tuple, ('\\', 'n' | 'r')))
 }
 fn contains_disallowed_jsx_text_chars(s: &str) -> bool {
     s.chars().any(|c| matches!(c, '<' | '>' | '{' | '}' | '\\'))
@@ -941,7 +947,7 @@ fn test() {
         (r#"<MyComponent>{"<Foo />"}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent prop={"Hello \u1026 world"}>bar</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"Hello \u1026 world"}</MyComponent>"#, Some(json!(["never"]))),
-        // (r#"<MyComponent prop={"Hello &middot; world"}>bar</MyComponent>"#, Some(json!(["never"]))),
+        (r#"<MyComponent prop={"Hello &middot; world"}>bar</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"Hello &middot; world"}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"Hello \n world"}</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent>{"space after "}</MyComponent>"#, Some(json!(["never"]))),
@@ -1222,12 +1228,12 @@ fn test() {
 			      ",
             Some(json!([{ "props": "never" }])),
         ),
-        // (
-        //     "
-        // 	        <Box mb={'1rem {}'} />
-        // 	      ",
-        //     Some(json!(["never"])),
-        // ),
+        (
+            "
+        	        <Box mb={'1rem {}'} />
+        	      ",
+            Some(json!(["never"])),
+        ),
         (r#"<MyComponent prop={"{ style: true }"}>bar</MyComponent>"#, Some(json!(["never"]))),
         (r#"<MyComponent prop={"< style: true >"}>foo</MyComponent>"#, Some(json!(["never"]))),
         (

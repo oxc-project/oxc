@@ -369,6 +369,14 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
 
   ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:2:27]
+ 1 │ 
+ 2 │                     <Box mb={'1rem {}'} />
+   ·                              ─────────
+ 3 │                   
+   ╰────
+
+  ⚠ eslint-plugin-react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:20]
  1 │ <MyComponent prop={"{ style: true }"}>bar</MyComponent>
    ·                    ─────────────────
