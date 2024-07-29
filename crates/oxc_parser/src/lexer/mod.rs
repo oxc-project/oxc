@@ -170,8 +170,8 @@ impl<'a> Lexer<'a> {
         let n = n as usize;
         debug_assert!(n > 0);
 
-        if self.lookahead.len() > n - 1 {
-            return self.lookahead[n - 1].token;
+        if let Some(lookahead) = self.lookahead.get(n - 1) {
+            return lookahead.token;
         }
 
         let position = self.source.position();
