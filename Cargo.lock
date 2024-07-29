@@ -1694,6 +1694,7 @@ dependencies = [
  "oxc_allocator",
  "oxc_diagnostics",
  "oxc_span",
+ "phf",
  "rustc-hash",
  "unicode-id-start",
 ]

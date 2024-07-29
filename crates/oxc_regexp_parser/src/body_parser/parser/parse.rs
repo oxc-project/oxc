@@ -515,6 +515,8 @@ impl<'a> PatternParser<'a> {
             if let Some((name, value, is_strings_related)) =
                 self.consume_unicode_property_value_expression()?
             {
+                // [SS:EE] CharacterClassEscape :: P{ UnicodePropertyValueExpression }
+                // It is a Syntax Error if MayContainStrings of the UnicodePropertyValueExpression is true.
                 if negative && is_strings_related {
                     return Err(OxcDiagnostic::error("Invalid property name"));
                 }
@@ -640,6 +642,19 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('[') {
             let negative = self.reader.eat('^');
             let (kind, body) = self.parse_class_contents()?;
+
+            // [SS:EE] CharacterClass :: [^ ClassContents ]
+            // It is a Syntax Error if MayContainStrings of the ClassContents is true.
+            if negative
+                && body.iter().any(|item| match item {
+                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_propery_escape) => {
+                        unicode_propery_escape.strings
+                    }
+                    _ => false,
+                })
+            {
+                return Err(OxcDiagnostic::error("Invalid character class"));
+            }
 
             if self.reader.eat(']') {
                 return Ok(Some(ast::CharacterClass {
@@ -1098,11 +1113,15 @@ impl<'a> PatternParser<'a> {
         if let Some(name) = self.consume_unicode_property_name() {
             if self.reader.eat('=') {
                 if let Some(value) = self.consume_unicode_property_value() {
-                    if unicode_property::is_valid_unicode_property(&name, &value) {
-                        return Ok(Some((name, Some(value), false)));
+                    // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
+                    // It is a Syntax Error if the source text matched by UnicodePropertyName is not a Unicode property name or property alias listed in the “Property name and aliases” column of Table 65.
+                    // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
+                    // It is a Syntax Error if the source text matched by UnicodePropertyValue is not a property value or property value alias for the Unicode property or property alias given by the source text matched by UnicodePropertyName listed in PropertyValueAliases.txt.
+                    if !unicode_property::is_valid_unicode_property(&name, &value) {
+                        return Err(OxcDiagnostic::error("Invalid property name"));
                     }
 
-                    return Err(OxcDiagnostic::error("Invalid property name"));
+                    return Ok(Some((name, Some(value), false)));
                 }
             }
         }
@@ -1110,22 +1129,21 @@ impl<'a> PatternParser<'a> {
 
         // LoneUnicodePropertyNameOrValue
         if let Some(name_or_value) = self.consume_unicode_property_value() {
+            // [SS:EE] UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
+            // It is a Syntax Error if the source text matched by LoneUnicodePropertyNameOrValue is not a Unicode property value or property value alias for the General_Category (gc) property listed in PropertyValueAliases.txt, nor a binary property or binary property alias listed in the “Property name and aliases” column of Table 66, nor a binary property of strings listed in the “Property name” column of Table 67.
             if unicode_property::is_valid_unicode_property("General_Category", &name_or_value) {
                 return Ok(Some(("General_Category".into(), Some(name_or_value), false)));
             }
-
             if unicode_property::is_valid_lone_unicode_property(&name_or_value) {
                 return Ok(Some((name_or_value, None, false)));
             }
-
+            // [SS:EE] UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
+            // It is a Syntax Error if the enclosing Pattern does not have a [UnicodeSetsMode] parameter and the source text matched by LoneUnicodePropertyNameOrValue is a binary property of strings listed in the “Property name” column of Table 67.
             if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
-                // Early errors:
-                // It is a Syntax Error
-                // - if the enclosing Pattern does not have a [UnicodeSetsMode] parameter
-                // - and the source text matched by LoneUnicodePropertyNameOrValue is a binary property of strings
-                //   - listed in the “Property name” column of Table 68.
                 if !self.state.unicode_sets_mode {
-                    return Err(OxcDiagnostic::error("Syntax Error"));
+                    return Err(OxcDiagnostic::error(
+                        "UnicodeSetsMode is required for binary property of strings",
+                    ));
                 }
 
                 return Ok(Some((name_or_value, None, true)));
