@@ -1,5 +1,3 @@
-/// Main entry point for `PatternParser`
-/// All others are just split files to `impl PatternParser`
 mod parse;
 
 pub use parse::PatternParser;
@@ -39,11 +37,21 @@ mod test {
             ("(?:abc)", ParserOptions::default()),
             ("a]", ParserOptions::default()),
             ("a}", ParserOptions::default()),
+            ("]", ParserOptions::default()),
+            ("[]", ParserOptions::default()),
+            ("[a]", ParserOptions::default()),
+            ("[ab]", ParserOptions::default()),
+            ("[a-b]", ParserOptions::default()),
+            ("[-]", ParserOptions::default()),
+            ("[a-]", ParserOptions::default()),
+            ("[-a]", ParserOptions::default()),
+            ("[-a-]", ParserOptions::default()),
+            (r"[a\-b]", ParserOptions::default()),
         ] {
-            assert!(
-                PatternParser::new(&allocator, source_text, *options).parse().is_ok(),
-                "{source_text} should be parsed with {options:?}!",
-            );
+            let res = PatternParser::new(&allocator, source_text, *options).parse();
+            if let Err(err) = res {
+                panic!("Failed to parse {source_text} with {options:?}\n💥 {err}");
+            }
         }
     }
 

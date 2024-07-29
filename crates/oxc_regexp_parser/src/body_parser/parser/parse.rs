@@ -357,7 +357,12 @@ impl<'a> PatternParser<'a> {
         }
 
         // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
-        // TODO
+        if let Some(character_class) = self.parse_character_class()? {
+            return Ok(Some(ast::Term::CharacterClass(Box::new_in(
+                character_class,
+                self.allocator,
+            ))));
+        }
 
         // (?: Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(ignore_group) = self.parse_ignore_group()? {
