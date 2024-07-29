@@ -894,6 +894,9 @@ pub struct ObjectAssignmentTarget<'a> {
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
+/// `rest` in `[foo, ...rest] = arr;`
+///
+/// Represents a rest element in an array assignment target, which can include a target.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
