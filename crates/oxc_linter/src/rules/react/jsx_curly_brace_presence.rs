@@ -1,8 +1,8 @@
 use oxc_allocator::Vec;
 use oxc_ast::{
     ast::{
-        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElementName,
-        JSXExpressionContainer,
+        Expression, JSXAttributeItem, JSXAttributeValue, JSXChild, JSXElement, JSXElementName,
+        JSXExpressionContainer, JSXFragment,
     },
     AstKind,
 };
@@ -658,9 +658,17 @@ impl JsxCurlyBracePresence {
         let Some(inner) = container.expression.as_expression() else { return };
         let allowed = if is_prop { self.props } else { self.children };
         match inner {
-            Expression::JSXFragment(_) | Expression::JSXElement(_) => {
+            Expression::JSXFragment(fragment) => {
+                if !is_prop
+                    && self.children.is_never()
+                    && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
+                {
+                    report_unnecessary_curly(ctx, container, node, inner.span());
+                }
+            }
+            Expression::JSXElement(el) => {
                 if is_prop {
-                    if self.prop_element_values.is_never() {
+                    if self.prop_element_values.is_never() && el.closing_element.is_none() {
                         report_unnecessary_curly(ctx, container, node, inner.span());
                     }
                 } else if self.children.is_never()
@@ -1096,14 +1104,14 @@ fn test() {
 			      "#,
             None,
         ),
-        // (
-        //     r#"
-        // 	        <CollapsibleTitle
-        // 	          extra={<span className="activity-type">{activity.type}</span>}
-        // 	        />
-        // 	      "#,
-        //     Some(json!(["never"])),
-        // ),
+        (
+            r#"
+        	        <CollapsibleTitle
+        	          extra={<span className="activity-type">{activity.type}</span>}
+        	        />
+        	      "#,
+            Some(json!(["never"])),
+        ),
         ("<App label={`${label}`} />", Some(json!(["never"]))),
         ("<App>{`${label}`}</App>", Some(json!(["never"]))),
     ];
