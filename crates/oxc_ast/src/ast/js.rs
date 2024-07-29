@@ -1045,7 +1045,9 @@ pub enum ChainElement<'a> {
 }
 }
 
-/// Parenthesized Expression
+/// `(a + b)` in `const res = (a + b) / c;`
+///
+/// Represents a parenthesized expression, which can include an expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
