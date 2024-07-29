@@ -37,8 +37,7 @@ export const renderSymbols = (symbols: SymbolTable): string => {
         span: symbols.spans[index],
         references: symbols.resolvedReferences[index].map(id => ({
           referenceId: id,
-          // reference id is 1-based
-          ...symbols.references[id - 1],
+          ...symbols.references[id],
         })),
       })
       return acc

@@ -197,6 +197,23 @@ impl<'a> Source<'a> {
         self.ptr = self.end;
     }
 
+    /// Advance `Source`'s cursor by one byte if it is equal to the given ASCII value.
+    ///
+    /// # SAFETY
+    ///
+    /// Caller must ensure that `ascii_byte` is a valid ASCII character.
+    #[inline]
+    pub(super) unsafe fn advance_if_ascii_eq(&mut self, ascii_byte: u8) -> bool {
+        debug_assert!(ascii_byte.is_ascii());
+        let matched = self.peek_byte() == Some(ascii_byte);
+        if matched {
+            // SAFETY: next byte exists and is a valid ASCII char (and thus UTF-8
+            // char boundary).
+            self.ptr = unsafe { self.ptr.add(1) };
+        }
+        matched
+    }
+
     /// Get string slice from a `SourcePosition` up to the current position of `Source`.
     pub(super) fn str_from_pos_to_current(&self, pos: SourcePosition) -> &'a str {
         assert!(pos.ptr <= self.ptr);
