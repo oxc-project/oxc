@@ -73,6 +73,8 @@ mod traverse;
 pub use traverse::Traverse;
 mod walk;
 
+mod compile_fail_tests;
+
 /// Traverse AST with a [`Traverse`] impl.
 ///
 /// This allows:
