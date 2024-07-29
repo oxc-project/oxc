@@ -48,10 +48,10 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> String {
     }
 
     contents.push("\"names\":[".into());
-    contents.push_list(sourcemap.names.iter().map(escape_json_string));
+    contents.push_list(sourcemap.names.iter(), escape_json_string);
 
     contents.push("],\"sources\":[".into());
-    contents.push_list(sourcemap.sources.iter().map(escape_json_string));
+    contents.push_list(sourcemap.sources.iter(), escape_json_string);
 
     // Quote `source_content` in parallel
     if let Some(source_contents) = &sourcemap.source_contents {
@@ -60,26 +60,31 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> String {
             if #[cfg(feature = "concurrent")] {
                 let quoted_source_contents: Vec<_> = source_contents
                     .par_iter()
-                    .map(escape_json_string)
+                    .map(|source| {
+                        let mut thread_contents = PreAllocatedString::new(source.len());
+                        escape_json_string(source, &mut thread_contents);
+                        thread_contents
+                    })
                     .collect();
-                contents.push_list(quoted_source_contents.into_iter());
+                contents.push_list(quoted_source_contents.into_iter(), |thread_contents, contents| {
+                    contents.extend_from(thread_contents);
+                });
             } else {
-                contents.push_list(source_contents.iter().map(escape_json_string));
+                contents.push_list(source_contents.iter(), escape_json_string);
             }
         };
     }
 
     if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
         contents.push("],\"x_google_ignoreList\":[".into());
-        contents.push_list(x_google_ignore_list.iter().map(ToString::to_string));
+        contents.push_list(x_google_ignore_list.iter(), |n, contents| {
+            contents.push(Cow::Owned(n.to_string()));
+        });
     }
 
     contents.push("],\"mappings\":\"".into());
     contents.push(serialize_sourcemap_mappings(sourcemap).into());
     contents.push("\"}".into());
-
-    // Check we calculated number of segments required correctly
-    debug_assert!(contents.num_segments() <= max_segments);
 
     contents.consume()
 }
@@ -208,19 +213,25 @@ impl<'a> PreAllocatedString<'a> {
     }
 
     #[inline]
-    fn push_list<I>(&mut self, mut iter: I)
+    fn push_list<S, I, P>(&mut self, mut iter: I, pusher: P)
     where
-        I: Iterator<Item = String>,
+        I: Iterator<Item = S>,
+        P: Fn(S, &mut Self) -> (),
     {
         let Some(first) = iter.next() else {
             return;
         };
-        self.push(Cow::Owned(first));
+        pusher(first, self);
 
         for other in iter {
             self.push(Cow::Borrowed(","));
-            self.push(Cow::Owned(other));
+            pusher(other, self);
         }
+    }
+
+    #[allow(dead_code)] // Only used when `concurrent` mode enabled
+    fn extend_from(&mut self, mut other: Self) {
+        self.buf.extend(other.buf.drain(..));
     }
 
     #[inline]
@@ -229,20 +240,144 @@ impl<'a> PreAllocatedString<'a> {
         buf.extend(self.buf);
         buf
     }
-
-    fn num_segments(&self) -> usize {
-        self.buf.len()
-    }
 }
 
-fn escape_json_string<S: AsRef<str>>(s: S) -> String {
+#[derive(Clone, Copy, PartialEq)]
+#[repr(u8)]
+enum EscapeCode {
+    None = 0,
+    Z0 = 1,
+    Z1 = 2,
+    Z2 = 3,
+    Z3 = 4,
+    Z4 = 5,
+    Z5 = 6,
+    Z6 = 7,
+    Z7 = 8,
+    BB = 9,
+    TT = 10,
+    NN = 11,
+    ZB = 12,
+    FF = 13,
+    RR = 14,
+    ZE = 15,
+    ZF = 16,
+    S0 = 17,
+    S1 = 18,
+    S2 = 19,
+    S3 = 20,
+    S4 = 21,
+    S5 = 22,
+    S6 = 23,
+    S7 = 24,
+    S8 = 25,
+    S9 = 26,
+    SA = 27,
+    SB = 28,
+    SC = 29,
+    SD = 30,
+    SE = 31,
+    SF = 32,
+    QU = 33,
+    BS = 34,
+}
+
+// Lookup table of escape sequences. A value of b'x' at index i means that byte
+// i is escaped as "\x" in JSON. A value of 0 means that byte i is not escaped.
+static ESCAPE_TABLE: [EscapeCode; 256] = {
+    use EscapeCode::*;
+    let __ = EscapeCode::None;
+    [
+        //   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+        Z0, Z1, Z2, Z3, Z4, Z5, Z6, Z7, BB, TT, NN, ZB, FF, RR, ZE, ZF, // 0
+        S0, S1, S2, S3, S4, S5, S6, S7, S8, S9, SA, SB, SC, SD, SE, SF, // 1
+        __, __, QU, __, __, __, __, __, __, __, __, __, __, __, __, __, // 2
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 3
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 4
+        __, __, __, __, __, __, __, __, __, __, __, __, BS, __, __, __, // 5
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 6
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 7
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 8
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // 9
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // A
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // B
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // C
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // D
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // E
+        __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, __, // F
+    ]
+};
+
+static ESCAPES: [&'static str; 35] = [
+    "",        // Not used
+    "\\u0000", // \x00
+    "\\u0001", // \x01
+    "\\u0002", // \x02
+    "\\u0003", // \x03
+    "\\u0004", // \x04
+    "\\u0005", // \x05
+    "\\u0006", // \x06
+    "\\u0007", // \x07
+    "\\b",     // \x08
+    "\\t",     // \x09
+    "\\n",     // \x0A
+    "\\u000b", // \x0B
+    "\\f",     // \x0C
+    "\\r",     // \x0D
+    "\\u000e", // \x0E
+    "\\u000f", // \x0F
+    "\\u0010", // \x10
+    "\\u0011", // \x11
+    "\\u0012", // \x12
+    "\\u0013", // \x13
+    "\\u0014", // \x14
+    "\\u0015", // \x15
+    "\\u0016", // \x16
+    "\\u0017", // \x17
+    "\\u0018", // \x18
+    "\\u0019", // \x19
+    "\\u001a", // \x1A
+    "\\u001b", // \x1B
+    "\\u001c", // \x1C
+    "\\u001d", // \x1D
+    "\\u001e", // \x1E
+    "\\u001f", // \x1F
+    "\\\"",    // \x22
+    "\\\\",    // \x5C
+];
+
+fn escape_json_string<'a, S: AsRef<str>>(s: S, contents: &mut PreAllocatedString<'a>) {
+    contents.push(Cow::Borrowed("\""));
+
     let s = s.as_ref();
-    let mut escaped_buf = Vec::with_capacity(s.len() * 2 + 2);
-    // This call is infallible as only error it can return is if the writer errors.
-    // Writing to a `Vec<u8>` is infallible, so that's not possible here.
-    serde::Serialize::serialize(s, &mut serde_json::Serializer::new(&mut escaped_buf)).unwrap();
-    // Safety: `escaped_buf` is valid utf8.
-    unsafe { String::from_utf8_unchecked(escaped_buf) }
+    // Extend lifetime of `s`.
+    // SAFETY: This is safe, because all strings are owned by `SourceMap` and live until after
+    // `PreAllocatedString` is dropped.
+    // TODO: Sort out lifetimes to make this work properly without `unsafe`.
+    let s: &'a str = unsafe { std::mem::transmute(s) };
+
+    let bytes = s.as_bytes();
+    let mut start = 0;
+    for (i, &byte) in bytes.iter().enumerate() {
+        let escape = ESCAPE_TABLE[byte as usize];
+        if escape == EscapeCode::None {
+            continue;
+        }
+
+        if start < i {
+            contents.push(Cow::Borrowed(&s[start..i]));
+        }
+
+        contents.push(Cow::Borrowed(ESCAPES[escape as usize]));
+
+        start = i + 1;
+    }
+
+    if start < bytes.len() {
+        contents.push(Cow::Borrowed(&s[start..]));
+    }
+
+    contents.push(Cow::Borrowed("\""));
 }
 
 #[test]
@@ -265,7 +400,11 @@ fn test_escape_json_string() {
     for (c, expected) in FIXTURES {
         let mut input = String::new();
         input.push(*c);
-        assert_eq!(escape_json_string(input), *expected);
+        let mut contents = PreAllocatedString::new(0);
+        escape_json_string(&input, &mut contents);
+        let encoded = contents.consume();
+        let _ = input; // Keep `input` alive until after `contents` consumed
+        assert_eq!(encoded, *expected);
     }
 }
 
