@@ -970,7 +970,9 @@ pub struct AssignmentTargetPropertyProperty<'a> {
     pub binding: AssignmentTargetMaybeDefault<'a>,
 }
 
-/// Sequence Expression
+/// `a++, b++` in `let a = 1, b = 2; let result = (a++, b++);`
+///
+/// Represents a sequence expression, which can include expressions.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
