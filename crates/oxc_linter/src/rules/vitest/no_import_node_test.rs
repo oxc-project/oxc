@@ -1,7 +1,5 @@
-use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
@@ -45,16 +43,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoImportNodeTest {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::ImportDeclaration(import_decl) = node.kind() {
-            if import_decl.source.value == "node:test" {
-                let span = import_decl.source.span;
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let module_record = ctx.module_record();
 
-                ctx.diagnostic_with_fix(no_import_node_test(span), |fixer| {
-                    fixer.replace(span, "\"vitest\"")
+        if let Some(node_test_module) = module_record.requested_modules.get("node:test") {
+            if let Some(requested_module) = node_test_module.first() {
+                ctx.diagnostic_with_fix(no_import_node_test(requested_module.span()), |fixer| {
+                    fixer.replace(requested_module.span(), "\"vitest\"")
                 });
             }
-        };
+        }
     }
 }
 
