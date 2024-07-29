@@ -22,6 +22,7 @@ pub struct AstNode<'a> {
 }
 
 impl<'a> AstNode<'a> {
+    #[inline]
     pub(crate) fn new(
         kind: AstKind<'a>,
         scope_id: ScopeId,
@@ -32,26 +33,32 @@ impl<'a> AstNode<'a> {
         Self { id, kind, scope_id, cfg_id, flags }
     }
 
+    #[inline]
     pub fn id(&self) -> AstNodeId {
         self.id
     }
 
+    #[inline]
     pub fn cfg_id(&self) -> BasicBlockId {
         self.cfg_id
     }
 
+    #[inline]
     pub fn kind(&self) -> AstKind<'a> {
         self.kind
     }
 
+    #[inline]
     pub fn scope_id(&self) -> ScopeId {
         self.scope_id
     }
 
+    #[inline]
     pub fn flags(&self) -> NodeFlags {
         self.flags
     }
 
+    #[inline]
     pub fn flags_mut(&mut self) -> &mut NodeFlags {
         &mut self.flags
     }
@@ -73,10 +80,12 @@ impl<'a> AstNodes<'a> {
         self.nodes.iter()
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.nodes.len()
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.nodes.len() == 0
     }
@@ -90,10 +99,12 @@ impl<'a> AstNodes<'a> {
         AstNodeParentIter { curr, nodes: self }
     }
 
+    #[inline]
     pub fn kind(&self, ast_node_id: AstNodeId) -> AstKind<'a> {
         self.nodes[ast_node_id].kind
     }
 
+    #[inline]
     pub fn parent_id(&self, ast_node_id: AstNodeId) -> Option<AstNodeId> {
         self.parent_ids[ast_node_id]
     }
@@ -106,28 +117,33 @@ impl<'a> AstNodes<'a> {
         self.parent_id(ast_node_id).map(|node_id| self.get_node(node_id))
     }
 
+    #[inline]
     pub fn get_node(&self, ast_node_id: AstNodeId) -> &AstNode<'a> {
         &self.nodes[ast_node_id]
     }
 
+    #[inline]
     pub fn get_node_mut(&mut self, ast_node_id: AstNodeId) -> &mut AstNode<'a> {
         &mut self.nodes[ast_node_id]
     }
 
     /// Get the root `AstNodeId`, It is always pointing to a `Program`.
     /// Returns `None` if root node isn't set.
+    #[inline]
     pub fn root(&self) -> Option<AstNodeId> {
         self.root
     }
 
     /// Get the root node as immutable reference, It is always guaranteed to be a `Program`.
     /// Returns `None` if root node isn't set.
+    #[inline]
     pub fn root_node(&self) -> Option<&AstNode<'a>> {
         self.root().map(|id| self.get_node(id))
     }
 
     /// Get the root node as mutable reference, It is always guaranteed to be a `Program`.
     /// Returns `None` if root node isn't set.
+    #[inline]
     pub fn root_node_mut(&mut self) -> Option<&mut AstNode<'a>> {
         self.root().map(|id| self.get_node_mut(id))
     }
@@ -143,6 +159,7 @@ impl<'a> AstNodes<'a> {
 
     /// Create and add an `AstNode` to the `AstNodes` tree and returns its `AstNodeId`.
     /// Node must not be `Program`. Use `add_program_node` instead.
+    #[inline]
     pub fn add_node(
         &mut self,
         kind: AstKind<'a>,

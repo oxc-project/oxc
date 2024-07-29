@@ -34,10 +34,12 @@ pub struct ScopeTree {
 impl ScopeTree {
     const ROOT_SCOPE_ID: ScopeId = ScopeId::new(0);
 
+    #[inline]
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
@@ -69,10 +71,12 @@ impl ScopeTree {
         list.into_iter()
     }
 
+    #[inline]
     pub fn get_child_ids(&self, scope_id: ScopeId) -> Option<&Vec<ScopeId>> {
         self.child_ids.get(scope_id)
     }
 
+    #[inline]
     pub fn get_child_ids_mut(&mut self, scope_id: ScopeId) -> Option<&mut Vec<ScopeId>> {
         self.child_ids.get_mut(scope_id)
     }
@@ -86,10 +90,12 @@ impl ScopeTree {
         Self::ROOT_SCOPE_ID
     }
 
+    #[inline]
     pub fn root_flags(&self) -> ScopeFlags {
         self.flags[self.root_scope_id()]
     }
 
+    #[inline]
     pub fn root_unresolved_references(&self) -> &UnresolvedReferences {
         &self.root_unresolved_references
     }
@@ -100,10 +106,12 @@ impl ScopeTree {
         self.root_unresolved_references.values().map(|v| v.iter().map(|(id, _)| *id))
     }
 
+    #[inline]
     pub fn get_flags(&self, scope_id: ScopeId) -> ScopeFlags {
         self.flags[scope_id]
     }
 
+    #[inline]
     pub fn get_flags_mut(&mut self, scope_id: ScopeId) -> &mut ScopeFlags {
         &mut self.flags[scope_id]
     }
@@ -134,6 +142,7 @@ impl ScopeTree {
         flags
     }
 
+    #[inline]
     pub fn get_parent_id(&self, scope_id: ScopeId) -> Option<ScopeId> {
         self.parent_ids[scope_id]
     }
@@ -146,6 +155,7 @@ impl ScopeTree {
     }
 
     /// Get a variable binding by name that was declared in the top-level scope
+    #[inline]
     pub fn get_root_binding(&self, name: &str) -> Option<SymbolId> {
         self.get_binding(self.root_scope_id(), name)
     }
@@ -175,10 +185,12 @@ impl ScopeTree {
         None
     }
 
+    #[inline]
     pub fn get_bindings(&self, scope_id: ScopeId) -> &Bindings {
         &self.bindings[scope_id]
     }
 
+    #[inline]
     pub fn get_node_id(&self, scope_id: ScopeId) -> AstNodeId {
         self.node_ids[scope_id]
     }
@@ -189,6 +201,7 @@ impl ScopeTree {
         })
     }
 
+    #[inline]
     pub(crate) fn get_bindings_mut(&mut self, scope_id: ScopeId) -> &mut Bindings {
         &mut self.bindings[scope_id]
     }

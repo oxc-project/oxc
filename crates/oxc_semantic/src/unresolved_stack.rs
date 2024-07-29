@@ -57,11 +57,13 @@ impl<'a> UnresolvedReferencesStack<'a> {
         assert!(self.current_scope_depth > 0);
     }
 
+    #[inline]
     pub(crate) fn scope_depth(&self) -> usize {
         self.current_scope_depth
     }
 
     /// Get unresolved references hash map for current scope
+    #[inline]
     pub(crate) fn current_mut(&mut self) -> &mut TempUnresolvedReferences<'a> {
         // SAFETY: `stack.len() > current_scope_depth` initially.
         // Thereafter, `stack` never shrinks, only grows.
@@ -72,6 +74,7 @@ impl<'a> UnresolvedReferencesStack<'a> {
     }
 
     /// Get unresolved references hash maps for current scope, and parent scope
+    #[inline]
     pub(crate) fn current_and_parent_mut(
         &mut self,
     ) -> (&mut TempUnresolvedReferences<'a>, &mut TempUnresolvedReferences<'a>) {
@@ -92,6 +95,7 @@ impl<'a> UnresolvedReferencesStack<'a> {
         (current, parent)
     }
 
+    #[inline]
     pub(crate) fn into_root(self) -> TempUnresolvedReferences<'a> {
         // SAFETY: Stack starts with a non-zero size and never shrinks.
         // This assertion removes bounds check in `.next()`.
