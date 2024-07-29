@@ -2,6 +2,4 @@ commit: a1587416
 
 minifier_test262 Summary:
 AST Parsed     : 46466/46466 (100.00%)
-Positive Passed: 46464/46466 (100.00%)
-Expect to Parse: "staging/explicit-resource-management/call-dispose-methods.js"
-Expect to Parse: "staging/explicit-resource-management/exception-handling.js"
+Positive Passed: 46466/46466 (100.00%)

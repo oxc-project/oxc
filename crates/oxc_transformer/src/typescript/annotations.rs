@@ -85,11 +85,7 @@ impl<'a> TypeScriptAnnotations<'a> {
                                         &specifier.local
                                     {
                                         ident.reference_id.get().is_some_and(|id| {
-                                            ctx.symbols().references[id].symbol_id().is_some_and(
-                                                |symbol_id| {
-                                                    ctx.symbols().get_flag(symbol_id).is_type()
-                                                },
-                                            )
+                                            ctx.symbols().get_reference(id).is_type()
                                         })
                                     } else {
                                         false
@@ -522,11 +518,7 @@ struct Assignment<'a> {
 impl<'a> Assignment<'a> {
     // Creates `this.name = name`
     fn create_this_property_assignment(&self, ctx: &mut TraverseCtx<'a>) -> Statement<'a> {
-        let reference_id = ctx.create_bound_reference(
-            self.name.to_compact_str(),
-            self.symbol_id,
-            ReferenceFlag::Read,
-        );
+        let reference_id = ctx.create_bound_reference(self.symbol_id, ReferenceFlag::Read);
         let id = IdentifierReference::new_read(self.span, self.name.clone(), Some(reference_id));
 
         ctx.ast.statement_expression(

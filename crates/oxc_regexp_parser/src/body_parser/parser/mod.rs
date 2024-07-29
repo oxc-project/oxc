@@ -1,10 +1,4 @@
-mod atom;
-mod atom_class;
-mod atom_escape;
-/// Main entry point for `PatternParser`
-/// All others are just split files to `impl PatternParser`
 mod parse;
-mod shared;
 
 pub use parse::PatternParser;
 
@@ -19,10 +13,13 @@ mod test {
         let allocator = Allocator::default();
 
         for (source_text, options) in &[
+            ("", ParserOptions::default()),
             ("a", ParserOptions::default()),
             ("a+", ParserOptions::default()),
             ("a*", ParserOptions::default()),
             ("a?", ParserOptions::default()),
+            ("(?=a){1}", ParserOptions::default()),
+            ("(?!a){1}", ParserOptions::default()),
             ("a{1}", ParserOptions::default()),
             ("a{1,}", ParserOptions::default()),
             ("a{1,2}", ParserOptions::default()),
@@ -40,11 +37,30 @@ mod test {
             (r"\n\cM\0\x41\u1f60\.\/", ParserOptions::default()),
             (r"\u{1f600}", ParserOptions::default().with_unicode_flags(true, false)),
             ("(?:abc)", ParserOptions::default()),
+            ("a]", ParserOptions::default()),
+            ("a}", ParserOptions::default()),
+            ("]", ParserOptions::default()),
+            ("[]", ParserOptions::default()),
+            ("[a]", ParserOptions::default()),
+            ("[ab]", ParserOptions::default()),
+            ("[a-b]", ParserOptions::default()),
+            ("[-]", ParserOptions::default()),
+            ("[a-]", ParserOptions::default()),
+            ("[-a]", ParserOptions::default()),
+            ("[-a-]", ParserOptions::default()),
+            (r"[a\-b]", ParserOptions::default()),
+            (r"[-a-b]", ParserOptions::default()),
+            (r"[a-b-]", ParserOptions::default()),
+            (r"[a\-b-]", ParserOptions::default()),
+            (r"[\[\]\-]", ParserOptions::default()),
+            ("[a-z0-9]", ParserOptions::default()),
+            ("[a-a]", ParserOptions::default()),
+            (r"[\d-\D]", ParserOptions::default()),
         ] {
-            assert!(
-                PatternParser::new(&allocator, source_text, *options).parse().is_ok(),
-                "{source_text} should be parsed with {options:?}!",
-            );
+            let res = PatternParser::new(&allocator, source_text, *options).parse();
+            if let Err(err) = res {
+                panic!("Failed to parse {source_text} with {options:?}\n💥 {err}");
+            }
         }
     }
 
@@ -53,35 +69,40 @@ mod test {
         let allocator = Allocator::default();
 
         for (source_text, options) in &[
-            ("", ParserOptions::default()),
             ("a)", ParserOptions::default()),
-            (r"b\", ParserOptions::default()),
-            ("c]", ParserOptions::default()),
-            ("d}", ParserOptions::default()),
-            ("e|+", ParserOptions::default()),
-            ("f|{", ParserOptions::default()),
-            ("g{", ParserOptions::default()),
-            ("g{1", ParserOptions::default()),
-            ("g{1,", ParserOptions::default()),
-            ("g{,", ParserOptions::default()),
-            ("g{2,1}", ParserOptions::default()),
-            ("(?=h", ParserOptions::default()),
-            ("(?<!h", ParserOptions::default()),
-            (r"\xi", ParserOptions::default()),
-            (r"j\u{1f600}", ParserOptions::default()),
-            (r"j\u", ParserOptions::default()),
+            (r"a\", ParserOptions::default()),
+            ("a]", ParserOptions::default().with_unicode_flags(true, false)),
+            ("a}", ParserOptions::default().with_unicode_flags(true, false)),
+            ("a|+", ParserOptions::default()),
+            ("a|{", ParserOptions::default()),
+            ("a{", ParserOptions::default()),
+            ("a{1", ParserOptions::default()),
+            ("a{1,", ParserOptions::default()),
+            ("a{,", ParserOptions::default()),
+            ("a{2,1}", ParserOptions::default()),
+            ("(?=a", ParserOptions::default()),
+            ("(?<!a", ParserOptions::default()),
+            (r"\xa", ParserOptions::default()),
+            (r"a\u{1f600}", ParserOptions::default()),
+            (r"a\u", ParserOptions::default()),
             (
-                r"k\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
+                r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
                 ParserOptions::default(),
             ),
-            (r"k\p{Emoji_Presentation", ParserOptions::default().with_unicode_flags(true, false)),
-            (r"k\p{Script=", ParserOptions::default().with_unicode_flags(true, false)),
-            (r"l\ka", ParserOptions::default().with_unicode_flags(true, false)),
-            (r"l\k<", ParserOptions::default().with_unicode_flags(true, false)),
-            (r"l\k<a", ParserOptions::default().with_unicode_flags(true, false)),
-            ("m(?:", ParserOptions::default()),
-            ("(n", ParserOptions::default()),
-            ("(?<n>", ParserOptions::default()),
+            (r"\p{Emoji_Presentation", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"\p{Script=", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"\ka", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"\k<", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"\k<>", ParserOptions::default()),
+            (r"\k<>", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"\k<a", ParserOptions::default().with_unicode_flags(true, false)),
+            ("a(?:", ParserOptions::default()),
+            ("(a", ParserOptions::default()),
+            ("(?<a>", ParserOptions::default()),
+            ("(?=a){1}", ParserOptions::default().with_unicode_flags(true, false)),
+            ("(?!a){1}", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"[\d-\D]", ParserOptions::default().with_unicode_flags(true, false)),
+            ("[z-a]", ParserOptions::default()),
         ] {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),
@@ -95,10 +116,6 @@ mod test {
         let allocator = Allocator::default();
         let source_text = "このEmoji🥹の数が変わる";
 
-        let pattern =
-            PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
-        assert_eq!(pattern.alternatives[0].terms.len(), 15);
-
         let pattern = PatternParser::new(
             &allocator,
             source_text,
@@ -106,7 +123,7 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.alternatives[0].terms.len(), 14);
+        assert_eq!(pattern.body.body[0].body.len(), 14);
         let pattern = PatternParser::new(
             &allocator,
             source_text,
@@ -114,6 +131,10 @@ mod test {
         )
         .parse()
         .unwrap();
-        assert_eq!(pattern.alternatives[0].terms.len(), 14);
+        assert_eq!(pattern.body.body[0].body.len(), 14);
+
+        let pattern =
+            PatternParser::new(&allocator, source_text, ParserOptions::default()).parse().unwrap();
+        assert_eq!(pattern.body.body[0].body.len(), 15);
     }
 }

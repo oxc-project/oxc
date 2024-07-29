@@ -1044,7 +1044,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let span = self.start_span();
-        let lhs = self.parse_binary_expression_or_higher(Precedence::lowest())?;
+        let lhs = self.parse_binary_expression_or_higher(Precedence::Comma)?;
         let kind = self.cur_kind();
 
         // `x => {}`

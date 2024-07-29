@@ -1,4 +1,4 @@
-use oxc_semantic::SymbolFlags;
+use oxc_semantic::{Reference, SymbolFlags};
 
 use crate::util::SemanticTester;
 
@@ -55,6 +55,18 @@ fn test_var_read_write() {
         .has_number_of_writes(1)
         .test();
 
+    SemanticTester::js("let x = 0; let foo = (0, x++)")
+        .has_some_symbol("x")
+        .has_number_of_reads(1)
+        .has_number_of_writes(1)
+        .test();
+
+    SemanticTester::js("let x = 0; x++")
+        .has_some_symbol("x")
+        .has_number_of_reads(0)
+        .has_number_of_writes(1)
+        .test();
+
     SemanticTester::js("let a; let b = 1 + (0, ((a)));")
         .has_some_symbol("a")
         .has_number_of_reads(1)
@@ -96,6 +108,20 @@ fn test_types_simple() {
         .contains_flags(SymbolFlags::TypeAlias)
         .has_number_of_references(1)
         .test();
+
+    SemanticTester::ts("function foo<T>(): T { }")
+        .has_some_symbol("T")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .has_number_of_references_where(1, Reference::is_type)
+        .test();
+
+    SemanticTester::ts("function foo<T>(a: T): void {}")
+        .has_some_symbol("T")
+        .contains_flags(SymbolFlags::TypeParameter)
+        .has_number_of_references(1)
+        .has_number_of_references_where(1, Reference::is_type)
+        .test();
 }
 
 #[test]
@@ -110,9 +136,30 @@ fn test_export_flag() {
     ",
     );
 
-    tester.has_root_symbol("a").contains_flags(SymbolFlags::Export).test();
-    tester.has_root_symbol("b").contains_flags(SymbolFlags::Export).test();
-    tester.has_root_symbol("c").contains_flags(SymbolFlags::Export).test();
+    tester.has_root_symbol("a").is_exported().test();
+    tester.has_root_symbol("b").is_exported().test();
+    tester.has_root_symbol("c").is_exported().test();
+}
+
+#[test]
+fn test_export_default_flag() {
+    let tester = SemanticTester::ts(
+        "
+        export default function func() {}
+        export default class cls {}
+        export default interface face {}
+
+        export default (function funcExpr() {});
+        export default (function(param) {});
+    ",
+    );
+
+    tester.has_root_symbol("func").is_exported().test();
+    tester.has_root_symbol("cls").is_exported().test();
+    tester.has_root_symbol("face").is_exported().test();
+
+    tester.has_symbol("funcExpr").is_not_exported().test();
+    tester.has_symbol("param").is_not_exported().test();
 }
 
 #[test]

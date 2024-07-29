@@ -162,6 +162,10 @@ impl Rule for TripleSlashReference {
             }
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 fn get_attr_key_and_value(raw: &str) -> Option<(String, String)> {

@@ -87,12 +87,15 @@ fn resolve_global_binding<'a, 'b: 'a>(
         let nodes = ctx.nodes();
         let symbols = ctx.symbols();
         scope.ancestors(scope_id).find_map(|id| scope.get_binding(id, &ident.name)).map_or_else(
+            // panic in debug builds, but fail gracefully in release builds
             || {
-                panic!(
+                debug_assert!(
+                    false,
                     "No binding id found for {}, but this IdentifierReference
                 is not a global",
                     &ident.name
                 );
+                None
             },
             |binding_id| {
                 let decl = nodes.get_node(symbols.get_declaration(binding_id));
@@ -104,7 +107,9 @@ fn resolve_global_binding<'a, 'b: 'a>(
                         }
                         match &parent_decl.init {
                             // handles "let a = JSON; let b = a; a();"
-                            Some(Expression::Identifier(parent_ident)) => {
+                            Some(Expression::Identifier(parent_ident))
+                                if parent_ident.name != ident.name =>
+                            {
                                 resolve_global_binding(parent_ident, decl_scope, ctx)
                             }
                             // handles "let a = globalThis.JSON; let b = a; a();"
@@ -180,6 +185,13 @@ fn test() {
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         ("{const Math = () => {}; {let obj = new Math();}}", None),
         ("{const {parse} = JSON;parse('{}')}", None),
+        // https://github.com/oxc-project/oxc/issues/4389
+        (
+            r"
+        export const getConfig = getConfig;
+        getConfig();",
+            None,
+        ),
     ];
 
     let fail = vec![

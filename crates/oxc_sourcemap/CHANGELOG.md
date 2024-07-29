@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.22.1] - 2024-07-27
+
+### Bug Fixes
+
+- 5db7bed sourcemap: Fix pre-calculation of required segments for building JSON (#4490) (overlookmotel)
+
+### Performance
+
+- 705e19f sourcemap: Reduce memory copies encoding JSON (#4489) (overlookmotel)
+- 4d10c6c sourcemap: Pre allocate String buf while encoding (#4476) (Brooooooklyn)
+
+### Refactor
+
+- c958a55 sourcemap: `push_list` method for building JSON (#4486) (overlookmotel)
+
+## [0.22.0] - 2024-07-23
+
+### Bug Fixes
+
+- 4cd5df0 sourcemap: Avoid negative line if token_chunks has same prev_dst_line (#4348) (underfin)
+
 ## [0.21.0] - 2024-07-18
 
 ### Features

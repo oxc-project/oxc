@@ -80,6 +80,10 @@ impl Rule for PreferAsConst {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 fn check_and_report(

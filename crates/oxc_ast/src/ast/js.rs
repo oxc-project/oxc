@@ -160,6 +160,8 @@ macro_rules! match_expression {
 pub use match_expression;
 
 /// Identifier Name
+///
+/// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -171,6 +173,8 @@ pub struct IdentifierName<'a> {
 }
 
 /// Identifier Reference
+///
+/// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -178,14 +182,26 @@ pub struct IdentifierName<'a> {
 pub struct IdentifierReference<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The name of the identifier being referenced.
     pub name: Atom<'a>,
+    /// Reference ID
+    ///
+    /// Identifies what identifier this refers to, and how it is used. This is
+    /// set in the bind step of semantic analysis, and will always be [`None`]
+    /// immediately after parsing.
     #[serde(skip)]
     pub reference_id: Cell<Option<ReferenceId>>,
+    /// Flags indicating how the reference is used.
+    ///
+    /// This gets set in the bind step of semantic analysis, and will always be
+    /// [`ReferenceFlag::None`] immediately after parsing.
     #[serde(skip)]
     pub reference_flag: ReferenceFlag,
 }
 
 /// Binding Identifier
+///
+/// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -193,12 +209,21 @@ pub struct IdentifierReference<'a> {
 pub struct BindingIdentifier<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The identifier name being bound.
     pub name: Atom<'a>,
+    /// Unique identifier for this binding.
+    ///
+    /// This gets initialized during [`semantic analysis`] in the bind step. If
+    /// you choose to skip semantic analysis, this will always be [`None`].
+    ///
+    /// [`semantic analysis`]: <https://docs.rs/oxc_semantic/latest/oxc_semantic/struct.SemanticBuilder.html>
     #[serde(skip)]
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
 /// Label Identifier
+///
+/// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -210,6 +235,8 @@ pub struct LabelIdentifier<'a> {
 }
 
 /// This Expression
+///
+/// Corresponds to the `this` keyword.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -266,6 +293,12 @@ pub struct Elision {
 }
 
 /// Object Expression
+///
+/// ## Example
+/// ```ts
+/// const x = { foo: 'foo' }
+/// //        ^^^^^^^^^^^^^^
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -273,6 +306,7 @@ pub struct Elision {
 pub struct ObjectExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// Properties declared in the object
     pub properties: Vec<'a, ObjectPropertyKind<'a>>,
     #[serde(skip)]
     pub trailing_comma: Option<Span>,
@@ -283,7 +317,22 @@ pub struct ObjectExpression<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ObjectPropertyKind<'a> {
+    /// Object Property
+    ///
+    /// ## Example
+    /// ```ts
+    /// const foo = 'foo'
+    /// const x = { foo, bar: 'bar' }
+    /// //          ^^^  ^^^^^^^^^^      
     ObjectProperty(Box<'a, ObjectProperty<'a>>),
+    /// Object Spread Property
+    ///
+    /// ## Example
+    /// ```ts
+    /// const obj = { foo: 'foo' }
+    /// const obj2 = { ...obj, bar: 'bar' }
+    /// //             ^^^^^^
+    /// ```
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
@@ -438,6 +487,14 @@ pub struct StaticMemberExpression<'a> {
 }
 
 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+///
+/// ## Example
+/// ```ts
+/// //    _______ object
+/// const foo.bar?.#baz
+/// //           ↑ ^^^^ field
+/// //           optional
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -451,6 +508,19 @@ pub struct PrivateFieldExpression<'a> {
 }
 
 /// Call Expression
+///
+/// ## Examples
+/// ```ts
+/// //        ___ callee
+/// const x = foo(1, 2)
+///
+/// //            ^^^^ arguments
+/// const y = foo.bar?.(1, 2)
+/// //               ^ optional
+///
+/// const z = foo<number, string>(1, 2)
+/// //            ^^^^^^^^^^^^^^ type_parameters
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -465,6 +535,15 @@ pub struct CallExpression<'a> {
 }
 
 /// New Expression
+///
+/// ## Example
+/// ```ts
+/// //           callee         arguments
+/// //              ↓↓↓         ↓↓↓↓         
+/// const foo = new Foo<number>(1, 2)
+/// //                 ↑↑↑↑↑↑↑↑
+/// //                 type_parameters
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -490,6 +569,16 @@ pub struct MetaProperty<'a> {
 }
 
 /// Spread Element
+///
+/// An array or object spread. Could be used in unpacking or a declaration.
+///
+/// ## Example
+/// ```ts
+/// const [first, ...rest] = arr
+/// //            ^^^^^^^
+/// const obj = { foo: 'foo', ...obj2 }
+/// //                        ^^^^^^^
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -497,6 +586,7 @@ pub struct MetaProperty<'a> {
 pub struct SpreadElement<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The expression being spread.
     pub argument: Expression<'a>,
 }
 
@@ -1578,17 +1668,65 @@ pub struct Class<'a> {
     pub r#type: ClassType,
     #[serde(flatten)]
     pub span: Span,
+    /// Decorators applied to the class.
+    ///
+    /// Decorators are currently a stage 3 proposal. Oxc handles both TC39 and
+    /// legacy TypeScript decorators.
+    ///
+    /// ## Example
+    /// ```ts
+    /// @Bar() // <-- Decorator
+    /// class Foo {}
+    /// ```
     pub decorators: Vec<'a, Decorator<'a>>,
+    /// Class identifier, AKA the name
     pub id: Option<BindingIdentifier<'a>>,
     #[scope(enter_before)]
     pub type_parameters: Option<Box<'a, TSTypeParameterDeclaration<'a>>>,
+    /// Super class. When present, this will usually be an [`IdentifierReference`].
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo extends Bar {}
+    /// //                ^^^
+    /// ```
     #[visit(as(ClassHeritage))]
     pub super_class: Option<Expression<'a>>,
+    /// Type parameters passed to super class.
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo<T> extends Bar<T> {}
+    /// //                       ^
+    /// ```
     pub super_type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
+    /// Interface implementation clause for TypeScript classes.
+    ///
+    /// ## Example
+    /// ```ts
+    /// interface Bar {}
+    /// class Foo implements Bar {}
+    /// //                   ^^^   
+    /// ```
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub body: Box<'a, ClassBody<'a>>,
+    /// Whether the class is abstract
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {}          // true
+    /// abstract class Bar {} // false
+    /// ```
     pub r#abstract: bool,
+    /// Whether the class was `declare`ed
+    ///
+    /// ## Example
+    /// ```ts
+    /// declare class Foo {}
+    /// ```
     pub declare: bool,
+    /// Id of the scope created by the [`Class`], including type parameters and
+    /// statements within the [`ClassBody`].
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
@@ -1596,7 +1734,16 @@ pub struct Class<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum ClassType {
+    /// Class declaration statement
+    /// ```ts
+    /// class Foo { }
+    /// ```
     ClassDeclaration,
+    /// Class expression
+    ///
+    /// ```ts
+    /// const Foo = class {}
+    /// ```
     ClassExpression,
 }
 
@@ -1610,15 +1757,44 @@ pub struct ClassBody<'a> {
     pub body: Vec<'a, ClassElement<'a>>,
 }
 
+/// Class Body Element
+///
+/// ## Example
+/// ```ts
+/// class Foo {
+///   [prop: string]: string // ClassElement::TSIndexSignature
+///
+///   public x: number // ClassElement::PropertyDefinition
+///
+///   accessor z() { return 5 } // ClassElement::AccessorProperty
+///
+///   // These are all ClassElement::MethodDefinitions
+///   get y() { return 5 }
+///   set y(value) { }
+///   static foo() {}
+///   bar() {}
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ClassElement<'a> {
     StaticBlock(Box<'a, StaticBlock<'a>>),
+    /// Class Methods
+    ///
+    /// Includes static and non-static methods, constructors, getters, and setters.
     MethodDefinition(Box<'a, MethodDefinition<'a>>),
     PropertyDefinition(Box<'a, PropertyDefinition<'a>>),
     AccessorProperty(Box<'a, AccessorProperty<'a>>),
+    /// Index Signature
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {
+    ///   [keys: string]: string
+    /// }
+    /// ```
     TSIndexSignature(Box<'a, TSIndexSignature<'a>>),
 }
 
@@ -1627,6 +1803,9 @@ pub enum ClassElement<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub struct MethodDefinition<'a> {
+    /// Method definition type
+    ///
+    /// This will always be true when an `abstract` modifier is used on the method.
     pub r#type: MethodDefinitionType,
     #[serde(flatten)]
     pub span: Span,
@@ -1663,17 +1842,76 @@ pub struct PropertyDefinition<'a> {
     pub r#type: PropertyDefinitionType,
     #[serde(flatten)]
     pub span: Span,
+    /// Decorators applied to the property.
+    ///
+    /// See [`Decorator`] for more information.
     pub decorators: Vec<'a, Decorator<'a>>,
+    /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
+    /// Initialized value in the declaration.
+    ///
+    /// ## Example
+    /// ```
+    /// class Foo {
+    ///   x = 5     // Some(NumericLiteral)
+    ///   y: string // None
+    ///
+    ///   constructor() {
+    ///     this.y = "hello"
+    ///   }
+    /// }
+    /// ```
     pub value: Option<Expression<'a>>,
+    /// Property was declared with a computed key
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {
+    ///   ["a"]: string // true
+    ///   b: number     // false
+    /// }
+    /// ```
     pub computed: bool,
+    /// Property was declared with a `static` modifier
     pub r#static: bool,
+    /// Property is declared with a `declare` modifier.
+    ///
+    /// ## Example
+    /// ```ts
+    /// class Foo {
+    ///   x: number         // false
+    ///   declare y: string // true
+    /// }
+    ///
+    /// declare class Bar {
+    ///   x: number         // false
+    /// }
+    /// ```
     pub declare: bool,
     pub r#override: bool,
+    /// `true` when created with an optional modifier (`?`)
     pub optional: bool,
     pub definite: bool,
+    /// `true` when declared with a `readonly` modifier
     pub readonly: bool,
+    /// Type annotation on the property.
+    ///
+    /// Will only ever be [`Some`] for TypeScript files.
     pub type_annotation: Option<Box<'a, TSTypeAnnotation<'a>>>,
+    /// Accessibility modifier.
+    ///
+    /// Only ever [`Some`] for TypeScript files.
+    ///
+    /// ## Example
+    ///
+    /// ```ts
+    /// class Foo {
+    ///   public w: number     // Some(TSAccessibility::Public)
+    ///   private x: string    // Some(TSAccessibility::Private)
+    ///   protected y: boolean // Some(TSAccessibility::Protected)
+    ///   readonly z           // None
+    /// }
+    /// ```
     pub accessibility: Option<TSAccessibility>,
 }
 
@@ -1690,12 +1928,19 @@ pub enum PropertyDefinitionType {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum MethodDefinitionKind {
+    /// Class constructor
     Constructor,
+    /// Static or instance method
     Method,
+    /// Getter method
     Get,
+    /// Setter method
     Set,
 }
 
+/// An identifier for a private class member.
+///
+/// See: [MDN - Private class fields](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Private_class_fields)
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1706,6 +1951,19 @@ pub struct PrivateIdentifier<'a> {
     pub name: Atom<'a>,
 }
 
+/// Class Static Block
+///
+/// See: [MDN - Static initialization blocks](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/Static_initialization_blocks)
+///
+/// ## Example
+///
+/// ```ts
+/// class Foo {
+///     static {
+///         this.someStaticProperty = 5;
+///     }
+/// }
+/// ```
 #[ast(visit)]
 #[scope(flags(ScopeFlags::ClassStaticBlock))]
 #[derive(Debug)]
@@ -1718,6 +1976,29 @@ pub struct StaticBlock<'a> {
     pub scope_id: Cell<Option<ScopeId>>,
 }
 
+/// ES6 Module Declaration
+///
+/// An ESM import or export statement.
+///
+/// ## Example
+///
+/// ```ts
+/// // ImportDeclaration
+/// import { foo } from 'foo';
+/// import bar from 'bar';
+/// import * as baz from 'baz';
+///
+/// // Not a ModuleDeclaration
+/// export const a = 5;
+///
+/// const b = 6;
+///
+/// export { b };             // ExportNamedDeclaration
+/// export default b;         // ExportDefaultDeclaration
+/// export * as c from './c'; // ExportAllDeclaration
+/// export = b;               // TSExportAssignment
+/// export as namespace d;    // TSNamespaceExportDeclaration
+/// ```
 #[ast(visit)]
 #[repr(C, u8)]
 #[derive(Debug, Hash)]
@@ -1763,6 +2044,14 @@ pub enum AccessorPropertyType {
     TSAbstractAccessorProperty,
 }
 
+/// Class Accessor Property
+///
+/// ## Example
+/// ```ts
+/// class Foo {
+///   accessor y: string
+/// }
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1770,8 +2059,13 @@ pub struct AccessorProperty<'a> {
     pub r#type: AccessorPropertyType,
     #[serde(flatten)]
     pub span: Span,
+    /// Decorators applied to the accessor property.
+    ///
+    /// See [`Decorator`] for more information.
     pub decorators: Vec<'a, Decorator<'a>>,
+    /// The expression used to declare the property.
     pub key: PropertyKey<'a>,
+    /// Initialized value in the declaration, if present.
     pub value: Option<Expression<'a>>,
     pub computed: bool,
     pub r#static: bool,
@@ -1828,11 +2122,28 @@ pub struct ImportSpecifier<'a> {
     #[serde(flatten)]
     pub span: Span,
     pub imported: ModuleExportName<'a>,
+    /// The name of the imported symbol.
+    ///
+    /// ## Example
+    /// ```ts
+    /// // local and imported name are the same
+    /// import { Foo } from 'foo';
+    /// //       ^^^
+    /// // imports can be renamed, changing the local name
+    /// import { Foo as Bar } from 'foo';
+    /// //              ^^^
+    /// ```
     pub local: BindingIdentifier<'a>,
     pub import_kind: ImportOrExportKind,
 }
 
-// import local from "source"
+/// Default Import Specifier
+///
+/// ## Example
+/// ```ts
+/// import local from "source";
+/// ```
+///
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1840,10 +2151,16 @@ pub struct ImportSpecifier<'a> {
 pub struct ImportDefaultSpecifier<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The name of the imported symbol.
     pub local: BindingIdentifier<'a>,
 }
 
-// import * as local from "source"
+/// Namespace import specifier
+///
+/// ## Example
+/// ```ts
+/// import * as local from "source";
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1885,6 +2202,17 @@ pub enum ImportAttributeKey<'a> {
     StringLiteral(StringLiteral<'a>),
 }
 
+/// Named Export Declaration
+///
+/// ## Example
+///
+/// ```ts
+/// //       ________ specifiers
+/// export { Foo, Bar };
+/// export type { Baz } from 'baz';
+/// //     ^^^^              ^^^^^
+/// // export_kind           source
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1902,9 +2230,14 @@ pub struct ExportNamedDeclaration<'a> {
 }
 
 /// Export Default Declaration
+///
+/// ## Example
+///
+/// ```ts
 /// export default HoistableDeclaration
 /// export default ClassDeclaration
 /// export default AssignmentExpression
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1916,6 +2249,15 @@ pub struct ExportDefaultDeclaration<'a> {
     pub exported: ModuleExportName<'a>, // the `default` Keyword
 }
 
+/// Export All Declaration
+///
+/// ## Example
+///
+/// ```ts
+/// //          _______ exported
+/// export * as numbers from '../numbers.js';
+/// //                       ^^^^^^^^^^^^^^^ source
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1923,12 +2265,25 @@ pub struct ExportDefaultDeclaration<'a> {
 pub struct ExportAllDeclaration<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// If this declaration is re-named
     pub exported: Option<ModuleExportName<'a>>,
     pub source: StringLiteral<'a>,
+    /// Will be `Some(vec![])` for empty assertion
     pub with_clause: Option<WithClause<'a>>, // Some(vec![]) for empty assertion
-    pub export_kind: ImportOrExportKind,     // `export type *`
+    pub export_kind: ImportOrExportKind, // `export type *`
 }
 
+/// Export Specifier
+///
+/// Each [`ExportSpecifier`] is one of the named exports in an [`ExportNamedDeclaration`].
+///
+/// ## Example
+///
+/// ```ts
+/// //       ____ export_kind
+/// import { type Foo as Bar } from './foo';
+/// //   exported ^^^    ^^^ local
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1957,7 +2312,6 @@ pub enum ExportDefaultDeclarationKind<'a> {
     FunctionDeclaration(Box<'a, Function<'a>>) = 64,
     ClassDeclaration(Box<'a, Class<'a>>) = 65,
 
-    #[visit(ignore)]
     TSInterfaceDeclaration(Box<'a, TSInterfaceDeclaration<'a>>) = 66,
 
     // `Expression` variants added here by `inherit_variants!` macro
@@ -1965,7 +2319,9 @@ pub enum ExportDefaultDeclarationKind<'a> {
 }
 }
 
-/// Support:
+/// Module Export Name
+///
+/// Supports:
 ///   * `import {"\0 any unicode" as foo} from ""`
 ///   * `export {foo as "\0 any unicode"}`
 /// * es2022: <https://github.com/estree/estree/blob/master/es2022.md#modules>

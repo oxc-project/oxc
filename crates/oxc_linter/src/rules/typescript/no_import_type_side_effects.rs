@@ -109,6 +109,10 @@ impl Rule for NoImportTypeSideEffects {
             },
         );
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 #[test]

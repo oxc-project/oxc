@@ -112,6 +112,10 @@ impl Rule for NoExplicitAny {
 
         Self { fix_to_unknown, ignore_rest_args }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 impl NoExplicitAny {

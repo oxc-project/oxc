@@ -84,6 +84,12 @@ impl<'a> Expression<'a> {
             )
     }
 
+    /// `true` if this [`Expression`] is a literal expression for a primitive value.
+    ///
+    /// Does not include [`TemplateLiteral`]s, [`object literals`], or [`array literals`].
+    ///
+    /// [`object literals`]: ObjectExpression
+    /// [`array literals`]: ArrayExpression
     pub fn is_literal(&self) -> bool {
         // Note: TemplateLiteral is not `Literal`
         matches!(
@@ -157,6 +163,8 @@ impl<'a> Expression<'a> {
     }
 
     /// Determines whether the given expr is a `null` or `undefined` or `void 0`
+    ///
+    /// Corresponds to a [nullish value check](https://developer.mozilla.org/en-US/docs/Glossary/Nullish).
     pub fn is_null_or_undefined(&self) -> bool {
         self.is_null() || self.evaluate_to_undefined()
     }
@@ -304,6 +312,11 @@ impl<'a> IdentifierReference<'a> {
             reference_flag: ReferenceFlag::Read,
         }
     }
+
+    #[inline]
+    pub fn reference_id(&self) -> Option<ReferenceId> {
+        self.reference_id.get()
+    }
 }
 
 impl<'a> Hash for BindingIdentifier<'a> {
@@ -325,6 +338,7 @@ impl<'a> ArrayExpressionElement<'a> {
 }
 
 impl<'a> ObjectExpression<'a> {
+    /// Returns `true` if this object has a property named `__proto__`
     pub fn has_proto(&self) -> bool {
         use crate::syntax_directed_operations::PropName;
         self.properties.iter().any(|p| p.prop_name().is_some_and(|name| name.0 == "__proto__"))
@@ -340,12 +354,9 @@ impl<'a> PropertyKey<'a> {
             Self::NumericLiteral(lit) => Some(Cow::Owned(lit.value.to_string())),
             Self::BigIntLiteral(lit) => Some(Cow::Borrowed(lit.raw.as_str())),
             Self::NullLiteral(_) => Some(Cow::Borrowed("null")),
-            Self::TemplateLiteral(lit) => lit
-                .expressions
-                .is_empty()
-                .then(|| lit.quasi())
-                .flatten()
-                .map(std::convert::Into::into),
+            Self::TemplateLiteral(lit) => {
+                lit.expressions.is_empty().then(|| lit.quasi()).flatten().map(Into::into)
+            }
             _ => None,
         }
     }
@@ -1192,6 +1203,8 @@ impl<'a> Hash for Class<'a> {
 }
 
 impl<'a> ClassElement<'a> {
+    /// Returns `true` if this [`ClassElement`] is a static block or has a
+    /// static modifier.
     pub fn r#static(&self) -> bool {
         match self {
             Self::TSIndexSignature(_) | Self::StaticBlock(_) => false,
@@ -1246,6 +1259,7 @@ impl<'a> ClassElement<'a> {
         }
     }
 
+    /// Returns `true` if this [`ClassElement`] is a property or accessor
     pub fn is_property(&self) -> bool {
         matches!(self, Self::PropertyDefinition(_) | Self::AccessorProperty(_))
     }

@@ -1,3 +1,7 @@
+// ```
+// SyntaxCharacter :: one of
+//   ^ $ \ . * + ? ( ) [ ] { } |
+// ```
 pub fn is_syntax_character(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| {
         matches!(
@@ -7,16 +11,12 @@ pub fn is_syntax_character(cp: u32) -> bool {
     })
 }
 
-pub fn is_decimal_digits(cp: u32) -> bool {
+pub fn is_decimal_digit(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| c.is_ascii_digit())
 }
 
-pub fn is_non_zero_digit(cp: u32) -> bool {
-    char::from_u32(cp).map_or(false, |c| c != '0' && c.is_ascii_digit())
-}
-
-pub fn is_id_continue(cp: u32) -> bool {
-    char::from_u32(cp).map_or(false, unicode_id_start::is_id_continue)
+pub fn is_octal_digit(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, |c| c.is_ascii_digit() && c < '8')
 }
 
 pub fn is_valid_unicode(cp: u32) -> bool {
@@ -41,6 +41,13 @@ pub fn is_unicode_property_name_character(cp: u32) -> bool {
 // <https://tc39.es/ecma262/#prod-UnicodePropertyValueCharacter>
 pub fn is_unicode_property_value_character(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+pub fn is_unicode_id_start(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, unicode_id_start::is_id_start)
+}
+pub fn is_unicode_id_continue(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, unicode_id_start::is_id_continue)
 }
 
 pub fn is_identifier_start_char(cp: u32) -> bool {

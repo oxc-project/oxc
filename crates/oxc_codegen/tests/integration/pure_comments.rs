@@ -1,26 +1,8 @@
-use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CommentOptions};
-use oxc_parser::Parser;
-use oxc_span::SourceType;
-
-fn test_comment_helper(source_text: &str, expected: &str) {
-    let allocator = Allocator::default();
-    let source_type = SourceType::default().with_module(true);
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
-    let result = CodeGenerator::new()
-        .enable_comment(
-            source_text,
-            ret.trivias,
-            CommentOptions { preserve_annotate_comments: true },
-        )
-        .build(&ret.program)
-        .source_text;
-    assert_eq!(expected, result, "for source {source_text}, expect {expected}, got {result}");
-}
+use crate::tester::test;
 
 #[test]
 fn annotate_comment() {
-    test_comment_helper(
+    test(
         r"
     				x([
     					/* #__NO_SIDE_EFFECTS__ */ function() {},
@@ -36,7 +18,7 @@ fn annotate_comment() {
 ",
     );
 
-    test_comment_helper(
+    test(
         r"
             x([
     					/* #__NO_SIDE_EFFECTS__ */ y => y,
@@ -49,7 +31,7 @@ fn annotate_comment() {
         r"x([/* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ () => {}, /* #__NO_SIDE_EFFECTS__ */ (y) => y, /* #__NO_SIDE_EFFECTS__ */ async (y) => y, /* #__NO_SIDE_EFFECTS__ */ async () => {}, /* #__NO_SIDE_EFFECTS__ */ async (y) => y,]);
 ",
     );
-    test_comment_helper(
+    test(
         r"
             x([
     					/* #__NO_SIDE_EFFECTS__ */ y => y,
@@ -63,7 +45,7 @@ fn annotate_comment() {
 ",
     );
     //
-    test_comment_helper(
+    test(
         r"
     // #__NO_SIDE_EFFECTS__
     function a() {}
@@ -85,7 +67,7 @@ async function* d() {}
 ",
     );
 
-    test_comment_helper(
+    test(
         r"
     // #__NO_SIDE_EFFECTS__
     function a() {}
@@ -107,7 +89,7 @@ async function* d() {}
 ",
     );
 
-    test_comment_helper(
+    test(
         r"
     /* @__NO_SIDE_EFFECTS__ */ export function a() {}
     /* @__NO_SIDE_EFFECTS__ */ export function* b() {}
@@ -120,7 +102,7 @@ async function* d() {}
 ",
     );
     // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
-    test_comment_helper(
+    test(
         r"
         					/* #__NO_SIDE_EFFECTS__ */ export var v0 = function() {}, v1 = function() {}
         					/* #__NO_SIDE_EFFECTS__ */ export let l0 = function() {}, l1 = function() {}
@@ -138,7 +120,7 @@ export const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 ",
     );
     // Only "c0" and "c2" should have "no side effects" (Rollup only respects "const" and only for the first one)
-    test_comment_helper(
+    test(
         r"
     /* #__NO_SIDE_EFFECTS__ */ var v0 = function() {}, v1 = function() {}
     /* #__NO_SIDE_EFFECTS__ */ let l0 = function() {}, l1 = function() {}
@@ -156,7 +138,7 @@ const c2 = /* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 ",
     );
 
-    test_comment_helper(
+    test(
         r"
 isFunction(options)
     ? // #8326: extend call and options.name access are considered side-effects
@@ -165,11 +147,11 @@ isFunction(options)
         extend({ name: options.name }, extraOptions, { setup: options }))()
     : options
         ",
-        r"isFunction(options) ? /*#__PURE__*/ (() => extend({name: options.name}, extraOptions, {setup: options}))() : options;
+        r"isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
 ",
     );
 
-    test_comment_helper(
+    test(
         r"
 const obj = {
   props: /*#__PURE__*/ extend({}, TransitionPropsValidators, {
@@ -179,32 +161,27 @@ const obj = {
 };
 const p = /*#__PURE__*/ Promise.resolve();
 ",
-        "const obj = {props: /*#__PURE__*/ extend({}, TransitionPropsValidators, {\n\ttag: String,\n\tmoveClass: String\n})};\nconst p = /*#__PURE__*/ Promise.resolve();\n",
+        "const obj = { props: /*#__PURE__*/ extend({}, TransitionPropsValidators, {\n\ttag: String,\n\tmoveClass: String\n}) };\nconst p = /*#__PURE__*/ Promise.resolve();\n",
     );
 
-    test_comment_helper(
+    test(
         r"
 const staticCacheMap = /*#__PURE__*/ new WeakMap()
 ",
         "const staticCacheMap = /*#__PURE__*/ new WeakMap();\n",
     );
 
-    test_comment_helper(
-        r"
+    test(
+        r#"
 const builtInSymbols = new Set(
   /*#__PURE__*/
   Object.getOwnPropertyNames(Symbol)
-    .filter(key => key !== 'arguments' && key !== 'caller')
-)
-
-",
-        "const builtInSymbols = new Set(/*#__PURE__*/ (Object.getOwnPropertyNames(Symbol)).filter((key) => key !== \"arguments\" && key !== \"caller\"));\n",
+    .filter(key => key !== "arguments" && key !== "caller")
+)"#,
+        "const builtInSymbols = new Set(/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).filter((key) => key !== \"arguments\" && key !== \"caller\"));\n",
     );
 
-    test_comment_helper(
-        "(/* @__PURE__ */ new Foo()).bar();\n",
-        "(/* @__PURE__ */ new Foo()).bar();\n",
-    );
+    test("(/* @__PURE__ */ new Foo()).bar();\n", "(/* @__PURE__ */ new Foo()).bar();\n");
 
-    test_comment_helper("(/* @__PURE__ */ Foo()).bar();\n", "(/* @__PURE__ */ Foo()).bar();\n");
+    test("(/* @__PURE__ */ Foo()).bar();\n", "(/* @__PURE__ */ Foo()).bar();\n");
 }

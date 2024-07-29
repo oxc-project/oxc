@@ -2,7 +2,7 @@ commit: 12619ffe
 
 parser_babel Summary:
 AST Parsed     : 2093/2101 (99.62%)
-Positive Passed: 2059/2101 (98.00%)
+Positive Passed: 2060/2101 (98.05%)
 Negative Passed: 1380/1501 (91.94%)
 Expect Syntax Error: "annex-b/disabled/1.1-html-comments-close/input.js"
 Expect Syntax Error: "annex-b/disabled/3.1-sloppy-labeled-functions/input.js"
@@ -127,19 +127,19 @@ Expect Syntax Error: "typescript/types/tuple-optional-invalid/input.ts"
 Expect Syntax Error: "typescript/types/tuple-required-after-labeled-optional/input.ts"
 Expect to Parse: "core/categorized/04-regex/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/categorized/05-regex/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/categorized/07-regex/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/categorized/labeled-block-statement-regex/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/categorized/regex-after-block/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
 
   × Unexpected new.target expression
@@ -159,67 +159,64 @@ Expect to Parse: "core/opts/allowNewTargetOutsideFunction-true/input.js"
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 Expect to Parse: "core/regression/2591/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/328/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/330/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/331/input.js"
 
-  × Nothing to repeat
+  × Invalid braced quantifier
 Expect to Parse: "core/uncategorised/332/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/336/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/337/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/340/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/341/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "core/uncategorised/541/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2015/for-of/brackets-const/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2015/for-of/brackets-let/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2015/for-of/brackets-var/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2015/generators/yield-regex/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2015/uncategorised/317/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2015/yield/asi2/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2015/yield/regexp/input.js"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "es2017/async-functions/context-regex-after-statement/input.js"
 
-  × Incomplete quantifier
-Expect to Parse: "esprima/expression-primary-literal-regular-expression/u-flag-valid-range/input.js"
-
-  × Invalid unicode escape
+  × Unterminated quantifier
 Expect to Parse: "typescript/arrow-function/generic-tsx-babel-7/input.ts"
 
   × Expected `<` but found `EOF`

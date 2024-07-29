@@ -138,3 +138,18 @@ fn test_catch_clause_parameters() {
     .has_number_of_references(1)
     .test();
 }
+
+#[test]
+fn var_hoisting() {
+    SemanticTester::js(
+        "
+            try {} catch (e) {
+                var e = 0;
+            }
+        ",
+    )
+    .has_root_symbol("e")
+    // `e` was hoisted to the top scope so the symbol's scope is also the top scope
+    .is_in_scope(ScopeFlags::Top)
+    .test();
+}

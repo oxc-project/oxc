@@ -13,21 +13,24 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_span::{CompactStr, SourceType, Span};
+use oxc_span::{Atom, CompactStr, SourceType, Span};
 use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,
     checker,
     class::ClassTableBuilder,
+    counter::Counter,
     diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
     node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
-    scope::{ScopeFlags, ScopeId, ScopeTree, UnresolvedReferences},
+    scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
+    unresolved_stack::UnresolvedReferencesStack,
     JSDocFinder, Semantic,
 };
 
@@ -56,9 +59,6 @@ pub struct SemanticBuilder<'a> {
     pub current_node_flags: NodeFlags,
     pub current_symbol_flags: SymbolFlags,
     pub current_scope_id: ScopeId,
-    /// Current scope depth.
-    /// 0 is global scope. 1 is `Program`. Incremented on entering a scope, and decremented on exit.
-    pub current_scope_depth: usize,
     /// Stores current `AstKind::Function` and `AstKind::ArrowFunctionExpression` during AST visit
     pub function_stack: Vec<AstNodeId>,
     // To make a namespace/module value like
@@ -67,17 +67,14 @@ pub struct SemanticBuilder<'a> {
     // to value like
     pub namespace_stack: Vec<SymbolId>,
     current_reference_flag: ReferenceFlag,
+    pub hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
     // builders
     pub nodes: AstNodes<'a>,
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
 
-    // Stack used to accumulate unresolved refs while traversing scopes.
-    // Indexed by scope depth. We recycle `UnresolvedReferences` instances during traversal
-    // to reduce allocations, so the stack grows to maximum scope depth, but never shrinks.
-    // See: <https://github.com/oxc-project/oxc/issues/4169>
-    unresolved_references: Vec<UnresolvedReferences>,
+    unresolved_references: UnresolvedReferencesStack<'a>,
 
     pub(crate) module_record: Arc<ModuleRecord>,
 
@@ -105,13 +102,6 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
-        // Most programs will have at least 1 place where scope depth reaches 16,
-        // so initialize `unresolved_references` with this length, to reduce reallocations as it grows.
-        // This is just an estimate of a good initial size, but certainly better than
-        // `Vec`'s default initial capacity of 4.
-        let mut unresolved_references = vec![];
-        unresolved_references.resize_with(16, Default::default);
-
         let trivias = Trivias::default();
         Self {
             source_text,
@@ -123,13 +113,13 @@ impl<'a> SemanticBuilder<'a> {
             current_symbol_flags: SymbolFlags::empty(),
             current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
-            current_scope_depth: 0,
             function_stack: vec![],
             namespace_stack: vec![],
             nodes: AstNodes::default(),
+            hoisting_variables: FxHashMap::default(),
             scope,
             symbols: SymbolTable::default(),
-            unresolved_references,
+            unresolved_references: UnresolvedReferencesStack::new(),
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
             build_jsdoc: false,
@@ -160,6 +150,9 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Enable or disable building a [`ControlFlowGraph`].
+    ///
+    /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
     #[must_use]
     pub fn with_cfg(mut self, cfg: bool) -> Self {
         self.cfg = if cfg { Some(ControlFlowGraphBuilder::default()) } else { None };
@@ -189,10 +182,40 @@ impl<'a> SemanticBuilder<'a> {
     /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            let scope_id = self.scope.add_scope(None, AstNodeId::DUMMY, ScopeFlags::Top);
+            let scope_id = self.scope.add_root_scope(AstNodeId::DUMMY, ScopeFlags::Top);
             program.scope_id.set(Some(scope_id));
         } else {
+            // Count the number of nodes, scopes, symbols, and references.
+            // Use these counts to reserve sufficient capacity in `AstNodes`, `ScopeTree`
+            // and `SymbolTable` to store them.
+            // This means that as we traverse the AST and fill up these structures with data,
+            // they never need to grow and reallocate - which is an expensive operation as it
+            // involves copying all the memory from the old allocation to the new one.
+            // For large source files, these structures are very large, so growth is very costly
+            // as it involves copying massive chunks of memory.
+            // Avoiding this growth produces up to 30% perf boost on our benchmarks.
+            // TODO: It would be even more efficient to calculate counts in parser to avoid
+            // this extra AST traversal.
+            let mut counter = Counter::default();
+            counter.visit_program(program);
+            self.nodes.reserve(counter.nodes_count);
+            self.scope.reserve(counter.scopes_count);
+            self.symbols.reserve(counter.symbols_count, counter.references_count);
+
+            // Visit AST to generate scopes tree etc
             self.visit_program(program);
+
+            // Check that `Counter` got accurate counts
+            debug_assert_eq!(self.nodes.len(), counter.nodes_count);
+            debug_assert_eq!(self.scope.len(), counter.scopes_count);
+            debug_assert_eq!(self.symbols.references.len(), counter.references_count);
+            // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
+            // can result in only a single symbol.
+            // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
+            // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
+            // It's allocating with *not enough* capacity which is costly, as then the `Vec`
+            // will grow and reallocate.
+            debug_assert!(self.symbols.len() <= counter.symbols_count);
 
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
@@ -200,9 +223,13 @@ impl<'a> SemanticBuilder<'a> {
             }
         }
 
-        debug_assert_eq!(self.current_scope_depth, 0);
-        self.scope.root_unresolved_references =
-            self.unresolved_references.into_iter().next().unwrap();
+        debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
+        self.scope.root_unresolved_references = self
+            .unresolved_references
+            .into_root()
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect();
 
         let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
@@ -316,8 +343,13 @@ impl<'a> SemanticBuilder<'a> {
 
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id = self.symbols.create_symbol(span, name.clone(), includes, scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            scope_id,
+            self.current_node_id,
+        );
         self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
@@ -333,14 +365,16 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn check_redeclaration(
-        &mut self,
+        &self,
         scope_id: ScopeId,
         span: Span,
         name: &str,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scope.get_binding(scope_id, name)?;
+        let symbol_id = self.scope.get_binding(scope_id, name).or_else(|| {
+            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+        })?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
             self.error(redeclaration(name, symbol_span, span));
@@ -351,13 +385,13 @@ impl<'a> SemanticBuilder<'a> {
     /// Declare an unresolved reference in the current scope.
     ///
     /// # Panics
-    pub fn declare_reference(&mut self, reference: Reference) -> ReferenceId {
-        let reference_name = reference.name().clone();
+    pub fn declare_reference(&mut self, name: Atom<'a>, reference: Reference) -> ReferenceId {
         let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
 
-        self.unresolved_references[self.current_scope_depth]
-            .entry(reference_name)
+        self.unresolved_references
+            .current_mut()
+            .entry(name)
             .or_default()
             .push((reference_id, reference_flag));
         reference_id
@@ -373,24 +407,25 @@ impl<'a> SemanticBuilder<'a> {
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
         let name = CompactStr::new(name);
-        let symbol_id =
-            self.symbols.create_symbol(span, name.clone(), includes, self.current_scope_id);
-        self.symbols.add_declaration(self.current_node_id);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            self.current_scope_id,
+            self.current_node_id,
+        );
         self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
         symbol_id
     }
 
     fn resolve_references_for_current_scope(&mut self) {
-        // `iter_mut` to get mut references to 2 entries of `unresolved_references` simultaneously
-        let mut iter = self.unresolved_references.iter_mut();
-        let parent_refs = iter.nth(self.current_scope_depth - 1).unwrap();
-        let current_refs = iter.next().unwrap();
+        let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
 
         for (name, mut references) in current_refs.drain() {
             // Try to resolve a reference.
             // If unresolved, transfer it to parent scope's unresolved references.
             let bindings = self.scope.get_bindings(self.current_scope_id);
-            if let Some(symbol_id) = bindings.get(&name).copied() {
+            if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
                 let symbol_flag = self.symbols.get_flag(symbol_id);
 
                 let resolved_references: &mut Vec<_> =
@@ -401,11 +436,24 @@ impl<'a> SemanticBuilder<'a> {
                 references.retain(|(id, flag)| {
                     if flag.is_type() && symbol_flag.can_be_referenced_by_type()
                         || flag.is_value() && symbol_flag.can_be_referenced_by_value()
+                        || flag.is_ts_type_query() && symbol_flag.is_import()
                     {
                         // The non type-only ExportSpecifier can reference a type/value symbol,
                         // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
                         if symbol_flag.is_value() && !flag.is_type_only() {
                             *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Type;
+                        } else {
+                            // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
+                            *self.symbols.references[*id].flag_mut() -= ReferenceFlag::Value;
+                        }
+
+                        // import type { T } from './mod'; type A = typeof T
+                        //                                                 ^ can reference type-only import
+                        // If symbol is type-import, we need to replace the ReferenceFlag::Value with ReferenceFlag::Type
+                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
+                            let reference_flag = self.symbols.references[*id].flag_mut();
+                            *reference_flag -= ReferenceFlag::Value;
+                            *reference_flag |= ReferenceFlag::Type;
                         }
 
                         self.symbols.references[*id].set_symbol_id(symbol_id);
@@ -430,7 +478,7 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.symbols.add_redeclare_variable(symbol_id, span);
+        self.symbols.add_redeclaration(symbol_id, span);
     }
 
     fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
@@ -460,51 +508,50 @@ impl<'a> SemanticBuilder<'a> {
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
+    // NB: Not called for `Program`
     fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
-        let parent_scope_id =
-            if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
+        let parent_scope_id = self.current_scope_id;
 
         let mut flags = flags;
-
         if !flags.is_strict_mode() && self.current_node_flags.has_class() {
             // NOTE A class definition is always strict mode code.
             flags |= ScopeFlags::StrictMode;
         };
-
-        if let Some(parent_scope_id) = parent_scope_id {
-            flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
-        }
+        flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
 
         self.current_scope_id = self.scope.add_scope(parent_scope_id, self.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
-        if let Some(parent_scope_id) = parent_scope_id {
-            if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-                // Clone the `CatchClause` bindings and add them to the current scope.
-                // to make it easier to check redeclare errors.
-                let bindings = self.scope.get_bindings(parent_scope_id).clone();
-                self.scope.get_bindings_mut(self.current_scope_id).extend(bindings);
-            }
+        if self.scope.get_flags(parent_scope_id).is_catch_clause() {
+            // Move all bindings from parent scope to current scope
+            // to make it easier to resole references and check redeclare errors.
+            let parent_bindings =
+                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
+            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
         }
 
-        // Increment scope depth, and ensure stack is large enough that
-        // `self.unresolved_references[self.current_scope_depth]` is initialized
-        self.current_scope_depth += 1;
-        if self.unresolved_references.len() <= self.current_scope_depth {
-            self.unresolved_references.push(UnresolvedReferences::default());
-        }
+        self.unresolved_references.increment_scope_depth();
     }
 
+    // NB: Not called for `Program`
     fn leave_scope(&mut self) {
         self.resolve_references_for_current_scope();
-        if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
+
+        // `get_parent_id` always returns `Some` because this method is not called for `Program`.
+        // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
+        // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
+        let parent_id = self.scope.get_parent_id(self.current_scope_id);
+        debug_assert!(parent_id.is_some());
+        if let Some(parent_id) = parent_id {
             self.current_scope_id = parent_id;
         }
-        self.current_scope_depth -= 1;
+
+        self.unresolved_references.decrement_scope_depth();
     }
 
     // Setup all the context for the binder.
     // The order is important here.
+    // NB: Not called for `Program`.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
         self.enter_kind(kind);
@@ -542,16 +589,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         );
         self.record_ast_node();
 
-        self.enter_scope(
-            {
-                let mut flags = ScopeFlags::Top;
-                if program.is_strict() {
-                    flags |= ScopeFlags::StrictMode;
-                }
-                flags
-            },
-            &program.scope_id,
-        );
+        // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
+        // Inline the specific logic for `Program` here instead.
+        // This simplifies logic in `enter_scope`, as it doesn't have to handle the special case.
+        let mut flags = ScopeFlags::Top;
+        if program.is_strict() {
+            flags |= ScopeFlags::StrictMode;
+        }
+        self.current_scope_id = self.scope.add_root_scope(self.current_node_id, flags);
+        program.scope_id.set(Some(self.current_scope_id));
+        // NB: Don't call `self.unresolved_references.increment_scope_depth()`
+        // as scope depth is initialized as 1 already (the scope depth for `Program`).
 
         if let Some(hashbang) = &program.hashbang {
             self.visit_hashbang(hashbang);
@@ -567,7 +615,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
 
-        self.leave_scope();
+        // Don't call `leave_scope` here as `Program` is a special case - scope has no `parent_id`.
+        // This simplifies `leave_scope`.
+        self.resolve_references_for_current_scope();
+        // NB: Don't call `self.unresolved_references.decrement_scope_depth()`
+        // as scope depth must remain >= 1.
+
         self.leave_node(kind);
     }
 
@@ -1635,7 +1688,8 @@ impl<'a> SemanticBuilder<'a> {
                         func.id.is_some()
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
-                    _ => true,
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
+                    _ => false,
                 } {
                     self.current_symbol_flags |= SymbolFlags::Export;
                 }
@@ -1719,6 +1773,7 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
@@ -1745,6 +1800,11 @@ impl<'a> SemanticBuilder<'a> {
                 //          ^^^^^^^^
                 self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
             }
+            AstKind::TSTypeParameterInstantiation(_) => {
+                // type A<T> = typeof a<T>;
+                //                     ^^^ avoid treat T as a value and TSTypeQuery
+                self.current_reference_flag -= ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
             AstKind::TSTypeName(_) => {
                 match self.nodes.parent_kind(self.current_node_id) {
                     Some(
@@ -1763,6 +1823,13 @@ impl<'a> SemanticBuilder<'a> {
                             self.current_reference_flag = ReferenceFlag::Type;
                         }
                     }
+                }
+            }
+            AstKind::TSExportAssignment(export) => {
+                // export = a;
+                //          ^ can reference value or type
+                if export.expression.is_identifier_reference() {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
                 }
             }
             AstKind::IdentifierReference(ident) => {
@@ -1890,11 +1957,10 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_identifier(&mut self, ident: &IdentifierReference) {
+    fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flag = self.resolve_reference_usages();
-        let name = ident.name.to_compact_str();
-        let reference = Reference::new(ident.span, name, self.current_node_id, flag);
-        let reference_id = self.declare_reference(reference);
+        let reference = Reference::new(self.current_node_id, flag);
+        let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
 
@@ -1907,7 +1973,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier) {
+    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier<'a>) {
         match self.nodes.parent_kind(self.current_node_id) {
             Some(AstKind::JSXElementName(_)) => {
                 if !ident.name.chars().next().is_some_and(char::is_uppercase) {
@@ -1917,13 +1983,8 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(
-            ident.span,
-            ident.name.to_compact_str(),
-            self.current_node_id,
-            ReferenceFlag::read(),
-        );
-        self.declare_reference(reference);
+        let reference = Reference::new(self.current_node_id, ReferenceFlag::read());
+        self.declare_reference(ident.name.clone(), reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

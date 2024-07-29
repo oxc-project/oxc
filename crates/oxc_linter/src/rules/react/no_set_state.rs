@@ -71,6 +71,10 @@ impl Rule for NoSetState {
 
         ctx.diagnostic(no_set_state_diagnostic(call_expr.callee.span()));
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
 #[test]

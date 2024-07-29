@@ -42,7 +42,7 @@ impl Rule for NoClassAssign {
                     ctx.diagnostic(no_class_assign_diagnostic(
                         symbol_table.get_name(symbol_id),
                         symbol_table.get_span(symbol_id),
-                        reference.span(),
+                        ctx.semantic().reference_span(reference),
                     ));
                 }
             }

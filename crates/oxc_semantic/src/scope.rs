@@ -11,9 +11,9 @@ use crate::{symbol::SymbolId, AstNodeId};
 
 type FxIndexMap<K, V> = IndexMap<K, V, BuildHasherDefault<FxHasher>>;
 
-type Bindings = FxIndexMap<CompactStr, SymbolId>;
+pub(crate) type Bindings = FxIndexMap<CompactStr, SymbolId>;
 pub(crate) type UnresolvedReference = (ReferenceId, ReferenceFlag);
-pub(crate) type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
+pub type UnresolvedReferences = FxHashMap<CompactStr, Vec<UnresolvedReference>>;
 
 /// Scope Tree
 ///
@@ -32,6 +32,8 @@ pub struct ScopeTree {
 }
 
 impl ScopeTree {
+    const ROOT_SCOPE_ID: ScopeId = ScopeId::new(0);
+
     pub fn len(&self) -> usize {
         self.parent_ids.len()
     }
@@ -80,8 +82,8 @@ impl ScopeTree {
     }
 
     #[inline]
-    pub fn root_scope_id(&self) -> ScopeId {
-        ScopeId::new(0)
+    pub const fn root_scope_id(&self) -> ScopeId {
+        Self::ROOT_SCOPE_ID
     }
 
     pub fn root_flags(&self) -> ScopeFlags {
@@ -191,7 +193,31 @@ impl ScopeTree {
         &mut self.bindings[scope_id]
     }
 
+    /// Create scope.
+    /// For root (`Program`) scope, use `add_root_scope`.
     pub fn add_scope(
+        &mut self,
+        parent_id: ScopeId,
+        node_id: AstNodeId,
+        flags: ScopeFlags,
+    ) -> ScopeId {
+        let scope_id = self.add_scope_impl(Some(parent_id), node_id, flags);
+
+        // Set this scope as child of parent scope
+        self.child_ids[parent_id].push(scope_id);
+
+        scope_id
+    }
+
+    /// Create root (`Program`) scope.
+    pub fn add_root_scope(&mut self, node_id: AstNodeId, flags: ScopeFlags) -> ScopeId {
+        self.add_scope_impl(None, node_id, flags)
+    }
+
+    // `#[inline]` because almost always called from `add_scope` and want to avoid
+    // overhead of a function call there.
+    #[inline]
+    fn add_scope_impl(
         &mut self,
         parent_id: Option<ScopeId>,
         node_id: AstNodeId,
@@ -202,12 +228,6 @@ impl ScopeTree {
         self.flags.push(flags);
         self.bindings.push(Bindings::default());
         self.node_ids.push(node_id);
-
-        // Set this scope as child of parent scope.
-        if let Some(parent_id) = parent_id {
-            self.child_ids[parent_id].push(scope_id);
-        }
-
         scope_id
     }
 
@@ -217,5 +237,13 @@ impl ScopeTree {
 
     pub fn remove_binding(&mut self, scope_id: ScopeId, name: &CompactStr) {
         self.bindings[scope_id].shift_remove(name);
+    }
+
+    pub fn reserve(&mut self, additional: usize) {
+        self.parent_ids.reserve(additional);
+        self.child_ids.reserve(additional);
+        self.flags.reserve(additional);
+        self.bindings.reserve(additional);
+        self.node_ids.reserve(additional);
     }
 }

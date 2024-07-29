@@ -3,7 +3,7 @@ commit: d8086f14
 parser_typescript Summary:
 AST Parsed     : 6444/6456 (99.81%)
 Positive Passed: 6403/6456 (99.18%)
-Negative Passed: 1200/5653 (21.23%)
+Negative Passed: 1186/5653 (20.98%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -2892,6 +2892,20 @@ Expect Syntax Error: "conformance/es6/templates/templateStringWithEmbeddedInstan
 Expect Syntax Error: "conformance/es6/templates/templateStringWithEmbeddedInstanceOfES6.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringsWithTypeErrorInFunctionExpressionsInSubstitutionExpression.ts"
 Expect Syntax Error: "conformance/es6/templates/templateStringsWithTypeErrorInFunctionExpressionsInSubstitutionExpressionES6.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions01.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions02.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions03.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions04.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions05.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions06.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions08.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions09.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions10.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions11.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions13.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions15.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions16.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions18.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression10_es6.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression11_es6.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression1_es6.ts"
@@ -4459,7 +4473,7 @@ Expect Syntax Error: "conformance/typings/typingsSuggestionBun1.ts"
 Expect Syntax Error: "conformance/typings/typingsSuggestionBun2.ts"
 Expect to Parse: "compiler/APISample_jsdoc.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/arrayFromAsync.ts"
 
   × Expected `(` but found `await`
@@ -4472,11 +4486,11 @@ Expect to Parse: "compiler/arrayFromAsync.ts"
     ╰────
 Expect to Parse: "compiler/bestChoiceType.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/bom-utf16be.ts"
 
   × Invalid Character `￾`
@@ -4486,18 +4500,18 @@ Expect to Parse: "compiler/bom-utf16be.ts"
    ╰────
 Expect to Parse: "compiler/castExpressionParentheses.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/controlFlowPropertyDeclarations.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 
   × 'with' statements are not allowed
@@ -4576,13 +4590,13 @@ Expect to Parse: "compiler/moduleResolution_packageJson_yesAtPackageRoot_fakeSco
   help: Try insert a semicolon here
 Expect to Parse: "compiler/overloadResolutionOverNonCTLambdas.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/regexMatchAll-esnext.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/regexMatchAll.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
 
   × Unexpected token
@@ -4594,7 +4608,7 @@ Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
     ╰────
 Expect to Parse: "compiler/stringMatchAll.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "compiler/thisInObjectJs.ts"
 
   × Cannot use export statement outside a module
@@ -4635,6 +4649,19 @@ Expect to Parse: "compiler/withStatementInternalComments.ts"
  2 │ /*1*/ with /*2*/ ( /*3*/ false /*4*/ ) /*5*/ {}
    ·       ────
    ╰────
+Expect to Parse: "conformance/async/es6/asyncWithVarShadowing_es6.ts"
+
+  × Identifier `x` has already been declared
+     ╭─[conformance/async/es6/asyncWithVarShadowing_es6.ts:130:14]
+ 129 │     }
+ 130 │     catch ({ x }) {
+     ·              ┬
+     ·              ╰── `x` has already been declared here
+ 131 │         var x;
+     ·             ┬
+     ·             ╰── It can not be redeclared here
+ 132 │     }
+     ╰────
 Expect to Parse: "conformance/classes/propertyMemberDeclarations/staticPropertyNameConflicts.ts"
 
   × Classes may not have a static property named prototype
@@ -4695,18 +4722,18 @@ Expect to Parse: "conformance/controlFlow/assertionTypePredicates2.ts"
     ╰────
 Expect to Parse: "conformance/controlFlow/controlFlowDoWhileStatement.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/controlFlow/controlFlowForInStatement.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/controlFlow/controlFlowIfStatement.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/controlFlow/typeGuardsNestedAssignments.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/dynamicImport/importCallExpressionInScriptContext1.ts"
 
   × Cannot assign to 'arguments' in strict mode
@@ -4781,7 +4808,7 @@ Expect to Parse: "conformance/esDecorators/esDecorators-decoratorExpression.1.ts
   help: Try insert a semicolon here
 Expect to Parse: "conformance/expressions/assignmentOperator/assignmentTypeNarrowing.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/jsdoc/constructorTagOnClassConstructor.ts"
 
   × Cannot use export statement outside a module
@@ -4864,10 +4891,7 @@ Expect to Parse: "conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts"
    ╰────
 Expect to Parse: "conformance/parser/ecmascript5/Fuzz/parser768531.ts"
 
-  × Incomplete quantifier
-Expect to Parse: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression1.ts"
-
-  × Invalid character class range
+  × Unterminated quantifier
 Expect to Parse: "conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts"
 
   × Cannot use export statement outside a module
@@ -4900,26 +4924,26 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
 Expect to Parse: "conformance/statements/ifDoWhileStatements/ifDoWhileStatements.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/statements/throwStatements/throwStatements.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/nullIsSubtypeOfEverythingButUndefined.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints2.ts"
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[compiler/ArrowFunctionExpression1.ts:1:10]
@@ -5419,11 +5443,11 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ╰────
 
   × Identifier `m1a` has already been declared
-   ╭─[compiler/augmentedTypesModules.ts:5:1]
+   ╭─[compiler/augmentedTypesModules.ts:5:8]
  4 │ 
  5 │ module m1a { var y = 2; } // error
-   · ────────────┬────────────
-   ·             ╰── `m1a` has already been declared here
+   ·        ─┬─
+   ·         ╰── `m1a` has already been declared here
  6 │ var m1a = 1; // error
    ·     ─┬─
    ·      ╰── It can not be redeclared here
@@ -5431,11 +5455,11 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ╰────
 
   × Identifier `m1b` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:8:1]
+    ╭─[compiler/augmentedTypesModules.ts:8:8]
   7 │ 
   8 │ module m1b { export var y = 2; } // error
-    · ────────────────┬───────────────
-    ·                 ╰── `m1b` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m1b` has already been declared here
   9 │ var m1b = 1; // error
     ·     ─┬─
     ·      ╰── It can not be redeclared here
@@ -5443,24 +5467,25 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ╰────
 
   × Identifier `m1d` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:16:1]
- 15 │     
- 16 │ ╭─▶ module m1d { // error
- 17 │ │       export class I { foo() { } }
- 18 │ ├─▶ }
-    · ╰──── `m1d` has already been declared here
- 19 │     var m1d = 1; // error
-    ·         ─┬─
-    ·          ╰── It can not be redeclared here
- 20 │     
+    ╭─[compiler/augmentedTypesModules.ts:16:8]
+ 15 │ 
+ 16 │ module m1d { // error
+    ·        ─┬─
+    ·         ╰── `m1d` has already been declared here
+ 17 │     export class I { foo() { } }
+ 18 │ }
+ 19 │ var m1d = 1; // error
+    ·     ─┬─
+    ·      ╰── It can not be redeclared here
+ 20 │ 
     ╰────
 
   × Identifier `m2a` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:25:1]
+    ╭─[compiler/augmentedTypesModules.ts:25:8]
  24 │ 
  25 │ module m2a { var y = 2; }
-    · ────────────┬────────────
-    ·             ╰── `m2a` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m2a` has already been declared here
  26 │ function m2a() { }; // error since the module is instantiated
     ·          ─┬─
     ·           ╰── It can not be redeclared here
@@ -5468,11 +5493,11 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ╰────
 
   × Identifier `m2b` has already been declared
-    ╭─[compiler/augmentedTypesModules.ts:28:1]
+    ╭─[compiler/augmentedTypesModules.ts:28:8]
  27 │ 
  28 │ module m2b { export var y = 2; }
-    · ────────────────┬───────────────
-    ·                 ╰── `m2b` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m2b` has already been declared here
  29 │ function m2b() { };  // error since the module is instantiated
     ·          ─┬─
     ·           ╰── It can not be redeclared here
@@ -5480,11 +5505,11 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ╰────
 
   × Identifier `m2a` has already been declared
-   ╭─[compiler/augmentedTypesModules2.ts:5:1]
+   ╭─[compiler/augmentedTypesModules2.ts:5:8]
  4 │ 
  5 │ module m2a { var y = 2; }
-   · ────────────┬────────────
-   ·             ╰── `m2a` has already been declared here
+   ·        ─┬─
+   ·         ╰── `m2a` has already been declared here
  6 │ function m2a() { }; // error since the module is instantiated
    ·          ─┬─
    ·           ╰── It can not be redeclared here
@@ -5492,11 +5517,11 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ╰────
 
   × Identifier `m2b` has already been declared
-    ╭─[compiler/augmentedTypesModules2.ts:8:1]
+    ╭─[compiler/augmentedTypesModules2.ts:8:8]
   7 │ 
   8 │ module m2b { export var y = 2; }
-    · ────────────────┬───────────────
-    ·                 ╰── `m2b` has already been declared here
+    ·        ─┬─
+    ·         ╰── `m2b` has already been declared here
   9 │ function m2b() { };  // error since the module is instantiated
     ·          ─┬─
     ·           ╰── It can not be redeclared here
@@ -5504,11 +5529,11 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ╰────
 
   × Identifier `m2cc` has already been declared
-    ╭─[compiler/augmentedTypesModules2.ts:14:1]
+    ╭─[compiler/augmentedTypesModules2.ts:14:8]
  13 │ 
  14 │ module m2cc { export var y = 2; }
-    · ────────────────┬────────────────
-    ·                 ╰── `m2cc` has already been declared here
+    ·        ──┬─
+    ·          ╰── `m2cc` has already been declared here
  15 │ function m2cc() { }; // error to have module first
     ·          ──┬─
     ·            ╰── It can not be redeclared here
@@ -6332,7 +6357,7 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  47 │     }
     ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/commonMissingSemicolons.ts:2:6]
@@ -6395,6 +6420,19 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  1 │ const x = <div>
  2 │ <<<<<<< HEAD
    · ──
+   ╰────
+
+  × Identifier `x` has already been declared
+   ╭─[compiler/constDeclarationShadowedByVarDeclaration.ts:4:11]
+ 3 │ {
+ 4 │     const x = 0;
+   ·           ┬
+   ·           ╰── `x` has already been declared here
+ 5 │ 
+ 6 │     var x = 0;
+   ·         ┬
+   ·         ╰── It can not be redeclared here
+ 7 │ }
    ╰────
 
   × Identifier `y` has already been declared
@@ -6893,19 +6931,19 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  12 │ 
     ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Unexpected token
    ╭─[compiler/dontShowCompilerGeneratedMembers.ts:3:6]
@@ -7376,16 +7414,17 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ╰────
 
   × Identifier `F` has already been declared
-    ╭─[compiler/duplicateSymbolsExportMatching.ts:49:5]
- 48 │     module M {
- 49 │ ╭─▶     module F {
- 50 │ │           var t;
- 51 │ ├─▶     }
-    · ╰──── `F` has already been declared here
- 52 │         export function F() { } // Only one error for duplicate identifier (don't consider visibility)
-    ·                         ┬
-    ·                         ╰── It can not be redeclared here
- 53 │     }
+    ╭─[compiler/duplicateSymbolsExportMatching.ts:49:12]
+ 48 │ module M {
+ 49 │     module F {
+    ·            ┬
+    ·            ╰── `F` has already been declared here
+ 50 │         var t;
+ 51 │     }
+ 52 │     export function F() { } // Only one error for duplicate identifier (don't consider visibility)
+    ·                     ┬
+    ·                     ╰── It can not be redeclared here
+ 53 │ }
     ╰────
 
   × Empty parenthesized expression
@@ -7818,9 +7857,9 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    · ──────
    ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Expected `;` but found `)`
     ╭─[compiler/for.ts:29:6]
@@ -9369,16 +9408,17 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
   help: Remove the duplicate modifier.
 
   × Identifier `z` has already been declared
-    ╭─[compiler/nameCollisions.ts:10:5]
-  9 │     
- 10 │ ╭─▶     module z {
- 11 │ │           var t;
- 12 │ ├─▶     }
-    · ╰──── `z` has already been declared here
- 13 │         var z; // error
-    ·             ┬
-    ·             ╰── It can not be redeclared here
- 14 │     
+    ╭─[compiler/nameCollisions.ts:10:12]
+  9 │ 
+ 10 │     module z {
+    ·            ┬
+    ·            ╰── `z` has already been declared here
+ 11 │         var t;
+ 12 │     }
+ 13 │     var z; // error
+    ·         ┬
+    ·         ╰── It can not be redeclared here
+ 14 │ 
     ╰────
 
   × Identifier `C` has already been declared
@@ -10168,9 +10208,9 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  1 │ if (true) {
    ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × 'export' modifier cannot be used here.
      ╭─[compiler/privacyImportParseErrors.ts:326:9]
@@ -10256,79 +10296,77 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  22 │ 
     ╰────
 
-  × Lone quantifier brackets
+  × Could not parse the entire pattern
 
-  × Lone quantifier brackets
+  × TODO: ClassSetExpression
 
-  × Lone quantifier brackets
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid unicode escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
-
-  × Invalid escape
+  × Invalid class escape
 
   × Unexpected flag a in regular expression literal
    ╭─[compiler/regularExpressionScanning.ts:3:12]
@@ -10418,83 +10456,83 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  4 │     // Pattern modifiers
    ╰────
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Invalid class escape
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
-  × Invalid escape
+  × TODO: ClassSetExpression
 
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[compiler/regularExpressionScanning.ts:3:2]
@@ -10504,9 +10542,9 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  4 │     // Pattern modifiers
    ╰────
 
-  × Invalid escape
+  × Invalid property name
 
-  × Invalid group
+  × Unterminated capturing group name
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/regularExpressionWithNonBMPFlags.ts:7:63]
@@ -12165,9 +12203,9 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    · ──
    ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Expected `;` but found `)`
     ╭─[compiler/unusedLocalsAndParameters.ts:83:14]
@@ -12178,15 +12216,15 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  84 │     z(x);
     ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/validRegexp.ts:1:23]
@@ -14290,9 +14328,9 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  164 │     get p2(): asserts this is string;
      ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Expected `,` but found `!`
    ╭─[conformance/controlFlow/definiteAssignmentAssertionsWithObjectShortHand.ts:2:16]
@@ -15600,34 +15638,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·               ╰── `(` expected
  2 │     // Once this is supported, yield *must* be parenthesized.
    ╰────
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
 
   × Invalid unicode escape
 
@@ -18086,13 +18096,13 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·                ╰── `,` expected
    ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × A rest parameter must be last in a parameter list
     ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
@@ -20014,29 +20024,29 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  2 │ }
    ╰────
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
-  × Invalid escape
+  × Unterminated quantifier
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
@@ -20127,7 +20137,7 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·         ──
    ╰────
 
-  × Unterminated group
+  × Unterminated capturing group
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:6]
@@ -20161,16 +20171,12 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  5 │ }
    ╰────
 
-  × Lone quantifier brackets
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser645086_1.ts:1:13]
  1 │ var v = /[]/]/
    ·             ▲
    ╰────
   help: Try insert a semicolon here
-
-  × Lone quantifier brackets
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser645086_2.ts:1:14]
@@ -20179,17 +20185,17 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ╰────
   help: Try insert a semicolon here
 
-  × Nothing to repeat
+  × Invalid braced quantifier
 
-  × Nothing to repeat
+  × Invalid braced quantifier
 
-  × Nothing to repeat
+  × Invalid braced quantifier
 
-  × Nothing to repeat
+  × Invalid braced quantifier
 
-  × Nothing to repeat
+  × Invalid braced quantifier
 
-  × Nothing to repeat
+  × Invalid braced quantifier
 
   × Unexpected flag a in regular expression literal
    ╭─[conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:17]
@@ -22008,7 +22014,7 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  38 │ }
     ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Unexpected token
    ╭─[conformance/statements/for-ofStatements/ES5For-of12.ts:1:6]
@@ -22126,9 +22132,9 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ╰────
   help: Try insert a semicolon here
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × Unexpected token
    ╭─[conformance/statements/throwStatements/invalidThrowStatement.ts:1:6]
@@ -22264,7 +22270,7 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  9 │ }
    ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
@@ -23345,6 +23351,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  2 │ type T2<out out> = T2 // Error: circularly references 
    ╰────
 
-  × Incomplete quantifier
+  × Unterminated quantifier
 
-  × Incomplete quantifier
+  × Unterminated quantifier

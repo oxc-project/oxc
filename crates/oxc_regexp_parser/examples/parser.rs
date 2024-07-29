@@ -20,6 +20,12 @@ fn main() {
         (r"/\n\cM\0\x41\u{1f600}\./u", ParserOptions::default()),
         (r"/a\k<f>x\1c/u", ParserOptions::default()),
         (r"/(cg)(?<n>cg)(?:g)/", ParserOptions::default()),
+        (r"/{3}/", ParserOptions::default()), // Error
+        (r"/Em🥹j/", ParserOptions::default()),
+        (r"/^(?=ab)\b(?!cd)(?<=ef)\B(?<!gh)$/", ParserOptions::default()),
+        (r"/^(?<!ab)$/", ParserOptions::default()),
+        (r"/a)/", ParserOptions::default()), // Error
+        (r"/c]/", ParserOptions::default()),
     ] {
         println!("Test: {pat} + {options:?}");
         let parser = Parser::new(&allocator, pat, options);

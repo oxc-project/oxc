@@ -98,6 +98,10 @@ impl Rule for NoNamespace {
             ctx.diagnostic(no_namespace_diagnostic(span));
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 fn is_declaration(node: &AstNode, ctx: &LintContext) -> bool {

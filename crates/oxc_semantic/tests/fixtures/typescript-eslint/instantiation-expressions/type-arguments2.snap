@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "references": [
               {
                 "flag": "ReferenceFlag(Read)",
-                "id": 0,
+                "id": 1,
                 "name": "value",
                 "node_id": 19
               }
@@ -52,7 +52,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
             "id": 4,
             "name": "T",
             "node": "TSTypeParameter",
-            "references": []
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 3,
+                "name": "T",
+                "node_id": 31
+              }
+            ]
           }
         ]
       }
@@ -69,13 +76,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/instantiation-e
         "references": [
           {
             "flag": "ReferenceFlag(Read | TSTypeQuery)",
-            "id": 0,
+            "id": 2,
             "name": "makeBox",
             "node_id": 27
           },
           {
             "flag": "ReferenceFlag(Read)",
-            "id": 1,
+            "id": 4,
             "name": "makeBox",
             "node_id": 36
           }

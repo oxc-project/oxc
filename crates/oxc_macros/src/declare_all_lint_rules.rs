@@ -118,6 +118,12 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                     #(Self::#struct_names(rule) => rule.run_once(ctx)),*
                 }
             }
+
+            pub(super) fn should_run(&self, ctx: &LintContext) -> bool {
+                match self {
+                    #(Self::#struct_names(rule) => rule.should_run(ctx)),*
+                }
+            }
         }
 
         impl std::hash::Hash for RuleEnum {

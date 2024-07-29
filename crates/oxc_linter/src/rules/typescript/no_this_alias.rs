@@ -87,9 +87,6 @@ impl Rule for NoThisAlias {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !ctx.source_type().is_typescript() {
-            return;
-        }
         match node.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(init) = &decl.init else { return };
@@ -145,6 +142,9 @@ impl Rule for NoThisAlias {
             }
             _ => {}
         }
+    }
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

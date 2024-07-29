@@ -1,7 +1,9 @@
+use std::ops::Not;
+
 use oxc_allocator::{Box, Vec};
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
-use oxc_span::{CompactStr, GetSpan};
+use oxc_span::GetSpan;
 use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
@@ -43,7 +45,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Program<'a> {
         if let Some(hashbang) = &self.hashbang {
             hashbang.gen(p, ctx);
         }
-        p.print_directives_and_statements(Some(&self.directives), &self.body, ctx);
+        for directive in &self.directives {
+            directive.gen(p, ctx);
+        }
+        for stmt in &self.body {
+            stmt.gen(p, ctx);
+            p.print_semicolon_if_needed();
+        }
     }
 }
 
@@ -64,7 +72,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Directive<'a> {
         p.wrap_quote(|p, _| {
             p.print_str(self.directive.as_str());
         });
-        p.print_semicolon_after_statement();
+        p.print_char(b';');
+        p.print_soft_newline();
     }
 }
 
@@ -112,9 +121,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Statement<'a> {
                 decl.gen(p, ctx);
                 p.print_soft_newline();
             }
-            Self::UsingDeclaration(declaration) => {
+            Self::UsingDeclaration(decl) => {
                 p.print_indent();
-                declaration.gen(p, ctx);
+                decl.gen(p, ctx);
                 p.print_semicolon_after_statement();
             }
             Self::TSModuleDeclaration(decl) => {
@@ -261,15 +270,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatement<'a> {
         p.print_soft_space();
         p.print_char(b'(');
 
-        if let Some(init) = self.init.as_ref() {
-            let ctx = Context::empty();
-            match init {
-                ForStatementInit::UsingDeclaration(decl) => decl.gen(p, ctx),
-                match_expression!(ForStatementInit) => {
-                    init.to_expression().gen_expr(p, Precedence::lowest(), ctx);
-                }
-                ForStatementInit::VariableDeclaration(var) => var.gen(p, ctx),
-            }
+        if let Some(init) = &self.init {
+            init.gen(p, Context::FORBID_IN);
         }
 
         p.print_semicolon();
@@ -298,7 +300,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForInStatement<'a> {
         p.print_str("for");
         p.print_soft_space();
         p.print_char(b'(');
-        self.left.gen(p, ctx);
+        self.left.gen(p, Context::empty().and_forbid_in(false));
         p.print_soft_space();
         p.print_space_before_identifier();
         p.print_str("in");
@@ -323,9 +325,21 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ForOfStatement<'a> {
         p.print_soft_space();
         p.print_space_before_identifier();
         p.print_str("of ");
-        self.right.gen_expr(p, Precedence::Assign, Context::default());
+        self.right.gen_expr(p, Precedence::Comma, Context::empty());
         p.print_char(b')');
         p.print_body(&self.body, false, ctx);
+    }
+}
+
+impl<'a, const MINIFY: bool> Gen<MINIFY> for ForStatementInit<'a> {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
+        match self {
+            Self::UsingDeclaration(decl) => decl.gen(p, ctx),
+            match_expression!(ForStatementInit) => {
+                self.to_expression().gen_expr(p, Precedence::Lowest, ctx);
+            }
+            Self::VariableDeclaration(var) => var.gen(p, ctx),
+        }
     }
 }
 
@@ -560,11 +574,9 @@ impl<const MINIFY: bool> Gen<MINIFY> for DebuggerStatement {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for UsingDeclaration<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if self.is_await {
-            p.print_str("await");
-            p.print_soft_space();
+            p.print_str("await ");
         }
-        p.print_str("using");
-        p.print_soft_space();
+        p.print_str("using ");
         p.print_list(&self.declarations, ctx);
     }
 }
@@ -608,7 +620,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.gen_expr(p, Precedence::Assign, ctx);
+            init.gen_expr(p, Precedence::Comma, ctx);
         }
     }
 }
@@ -616,8 +628,8 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        p.gen_comment(self.span.start);
         let n = p.code_len();
+        p.gen_comment(self.span.start);
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
         p.wrap(wrap, |p| {
             if self.declare {
@@ -665,7 +677,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for FunctionBody<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_curly_braces(self.span, self.is_empty(), |p| {
-            p.print_directives_and_statements(Some(&self.directives), &self.statements, ctx);
+            for directive in &self.directives {
+                directive.gen(p, ctx);
+            }
+            for stmt in &self.statements {
+                p.print_semicolon_if_needed();
+                stmt.gen(p, ctx);
+            }
         });
         p.needs_semicolon = false;
     }
@@ -711,9 +729,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ImportDeclaration<'a> {
                 p.print_soft_space();
                 p.print_str("from");
                 p.print_soft_space();
-                p.print_char(b'\'');
+                p.print_char(b'"');
                 p.print_str(self.source.value.as_str());
-                p.print_char(b'\'');
+                p.print_char(b'"');
                 if self.with_clause.is_some() {
                     p.print_hard_space();
                 }
@@ -918,7 +936,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSExportAssignment<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.print_indent();
         p.print_str("export = ");
-        self.expression.gen_expr(p, Precedence::lowest(), ctx);
+        self.expression.gen_expr(p, Precedence::Lowest, ctx);
         p.print_semicolon_after_statement();
     }
 }
@@ -993,10 +1011,13 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ExportDefaultDeclarationKind<'a> {
         match self {
             match_expression!(Self) => {
                 p.start_of_default_export = p.code_len();
-                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
                 p.print_semicolon_after_statement();
             }
-            Self::FunctionDeclaration(fun) => fun.gen(p, ctx),
+            Self::FunctionDeclaration(fun) => {
+                fun.gen(p, ctx);
+                p.print_soft_newline();
+            }
             Self::ClassDeclaration(class) => {
                 class.gen(p, ctx);
                 p.print_soft_newline();
@@ -1079,18 +1100,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        if let Some(mangler) = &p.mangler {
-            if let Some(reference_id) = self.reference_id.get() {
-                if let Some(name) = mangler.get_reference_name(reference_id) {
-                    let name = CompactStr::new(name);
-                    p.add_source_mapping_for_name(self.span, &name);
-                    p.print_str(&name);
-                    return;
-                }
-            }
-        }
-        p.add_source_mapping_for_name(self.span, &self.name);
-        p.print_str(&self.name);
+        let name = p.get_identifier_reference_name(self);
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_str(name);
     }
 }
 
@@ -1103,7 +1115,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierName<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
-        p.print_symbol(self.span, self.symbol_id.get(), self.name.as_str());
+        let name = p.get_binding_identifier_name(self);
+        p.add_source_mapping_for_name(self.span, name);
+        p.print_str(name);
     }
 }
 
@@ -1368,31 +1382,29 @@ impl<const MINIFY: bool> Gen<MINIFY> for ThisExpression {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for MemberExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| match self {
-            Self::ComputedMemberExpression(expr) => {
-                expr.gen_expr(p, self.precedence(), ctx.and_in(true));
-            }
-            Self::StaticMemberExpression(expr) => expr.gen_expr(p, self.precedence(), ctx),
-            Self::PrivateFieldExpression(expr) => expr.gen_expr(p, self.precedence(), ctx),
-        });
+        match self {
+            Self::ComputedMemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            Self::StaticMemberExpression(expr) => expr.gen_expr(p, precedence, ctx),
+            Self::PrivateFieldExpression(expr) => expr.gen_expr(p, precedence, ctx),
+        }
     }
 }
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ComputedMemberExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, self.precedence(), ctx);
+        self.object.gen_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_str("?.");
         }
         p.print_char(b'[');
-        self.expression.gen_expr(p, Precedence::lowest(), ctx);
+        self.expression.gen_expr(p, Precedence::Lowest, Context::empty());
         p.print_char(b']');
     }
 }
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for StaticMemberExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, self.precedence(), ctx);
+        self.object.gen_expr(p, Precedence::Postfix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_char(b'?');
         } else if p.need_space_before_dot == p.code_len() {
@@ -1406,7 +1418,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for StaticMemberExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
-        self.object.gen_expr(p, self.precedence(), ctx);
+        self.object.gen_expr(p, Precedence::Prefix, ctx.intersection(Context::FORBID_CALL));
         if self.optional {
             p.print_str("?");
         }
@@ -1417,12 +1429,17 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for PrivateFieldExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for CallExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        let wrap = precedence > self.precedence() || ctx.has_forbid_call();
-        let ctx = ctx.and_forbid_call(false);
+        let mut wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
+        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
+        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+            wrap = true;
+        }
         p.wrap(wrap, |p| {
-            p.gen_comment(self.span.start);
+            if let Some(comment) = annotate_comment {
+                p.print_comment(comment);
+            }
             p.add_source_mapping(self.span.start);
-            self.callee.gen_expr(p, self.precedence(), ctx);
+            self.callee.gen_expr(p, Precedence::Postfix, Context::empty());
             if self.optional {
                 p.print_str("?.");
             }
@@ -1442,7 +1459,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Argument<'a> {
         match self {
             Self::SpreadElement(elem) => elem.gen(p, ctx),
             match_expression!(Self) => {
-                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
             }
         }
     }
@@ -1452,7 +1469,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayExpressionElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             match_expression!(Self) => {
-                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
             }
             Self::SpreadElement(elem) => elem.gen(p, ctx),
             Self::Elision(_span) => {}
@@ -1464,7 +1481,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for SpreadElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.add_source_mapping(self.span.start);
         p.print_ellipsis();
-        self.argument.gen_expr(p, Precedence::Assign, Context::default());
+        self.argument.gen_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
@@ -1484,23 +1501,36 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ObjectExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, _precedence: Precedence, ctx: Context) {
         let n = p.code_len();
-        p.wrap(p.start_of_stmt == n || p.start_of_arrow_expr == n, |p| {
-            let single_line = self.properties.len() <= 1;
-            p.print_curly_braces(self.span, single_line, |p| {
-                for (index, item) in self.properties.iter().enumerate() {
-                    if index != 0 {
-                        p.print_comma();
-                        p.print_soft_newline();
-                    }
-                    if !single_line {
-                        p.print_indent();
-                    }
-                    item.gen(p, ctx);
+        let len = self.properties.len();
+        let is_multi_line = len > 1;
+        let wrap = p.start_of_stmt == n || p.start_of_arrow_expr == n;
+        p.wrap(wrap, |p| {
+            p.add_source_mapping(self.span.start);
+            p.print_char(b'{');
+            if is_multi_line {
+                p.indent();
+            }
+            for (i, item) in self.properties.iter().enumerate() {
+                if i != 0 {
+                    p.print_comma();
                 }
-                if !single_line {
+                if is_multi_line {
                     p.print_soft_newline();
+                    p.print_indent();
+                } else {
+                    p.print_soft_space();
                 }
-            });
+                item.gen(p, ctx);
+            }
+            if is_multi_line {
+                p.print_soft_newline();
+                p.dedent();
+                p.print_indent();
+            } else if len > 0 {
+                p.print_soft_space();
+            }
+            p.add_source_mapping(self.span.end);
+            p.print_char(b'}');
         });
     }
 }
@@ -1514,7 +1544,6 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPropertyKind<'a> {
     }
 }
 
-// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         if let Expression::FunctionExpression(func) = &self.value {
@@ -1559,16 +1588,30 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectProperty<'a> {
                 return;
             }
         }
+
+        let mut shorthand = false;
+        if let PropertyKey::StaticIdentifier(key) = &self.key {
+            if let Expression::Identifier(ident) = self.value.without_parenthesized() {
+                if key.name == p.get_identifier_reference_name(ident) && key.name != "__proto__" {
+                    shorthand = true;
+                }
+            }
+        }
+
         if self.computed {
             p.print_char(b'[');
         }
-        self.key.gen(p, ctx);
+        if !shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print_char(b']');
         }
-        p.print_colon();
-        p.print_soft_space();
-        self.value.gen_expr(p, Precedence::Assign, Context::default());
+        if !shorthand {
+            p.print_colon();
+            p.print_soft_space();
+        }
+        self.value.gen_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
@@ -1578,7 +1621,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
             Self::StaticIdentifier(ident) => ident.gen(p, ctx),
             Self::PrivateIdentifier(ident) => ident.gen(p, ctx),
             match_expression!(Self) => {
-                self.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+                self.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
             }
         }
     }
@@ -1586,7 +1629,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyKey<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > Precedence::Assign, |p| {
+        p.wrap(precedence >= Precedence::Assign, |p| {
             p.gen_comment(self.span.start);
             if self.r#async {
                 p.add_source_mapping(self.span.start);
@@ -1615,7 +1658,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
             if self.expression {
                 if let Statement::ExpressionStatement(stmt) = &self.body.statements[0] {
                     p.start_of_arrow_expr = p.code_len();
-                    stmt.expression.gen_expr(p, Precedence::Assign, ctx);
+                    stmt.expression.gen_expr(p, Precedence::Comma, ctx.and_forbid_in(true));
                 }
             } else {
                 self.body.gen(p, ctx);
@@ -1625,8 +1668,8 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
 }
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for YieldExpression<'a> {
-    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence >= self.precedence(), |p| {
+    fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, _ctx: Context) {
+        p.wrap(precedence >= Precedence::Assign, |p| {
             p.add_source_mapping(self.span.start);
             p.print_space_before_identifier();
             p.print_str("yield");
@@ -1638,7 +1681,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for YieldExpression<'a> {
                 if !self.delegate {
                     p.print_hard_space();
                 }
-                argument.gen_expr(p, Precedence::Assign, ctx);
+                argument.gen_expr(p, Precedence::Yield, Context::empty());
             }
         });
     }
@@ -1647,7 +1690,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for YieldExpression<'a> {
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UpdateExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
         let operator = self.operator.as_str();
-        p.wrap(precedence > self.precedence(), |p| {
+        p.wrap(precedence >= self.precedence(), |p| {
             if self.prefix {
                 p.add_source_mapping(self.span.start);
                 p.print_space_before_operator(self.operator.into());
@@ -1668,7 +1711,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UpdateExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UnaryExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence() || precedence == Precedence::Exponential, |p| {
+        p.wrap(precedence >= self.precedence(), |p| {
             let operator = self.operator.as_str();
             if self.operator.is_keyword() {
                 p.print_space_before_identifier();
@@ -1680,18 +1723,27 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UnaryExpression<'a> {
                 p.prev_op = Some(self.operator.into());
                 p.prev_op_end = p.code().len();
             }
-            self.argument.gen_expr(p, Precedence::Prefix, ctx);
+            self.argument.gen_expr(p, Precedence::Exponentiation, ctx);
         });
     }
 }
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        let wrap_in = self.operator == BinaryOperator::In && !ctx.has_in();
-        let wrap = precedence >= self.precedence() || wrap_in;
+        let mut ctx = ctx;
+        let wrap = precedence >= self.precedence()
+            || (self.operator == BinaryOperator::In && ctx.intersects(Context::FORBID_IN));
+        if wrap {
+            ctx &= Context::FORBID_IN.not();
+        }
         p.wrap(wrap, |p| {
-            let left_precedence = if self.precedence().is_right_associative() {
-                self.precedence()
+            let left_precedence = if self.operator.precedence().is_right_associative() {
+                // "**" can't contain certain unary expressions
+                if matches!(self.left.without_parenthesized(), Expression::UnaryExpression(_)) {
+                    Precedence::Call
+                } else {
+                    self.precedence()
+                }
             } else {
                 self.operator.lower_precedence()
             };
@@ -1702,12 +1754,12 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
                 p.print_soft_space();
             }
             self.operator.gen(p, ctx);
-            let right_precedence = if self.precedence().is_left_associative() {
+            let right_precedence = if self.operator.precedence().is_left_associative() {
                 self.precedence()
             } else {
                 self.operator.lower_precedence()
             };
-            self.right.gen_expr(p, right_precedence, ctx.union_in_if(wrap));
+            self.right.gen_expr(p, right_precedence, ctx & Context::FORBID_IN);
         });
     }
 }
@@ -1733,7 +1785,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateInExpression<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         self.left.gen(p, ctx);
         p.print_str(" in ");
-        self.right.gen_expr(p, Precedence::Shift, Context::default());
+        self.right.gen_expr(p, Precedence::Shift, Context::empty());
     }
 }
 
@@ -1742,9 +1794,9 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for LogicalExpression<'a> {
         // Logical expressions and coalesce expressions cannot be mixed (Syntax Error).
         let mixed = matches!(
             (precedence, self.precedence()),
-            (Precedence::Coalesce, Precedence::LogicalAnd | Precedence::LogicalOr)
+            (Precedence::NullishCoalescing, Precedence::LogicalAnd | Precedence::LogicalOr)
         );
-        p.wrap(mixed || (precedence > self.precedence()), |p| {
+        p.wrap(mixed || (precedence >= self.precedence()), |p| {
             self.left.gen_expr(p, self.precedence(), ctx);
             p.print_soft_space();
             p.print_str(self.operator.as_str());
@@ -1756,17 +1808,21 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for LogicalExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ConditionalExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        let wrap = precedence > self.precedence();
+        let mut ctx = ctx;
+        let wrap = precedence >= self.precedence();
+        if wrap {
+            ctx &= Context::FORBID_IN.not();
+        }
         p.wrap(wrap, |p| {
-            self.test.gen_expr(p, self.precedence(), ctx);
+            self.test.gen_expr(p, Precedence::Conditional, ctx & Context::FORBID_IN);
             p.print_soft_space();
             p.print_char(b'?');
             p.print_soft_space();
-            self.consequent.gen_expr(p, Precedence::Assign, ctx.and_in(true));
+            self.consequent.gen_expr(p, Precedence::Yield, Context::empty());
             p.print_soft_space();
             p.print_colon();
             p.print_soft_space();
-            self.alternate.gen_expr(p, Precedence::Assign, ctx.union_in_if(wrap));
+            self.alternate.gen_expr(p, Precedence::Yield, ctx & Context::FORBID_IN);
         });
     }
 }
@@ -1798,12 +1854,12 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AssignmentExpression<'a> {
         let wrap = ((p.start_of_stmt == n || p.start_of_arrow_expr == n)
             && matches!(self.left, AssignmentTarget::ObjectAssignmentTarget(_)))
             || identifier_is_keyword;
-        p.wrap(wrap || precedence > self.precedence(), |p| {
+        p.wrap(wrap || precedence >= self.precedence(), |p| {
             self.left.gen(p, ctx);
             p.print_soft_space();
             p.print_str(self.operator.as_str());
             p.print_soft_space();
-            self.right.gen_expr(p, Precedence::Assign, ctx);
+            self.right.gen_expr(p, Precedence::Comma, ctx);
         });
     }
 }
@@ -1812,11 +1868,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTarget<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         match self {
             match_simple_assignment_target!(Self) => {
-                self.to_simple_assignment_target().gen_expr(
-                    p,
-                    Precedence::Assign,
-                    Context::default(),
-                );
+                self.to_simple_assignment_target().gen_expr(p, Precedence::Comma, Context::empty());
             }
             match_assignment_target_pattern!(Self) => {
                 self.to_assignment_target_pattern().gen(p, ctx);
@@ -1910,7 +1962,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetWithDefault<'a> {
         p.print_soft_space();
         p.print_equal();
         p.print_soft_space();
-        self.init.gen_expr(p, Precedence::Assign, Context::default());
+        self.init.gen_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
@@ -1925,12 +1977,21 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetProperty<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyIdentifier<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        self.binding.gen(p, ctx);
+        let ident_name = p.get_identifier_reference_name(&self.binding).to_owned();
+        if ident_name == self.binding.name.as_str() {
+            self.binding.gen(p, ctx);
+        } else {
+            // `({x: a} = y);`
+            p.print_str(self.binding.name.as_str());
+            p.print_colon();
+            p.print_soft_space();
+            p.print_str(&ident_name);
+        }
         if let Some(expr) = &self.init {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            expr.gen_expr(p, Precedence::Assign, Context::default());
+            expr.gen_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
@@ -1946,7 +2007,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetPropertyProperty<'a
             }
             key @ match_expression!(PropertyKey) => {
                 p.print_char(b'[');
-                key.to_expression().gen_expr(p, Precedence::Assign, Context::default());
+                key.to_expression().gen_expr(p, Precedence::Comma, Context::empty());
                 p.print_char(b']');
             }
         }
@@ -1965,23 +2026,22 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentTargetRest<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for SequenceExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, _ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| {
-            p.print_expressions(&self.expressions, Precedence::Assign, Context::default());
+        p.wrap(precedence >= self.precedence(), |p| {
+            p.print_expressions(&self.expressions, Precedence::Lowest, Context::empty());
         });
     }
 }
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ImportExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        let wrap = precedence > self.precedence() || ctx.has_forbid_call();
-        let ctx = ctx.and_forbid_call(false);
+        let wrap = precedence >= Precedence::New || ctx.intersects(Context::FORBID_CALL);
         p.wrap(wrap, |p| {
             p.add_source_mapping(self.span.start);
             p.print_str("import(");
-            self.source.gen_expr(p, Precedence::Assign, ctx);
+            self.source.gen_expr(p, Precedence::Comma, Context::empty());
             if !self.arguments.is_empty() {
                 p.print_comma();
-                p.print_expressions(&self.arguments, Precedence::Assign, ctx);
+                p.print_expressions(&self.arguments, Precedence::Comma, Context::empty());
             }
             p.print_char(b')');
         });
@@ -2011,7 +2071,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TemplateLiteral<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TaggedTemplateExpression<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        self.tag.gen_expr(p, Precedence::Postfix, Context::default());
+        self.tag.gen_expr(p, Precedence::Postfix, Context::empty());
         self.quasi.gen(p, ctx);
     }
 }
@@ -2025,10 +2085,10 @@ impl<const MINIFY: bool> Gen<MINIFY> for Super {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for AwaitExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| {
+        p.wrap(precedence >= self.precedence(), |p| {
             p.add_source_mapping(self.span.start);
             p.print_str("await ");
-            self.argument.gen_expr(p, self.precedence(), ctx);
+            self.argument.gen_expr(p, Precedence::Exponentiation, ctx);
         });
     }
 }
@@ -2046,11 +2106,18 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ChainExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for NewExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| {
-            p.gen_comment(self.span.start);
+        let mut wrap = precedence >= self.precedence();
+        let annotate_comment = p.get_leading_annotate_comment(self.span.start);
+        if annotate_comment.is_some() && precedence >= Precedence::Postfix {
+            wrap = true;
+        }
+        p.wrap(wrap, |p| {
+            if let Some(comment) = annotate_comment {
+                p.print_comment(comment);
+            }
             p.add_source_mapping(self.span.start);
             p.print_str("new ");
-            self.callee.gen_expr(p, Precedence::NewWithoutArgs, ctx.and_forbid_call(true));
+            self.callee.gen_expr(p, Precedence::New, Context::FORBID_CALL);
             p.print_char(b'(');
             p.print_list(&self.arguments, ctx);
             p.print_char(b')');
@@ -2090,7 +2157,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Class<'a> {
             }
             if let Some(super_class) = self.super_class.as_ref() {
                 p.print_str(" extends ");
-                super_class.gen_expr(p, Precedence::Call, Context::default());
+                super_class.gen_expr(p, Precedence::Call, Context::empty());
                 if let Some(super_type_parameters) = &self.super_type_parameters {
                     super_type_parameters.gen(p, ctx);
                 }
@@ -2246,7 +2313,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeValue<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXSpreadAttribute<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.print_str("{...");
-        self.argument.gen_expr(p, Precedence::Assign, Context::default());
+        self.argument.gen_expr(p, Precedence::Comma, Context::empty());
         p.print_char(b'}');
     }
 }
@@ -2263,17 +2330,24 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXAttributeItem<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for JSXOpeningElement<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
-        p.print_str("<");
+        p.print_char(b'<');
         self.name.gen(p, ctx);
         for attr in &self.attributes {
-            p.print_hard_space();
+            match attr {
+                JSXAttributeItem::Attribute(_) => {
+                    p.print_hard_space();
+                }
+                JSXAttributeItem::SpreadAttribute(_) => {
+                    p.print_soft_space();
+                }
+            }
             attr.gen(p, ctx);
         }
         if self.self_closing {
-            p.print_str("/>");
-        } else {
-            p.print_char(b'>');
+            p.print_soft_space();
+            p.print_str("/");
         }
+        p.print_char(b'>');
     }
 }
 
@@ -2461,7 +2535,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PropertyDefinition<'a> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            value.gen_expr(p, Precedence::Assign, Context::default());
+            value.gen_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
@@ -2475,9 +2549,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
         if self.r#static {
             p.print_str("static ");
         }
-        p.print_str("accessor ");
+        p.print_str("accessor");
         if self.computed {
+            p.print_soft_space();
             p.print_char(b'[');
+        } else {
+            p.print_hard_space();
         }
         self.key.gen(p, ctx);
         if self.computed {
@@ -2485,7 +2562,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AccessorProperty<'a> {
         }
         if let Some(value) = &self.value {
             p.print_equal();
-            value.gen_expr(p, Precedence::Assign, Context::default());
+            value.gen_expr(p, Precedence::Comma, Context::empty());
         }
     }
 }
@@ -2535,19 +2612,44 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ObjectPattern<'a> {
     }
 }
 
-// TODO: only print shorthand if key value are the same.
 impl<'a, const MINIFY: bool> Gen<MINIFY> for BindingProperty<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         p.add_source_mapping(self.span.start);
         if self.computed {
             p.print_char(b'[');
         }
-        self.key.gen(p, ctx);
+
+        let mut shorthand = false;
+        if let PropertyKey::StaticIdentifier(key) = &self.key {
+            match &self.value.kind {
+                BindingPatternKind::BindingIdentifier(ident)
+                    if key.name == p.get_binding_identifier_name(ident) =>
+                {
+                    shorthand = true;
+                }
+                BindingPatternKind::AssignmentPattern(assignment_pattern) => {
+                    if let BindingPatternKind::BindingIdentifier(ident) =
+                        &assignment_pattern.left.kind
+                    {
+                        if key.name == p.get_binding_identifier_name(ident) {
+                            shorthand = true;
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        if !shorthand {
+            self.key.gen(p, ctx);
+        }
         if self.computed {
             p.print_char(b']');
         }
-        p.print_colon();
-        p.print_soft_space();
+        if !shorthand {
+            p.print_colon();
+            p.print_soft_space();
+        }
         self.value.gen(p, ctx);
     }
 }
@@ -2567,9 +2669,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for ArrayPattern<'a> {
         for (index, item) in self.elements.iter().enumerate() {
             if index != 0 {
                 p.print_comma();
-                if item.is_some() {
-                    p.print_soft_space();
-                }
+                p.print_soft_space();
             }
             if let Some(item) = item {
                 item.gen(p, ctx);
@@ -2593,7 +2693,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for AssignmentPattern<'a> {
         p.print_soft_space();
         p.print_equal();
         p.print_soft_space();
-        self.right.gen_expr(p, Precedence::Assign, Context::default());
+        self.right.gen_expr(p, Precedence::Comma, Context::empty());
     }
 }
 
@@ -2628,7 +2728,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for Decorator<'a> {
         p.print_char(b'@');
         let wrap = need_wrap(&self.expression);
         p.wrap(wrap, |p| {
-            self.expression.gen_expr(p, Precedence::Assign, Context::default());
+            self.expression.gen_expr(p, Precedence::Lowest, Context::empty());
         });
     }
 }
@@ -2975,7 +3075,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSLiteral<'a> {
             Self::RegExpLiteral(decl) => decl.gen(p, ctx),
             Self::StringLiteral(decl) => decl.gen(p, ctx),
             Self::TemplateLiteral(decl) => decl.gen(p, ctx),
-            Self::UnaryExpression(decl) => decl.gen_expr(p, Precedence::Assign, ctx),
+            Self::UnaryExpression(decl) => decl.gen_expr(p, Precedence::Comma, ctx),
         }
     }
 }
@@ -3050,7 +3150,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                             p.print_str(key.name.as_str());
                         }
                         key @ match_expression!(PropertyKey) => {
-                            key.to_expression().gen_expr(p, Precedence::Assign, ctx);
+                            key.to_expression().gen_expr(p, Precedence::Comma, ctx);
                         }
                     }
                 }
@@ -3116,7 +3216,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSSignature<'a> {
                             p.print_str(key.name.as_str());
                         }
                         key @ match_expression!(PropertyKey) => {
-                            key.to_expression().gen_expr(p, Precedence::Assign, ctx);
+                            key.to_expression().gen_expr(p, Precedence::Comma, ctx);
                         }
                     }
                 }
@@ -3337,8 +3437,15 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleBlock<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
         let is_empty = self.directives.is_empty() && self.body.is_empty();
         p.print_curly_braces(self.span, is_empty, |p| {
-            p.print_directives_and_statements(Some(&self.directives), &self.body, ctx);
+            for directive in &self.directives {
+                directive.gen(p, ctx);
+            }
+            for stmt in &self.body {
+                p.print_semicolon_if_needed();
+                stmt.gen(p, ctx);
+            }
         });
+        p.needs_semicolon = false;
     }
 }
 
@@ -3427,7 +3534,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
             TSEnumMemberName::StaticNumericLiteral(decl) => decl.gen(p, ctx),
             decl @ match_expression!(TSEnumMemberName) => {
                 p.print_str("[");
-                decl.to_expression().gen_expr(p, Precedence::lowest(), ctx);
+                decl.to_expression().gen_expr(p, Precedence::Lowest, ctx);
                 p.print_str("]");
             }
         }
@@ -3435,7 +3542,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
             p.print_soft_space();
             p.print_equal();
             p.print_soft_space();
-            init.gen_expr(p, Precedence::lowest(), ctx);
+            init.gen_expr(p, Precedence::Lowest, ctx);
         }
     }
 }
@@ -3483,7 +3590,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSModuleReference<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        p.wrap(precedence > self.precedence(), |p| {
+        p.wrap(precedence >= self.precedence(), |p| {
             p.print_str("<");
             // var r = < <T>(x: T) => T > ((x) => { return null; });
             //          ^ make sure space is printed here.
@@ -3492,7 +3599,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for TSTypeAssertion<'a> {
             }
             self.type_annotation.gen(p, ctx);
             p.print_str(">");
-            self.expression.gen_expr(p, Precedence::Grouping, ctx);
+            self.expression.gen_expr(p, Precedence::Member, ctx);
         });
     }
 }

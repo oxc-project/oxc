@@ -68,8 +68,10 @@ fn get_scope_snapshot(semantic: &Semantic, scopes: impl Iterator<Item = ScopeId>
                         let reference = &semantic.symbols().references[*reference_id];
                         result.push('{');
                         result.push_str(format!("\"flag\": \"{:?}\",", reference.flag()).as_str());
-                        result.push_str(format!("\"id\": {index:?},").as_str());
-                        result.push_str(format!("\"name\": {:?},", reference.name()).as_str());
+                        result.push_str(format!("\"id\": {},", reference_id.index()).as_str());
+                        result.push_str(
+                            format!("\"name\": {:?},", semantic.reference_name(reference)).as_str(),
+                        );
                         result.push_str(
                             format!("\"node_id\": {}", reference.node_id().index()).as_str(),
                         );
