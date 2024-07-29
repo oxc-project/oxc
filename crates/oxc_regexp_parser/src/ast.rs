@@ -99,13 +99,13 @@ pub struct Quantifier<'a> {
     pub body: Term<'a>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub struct Character {
     pub span: Span,
     pub kind: CharacterKind,
     pub value: u32,
 }
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum CharacterKind {
     ControlLetter,
     HexadecimalEscape,
@@ -156,9 +156,6 @@ pub struct CharacterClass<'a> {
 }
 #[derive(Debug)]
 pub enum CharacterClassContentsKind {
-    // NonemptyClassRanges
-    Ranges,
-    // ClassSetExpression
     Union,
     Intersection,
     Subtraction,

@@ -666,8 +666,11 @@ impl<'a> PatternParser<'a> {
         }
 
         // [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
-        let nonempty_class_ranges = self.parse_nonempty_class_ranges()?;
-        Ok((ast::CharacterClassContentsKind::Union, nonempty_class_ranges))
+        if let Some(nonempty_class_ranges) = self.parse_nonempty_class_ranges()? {
+            return Ok((ast::CharacterClassContentsKind::Union, nonempty_class_ranges));
+        }
+
+        Err(OxcDiagnostic::error("Empty class ranges"))
     }
 
     // ```
@@ -676,14 +679,218 @@ impl<'a> PatternParser<'a> {
     //   ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
     //   ClassAtom[?UnicodeMode] - ClassAtom[?UnicodeMode] ClassContents[?UnicodeMode, ~UnicodeSetsMode]
     // ```
-    fn parse_nonempty_class_ranges(&mut self) -> Result<Vec<'a, ast::CharacterClassContents<'a>>> {
-        let body = Vec::new_in(self.allocator);
+    fn parse_nonempty_class_ranges(
+        &mut self,
+    ) -> Result<Option<Vec<'a, ast::CharacterClassContents<'a>>>> {
+        let Some(class_atom) = self.parse_class_atom()? else {
+            return Err(OxcDiagnostic::error("Empty class atom"));
+        };
 
-        if body.len() == 99 {
-            return Err(OxcDiagnostic::error("TODO"));
+        // ClassAtom[?UnicodeMode]
+        if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+            let mut body = Vec::new_in(self.allocator);
+            body.push(class_atom);
+            return Ok(Some(body));
         }
 
-        Ok(body)
+        // ClassAtom[?UnicodeMode] - ClassAtom[?UnicodeMode] ClassContents[?UnicodeMode, ~UnicodeSetsMode]
+        if self.reader.peek().filter(|&cp| cp == '-' as u32).is_some()
+            && self.reader.peek2().filter(|&cp| cp != ']' as u32).is_some()
+        {
+            let span_start = self.reader.span_position();
+            self.reader.advance();
+            let dash = ast::CharacterClassContents::Character(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::CharacterKind::Symbol,
+                value: '-' as u32,
+            });
+
+            let Some(class_atom_to) = self.parse_class_atom()? else {
+                return Err(OxcDiagnostic::error("Missing class atom pair"));
+            };
+
+            let mut body = Vec::new_in(self.allocator);
+            if let (
+                ast::CharacterClassContents::Character(from),
+                ast::CharacterClassContents::Character(to),
+            ) = (&class_atom, &class_atom_to)
+            {
+                body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
+                    ast::CharacterClassRange {
+                        span: from.span.merge(&to.span),
+                        min: *from,
+                        max: *to,
+                    },
+                    self.allocator,
+                )));
+            } else {
+                if self.state.unicode_mode {
+                    return Err(OxcDiagnostic::error("Invalid character class range"));
+                }
+
+                body.push(class_atom);
+                body.push(dash);
+                body.push(class_atom_to);
+            }
+
+            let (_, class_contents) = self.parse_class_contents()?;
+            body.extend(class_contents);
+
+            return Ok(Some(body));
+        }
+
+        // ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
+        // `NoDash` part is already covered
+        let Some(class_ranges) = self.parse_nonempty_class_ranges()? else {
+            return Err(OxcDiagnostic::error("Missing class ranges"));
+        };
+
+        let mut body = Vec::new_in(self.allocator);
+        body.push(class_atom);
+        body.extend(class_ranges);
+
+        Ok(Some(body))
+    }
+
+    // ```
+    // ClassAtom[UnicodeMode] ::
+    //   -
+    //   ClassAtomNoDash[?UnicodeMode]
+    // ```
+    fn parse_class_atom(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        let span_start = self.reader.span_position();
+        if self.reader.eat('-') {
+            return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::CharacterKind::Symbol,
+                value: '-' as u32,
+            })));
+        }
+
+        self.parse_class_atom_no_dash()
+    }
+
+    // ```
+    // ClassAtomNoDash[UnicodeMode, NamedCaptureGroups] ::
+    //   SourceCharacter but not one of \ or ] or -
+    //   \ ClassEscape[?UnicodeMode, ?NamedCaptureGroups]
+    //   \ [lookahead = c]
+    // ```
+    // (Annex B)
+    fn parse_class_atom_no_dash(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        let span_start = self.reader.span_position();
+
+        if let Some(cp) = self
+            .reader
+            .peek()
+            .filter(|&cp| cp != '\\' as u32 && cp != ']' as u32 && cp != '-' as u32)
+        {
+            self.reader.advance();
+
+            return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::CharacterKind::Symbol,
+                value: cp,
+            })));
+        }
+
+        if self.reader.eat('\\') {
+            if self.reader.peek().filter(|&cp| cp == 'c' as u32).is_some() {
+                return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::CharacterKind::Symbol,
+                    value: '\\' as u32,
+                })));
+            }
+
+            if let Some(class_escape) = self.parse_class_escape(span_start)? {
+                return Ok(Some(class_escape));
+            }
+
+            return Err(OxcDiagnostic::error("Invalid class escape"));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ClassEscape[UnicodeMode, NamedCaptureGroups] ::
+    //   b
+    //   [+UnicodeMode] -
+    //   [~UnicodeMode] c ClassControlLetter
+    //   CharacterClassEscape[?UnicodeMode]
+    //   CharacterEscape[?UnicodeMode, ?NamedCaptureGroups]
+    //
+    // ClassControlLetter ::
+    //   DecimalDigit
+    //   _
+    // ```
+    // (Annex B)
+    fn parse_class_escape(
+        &mut self,
+        span_start: usize,
+    ) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        // b
+        if self.reader.eat('b') {
+            return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::CharacterKind::Symbol,
+                value: 'b' as u32,
+            })));
+        }
+
+        // [+UnicodeMode] -
+        if self.state.unicode_mode && self.reader.eat('-') {
+            return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
+                span: self.span_factory.create(span_start, self.reader.span_position()),
+                kind: ast::CharacterKind::Symbol,
+                value: '-' as u32,
+            })));
+        }
+
+        // [~UnicodeMode] c ClassControlLetter
+        if !self.state.unicode_mode {
+            let checkpoint = self.reader.checkpoint();
+            if self.reader.eat('c') {
+                if let Some(cp) = self
+                    .reader
+                    .peek()
+                    .filter(|&cp| unicode::is_decimal_digit(cp) || cp == '-' as u32)
+                {
+                    self.reader.advance();
+
+                    return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        kind: ast::CharacterKind::ControlLetter,
+                        value: cp,
+                    })));
+                }
+
+                self.reader.rewind(checkpoint);
+            }
+        }
+
+        // CharacterClassEscape[?UnicodeMode]
+        if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
+            return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
+                character_class_escape,
+            )));
+        }
+        if let Some(unicode_property_escape) =
+            self.parse_character_class_escape_unicode(span_start)?
+        {
+            return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
+                unicode_property_escape,
+                self.allocator,
+            ))));
+        }
+
+        // CharacterEscape[?UnicodeMode, ?NamedCaptureGroups]
+        if let Some(character_escape) = self.parse_character_escape(span_start)? {
+            return Ok(Some(ast::CharacterClassContents::Character(character_escape)));
+        }
+
+        Ok(None)
     }
 
     // ```
