@@ -1178,7 +1178,9 @@ macro_rules! match_declaration {
 }
 pub use match_declaration;
 
-/// Variable Declaration
+/// `let a;` in `let a; a = 1;`
+///
+/// Represents a variable declaration, which can include a kind, declarations, and modifiers.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
