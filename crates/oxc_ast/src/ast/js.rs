@@ -1097,7 +1097,9 @@ pub enum Statement<'a> {
 }
 }
 
-/// Directive Prologue
+/// `"use strict";` in `"use strict";`
+///
+/// Represents a directive statement, which can include a string literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
