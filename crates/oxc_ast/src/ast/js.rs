@@ -1014,6 +1014,9 @@ pub struct AwaitExpression<'a> {
     pub argument: Expression<'a>,
 }
 
+/// `foo?.bar` in `foo?.bar;`
+///
+/// Represents a chain expression, which can include an expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
