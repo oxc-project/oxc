@@ -265,6 +265,7 @@ mod unicorn {
     pub mod no_hex_escape;
     pub mod no_instanceof_array;
     pub mod no_invalid_remove_event_listener;
+    pub mod no_length_as_slice_end;
     pub mod no_lonely_if;
     pub mod no_magic_array_flat_depth;
     pub mod no_negated_condition;
@@ -441,6 +442,7 @@ mod promise {
 }
 
 mod vitest {
+    pub mod no_import_node_test;
     pub mod require_local_test_context_for_concurrent_snapshots;
 }
 
@@ -643,6 +645,7 @@ oxc_macros::declare_all_lint_rules! {
     unicorn::no_hex_escape,
     unicorn::no_instanceof_array,
     unicorn::no_invalid_remove_event_listener,
+    unicorn::no_length_as_slice_end,
     unicorn::no_lonely_if,
     unicorn::no_magic_array_flat_depth,
     unicorn::no_negated_condition,
@@ -839,5 +842,6 @@ oxc_macros::declare_all_lint_rules! {
     promise::avoid_new,
     promise::no_new_statics,
     promise::param_names,
+    vitest::no_import_node_test,
     vitest::require_local_test_context_for_concurrent_snapshots,
 }

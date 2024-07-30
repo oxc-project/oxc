@@ -1,5 +1,5 @@
 ---
-source: crates/oxc_mangler/tests/integration/main.rs
+source: crates/oxc_minifier/tests/mangler/mod.rs
 ---
 function foo(a) {a}
 function a(b) {
@@ -8,7 +8,7 @@ function a(b) {
 
 function foo(a) { let _ = { x } }
 function a(b) {
-	let c = {x};
+	let c = { x };
 }
 
 function foo(a) { let { x } = y }

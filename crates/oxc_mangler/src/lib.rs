@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use oxc_ast::ast::Program;
-use oxc_index::{index_vec, IndexVec};
+use oxc_index::{index_vec, Idx, IndexVec};
 use oxc_semantic::{ReferenceId, SemanticBuilder, SymbolId, SymbolTable};
 use oxc_span::CompactStr;
 
@@ -104,25 +104,9 @@ impl ManglerBuilder {
             let mut slot = parent_max_slot;
 
             if !bindings.is_empty() {
-                let mut parent_bindings = None;
-
                 // `bindings` are stored in order, traverse and increment slot
-                for symbol_id in bindings.values() {
-                    // omit var hoisting because var symbols are added to every parent scope
-                    if symbol_table.get_flag(*symbol_id).is_function_scoped_declaration()
-                        && parent_bindings.is_none()
-                    {
-                        parent_bindings = scope_tree
-                            .get_parent_id(scope_id)
-                            .map(|parent_scope_id| scope_tree.get_bindings(parent_scope_id));
-                    }
-                    if let Some(parent_bindings) = &parent_bindings {
-                        if parent_bindings.values().contains(symbol_id) {
-                            continue;
-                        }
-                    }
-
-                    slots[*symbol_id] = slot;
+                for symbol_id in bindings.values().copied() {
+                    slots[symbol_id] = slot;
                     slot += 1;
                 }
             }
@@ -137,9 +121,6 @@ impl ManglerBuilder {
         let frequencies =
             Self::tally_slot_frequencies(&symbol_table, total_number_of_slots, &slots);
 
-        let unresolved_references =
-            scope_tree.root_unresolved_references().keys().collect::<Vec<_>>();
-
         let mut names = Vec::with_capacity(total_number_of_slots);
 
         let generate_name = if self.debug { debug_name } else { base54 };
@@ -149,7 +130,9 @@ impl ManglerBuilder {
                 let name = generate_name(count);
                 count += 1;
                 // Do not mangle keywords and unresolved references
-                if !is_keyword(&name) && !unresolved_references.iter().any(|n| **n == name) {
+                if !is_keyword(&name)
+                    && !scope_tree.root_unresolved_references().contains_key(name.as_str())
+                {
                     break name;
                 }
             });
@@ -185,7 +168,7 @@ impl ManglerBuilder {
             // sorting by slot enables us to sort by the order at which the vars first appear in the source
             // (this is possible because the slots are discovered currently in a DFS method which is the same order
             //  as variables appear in the source code)
-            symbols_renamed_in_this_batch.sort_by(|a, b| a.slot.cmp(&b.slot.clone()));
+            symbols_renamed_in_this_batch.sort_by(|a, b| a.slot.cmp(&b.slot));
 
             // here we just zip the iterator of symbols to rename with the iterator of new names for the next for loop
             let symbols_to_rename_with_new_names =

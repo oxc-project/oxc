@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.22.1] - 2024-07-27
+
+### Features
+
+- 2477330 ast: Add `AstKind::TSExportAssignment` (#4501) (Dunqing)
+- aaee07e ast: Add `AstKind::AssignmentTargetPattern`, `AstKind::ArrayAssignmentTarget` and `AstKind::ObjectAssignmentTarget` (#4456) (Dunqing)
+
+### Bug Fixes
+
+- 36bb680 semantic: `TSExportAssignment` cannot reference type binding (#4502) (Dunqing)
+- cb2fa49 semantic: `typeof` operator cannot reference type-only import (#4500) (Dunqing)
+- ef0e953 semantic: Generic passed to typeof not counted as a reference (#4499) (Dunqing)
+- 40cafb8 semantic: Params in `export default (function() {})` flagged as `SymbolFlags::Export` (#4480) (Dunqing)
+- 2e01a45 semantic: Non-exported namespace member symbols flagged as exported (#4493) (Don Isaac)
+- e4ca06a semantic: Incorrect symbol’s scope_id after var hoisting (#4458) (Dunqing)
+- 77bd5f1 semantic: Use correct span for namespace symbols (#4448) (Don Isaac)
+
+### Performance
+
+- 348c1ad semantic: Remove `span` field from `Reference` (#4464) (overlookmotel)
+- 6a9f4db semantic: Reduce storage size for symbol redeclarations (#4463) (overlookmotel)
+
+### Documentation
+
+- 871b3d6 semantic: Add doc comments for SymbolTester and SemanticTester (#4433) (DonIsaac)
+
+### Refactor
+
+- ccb1835 semantic: Methods take `Span` as param, not `&Span` (#4470) (overlookmotel)
+- f17254a semantic: Populate `declarations` field in `SymbolTable::create_symbol` (#4461) (overlookmotel)
+- a49f491 semantic: Re-order `SymbolTable` fields (#4459) (overlookmotel)
+- 7cd53f3 semantic: Var hoisting (#4379) (Dunqing)
+- 4f5a7cb semantic: Mark SemanticTester and SymbolTester as must_use (#4430) (DonIsaac)
+- c99b3eb syntax: Give `ScopeId` a niche (#4468) (overlookmotel)
+
+### Testing
+
+- 4b274a8 semantic: Add more test cases for symbol references (#4429) (DonIsaac)
+
 ## [0.22.0] - 2024-07-23
 
 - 85a7cea semantic: [**BREAKING**] Remove name from `reference` (#4329) (Dunqing)

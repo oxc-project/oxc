@@ -263,14 +263,16 @@ impl<'a> Lexer<'a> {
         self.source.peek_char2()
     }
 
-    /// Peek the next character, and advance the current position if it matches
-    #[inline]
-    fn next_eq(&mut self, c: char) -> bool {
-        let matched = self.peek() == Some(c);
-        if matched {
-            self.source.next_char().unwrap();
-        }
-        matched
+    /// Peek the next byte, and advance the current position if it matches
+    /// the given ASCII char.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    fn next_ascii_char_eq(&mut self, b: u8) -> bool {
+        // TODO: can be replaced by `std::ascii:Char` once stabilized.
+        // https://github.com/rust-lang/rust/issues/110998
+        assert!(b.is_ascii());
+        // SAFETY: `b` is a valid ASCII char.
+        unsafe { self.source.advance_if_ascii_eq(b) }
     }
 
     fn current_offset(&self) -> Span {

@@ -47,22 +47,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/catch/scope.ts
         "flag": "ScopeFlags(StrictMode | CatchClause)",
         "id": 2,
         "node": "CatchClause",
-        "symbols": [
-          {
-            "flag": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
-            "id": 0,
-            "name": "e",
-            "node": "CatchParameter",
-            "references": [
-              {
-                "flag": "ReferenceFlag(Read)",
-                "id": 0,
-                "name": "e",
-                "node_id": 8
-              }
-            ]
-          }
-        ]
+        "symbols": []
       }
     ],
     "flag": "ScopeFlags(StrictMode | Top)",

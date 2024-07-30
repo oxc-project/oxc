@@ -13,6 +13,9 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
     pub(crate) fn get_leading_annotate_comment(&mut self, node_start: u32) -> Option<Comment> {
         let maybe_leading_comment = self.try_get_leading_comment(node_start);
         let comment = maybe_leading_comment?;
+        if self.latest_consumed_comment_end >= comment.span.end {
+            return None;
+        }
         let real_end = match comment.kind {
             CommentKind::SingleLine => comment.span.end,
             CommentKind::MultiLine => comment.span.end + 2,
@@ -67,6 +70,8 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
                 self.print_soft_space();
             }
         }
+        // FIXME: esbuild function `restoreExprStartFlags`
+        self.start_of_default_export = self.code_len();
     }
 
     pub(crate) fn gen_comment(&mut self, node_start: u32) {

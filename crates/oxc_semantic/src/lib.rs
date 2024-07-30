@@ -23,7 +23,7 @@ pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
 pub use node::{AstNode, AstNodeId, AstNodes};
 use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
 use oxc_cfg::ControlFlowGraph;
-use oxc_span::SourceType;
+use oxc_span::{GetSpan, SourceType, Span};
 pub use oxc_syntax::{
     module_record::ModuleRecord,
     scope::{ScopeFlags, ScopeId},
@@ -147,6 +147,11 @@ impl<'a> Semantic<'a> {
             AstKind::JSXIdentifier(id) => id.name.as_str(),
             _ => unreachable!(),
         }
+    }
+
+    pub fn reference_span(&self, reference: &Reference) -> Span {
+        let node = self.nodes.get_node(reference.node_id());
+        node.kind().span()
     }
 }
 
