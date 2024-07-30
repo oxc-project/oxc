@@ -1,4 +1,5 @@
 use std::{
+    borrow::Cow,
     fmt,
     hash::{Hash, Hasher},
     ops::Deref,
@@ -6,7 +7,7 @@ use std::{
 
 use oxc_semantic::SymbolId;
 
-use crate::{context::LintContext, AllowWarnDeny, AstNode, RuleEnum};
+use crate::{context::LintContext, AllowWarnDeny, AstNode, FixKind, RuleEnum};
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
@@ -39,6 +40,9 @@ pub trait RuleMeta {
     const NAME: &'static str;
 
     const CATEGORY: RuleCategory;
+
+    /// What kind of auto-fixing can this rule do?
+    const FIX: RuleFixMeta = RuleFixMeta::None;
 
     fn documentation() -> Option<&'static str> {
         None
@@ -107,6 +111,73 @@ impl fmt::Display for RuleCategory {
             Self::Style => write!(f, "Style"),
             Self::Restriction => write!(f, "Restriction"),
             Self::Nursery => write!(f, "Nursery"),
+        }
+    }
+}
+
+// NOTE: this could be packed into a single byte if we wanted. I don't think
+// this is needed, but we could do it if it would have a performance impact.
+/// Describes the auto-fixing capabilities of a [`Rule`].
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum RuleFixMeta {
+    /// An auto-fix is not available.
+    #[default]
+    None,
+    /// An auto-fix could be implemented, but it has not been yet.
+    FixPending,
+    /// An auto-fix is available.
+    Fixable(FixKind),
+}
+
+impl RuleFixMeta {
+    /// Does this [`Rule`] have some kind of auto-fix available?
+    ///
+    /// Also returns `true` for suggestions.
+    #[inline]
+    pub fn has_fix(self) -> bool {
+        matches!(self, Self::Fixable(_))
+    }
+
+    pub fn description(self) -> Cow<'static, str> {
+        match self {
+            Self::None => Cow::Borrowed("No auto-fix is available for this rule."),
+            Self::FixPending => Cow::Borrowed("An auto-fix is still under development."),
+            Self::Fixable(kind) => {
+                // e.g. an auto-fix is available for this rule
+                // e.g. a suggestion is available for this rule
+                // e.g. a dangerous auto-fix is available for this rule
+                // e.g. an auto-fix and a suggestion are available for this rule
+                let noun = match (kind.contains(FixKind::Fix), kind.contains(FixKind::Suggestion)) {
+                    (true, true) => "auto-fix and a suggestion are available for this rule",
+                    (true, false) => "auto-fix is available for this rule",
+                    (false, true) => "suggestion is available for this rule",
+                    _ => unreachable!(),
+                };
+                let message =
+                    if kind.is_dangerous() { format!("dangerous {noun}") } else { noun.into() };
+
+                let article = match message.chars().next().unwrap() {
+                    'a' | 'e' | 'i' | 'o' | 'u' => "An",
+                    _ => "A",
+                };
+
+                Cow::Owned(format!("{article} {message}"))
+            }
+        }
+    }
+}
+
+impl TryFrom<&str> for RuleFixMeta {
+    type Error = ();
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "none" => Ok(Self::None),
+            "pending" => Ok(Self::FixPending),
+            "fix" => Ok(Self::Fixable(FixKind::Fix)),
+            "fix-dangerous" => Ok(Self::Fixable(FixKind::DangerousFix)),
+            "suggestion" => Ok(Self::Fixable(FixKind::Suggestion)),
+            "suggestion-dangerous" => Ok(Self::Fixable(FixKind::Suggestion | FixKind::Dangerous)),
+            _ => Err(()),
         }
     }
 }
