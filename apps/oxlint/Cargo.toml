@@ -19,9 +19,9 @@ workspace = true
 doctest = false
 
 [[bin]]
-name = "oxlint"
-path = "src/main.rs"
-test = false
+name    = "oxlint"
+path    = "src/main.rs"
+test    = false
 doctest = false
 
 [target.'cfg(not(target_env = "msvc"))'.dependencies]

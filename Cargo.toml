@@ -179,7 +179,6 @@ textwrap            = "0.16.1"
 tokio               = "1.38.0"
 tower-lsp           = "0.20.0"
 tracing-subscriber  = "0.3.18"
-trybuild            = "1.0.96"
 tsify               = "0.4.5"
 unicode-id-start    = "1" # Relaxed version so the user can decide which unicode version to use.
 unicode-width       = "0.1.13"

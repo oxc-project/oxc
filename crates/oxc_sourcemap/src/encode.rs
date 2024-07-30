@@ -3,7 +3,7 @@ use std::borrow::Cow;
 #[cfg(feature = "concurrent")]
 use rayon::prelude::*;
 
-use crate::error::{Error, Result};
+use crate::Error;
 use crate::JSONSourceMap;
 /// Port from https://github.com/getsentry/rust-sourcemap/blob/master/src/encoder.rs
 /// It is a helper for encode `SourceMap` to vlq sourcemap string, but here some different.
@@ -25,9 +25,9 @@ pub fn encode(sourcemap: &SourceMap) -> JSONSourceMap {
     }
 }
 
-// Here using `serde_json::to_string` to serialization `names/source_contents/sources`.
+// Here using `serde_json` to serialize `names` / `source_contents` / `sources`.
 // It will escape the string to avoid invalid JSON string.
-pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
+pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String, Error> {
     let max_segments = 12
         + sourcemap.names.len() * 2
         + sourcemap.sources.len() * 2
@@ -49,10 +49,11 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
     }
 
     contents.push("\"names\":[".into());
-    contents.push_list(sourcemap.names.iter().map(to_json_string))?;
+    contents.push_list(sourcemap.names.iter().map(escape_json_string))?;
 
     contents.push("],\"sources\":[".into());
-    contents.push_list(sourcemap.sources.iter().map(to_json_string))?;
+
+    contents.push_list(sourcemap.sources.iter().map(escape_json_string))?;
 
     // Quote `source_content` in parallel
     if let Some(source_contents) = &sourcemap.source_contents {
@@ -61,18 +62,19 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
             if #[cfg(feature = "concurrent")] {
                 let quoted_source_contents: Vec<_> = source_contents
                     .par_iter()
-                    .map(to_json_string)
+                    .map(escape_json_string)
                     .collect();
                 contents.push_list(quoted_source_contents.into_iter())?;
             } else {
-                contents.push_list(source_contents.iter().map(to_json_string))?;
+                contents.push_list(source_contents.iter().map(escape_json_string));
             }
         };
     }
 
     if let Some(x_google_ignore_list) = &sourcemap.x_google_ignore_list {
         contents.push("],\"x_google_ignoreList\":[".into());
-        contents.push_list(x_google_ignore_list.iter().map(|ignore| Ok(ignore.to_string())))?;
+        contents
+            .push_list(x_google_ignore_list.iter().map(std::string::ToString::to_string).map(Ok))?;
     }
 
     contents.push("],\"mappings\":\"".into());
@@ -83,11 +85,6 @@ pub fn encode_to_string(sourcemap: &SourceMap) -> Result<String> {
     debug_assert!(contents.num_segments() <= max_segments);
 
     Ok(contents.consume())
-}
-
-#[inline]
-fn to_json_string<S: AsRef<str>>(s: S) -> Result<String> {
-    serde_json::to_string(s.as_ref()).map_err(Error::from)
 }
 
 #[allow(clippy::cast_possible_truncation)]
@@ -214,9 +211,9 @@ impl<'a> PreAllocatedString<'a> {
     }
 
     #[inline]
-    fn push_list<I>(&mut self, mut iter: I) -> Result<()>
+    fn push_list<I>(&mut self, mut iter: I) -> Result<(), Error>
     where
-        I: Iterator<Item = Result<String>>,
+        I: Iterator<Item = Result<String, Error>>,
     {
         let Some(first) = iter.next() else {
             return Ok(());
@@ -227,7 +224,6 @@ impl<'a> PreAllocatedString<'a> {
             self.push(Cow::Borrowed(","));
             self.push(Cow::Owned(other?));
         }
-
         Ok(())
     }
 
@@ -240,6 +236,38 @@ impl<'a> PreAllocatedString<'a> {
 
     fn num_segments(&self) -> usize {
         self.buf.len()
+    }
+}
+
+fn escape_json_string<S: AsRef<str>>(s: S) -> Result<String, Error> {
+    let s = s.as_ref();
+    let mut escaped_buf = Vec::with_capacity(s.len() * 2 + 2);
+    serde::Serialize::serialize(s, &mut serde_json::Serializer::new(&mut escaped_buf))?;
+    // Safety: `escaped_buf` is valid utf8.
+    Ok(unsafe { String::from_utf8_unchecked(escaped_buf) })
+}
+
+#[test]
+fn test_escape_json_string() {
+    const FIXTURES: &[(char, &str)] = &[
+        ('n', "\"n\""),
+        ('"', "\"\\\"\""),
+        ('\\', "\"\\\\\""),
+        ('/', "\"/\""),
+        ('\x08', "\"\\b\""),
+        ('\x0C', "\"\\f\""),
+        ('\n', "\"\\n\""),
+        ('\r', "\"\\r\""),
+        ('\t', "\"\\t\""),
+        ('\x0B', "\"\\u000b\""),
+        ('虎', "\"虎\""),
+        ('\u{3A3}', "\"\u{3A3}\""),
+    ];
+
+    for (c, expected) in FIXTURES {
+        let mut input = String::new();
+        input.push(*c);
+        assert_eq!(escape_json_string(input).unwrap(), *expected);
     }
 }
 
@@ -265,16 +293,16 @@ fn test_encode_escape_string() {
     // '\0' should be escaped.
     let mut sm = SourceMap::new(
         None,
-        vec!["\0".into()],
+        vec!["name_length_greater_than_16_\0".into()],
         None,
         vec!["\0".into()],
-        Some(vec!["\0".into()]),
+        Some(vec!["emoji-👀-\0".into()]),
         vec![],
         None,
     );
     sm.set_x_google_ignore_list(vec![0]);
     assert_eq!(
         sm.to_json_string().unwrap(),
-        r#"{"version":3,"names":["\u0000"],"sources":["\u0000"],"sourcesContent":["\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
+        r#"{"version":3,"names":["name_length_greater_than_16_\u0000"],"sources":["\u0000"],"sourcesContent":["emoji-👀-\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
     );
 }

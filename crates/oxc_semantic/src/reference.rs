@@ -21,10 +21,12 @@ pub struct Reference {
 }
 
 impl Reference {
+    #[inline]
     pub fn new(node_id: AstNodeId, flag: ReferenceFlag) -> Self {
         Self { node_id, symbol_id: None, flag }
     }
 
+    #[inline]
     pub fn new_with_symbol_id(
         node_id: AstNodeId,
         symbol_id: SymbolId,
@@ -33,38 +35,46 @@ impl Reference {
         Self { node_id, symbol_id: Some(symbol_id), flag }
     }
 
+    #[inline]
     pub fn node_id(&self) -> AstNodeId {
         self.node_id
     }
 
+    #[inline]
     pub fn symbol_id(&self) -> Option<SymbolId> {
         self.symbol_id
     }
 
+    #[inline]
     pub(crate) fn set_symbol_id(&mut self, symbol_id: SymbolId) {
         self.symbol_id = Some(symbol_id);
     }
 
+    #[inline]
     pub fn flag(&self) -> &ReferenceFlag {
         &self.flag
     }
 
+    #[inline]
     pub fn flag_mut(&mut self) -> &mut ReferenceFlag {
         &mut self.flag
     }
 
     /// Returns `true` if the identifier value was read. This is not mutually
     /// exclusive with [`#is_write`]
+    #[inline]
     pub fn is_read(&self) -> bool {
         self.flag.is_read()
     }
 
     /// Returns `true` if the identifier was written to. This is not mutually
     /// exclusive with [`#is_read`]
+    #[inline]
     pub fn is_write(&self) -> bool {
         self.flag.is_write()
     }
 
+    #[inline]
     pub fn is_type(&self) -> bool {
         self.flag.is_type() || self.flag.is_ts_type_query()
     }
