@@ -8116,6 +8116,37 @@ impl<'a> AstBuilder<'a> {
         TSEnumMemberName::StaticStringLiteral(inner.into_in(self.allocator))
     }
 
+    /// Build a [`TSEnumMemberName::StaticTemplateLiteral`]
+    ///
+    /// This node contains a [`TemplateLiteral`] that will be stored in the memory arena.
+    ///
+    /// ## Parameters
+    /// - span: The [`Span`] covering this node
+    /// - quasis
+    /// - expressions
+    #[inline]
+    pub fn ts_enum_member_name_template_literal(
+        self,
+        span: Span,
+        quasis: Vec<'a, TemplateElement<'a>>,
+        expressions: Vec<'a, Expression<'a>>,
+    ) -> TSEnumMemberName<'a> {
+        TSEnumMemberName::StaticTemplateLiteral(self.alloc(self.template_literal(
+            span,
+            quasis,
+            expressions,
+        )))
+    }
+
+    /// Convert a [`TemplateLiteral`] into a [`TSEnumMemberName::StaticTemplateLiteral`]
+    #[inline]
+    pub fn ts_enum_member_name_from_template_literal<T>(self, inner: T) -> TSEnumMemberName<'a>
+    where
+        T: IntoIn<'a, Box<'a, TemplateLiteral<'a>>>,
+    {
+        TSEnumMemberName::StaticTemplateLiteral(inner.into_in(self.allocator))
+    }
+
     /// Build a [`TSEnumMemberName::StaticNumericLiteral`]
     ///
     /// This node contains a [`NumericLiteral`] that will be stored in the memory arena.

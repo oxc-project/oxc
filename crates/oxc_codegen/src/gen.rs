@@ -3531,6 +3531,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
         match &self.id {
             TSEnumMemberName::StaticIdentifier(decl) => decl.gen(p, ctx),
             TSEnumMemberName::StaticStringLiteral(decl) => decl.gen(p, ctx),
+            TSEnumMemberName::StaticTemplateLiteral(decl) => decl.gen(p, ctx),
             TSEnumMemberName::StaticNumericLiteral(decl) => decl.gen(p, ctx),
             decl @ match_expression!(TSEnumMemberName) => {
                 p.print_str("[");
