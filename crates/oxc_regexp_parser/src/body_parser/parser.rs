@@ -19,6 +19,9 @@ pub struct PatternParser<'a> {
 
 impl<'a> PatternParser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
+        // For `new RegExp("")` or `new RegExp()` (= empty)
+        let source_text = if source_text.is_empty() { "(?:)" } else { source_text };
+
         let has_group_names = |_source_text: &str| {
             // TODO: If GroupName exists, return true, otherwise false
             false
@@ -41,18 +44,11 @@ impl<'a> PatternParser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<ast::Pattern<'a>> {
-        // For `new RegExp("")` or `new RegExp()` (= empty)
-        if self.source_text.is_empty() {
-            self.source_text = "(?:)";
-        }
-
         let result = self.parse_disjunction()?;
 
         if self.reader.peek().is_some() {
             return Err(OxcDiagnostic::error("Could not parse the entire pattern"));
         }
-
-        // TODO: Revisit `should_reparse`
 
         Ok(ast::Pattern { span: self.span_factory.create(0, self.source_text.len()), body: result })
     }
