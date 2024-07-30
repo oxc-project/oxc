@@ -622,9 +622,9 @@ impl JsxCurlyBracePresence {
                     ctx.diagnostic(jsx_curly_brace_presence_necessary_diagnostic(string.span));
                 }
             }
-            _ => {}
         }
     }
+
     fn check_expression_container<'a>(
         &self,
         ctx: &LintContext<'a>,
@@ -636,7 +636,7 @@ impl JsxCurlyBracePresence {
         let Some(inner) = container.expression.as_expression() else { return };
         let allowed = if is_prop { self.props } else { self.children };
         match inner {
-            Expression::JSXFragment(fragment) => {
+            Expression::JSXFragment(_) => {
                 if !is_prop
                     && self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
@@ -733,7 +733,7 @@ fn contains_html_entity(s: &str) -> bool {
 
 fn report_unnecessary_curly<'a>(
     ctx: &LintContext<'a>,
-    container: &JSXExpressionContainer<'a>,
+    _container: &JSXExpressionContainer<'a>,
     inner_span: Span,
 ) {
     ctx.diagnostic(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span));
