@@ -31,7 +31,7 @@ fn bench_sourcemap(criterion: &mut Criterion) {
                     for i in 0..2 {
                         concat_sourcemap_builder.add_sourcemap(&sourcemap, lines * i);
                     }
-                    concat_sourcemap_builder.into_sourcemap().to_json_string().unwrap();
+                    concat_sourcemap_builder.into_sourcemap().to_json_string();
                 }
             });
         });
