@@ -145,7 +145,6 @@ fn tests() {
         //     r#"describe.concurrent("something", () => { it("something", ({ expect }) => { expect(1).toMatchInlineSnapshot() }) })"#,
         //     None,
         // ),
-
         (
             r#"describe.concurrent("something", () => { it("something", () => { expect(true).toBe(true) }) })"#,
             None,
