@@ -101,5 +101,5 @@ fn test_sourcemap_builder() {
     assert_eq!(sm.get_file(), Some("file"));
 
     let expected = r#"{"version":3,"file":"file","names":["x"],"sources":["baz.js"],"sourcesContent":[""],"mappings":""}"#;
-    assert_eq!(expected, sm.to_json_string().unwrap());
+    assert_eq!(expected, sm.to_json_string());
 }

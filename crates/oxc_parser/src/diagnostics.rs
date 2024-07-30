@@ -449,3 +449,16 @@ pub fn accessibility_modifier_on_private_property(modifier: &Modifier) -> OxcDia
     ts_error("18010", "An accessibility modifier cannot be used with a private identifier.")
         .with_label(modifier.span)
 }
+
+// ================================== TS ENUMS =================================
+
+/// Computed property names are not allowed in enums.ts(1164)
+#[cold]
+pub fn computed_property_names_not_allowed_in_enums(span: Span) -> OxcDiagnostic {
+    ts_error("1164", "Computed property names are not allowed in enums.").with_label(span)
+}
+/// An enum member cannot have a numeric name.ts(2452)
+#[cold]
+pub fn enum_member_cannot_have_numeric_name(span: Span) -> OxcDiagnostic {
+    ts_error("2452", "An enum member cannot have a numeric name.").with_label(span)
+}

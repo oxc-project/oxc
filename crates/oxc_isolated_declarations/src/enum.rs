@@ -16,6 +16,8 @@ enum ConstantValue {
 }
 
 impl<'a> IsolatedDeclarations<'a> {
+    /// # Panics
+    /// if the enum member is a template literal with substitutions.
     pub fn transform_ts_enum_declaration(
         &mut self,
         decl: &TSEnumDeclaration<'a>,
@@ -45,6 +47,9 @@ impl<'a> IsolatedDeclarations<'a> {
                 let member_name = match &member.id {
                     TSEnumMemberName::StaticIdentifier(id) => &id.name,
                     TSEnumMemberName::StaticStringLiteral(str) => &str.value,
+                    TSEnumMemberName::StaticTemplateLiteral(template) => {
+                        &template.quasi().expect("Template enum members cannot have substitutions.")
+                    }
                     #[allow(clippy::unnested_or_patterns)] // Clippy is wrong
                     TSEnumMemberName::StaticNumericLiteral(_)
                     | match_expression!(TSEnumMemberName) => {

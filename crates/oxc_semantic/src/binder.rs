@@ -365,6 +365,9 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
         let name = match &self.id {
             TSEnumMemberName::StaticIdentifier(id) => Cow::Borrowed(id.name.as_str()),
             TSEnumMemberName::StaticStringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+            TSEnumMemberName::StaticTemplateLiteral(s) => Cow::Borrowed(
+                s.quasi().expect("Template enum members must have no substitutions.").as_str(),
+            ),
             TSEnumMemberName::StaticNumericLiteral(n) => Cow::Owned(n.value.to_string()),
             match_expression!(TSEnumMemberName) => panic!("TODO: implement"),
         };
