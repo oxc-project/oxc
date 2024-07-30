@@ -19,15 +19,24 @@ pub struct PatternParser<'a> {
 
 impl<'a> PatternParser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
+        let has_group_names = |_source_text: &str| {
+            // TODO: If GroupName exists, return true, otherwise false
+            false
+        };
+
         let unicode_mode = options.unicode_flag || options.unicode_sets_flag;
         let unicode_sets_mode = options.unicode_sets_flag;
+        // In Annex B, this is `false` by default.
+        // But it is `true` if `GroupName` is found in pattern or `u` or `v` flag is set.
+        let named_capture_groups =
+            options.unicode_flag || options.unicode_sets_flag || has_group_names(source_text);
 
         Self {
             allocator,
             source_text,
             span_factory: SpanFactory::new(options.span_offset),
             reader: Reader::new(source_text, unicode_mode),
-            state: State::new(unicode_mode, unicode_sets_mode),
+            state: State::new(unicode_mode, unicode_sets_mode, named_capture_groups),
         }
     }
 
@@ -437,8 +446,12 @@ impl<'a> PatternParser<'a> {
         }
 
         // k GroupName: \k<name> means named reference
-        if self.reader.eat('k') {
+        if self.state.named_capture_groups && self.reader.eat('k') {
             if let Some(name) = self.consume_group_name()? {
+                // [SS:EE] AtomEscape :: k GroupName
+                // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
+                // TODO
+
                 return Ok(Some(ast::Term::NamedReference(Box::new_in(
                     ast::NamedReference {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
@@ -448,8 +461,6 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            // [SS:EE] AtomEscape :: k GroupName
-            // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
             return Err(OxcDiagnostic::error("Invalid named reference"));
         }
 
@@ -1470,10 +1481,15 @@ impl<'a> PatternParser<'a> {
             return Some(cp);
         }
 
-        // `NamedCaptureGroups` is always enabled
-        if !self.state.unicode_mode && (cp != 'c' as u32 && cp != 'k' as u32) {
-            self.reader.advance();
-            return Some(cp);
+        if !self.state.unicode_mode {
+            if self.state.named_capture_groups && (cp != 'c' as u32 && cp != 'k' as u32) {
+                self.reader.advance();
+                return Some(cp);
+            }
+            if cp != 'c' as u32 {
+                self.reader.advance();
+                return Some(cp);
+            }
         }
 
         None
