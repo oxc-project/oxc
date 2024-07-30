@@ -16,6 +16,20 @@ pub struct Allocator {
     bump: Bump,
 }
 
+impl Allocator {
+    /// Construct a new arena with the specified byte capacity to bump allocate into.
+    ///
+    /// ## Example
+    ///
+    /// ```
+    /// let allocator = oxc_allocator::Allocator::with_capacity(100);
+    /// # let _ = allocator;
+    /// ```
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self { bump: Bump::with_capacity(capacity) }
+    }
+}
+
 impl From<Bump> for Allocator {
     fn from(bump: Bump) -> Self {
         Self { bump }

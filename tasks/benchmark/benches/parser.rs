@@ -15,7 +15,7 @@ fn bench_parser(criterion: &mut Criterion) {
                 // Do not include initializing allocator in benchmark.
                 // User code would likely reuse the same allocator over and over to parse multiple files,
                 // so we do the same here.
-                let mut allocator = Allocator::default();
+                let mut allocator = Allocator::with_capacity(source_text.len());
                 b.iter(|| {
                     Parser::new(&allocator, source_text, source_type).parse();
                     allocator.reset();

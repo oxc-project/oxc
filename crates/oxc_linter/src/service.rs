@@ -222,7 +222,7 @@ impl Runtime {
         }
 
         for JavaScriptSource { source_text, source_type, .. } in sources {
-            let allocator = Allocator::default();
+            let allocator = Allocator::with_capacity(source_text.len());
             let mut messages =
                 self.process_source(path, &allocator, source_text, source_type, true, tx_error);
 

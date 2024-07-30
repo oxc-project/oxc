@@ -29,7 +29,7 @@ fn bench_linter(criterion: &mut Criterion) {
             BenchmarkId::from_parameter(&file.file_name),
             &file.source_text,
             |b, source_text| {
-                let allocator = Allocator::default();
+                let allocator = Allocator::with_capacity(source_text.len());
                 let ret = Parser::new(&allocator, source_text, source_type).parse();
                 let program = allocator.alloc(ret.program);
                 let semantic_ret = SemanticBuilder::new(source_text, source_type)

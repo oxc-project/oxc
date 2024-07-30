@@ -28,8 +28,9 @@ impl ReplaceGlobalDefinesConfig {
     /// * key is not an identifier
     /// * value has a syntax error
     pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Vec<OxcDiagnostic>> {
-        let allocator = Allocator::default();
-        let mut identifier_defines = vec![];
+        // 16 is a ballpark guess for the length of each define expression.
+        let allocator = Allocator::with_capacity(defines.len() * 16);
+        let mut identifier_defines = Vec::with_capacity(defines.len());
         for (key, value) in defines {
             let key = key.as_ref();
             let value = value.as_ref();

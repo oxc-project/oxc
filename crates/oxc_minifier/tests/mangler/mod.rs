@@ -8,7 +8,7 @@ use oxc_parser::Parser;
 use oxc_span::SourceType;
 
 fn mangle(source_text: &str) -> String {
-    let allocator = Allocator::default();
+    let allocator = Allocator::with_capacity(source_text.len());
     let source_type = SourceType::default().with_module(true);
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = ret.program;
