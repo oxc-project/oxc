@@ -336,12 +336,12 @@ ascii_byte_handler!(PRD(lexer) {
 // /
 ascii_byte_handler!(SLH(lexer) {
     lexer.consume_char();
-    match lexer.peek() {
-        Some('/') => {
+    match lexer.peek_byte() {
+        Some(b'/') => {
             lexer.consume_char();
             lexer.skip_single_line_comment()
         }
-        Some('*') => {
+        Some(b'*') => {
             lexer.consume_char();
             lexer.skip_multi_line_comment()
         }
@@ -418,9 +418,9 @@ ascii_byte_handler!(QST(lexer) {
         } else {
             Kind::Question2
         }
-    } else if lexer.peek() == Some('.') {
+    } else if lexer.peek_byte() == Some(b'.') {
         // parse `?.1` as `?` `.1`
-        if lexer.peek2().is_some_and(|c| c.is_ascii_digit()) {
+        if lexer.peek_char2().is_some_and(|c| c.is_ascii_digit()) {
             Kind::Question
         } else {
             lexer.consume_char();

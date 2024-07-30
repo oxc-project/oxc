@@ -498,6 +498,19 @@ impl<'a> Source<'a> {
         }
     }
 
+    /// Peek next two bytes of source without consuming them.
+    #[inline]
+    pub(super) fn peek_2_bytes(&self) -> Option<[u8; 2]> {
+        if (self.end as usize).saturating_sub(self.ptr as usize) >= 2 {
+            // SAFETY: The check above ensures that there are at least 2 bytes to
+            // read from `self.ptr` without overflowing past `self.end`.
+            let bytes = unsafe { self.position().read2() };
+            Some(bytes)
+        } else {
+            None
+        }
+    }
+
     /// Peek next byte of source without consuming it, without EOF bounds-check.
     ///
     /// # SAFETY

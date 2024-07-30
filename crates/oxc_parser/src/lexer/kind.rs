@@ -206,11 +206,11 @@ impl Kind {
         )
     }
 
-    pub fn matches_number_char(self, c: char) -> bool {
+    pub fn matches_number_char(self, c: u8) -> bool {
         match self {
             Decimal => c.is_ascii_digit(),
-            Binary => matches!(c, '0'..='1'),
-            Octal => matches!(c, '0'..='7'),
+            Binary => matches!(c, b'0'..=b'1'),
+            Octal => matches!(c, b'0'..=b'7'),
             Hex => c.is_ascii_hexdigit(),
             _ => unreachable!(),
         }

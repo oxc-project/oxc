@@ -251,15 +251,27 @@ impl<'a> Lexer<'a> {
         self.source.next_char().unwrap()
     }
 
+    /// Peek the next byte without advancing the position
+    #[inline]
+    fn peek_byte(&self) -> Option<u8> {
+        self.source.peek_byte()
+    }
+
+    /// Peek the next two bytes without advancing the position
+    #[inline]
+    fn peek_2_bytes(&self) -> Option<[u8; 2]> {
+        self.source.peek_2_bytes()
+    }
+
     /// Peek the next char without advancing the position
     #[inline]
-    fn peek(&self) -> Option<char> {
+    fn peek_char(&self) -> Option<char> {
         self.source.peek_char()
     }
 
     /// Peek the next next char without advancing the position
     #[inline]
-    fn peek2(&self) -> Option<char> {
+    fn peek_char2(&self) -> Option<char> {
         self.source.peek_char2()
     }
 
@@ -284,7 +296,7 @@ impl<'a> Lexer<'a> {
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
-        match self.peek() {
+        match self.peek_char() {
             Some(c) => self.error(diagnostics::invalid_character(c, offset)),
             None => self.error(diagnostics::unexpected_end(offset)),
         }

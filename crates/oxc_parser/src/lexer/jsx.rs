@@ -61,12 +61,12 @@ impl<'a> Lexer<'a> {
     /// `JSXFragment`
     /// { `JSXChildExpressionopt` }
     fn read_jsx_child(&mut self) -> Kind {
-        match self.peek() {
-            Some('<') => {
+        match self.peek_byte() {
+            Some(b'<') => {
                 self.consume_char();
                 Kind::LAngle
             }
-            Some('{') => {
+            Some(b'{') => {
                 self.consume_char();
                 Kind::LCurly
             }
@@ -122,7 +122,7 @@ impl<'a> Lexer<'a> {
             // Unicode chars are rare in identifiers, so cold branch to keep common path for ASCII
             // as fast as possible
             cold_branch(|| {
-                while let Some(c) = self.peek() {
+                while let Some(c) = self.peek_char() {
                     if c == '-' || is_identifier_part(c) {
                         self.consume_char();
                     } else {

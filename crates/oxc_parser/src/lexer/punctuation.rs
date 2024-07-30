@@ -3,12 +3,12 @@ use super::{Kind, Lexer, Token};
 impl<'a> Lexer<'a> {
     /// Section 12.8 Punctuators
     pub(super) fn read_dot(&mut self) -> Kind {
-        if self.peek() == Some('.') && self.peek2() == Some('.') {
+        if self.peek_2_bytes() == Some([b'.', b'.']) {
             self.consume_char();
             self.consume_char();
             return Kind::Dot3;
         }
-        if self.peek().is_some_and(|c| c.is_ascii_digit()) {
+        if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
             self.decimal_literal_after_decimal_point()
         } else {
             Kind::Dot
@@ -25,7 +25,7 @@ impl<'a> Lexer<'a> {
             }
         } else if self.next_ascii_char_eq(b'=') {
             Some(Kind::LtEq)
-        } else if self.peek() == Some('!')
+        } else if self.peek_byte() == Some(b'!')
             // SingleLineHTMLOpenComment `<!--` in script mode
             && self.source_type.is_script()
             && self.remaining().starts_with("!--")
