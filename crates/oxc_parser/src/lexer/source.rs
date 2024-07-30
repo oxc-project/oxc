@@ -202,8 +202,7 @@ impl<'a> Source<'a> {
     /// # SAFETY
     ///
     /// Caller must ensure that `ascii_byte` is a valid ASCII character.
-    #[allow(clippy::inline_always)]
-    #[inline(always)]
+    #[inline]
     pub(super) unsafe fn advance_if_ascii_eq(&mut self, ascii_byte: u8) -> bool {
         debug_assert!(ascii_byte.is_ascii());
         let matched = self.peek_byte() == Some(ascii_byte);

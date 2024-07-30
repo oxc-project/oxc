@@ -170,8 +170,8 @@ impl<'a> Lexer<'a> {
         let n = n as usize;
         debug_assert!(n > 0);
 
-        if self.lookahead.len() > n - 1 {
-            return self.lookahead[n - 1].token;
+        if let Some(lookahead) = self.lookahead.get(n - 1) {
+            return lookahead.token;
         }
 
         let position = self.source.position();
@@ -265,6 +265,7 @@ impl<'a> Lexer<'a> {
 
     /// Peek the next byte, and advance the current position if it matches
     /// the given ASCII char.
+    // `#[inline(always)]` to make sure the `assert!` gets optimized out.
     #[allow(clippy::inline_always)]
     #[inline(always)]
     fn next_ascii_char_eq(&mut self, b: u8) -> bool {

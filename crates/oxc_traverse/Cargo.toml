@@ -17,7 +17,9 @@ include                = ["/src"]
 workspace = true
 
 [lib]
-test    = false
+test = false
+# Doctests must be enabled for this crate as they are used to run tests
+# which check the soundness of its code
 doctest = true
 
 [dependencies]
@@ -29,6 +31,3 @@ oxc_syntax    = { workspace = true }
 
 compact_str = { workspace = true }
 memoffset   = { workspace = true }
-
-[dev-dependencies]
-trybuild = { workspace = true }
