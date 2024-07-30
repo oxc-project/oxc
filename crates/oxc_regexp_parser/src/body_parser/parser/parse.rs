@@ -600,7 +600,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // e.g. \u{1f600}
-        if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence()? {
+        if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(self.state.unicode_mode)? {
             return Ok(Some(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind: ast::CharacterKind::UnicodeEscape,
@@ -1223,15 +1223,13 @@ impl<'a> PatternParser<'a> {
     //   [~UnicodeMode] UnicodeLeadSurrogate UnicodeTrailSurrogate
     // ```
     fn consume_reg_exp_idenfigier_start(&mut self) -> Result<Option<u32>> {
-        if let Some(cp) = self.reader.peek() {
-            if unicode::is_identifier_start_char(cp) {
-                self.reader.advance();
-                return Ok(Some(cp));
-            }
+        if let Some(cp) = self.reader.peek().filter(|&cp| unicode::is_identifier_start_char(cp)) {
+            self.reader.advance();
+            return Ok(Some(cp));
         }
 
         if self.reader.eat('\\') {
-            if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence()? {
+            if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierStart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierStartChar lexical grammar production.
                 if !unicode::is_identifier_start_char(cp) {
@@ -1282,7 +1280,7 @@ impl<'a> PatternParser<'a> {
         }
 
         if self.reader.eat('\\') {
-            if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence()? {
+            if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierPart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierPartChar lexical grammar production.
                 if !unicode::is_identifier_part_char(cp) {
@@ -1327,14 +1325,17 @@ impl<'a> PatternParser<'a> {
     //   [~UnicodeMode] u Hex4Digits
     //   [+UnicodeMode] u{ CodePoint }
     // ```
-    fn consume_reg_exp_unicode_escape_sequence(&mut self) -> Result<Option<u32>> {
+    fn consume_reg_exp_unicode_escape_sequence(
+        &mut self,
+        unicode_mode: bool,
+    ) -> Result<Option<u32>> {
         let checkpoint = self.reader.checkpoint();
 
         if !self.reader.eat('u') {
             return Ok(None);
         }
 
-        if self.state.unicode_mode {
+        if unicode_mode {
             let checkpoint = self.reader.checkpoint();
 
             // HexLeadSurrogate + HexTrailSurrogate
@@ -1378,7 +1379,7 @@ impl<'a> PatternParser<'a> {
         }
 
         // {CodePoint}
-        if self.state.unicode_mode {
+        if unicode_mode {
             let checkpoint = self.reader.checkpoint();
 
             if self.reader.eat('{') {

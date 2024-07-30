@@ -55,6 +55,7 @@ mod test {
             (r"\u{1f600}", ParserOptions::default()),
             (r"\u{1f600}", ParserOptions::default().with_unicode_flags(true, false)),
             ("(?:abc)", ParserOptions::default()),
+            (r"(?<\u{1d49c}>.)\x1f", ParserOptions::default()),
             ("a]", ParserOptions::default()),
             ("a}", ParserOptions::default()),
             ("]", ParserOptions::default()),
