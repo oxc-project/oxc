@@ -689,13 +689,8 @@ impl<'a> PatternParser<'a> {
         if self.state.unicode_sets_mode {
             return Err(OxcDiagnostic::error("TODO: ClassSetExpression"));
         }
-
         // [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
-        if let Some(nonempty_class_ranges) = self.parse_nonempty_class_ranges()? {
-            return Ok((ast::CharacterClassContentsKind::Union, nonempty_class_ranges));
-        }
-
-        Err(OxcDiagnostic::error("Empty class ranges"))
+        self.parse_nonempty_class_ranges()
     }
 
     // ```
@@ -703,27 +698,29 @@ impl<'a> PatternParser<'a> {
     //   ClassAtom[?UnicodeMode]
     //   ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
     //   ClassAtom[?UnicodeMode] - ClassAtom[?UnicodeMode] ClassContents[?UnicodeMode, ~UnicodeSetsMode]
+    //
+    // NonemptyClassRangesNoDash[UnicodeMode] ::
+    //   ClassAtom[?UnicodeMode]
+    //   ClassAtomNoDash[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
+    //   ClassAtomNoDash[?UnicodeMode] - ClassAtom[?UnicodeMode] ClassContents[?UnicodeMode, ~UnicodeSetsMode]
     // ```
     fn parse_nonempty_class_ranges(
         &mut self,
-    ) -> Result<Option<Vec<'a, ast::CharacterClassContents<'a>>>> {
-        let Some(class_atom) = self.parse_class_atom()? else {
-            return Err(OxcDiagnostic::error("Empty class atom"));
-        };
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        let mut body = Vec::new_in(self.allocator);
 
-        // ClassAtom[?UnicodeMode]
-        if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
-            let mut body = Vec::new_in(self.allocator);
-            body.push(class_atom);
-            return Ok(Some(body));
-        }
+        loop {
+            let Some(class_atom) = self.parse_class_atom()? else {
+                break;
+            };
 
-        // ClassAtom[?UnicodeMode] - ClassAtom[?UnicodeMode] ClassContents[?UnicodeMode, ~UnicodeSetsMode]
-        if self.reader.peek().filter(|&cp| cp == '-' as u32).is_some()
-            && self.reader.peek2().filter(|&cp| cp != ']' as u32).is_some()
-        {
             let span_start = self.reader.span_position();
-            self.reader.advance();
+            if !self.reader.eat('-') {
+                // ClassAtom[?UnicodeMode]
+                body.push(class_atom);
+                continue;
+            }
+
             let dash = ast::CharacterClassContents::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
                 kind: ast::CharacterKind::Symbol,
@@ -731,10 +728,16 @@ impl<'a> PatternParser<'a> {
             });
 
             let Some(class_atom_to) = self.parse_class_atom()? else {
-                return Err(OxcDiagnostic::error("Missing class atom pair"));
+                // ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
+                // => ClassAtom[?UnicodeMode] ClassAtom[?UnicodeMode]
+                // => ClassAtom[?UnicodeMode] -
+                body.push(class_atom);
+                body.push(dash);
+                continue;
             };
 
-            let mut body = Vec::new_in(self.allocator);
+            // ClassAtom[?UnicodeMode] - ClassAtom[?UnicodeMode] ClassContents[?UnicodeMode, ~UnicodeSetsMode]
+            // If both sides are characters, it is a range.
             if let (
                 ast::CharacterClassContents::Character(from),
                 ast::CharacterClassContents::Character(to),
@@ -755,37 +758,28 @@ impl<'a> PatternParser<'a> {
                     },
                     self.allocator,
                 )));
-            } else {
-                // [SS:EE] NonemptyClassRanges :: ClassAtom - ClassAtom ClassContents
-                // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
-                // It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
-                // (Annex B)
-                if self.state.unicode_mode {
-                    return Err(OxcDiagnostic::error("Invalid character class range"));
-                }
-
-                body.push(class_atom);
-                body.push(dash);
-                body.push(class_atom_to);
+                continue;
             }
 
-            let (_, class_contents) = self.parse_class_contents()?;
-            body.extend(class_contents);
+            // If not, it is just a union of characters.
 
-            return Ok(Some(body));
+            // [SS:EE] NonemptyClassRanges :: ClassAtom - ClassAtom ClassContents
+            // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
+            // It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
+            // (Annex B)
+            if self.state.unicode_mode {
+                return Err(OxcDiagnostic::error("Invalid character class range"));
+            }
+
+            body.push(class_atom);
+            body.push(dash);
+            body.push(class_atom_to);
         }
 
-        // ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
-        // `NoDash` part is already covered
-        let Some(class_ranges) = self.parse_nonempty_class_ranges()? else {
-            return Err(OxcDiagnostic::error("Missing class ranges"));
-        };
-
-        let mut body = Vec::new_in(self.allocator);
-        body.push(class_atom);
-        body.extend(class_ranges);
-
-        Ok(Some(body))
+        if body.is_empty() {
+            return Err(OxcDiagnostic::error("Empty class ranges"));
+        }
+        Ok((ast::CharacterClassContentsKind::Union, body))
     }
 
     // ```
