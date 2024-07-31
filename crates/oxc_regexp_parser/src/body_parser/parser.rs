@@ -1,6 +1,7 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
+use rustc_hash::FxHashSet;
 
 use crate::{
     ast,
@@ -14,7 +15,7 @@ pub struct PatternParser<'a> {
     source_text: &'a str,
     span_factory: SpanFactory,
     reader: Reader<'a>,
-    state: State,
+    state: State<'a>,
 }
 
 impl<'a> PatternParser<'a> {
@@ -22,28 +23,25 @@ impl<'a> PatternParser<'a> {
         // For `new RegExp("")` or `new RegExp()` (= empty)
         let source_text = if source_text.is_empty() { "(?:)" } else { source_text };
 
-        let has_group_names = |_source_text: &str| {
-            // TODO: If GroupName exists, return true, otherwise false
-            false
-        };
-
-        let unicode_mode = options.unicode_flag || options.unicode_sets_flag;
-        let unicode_sets_mode = options.unicode_sets_flag;
-        // In Annex B, this is `false` by default.
-        // But it is `true` if `GroupName` is found in pattern or `u` or `v` flag is set.
-        let named_capture_groups =
-            options.unicode_flag || options.unicode_sets_flag || has_group_names(source_text);
-
         Self {
             allocator,
             source_text,
             span_factory: SpanFactory::new(options.span_offset),
-            reader: Reader::new(source_text, unicode_mode),
-            state: State::new(unicode_mode, unicode_sets_mode, named_capture_groups),
+            reader: Reader::new(source_text, options.unicode_flag || options.unicode_sets_flag),
+            state: State::new(options.unicode_flag, options.unicode_sets_flag),
         }
     }
 
     pub fn parse(&mut self) -> Result<ast::Pattern<'a>> {
+        // TODO: Comment
+        self.state.count_capturing_groups(self.source_text);
+
+        // [SS:EE] Pattern :: Disjunction
+        // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
+        if 2 ^ 32 < self.state.num_of_capturing_groups {
+            return Err(OxcDiagnostic::error("Too many capturing groups"));
+        }
+
         let result = self.parse_disjunction()?;
 
         if self.reader.peek().is_some() {
@@ -67,6 +65,23 @@ impl<'a> PatternParser<'a> {
 
             if !self.reader.eat('|') {
                 break;
+            }
+        }
+
+        for alternative in &body {
+            // Duplicated group names can be used across alternatives, but not within the same
+            let mut found_group_names = FxHashSet::default();
+
+            for term in &alternative.body {
+                if let ast::Term::CapturingGroup(capturing_group) = term {
+                    if let Some(name) = &capturing_group.name {
+                        //  [SS:EE] Pattern :: Disjunction
+                        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
+                        if !found_group_names.insert(name.as_str()) {
+                            return Err(OxcDiagnostic::error("Duplicated group name"));
+                        }
+                    }
+                }
             }
         }
 
@@ -413,14 +428,31 @@ impl<'a> PatternParser<'a> {
     // ```
     // (Annex B)
     fn parse_atom_escape(&mut self, span_start: usize) -> Result<Option<ast::Term<'a>>> {
+        let checkpoint = self.reader.checkpoint();
+
         // DecimalEscape: \1 means indexed reference
         if let Some(index) = self.consume_decimal_escape() {
-            // TODO: Check `CapturingGroupNumber` <= `CountLeftCapturingParensWithin`
+            if self.state.unicode_mode {
+                // [SS:EE]  AtomEscape :: DecimalEscape
+                // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
+                if self.state.num_of_capturing_groups < index {
+                    return Err(OxcDiagnostic::error("Invalid indexed reference"));
+                }
 
-            return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
-                span: self.span_factory.create(span_start, self.reader.span_position()),
-                index,
-            })));
+                return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    index,
+                })));
+            }
+
+            if index <= self.state.num_of_capturing_groups {
+                return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    index,
+                })));
+            }
+
+            self.reader.rewind(checkpoint);
         }
 
         // CharacterClassEscape: \d, \p{...}
@@ -446,7 +478,9 @@ impl<'a> PatternParser<'a> {
             if let Some(name) = self.consume_group_name()? {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
-                // TODO
+                if !self.state.found_group_names.contains(name.as_str()) {
+                    return Err(OxcDiagnostic::error("Invalid named reference"));
+                }
 
                 return Ok(Some(ast::Term::NamedReference(Box::new_in(
                     ast::NamedReference {
@@ -1472,20 +1506,25 @@ impl<'a> PatternParser<'a> {
     fn consume_identity_escape(&mut self) -> Option<u32> {
         let cp = self.reader.peek()?;
 
-        if self.state.unicode_mode && (unicode::is_syntax_character(cp) || cp == '/' as u32) {
-            self.reader.advance();
-            return Some(cp);
+        if self.state.unicode_mode {
+            if unicode::is_syntax_character(cp) || cp == '/' as u32 {
+                self.reader.advance();
+                return Some(cp);
+            }
+            return None;
         }
 
-        if !self.state.unicode_mode {
-            if self.state.named_capture_groups && (cp != 'c' as u32 && cp != 'k' as u32) {
+        if self.state.named_capture_groups {
+            if cp != 'c' as u32 && cp != 'k' as u32 {
                 self.reader.advance();
                 return Some(cp);
             }
-            if cp != 'c' as u32 {
-                self.reader.advance();
-                return Some(cp);
-            }
+            return None;
+        }
+
+        if cp != 'c' as u32 {
+            self.reader.advance();
+            return Some(cp);
         }
 
         None

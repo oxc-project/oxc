@@ -92,6 +92,8 @@ mod test {
             (r"(?<a>)\k<a>", ParserOptions::default()),
             (r"(?<a>)\k<a>", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\1", ParserOptions::default()),
+            (r"(?<n1>..)(?<n2>..)", ParserOptions::default()),
+            (r"(?<n1>..)|(?<n1>..)", ParserOptions::default()),
         ] {
             let res = PatternParser::new(&allocator, source_text, *options).parse();
             if let Err(err) = res {
@@ -128,8 +130,9 @@ mod test {
             (r"\k<>", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\k<4>", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\k<a", ParserOptions::default().with_unicode_flags(true, false)),
-            // (r"\1", ParserOptions::default().with_unicode_flags(true, false)),
-            // (r"(?<b>)\k<a>", ParserOptions::default()),
+            (r"\1", ParserOptions::default().with_unicode_flags(true, false)),
+            (r"(?<b>)\k<a>", ParserOptions::default()),
+            (r"(?<n>..)(?<n>..)", ParserOptions::default()),
             ("a(?:", ParserOptions::default()),
             ("(a", ParserOptions::default()),
             ("(?<a>", ParserOptions::default()),
