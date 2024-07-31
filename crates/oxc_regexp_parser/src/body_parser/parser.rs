@@ -1,7 +1,6 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
-use rustc_hash::FxHashSet;
 
 use crate::{
     ast,
@@ -46,6 +45,12 @@ impl<'a> PatternParser<'a> {
             return Err(OxcDiagnostic::error("Too many capturing groups"));
         }
 
+        // [SS:EE] Pattern :: Disjunction
+        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
+        if self.state.num_of_named_capture_groups as usize != self.state.found_group_names.len() {
+            return Err(OxcDiagnostic::error("Duplicated group name"));
+        }
+
         let result = self.parse_disjunction()?;
 
         if self.reader.peek().is_some() {
@@ -69,23 +74,6 @@ impl<'a> PatternParser<'a> {
 
             if !self.reader.eat('|') {
                 break;
-            }
-        }
-
-        for alternative in &body {
-            // Duplicated group names can be used across alternatives, but not within the same
-            let mut found_group_names = FxHashSet::default();
-
-            for term in &alternative.body {
-                if let ast::Term::CapturingGroup(capturing_group) = term {
-                    if let Some(name) = &capturing_group.name {
-                        //  [SS:EE] Pattern :: Disjunction
-                        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-                        if !found_group_names.insert(name.as_str()) {
-                            return Err(OxcDiagnostic::error("Duplicated group name"));
-                        }
-                    }
-                }
             }
         }
 
