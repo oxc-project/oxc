@@ -470,23 +470,6 @@ impl<'a> Source<'a> {
         Some(c)
     }
 
-    /// Peek next next char of source, without consuming it.
-    #[inline]
-    pub(super) fn peek_char2(&self) -> Option<char> {
-        // Handle EOF
-        if self.is_eof() {
-            return None;
-        }
-
-        // Check invariant that `ptr` is on a UTF-8 character boundary.
-        debug_assert!(!is_utf8_cont_byte(self.peek_byte().unwrap()));
-
-        let mut chars = self.remaining().chars();
-        // SAFETY: We already checked not at EOF, so `chars.next()` must return `Some(_)`
-        unsafe { chars.next().unwrap_unchecked() };
-        chars.next()
-    }
-
     /// Peek next byte of source without consuming it.
     #[inline]
     pub(super) fn peek_byte(&self) -> Option<u8> {

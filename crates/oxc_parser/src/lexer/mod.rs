@@ -269,12 +269,6 @@ impl<'a> Lexer<'a> {
         self.source.peek_char()
     }
 
-    /// Peek the next next char without advancing the position
-    #[inline]
-    fn peek_char2(&self) -> Option<char> {
-        self.source.peek_char2()
-    }
-
     /// Peek the next byte, and advance the current position if it matches
     /// the given ASCII char.
     // `#[inline(always)]` to make sure the `assert!` gets optimized out.

@@ -412,22 +412,39 @@ ascii_byte_handler!(GTR(lexer) {
 // ?
 ascii_byte_handler!(QST(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'?') {
-        if lexer.next_ascii_char_eq(b'=') {
-            Kind::Question2Eq
-        } else {
-            Kind::Question2
-        }
-    } else if lexer.peek_byte() == Some(b'.') {
-        // parse `?.1` as `?` `.1`
-        if lexer.peek_char2().is_some_and(|c| c.is_ascii_digit()) {
-            Kind::Question
-        } else {
-            lexer.consume_char();
-            Kind::QuestionDot
+
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        match next_2_bytes[0] {
+            b'?' => {
+                if next_2_bytes[1] == b'=' {
+                    lexer.consume_char();
+                    lexer.consume_char();
+                    Kind::Question2Eq
+                } else {
+                    lexer.consume_char();
+                    Kind::Question2
+                }
+            }
+            // parse `?.1` as `?` `.1`
+            b'.' if !next_2_bytes[1].is_ascii_digit() => {
+                lexer.consume_char();
+                Kind::QuestionDot
+            }
+            _ => Kind::Question,
         }
     } else {
-        Kind::Question
+        // At EOF, or only 1 byte left
+        match lexer.peek_byte() {
+            Some(b'?') => {
+                lexer.consume_char();
+                Kind::Question2
+            }
+            Some(b'.') => {
+                lexer.consume_char();
+                Kind::QuestionDot
+            }
+            _ => Kind::Question,
+        }
     }
 });
 
