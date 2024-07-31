@@ -206,7 +206,7 @@ impl Kind {
         )
     }
 
-    pub fn matches_number_char(self, b: u8) -> bool {
+    pub fn matches_number_byte(self, b: u8) -> bool {
         match self {
             Decimal => b.is_ascii_digit(),
             Binary => matches!(b, b'0'..=b'1'),

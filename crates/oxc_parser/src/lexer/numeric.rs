@@ -42,7 +42,7 @@ impl<'a> Lexer<'a> {
     fn read_non_decimal(&mut self, kind: Kind) -> Kind {
         self.consume_char();
 
-        if self.peek_byte().is_some_and(|b| kind.matches_number_char(b)) {
+        if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
             self.consume_char();
         } else {
             self.unexpected_err();
@@ -58,14 +58,14 @@ impl<'a> Lexer<'a> {
                     // call here instead of after we ensure the next character
                     // is a number character
                     self.token.set_has_separator();
-                    if self.peek_byte().is_some_and(|b| kind.matches_number_char(b)) {
+                    if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
                         self.unexpected_err();
                         return Kind::Undetermined;
                     }
                 }
-                b if kind.matches_number_char(b) => {
+                b if kind.matches_number_byte(b) => {
                     self.consume_char();
                 }
                 _ => break,
