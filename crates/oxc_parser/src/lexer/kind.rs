@@ -206,6 +206,7 @@ impl Kind {
         )
     }
 
+    #[inline] // Inline into `read_non_decimal` - see comment there as to why
     pub fn matches_number_byte(self, b: u8) -> bool {
         match self {
             Decimal => b.is_ascii_digit(),

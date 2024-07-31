@@ -39,6 +39,10 @@ impl<'a> Lexer<'a> {
         self.check_after_numeric_literal(kind)
     }
 
+    // Inline into the 3 calls from `read_zero` so that value of `kind` is known
+    // and `kind.matches_number_byte` can be statically reduced to just the match arm
+    // that applies for this specific kind. `matches_number_byte` is also marked `#[inline]`.
+    #[inline]
     fn read_non_decimal(&mut self, kind: Kind) -> Kind {
         self.consume_char();
 
