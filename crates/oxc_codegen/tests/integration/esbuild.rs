@@ -1066,15 +1066,19 @@ fn test_infinity() {
 }
 
 #[test]
-#[ignore]
 fn test_binary_operator_visitor() {
     // Make sure the inner "/*b*/" comment doesn't disappear due to weird binary visitor stuff
     // testMangle(t, "x = (0, /*a*/ (0, /*b*/ (0, /*c*/ 1 == 2) + 3) * 4)", "x = /*a*/\n/*b*/\n(/*c*/\n!1 + 3) * 4;\n");
 
     // Make sure deeply-nested ASTs don't cause a stack overflow
-    // FIXME:
-    // let x = format!("x = f(){};\n", " || f()".repeat(2)); // TODO: change this to 10_000
-    // test(&x, &x);
+    let x = format!("x = f(){};\n", " + f()".repeat(10_000));
+    test(&x, &x);
+
+    let x = format!("x = f(){};\n", " && f()".repeat(10_000));
+    test(&x, &x);
+
+    let x = format!("x = f(){};\n", " && f() + f()".repeat(10_000));
+    test(&x, &x);
 }
 
 // See: https://github.com/tc39/proposal-explicit-resource-management

@@ -4,6 +4,7 @@
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
 mod annotation_comment;
+mod binary_expr_visitor;
 mod context;
 mod gen;
 mod operator;
@@ -25,11 +26,14 @@ use oxc_syntax::{
     precedence::Precedence,
 };
 
+use crate::{
+    binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
+    sourcemap_builder::SourcemapBuilder,
+};
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
 };
-use crate::{operator::Operator, sourcemap_builder::SourcemapBuilder};
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a, false>;
@@ -72,6 +76,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     prev_reg_exp_end: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
+    binary_expr_stack: Vec<BinaryExpressionVisitor<'a>>,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -130,6 +135,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
+            binary_expr_stack: Vec::with_capacity(5),
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
