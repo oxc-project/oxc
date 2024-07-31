@@ -1,0 +1,660 @@
+//! Test cases created by oxc maintainers
+
+use super::NoUnusedVars;
+use crate::{tester::Tester, RuleMeta as _};
+use serde_json::json;
+
+#[test]
+fn test_vars_simple() {
+    let pass = vec![
+        ("let a = 1; console.log(a)", None),
+        ("let a = 1; new Foo(a)", None),
+        ("let a = 1; let b = a + 1; console.log(b)", None),
+        ("let a = 1; if (true) { console.log(a) }", None),
+        ("let _a = 1", Some(json!([{ "varsIgnorePattern": "^_" }]))),
+    ];
+    let fail = vec![
+        ("let a = 1", None),
+        ("let a = 1; a = 2", None),
+        (
+            "let _a = 1; console.log(_a)",
+            Some(json!([{ "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true }])),
+        ),
+        ("let _a = 1", Some(json!([{ "argsIgnorePattern": "^_" }]))),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-vars-simple")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_vars_self_use() {
+    let pass = vec![
+        "
+        function foo() {
+            let bar = 0;
+            return bar++;
+        }
+        foo();
+        ",
+    ];
+    let fail = vec![
+        "
+        function foo() {
+            return foo
+        }
+        ",
+        "
+        const foo = () => {
+            return foo
+        }
+        ",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-vars-self-use")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_vars_discarded_reads() {
+    let pass = vec![
+        // https://github.com/oxc-project/oxc/pull/4445#issuecomment-2254122889
+        "
+        (() => {
+            const t = import.meta.url,
+                s = {};
+            return '' !== t && (s.resourcesUrl = new URL('.', t).href), e(s);
+        })();
+        ",
+        "var a; b !== '' && (x = a, f(c))",
+        "
+        class Test {
+            async updateContextGroup(t, i, s = !0) {
+                s ? await this.leave(i) : await this.join(t, i), false;
+            }
+        }
+
+        new Test();
+        ",
+    ];
+
+    let fail = vec![
+        "
+        function foo(a) { return (a, 0); }
+        foo(1);
+        ",
+        "
+        const I = (e) => (l) => {
+            e.push(l), n || false;
+        };
+        ",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-vars-discarded-read")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_vars_reassignment() {
+    let pass = vec![
+        "let i = 0; someFunction(i++);",
+        "
+        const thunk = () => 3;
+        let result = undefined;
+        result &&= thunk();
+        console.log(result);
+        ",
+        r"
+        const thunk = () => 3;
+        {
+            let a = thunk();
+            console.log(a);
+        }
+        ",
+        "let a = 0; let b = a++; f(b);",
+        "let a = 0, b = 1; let c = b = a = 1; f(c+b);",
+        // implicit returns
+        "
+		let i = 0;
+        const func = () => 'value: ' + i++;
+        func();
+        ",
+        // parenthesis are transparent
+        "let a = 0; let b = ((a++)); f(b);",
+        // type casting is transparent
+        "let a = 0; let b = a as any; f(b);",
+        "let a = 0; let b = a as unknown as string as unknown as number; f(b);",
+        "let a = 0; let b = a++ as string | number; f(b);",
+        // pathological sequence assignments
+        "let a = 0; let b = (0, a++); f(b);",
+        "let a = 0; let b = (0, (a++)); f(b);",
+        "let a = 0; let b = (0, (a++) as string | number); f(b);",
+        "let a = 0; let b = (0, (0, a++)); f(b);",
+        "let a = 0; let b = (0, (((0, a++)))); f(b);",
+        "let a = 0; let b = (0, a) + 1; f(b);",
+        // reassignment in conditions
+        "
+        function foo() {
+            if (i++ === 0) {
+                return 'zero';
+            } else {
+                return 'not zero';
+            }
+            var i = 0;
+        }
+        foo();
+        ",
+        "
+        let i = 10;
+        while (i-- > 0) {
+            console.log('countdown');
+        };
+        ",
+        "
+        let i = 10;
+        do {
+            console.log('countdown');
+        } while(i-- > 0);
+        ",
+        "let i = 0; i > 0 ? 'positive' : 'negative';",
+        "let i = 0; i > 0 && console.log('positive');",
+    ];
+
+    let fail = vec![
+        "let a = 1; a ||= 2;",
+        "let a = 0; a = a + 1;",
+        // type casting is transparent
+        "let a = 0; a = a++ as any;",
+        "let a = 0; a = a as unknown as string as unknown as number;",
+        // pathological sequence assignments
+        "let a = 0; a = ++a;",
+        "let a = 0; a = (0, ++a);",
+        "let a = 0; a = (a++, 0);",
+        "let a = 0; let b = (a++, 0); f(b);",
+        "let a = 0; let b = (0, (a++, 0)); f(b);",
+        "let a = 0; let b = ((0, a++), 0); f(b);",
+        "let a = 0; let b = (a, 0) + 1; f(b);",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-vars-reassignment")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_vars_destructure_ignored() {
+    let pass = vec![
+        // ("const { a, ...rest } = obj; console.log(rest)", Some(json![{ "ignoreRestSiblings": true }]))
+    ];
+    let fail = vec![
+        ("const { a, ...rest } = obj", Some(json![{ "ignoreRestSiblings": true }])),
+        ("const [a, ...rest] = arr", Some(json![{ "ignoreRestSiblings": true }])),
+        (
+            "const { a: { b }, ...rest } = obj; console.log(a)",
+            Some(json![{ "ignoreRestSiblings": true }]),
+        ),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-vars-destructure-ignored")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_vars_catch() {
+    let pass = vec![
+        // lb
+        ("try {} catch (e) { throw e }", None),
+        ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "none" }]))),
+        ("try {} catch { }", None),
+    ];
+    let fail = vec![
+        // lb
+        ("try {} catch (e) { }", Some(json!([{ "caughtErrors": "all" }]))),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-vars-catch")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_functions() {
+    let pass = vec![
+        "function foo() {}\nfoo()",
+        "const a = () => {}; a();",
+        "var foo = function foo() {}\n foo();",
+        "var foo = function bar() {}\n foo();",
+        "var foo; foo = function bar() {}; foo();",
+        "
+        const obj = {
+            foo: function foo () {}
+        }
+        f(obj)
+        ",
+        "
+        function foo() {}
+        function bar() { foo() }
+        bar()
+        ",
+        "
+        function foo() {}
+        if (true) {
+            foo()
+        }
+        ",
+        "
+        function main() {
+            function foo() {}
+            if (true) { foo() }
+        }
+        main()
+        ",
+        "
+        function foo() {
+        return function bar() {}
+        }
+        foo()()
+        ",
+        "
+        import debounce from 'debounce';
+
+        const debouncedFoo = debounce(function foo() {
+            console.log('do a thing');
+        }, 100);
+
+        debouncedFoo();
+        ",
+        // FIXME
+        "
+            const createIdFactory = ((): (() => string) => {
+                let count = 0;
+                return () => `${count++}`
+        })();
+
+        const getId = createIdFactory();
+        console.log(getId());
+            ",
+        // calls on optional chains should be valid
+        "
+        let foo = () => {};
+        foo?.();
+        ",
+        "
+        function foo(a: number): number;
+        function foo(a: number | string): number {
+            return Number(a) 
+        }
+        foo();
+        ",
+        "export const Component = () => <button onClick={function onClick(e) { console.log(e) }} />",
+        // https://github.com/oxc-project/oxc/pull/4445#issuecomment-2254122889
+        "
+        Promise.withResolvers ||
+            (Promise.withResolvers = function withResolvers<T>() {
+                let resolve!: (value: T | PromiseLike<T>) => void;
+                let reject!: (reason: unknown) => void;
+
+                const promise = new this<T>((promiseResolve, promiseReject) => {
+                    resolve = promiseResolve;
+                    reject = promiseReject;
+                });
+
+                return {
+                    resolve,
+                    reject,
+                    promise,
+                };
+            });
+        ",
+    ];
+
+    let fail = vec!["function foo() {}", "function foo() { foo() }"];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-functions")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_imports() {
+    let pass = vec![
+        ("import { a } from 'b'; console.log(a)", None),
+        ("import * as a from 'a'; console.log(a)", None),
+        ("import a from 'a'; console.log(a)", None),
+        ("import { default as a } from 'a'; console.log(a)", None),
+        (
+            "import { createElement } from 'preact/compat';",
+            Some(json!([{ "varsIgnorePattern": "^(h|React|createElement)$" }])),
+        ),
+        (
+            "import { createElement } from 'preact/compat';",
+            Some(json!([{ "args": "none", "varsIgnorePattern": "^(h|React|createElement)$" }])),
+        ),
+    ];
+    let fail = vec![
+        ("import { a } from 'a'", None),
+        ("import * as a from 'a'", None),
+        ("import { a as b } from 'a'; console.log(a)", None),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-imports")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_exports() {
+    let pass = vec![
+        "export const a = 1; console.log(a)",
+        "export function foo() {}",
+        "export default function foo() {}",
+        "export class A {}",
+        "export interface A {}",
+        "export type A = string",
+        "export enum E { }",
+        // "export enum E { A, B }",
+        "const a = 1; export { a }",
+        "const a = 1; export default a",
+        // re-exports
+        "import { a } from 'a'; export { a }",
+        "import { a as b } from 'a'; export { b }",
+        "export * as a from 'a'",
+        "export { a, b } from 'a'",
+    ];
+    let fail = vec!["import { a as b } from 'a'; export { a }"];
+
+    // these are mostly pass[] cases, so do not snapshot
+    Tester::new(NoUnusedVars::NAME, pass, fail).test();
+}
+
+#[test]
+fn test_react() {
+    let pass = vec![
+        "
+        import React from 'react';
+
+        export const Foo = () => <div />;
+        ",
+        "
+        // React 17 API
+        import React from 'react';
+        import ReactDOM from 'react-dom';
+
+        interface Props {}
+        const Component = React.forwardRef<HTMLElement, Props>(
+            function Component(props, ref) {
+                return <div ref={ref} {...props} />
+            }
+        );
+
+        ReactDOM.render(<Component />, document.getElementById('root'));
+        ",
+        "
+        import React from 'react';
+        export class Foo extends React.Component<{}, { i: number }> {
+            constructor(props) {
+                super(props);
+            }
+
+            getId = () => {
+            }
+        }
+        ",
+    ];
+
+    let fail = vec![
+        "
+        const React = {};
+
+        export const Foo = () => <div />
+        ",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail).test();
+}
+
+#[test]
+fn test_arguments() {
+    let pass = vec![
+        ("function foo(a) { return a } foo()", None),
+        ("function foo(a, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+        ("let ids = arr.map(el => el.id); f(ids)", None),
+        (
+            "let targetId = '1234'; let user = users.find(user => user.id === targetId); f(user)",
+            None,
+        ),
+        (
+            "
+        const unboxed = arr.map(el => {
+            if (typeof el === 'object') return el['value']
+            else return el
+        })
+        f(unboxed)
+        ",
+            None,
+        ),
+    ];
+    let fail = vec![
+        ("function foo(a) {} foo()", None),
+        ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-arguments")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_enums() {
+    let pass = vec![
+        "export enum Foo { A, B }",
+        "enum Foo { A }\nconsole.log(Foo.A)",
+        "enum Foo { A, B }\n export { Foo }",
+    ];
+
+    let fail = vec!["enum Foo { A }"];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-enums")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_classes() {
+    let pass = vec![
+        "
+        export class Foo {
+            public a = 4;
+            private b;
+        }
+        ",
+        // TS constructor property definitions
+        "export class Foo { constructor(public a) {} }",
+        "export class Foo { constructor(private a) {} }",
+        "export class Foo { constructor(protected a) {} }",
+        "export class Foo { constructor(readonly a) {} }",
+        "export class Foo extends Bar { constructor(override a) {} }",
+        "export class Foo { constructor(public readonly a) {} }",
+        // note: abstract doesn't count, but that's a parse error
+        // setters can have unused methods
+        "export class Foo { set foo(value) { } }",
+        "export class Foo { public set foo(value) { } }",
+        "
+        class Foo { }
+        class Bar extends Foo {}
+        console.log(new Bar());
+        ",
+        "
+        export abstract class Foo {
+            public abstract bar(a: number): string;
+        }
+        ",
+        "var Foo = class Foo {}; new Foo();",
+        // override methods must have the same signature as their parent and so
+        // any unused parameters in them are allowed
+        "
+        class Foo {
+            public method(a: number, b: number): number {
+                return a + b;
+            }
+        }
+        class Bar extends Foo {
+            public override method(a: number, b: number): number {
+                return a;
+            }
+        }
+        new Bar();
+        ",
+    ];
+
+    let fail = vec![
+        // no modifier = no property
+        "export class Foo { constructor(a: number) {} }",
+        // not a setter
+        "export class Foo { set(value) { } }",
+        "
+        export abstract class Foo {
+            public bar(a: number): string {}
+        }
+        ",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-classes")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_namespaces() {
+    let pass = vec![
+        "export namespace N {}",
+        "namespace N { export function foo() {} }\nconsole.log(N.foo());",
+        "export namespace N { export function foo() {} }",
+        "export namespace N { export const foo = 1 }",
+        "
+        export namespace N {
+            export function foo() {
+                bar()
+            }
+            function bar() {}
+        }
+        ",
+        "declare global {}",
+        "declare global { interface Window {} }",
+        "
+        declare global {
+            namespace jest {
+                interface Matcher {
+                    someCustomMatcher(): void
+                }
+            }
+        }
+        ",
+        "
+        declare global {
+            const x: number;
+        }
+        ",
+        "
+        interface Foo {}
+        namespace Foo {
+            export const a = {};
+        }
+        const foo: Foo = Foo.a
+        console.log(foo)
+        ",
+    ];
+
+    let fail = vec![
+        "namespace N {}",
+        // FIXME
+        // "export namespace N { function foo() }",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-namespaces")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_type_aliases() {
+    let pass = vec![];
+
+    let fail = vec![
+        // usages within own declaration do not count
+        "type Foo = Foo",
+        "type Foo = Array<Foo>",
+        "type Unbox<B> = B extends Box<infer R> ? Unbox<R> : B",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-type-aliases")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_type_references() {
+    let pass = vec![
+        "type A = number; export type B = Array<A>;",
+        "
+        type A = number;
+        type B<T> = T;
+        export type C = B<A>;
+        ",
+        "
+        type A<T> = T;
+        type B<T> = T;
+        export type C = B<A<number>>;
+        ",
+        "const x: number = 1; function foo(): typeof x { return x }; foo()",
+        // not handled by typescript-eslint. Maybe we'll add this one day
+        "function foo(): typeof foo { }",
+        "function foo(): typeof foo { return foo }",
+        // ---
+        "type T = number; console.log(3 as T);",
+        "type T = number; console.log(((3) as T));",
+        "type T = Record<string, any>; console.log({} as Readonly<T>)",
+        // https://github.com/oxc-project/oxc/issues/4494
+        "
+        import type { mySchema } from './my-schema';
+        function test(arg: ReturnType<typeof mySchema>) {
+            arg;
+        }
+        test('');
+        ",
+        // https://github.com/oxc-project/oxc/pull/4445#issuecomment-2254122889
+        "
+        type PermissionValues<T> = {
+            [K in keyof T]: T[K] extends object ? PermissionValues<T[K]> : T[K];
+        }[keyof T];
+        
+        export type ApiPermission = PermissionValues<typeof API_PERMISSIONS>;
+        
+        export const API_PERMISSIONS = {} as const;
+        ",
+    ];
+
+    let fail = vec![
+        "type T = number; function foo<T>(a: T): T { return a as T }; foo(1)",
+        "type A = number; type B<A> = A; console.log(3 as B<3>)",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, pass, fail)
+        .with_snapshot_suffix("oxc-type-references")
+        .test_and_snapshot();
+}
+
+// #[test]
+// fn test_template() {
+//     let pass = vec![];
+
+//     let fail = vec![];
+
+//     Tester::new(NoUnusedVars::NAME, pass, fail)
+//         .with_snapshot_suffix("<replace>")
+//         .test_and_snapshot();
+// }

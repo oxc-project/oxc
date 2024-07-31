@@ -1,0 +1,10 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Variable 'N' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:11]
+ 1 │ namespace N {}
+   ·           ┬
+   ·           ╰── 'N' is declared here
+   ╰────
+  help: Consider removing this declaration.
