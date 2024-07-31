@@ -38,20 +38,23 @@ impl<'a> Lexer<'a> {
 
     /// returns None for `SingleLineHTMLCloseComment` `-->` in script mode
     pub(super) fn read_minus(&mut self) -> Option<Kind> {
-        if self.next_ascii_byte_eq(b'-') {
-            // SingleLineHTMLCloseComment `-->` in script mode
-            if self.token.is_on_new_line
-                && self.source_type.is_script()
-                && self.next_ascii_byte_eq(b'>')
-            {
-                None
-            } else {
-                Some(Kind::Minus2)
+        match self.peek_byte() {
+            Some(b'-') => {
+                self.consume_char();
+                if self.token.is_on_new_line
+                    && self.source_type.is_script()
+                    && self.next_ascii_byte_eq(b'>')
+                {
+                    None
+                } else {
+                    Some(Kind::Minus2)
+                }
             }
-        } else if self.next_ascii_byte_eq(b'=') {
-            Some(Kind::MinusEq)
-        } else {
-            Some(Kind::Minus)
+            Some(b'=') => {
+                self.consume_char();
+                Some(Kind::MinusEq)
+            }
+            _ => Some(Kind::Minus),
         }
     }
 
