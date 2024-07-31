@@ -1267,8 +1267,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for RegExpLiteral<'a> {
         let last = p.peek_nth(0);
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
-            || (Some('<') == last
-                && self.regex.pattern.as_str().to_lowercase().starts_with("script"))
+            || (Some('<') == last && self.regex.pattern.to_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }
