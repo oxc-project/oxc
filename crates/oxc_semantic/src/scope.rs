@@ -201,6 +201,12 @@ impl ScopeTree {
         })
     }
 
+    /// Iterate over bindings declared inside a scope.
+    #[inline]
+    pub fn iter_bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
+        self.bindings[scope_id].values().copied()
+    }
+
     #[inline]
     pub(crate) fn get_bindings_mut(&mut self, scope_id: ScopeId) -> &mut Bindings {
         &mut self.bindings[scope_id]

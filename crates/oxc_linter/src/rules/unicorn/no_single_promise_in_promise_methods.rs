@@ -50,7 +50,8 @@ declare_oxc_lint!(
     /// ```
     ///
     NoSinglePromiseInPromiseMethods,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for NoSinglePromiseInPromiseMethods {

@@ -2,18 +2,17 @@ commit: a1587416
 
 parser_test262 Summary:
 AST Parsed     : 46466/46466 (100.00%)
-Positive Passed: 45175/46466 (97.22%)
-Negative Passed: 4300/4307 (99.84%)
+Positive Passed: 45405/46466 (97.72%)
+Negative Passed: 4301/4307 (99.86%)
 Expect Syntax Error: "language/import/import-assertions/json-invalid.js"
 Expect Syntax Error: "language/import/import-assertions/json-named-bindings.js"
 Expect Syntax Error: "language/import/import-attributes/json-invalid.js"
 Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
 Expect Syntax Error: "language/literals/regexp/early-err-pattern.js"
 Expect Syntax Error: "language/literals/regexp/u-invalid-legacy-octal-escape.js"
-Expect Syntax Error: "language/literals/regexp/u-invalid-oob-decimal-escape.js"
 Expect to Parse: "annexB/built-ins/RegExp/RegExp-control-escape-russian-letter.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "annexB/built-ins/RegExp/RegExp-decimal-escape-class-range.js"
 
   × Invalid braced quantifier
@@ -22,7 +21,7 @@ Expect to Parse: "annexB/built-ins/RegExp/RegExp-invalid-control-escape-characte
   × Invalid atom escape
 Expect to Parse: "annexB/built-ins/RegExp/RegExp-invalid-control-escape-character-class.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "annexB/built-ins/RegExp/incomplete_hex_unicode_escape.js"
 
   × Invalid escape
@@ -52,13 +51,13 @@ Expect to Parse: "annexB/built-ins/RegExp/legacy-accessors/rightContext/this-not
   × Character class range out of order
 Expect to Parse: "annexB/built-ins/RegExp/named-groups/non-unicode-malformed-lookbehind.js"
 
-  × Invalid named reference
+  × Character class range out of order
 
-  × Invalid named reference
+  × Character class range out of order
 
-  × Invalid named reference
+  × Character class range out of order
 
-  × Invalid named reference
+  × Character class range out of order
 Expect to Parse: "annexB/built-ins/RegExp/named-groups/non-unicode-malformed.js"
 
   × Character class range out of order
@@ -80,51 +79,12 @@ Expect to Parse: "annexB/built-ins/RegExp/named-groups/non-unicode-malformed.js"
   × Character class range out of order
 
   × Character class range out of order
-Expect to Parse: "annexB/built-ins/RegExp/prototype/Symbol.split/Symbol.match-getter-recompiles-source.js"
-
-  × Unterminated quantifier
-Expect to Parse: "annexB/built-ins/RegExp/prototype/Symbol.split/toint32-limit-recompiles-source.js"
-
-  × Unterminated quantifier
 Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/duplicate-named-capturing-groups-syntax.js"
 
   × Character class range out of order
-Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/flags-string-invalid.js"
-
-  × Unterminated quantifier
-Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/flags-to-string-err.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/pattern-regexp-flags-defined.js"
-
-  × Unterminated quantifier
-Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/pattern-regexp-immutable-lastindex.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/pattern-regexp-props.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/pattern-string-invalid-u.js"
-
-  × Unterminated quantifier
 Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/pattern-string-invalid.js"
 
-  × Unterminated quantifier
-Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/pattern-to-string-err.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Numbers out of order in braced quantifier
 Expect to Parse: "annexB/built-ins/RegExp/prototype/flags/order-after-compile.js"
 
   × Unterminated capturing group name
@@ -166,62 +126,84 @@ Expect to Parse: "annexB/language/literals/regexp/extended-pattern-char.js"
   × Invalid braced quantifier
 
   × Invalid braced quantifier
-Expect to Parse: "annexB/language/literals/regexp/quantifiable-assertion-followed-by.js"
+Expect to Parse: "annexB/language/literals/regexp/identity-escape.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
+Expect to Parse: "annexB/language/literals/regexp/legacy-octal-escape.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
-Expect to Parse: "annexB/language/literals/regexp/quantifiable-assertion-not-followed-by.js"
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Array/prototype/find/predicate-is-not-callable-throws.js"
+  × Too many capturing groups
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Array/prototype/findIndex/predicate-is-not-callable-throws.js"
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
 Expect to Parse: "built-ins/Array/prototype/findLast/predicate-is-not-callable-throws.js"
 
   × Character class range out of order
@@ -230,207 +212,80 @@ Expect to Parse: "built-ins/Array/prototype/findLastIndex/predicate-is-not-calla
   × Character class range out of order
 Expect to Parse: "built-ins/Array/prototype/sort/comparefn-nonfunction-call-throws.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/Array/prototype/toSorted/comparefn-not-a-function.js"
 
   × Character class range out of order
 Expect to Parse: "built-ins/Function/prototype/apply/this-not-callable-realm.js"
 
   × Character class range out of order
-Expect to Parse: "built-ins/Function/prototype/apply/this-not-callable.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Function/prototype/bind/S15.3.4.5_A16.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Function/prototype/call/S15.3.4.4_A16.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/JSON/stringify/value-tojson-not-function.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Object/getOwnPropertyDescriptors/order-after-define-property.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Object/internals/DefineOwnProperty/consistent-value-regexp-dollar1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Object/prototype/toString/symbol-tag-override-instances.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Proxy/defineProperty/trap-is-null-target-is-proxy.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Proxy/deleteProperty/trap-is-null-target-is-proxy.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Proxy/get/trap-is-missing-target-is-proxy.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Proxy/getOwnPropertyDescriptor/trap-is-undefined-target-is-proxy.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Proxy/has/trap-is-missing-target-is-proxy.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Proxy/isExtensible/trap-is-missing-target-is-proxy.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/Proxy/set/trap-is-missing-target-is-proxy.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-digit-class-escape-flags-u.js"
 
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-digit-class-escape-plus-quantifier-flags-u.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-digit-class-escape-plus-quantifier.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-digit-class-escape.js"
-
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-digit-class-escape-flags-u.js"
 
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-digit-class-escape-plus-quantifier-flags-u.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-digit-class-escape-plus-quantifier.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-digit-class-escape.js"
-
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape-flags-u.js"
 
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape-plus-quantifier-flags-u.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape-plus-quantifier.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-whitespace-class-escape.js"
-
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-word-class-escape-flags-u.js"
 
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-word-class-escape-plus-quantifier-flags-u.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-word-class-escape-plus-quantifier.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-non-word-class-escape.js"
-
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape-flags-u.js"
 
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape-plus-quantifier-flags-u.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape-plus-quantifier.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-whitespace-class-escape.js"
-
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-word-class-escape-flags-u.js"
 
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-word-class-escape-plus-quantifier-flags-u.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-word-class-escape-plus-quantifier.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/CharacterClassEscapes/character-class-word-class-escape.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.10_A1.1_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.10_A1.2_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.10_A1.3_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.10_A1.4_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.10_A1.5_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.10_A3.1_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/RegExp/S15.10.2.10_A4.1_T1.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.11_A1_T1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.11_A1_T4.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.11_A1_T5.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.11_A1_T6.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.11_A1_T7.js"
-
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/S15.10.2.11_A1_T8.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.11_A1_T9.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.12_A3_T5.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.12_A4_T5.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.13_A1_T10.js"
 
   × Invalid braced quantifier
@@ -667,40 +522,34 @@ Expect to Parse: "built-ins/RegExp/S15.10.2.6_A6_T4.js"
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T1.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T10.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T11.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T12.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T2.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T3.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T4.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T5.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T6.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T7.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T8.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.2.7_A1_T9.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A2_T1.js"
 
   × Could not parse the entire pattern
@@ -838,22 +687,22 @@ Expect to Parse: "built-ins/RegExp/S15.10.2.7_A5_T9.js"
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A6_T1.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A6_T2.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A6_T3.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A6_T4.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A6_T5.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/S15.10.2.7_A6_T6.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/S15.10.2.8_A1_T1.js"
 
   × Invalid braced quantifier
@@ -1022,18 +871,6 @@ Expect to Parse: "built-ins/RegExp/S15.10.2.9_A1_T3.js"
 Expect to Parse: "built-ins/RegExp/S15.10.2.9_A1_T5.js"
 
   × Invalid braced quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.3.1_A2_T2.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.4.1_A2_T2.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.7_A1_T1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/S15.10.7_A2_T1.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/character-class-escape-non-whitespace.js"
 
   × Invalid braced quantifier
@@ -1049,14 +886,9 @@ Expect to Parse: "built-ins/RegExp/dotall/with-dotall.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/dotall/without-dotall-unicode.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/dotall/without-dotall.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/lookBehind/alternations.js"
 
   × Character class range out of order
@@ -1081,41 +913,41 @@ Expect to Parse: "built-ins/RegExp/lookBehind/back-references-to-captures.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/lookBehind/back-references.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/lookBehind/captures-negative.js"
 
   × Character class range out of order
@@ -1222,37 +1054,37 @@ Expect to Parse: "built-ins/RegExp/lookBehind/nested-lookaround.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/lookBehind/simple-fixed-length.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/lookBehind/sliced-strings.js"
 
   × Character class range out of order
@@ -1262,37 +1094,37 @@ Expect to Parse: "built-ins/RegExp/lookBehind/sliced-strings.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/lookBehind/start-of-line.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/lookBehind/sticky.js"
 
   × Character class range out of order
@@ -1320,77 +1152,77 @@ Expect to Parse: "built-ins/RegExp/match-indices/indices-array-matched.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/match-indices/indices-array-non-unicode-match.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/match-indices/indices-array-properties.js"
 
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/match-indices/indices-array-unicode-match.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/match-indices/indices-array-unicode-property-names.js"
 
   × Character class range out of order
@@ -1442,37 +1274,37 @@ Expect to Parse: "built-ins/RegExp/match-indices/no-indices-array.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-exec.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-group-property-enumeration-order.js"
 
   × Character class range out of order
@@ -1483,37 +1315,37 @@ Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-match-indices.js
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-match.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-matchall.js"
 
   × Character class range out of order
@@ -1582,171 +1414,171 @@ Expect to Parse: "built-ins/RegExp/named-groups/groups-properties.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/named-groups/lookbehind.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-match.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-property-names-valid.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-property-names.js"
 
   × Character class range out of order
@@ -1766,221 +1598,221 @@ Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-property-names.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-references.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/unicode-match.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/unicode-property-names-valid.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/unicode-property-names.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/unicode-references.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/property-escapes/character-class.js"
 
   × Character class range out of order
@@ -9027,79 +8859,20 @@ Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-coerce-lastindex.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-failure-g-set-lastindex-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-failure-y-set-lastindex-err.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-infer-unicode.js"
 
-  × Unterminated quantifier
-
   × Could not parse the entire pattern
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-success-g-set-lastindex-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-success-g-set-lastindex.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-success-y-set-lastindex-err.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-y-coerce-lastindex-err.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/coerce-arg-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/coerce-arg.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/coerce-global.js"
 
   × Unterminated capturing group name
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/exec-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/exec-invocation.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/exec-return-type-invalid.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/exec-return-type-valid.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/flags-tostring-error.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/g-coerce-result-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/g-get-result-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/g-init-lastindex-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/g-match-empty-coerce-lastindex-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/g-match-empty-set-lastindex-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/g-match-no-coerce-lastindex.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/g-match-no-set-lastindex.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/get-exec-err.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/get-global-err.js"
 
   × Unterminated capturing group name
@@ -9108,18 +8881,6 @@ Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/get-unicode-error.js"
   × Unterminated capturing group name
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/y-fail-lastindex-no-write.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/species-constructor-get-constructor-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/species-constructor-get-species-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/species-constructor-is-not-object-throws.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/species-constructor-is-undefined.js"
 
   × Could not parse the entire pattern
@@ -9147,12 +8908,9 @@ Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/species-regexp-get-
   × Unterminated capturing group name
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/string-tostring-throws.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/string-tostring.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/this-get-flags-throws.js"
 
   × Unterminated capturing group name
@@ -9171,71 +8929,18 @@ Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/this-tostring-flags
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.matchAll/this-tostring-flags.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/arg-1-coerce-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/arg-1-coerce.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/arg-2-coerce-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/arg-2-coerce.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/coerce-global.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/coerce-lastindex-err.js"
 
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/coerce-lastindex.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/coerce-unicode.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/exec-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/exec-invocation.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/flags-tostring-error.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/fn-coerce-replacement-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/fn-coerce-replacement.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/fn-err.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/fn-invoke-args-empty-result.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/fn-invoke-args.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/fn-invoke-this-no-strict.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/fn-invoke-this-strict.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/g-init-lastindex-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/g-pos-decrement.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/g-pos-increment.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/get-global-err.js"
 
   × Unterminated capturing group name
@@ -9249,33 +8954,33 @@ Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/named-groups-fn.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/named-groups.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/poisoned-stdlib.js"
 
   × Character class range out of order
@@ -9289,12 +8994,6 @@ Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/poisoned-stdlib.js"
   × Character class range out of order
 
   × Character class range out of order
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-capture-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-capture.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-groups-err.js"
 
   × Character class range out of order
@@ -9307,128 +9006,51 @@ Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-groups
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-groups.js"
 
   × Character class range out of order
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-index-err.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-index-undefined.js"
 
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-index.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-length-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-length.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-matched-err.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-matched-global.js"
 
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-coerce-matched.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-get-capture-err.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-get-groups-err.js"
 
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-get-groups-prop-err.js"
 
   × Character class range out of order
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-get-index-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-get-length-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/result-get-matched-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.replace/y-fail-lastindex-no-write.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.search/coerce-string-err.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.search/coerce-string.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.search/set-lastindex-init-samevalue.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.search/set-lastindex-restore-samevalue.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.search/u-lastindex-advance.js"
 
   × Could not parse the entire pattern
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/coerce-flags.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/coerce-limit-err.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/coerce-string-err.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/coerce-string.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/last-index-exceeds-str-size.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/species-ctor-err.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/species-ctor-species-non-ctor.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/species-ctor-species-undef.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/species-ctor-y.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/species-ctor.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.split/splitter-proto-from-ctor-realm.js"
 
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/prototype/dotAll/this-val-regexp.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T1.js"
 
   × Invalid braced quantifier
@@ -9440,7 +9062,7 @@ Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T11.js"
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T12.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T13.js"
 
   × Invalid braced quantifier
@@ -9449,7 +9071,7 @@ Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T14.js"
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T15.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T17.js"
 
   × Invalid braced quantifier
@@ -9467,61 +9089,52 @@ Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T20.js"
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T21.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T3.js"
 
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T4.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T5.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T6.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T7.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T8.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A1_T9.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T1.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T2.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T3.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T4.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T5.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T6.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A3_T7.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A4_T1.js"
 
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A4_T10.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A4_T11.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A4_T12.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A4_T2.js"
 
   × Invalid braced quantifier
@@ -9574,7 +9187,7 @@ Expect to Parse: "built-ins/RegExp/prototype/exec/failure-lastindex-set.js"
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/prototype/exec/success-g-lastindex-no-access.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/success-lastindex-access.js"
 
   × Unterminated capturing group name
@@ -9587,9 +9200,6 @@ Expect to Parse: "built-ins/RegExp/prototype/exec/u-lastindex-adv.js"
 Expect to Parse: "built-ins/RegExp/prototype/exec/u-lastindex-value.js"
 
   × Could not parse the entire pattern
-Expect to Parse: "built-ins/RegExp/prototype/exec/y-fail-lastindex-no-write.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/flags/this-val-regexp.js"
 
   × Unterminated capturing group name
@@ -9611,68 +9221,38 @@ Expect to Parse: "built-ins/RegExp/prototype/flags/this-val-regexp.js"
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/prototype/hasIndices/this-val-regexp.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/prototype/source/value-u.js"
 
   × Could not parse the entire pattern
 
   × Could not parse the entire pattern
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T12.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T15.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T21.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T4.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T5.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T6.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T7.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T8.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/S15.10.6.3_A1_T9.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExp/prototype/test/y-fail-lastindex-no-write.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExp/prototype/unicode/this-val-regexp.js"
 
   × Could not parse the entire pattern
@@ -9684,99 +9264,113 @@ Expect to Parse: "built-ins/RegExp/prototype/unicode/this-val-regexp.js"
   × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/prototype/unicodeSets/this-val-regexp.js"
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 
-  × TODO: ClassSetExpression
+  × Too many capturing groups
 
-  × TODO: ClassSetExpression
+  × Too many capturing groups
 
-  × TODO: ClassSetExpression
+  × Too many capturing groups
 
-  × TODO: ClassSetExpression
+  × Too many capturing groups
 
-  × TODO: ClassSetExpression
+  × Too many capturing groups
 
-  × TODO: ClassSetExpression
+  × Too many capturing groups
 
-  × TODO: ClassSetExpression
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
+
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-dotAll-property.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-ignoreCase-flag.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-multiline-flag.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll.js"
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-backreferences.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterClasses.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-b.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-p.js"
 
-  × Unterminated unicode property escape
+  × Too many capturing groups
 
-  × Unterminated unicode property escape
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-w.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Could not parse the entire pattern
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-b.js"
 
   × Could not parse the entire pattern
@@ -9784,9 +9378,9 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash
   × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-p.js"
 
-  × Unterminated unicode property escape
+  × Too many capturing groups
 
-  × Unterminated unicode property escape
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-w.js"
 
   × Could not parse the entire pattern
@@ -9794,53 +9388,53 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash
   × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-dotAll-flag.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-ignoreCase-property.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-multiline-flag.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase.js"
 
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-dotAll-flag.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-ignoreCase-flag.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-multiline-property.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline.js"
 
   × Unterminated capturing group name
@@ -9851,77 +9445,77 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-remove-modifiers.js"
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/changing-dotAll-flag-does-not-affect-dotAll-modifier.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/changing-ignoreCase-flag-does-not-affect-ignoreCase-modifier.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/changing-multiline-flag-does-not-affect-multiline-modifier.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/nested-add-remove-modifiers.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-add-dotAll-within-remove-dotAll.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-add-ignoreCase-within-remove-ignoreCase.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-add-multiline-within-remove-multiline.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-remove-dotAll-within-add-dotAll.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-remove-ignoreCase-within-add-ignoreCase.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-remove-multiline-within-add-multiline.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-dotAll-property.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-ignoreCase-flag.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-multiline-flag.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll.js"
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-backreferences.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterClasses.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterEscapes.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 
   × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-lower-b.js"
@@ -9944,104 +9538,104 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-sl
   × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-dotAll-flag.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-ignoreCase-property.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-multiline-flag.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase.js"
 
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-dotAll-flag.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-ignoreCase-flag.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-multiline-property.js"
 
-  × Unterminated quantifier
+  × Character class range out of order
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline.js"
 
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js"
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js"
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-nested.js"
 
   × Unterminated capturing group name
@@ -10051,35 +9645,35 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-w
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js"
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-set-as-flags.js"
 
   × Unterminated capturing group name
@@ -10098,66 +9692,66 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifier
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js"
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js"
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 
-  × Unterminated capturing group name
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-difference-character-class-escape.js"
 
   × TODO: ClassSetExpression
@@ -10514,74 +10108,65 @@ Expect to Parse: "built-ins/RegExp/unicode_full_case_folding.js"
   × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExp/unicode_identity_escape.js"
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
+  × Too many capturing groups
 
-  × Invalid atom escape
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/Symbol.toStringTag.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/custom-regexpexec-call-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/custom-regexpexec-get-throws.js"
-
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/custom-regexpexec-match-get-0-throws.js"
 
   × Unterminated capturing group name
@@ -10593,149 +10178,92 @@ Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/custom-regexpexec
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/custom-regexpexec-not-callable.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/custom-regexpexec.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/length.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/name.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/next-iteration-global.js"
 
   × Unterminated capturing group name
 Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/next-iteration.js"
 
   × Could not parse the entire pattern
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/next-missing-internal-slots.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/prop-desc.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/regexp-tolength-lastindex-throws.js"
 
   × Unterminated capturing group name
-Expect to Parse: "built-ins/RegExpStringIteratorPrototype/next/this-is-not-object-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/endsWith/return-abrupt-from-searchstring-regexp-test.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/endsWith/searchstring-is-regexp-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/includes/return-abrupt-from-searchstring-regexp-test.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/includes/searchstring-is-regexp-throws.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T10.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T11.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T12.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T13.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T14.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T15.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T16.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T17.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T18.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T2.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T3.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T4.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T5.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T6.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T7.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T8.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T9.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/duplicate-named-groups-properties.js"
 
   × Character class range out of order
@@ -10746,196 +10274,25 @@ Expect to Parse: "built-ins/String/prototype/match/duplicate-named-indices-group
   × Character class range out of order
 
   × Character class range out of order
-Expect to Parse: "built-ins/String/prototype/match/this-value-not-obj-coercible.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/String/prototype/matchAll/flags-nonglobal-throws.js"
 
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/matchAll/flags-undefined-throws.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/matchAll/regexp-get-matchAll-throws.js"
-
-  × Unterminated quantifier
+  × Unterminated capturing group
 Expect to Parse: "built-ins/String/prototype/matchAll/regexp-matchAll-is-undefined-or-null.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/matchAll/regexp-matchAll-not-callable.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/matchAll/regexp-matchAll-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/matchAll/regexp-prototype-get-matchAll-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/matchAll/regexp-prototype-has-no-matchAll.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/matchAll/regexp-prototype-matchAll-invocation.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/matchAll/regexp-prototype-matchAll-throws.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/matchAll/toString-this-val.js"
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/15.5.4.11-1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A12.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A1_T15.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A1_T16.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A1_T8.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T10.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T2.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T3.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T4.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T5.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T6.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T7.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T8.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A2_T9.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A3_T1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A3_T2.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A3_T3.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A4_T1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A4_T2.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A4_T3.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A4_T4.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/S15.5.4.11_A5_T1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replace/replaceValue-evaluation-order-regexp-object.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replaceAll/getSubstitution-0x0024-0x003C.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replaceAll/getSubstitution-0x0024N.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replaceAll/getSubstitution-0x0024NN.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replaceAll/searchValue-flags-no-g-throws.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/replaceAll/searchValue-get-flags-abrupt.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replaceAll/searchValue-replacer-before-tostring.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replaceAll/searchValue-replacer-call.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/replaceAll/searchValue-tostring-regexp.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/search/S15.5.4.12_A2_T3.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/search/S15.5.4.12_A2_T4.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/search/S15.5.4.12_A2_T5.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/search/S15.5.4.12_A3_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/search/S15.5.4.12_A3_T2.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/search/this-value-not-obj-coercible.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "built-ins/String/prototype/split/argument-is-regexp-a-z-and-instance-is-string-abc.js"
 
   × Invalid braced quantifier
@@ -10953,100 +10310,82 @@ Expect to Parse: "built-ins/String/prototype/split/arguments-are-regexp-s-and-3-
   × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/split/separator-regexp.js"
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 
-  × Invalid escape
+  × Too many capturing groups
 Expect to Parse: "built-ins/String/prototype/split/transferred-to-number-separator-override-tostring-returns-regexp.js"
 
   × Could not parse the entire pattern
-Expect to Parse: "built-ins/String/prototype/startsWith/return-abrupt-from-searchstring-regexp-test.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/String/prototype/startsWith/searchstring-is-regexp-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/TypedArray/prototype/find/BigInt/predicate-is-not-callable-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/TypedArray/prototype/find/predicate-is-not-callable-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/TypedArray/prototype/findIndex/BigInt/predicate-is-not-callable-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/TypedArray/prototype/findIndex/predicate-is-not-callable-throws.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/TypedArray/prototype/findLast/BigInt/predicate-is-not-callable-throws.js"
 
   × Character class range out of order
@@ -11059,12 +10398,6 @@ Expect to Parse: "built-ins/TypedArray/prototype/findLastIndex/BigInt/predicate-
 Expect to Parse: "built-ins/TypedArray/prototype/findLastIndex/predicate-is-not-callable-throws.js"
 
   × Character class range out of order
-Expect to Parse: "built-ins/TypedArray/prototype/sort/BigInt/comparefn-nonfunction-call-throws.js"
-
-  × Unterminated quantifier
-Expect to Parse: "built-ins/TypedArray/prototype/sort/comparefn-nonfunction-call-throws.js"
-
-  × Unterminated quantifier
 Expect to Parse: "built-ins/TypedArray/prototype/toSorted/comparefn-not-a-function.js"
 
   × Character class range out of order
@@ -11087,81 +10420,17 @@ Expect to Parse: "intl402/Intl/supportedValuesOf/numberingSystems.js"
   × Character class range out of order
 Expect to Parse: "intl402/Locale/likely-subtags-grandfathered.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
-Expect to Parse: "intl402/fallback-locales-are-supported.js"
-
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "language/expressions/optional-chaining/member-expression.js"
 
-  × Character class range out of order
-Expect to Parse: "language/expressions/yield/rhs-regexp.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A1.1_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A1.4_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A2.1_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A2.4_T1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A3.1_T1.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A3.1_T2.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A3.1_T3.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A3.1_T4.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A3.1_T5.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A3.1_T6.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/S7.8.5_A4.1.js"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "language/literals/regexp/inequality.js"
 
-  × Unterminated quantifier
+  × Invalid braced quantifier
 
-  × Unterminated quantifier
-Expect to Parse: "language/literals/regexp/lastIndex.js"
-
-  × Unterminated quantifier
+  × Invalid braced quantifier
 Expect to Parse: "language/literals/regexp/named-groups/forward-reference.js"
 
   × Character class range out of order
@@ -11176,22 +10445,22 @@ Expect to Parse: "language/literals/regexp/u-null-character-escape.js"
   × Invalid atom escape
 Expect to Parse: "language/literals/regexp/u-surrogate-pairs.js"
 
-  × Invalid unicode escape
+  × Invalid unicode escape sequence
 Expect to Parse: "language/literals/regexp/u-unicode-esc.js"
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 Expect to Parse: "language/module-code/top-level-await/await-expr-regexp.js"
 
   × Character class range out of order
@@ -11310,46 +10579,22 @@ Expect to Parse: "language/module-code/top-level-await/syntax/void-await-expr-re
 Expect to Parse: "language/module-code/top-level-await/syntax/while-await-expr-regexp.js"
 
   × Character class range out of order
-Expect to Parse: "language/statementList/block-regexp-literal-flags.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/statementList/block-regexp-literal.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/statementList/block-with-statment-regexp-literal-flags.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/statementList/block-with-statment-regexp-literal.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/statementList/class-regexp-literal-flags.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/statementList/class-regexp-literal.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/statementList/fn-regexp-literal-flags.js"
-
-  × Unterminated quantifier
-Expect to Parse: "language/statementList/fn-regexp-literal.js"
-
-  × Unterminated quantifier
 Expect to Parse: "language/statements/for-of/iterator-next-result-type.js"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups-replace.js"
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 
-  × Character class range out of order
+  × Too many capturing groups
 Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups-search.js"
 
   × Character class range out of order
@@ -11498,61 +10743,61 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
 
   × Character class range out of order
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
   × Character class range out of order
 
@@ -16986,8 +16231,6 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
  16 │ async(a = await => {}) => {};
     ·           ─────
     ╰────
-
-  × Unterminated quantifier
 
   × await expression not allowed in formal parameter
     ╭─[language/expressions/async-arrow-function/await-as-param-nested-arrow-body-position.js:16:19]
@@ -30777,7 +30020,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
     · ────
     ╰────
 
-  × Empty class atom
+  × Unterminated character class
 
   × Unexpected token
     ╭─[language/literals/regexp/S7.8.5_A1.2_T3.js:27:1]
@@ -30801,7 +30044,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
  30 │ /
     ╰────
 
-  × Empty class atom
+  × Unterminated character class
 
   × Unexpected token
     ╭─[language/literals/regexp/S7.8.5_A1.3_T1.js:31:1]
@@ -30816,7 +30059,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
  30 │ /
     ╰────
 
-  × Empty class atom
+  × Unterminated character class
 
   × Unexpected token
     ╭─[language/literals/regexp/S7.8.5_A1.3_T3.js:31:1]
@@ -30856,9 +30099,9 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
     · ─────
     ╰────
 
-  × Empty class atom
+  × Unterminated character class
 
-  × Empty class atom
+  × Unterminated character class
 
   × Unexpected token
     ╭─[language/literals/regexp/S7.8.5_A2.2_T2.js:23:5]
@@ -31237,7 +30480,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
  30 │ 
     ╰────
 
-  × Empty class atom
+  × Unterminated character class
 
   × Unexpected token
     ╭─[language/literals/regexp/regexp-first-char-no-line-separator.js:34:1]
@@ -31252,7 +30495,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
  30 │ 
     ╰────
 
-  × Empty class atom
+  × Unterminated character class
 
   × Unexpected token
     ╭─[language/literals/regexp/regexp-first-char-no-paragraph-separator.js:34:1]
@@ -31280,7 +30523,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
  30 │ 
     ╰────
 
-  × Empty class atom
+  × Unterminated character class
 
   × Unexpected token
     ╭─[language/literals/regexp/regexp-source-char-no-paragraph-separator.js:34:1]
@@ -31289,7 +30532,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
 
   × Invalid atom escape
 
-  × Unterminated quantifier
+  × Could not parse the entire pattern
 
   × Invalid atom escape
 
@@ -31301,7 +30544,7 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
 
   × Invalid character class range
 
-  × Lone `Quantifier`, expected `Atom`
+  × Invalid indexed reference
 
   × Lone `Quantifier`, expected `Atom`
 
@@ -31317,9 +30560,11 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
 
   × Lone `Quantifier`, expected `Atom`
 
-  × Unterminated quantifier
+  × Lone `Quantifier`, expected `Atom`
 
-  × Invalid unicode escape
+  × Could not parse the entire pattern
+
+  × Invalid unicode escape sequence
 
   × Invalid atom escape
 
@@ -43768,8 +43013,6 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
  17 │ function __func(){/ ABC}
     ·                   ───────
     ╰────
-
-  × Unterminated quantifier
 
   × Expected `}` but found `EOF`
     ╭─[language/statements/function/invalid-function-body-1.js:18:1]

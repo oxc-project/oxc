@@ -416,7 +416,7 @@ Invalid Character `[`
 
 
 - react.development.js
-Invalid braced quantifier
+Too many capturing groups
 
 
 - string-literal-newline/input.js

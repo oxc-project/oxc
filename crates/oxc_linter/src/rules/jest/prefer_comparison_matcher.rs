@@ -56,6 +56,7 @@ declare_oxc_lint!(
     ///
     PreferComparisonMatcher,
     style,
+    fix
 );
 
 impl Rule for PreferComparisonMatcher {

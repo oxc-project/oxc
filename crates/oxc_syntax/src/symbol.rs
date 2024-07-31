@@ -62,7 +62,7 @@ export type RedeclarationId = unknown;
 "#;
 
 bitflags! {
-    #[derive(Debug, Clone, Copy)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct SymbolFlags: u32 {
         const None                    = 0;
@@ -161,6 +161,10 @@ impl SymbolFlags {
 
     pub fn is_enum(&self) -> bool {
         self.intersects(Self::Enum)
+    }
+
+    pub fn is_enum_member(&self) -> bool {
+        self.contains(Self::EnumMember)
     }
 
     pub fn is_catch_variable(&self) -> bool {

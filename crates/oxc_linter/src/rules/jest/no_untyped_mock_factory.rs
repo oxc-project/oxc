@@ -88,6 +88,7 @@ declare_oxc_lint!(
     ///
     NoUntypedMockFactory,
     style,
+    conditional_fix
 );
 
 impl Rule for NoUntypedMockFactory {

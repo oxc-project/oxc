@@ -1278,6 +1278,7 @@ impl<'a> GetSpan for TSEnumMemberName<'a> {
         match self {
             Self::StaticIdentifier(it) => it.span(),
             Self::StaticStringLiteral(it) => it.span(),
+            Self::StaticTemplateLiteral(it) => it.span(),
             Self::StaticNumericLiteral(it) => it.span(),
             Self::BooleanLiteral(it) => it.span(),
             Self::NullLiteral(it) => it.span(),

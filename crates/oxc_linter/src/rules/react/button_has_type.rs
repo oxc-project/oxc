@@ -12,7 +12,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_prop_value, has_jsx_prop_lowercase, is_create_element_call},
+    utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
     AstNode,
 };
 
@@ -77,7 +77,7 @@ impl Rule for ButtonHasType {
                     return;
                 }
 
-                has_jsx_prop_lowercase(jsx_el, "type").map_or_else(
+                has_jsx_prop_ignore_case(jsx_el, "type").map_or_else(
                     || {
                         ctx.diagnostic(missing_type_prop(identifier.span));
                     },

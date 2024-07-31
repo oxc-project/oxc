@@ -2,8 +2,8 @@ commit: d8086f14
 
 parser_typescript Summary:
 AST Parsed     : 6444/6456 (99.81%)
-Positive Passed: 6403/6456 (99.18%)
-Negative Passed: 1186/5653 (20.98%)
+Positive Passed: 6416/6456 (99.38%)
+Negative Passed: 1183/5653 (20.93%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -665,7 +665,6 @@ Expect Syntax Error: "compiler/enumAssignmentCompat7.ts"
 Expect Syntax Error: "compiler/enumBasics1.ts"
 Expect Syntax Error: "compiler/enumBasics2.ts"
 Expect Syntax Error: "compiler/enumBasics3.ts"
-Expect Syntax Error: "compiler/enumIdentifierLiterals.ts"
 Expect Syntax Error: "compiler/enumLiteralAssignableToEnumInsideUnion.ts"
 Expect Syntax Error: "compiler/enumNoInitializerFollowsNonLiteralInitializer.ts"
 Expect Syntax Error: "compiler/enumPropertyAccess.ts"
@@ -836,8 +835,10 @@ Expect Syntax Error: "compiler/fatarrowfunctionsOptionalArgsErrors4.ts"
 Expect Syntax Error: "compiler/filesEmittingIntoSameOutput.ts"
 Expect Syntax Error: "compiler/fillInMissingTypeArgsOnJSConstructCalls.ts"
 Expect Syntax Error: "compiler/findLast.ts"
+Expect Syntax Error: "compiler/firstMatchRegExpMatchArray.ts"
 Expect Syntax Error: "compiler/fixTypeParameterInSignatureWithRestParameters.ts"
 Expect Syntax Error: "compiler/fixingTypeParametersRepeatedly2.ts"
+Expect Syntax Error: "compiler/flatArrayNoExcessiveStackDepth.ts"
 Expect Syntax Error: "compiler/forIn.ts"
 Expect Syntax Error: "compiler/forIn2.ts"
 Expect Syntax Error: "compiler/forInStatement2.ts"
@@ -1326,7 +1327,6 @@ Expect Syntax Error: "compiler/limitDeepInstantiations.ts"
 Expect Syntax Error: "compiler/literalFreshnessPropagationOnNarrowing.ts"
 Expect Syntax Error: "compiler/literalTypeNameAssertionNotTriggered.ts"
 Expect Syntax Error: "compiler/literals-negative.ts"
-Expect Syntax Error: "compiler/literalsInComputedProperties1.ts"
 Expect Syntax Error: "compiler/logicalNotExpression1.ts"
 Expect Syntax Error: "compiler/mappedTypeAsStringTemplate.ts"
 Expect Syntax Error: "compiler/mappedTypeGenericWithKnownKeys.ts"
@@ -1666,6 +1666,7 @@ Expect Syntax Error: "compiler/prettyFileWithErrorsAndTabs.ts"
 Expect Syntax Error: "compiler/primaryExpressionMods.ts"
 Expect Syntax Error: "compiler/primitiveConstraints1.ts"
 Expect Syntax Error: "compiler/primitiveConstraints2.ts"
+Expect Syntax Error: "compiler/primitiveMembers.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsClassName.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsInterfaceName.ts"
 Expect Syntax Error: "compiler/primitiveTypeAsInterfaceNameGeneric.ts"
@@ -1783,7 +1784,6 @@ Expect Syntax Error: "compiler/reexportMissingDefault4.ts"
 Expect Syntax Error: "compiler/reexportMissingDefault6.ts"
 Expect Syntax Error: "compiler/reexportMissingDefault7.ts"
 Expect Syntax Error: "compiler/reexportedMissingAlias.ts"
-Expect Syntax Error: "compiler/regularExpressionGroupNameSuggestions.ts"
 Expect Syntax Error: "compiler/relationComplexityError.ts"
 Expect Syntax Error: "compiler/relationalOperatorComparable.ts"
 Expect Syntax Error: "compiler/relativeNamesInClassicResolution.ts"
@@ -2126,6 +2126,7 @@ Expect Syntax Error: "compiler/unusedFunctionsinNamespaces4.ts"
 Expect Syntax Error: "compiler/unusedFunctionsinNamespaces5.ts"
 Expect Syntax Error: "compiler/unusedFunctionsinNamespaces6.ts"
 Expect Syntax Error: "compiler/unusedGetterInClass.ts"
+Expect Syntax Error: "compiler/unusedIdentifiersConsolidated1.ts"
 Expect Syntax Error: "compiler/unusedImports1.ts"
 Expect Syntax Error: "compiler/unusedImports10.ts"
 Expect Syntax Error: "compiler/unusedImports12.ts"
@@ -2230,6 +2231,9 @@ Expect Syntax Error: "compiler/unusedVariablesinForLoop2.ts"
 Expect Syntax Error: "compiler/unusedVariablesinForLoop3.ts"
 Expect Syntax Error: "compiler/unusedVariablesinForLoop4.ts"
 Expect Syntax Error: "compiler/unusedVariablesinModules1.ts"
+Expect Syntax Error: "compiler/unusedVariablesinNamespaces1.ts"
+Expect Syntax Error: "compiler/unusedVariablesinNamespaces2.ts"
+Expect Syntax Error: "compiler/unusedVariablesinNamespaces3.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_classDecorators.1.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_destructuring.ts"
 Expect Syntax Error: "compiler/useBeforeDeclaration_jsx.tsx"
@@ -2513,6 +2517,7 @@ Expect Syntax Error: "conformance/controlFlow/controlFlowNullishCoalesce.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowOptionalChain.ts"
 Expect Syntax Error: "conformance/controlFlow/controlFlowOptionalChain3.tsx"
 Expect Syntax Error: "conformance/controlFlow/controlFlowTypeofObject.ts"
+Expect Syntax Error: "conformance/controlFlow/controlFlowWhileStatement.ts"
 Expect Syntax Error: "conformance/controlFlow/definiteAssignmentAssertions.ts"
 Expect Syntax Error: "conformance/controlFlow/dependentDestructuredVariables.ts"
 Expect Syntax Error: "conformance/controlFlow/exhaustiveSwitchStatements1.ts"
@@ -3709,7 +3714,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName5.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName6.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName8.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName9.ts"
@@ -3718,7 +3722,6 @@ Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/par
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration9.ts"
-Expect Syntax Error: "conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/EnumDeclarations/parserEnumDeclaration3.d.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/ErrorRecovery/AccessibilityAfterStatic/parserAccessibilityAfterStatic1.ts"
@@ -3921,7 +3924,6 @@ Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName13.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName14.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName15.ts"
-Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName16.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName17.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName18.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName19.ts"
@@ -3932,13 +3934,11 @@ Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parse
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName23.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName24.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName25.ts"
-Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName26.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName28.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName29.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName31.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName32.ts"
-Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName37.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName4.ts"
 Expect Syntax Error: "conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName40.ts"
@@ -4080,6 +4080,7 @@ Expect Syntax Error: "conformance/statements/for-ofStatements/ES5For-ofTypeCheck
 Expect Syntax Error: "conformance/statements/for-ofStatements/ES5For-ofTypeCheck9.ts"
 Expect Syntax Error: "conformance/statements/forStatements/forStatementsMultipleInvalidDecl.ts"
 Expect Syntax Error: "conformance/statements/returnStatements/invalidReturnStatements.ts"
+Expect Syntax Error: "conformance/statements/switchStatements/switchStatements.ts"
 Expect Syntax Error: "conformance/types/any/anyAsConstructor.ts"
 Expect Syntax Error: "conformance/types/any/anyAsGenericFunctionCall.ts"
 Expect Syntax Error: "conformance/types/any/assignAnyToEveryType.ts"
@@ -4175,6 +4176,7 @@ Expect Syntax Error: "conformance/types/members/objectTypeWithConstructSignature
 Expect Syntax Error: "conformance/types/members/objectTypeWithConstructSignatureHidingMembersOfFunctionAssignmentCompat.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithStringAndNumberIndexSignatureToAny.ts"
 Expect Syntax Error: "conformance/types/members/objectTypeWithStringIndexerHidingObjectIndexer.ts"
+Expect Syntax Error: "conformance/types/members/objectTypeWithStringNamedNumericProperty.ts"
 Expect Syntax Error: "conformance/types/members/typesWithPrivateConstructor.ts"
 Expect Syntax Error: "conformance/types/members/typesWithProtectedConstructor.ts"
 Expect Syntax Error: "conformance/types/members/typesWithPublicConstructor.ts"
@@ -4389,6 +4391,7 @@ Expect Syntax Error: "conformance/types/typeRelationships/recursiveTypes/objectT
 Expect Syntax Error: "conformance/types/typeRelationships/recursiveTypes/recursiveTypeReferences1.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/recursiveTypes/recursiveTypeReferences2.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/enumIsNotASubtypeOfAnythingButNumber.ts"
+Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameter.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints4.ts"
 Expect Syntax Error: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithRecursiveConstraints.ts"
@@ -4473,7 +4476,7 @@ Expect Syntax Error: "conformance/typings/typingsSuggestionBun1.ts"
 Expect Syntax Error: "conformance/typings/typingsSuggestionBun2.ts"
 Expect to Parse: "compiler/APISample_jsdoc.ts"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "compiler/arrayFromAsync.ts"
 
   × Expected `(` but found `await`
@@ -4484,13 +4487,6 @@ Expect to Parse: "compiler/arrayFromAsync.ts"
     ·       ╰── `(` expected
  23 │   arr.push(v);
     ╰────
-Expect to Parse: "compiler/bestChoiceType.ts"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
 Expect to Parse: "compiler/bom-utf16be.ts"
 
   × Invalid Character `￾`
@@ -4500,18 +4496,18 @@ Expect to Parse: "compiler/bom-utf16be.ts"
    ╰────
 Expect to Parse: "compiler/castExpressionParentheses.ts"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "compiler/controlFlowPropertyDeclarations.ts"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 
   × 'with' statements are not allowed
@@ -4588,15 +4584,6 @@ Expect to Parse: "compiler/moduleResolution_packageJson_yesAtPackageRoot_fakeSco
    ·    ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: "compiler/overloadResolutionOverNonCTLambdas.ts"
-
-  × Unterminated quantifier
-Expect to Parse: "compiler/regexMatchAll-esnext.ts"
-
-  × Unterminated quantifier
-Expect to Parse: "compiler/regexMatchAll.ts"
-
-  × Unterminated quantifier
 Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
 
   × Unexpected token
@@ -4606,9 +4593,6 @@ Expect to Parse: "compiler/sourceMapValidationDecorators.ts"
     ·       ───
  19 │     }
     ╰────
-Expect to Parse: "compiler/stringMatchAll.ts"
-
-  × Unterminated quantifier
 Expect to Parse: "compiler/thisInObjectJs.ts"
 
   × Cannot use export statement outside a module
@@ -4720,20 +4704,6 @@ Expect to Parse: "conformance/controlFlow/assertionTypePredicates2.ts"
     · ──────
  19 │     /** @type { A } */
     ╰────
-Expect to Parse: "conformance/controlFlow/controlFlowDoWhileStatement.ts"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-Expect to Parse: "conformance/controlFlow/controlFlowForInStatement.ts"
-
-  × Unterminated quantifier
-Expect to Parse: "conformance/controlFlow/controlFlowIfStatement.ts"
-
-  × Unterminated quantifier
-Expect to Parse: "conformance/controlFlow/typeGuardsNestedAssignments.ts"
-
-  × Unterminated quantifier
 Expect to Parse: "conformance/dynamicImport/importCallExpressionInScriptContext1.ts"
 
   × Cannot assign to 'arguments' in strict mode
@@ -4806,9 +4776,6 @@ Expect to Parse: "conformance/esDecorators/esDecorators-decoratorExpression.1.ts
  14 │ 
     ╰────
   help: Try insert a semicolon here
-Expect to Parse: "conformance/expressions/assignmentOperator/assignmentTypeNarrowing.ts"
-
-  × Unterminated quantifier
 Expect to Parse: "conformance/jsdoc/constructorTagOnClassConstructor.ts"
 
   × Cannot use export statement outside a module
@@ -4889,9 +4856,6 @@ Expect to Parse: "conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts"
    ·                          ╰── `with` expected
  3 │     & import("pkg", { assert: {"resolution-mode": "import"} }).ImportInterface;
    ╰────
-Expect to Parse: "conformance/parser/ecmascript5/Fuzz/parser768531.ts"
-
-  × Unterminated quantifier
 Expect to Parse: "conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts"
 
   × Cannot use export statement outside a module
@@ -4924,26 +4888,18 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    ╰────
 Expect to Parse: "conformance/statements/ifDoWhileStatements/ifDoWhileStatements.ts"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
-Expect to Parse: "conformance/statements/throwStatements/throwStatements.ts"
-
-  × Unterminated quantifier
-Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/nullIsSubtypeOfEverythingButUndefined.ts"
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Too many capturing groups
 Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints2.ts"
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[compiler/ArrowFunctionExpression1.ts:1:10]
@@ -6357,7 +6313,7 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  47 │     }
     ╰────
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/commonMissingSemicolons.ts:2:6]
@@ -6931,19 +6887,19 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  12 │ 
     ╰────
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
   × Unexpected token
    ╭─[compiler/dontShowCompilerGeneratedMembers.ts:3:6]
@@ -7453,6 +7409,38 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·      ╰── It can not be redeclared here
    ╰────
 
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:2:5]
+ 1 │ enum Nums {
+ 2 │     1.0,
+   ·     ───
+ 3 │     11e-1,
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:3:5]
+ 2 │     1.0,
+ 3 │     11e-1,
+   ·     ─────
+ 4 │     0.12e1,
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:4:5]
+ 3 │     11e-1,
+ 4 │     0.12e1,
+   ·     ──────
+ 5 │     "13e-1",
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[compiler/enumIdentifierLiterals.ts:6:5]
+ 5 │     "13e-1",
+ 6 │     0xF00D
+   ·     ──────
+ 7 │ }
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/enumMemberResolution.ts:5:4]
  4 │ var x = IgnoreRulesSpecific. // error
@@ -7856,10 +7844,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  3 │ return0; 
    · ──────
    ╰────
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
 
   × Expected `;` but found `)`
     ╭─[compiler/for.ts:29:6]
@@ -9086,6 +9070,22 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  10 │     a.length;
     ╰────
 
+  × TS(2452): An enum member cannot have a numeric name.
+    ╭─[compiler/literalsInComputedProperties1.ts:39:5]
+ 38 │ enum X {
+ 39 │     1 = 1,
+    ·     ─
+ 40 │     [2] = 2,
+    ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+    ╭─[compiler/literalsInComputedProperties1.ts:40:6]
+ 39 │     1 = 1,
+ 40 │     [2] = 2,
+    ·      ─
+ 41 │     "3" = 3,
+    ╰────
+
   × Invalid Character `!`
    ╭─[compiler/manyCompilerErrorsInTheTwoFiles.ts:1:13]
  1 │ const a =!@#!@$
@@ -10208,10 +10208,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  1 │ if (true) {
    ╰────
 
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
   × 'export' modifier cannot be used here.
      ╭─[compiler/privacyImportParseErrors.ts:326:9]
  325 │ 
@@ -10300,45 +10296,11 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
 
   × TODO: ClassSetExpression
 
-  × Invalid unicode escape
+  × Invalid escape
 
-  × Invalid unicode escape
+  × Invalid escape
 
-  × Invalid unicode escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
-
-  × Invalid unicode escape
+  × Invalid escape
 
   × Invalid class escape
 
@@ -10346,7 +10308,33 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
 
   × Invalid class escape
 
-  × Invalid class escape
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
+
+  × Invalid escape
 
   × Invalid class escape
 
@@ -10367,6 +10355,16 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
   × Invalid class escape
 
   × Invalid class escape
+
+  × Invalid class escape
+
+  × Invalid class escape
+
+  × Invalid class escape
+
+  × Invalid class escape
+
+  × Group specifier is empty
 
   × Unexpected flag a in regular expression literal
    ╭─[compiler/regularExpressionScanning.ts:3:12]
@@ -10458,59 +10456,59 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
 
   × TODO: ClassSetExpression
 
-  × Unterminated quantifier
+  × Group specifier is empty
 
-  × Unterminated quantifier
+  × Group specifier is empty
 
-  × Unterminated quantifier
+  × Group specifier is empty
 
-  × Unterminated quantifier
+  × Group specifier is empty
 
-  × Unterminated quantifier
+  × Group specifier is empty
 
-  × Unterminated quantifier
+  × Group specifier is empty
 
-  × Unterminated quantifier
-
-  × Invalid class escape
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
+  × Group specifier is empty
 
   × Invalid class escape
 
-  × TODO: ClassSetExpression
+  × Group specifier is empty
 
-  × Unterminated quantifier
+  × Group specifier is empty
+
+  × Group specifier is empty
+
+  × Group specifier is empty
+
+  × Group specifier is empty
 
   × Invalid class escape
 
   × TODO: ClassSetExpression
 
-  × Unterminated quantifier
+  × Group specifier is empty
 
   × Invalid class escape
 
   × TODO: ClassSetExpression
 
-  × Unterminated quantifier
-
-  × Invalid class escape
-
-  × Unterminated quantifier
+  × Group specifier is empty
 
   × Invalid class escape
 
   × TODO: ClassSetExpression
 
-  × Unterminated quantifier
+  × Group specifier is empty
+
+  × Invalid class escape
+
+  × Group specifier is empty
+
+  × Invalid class escape
+
+  × TODO: ClassSetExpression
+
+  × Group specifier is empty
 
   × Invalid class escape
 
@@ -12203,10 +12201,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    · ──
    ╰────
 
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
   × Expected `;` but found `)`
     ╭─[compiler/unusedLocalsAndParameters.ts:83:14]
  82 │ 
@@ -12215,16 +12209,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ·              ╰── `;` expected
  84 │     z(x);
     ╰────
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/validRegexp.ts:1:23]
@@ -14328,10 +14312,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  164 │     get p2(): asserts this is string;
      ╰────
 
-  × Unterminated quantifier
-
-  × Unterminated quantifier
-
   × Expected `,` but found `!`
    ╭─[conformance/controlFlow/definiteAssignmentAssertionsWithObjectShortHand.ts:2:16]
  1 │ const a: string | undefined = 'ff';
@@ -15639,15 +15619,15 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  2 │     // Once this is supported, yield *must* be parenthesized.
    ╰────
 
-  × Invalid unicode escape
+  × Invalid unicode escape sequence
 
-  × Invalid unicode escape
+  × Invalid unicode escape sequence
 
-  × Invalid unicode escape
+  × Invalid unicode escape sequence
 
-  × Invalid unicode escape
+  × Invalid unicode escape sequence
 
-  × Invalid unicode escape
+  × Invalid unicode escape sequence
 
   × Invalid escape sequence
    ╭─[conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings07.ts:3:10]
@@ -18096,13 +18076,13 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·                ╰── `,` expected
    ╰────
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
   × A rest parameter must be last in a parameter list
     ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
@@ -18881,6 +18861,14 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·                 ╰── `,` expected
    ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript5/ComputedPropertyNames/parserES5ComputedPropertyName6.ts:2:4]
+ 1 │ enum E {
+ 2 │   [e] = 1
+   ·    ─
+ 3 │ }
+   ╰────
+
   × Type parameter list cannot be empty.
    ╭─[conformance/parser/ecmascript5/ConstructorDeclarations/parserConstructorDeclaration11.ts:2:14]
  1 │ class C {
@@ -18930,6 +18918,30 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·            ┬
    ·            ╰── `,` expected
  3 │ enum E1 { a, b: 1, c, d: 2 = 3 }
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts:2:3]
+ 1 │ enum E {
+ 2 │   1, 2, 3
+   ·   ─
+ 3 │ }
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts:2:6]
+ 1 │ enum E {
+ 2 │   1, 2, 3
+   ·      ─
+ 3 │ }
+   ╰────
+
+  × TS(2452): An enum member cannot have a numeric name.
+   ╭─[conformance/parser/ecmascript5/EnumDeclarations/parserEnum7.ts:2:9]
+ 1 │ enum E {
+ 2 │   1, 2, 3
+   ·         ─
+ 3 │ }
    ╰────
 
   × Unexpected token
@@ -20024,29 +20036,29 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  2 │ }
    ╰────
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
@@ -20952,6 +20964,22 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·               ─
    ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName16.ts:2:4]
+ 1 │ enum E {
+ 2 │   [e] = 1
+   ·    ─
+ 3 │ }
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName26.ts:3:6]
+ 2 │     // No ASI
+ 3 │     [e] = 0
+   ·      ─
+ 4 │     [e2] = 1
+   ╰────
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName27.ts:4:9]
  3 │     [e]: number = 0
@@ -20960,6 +20988,14 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  5 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName30.ts:3:6]
+ 2 │     // no ASI, comma expected
+ 3 │     [e] = id++
+   ·      ─
+ 4 │     [e2] = 1
+   ╰────
 
   × Expected `,` but found `[`
    ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName30.ts:4:5]
@@ -20978,6 +21014,22 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  5 │ }
    ╰────
   help: Try insert a semicolon here
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts:3:6]
+ 2 │     // no ASI, comma expected
+ 3 │     [e] = id++,
+   ·      ─
+ 4 │     [e2] = 1
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName34.ts:4:6]
+ 3 │     [e] = id++,
+ 4 │     [e2] = 1
+   ·      ──
+ 5 │ }
+   ╰────
 
   × Expected `]` but found `,`
    ╭─[conformance/parser/ecmascript6/ComputedPropertyNames/parserComputedPropertyName35.ts:2:7]
@@ -22014,7 +22066,7 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  38 │ }
     ╰────
 
-  × Unterminated quantifier
+  × Too many capturing groups
 
   × Unexpected token
    ╭─[conformance/statements/for-ofStatements/ES5For-of12.ts:1:6]
@@ -22131,10 +22183,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  10 │ label: const c = 1;
     ╰────
   help: Try insert a semicolon here
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier
 
   × Unexpected token
    ╭─[conformance/statements/throwStatements/invalidThrowStatement.ts:1:6]
@@ -22269,8 +22317,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·       ╰── It can not be redeclared here
  9 │ }
    ╰────
-
-  × Unterminated quantifier
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[conformance/types/objectTypeLiteral/callSignatures/callSignaturesWithAccessibilityModifiersOnParameters.ts:3:14]
@@ -23350,7 +23396,3 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·            ──
  2 │ type T2<out out> = T2 // Error: circularly references 
    ╰────
-
-  × Unterminated quantifier
-
-  × Unterminated quantifier

@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnusedLabels,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUnusedLabels {

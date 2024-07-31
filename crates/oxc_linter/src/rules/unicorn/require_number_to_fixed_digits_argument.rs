@@ -32,7 +32,8 @@ declare_oxc_lint!(
     /// number.toFixed();
     /// ```
     RequireNumberToFixedDigitsArgument,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for RequireNumberToFixedDigitsArgument {

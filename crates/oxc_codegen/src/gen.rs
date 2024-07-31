@@ -1267,8 +1267,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for RegExpLiteral<'a> {
         let last = p.peek_nth(0);
         // Avoid forming a single-line comment or "</script" sequence
         if Some('/') == last
-            || (Some('<') == last
-                && self.regex.pattern.as_str().to_lowercase().starts_with("script"))
+            || (Some('<') == last && self.regex.pattern.to_lowercase().starts_with("script"))
         {
             p.print_hard_space();
         }
@@ -3531,6 +3530,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSEnumMember<'a> {
         match &self.id {
             TSEnumMemberName::StaticIdentifier(decl) => decl.gen(p, ctx),
             TSEnumMemberName::StaticStringLiteral(decl) => decl.gen(p, ctx),
+            TSEnumMemberName::StaticTemplateLiteral(decl) => decl.gen(p, ctx),
             TSEnumMemberName::StaticNumericLiteral(decl) => decl.gen(p, ctx),
             decl @ match_expression!(TSEnumMemberName) => {
                 p.print_str("[");

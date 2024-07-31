@@ -1,0 +1,26 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:10]
+ 1 │ import { a } from 'a'
+   ·          ┬
+   ·          ╰── 'a' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'a' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:13]
+ 1 │ import * as a from 'a'
+   ·             ┬
+   ·             ╰── 'a' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'b' is imported but never used.
+   ╭─[no_unused_vars.tsx:1:15]
+ 1 │ import { a as b } from 'a'; console.log(a)
+   ·               ┬
+   ·               ╰── 'b' is imported here
+   ╰────
+  help: Consider removing this import.

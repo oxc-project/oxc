@@ -6,7 +6,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{has_jsx_prop_lowercase, parse_jsx_value},
+    utils::{has_jsx_prop_ignore_case, parse_jsx_value},
     AstNode,
 };
 
@@ -44,7 +44,7 @@ impl Rule for TabindexNoPositive {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
-        if let Some(tab_index_prop) = has_jsx_prop_lowercase(jsx_el, "tabIndex") {
+        if let Some(tab_index_prop) = has_jsx_prop_ignore_case(jsx_el, "tabIndex") {
             check_and_diagnose(tab_index_prop, ctx);
         }
     }

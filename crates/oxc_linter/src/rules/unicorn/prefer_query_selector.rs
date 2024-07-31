@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// document.querySelector('li').querySelectorAll('a');
     /// ```
     PreferQuerySelector,
-    pedantic
+    pedantic,
+    conditional_fix
 );
 
 impl Rule for PreferQuerySelector {

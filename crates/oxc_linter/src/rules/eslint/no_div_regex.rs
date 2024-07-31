@@ -30,6 +30,7 @@ declare_oxc_lint!(
     /// ```
     NoDivRegex,
     restriction,
+    fix
 );
 
 impl Rule for NoDivRegex {

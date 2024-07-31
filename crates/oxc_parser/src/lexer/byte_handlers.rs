@@ -209,8 +209,8 @@ ascii_byte_handler!(LIN(lexer) {
 // !
 ascii_byte_handler!(EXL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'=') {
-        if lexer.next_ascii_char_eq(b'=') {
+    if lexer.next_ascii_byte_eq(b'=') {
+        if lexer.next_ascii_byte_eq(b'=') {
             Kind::Neq2
         } else {
             Kind::Neq
@@ -237,7 +237,7 @@ ascii_byte_handler!(HAS(lexer) {
     lexer.consume_char();
     // HashbangComment ::
     //     `#!` SingleLineCommentChars?
-    if lexer.token.start == 0 && lexer.next_ascii_char_eq(b'!') {
+    if lexer.token.start == 0 && lexer.next_ascii_byte_eq(b'!') {
         lexer.read_hashbang_comment()
     } else {
         lexer.private_identifier()
@@ -252,7 +252,7 @@ ascii_identifier_handler!(IDT(_id_without_first_char) {
 // %
 ascii_byte_handler!(PRC(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'=') {
+    if lexer.next_ascii_byte_eq(b'=') {
         Kind::PercentEq
     } else {
         Kind::Percent
@@ -262,13 +262,13 @@ ascii_byte_handler!(PRC(lexer) {
 // &
 ascii_byte_handler!(AMP(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'&') {
-        if lexer.next_ascii_char_eq(b'=') {
+    if lexer.next_ascii_byte_eq(b'&') {
+        if lexer.next_ascii_byte_eq(b'=') {
             Kind::Amp2Eq
         } else {
             Kind::Amp2
         }
-    } else if lexer.next_ascii_char_eq(b'=') {
+    } else if lexer.next_ascii_byte_eq(b'=') {
         Kind::AmpEq
     } else {
         Kind::Amp
@@ -290,13 +290,13 @@ ascii_byte_handler!(PNC(lexer) {
 // *
 ascii_byte_handler!(ATR(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'*') {
-        if lexer.next_ascii_char_eq(b'=') {
+    if lexer.next_ascii_byte_eq(b'*') {
+        if lexer.next_ascii_byte_eq(b'=') {
             Kind::Star2Eq
         } else {
             Kind::Star2
         }
-    } else if lexer.next_ascii_char_eq(b'=') {
+    } else if lexer.next_ascii_byte_eq(b'=') {
         Kind::StarEq
     } else {
         Kind::Star
@@ -306,9 +306,9 @@ ascii_byte_handler!(ATR(lexer) {
 // +
 ascii_byte_handler!(PLS(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'+') {
+    if lexer.next_ascii_byte_eq(b'+') {
         Kind::Plus2
-    } else if lexer.next_ascii_char_eq(b'=') {
+    } else if lexer.next_ascii_byte_eq(b'=') {
         Kind::PlusEq
     } else {
         Kind::Plus
@@ -336,18 +336,18 @@ ascii_byte_handler!(PRD(lexer) {
 // /
 ascii_byte_handler!(SLH(lexer) {
     lexer.consume_char();
-    match lexer.peek() {
-        Some('/') => {
+    match lexer.peek_byte() {
+        Some(b'/') => {
             lexer.consume_char();
             lexer.skip_single_line_comment()
         }
-        Some('*') => {
+        Some(b'*') => {
             lexer.consume_char();
             lexer.skip_multi_line_comment()
         }
         _ => {
             // regex is handled separately, see `next_regex`
-            if lexer.next_ascii_char_eq(b'=') {
+            if lexer.next_ascii_byte_eq(b'=') {
                 Kind::SlashEq
             } else {
                 Kind::Slash
@@ -389,13 +389,13 @@ ascii_byte_handler!(LSS(lexer) {
 // =
 ascii_byte_handler!(EQL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'=') {
-        if lexer.next_ascii_char_eq(b'=') {
+    if lexer.next_ascii_byte_eq(b'=') {
+        if lexer.next_ascii_byte_eq(b'=') {
             Kind::Eq3
         } else {
             Kind::Eq2
         }
-    } else if lexer.next_ascii_char_eq(b'>') {
+    } else if lexer.next_ascii_byte_eq(b'>') {
         Kind::Arrow
     } else {
         Kind::Eq
@@ -412,22 +412,38 @@ ascii_byte_handler!(GTR(lexer) {
 // ?
 ascii_byte_handler!(QST(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'?') {
-        if lexer.next_ascii_char_eq(b'=') {
-            Kind::Question2Eq
-        } else {
-            Kind::Question2
-        }
-    } else if lexer.peek() == Some('.') {
-        // parse `?.1` as `?` `.1`
-        if lexer.peek2().is_some_and(|c| c.is_ascii_digit()) {
-            Kind::Question
-        } else {
-            lexer.consume_char();
-            Kind::QuestionDot
+
+    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
+        match next_2_bytes[0] {
+            b'?' => {
+                if next_2_bytes[1] == b'=' {
+                    lexer.consume_2_chars();
+                    Kind::Question2Eq
+                } else {
+                    lexer.consume_char();
+                    Kind::Question2
+                }
+            }
+            // parse `?.1` as `?` `.1`
+            b'.' if !next_2_bytes[1].is_ascii_digit() => {
+                lexer.consume_char();
+                Kind::QuestionDot
+            }
+            _ => Kind::Question,
         }
     } else {
-        Kind::Question
+        // At EOF, or only 1 byte left
+        match lexer.peek_byte() {
+            Some(b'?') => {
+                lexer.consume_char();
+                Kind::Question2
+            }
+            Some(b'.') => {
+                lexer.consume_char();
+                Kind::QuestionDot
+            }
+            _ => Kind::Question,
+        }
     }
 });
 
@@ -457,7 +473,7 @@ ascii_byte_handler!(BTC(lexer) {
 // ^
 ascii_byte_handler!(CRT(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'=') {
+    if lexer.next_ascii_byte_eq(b'=') {
         Kind::CaretEq
     } else {
         Kind::Caret
@@ -479,16 +495,21 @@ ascii_byte_handler!(BEO(lexer) {
 // |
 ascii_byte_handler!(PIP(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_char_eq(b'|') {
-        if lexer.next_ascii_char_eq(b'=') {
-            Kind::Pipe2Eq
-        } else {
-            Kind::Pipe2
+
+    match lexer.peek_byte() {
+        Some(b'|') => {
+            lexer.consume_char();
+            if lexer.next_ascii_byte_eq(b'=') {
+                Kind::Pipe2Eq
+            } else {
+                Kind::Pipe2
+            }
         }
-    } else if lexer.next_ascii_char_eq(b'=') {
-        Kind::PipeEq
-    } else {
-        Kind::Pipe
+        Some(b'=') => {
+            lexer.consume_char();
+            Kind::PipeEq
+        }
+        _ => Kind::Pipe
     }
 });
 

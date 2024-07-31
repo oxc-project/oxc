@@ -37,7 +37,8 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferSpread,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for PreferSpread {
