@@ -417,8 +417,7 @@ ascii_byte_handler!(QST(lexer) {
         match next_2_bytes[0] {
             b'?' => {
                 if next_2_bytes[1] == b'=' {
-                    lexer.consume_char();
-                    lexer.consume_char();
+                    lexer.consume_2_chars();
                     Kind::Question2Eq
                 } else {
                     lexer.consume_char();

@@ -194,8 +194,7 @@ impl<'a> Lexer<'a> {
             return Some(SurrogatePair::CodePoint(high));
         }
 
-        self.consume_char();
-        self.consume_char();
+        self.consume_2_chars();
 
         let low = self.hex_4_digits()?;
 

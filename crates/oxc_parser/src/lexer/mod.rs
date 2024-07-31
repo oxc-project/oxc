@@ -251,6 +251,18 @@ impl<'a> Lexer<'a> {
         self.source.next_char().unwrap()
     }
 
+    /// Consume the current char and the next if not at EOF
+    #[inline]
+    fn next_2_chars(&mut self) -> Option<[char; 2]> {
+        self.source.next_2_chars()
+    }
+
+    /// Consume the current char and the next
+    #[inline]
+    fn consume_2_chars(&mut self) -> [char; 2] {
+        self.next_2_chars().unwrap()
+    }
+
     /// Peek the next byte without advancing the position
     #[inline]
     fn peek_byte(&self) -> Option<u8> {
