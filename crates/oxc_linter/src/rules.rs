@@ -115,6 +115,7 @@ mod eslint {
     pub mod no_void;
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
+    pub mod prefer_numeric_literals;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -544,6 +545,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_new_native_nonconstructor,
     eslint::no_restricted_globals,
     eslint::prefer_exponentiation_operator,
+    eslint::prefer_numeric_literals,
     eslint::no_constructor_return,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
