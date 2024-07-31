@@ -161,9 +161,9 @@ impl<'a> Lexer<'a> {
 
     fn hex_digit(&mut self) -> Option<u32> {
         let value = match self.peek_byte() {
-            Some(c @ b'0'..=b'9') => u32::from(c) - '0' as u32,
-            Some(c @ b'a'..=b'f') => 10 + (u32::from(c) - 'a' as u32),
-            Some(c @ b'A'..=b'F') => 10 + (u32::from(c) - 'A' as u32),
+            Some(b @ b'0'..=b'9') => u32::from(b) - '0' as u32,
+            Some(b @ b'a'..=b'f') => 10 + (u32::from(b) - 'a' as u32),
+            Some(b @ b'A'..=b'F') => 10 + (u32::from(b) - 'A' as u32),
             _ => return None,
         };
         self.consume_char();

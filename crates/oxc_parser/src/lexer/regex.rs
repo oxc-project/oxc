@@ -58,16 +58,16 @@ impl<'a> Lexer<'a> {
         let pattern_end = self.offset() - 1; // -1 to exclude `/`
         let mut flags = RegExpFlags::empty();
 
-        while let Some(ch @ (b'$' | b'_' | b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9')) =
+        while let Some(b @ (b'$' | b'_' | b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9')) =
             self.peek_byte()
         {
             self.consume_char();
-            let Ok(flag) = RegExpFlags::try_from(ch) else {
-                self.error(diagnostics::reg_exp_flag(ch as char, self.current_offset()));
+            let Ok(flag) = RegExpFlags::try_from(b) else {
+                self.error(diagnostics::reg_exp_flag(b as char, self.current_offset()));
                 continue;
             };
             if flags.contains(flag) {
-                self.error(diagnostics::reg_exp_flag_twice(ch as char, self.current_offset()));
+                self.error(diagnostics::reg_exp_flag_twice(b as char, self.current_offset()));
                 continue;
             }
             flags |= flag;
