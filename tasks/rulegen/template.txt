@@ -2,7 +2,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::LintContext,
+    fixer::{RuleFixer, RuleFix},
+    rule::Rule,
+    AstNode
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct {{pascal_rule_name}};
@@ -20,6 +25,10 @@ declare_oxc_lint!(
     {{pascal_rule_name}},
     nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
              // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+             
+    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
+             // keep at 'pending' if you think one could be added but don't know how.
+             // Options are 'fix', 'fix-dangerous', 'suggestion', and 'suggestion-dangerous'
 );
 
 impl Rule for {{pascal_rule_name}} {
