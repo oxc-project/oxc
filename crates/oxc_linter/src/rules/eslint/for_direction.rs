@@ -130,8 +130,7 @@ fn get_assignment_direction(assign: &AssignmentExpression) -> UpdateDirection {
         Expression::NumericLiteral(r) => {
             match r.value {
                 0.0 => return UNKNOWN,
-                _ if r.value.is_sign_positive() => true,
-                _ => false,
+                _ => r.value.is_sign_positive(),
             }
         },
         Expression::UnaryExpression(right) => right.operator != UnaryOperator::UnaryNegation,
