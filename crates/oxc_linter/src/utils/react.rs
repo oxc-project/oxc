@@ -37,7 +37,7 @@ pub fn has_jsx_prop<'a, 'b>(
     })
 }
 
-pub fn has_jsx_prop_lowercase<'a, 'b>(
+pub fn has_jsx_prop_ignore_case<'a, 'b>(
     node: &'b JSXOpeningElement<'a>,
     target_prop: &'b str,
 ) -> Option<&'b JSXAttributeItem<'a>> {
@@ -48,7 +48,7 @@ pub fn has_jsx_prop_lowercase<'a, 'b>(
                 return false;
             };
 
-            name.name.as_str().to_lowercase() == target_prop.to_lowercase()
+            name.name.as_str().eq_ignore_ascii_case(target_prop)
         }
     })
 }
@@ -84,7 +84,7 @@ pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Opti
 pub fn is_hidden_from_screen_reader(ctx: &LintContext, node: &JSXOpeningElement) -> bool {
     if let Some(name) = get_element_type(ctx, node) {
         if name.as_str().to_uppercase() == "INPUT" {
-            if let Some(item) = has_jsx_prop_lowercase(node, "type") {
+            if let Some(item) = has_jsx_prop_ignore_case(node, "type") {
                 let hidden = get_string_literal_prop_value(item);
 
                 if hidden.is_some_and(|val| val.to_uppercase() == "HIDDEN") {
@@ -94,7 +94,7 @@ pub fn is_hidden_from_screen_reader(ctx: &LintContext, node: &JSXOpeningElement)
         }
     }
 
-    has_jsx_prop_lowercase(node, "aria-hidden").map_or(false, |v| match get_prop_value(v) {
+    has_jsx_prop_ignore_case(node, "aria-hidden").map_or(false, |v| match get_prop_value(v) {
         None => true,
         Some(JSXAttributeValue::StringLiteral(s)) if s.value == "true" => true,
         Some(JSXAttributeValue::ExpressionContainer(container)) => {
@@ -118,8 +118,8 @@ pub fn object_has_accessible_child(ctx: &LintContext, node: &JSXElement<'_>) -> 
                 && !container.expression.is_undefined()
         }
         _ => false,
-    }) || has_jsx_prop_lowercase(&node.opening_element, "dangerouslySetInnerHTML").is_some()
-        || has_jsx_prop_lowercase(&node.opening_element, "children").is_some()
+    }) || has_jsx_prop_ignore_case(&node.opening_element, "dangerouslySetInnerHTML").is_some()
+        || has_jsx_prop_ignore_case(&node.opening_element, "children").is_some()
 }
 
 pub fn is_presentation_role(jsx_opening_el: &JSXOpeningElement) -> bool {
@@ -247,7 +247,7 @@ pub fn get_element_type(context: &LintContext, element: &JSXOpeningElement) -> O
         .polymorphic_prop_name
         .as_ref()
         .and_then(|polymorphic_prop_name_value| {
-            has_jsx_prop_lowercase(element, polymorphic_prop_name_value)
+            has_jsx_prop_ignore_case(element, polymorphic_prop_name_value)
         })
         .and_then(get_prop_value)
         .and_then(|prop_value| match prop_value {

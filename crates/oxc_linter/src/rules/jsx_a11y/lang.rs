@@ -10,7 +10,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -75,7 +75,7 @@ impl Rule for Lang {
             return;
         };
 
-        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
+        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
             || ctx.diagnostic(lang_diagnostic(identifier.span)),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {

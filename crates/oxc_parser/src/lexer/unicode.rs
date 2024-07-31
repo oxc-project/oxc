@@ -18,7 +18,7 @@ enum SurrogatePair {
 
 impl<'a> Lexer<'a> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
-        let c = self.peek().unwrap();
+        let c = self.peek_char().unwrap();
         match c {
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
@@ -60,7 +60,7 @@ impl<'a> Lexer<'a> {
             return;
         }
 
-        let value = match self.peek() {
+        let value = match self.peek_char() {
             Some('{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
@@ -109,7 +109,7 @@ impl<'a> Lexer<'a> {
         text: &mut String<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
-        let value = match self.peek() {
+        let value = match self.peek_char() {
             Some('{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
@@ -141,11 +141,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn unicode_code_point(&mut self) -> Option<SurrogatePair> {
-        if !self.next_ascii_char_eq(b'{') {
+        if !self.next_ascii_byte_eq(b'{') {
             return None;
         }
         let value = self.code_point()?;
-        if !self.next_ascii_char_eq(b'}') {
+        if !self.next_ascii_byte_eq(b'}') {
             return None;
         }
         Some(SurrogatePair::CodePoint(value))
@@ -160,10 +160,10 @@ impl<'a> Lexer<'a> {
     }
 
     fn hex_digit(&mut self) -> Option<u32> {
-        let value = match self.peek() {
-            Some(c @ '0'..='9') => c as u32 - '0' as u32,
-            Some(c @ 'a'..='f') => 10 + (c as u32 - 'a' as u32),
-            Some(c @ 'A'..='F') => 10 + (c as u32 - 'A' as u32),
+        let value = match self.peek_byte() {
+            Some(b @ b'0'..=b'9') => u32::from(b) - '0' as u32,
+            Some(b @ b'a'..=b'f') => 10 + (u32::from(b) - 'a' as u32),
+            Some(b @ b'A'..=b'F') => 10 + (u32::from(b) - 'A' as u32),
             _ => return None,
         };
         self.consume_char();
@@ -188,15 +188,13 @@ impl<'a> Lexer<'a> {
     fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
         let high = self.hex_4_digits()?;
         // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
-        let is_pair = (0xD800..=0xDBFF).contains(&high)
-            && self.peek() == Some('\\')
-            && self.peek2() == Some('u');
+        let is_pair =
+            (0xD800..=0xDBFF).contains(&high) && self.peek_2_bytes() == Some([b'\\', b'u']);
         if !is_pair {
             return Some(SurrogatePair::CodePoint(high));
         }
 
-        self.consume_char();
-        self.consume_char();
+        self.consume_2_chars();
 
         let low = self.hex_4_digits()?;
 
@@ -232,7 +230,7 @@ impl<'a> Lexer<'a> {
                 // <CR> <LF>
                 LF | LS | PS => {}
                 CR => {
-                    self.next_ascii_char_eq(b'\n');
+                    self.next_ascii_byte_eq(b'\n');
                 }
                 // SingleEscapeCharacter :: one of
                 //   ' " \ b f n r t v
@@ -266,7 +264,7 @@ impl<'a> Lexer<'a> {
                     self.string_unicode_escape_sequence(text, is_valid_escape_sequence);
                 }
                 // 0 [lookahead ∉ DecimalDigit]
-                '0' if !self.peek().is_some_and(|c| c.is_ascii_digit()) => text.push('\0'),
+                '0' if !self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => text.push('\0'),
                 // Section 12.9.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
@@ -275,16 +273,16 @@ impl<'a> Lexer<'a> {
                     num.push(a);
                     match a {
                         '4'..='7' => {
-                            if matches!(self.peek(), Some('0'..='7')) {
+                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
                                 let b = self.consume_char();
                                 num.push(b);
                             }
                         }
                         '0'..='3' => {
-                            if matches!(self.peek(), Some('0'..='7')) {
+                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
                                 let b = self.consume_char();
                                 num.push(b);
-                                if matches!(self.peek(), Some('0'..='7')) {
+                                if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
                                     let c = self.consume_char();
                                     num.push(c);
                                 }
@@ -297,7 +295,7 @@ impl<'a> Lexer<'a> {
                         char::from_u32(u32::from_str_radix(num.as_str(), 8).unwrap()).unwrap();
                     text.push(value);
                 }
-                '0' if in_template && self.peek().is_some_and(|c| c.is_ascii_digit()) => {
+                '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
                     self.consume_char();
                     // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;

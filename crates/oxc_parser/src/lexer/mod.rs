@@ -251,16 +251,34 @@ impl<'a> Lexer<'a> {
         self.source.next_char().unwrap()
     }
 
-    /// Peek the next char without advancing the position
+    /// Consume the current char and the next if not at EOF
     #[inline]
-    fn peek(&self) -> Option<char> {
-        self.source.peek_char()
+    fn next_2_chars(&mut self) -> Option<[char; 2]> {
+        self.source.next_2_chars()
     }
 
-    /// Peek the next next char without advancing the position
+    /// Consume the current char and the next
     #[inline]
-    fn peek2(&self) -> Option<char> {
-        self.source.peek_char2()
+    fn consume_2_chars(&mut self) -> [char; 2] {
+        self.next_2_chars().unwrap()
+    }
+
+    /// Peek the next byte without advancing the position
+    #[inline]
+    fn peek_byte(&self) -> Option<u8> {
+        self.source.peek_byte()
+    }
+
+    /// Peek the next two bytes without advancing the position
+    #[inline]
+    fn peek_2_bytes(&self) -> Option<[u8; 2]> {
+        self.source.peek_2_bytes()
+    }
+
+    /// Peek the next char without advancing the position
+    #[inline]
+    fn peek_char(&self) -> Option<char> {
+        self.source.peek_char()
     }
 
     /// Peek the next byte, and advance the current position if it matches
@@ -268,7 +286,7 @@ impl<'a> Lexer<'a> {
     // `#[inline(always)]` to make sure the `assert!` gets optimized out.
     #[allow(clippy::inline_always)]
     #[inline(always)]
-    fn next_ascii_char_eq(&mut self, b: u8) -> bool {
+    fn next_ascii_byte_eq(&mut self, b: u8) -> bool {
         // TODO: can be replaced by `std::ascii:Char` once stabilized.
         // https://github.com/rust-lang/rust/issues/110998
         assert!(b.is_ascii());
@@ -284,7 +302,7 @@ impl<'a> Lexer<'a> {
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
-        match self.peek() {
+        match self.peek_char() {
             Some(c) => self.error(diagnostics::invalid_character(c, offset)),
             None => self.error(diagnostics::unexpected_end(offset)),
         }
@@ -297,7 +315,7 @@ impl<'a> Lexer<'a> {
             let offset = self.offset();
             self.token.start = offset;
 
-            let Some(byte) = self.source.peek_byte() else {
+            let Some(byte) = self.peek_byte() else {
                 return Kind::Eof;
             };
 

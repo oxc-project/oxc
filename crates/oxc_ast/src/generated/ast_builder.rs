@@ -78,9 +78,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
-    /// - raw
-    /// - base
+    /// - value: The value of the number, converted into base 10
+    /// - raw: The number as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn numeric_literal<S>(
         self,
@@ -101,9 +101,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
-    /// - raw
-    /// - base
+    /// - value: The value of the number, converted into base 10
+    /// - raw: The number as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn alloc_numeric_literal<S>(
         self,
@@ -124,8 +124,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - raw
-    /// - base
+    /// - raw: The bigint as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn big_int_literal<A>(self, span: Span, raw: A, base: BigintBase) -> BigIntLiteral<'a>
     where
@@ -140,8 +140,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - raw
-    /// - base
+    /// - raw: The bigint as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn alloc_big_int_literal<A>(
         self,
@@ -312,9 +312,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
-    /// - raw
-    /// - base
+    /// - value: The value of the number, converted into base 10
+    /// - raw: The number as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn expression_numeric_literal<S>(
         self,
@@ -344,8 +344,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - raw
-    /// - base
+    /// - raw: The bigint as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn expression_big_int_literal<A>(
         self,
@@ -8153,9 +8153,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
-    /// - raw
-    /// - base
+    /// - value: The value of the number, converted into base 10
+    /// - raw: The number as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn ts_enum_member_name_numeric_literal<S>(
         self,
@@ -8293,9 +8293,9 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - value
-    /// - raw
-    /// - base
+    /// - value: The value of the number, converted into base 10
+    /// - raw: The number as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn ts_literal_numeric_literal<S>(
         self,
@@ -8325,8 +8325,8 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
-    /// - raw
-    /// - base
+    /// - raw: The bigint as it appears in the source code
+    /// - base: The base representation used by the literal in the source code
     #[inline]
     pub fn ts_literal_big_int_literal<A>(
         self,

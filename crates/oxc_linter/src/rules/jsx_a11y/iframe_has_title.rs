@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -75,7 +75,7 @@ impl Rule for IframeHasTitle {
             return;
         }
 
-        let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "title") else {
+        let Some(alt_prop) = has_jsx_prop_ignore_case(jsx_el, "title") else {
             ctx.diagnostic(iframe_has_title_diagnostic(iden.span));
             return;
         };
