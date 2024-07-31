@@ -62,7 +62,7 @@ impl Rule for PreferToHaveLength {
 }
 
 impl PreferToHaveLength {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -122,7 +122,7 @@ impl PreferToHaveLength {
         parsed_expect_call: &ParsedExpectFnCall<'a>,
         kind: Option<&str>,
         property_name: Option<&str>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let Some(argument) = expr_call_expr.arguments.first() else {
             return;
@@ -154,7 +154,7 @@ impl PreferToHaveLength {
     }
 
     fn build_code<'a>(
-        fixer: RuleFixer<'_, 'a>,
+        fixer: RuleFixer<'_, '_, 'a>,
         mem_expr: &MemberExpression<'a>,
         kind: Option<&str>,
         property_name: Option<&str>,

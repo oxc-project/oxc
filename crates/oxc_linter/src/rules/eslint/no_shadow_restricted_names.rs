@@ -37,7 +37,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoShadowRestrictedNames {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         ctx.symbols().iter().for_each(|symbol_id| {
             let name = ctx.symbols().get_name(symbol_id);
 

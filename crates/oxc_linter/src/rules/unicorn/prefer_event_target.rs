@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferEventTarget {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::IdentifierReference(ident) = node.kind() else {
             return;
         };

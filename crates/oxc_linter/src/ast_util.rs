@@ -21,7 +21,7 @@ use crate::context::LintContext;
 /// 1. Literal booleans (`true` or `false`)
 /// 2. Unary `!` expressions with a constant value
 /// 3. Constant booleans created via the `Boolean` global function
-pub fn is_static_boolean<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+pub fn is_static_boolean<'a>(expr: &Expression<'a>, ctx: &LintContext<'a, '_>) -> bool {
     match expr {
         Expression::BooleanLiteral(_) => true,
         Expression::CallExpression(call_expr) => call_expr.is_constant(true, ctx),
@@ -71,11 +71,11 @@ fn is_logical_identity(op: LogicalOperator, expr: &Expression) -> bool {
 ///   When `false`, checks if -- for both string and number --
 ///   if coerced to that type, the value will be constant.
 pub trait IsConstant<'a, 'b> {
-    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool;
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a, '_>) -> bool;
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
-    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a, '_>) -> bool {
         match self {
             Self::ArrowFunctionExpression(_)
             | Self::FunctionExpression(_)
@@ -149,7 +149,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Expression<'a> {
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for CallExpression<'a> {
-    fn is_constant(&self, _in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
+    fn is_constant(&self, _in_boolean_position: bool, ctx: &LintContext<'a, '_>) -> bool {
         if let Expression::Identifier(ident) = &self.callee {
             if ident.name == "Boolean"
                 && self.arguments.iter().next().map_or(true, |first| first.is_constant(true, ctx))
@@ -162,7 +162,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for CallExpression<'a> {
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
-    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a, '_>) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
             match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
@@ -171,7 +171,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for Argument<'a> {
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for ArrayExpressionElement<'a> {
-    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a, '_>) -> bool {
         match self {
             Self::SpreadElement(element) => element.is_constant(in_boolean_position, ctx),
             match_expression!(Self) => self.to_expression().is_constant(in_boolean_position, ctx),
@@ -181,7 +181,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for ArrayExpressionElement<'a> {
 }
 
 impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
-    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a>) -> bool {
+    fn is_constant(&self, in_boolean_position: bool, ctx: &LintContext<'a, '_>) -> bool {
         self.argument.is_constant(in_boolean_position, ctx)
     }
 }
@@ -190,7 +190,7 @@ impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
 /// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
     loop {
@@ -212,7 +212,10 @@ pub fn is_nth_argument<'a>(call: &CallExpression<'a>, arg: &Argument<'a>, n: usi
 }
 
 /// Jump to the outer most of chained parentheses if any
-pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> &'b AstNode<'a> {
+pub fn outermost_paren<'a, 'b>(
+    node: &'b AstNode<'a>,
+    ctx: &'b LintContext<'a, '_>,
+) -> &'b AstNode<'a> {
     let mut node = node;
 
     loop {
@@ -231,7 +234,7 @@ pub fn outermost_paren<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) 
 
 pub fn outermost_paren_parent<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b AstNode<'a>> {
     let mut node = node;
 
@@ -251,7 +254,7 @@ pub fn outermost_paren_parent<'a, 'b>(
 
 pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b AstNode<'a>> {
     let symbol_id = get_symbol_id_of_variable(ident, ctx)?;
     let symbol_table = ctx.semantic().symbols();
@@ -260,7 +263,7 @@ pub fn get_declaration_of_variable<'a, 'b>(
 
 pub fn get_symbol_id_of_variable(
     ident: &IdentifierReference,
-    ctx: &LintContext<'_>,
+    ctx: &LintContext<'_, '_>,
 ) -> Option<SymbolId> {
     let symbol_table = ctx.semantic().symbols();
     let reference_id = ident.reference_id.get()?;

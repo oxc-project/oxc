@@ -61,7 +61,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferArrayFlat {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -74,7 +74,7 @@ impl Rule for PreferArrayFlat {
 }
 
 // `array.flatMap(x => x)`
-fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
+fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a, '_>) {
     if !is_method_call(call_expr, None, Some(&["flatMap"]), Some(1), Some(1)) {
         return;
     }
@@ -104,7 +104,7 @@ fn check_array_flat_map_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintConte
 
 // `array.reduce((a, b) => a.concat(b), [])`
 // `array.reduce((a, b) => [...a, ...b], [])`
-fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
+fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a, '_>) {
     if !is_method_call(call_expr, None, Some(&["reduce"]), Some(2), Some(2)) {
         return;
     }
@@ -199,7 +199,7 @@ fn check_array_reduce_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
 
 // `[].concat(maybeArray)`
 // `[].concat(...array)`
-fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
+fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a, '_>) {
     if is_method_call(call_expr, None, Some(&["concat"]), Some(1), Some(1)) {
         // `array.concat(maybeArray)`
         if let Expression::ArrayExpression(array_expr) =
@@ -216,7 +216,10 @@ fn check_array_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext
 // - `[].concat.apply([], array)` and `Array.prototype.concat.apply([], array)`
 // - `[].concat.call([], maybeArray)` and `Array.prototype.concat.call([], maybeArray)`
 // - `[].concat.call([], ...array)` and `Array.prototype.concat.call([], ...array)`
-fn check_array_prototype_concat_case<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
+fn check_array_prototype_concat_case<'a>(
+    call_expr: &CallExpression<'a>,
+    ctx: &LintContext<'a, '_>,
+) {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return;
     };

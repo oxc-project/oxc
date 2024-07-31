@@ -120,7 +120,7 @@ fn check_case(value: &str, is_regex: bool) -> Option<String> {
     }
 }
 impl Rule for EscapeCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::StringLiteral(StringLiteral { span, .. }) => {
                 let text = span.source_text(ctx.source_text());

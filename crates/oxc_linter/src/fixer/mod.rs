@@ -15,7 +15,7 @@ pub use fix::{CompositeFix, Fix, FixKind, RuleFix};
 /// [`RuleFixer`]: https://github.com/eslint/eslint/blob/main/lib/linter/rule-fixer.js
 #[derive(Clone, Copy)]
 #[must_use]
-pub struct RuleFixer<'c, 'a: 'c> {
+pub struct RuleFixer<'c, 'l, 'a> {
     /// What kind of fixes will factory methods produce?
     ///
     /// Controlled via `diagnostic_with_fix`, `diagnostic_with_suggestion`, and
@@ -30,16 +30,16 @@ pub struct RuleFixer<'c, 'a: 'c> {
     ///
     /// Defaults to `true`
     auto_message: bool,
-    ctx: &'c LintContext<'a>,
+    ctx: &'c LintContext<'a, 'l>,
 }
 
-impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
+impl<'c, 'a: 'c, 'l: 'c> RuleFixer<'c, 'l, 'a> {
     /// Maximum length code snippets can be inside auto-created messages before
     /// they get truncated. Prevents the terminal from getting flooded when a
     /// replacement covers a large span.
     const MAX_SNIPPET_LEN: usize = 256;
 
-    pub(super) fn new(kind: FixKind, ctx: &'c LintContext<'a>) -> Self {
+    pub(super) fn new(kind: FixKind, ctx: &'c LintContext<'a, 'l>) -> Self {
         Self { kind, auto_message: true, ctx }
     }
 

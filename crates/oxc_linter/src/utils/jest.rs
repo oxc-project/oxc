@@ -92,7 +92,7 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
 pub fn is_type_of_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     kinds: &[JestFnKind],
 ) -> bool {
     let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx);
@@ -109,7 +109,7 @@ pub fn is_type_of_jest_fn_call<'a>(
 pub fn parse_general_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<ParsedGeneralJestFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
@@ -122,7 +122,7 @@ pub fn parse_general_jest_fn_call<'a>(
 pub fn parse_expect_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<ParsedExpectFnCall<'a>> {
     let jest_fn_call = parse_jest_fn_call(call_expr, possible_jest_node, ctx)?;
 
@@ -140,7 +140,7 @@ pub struct PossibleJestNode<'a, 'b> {
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn collect_possible_jest_call_node<'a, 'b>(
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Vec<PossibleJestNode<'a, 'b>> {
     // Some people may write codes like below, we need lookup imported test function and global test function.
     // ```
@@ -192,7 +192,7 @@ pub fn collect_possible_jest_call_node<'a, 'b>(
 }
 
 fn collect_ids_referenced_to_import<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Vec<(ReferenceId, Option<&'a str>)> {
     ctx.symbols()
         .resolved_references
@@ -296,35 +296,32 @@ pub fn is_equality_matcher(matcher: &KnownMemberExpressionProperty) -> bool {
 
 #[cfg(test)]
 mod test {
-    use std::{path::Path, rc::Rc};
+    use crate::context::LinterContext;
 
-    use oxc_allocator::Allocator;
-    use oxc_parser::Parser;
-    use oxc_semantic::SemanticBuilder;
-    use oxc_span::SourceType;
 
-    use crate::LintContext;
+        #[test]
+        fn test_is_jest_file() {
+            let allocator = Allocator::default();
+            let source_type = SourceType::default();
+            let parser_ret = Parser::new(&allocator, "", source_type).parse();
+            let program = allocator.alloc(parser_ret.program);
+            let semantic_ret =
+                SemanticBuilder::new("", source_type).with_cfg(true).build(program).semantic;
+            let semantic_ret = Rc::new(semantic_ret);
 
-    #[test]
-    fn test_is_jest_file() {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let parser_ret = Parser::new(&allocator, "", source_type).parse();
-        let program = allocator.alloc(parser_ret.program);
-        let semantic_ret =
-            SemanticBuilder::new("", source_type).with_cfg(true).build(program).semantic;
-        let semantic_ret = Rc::new(semantic_ret);
+            let path = Path::new("foo.js");
+            let linter_ctx = LinterContext::new(Box::from(path), Rc::clone(&semantic_ret));
+            let ctx = linter_ctx.build()
+            assert!(!super::is_jest_file(&ctx));
 
-        let path = Path::new("foo.js");
-        let ctx = LintContext::new(Box::from(path), Rc::clone(&semantic_ret));
-        assert!(!super::is_jest_file(&ctx));
+            let path = Path::new("foo.test.js");
+            let linter_ctx = LinterContext::new(Box::from(path), Rc::clone(&semantic_ret));
+            let ctx = LintContext::new(Box::from(path), Rc::clone(&semantic_ret));
+            assert!(super::is_jest_file(&ctx));
 
-        let path = Path::new("foo.test.js");
-        let ctx = LintContext::new(Box::from(path), Rc::clone(&semantic_ret));
-        assert!(super::is_jest_file(&ctx));
-
-        let path = Path::new("__tests__/foo/test.spec.js");
-        let ctx = LintContext::new(Box::from(path), semantic_ret);
-        assert!(super::is_jest_file(&ctx));
-    }
+            let path = Path::new("__tests__/foo/test.spec.js");
+            let linter_ctx = LinterContext::new(Box::from(path), Rc::clone(&semantic_ret));
+            let ctx = LintContext::new(Box::from(path), semantic_ret);
+            assert!(super::is_jest_file(&ctx));
+        }
 }

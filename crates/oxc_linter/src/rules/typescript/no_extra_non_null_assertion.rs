@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_extra_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("extra non-null assertion").with_label(span0)
@@ -30,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExtraNonNullAssertion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let expr = match node.kind() {
             AstKind::TSNonNullExpression(expr) => {
                 if let Expression::TSNonNullExpression(expr) =
@@ -65,7 +69,7 @@ impl Rule for NoExtraNonNullAssertion {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

@@ -131,7 +131,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessSpread {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         check_useless_spread_in_list(node, ctx);
 
         if let AstKind::ArrayExpression(array_expr) = node.kind() {
@@ -141,7 +141,7 @@ impl Rule for NoUselessSpread {
     }
 }
 
-fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
     if !matches!(node.kind(), AstKind::ArrayExpression(_) | AstKind::ObjectExpression(_)) {
         return;
     }
@@ -192,7 +192,7 @@ fn check_useless_spread_in_list<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
 
 /// `...[ ...[] ]`. May contain multiple spread elements.
 fn diagnose_array_in_array_spread<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     diagnostic: OxcDiagnostic,
     outer_array: &AstKind<'a>,
     inner_array: &ArrayExpression<'a>,
@@ -247,7 +247,7 @@ fn diagnose_array_in_array_spread<'a>(
 fn check_useless_iterable_to_array<'a>(
     node: &AstNode<'a>,
     array_expr: &ArrayExpression<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) {
     let Some(parent) = outermost_paren_parent(node, ctx) else {
         return;
@@ -367,7 +367,7 @@ fn check_useless_iterable_to_array<'a>(
     }
 }
 
-fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
+fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintContext<'a, '_>) {
     if !is_single_array_spread(array_expr) {
         return;
     }
@@ -446,7 +446,7 @@ fn check_useless_array_clone<'a>(array_expr: &ArrayExpression<'a>, ctx: &LintCon
 }
 
 fn fix_replace<'a, T: GetSpan, U: GetSpan>(
-    fixer: RuleFixer<'_, 'a>,
+    fixer: RuleFixer<'_, '_, 'a>,
     target: &T,
     replacement: &U,
 ) -> RuleFix<'a> {
@@ -456,7 +456,7 @@ fn fix_replace<'a, T: GetSpan, U: GetSpan>(
 
 /// Creates a fix that replaces `[...spread]` with `spread`
 fn fix_by_removing_spread<'a, S: GetSpan>(
-    fixer: RuleFixer<'_, 'a>,
+    fixer: RuleFixer<'_, '_, 'a>,
     iterable: &S,
     spread: &SpreadElement<'a>,
 ) -> RuleFix<'a> {

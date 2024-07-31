@@ -80,7 +80,7 @@ impl Rule for CatchErrorName {
         Self(Box::new(CatchErrorNameConfig { ignore: ignored_names, name: allowed_name }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::CatchParameter(catch_param) = node.kind() {
             if let oxc_ast::ast::BindingPatternKind::BindingIdentifier(binding_ident) =
                 &catch_param.pattern.kind

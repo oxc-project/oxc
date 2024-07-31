@@ -45,17 +45,14 @@ declare_oxc_lint!(
     NoNamedAsDefaultMember,
     suspicious
 );
-fn get_symbol_id_from_ident(
-    ctx: &LintContext<'_>,
-    ident: &IdentifierReference,
-) -> Option<SymbolId> {
+fn get_symbol_id_from_ident(ctx: &LintContext, ident: &IdentifierReference) -> Option<SymbolId> {
     let reference_id = ident.reference_id.get().unwrap();
     let reference = &ctx.symbols().references[reference_id];
     reference.symbol_id()
 }
 
 impl Rule for NoNamedAsDefaultMember {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
 
         let mut has_members_map = FxHashMap::default();

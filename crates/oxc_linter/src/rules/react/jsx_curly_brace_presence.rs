@@ -12,7 +12,11 @@ use oxc_semantic::AstNodeId;
 use oxc_span::{GetSpan as _, Span};
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn jsx_curly_brace_presence_unnecessary_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Curly braces are unnecessary here.").with_label(span)
@@ -327,7 +331,7 @@ impl Rule for JsxCurlyBracePresence {
             _ => default,
         }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::JSXElement(el) => {
                 el.opening_element.attributes.iter().for_each(|attr| {
@@ -347,7 +351,7 @@ impl Rule for JsxCurlyBracePresence {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }
@@ -355,7 +359,7 @@ impl Rule for JsxCurlyBracePresence {
 impl JsxCurlyBracePresence {
     fn check_jsx_child<'a>(
         &self,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
         children: &Vec<'a, JSXChild<'a>>,
         node: &AstNode<'a>,
     ) {
@@ -379,7 +383,7 @@ impl JsxCurlyBracePresence {
 
     fn check_jsx_attribute<'a>(
         &self,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
         attr: &JSXAttributeItem<'a>,
         node: &AstNode<'a>,
     ) {
@@ -412,7 +416,7 @@ impl JsxCurlyBracePresence {
 
     fn check_expression_container<'a>(
         &self,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
         container: &JSXExpressionContainer<'a>,
         node: &AstNode<'a>,
         // true for JSX props, false for JSX children
@@ -464,7 +468,7 @@ impl JsxCurlyBracePresence {
 }
 
 fn is_allowed_string_like<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     s: &'a str,
     container: &JSXExpressionContainer<'a>,
     node_id: AstNodeId,
@@ -517,7 +521,7 @@ fn contains_html_entity(s: &str) -> bool {
 }
 
 fn report_unnecessary_curly<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     _container: &JSXExpressionContainer<'a>,
     inner_span: Span,
 ) {
@@ -525,7 +529,7 @@ fn report_unnecessary_curly<'a>(
 }
 
 fn has_adjacent_jsx_expression_containers<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     container: &JSXExpressionContainer<'a>,
     node_id: AstNodeId,
     // element: &JSXElement<'a>,

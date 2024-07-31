@@ -96,7 +96,7 @@ impl Rule for NoCycle {
         }
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
 
         let needle = &module_record.resolved_absolute_path;

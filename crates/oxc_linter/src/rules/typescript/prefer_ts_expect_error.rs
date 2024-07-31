@@ -3,7 +3,10 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+};
 
 fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce using `@ts-expect-error` over `@ts-ignore`")
@@ -72,7 +75,7 @@ impl Rule for PreferTsExpectError {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

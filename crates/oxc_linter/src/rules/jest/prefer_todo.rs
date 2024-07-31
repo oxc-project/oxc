@@ -57,7 +57,7 @@ impl Rule for PreferTodo {
     }
 }
 
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
         let counts = call_expr.arguments.len();
@@ -135,7 +135,7 @@ fn is_empty_function(expr: &CallExpression) -> bool {
     }
 }
 
-fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFix<'a> {
+fn build_code<'a>(fixer: RuleFixer<'_, '_, 'a>, expr: &CallExpression<'a>) -> RuleFix<'a> {
     let mut formatter = fixer.codegen();
 
     match &expr.callee {

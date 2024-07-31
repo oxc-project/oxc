@@ -29,7 +29,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoHeadElement {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let Some(full_file_path) = ctx.file_path().to_str() else {
             return;
         };

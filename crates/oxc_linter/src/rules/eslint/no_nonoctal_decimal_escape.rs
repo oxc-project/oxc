@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNonoctalDecimalEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
             check_string(ctx, literal.span.source_text(ctx.source_text()));
         }
@@ -82,7 +82,7 @@ fn quick_test(s: &str) -> bool {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn check_string(ctx: &LintContext<'_>, string: &str) {
+fn check_string(ctx: &LintContext, string: &str) {
     lazy_static! {
         static ref NONOCTAL_REGEX: Regex =
             Regex::new(r"(?:[^\\]|(?P<previousEscape>\\.))*?(?P<decimalEscape>\\[89])").unwrap();

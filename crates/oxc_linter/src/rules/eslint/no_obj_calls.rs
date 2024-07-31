@@ -78,7 +78,7 @@ fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
 fn resolve_global_binding<'a, 'b: 'a>(
     ident: &'a oxc_allocator::Box<'a, IdentifierReference<'a>>,
     scope_id: ScopeId,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<&'a str> {
     if ctx.semantic().is_reference_to_global_variable(ident) {
         Some(ident.name.as_str())
@@ -127,7 +127,7 @@ fn resolve_global_binding<'a, 'b: 'a>(
 }
 
 impl Rule for NoObjCalls {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         #[allow(clippy::needless_return)]
         let (callee, span) = match node.kind() {
             AstKind::NewExpression(expr) => (&expr.callee, expr.span),

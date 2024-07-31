@@ -52,7 +52,7 @@ impl Rule for NoUnsafeNegation {
         Self { enforce_for_ordering_relations }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };
@@ -74,12 +74,12 @@ impl NoUnsafeNegation {
 
     /// Precondition:
     /// expr.left is `UnaryExpression` whose operator is '!'
-    fn report_with_fix<'a>(expr: &BinaryExpression, ctx: &LintContext<'a>) {
+    fn report_with_fix<'a>(expr: &BinaryExpression, ctx: &LintContext<'a, '_>) {
         use oxc_codegen::{Context, Gen};
         // Diagnostic points at the unexpected negation
         let diagnostic = no_unsafe_negation_diagnostic(expr.operator.as_str(), expr.left.span());
 
-        let fix_producer = |fixer: RuleFixer<'_, 'a>| {
+        let fix_producer = |fixer: RuleFixer<'_, '_, 'a>| {
             // modify `!a instance of B` to `!(a instanceof B)`
             let modified_code = {
                 let mut codegen = fixer.codegen();

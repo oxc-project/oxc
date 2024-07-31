@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireAwait {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::FunctionBody(body) = node.kind() {
             if body.is_empty() {
                 return;

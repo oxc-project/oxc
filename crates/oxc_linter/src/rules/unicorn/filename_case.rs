@@ -91,7 +91,7 @@ impl Rule for FilenameCase {
         Self::default()
     }
 
-    fn run_once<'a>(&self, ctx: &LintContext<'_>) {
+    fn run_once<'a>(&self, ctx: &LintContext) {
         let Some(filename) = ctx.file_path().file_stem().and_then(|s| s.to_str()) else {
             return;
         };

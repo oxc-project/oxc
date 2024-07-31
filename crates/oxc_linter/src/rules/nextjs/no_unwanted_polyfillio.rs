@@ -106,7 +106,7 @@ const NEXT_POLYFILLED_FEATURES: Set<&'static str> = phf_set! {
 };
 
 impl Rule for NoUnwantedPolyfillio {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let tag_name = if let JSXElementName::Identifier(ident) = &jsx_el.name {
                 &ident.name

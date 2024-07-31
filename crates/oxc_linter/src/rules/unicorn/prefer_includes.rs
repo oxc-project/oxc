@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferIncludes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::BinaryExpression(bin_expr) = node.kind() else {
             return;
         };

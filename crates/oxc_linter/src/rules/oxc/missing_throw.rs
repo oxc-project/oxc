@@ -29,7 +29,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MissingThrow {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::NewExpression(new_expr) = node.kind() else {
             return;
         };
@@ -40,7 +40,7 @@ impl Rule for MissingThrow {
 }
 
 impl MissingThrow {
-    fn has_missing_throw<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    fn has_missing_throw<'a>(node: &AstNode<'a>, ctx: &LintContext<'a, '_>) -> bool {
         let mut node_ancestors = ctx.nodes().ancestors(node.id()).skip(1);
 
         let Some(node_id) = node_ancestors.next() else {

@@ -77,7 +77,7 @@ impl Rule for NoConditionalExpect {
     }
 }
 
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
         let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
@@ -100,7 +100,7 @@ fn check_parents<'a>(
     node: &AstNode<'a>,
     visited: &mut FxHashSet<AstNodeId>,
     in_conditional: InConditional,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> InConditional {
     // if the node is already visited, we should return `false` to avoid infinite loop.
     if !visited.insert(node.id()) {

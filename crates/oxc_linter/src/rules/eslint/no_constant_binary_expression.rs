@@ -75,7 +75,7 @@ fn constant_both_always_new(span0: Span) -> OxcDiagnostic {
 }
 
 impl Rule for NoConstantBinaryExpression {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::LogicalExpression(expr) => match expr.operator {
                 LogicalOperator::Or | LogicalOperator::And if expr.left.is_constant(true, ctx) => {
@@ -146,7 +146,7 @@ impl NoConstantBinaryExpression {
     fn has_constant_nullishness<'a>(
         expr: &Expression<'a>,
         non_nullish: bool,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) -> bool {
         if non_nullish && (expr.is_null() || expr.evaluate_to_undefined()) {
             return false;
@@ -197,7 +197,7 @@ impl NoConstantBinaryExpression {
         a: &'a Expression<'a>,
         b: &'a Expression<'a>,
         operator: BinaryOperator,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) -> Option<&'a Expression<'a>> {
         match operator {
             BinaryOperator::Equality | BinaryOperator::Inequality => {
@@ -227,7 +227,7 @@ impl NoConstantBinaryExpression {
     /// `https://262.ecma-international.org/5.1/#sec-11.9.3`
     fn has_constant_loose_boolean_comparison<'a>(
         expr: &Expression<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) -> bool {
         match expr {
             Expression::ObjectExpression(_)
@@ -268,7 +268,7 @@ impl NoConstantBinaryExpression {
     /// if it is always the same boolean value.
     fn has_constant_strict_boolean_comparison<'a>(
         expr: &Expression<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) -> bool {
         match expr {
             Expression::ObjectExpression(_)
@@ -329,7 +329,7 @@ impl NoConstantBinaryExpression {
     }
 
     /// Test if an AST node will always result in a newly constructed object
-    fn is_always_new<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    fn is_always_new<'a>(expr: &Expression<'a>, ctx: &LintContext<'a, '_>) -> bool {
         match expr {
             Expression::ObjectExpression(_)
             | Expression::ArrayExpression(_)

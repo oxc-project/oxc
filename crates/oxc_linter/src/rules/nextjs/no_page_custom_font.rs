@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoPageCustomFont {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::JSXOpeningElement(element) = node.kind() else {
             return;
         };
@@ -76,7 +76,7 @@ impl Rule for NoPageCustomFont {
     }
 }
 
-fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+fn is_inside_export_default(node: &AstNode<'_>, ctx: &LintContext) -> bool {
     let mut is_inside_export_default = false;
     for parent_node in ctx.nodes().iter_parents(node.id()) {
         // export default function/class

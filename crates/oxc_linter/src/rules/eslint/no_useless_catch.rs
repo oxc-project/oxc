@@ -46,7 +46,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessCatch {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::TryStatement(try_stmt) = node.kind() else {
             return;
         };

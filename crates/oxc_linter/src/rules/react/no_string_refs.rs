@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LinterContext},
     rule::Rule,
     utils::{get_parent_es5_component, get_parent_es6_component},
     AstNode,
@@ -108,7 +108,7 @@ impl Rule for NoStringRefs {
         Self { no_template_literals }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 if is_literal_ref_attribute(attr, self.no_template_literals) {
@@ -128,7 +128,7 @@ impl Rule for NoStringRefs {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

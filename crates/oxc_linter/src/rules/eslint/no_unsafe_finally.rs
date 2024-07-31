@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeFinally {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let kind = node.kind();
 
         let sentinel_node_type = match kind {

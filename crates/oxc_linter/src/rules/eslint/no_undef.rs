@@ -73,7 +73,7 @@ impl Rule for NoUndef {
     }
 }
 
-fn has_typeof_operator(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+fn has_typeof_operator(node: &AstNode<'_>, ctx: &LintContext) -> bool {
     ctx.nodes().parent_node(node.id()).map_or(false, |parent| match parent.kind() {
         AstKind::UnaryExpression(expr) => expr.operator == UnaryOperator::Typeof,
         AstKind::ParenthesizedExpression(_) => has_typeof_operator(parent, ctx),

@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadBitwiseOperator {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 if is_mistype_short_circuit(node) {

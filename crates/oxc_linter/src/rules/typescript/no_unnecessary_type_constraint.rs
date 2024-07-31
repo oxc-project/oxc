@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_unnecessary_type_constraint_diagnostic(
     x0: &str,
@@ -48,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnnecessaryTypeConstraint {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::TSTypeParameterDeclaration(decl) = node.kind() {
             for param in &decl.params {
                 if let Some(ty) = &param.constraint {
@@ -68,7 +72,7 @@ impl Rule for NoUnnecessaryTypeConstraint {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

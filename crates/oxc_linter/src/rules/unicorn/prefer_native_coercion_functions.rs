@@ -50,7 +50,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNativeCoercionFunctions {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
                 if arrow_expr.r#async || arrow_expr.params.items.len() == 0 {

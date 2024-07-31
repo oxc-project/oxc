@@ -81,7 +81,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessConstructor {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::MethodDefinition(constructor) = node.kind() else {
             return;
         };
@@ -123,7 +123,7 @@ impl Rule for NoUselessConstructor {
 
 // Check for an empty constructor in a class without a superclass.
 fn lint_empty_constructor<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     constructor: &MethodDefinition<'a>,
     body: &FunctionBody<'a>,
 ) {
@@ -149,7 +149,7 @@ fn lint_empty_constructor<'a>(
 }
 
 fn lint_redundant_super_call<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     constructor: &MethodDefinition<'a>,
     body: &FunctionBody<'a>,
 ) {

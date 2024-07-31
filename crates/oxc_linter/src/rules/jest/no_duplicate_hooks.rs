@@ -121,7 +121,7 @@ impl NoDuplicateHooks {
         possible_jest_node: &PossibleJestNode<'a, '_>,
         root_node_id: AstNodeId,
         hook_contexts: &mut HashMap<AstNodeId, Vec<HashMap<String, i32>>>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {

@@ -59,7 +59,7 @@ impl Rule for NoBarrelFile {
         }
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let semantic = ctx.semantic();
         let module_record = semantic.module_record();
 

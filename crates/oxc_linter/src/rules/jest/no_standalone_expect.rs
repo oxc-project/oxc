@@ -74,7 +74,7 @@ impl Rule for NoStandaloneExpect {
         Self(Box::new(NoStandaloneExpectConfig { additional_test_block_functions }))
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let possible_jest_nodes = collect_possible_jest_call_node(ctx);
         let id_nodes_mapping = possible_jest_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
             acc.entry(cur.node.id()).or_insert(cur);
@@ -92,7 +92,7 @@ impl NoStandaloneExpect {
         &self,
         possible_jest_node: &PossibleJestNode<'a, '_>,
         id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -130,7 +130,7 @@ fn is_correct_place_to_call_expect<'a>(
     node: &AstNode<'a>,
     additional_test_block_functions: &[String],
     id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<()> {
     let mut parent = ctx.nodes().parent_node(node.id())?;
 
@@ -198,7 +198,7 @@ fn is_var_declarator_or_test_block<'a>(
     node: &AstNode<'a>,
     additional_test_block_functions: &[String],
     id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> bool {
     match node.kind() {
         AstKind::VariableDeclarator(_) => return true,

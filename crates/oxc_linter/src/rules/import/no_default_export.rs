@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDefaultExport {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
         write_diagnostic_optional(ctx, module_record.export_default);
         module_record.export_default_duplicated.iter().for_each(|it| write_diagnostic(ctx, *it));
@@ -48,10 +48,10 @@ impl Rule for NoDefaultExport {
     }
 }
 
-fn write_diagnostic(ctx: &LintContext<'_>, span: Span) {
+fn write_diagnostic(ctx: &LintContext, span: Span) {
     ctx.diagnostic(no_default_export_diagnostic(span));
 }
-fn write_diagnostic_optional(ctx: &LintContext<'_>, span_option: Option<Span>) {
+fn write_diagnostic_optional(ctx: &LintContext, span_option: Option<Span>) {
     if let Some(span) = span_option {
         write_diagnostic(ctx, span);
     }

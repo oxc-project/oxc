@@ -9,7 +9,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn adjacent_overload_signatures_diagnostic(
     x0: &str,
@@ -246,7 +250,7 @@ impl GetMethod for Statement<'_> {
     }
 }
 
-fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
+fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext) {
     let mut last_method: Option<&Method> = None;
     let mut seen_methods: Vec<&Method> = Vec::new();
 
@@ -280,7 +284,7 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 }
 
 impl Rule for AdjacentOverloadSignatures {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::Class(class) => {
                 let members = &class.body.body;
@@ -320,7 +324,7 @@ impl Rule for AdjacentOverloadSignatures {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

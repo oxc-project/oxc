@@ -6,7 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, utils::is_create_element_call, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    utils::is_create_element_call,
+    AstNode,
+};
 
 fn no_children_prop_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Avoid passing children using a prop.")
@@ -55,7 +60,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoChildrenProp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
@@ -86,7 +91,7 @@ impl Rule for NoChildrenProp {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

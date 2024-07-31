@@ -44,7 +44,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDuplicateCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::SwitchStatement(ss) = node.kind() {
             let mut map = FxHashMap::default();
             map.reserve(ss.cases.len());

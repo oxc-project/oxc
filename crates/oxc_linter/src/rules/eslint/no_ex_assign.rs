@@ -36,7 +36,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flag(symbol_id).is_catch_variable() {
             for reference in symbol_table.get_resolved_references(symbol_id) {

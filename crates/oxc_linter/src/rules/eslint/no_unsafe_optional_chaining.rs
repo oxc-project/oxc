@@ -63,7 +63,7 @@ impl Rule for NoUnsafeOptionalChaining {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::CallExpression(expr) if !expr.optional => {
                 Self::check_unsafe_usage(&expr.callee, ctx);
@@ -135,11 +135,11 @@ enum ErrorType {
 }
 
 impl NoUnsafeOptionalChaining {
-    fn check_unsafe_usage<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) {
+    fn check_unsafe_usage<'a>(expr: &Expression<'a>, ctx: &LintContext<'a, '_>) {
         Self::check_undefined_short_circuit(expr, ErrorType::Usage, ctx);
     }
 
-    fn check_unsafe_arithmetic<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
+    fn check_unsafe_arithmetic<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a, '_>) {
         if self.disallow_arithmetic_operators {
             Self::check_undefined_short_circuit(expr, ErrorType::Arithmetic, ctx);
         }
@@ -148,7 +148,7 @@ impl NoUnsafeOptionalChaining {
     fn check_undefined_short_circuit<'a>(
         expr: &Expression<'a>,
         error_type: ErrorType,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         match expr.get_inner_expression() {
             Expression::LogicalExpression(expr) => match expr.operator {

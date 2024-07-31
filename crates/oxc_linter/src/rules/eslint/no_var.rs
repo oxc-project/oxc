@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoVar {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::VariableDeclaration(dec) = node.kind() {
             if dec.kind == VariableDeclarationKind::Var {
                 ctx.diagnostic(no_var_diagnostic(Span::new(dec.span.start, dec.span.start + 3)));

@@ -111,7 +111,7 @@ impl<'a> ExpressionExt for Expression<'a> {
 }
 
 impl Rule for PreferForOf {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::ForStatement(for_stmt) = node.kind() else {
             return;
         };

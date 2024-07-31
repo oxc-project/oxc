@@ -70,7 +70,7 @@ impl Rule for NoBitwise {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::BinaryExpression(bin_expr) => {
                 let op = bin_expr.operator.as_str();

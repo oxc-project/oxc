@@ -6,7 +6,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConfusingNonNullAssertion;
@@ -62,7 +66,7 @@ fn get_depth_ends_in_bang(expr: &Expression<'_>) -> Option<u32> {
 }
 
 impl Rule for NoConfusingNonNullAssertion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::BinaryExpression(binary_expr) => {
                 let Some(bang_depth) = get_depth_ends_in_bang(&binary_expr.left) else {
@@ -93,7 +97,7 @@ impl Rule for NoConfusingNonNullAssertion {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

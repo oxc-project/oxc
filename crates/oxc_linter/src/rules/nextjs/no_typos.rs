@@ -46,7 +46,7 @@ const NEXTJS_DATA_FETCHING_FUNCTIONS: phf::Set<&'static str> = phf_set! {
 const THRESHOLD: i32 = 1;
 
 impl Rule for NoTypos {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let Some(path) = ctx.file_path().to_str() else {
             return;
         };

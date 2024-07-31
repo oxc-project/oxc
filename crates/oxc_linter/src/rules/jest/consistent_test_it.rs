@@ -207,7 +207,7 @@ impl ConsistentTestIt {
         &self,
         describe_nesting_hash: &mut FxHashMap<ScopeId, i32>,
         possible_jest_node: &PossibleJestNode<'a, '_>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {

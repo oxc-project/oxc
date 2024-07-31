@@ -6,7 +6,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    fixer::Fix,
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_function_type_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Enforce using function types instead of interfaces with call signatures.")
@@ -101,7 +106,7 @@ fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
     true
 }
 
-fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>) {
+fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext) {
     match member {
         TSSignature::TSCallSignatureDeclaration(decl) => {
             let start = decl.span.start;
@@ -309,7 +314,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
 }
 
 impl Rule for PreferFunctionType {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(decl) => {
                 let body: &oxc_allocator::Vec<'_, TSSignature<'_>> = &decl.body.body;
@@ -393,7 +398,7 @@ impl Rule for PreferFunctionType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

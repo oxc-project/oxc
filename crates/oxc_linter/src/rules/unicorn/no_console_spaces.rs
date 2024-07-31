@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConsoleSpaces {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -123,7 +123,7 @@ fn report_diagnostic<'a>(
     span: Span,
     literal_raw: &'a str,
     is_template_lit: bool,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) {
     let span = if is_template_lit { span } else { Span::new(span.start + 1, span.end - 1) };
 

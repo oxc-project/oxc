@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for GetterReturn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         // https://eslint.org/docs/latest/rules/getter-return#handled_by_typescript
         if ctx.source_type().is_typescript() {
             return;
@@ -119,7 +119,7 @@ impl GetterReturn {
     }
 
     /// Checks whether it is necessary to check the node
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+    fn is_wanted_node(node: &AstNode, ctx: &LintContext) -> bool {
         if let Some(parent) = ctx.nodes().parent_node(node.id()) {
             match parent.kind() {
                 AstKind::MethodDefinition(mdef) => {
@@ -183,7 +183,7 @@ impl GetterReturn {
         false
     }
 
-    fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>, span: Span) {
+    fn run_diagnostic<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>, span: Span) {
         if !Self::is_wanted_node(node, ctx) {
             return;
         }

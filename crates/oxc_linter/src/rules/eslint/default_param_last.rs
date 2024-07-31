@@ -36,7 +36,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for DefaultParamLast {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::Function(function) => {
                 if !function.is_declaration() && !function.is_expression() {
@@ -50,7 +50,7 @@ impl Rule for DefaultParamLast {
     }
 }
 
-fn check_params<'a>(items: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
+fn check_params<'a>(items: &'a [FormalParameter<'a>], ctx: &LintContext<'a, '_>) {
     let mut has_seen_plain_param = false;
     for param in items.iter().rev() {
         if !param.pattern.kind.is_assignment_pattern() {

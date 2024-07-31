@@ -7,7 +7,10 @@ use std::{
 
 use oxc_semantic::SymbolId;
 
-use crate::{context::LintContext, AllowWarnDeny, AstNode, FixKind, RuleEnum};
+use crate::{
+    context::{LintContext, LinterContext},
+    AllowWarnDeny, AstNode, FixKind, RuleEnum,
+};
 
 pub trait Rule: Sized + Default + fmt::Debug {
     /// Initialize from eslint json configuration
@@ -16,10 +19,10 @@ pub trait Rule: Sized + Default + fmt::Debug {
     }
 
     /// Visit each AST Node
-    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a, '_>) {}
 
     /// Visit each symbol
-    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_>) {}
+    fn run_on_symbol(&self, _symbol_id: SymbolId, _ctx: &LintContext<'_, '_>) {}
 
     /// Run only once. Useful for inspecting scopes and trivias etc.
     fn run_once(&self, _ctx: &LintContext) {}
@@ -31,7 +34,7 @@ pub trait Rule: Sized + Default + fmt::Debug {
     /// enabled/disabled; this is handled by the [`linter`].
     ///
     /// [`linter`]: crate::Linter
-    fn should_run(&self, _ctx: &LintContext) -> bool {
+    fn should_run(&self, _ctx: &LinterContext) -> bool {
         true
     }
 }

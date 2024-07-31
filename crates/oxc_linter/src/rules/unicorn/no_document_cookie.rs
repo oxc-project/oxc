@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDocumentCookie {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
             return;
         };
@@ -79,7 +79,7 @@ impl Rule for NoDocumentCookie {
 
 fn is_document_cookie_reference<'a, 'b>(
     expr: &'a Expression<'b>,
-    ctx: &'a LintContext<'b>,
+    ctx: &'a LintContext<'b, '_>,
 ) -> bool {
     match expr {
         Expression::Identifier(ident) => {

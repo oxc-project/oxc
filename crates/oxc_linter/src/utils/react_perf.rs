@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{rule::Rule, AstNode, LintContext};
+use crate::{context::LinterContext, rule::Rule, AstNode, LintContext};
 use oxc_ast::{
     ast::{
         BindingIdentifier, BindingPattern, BindingPatternKind, Expression, JSXAttributeItem,
@@ -59,7 +59,7 @@ impl<R> Rule for R
 where
     R: ReactPerfRule,
 {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         // new objects/arrays/etc created at the root scope do not get
         // re-created on each render and thus do not affect performance.
         if node.scope_id() == ctx.scopes().root_scope_id() {
@@ -118,7 +118,7 @@ where
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

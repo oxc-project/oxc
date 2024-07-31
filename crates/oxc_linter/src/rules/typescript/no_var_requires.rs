@@ -3,7 +3,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{ast_util::is_global_require_call, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::is_global_require_call,
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_var_requires_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Require statement not part of import statement.")
@@ -33,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoVarRequires {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(expr) = node.kind() else {
             return;
         };
@@ -66,7 +71,7 @@ impl Rule for NoVarRequires {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

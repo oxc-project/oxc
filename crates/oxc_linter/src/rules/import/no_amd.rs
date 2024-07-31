@@ -37,7 +37,7 @@ declare_oxc_lint!(
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/src/rules/no-amd.js>
 impl Rule for NoAmd {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         // not in top level
         if node.scope_id() != ctx.scopes().root_scope_id() {
             return;

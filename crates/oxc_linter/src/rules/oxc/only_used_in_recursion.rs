@@ -59,7 +59,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for OnlyUsedInRecursion {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::Function(function) = node.kind() else {
             return;
         };
@@ -92,7 +92,7 @@ fn is_argument_only_used_in_recursion<'a>(
     function_id: &'a BindingIdentifier,
     arg: &'a BindingIdentifier,
     arg_index: usize,
-    ctx: &'a LintContext<'_>,
+    ctx: &'a LintContext,
 ) -> bool {
     let mut is_used_only_in_recursion = true;
     let mut has_references = false;
@@ -132,7 +132,7 @@ fn is_argument_only_used_in_recursion<'a>(
 
 fn is_function_maybe_reassigned<'a>(
     function_id: &'a BindingIdentifier,
-    ctx: &'a LintContext<'_>,
+    ctx: &'a LintContext,
 ) -> bool {
     let mut is_maybe_reassigned = false;
 

@@ -58,7 +58,7 @@ impl Rule for NoDefaults {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if !is_function_node(node) {
             return;
         }

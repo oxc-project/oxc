@@ -34,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoScriptUrl {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::StringLiteral(literal)
                 if literal.value.to_lowercase().starts_with("javascript:") =>

@@ -13,7 +13,12 @@ use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    utils::get_jsx_attribute_name,
+    AstNode,
+};
 
 fn invalid_prop_on_tag(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Invalid property found")
@@ -452,7 +457,7 @@ impl Rule for NoUnknownProperty {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         static HTML_TAG_CONVENTION: Lazy<Regex> = Lazy::new(|| Regex::new("^[a-z][^-]*$").unwrap());
 
         let AstKind::JSXOpeningElement(el) = &node.kind() else {
@@ -530,7 +535,7 @@ impl Rule for NoUnknownProperty {
             });
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

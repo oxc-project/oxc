@@ -34,7 +34,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadComparisonSequence {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::BinaryExpression(expr) = node.kind() else {
             return;
         };
@@ -46,7 +46,7 @@ impl Rule for BadComparisonSequence {
 
 fn has_no_bad_comparison_in_parents<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> bool {
     for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
         let kind = ctx.nodes().kind(node_id);

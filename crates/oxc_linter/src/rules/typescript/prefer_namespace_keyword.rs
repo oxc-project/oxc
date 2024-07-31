@@ -6,7 +6,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_namespace_keyword_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Use 'namespace' instead of 'module' to declare custom TypeScript modules.")
@@ -34,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferNamespaceKeyword {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::TSModuleDeclaration(module) = node.kind() else { return };
         if module.id.is_string_literal()
             || !matches!(module.id, TSModuleDeclarationName::Identifier(_))
@@ -54,7 +58,7 @@ impl Rule for PreferNamespaceKeyword {
         });
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

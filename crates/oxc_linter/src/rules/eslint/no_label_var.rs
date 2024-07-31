@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLabelVar {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::LabeledStatement(labeled_stmt) = node.kind() else { return };
 
         if let Some(symbol_id) =

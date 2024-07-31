@@ -124,7 +124,7 @@ impl Rule for AnchorIsValid {
         Self(Box::new(AnchorIsValidConfig { valid_hrefs }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             let JSXElementName::Identifier(ident) = &jsx_el.opening_element.name else {
                 return;

@@ -4,7 +4,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+};
 
 fn comment(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use @ts-{x0} because it alters compilation errors."))
@@ -205,7 +208,7 @@ impl Rule for BanTsComment {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

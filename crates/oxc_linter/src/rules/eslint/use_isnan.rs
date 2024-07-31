@@ -78,7 +78,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for UseIsnan {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::BinaryExpression(expr) if expr.operator.is_compare() => {
                 if is_nan_identifier(&expr.left) {
@@ -176,7 +176,7 @@ fn is_target_callee<'a>(callee: &'a Expression<'a>) -> Option<&'static str> {
 fn make_equality_fix<'a>(
     nan_on_left: bool,
     comparison: &BinaryExpression<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> String {
     let non_nan = if nan_on_left {
         comparison.right.span().source_text(ctx.source_text())

@@ -6,7 +6,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_non_null_asserted_optional_chain_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("non-null assertions after an optional chain expression")
@@ -38,7 +42,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoNonNullAssertedOptionalChain {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::TSNonNullExpression(non_null_expr) = node.kind() {
             let chain_span = match non_null_expr.expression.get_inner_expression() {
                 Expression::ChainExpression(chain) => match &chain.expression {
@@ -89,12 +93,12 @@ impl Rule for NoNonNullAssertedOptionalChain {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }
 
-fn is_parent_member_or_call(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
+fn is_parent_member_or_call(node: &AstNode<'_>, ctx: &LintContext) -> bool {
     matches!(
         ctx.nodes().parent_kind(node.id()),
         Some(AstKind::MemberExpression(_) | AstKind::CallExpression(_))

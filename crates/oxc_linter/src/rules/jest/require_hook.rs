@@ -161,7 +161,7 @@ impl Rule for RequireHook {
         Self(Box::new(RequireHookConfig { allowed_function_calls }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let kind = node.kind();
 
         if let AstKind::Program(program) = kind {
@@ -199,14 +199,14 @@ impl RequireHook {
         &self,
         node: &AstNode<'a>,
         statements: &'a OxcVec<'a, Statement<'_>>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         for stmt in statements {
             self.check(node, stmt, ctx);
         }
     }
 
-    fn check<'a>(&self, node: &AstNode<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a>) {
+    fn check<'a>(&self, node: &AstNode<'a>, stmt: &'a Statement<'_>, ctx: &LintContext<'a, '_>) {
         if let Statement::ExpressionStatement(expr_stmt) = stmt {
             self.check_should_report_in_hook(node, &expr_stmt.expression, ctx);
         } else if let Statement::VariableDeclaration(var_decl) = stmt {
@@ -227,7 +227,7 @@ impl RequireHook {
         &self,
         node: &AstNode<'a>,
         expr: &'a Expression<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         if let Expression::CallExpression(call_expr) = expr {
             let name: String = get_node_name(&call_expr.callee);

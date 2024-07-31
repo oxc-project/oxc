@@ -90,7 +90,7 @@ impl MaxExpects {
         &self,
         jest_node: &PossibleJestNode<'a, '_>,
         count_map: &mut FxHashMap<usize, usize>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let node = jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {

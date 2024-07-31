@@ -143,7 +143,7 @@ impl MaxNestedDescribe {
         &self,
         possible_jest_node: &PossibleJestNode<'a, '_>,
         describes_hooks_depth: &mut Vec<ScopeId>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let node = possible_jest_node.node;
         let scope_id = node.scope_id();

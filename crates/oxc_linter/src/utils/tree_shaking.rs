@@ -14,18 +14,18 @@ use crate::LintContext;
 
 mod pure_functions;
 
-pub struct NodeListenerOptions<'a, 'b> {
+pub struct NodeListenerOptions<'a, 'b, 'c> {
     pub checked_mutated_nodes: RefCell<FxHashSet<SymbolId>>,
     pub checked_called_nodes: RefCell<FxHashSet<SymbolId>>,
-    pub ctx: &'b LintContext<'a>,
+    pub ctx: &'b LintContext<'a, 'c>,
     pub has_valid_this: Cell<bool>,
     pub called_with_new: Cell<bool>,
     pub whitelist_modules: Option<&'b Vec<WhitelistModule>>,
     pub whitelist_functions: Option<&'b Vec<String>>,
 }
 
-impl<'a, 'b> NodeListenerOptions<'a, 'b> {
-    pub fn new(ctx: &'b LintContext<'a>) -> Self {
+impl<'a, 'b, 'c> NodeListenerOptions<'a, 'b, 'c> {
+    pub fn new(ctx: &'b LintContext<'a, 'c>) -> Self {
         Self {
             checked_mutated_nodes: RefCell::new(FxHashSet::default()),
             checked_called_nodes: RefCell::new(FxHashSet::default()),
@@ -136,7 +136,7 @@ impl Value {
 
 pub fn get_write_expr<'a, 'b>(
     node_id: AstNodeId,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b Expression<'a>> {
     let parent = ctx.nodes().parent_node(node_id)?;
     match parent.kind() {
@@ -262,7 +262,10 @@ pub fn has_comment_about_side_effect_check(span: Span, ctx: &LintContext) -> boo
 /// let d = 1; /* invalid comment for `e` */
 /// let e = 2
 /// ```
-pub fn get_leading_tree_shaking_comment<'a>(span: Span, ctx: &LintContext<'a>) -> Option<&'a str> {
+pub fn get_leading_tree_shaking_comment<'a>(
+    span: Span,
+    ctx: &LintContext<'a, '_>,
+) -> Option<&'a str> {
     let comment = ctx.semantic().trivias().comments_range(..span.start).next_back()?;
 
     let comment_text = comment.span.source_text(ctx.source_text());

@@ -22,6 +22,7 @@ pub mod table;
 
 use std::{io::Write, path::Path, rc::Rc, sync::Arc};
 
+use context::LinterContext;
 use oxc_diagnostics::Error;
 use oxc_semantic::{AstNode, Semantic};
 
@@ -111,7 +112,7 @@ impl Linter {
         self.rules.len()
     }
 
-    // pub fn run<'a>(&self, ctx: LintContext<'a>) -> Vec<Message<'a>> {
+    // pub fn run<'a>(&self, ctx: LintContext<'a, '_>) -> Vec<Message<'a>> {
     pub fn run<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> Vec<Message<'a>> {
         let ctx = self.create_ctx(path, semantic);
         let semantic = Rc::clone(ctx.semantic());
@@ -124,13 +125,7 @@ impl Linter {
                 let rule_name = rule.name();
                 let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
 
-                (
-                    rule,
-                    ctx.clone()
-                        .with_plugin_name(plugin_name)
-                        .with_rule_name(rule_name)
-                        .with_severity(rule.severity),
-                )
+                (rule, ctx.build(plugin_name, rule_name).with_severity(rule.severity))
             })
             .collect::<Vec<_>>();
 
@@ -163,8 +158,8 @@ impl Linter {
         writeln!(writer, "Total: {}", table.total).unwrap();
     }
 
-    fn create_ctx<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> LintContext<'a> {
-        let mut ctx = LintContext::new(path.to_path_buf().into_boxed_path(), semantic)
+    fn create_ctx<'a>(&self, path: &Path, semantic: Rc<Semantic<'a>>) -> LinterContext<'a> {
+        let mut ctx = LinterContext::new(path.to_path_buf().into_boxed_path(), semantic)
             .with_fix(self.options.fix)
             .with_eslint_config(&self.eslint_config)
             .with_frameworks(self.options.framework_hints);
@@ -176,7 +171,7 @@ impl Linter {
             if frameworks::is_jestlike_file(path) {
                 test_flags.set(FrameworkFlags::Jest, self.options.jest_plugin);
                 test_flags.set(FrameworkFlags::Vitest, self.options.vitest_plugin);
-            } else if frameworks::has_vitest_imports(ctx.module_record()) {
+            } else if frameworks::has_vitest_imports(ctx.semantic().module_record()) {
                 test_flags.set(FrameworkFlags::Vitest, true);
             }
 

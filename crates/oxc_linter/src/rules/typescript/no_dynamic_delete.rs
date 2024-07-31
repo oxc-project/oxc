@@ -34,7 +34,7 @@ fn no_dynamic_delete_diagnostic(span0: Span) -> OxcDiagnostic {
 }
 
 impl Rule for NoDynamicDelete {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::UnaryExpression(expr) = node.kind() else { return };
         if !matches!(expr.operator, UnaryOperator::Delete) {
             return;

@@ -88,7 +88,7 @@ impl Rule for NoRestrictedMatchers {
         }))
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
             self.run(possible_jest_node, ctx);
         }
@@ -96,7 +96,7 @@ impl Rule for NoRestrictedMatchers {
 }
 
 impl NoRestrictedMatchers {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

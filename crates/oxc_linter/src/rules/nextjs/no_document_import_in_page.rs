@@ -27,7 +27,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDocumentImportInPage {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import_decl)) =
             node.kind()
         else {

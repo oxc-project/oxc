@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoImportNodeTest {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
 
         if let Some(node_test_module) = module_record.requested_modules.get("node:test") {

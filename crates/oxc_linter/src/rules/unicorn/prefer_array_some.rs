@@ -49,7 +49,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferArraySome {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 if !is_method_call(call_expr, None, Some(&["find", "findLast"]), Some(1), Some(2)) {
@@ -163,7 +163,7 @@ fn is_node_value_not_function(expr: &Expression) -> bool {
 fn is_checking_undefined<'a, 'b>(
     node: &'b AstNode<'a>,
     _call_expr: &'b CallExpression<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else {
         return false;

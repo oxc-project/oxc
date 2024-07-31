@@ -5,7 +5,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn jsx_no_comment_textnodes_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Comments inside children section of tag should be placed inside braces")
@@ -51,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxNoCommentTextnodes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::JSXText(jsx_text) = node.kind() else {
             return;
         };
@@ -61,7 +65,7 @@ impl Rule for JsxNoCommentTextnodes {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

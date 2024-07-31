@@ -14,7 +14,7 @@ use oxc_semantic::{Reference, SymbolId};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LinterContext},
     fixer::{RuleFix, RuleFixer},
     rule::Rule,
     AstNode,
@@ -136,7 +136,7 @@ impl Rule for ConsistentTypeImports {
         Self(Box::new(config))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if self.disallow_type_annotations.0 {
             //  `import()` type annotations are forbidden.
             // `type Foo = import('foo')`
@@ -233,7 +233,7 @@ impl Rule for ConsistentTypeImports {
             let type_imports = format_word_list(&type_names);
             let type_names = type_names.iter().map(std::convert::AsRef::as_ref).collect::<Vec<_>>();
 
-            let fixer_fn = |fixer: RuleFixer<'_, 'a>| {
+            let fixer_fn = |fixer: RuleFixer<'_, '_, 'a>| {
                 let fix_options = FixOptions {
                     fixer,
                     import_decl,
@@ -267,7 +267,7 @@ impl Rule for ConsistentTypeImports {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }
@@ -306,12 +306,12 @@ fn is_only_has_type_references(symbol_id: SymbolId, ctx: &LintContext) -> bool {
     peekable_iter.all(Reference::is_type)
 }
 
-struct FixOptions<'a, 'b> {
-    fixer: RuleFixer<'b, 'a>,
+struct FixOptions<'a, 'b, 'l> {
+    fixer: RuleFixer<'b, 'l, 'a>,
     import_decl: &'b ImportDeclaration<'a>,
     type_names: &'b [&'b str],
     fix_style: FixStyle,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, 'l>,
 }
 
 type FixerResult<T> = Result<T, Box<dyn Error>>;
@@ -323,7 +323,9 @@ fn fixer_error<S: Into<String>, T>(message: S) -> FixerResult<T> {
 
 // import { Foo, Bar } from 'foo' => import type { Foo, Bar } from 'foo'
 #[allow(clippy::unnecessary_cast, clippy::cast_possible_truncation)]
-fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResult<RuleFix<'a>> {
+fn fix_to_type_import_declaration<'a>(
+    options: &FixOptions<'a, '_, '_>,
+) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, type_names, fix_style, ctx } = options;
     let fixer = fixer.for_multifix();
 
@@ -513,7 +515,7 @@ fn fix_to_type_import_declaration<'a>(options: &FixOptions<'a, '_>) -> FixerResu
 }
 
 fn fix_insert_named_specifiers_in_named_specifier_list<'a>(
-    options: &FixOptions<'a, '_>,
+    options: &FixOptions<'a, '_, '_>,
     insert_text: &str,
 ) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
@@ -542,7 +544,7 @@ struct FixNamedSpecifiers<'a> {
 // get the type-only named import declaration with same source
 // import type { A } from 'foo'
 fn get_type_only_named_import<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     source: &str,
 ) -> Option<&'a ImportDeclaration<'a>> {
     let root = ctx.nodes().root_node()?;
@@ -570,7 +572,7 @@ fn get_type_only_named_import<'a>(
 }
 
 fn get_fixes_named_specifiers<'a>(
-    options: &FixOptions<'a, '_>,
+    options: &FixOptions<'a, '_, '_>,
     subset_named_specifiers: &[&ImportSpecifier<'a>],
     all_named_specifiers: &[&ImportSpecifier<'a>],
 ) -> FixerResult<FixNamedSpecifiers<'a>> {
@@ -640,7 +642,7 @@ fn get_fixes_named_specifiers<'a>(
 fn get_named_specifier_ranges(
     named_specifier_group: &[&ImportSpecifier],
     all_named_specifiers: &[&ImportSpecifier],
-    options: &FixOptions<'_, '_>,
+    options: &FixOptions<'_, '_, '_>,
 ) -> FixerResult<(/* remove_range */ Span, /* text_range*/ Span)> {
     let FixOptions { ctx, import_decl, .. } = options;
 
@@ -731,7 +733,7 @@ fn try_find_char(text: &str, c: char) -> Result<u32, Box<dyn Error>> {
 }
 
 fn fix_inline_type_import_declaration<'a>(
-    options: &FixOptions<'a, '_>,
+    options: &FixOptions<'a, '_, '_>,
 ) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, type_names, ctx, .. } = options;
     let fixer = fixer.for_multifix();
@@ -759,7 +761,7 @@ fn fix_inline_type_import_declaration<'a>(
 }
 
 fn fix_insert_type_specifier_for_import_declaration<'a>(
-    options: &FixOptions<'a, '_>,
+    options: &FixOptions<'a, '_, '_>,
     is_default_import: bool,
 ) -> FixerResult<RuleFix<'a>> {
     let FixOptions { fixer, import_decl, ctx, .. } = options;
@@ -866,9 +868,9 @@ fn classify_specifier<'a, 'b>(import_decl: &'b ImportDeclaration<'a>) -> Grouped
 //        ^^^^ remove
 // note:(don): RuleFix added
 fn fix_remove_type_specifier_from_import_declaration<'a>(
-    fixer: RuleFixer<'_, 'a>,
+    fixer: RuleFixer<'_, '_, 'a>,
     import_decl_span: Span,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> RuleFix<'a> {
     let import_source = ctx.source_range(import_decl_span);
     let new_import_source = import_source
@@ -892,9 +894,9 @@ fn fix_remove_type_specifier_from_import_declaration<'a>(
 // import { type Foo } from 'foo'
 //          ^^^^ remove
 fn fix_remove_type_specifier_from_import_specifier<'a>(
-    fixer: RuleFixer<'_, 'a>,
+    fixer: RuleFixer<'_, '_, 'a>,
     specifier_span: Span,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> RuleFix<'a> {
     let specifier_source = ctx.source_range(specifier_span);
     let new_specifier_source = specifier_source.strip_prefix("type ");

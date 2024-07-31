@@ -7,7 +7,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct ArrayType(Box<ArrayTypeConfig>);
@@ -106,7 +109,7 @@ impl Rule for ArrayType {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let default_config = &self.default;
         let readonly_config: &ArrayOption =
             &self.readonly.clone().unwrap_or_else(|| default_config.clone());
@@ -127,7 +130,7 @@ impl Rule for ArrayType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

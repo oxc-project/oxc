@@ -48,7 +48,7 @@ impl Rule for NoConstantCondition {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::IfStatement(if_stmt) => {
                 if if_stmt.test.is_constant(true, ctx) {

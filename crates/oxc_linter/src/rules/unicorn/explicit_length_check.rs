@@ -104,7 +104,7 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
 }
 fn get_length_check_node<'a, 'b>(
     node: &AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
     // (is_zero_length_check, length_check_node)
 ) -> Option<(bool, &'b AstNode<'a>)> {
     let parent = ctx.nodes().parent_node(node.id());
@@ -155,7 +155,7 @@ fn get_length_check_node<'a, 'b>(
 impl ExplicitLengthCheck {
     fn report<'a>(
         &self,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
         node: &AstNode<'a>,
         is_zero_length_check: bool,
         static_member_expr: &StaticMemberExpression,
@@ -230,7 +230,7 @@ impl ExplicitLengthCheck {
     }
 }
 impl Rule for ExplicitLengthCheck {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::MemberExpression(MemberExpression::StaticMemberExpression(
             static_member_expr,
         )) = node.kind()

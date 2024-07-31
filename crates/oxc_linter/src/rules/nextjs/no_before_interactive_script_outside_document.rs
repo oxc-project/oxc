@@ -37,7 +37,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoBeforeInteractiveScriptOutsideDocument {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             let Some(file_path) = ctx.file_path().to_str() else {
                 return;

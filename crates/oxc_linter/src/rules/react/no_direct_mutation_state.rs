@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LinterContext},
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
     AstNode,
@@ -82,7 +82,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDirectMutationState {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::AssignmentExpression(assignment_expr) => {
                 if should_ignore_component(node, ctx) {
@@ -118,7 +118,7 @@ impl Rule for NoDirectMutationState {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }
@@ -171,7 +171,7 @@ fn get_static_member_expression_obj<'a, 'b>(
     }
 }
 
-fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn should_ignore_component<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a, '_>) -> bool {
     let mut is_constructor = false;
     let mut is_call_expression = false;
     let mut is_component = false;

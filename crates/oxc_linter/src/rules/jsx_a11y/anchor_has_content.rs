@@ -63,7 +63,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for AnchorHasContent {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
             let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else {
                 return;

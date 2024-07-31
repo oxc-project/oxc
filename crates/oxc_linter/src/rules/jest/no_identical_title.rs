@@ -128,7 +128,7 @@ impl Rule for NoIdenticalTitle {
 fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<(Span, &'a str, JestFnKind, AstNodeId)> {
     let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;

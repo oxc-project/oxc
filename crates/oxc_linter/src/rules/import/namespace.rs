@@ -59,7 +59,7 @@ impl Rule for Namespace {
         }
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
         module_record.import_entries.iter().for_each(|entry| {
             let (source, module) = match &entry.import_name {
@@ -211,7 +211,7 @@ fn check_deep_namespace_for_node(
     source: &str,
     namespaces: &[String],
     module: &Arc<ModuleRecord>,
-    ctx: &LintContext<'_>,
+    ctx: &LintContext,
 ) {
     if let AstKind::MemberExpression(expr) = node.kind() {
         let Some((span, name)) = expr.static_property_info() else {
@@ -255,7 +255,7 @@ fn check_deep_namespace_for_object_pattern(
     source: &str,
     namespaces: &[String],
     module: &Arc<ModuleRecord>,
-    ctx: &LintContext<'_>,
+    ctx: &LintContext,
 ) {
     for property in &pattern.properties {
         let Some(name) = property.key.name() else {
@@ -300,7 +300,7 @@ fn check_binding_exported(
     name: &str,
     get_diagnostic: impl FnOnce() -> OxcDiagnostic,
     module: &ModuleRecord,
-    ctx: &LintContext<'_>,
+    ctx: &LintContext,
 ) {
     if module.exported_bindings.contains_key(name)
         || (name == "default" && module.export_default.is_some())

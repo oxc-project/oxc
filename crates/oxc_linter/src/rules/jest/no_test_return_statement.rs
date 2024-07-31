@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTestReturnStatement {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::CallExpression(call_expr) => {
                 check_call_expression(call_expr, node, ctx);
@@ -59,7 +59,7 @@ impl Rule for NoTestReturnStatement {
 fn check_call_expression<'a>(
     call_expr: &'a CallExpression<'a>,
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) {
     if !is_type_of_jest_fn_call(
         call_expr,
@@ -89,7 +89,10 @@ fn check_call_expression<'a>(
     }
 }
 
-fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: &LintContext<'a>) {
+fn check_test_return_statement<'a>(
+    func_body: &OBox<'_, FunctionBody<'a>>,
+    ctx: &LintContext<'a, '_>,
+) {
     let Some(return_stmt) =
         func_body.statements.iter().find(|stmt| matches!(stmt, Statement::ReturnStatement(_)))
     else {

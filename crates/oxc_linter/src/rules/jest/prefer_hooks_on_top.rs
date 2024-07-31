@@ -155,7 +155,7 @@ impl PreferHooksOnTop {
     fn run<'a>(
         possible_jest_node: &PossibleJestNode<'a, '_>,
         hooks_context: &mut HashMap<ScopeId, bool>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {

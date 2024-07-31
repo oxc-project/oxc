@@ -42,7 +42,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoObjectAsDefaultParameter {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::AssignmentPattern(assignment_pat) = node.kind() else {
             return;
         };

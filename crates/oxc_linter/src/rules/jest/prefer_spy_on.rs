@@ -56,7 +56,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferSpyOn {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::AssignmentExpression(assign_expr) = node.kind() else {
             return;
         };
@@ -93,7 +93,7 @@ impl PreferSpyOn {
         call_expr: &'a CallExpression<'a>,
         left_assign: &MemberExpression,
         node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let Some(jest_fn_call) =
             parse_general_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
@@ -136,7 +136,7 @@ impl PreferSpyOn {
         call_expr: &'a CallExpression<'a>,
         left_assign: &MemberExpression,
         has_mock_implementation: bool,
-        fixer: RuleFixer<'_, 'a>,
+        fixer: RuleFixer<'_, '_, 'a>,
     ) -> String {
         let mut formatter = fixer.codegen();
         formatter.print_str("jest.spyOn(");

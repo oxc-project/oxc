@@ -83,7 +83,7 @@ impl Rule for PreferExpectResolves {
 }
 
 impl PreferExpectResolves {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -112,7 +112,7 @@ impl PreferExpectResolves {
     }
 
     fn fix<'c, 'a: 'c>(
-        fixer: RuleFixer<'c, 'a>,
+        fixer: RuleFixer<'c, '_, 'a>,
         jest_expect_fn_call: &ParsedExpectFnCall<'a>,
         call_expr: &CallExpression<'a>,
         ident_span: Span,

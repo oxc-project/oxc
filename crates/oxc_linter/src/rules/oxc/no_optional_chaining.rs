@@ -76,7 +76,7 @@ impl Rule for NoOptionalChaining {
         Self(Box::new(NoOptionalChainingConfig { message: message.to_string() }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::ChainExpression(expr) = node.kind() {
             ctx.diagnostic(no_optional_chaining_diagnostic(expr.span, &self.message));
         }

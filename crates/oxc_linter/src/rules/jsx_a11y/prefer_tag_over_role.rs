@@ -48,7 +48,7 @@ impl PreferTagOverRole {
         role_prop: &JSXAttributeItem<'a>,
         role_to_tag: &phf::Map<&str, &str>,
         jsx_name: &str,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         if let JSXAttributeItem::Attribute(attr) = role_prop {
             if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
@@ -87,7 +87,7 @@ static ROLE_TO_TAG_MAP: Lazy<phf::Map<&'static str, &'static str>> = Lazy::new(|
 });
 
 impl Rule for PreferTagOverRole {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(name) = get_element_type(ctx, jsx_el) {
                 if let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") {

@@ -112,7 +112,7 @@ impl Rule for ValidTitle {
 }
 
 impl ValidTitle {
-    fn run<'a>(&self, possible_jest_fn_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, possible_jest_fn_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_fn_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ErasingOp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::BinaryExpression(binary_expression) = node.kind() else {
             return;
         };
@@ -77,7 +77,7 @@ fn is_number_value(expr: &Expression, value: f64) -> bool {
 fn check_op<'a, 'b>(
     binary_expression: &'b BinaryExpression<'a>,
     op: &'b Expression<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) {
     if is_number_value(op, 0.0) {
         ctx.diagnostic(erasing_op_diagnostic(binary_expression.span));

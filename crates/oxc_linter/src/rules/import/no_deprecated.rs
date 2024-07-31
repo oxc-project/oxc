@@ -2,7 +2,7 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 // use oxc_span::{CompactStr, Span};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::{LintContext, LinterContext}, rule::Rule};
 
 // #[derive(Debug, Error, Diagnostic)]
 // #[error("")]
@@ -22,7 +22,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDeprecated {
-    fn run_once(&self, _ctx: &LintContext<'_>) {}
+    fn run_once(&self, _ctx: &LintContext) {}
 }
 
 #[test]

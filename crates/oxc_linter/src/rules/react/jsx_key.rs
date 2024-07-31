@@ -6,7 +6,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn missing_key_prop_for_element_in_array(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(r#"Missing "key" prop for element in array."#).with_label(span0)
@@ -50,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for JsxKey {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 check_jsx_element(node, jsx_elem, ctx);
@@ -64,7 +68,7 @@ impl Rule for JsxKey {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }
@@ -76,7 +80,7 @@ enum InsideArrayOrIterator {
 
 fn is_in_array_or_iter<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<InsideArrayOrIterator> {
     let mut node = node;
 
@@ -149,7 +153,7 @@ fn is_in_array_or_iter<'a, 'b>(
     }
 }
 
-fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
+fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a, '_>) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
         if !jsx_elem.opening_element.attributes.iter().any(|attr| {
             let JSXAttributeItem::Attribute(attr) = attr else {
@@ -166,7 +170,10 @@ fn check_jsx_element<'a>(node: &AstNode<'a>, jsx_elem: &JSXElement<'a>, ctx: &Li
     }
 }
 
-fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
+fn check_jsx_element_is_key_before_spread<'a>(
+    jsx_elem: &JSXElement<'a>,
+    ctx: &LintContext<'a, '_>,
+) {
     let mut key_idx_span: Option<(usize, Span)> = None;
     let mut spread_idx: Option<usize> = None;
 
@@ -194,7 +201,11 @@ fn check_jsx_element_is_key_before_spread<'a>(jsx_elem: &JSXElement<'a>, ctx: &L
     }
 }
 
-fn check_jsx_fragment<'a>(node: &AstNode<'a>, fragment: &JSXFragment<'a>, ctx: &LintContext<'a>) {
+fn check_jsx_fragment<'a>(
+    node: &AstNode<'a>,
+    fragment: &JSXFragment<'a>,
+    ctx: &LintContext<'a, '_>,
+) {
     if let Some(outer) = is_in_array_or_iter(node, ctx) {
         ctx.diagnostic(gen_diagnostic(fragment.opening_fragment.span, &outer));
     }

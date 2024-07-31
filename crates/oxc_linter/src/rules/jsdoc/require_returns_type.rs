@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for RequireReturnsType {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if !is_function_node(node) {
             return;
         }

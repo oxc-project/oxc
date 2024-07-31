@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSinglePromiseInPromiseMethods {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -119,7 +119,7 @@ fn is_promise_method_with_single_argument(call_expr: &CallExpression) -> bool {
     is_method_call(call_expr, Some(&["Promise"]), Some(&["all", "any", "race"]), Some(1), Some(1))
 }
 
-fn is_fixable(call_node_id: AstNodeId, ctx: &LintContext<'_>) -> bool {
+fn is_fixable(call_node_id: AstNodeId, ctx: &LintContext) -> bool {
     for parent in ctx.semantic().nodes().iter_parents(call_node_id).skip(1) {
         match parent.kind() {
             AstKind::CallExpression(_)

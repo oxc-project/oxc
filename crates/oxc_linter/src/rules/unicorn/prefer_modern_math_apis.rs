@@ -54,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferModernMathApis {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         // there are two main cases to check:
         // Bin expression:
         //     `Math.log(x) * Math.LOG10E`
@@ -108,7 +108,7 @@ impl Rule for PreferModernMathApis {
     }
 }
 
-fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
+fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a, '_>) {
     match expr.operator {
         BinaryOperator::Multiplication => {
             check_multiplication(expr.span, &expr.left, &expr.right, ctx);
@@ -172,7 +172,7 @@ fn check_multiplication<'a, 'b>(
     expr_span: Span,
     left: &'b Expression<'a>,
     right: &'b Expression<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) {
     let Expression::CallExpression(call_expr) = left else {
         return;
@@ -231,7 +231,7 @@ fn flat_plus_expression<'a>(expression: &'a Expression<'a>) -> Vec<&'a Expressio
     expressions
 }
 
-fn is_pow_2_expression(expression: &Expression, ctx: &LintContext<'_>) -> bool {
+fn is_pow_2_expression(expression: &Expression, ctx: &LintContext) -> bool {
     if let Expression::BinaryExpression(bin_expr) = expression.without_parenthesized() {
         match bin_expr.operator {
             BinaryOperator::Exponential => {

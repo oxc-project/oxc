@@ -168,7 +168,7 @@ impl Rule for PreferLowercaseTitle {
 }
 
 impl PreferLowercaseTitle {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -230,7 +230,7 @@ impl PreferLowercaseTitle {
         ignores
     }
 
-    fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
+    fn lint_string<'a>(&self, ctx: &LintContext<'a, '_>, literal: &'a str, span: Span) {
         if literal.is_empty() || self.allowed_prefixes.iter().any(|name| literal.starts_with(name))
         {
             return;

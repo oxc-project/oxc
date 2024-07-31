@@ -4,7 +4,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_explicit_any_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected any. Specify a different type.")
@@ -86,7 +90,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoExplicitAny {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::TSAnyKeyword(any) = node.kind() else {
             return;
         };
@@ -113,13 +117,13 @@ impl Rule for NoExplicitAny {
         Self { fix_to_unknown, ignore_rest_args }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }
 
 impl NoExplicitAny {
-    fn is_in_rest<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    fn is_in_rest<'a>(node: &AstNode<'a>, ctx: &LintContext<'a, '_>) -> bool {
         debug_assert!(matches!(node.kind(), AstKind::TSAnyKeyword(_)));
         ctx.nodes()
             .iter_parents(node.id())

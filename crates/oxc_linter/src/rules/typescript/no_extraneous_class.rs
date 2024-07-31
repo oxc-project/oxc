@@ -100,7 +100,7 @@ impl Rule for NoExtraneousClass {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::Class(class) = node.kind() else {
             return;
         };

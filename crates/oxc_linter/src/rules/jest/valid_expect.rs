@@ -123,7 +123,7 @@ impl Rule for ValidExpect {
 }
 
 impl ValidExpect {
-    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -231,7 +231,7 @@ impl ValidExpect {
 
 fn find_top_most_member_expression<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b MemberExpression<'a>> {
     let mut top_most_member_expression = None;
     let mut node = node;
@@ -257,7 +257,7 @@ fn find_top_most_member_expression<'a, 'b>(
 fn is_acceptable_return_node<'a, 'b>(
     node: &'b AstNode<'a>,
     allow_return: bool,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> bool {
     let mut node = node;
     loop {
@@ -288,7 +288,7 @@ type ParentAndIsFirstItem<'a, 'b> = (&'b AstNode<'a>, bool);
 // and return whether the first item if parent is an array.
 fn get_parent_with_ignore<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<ParentAndIsFirstItem<'a, 'b>> {
     let mut node = node;
     loop {
@@ -321,7 +321,7 @@ fn get_parent_with_ignore<'a, 'b>(
 
 fn find_promise_call_expression_node<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
     default_node: &'b AstNode<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let Some((mut parent, is_first_array_item)) = get_parent_with_ignore(node, ctx) else {
@@ -359,7 +359,7 @@ fn find_promise_call_expression_node<'a, 'b>(
 
 fn get_parent_if_thenable<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> &'b AstNode<'a> {
     let grandparent =
         ctx.nodes().parent_node(node.id()).and_then(|node| ctx.nodes().parent_node(node.id()));

@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn type_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not use {x0:?} as a type. Use \"{x1}\" instead"))
@@ -50,7 +54,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BanTypes {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::TSTypeReference(typ) => {
                 let name = match &typ.type_name {
@@ -84,7 +88,7 @@ impl Rule for BanTypes {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

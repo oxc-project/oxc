@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferMathTrunc {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let operator = match node.kind() {
             AstKind::UnaryExpression(unary_expr) => {
                 if !matches!(unary_expr.operator, UnaryOperator::BitwiseNot) {

@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for MisrefactoredAssignOp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
             return;
         };
@@ -96,7 +96,7 @@ impl Rule for MisrefactoredAssignOp {
 fn assignment_target_eq_expr<'a>(
     assignment_target: &AssignmentTarget<'a>,
     right_expr: &Expression<'_>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> bool {
     if let Some(simple_assignment_target) = assignment_target.as_simple_assignment_target() {
         return match simple_assignment_target {

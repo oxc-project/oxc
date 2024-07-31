@@ -36,7 +36,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEmptyFunction {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::FunctionBody(fb) = node.kind() {
             if fb.is_empty() && !ctx.semantic().trivias().has_comments_between(fb.span) {
                 ctx.diagnostic(no_empty_function_diagnostic(fb.span));

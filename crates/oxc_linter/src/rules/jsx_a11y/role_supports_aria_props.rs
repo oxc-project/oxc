@@ -60,7 +60,7 @@ fn is_implicit_diagnostic(span0: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagn
 }
 
 impl Rule for RoleSupportsAriaProps {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(el_type) = get_element_type(ctx, jsx_el) {
                 let role = has_jsx_prop_ignore_case(jsx_el, "role");

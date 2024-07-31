@@ -58,7 +58,7 @@ impl Rule for NoSelfAssign {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::AssignmentExpression(assignment) = node.kind() else {
             return;
         };
@@ -79,7 +79,7 @@ impl NoSelfAssign {
         &self,
         left: &'a AssignmentTarget<'a>,
         right: &'a Expression<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         match left {
             match_simple_assignment_target!(AssignmentTarget) => {
@@ -225,7 +225,7 @@ impl NoSelfAssign {
         &self,
         left: &'a AssignmentTargetProperty<'a>,
         right: &'a ObjectPropertyKind<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         match left {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(id1)

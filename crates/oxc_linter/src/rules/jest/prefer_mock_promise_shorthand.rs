@@ -55,7 +55,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferMockPromiseShorthand {
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -128,7 +128,7 @@ impl PreferMockPromiseShorthand {
         property_span: Span,
         arg_span: Option<Span>,
         arg_expr: &'a Expression<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let Expression::CallExpression(call_expr) = arg_expr else {
             return;
@@ -163,7 +163,7 @@ impl PreferMockPromiseShorthand {
     }
 
     fn fix<'a>(
-        fixer: RuleFixer<'_, 'a>,
+        fixer: RuleFixer<'_, '_, 'a>,
         prefer_name: &'a str,
         call_expr: &CallExpression<'a>,
     ) -> String {

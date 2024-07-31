@@ -43,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMagicArrayFlatDepth {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expression) = node.kind() else {
             return;
         };
@@ -88,7 +88,7 @@ impl Rule for NoMagicArrayFlatDepth {
 #[allow(clippy::cast_possible_truncation)]
 fn get_call_expression_parentheses_pos<'a>(
     call_expr: &CallExpression<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<Span> {
     call_expr.callee.get_member_expr().map(|member_expr| {
         let callee_span = member_expr.object().span();

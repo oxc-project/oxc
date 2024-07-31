@@ -68,7 +68,7 @@ impl Rule for NoEmptyFile {
     }
 }
 
-fn has_triple_slash_directive(ctx: &LintContext<'_>) -> bool {
+fn has_triple_slash_directive(ctx: &LintContext) -> bool {
     for comment in ctx.semantic().trivias().comments() {
         if !comment.kind.is_single_line() {
             continue;

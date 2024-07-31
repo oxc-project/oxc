@@ -58,7 +58,7 @@ impl Rule for NoExtraBooleanCast {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::CallExpression(expr)
                 if expr.callee.is_specific_id("Boolean")
@@ -183,7 +183,10 @@ fn is_unary_negation(node: &AstNode) -> bool {
     }
 }
 
-fn get_real_parent<'a, 'b>(node: &AstNode, ctx: &'a LintContext<'b>) -> Option<&'a AstNode<'b>> {
+fn get_real_parent<'a, 'b>(
+    node: &AstNode,
+    ctx: &'a LintContext<'b, '_>,
+) -> Option<&'a AstNode<'b>> {
     for (_, parent) in
         ctx.nodes().iter_parents(node.id()).tuple_windows::<(&AstNode<'b>, &AstNode<'b>)>()
     {

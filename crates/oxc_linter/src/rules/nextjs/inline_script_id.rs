@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for InlineScriptId {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::ImportDefaultSpecifier(specifier) = node.kind() else {
             return;
         };

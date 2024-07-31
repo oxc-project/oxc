@@ -52,7 +52,7 @@ impl Rule for NoCondAssign {
         Self { config }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::IfStatement(stmt) => self.check_expression(ctx, &stmt.test),
             AstKind::WhileStatement(stmt) => self.check_expression(ctx, &stmt.test),
@@ -89,7 +89,7 @@ impl Rule for NoCondAssign {
 
 impl NoCondAssign {
     #[allow(clippy::cast_possible_truncation)]
-    fn emit_diagnostic(ctx: &LintContext<'_>, expr: &AssignmentExpression<'_>) {
+    fn emit_diagnostic(ctx: &LintContext, expr: &AssignmentExpression<'_>) {
         let mut operator_span = Span::new(expr.left.span().end, expr.right.span().start);
         let start =
             operator_span.source_text(ctx.source_text()).find(expr.operator.as_str()).unwrap_or(0)
@@ -100,7 +100,7 @@ impl NoCondAssign {
         ctx.diagnostic(no_cond_assign_diagnostic(operator_span));
     }
 
-    fn check_expression(&self, ctx: &LintContext<'_>, expr: &Expression<'_>) {
+    fn check_expression(&self, ctx: &LintContext, expr: &Expression<'_>) {
         let mut expr = expr;
         if self.config == NoCondAssignConfig::Always {
             expr = expr.get_inner_expression();

@@ -104,7 +104,7 @@ impl Rule for ImgRedundantAlt {
         Self(Box::new(img_redundant_alt))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };

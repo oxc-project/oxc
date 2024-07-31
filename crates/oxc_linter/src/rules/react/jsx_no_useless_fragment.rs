@@ -10,7 +10,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn needs_more_children(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Fragments should contain more than one child.").with_label(span0)
@@ -60,7 +64,7 @@ impl Rule for JsxNoUselessFragment {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 if !is_jsx_fragment(&jsx_elem.opening_element) {
@@ -75,7 +79,7 @@ impl Rule for JsxNoUselessFragment {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

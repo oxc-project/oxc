@@ -48,7 +48,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferStringStartsEndsWith {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -93,7 +93,7 @@ impl Rule for PreferStringStartsEndsWith {
 }
 
 fn do_fix<'a>(
-    fixer: RuleFixer<'_, 'a>,
+    fixer: RuleFixer<'_, '_, 'a>,
     err_kind: ErrorKind,
     call_expr: &CallExpression<'a>,
     regex: &RegExpLiteral,

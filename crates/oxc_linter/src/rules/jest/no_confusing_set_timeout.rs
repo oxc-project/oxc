@@ -146,7 +146,7 @@ fn collect_jest_reference_id(
 }
 
 fn handle_jest_set_time_out<'a>(
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
     reference_id_list: impl Iterator<Item = ReferenceId>,
     jest_reference_id_list: &Vec<(ReferenceId, Span)>,
     seen_jest_set_timeout: &mut bool,
@@ -199,7 +199,7 @@ fn handle_jest_set_time_out<'a>(
 fn is_jest_fn_call<'a>(
     parent_node: &AstNode<'a>,
     id_to_jest_node_map: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> bool {
     let mut id = parent_node.id();
     loop {

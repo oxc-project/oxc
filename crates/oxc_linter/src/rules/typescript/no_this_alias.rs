@@ -6,7 +6,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_this_alias_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected aliasing of 'this' to local variable.")
@@ -86,7 +90,7 @@ impl Rule for NoThisAlias {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(init) = &decl.init else { return };
@@ -143,7 +147,7 @@ impl Rule for NoThisAlias {
             _ => {}
         }
     }
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

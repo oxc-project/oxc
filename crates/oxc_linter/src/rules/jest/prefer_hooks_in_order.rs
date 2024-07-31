@@ -164,7 +164,7 @@ impl PreferHooksInOrder {
         previous_hook_index: &mut i32,
         possible_jest_node: &PossibleJestNode<'a, '_>,
         call_expr: &'a CallExpression<'_>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let Some(ParsedJestFnCallNew::GeneralJestFnCall(jest_fn_call)) =
             parse_jest_fn_call(call_expr, possible_jest_node, ctx)

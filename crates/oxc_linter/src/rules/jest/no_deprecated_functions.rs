@@ -106,7 +106,7 @@ impl Rule for NoDeprecatedFunctions {
         }))
     }
 
-    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::MemberExpression(mem_expr) = node.kind() else {
             return;
         };

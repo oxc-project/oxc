@@ -213,14 +213,14 @@ pub fn is_es6_component(node: &AstNode) -> bool {
 
 pub fn get_parent_es5_component<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b AstNode<'a>> {
     ctx.nodes().ancestors(node.id()).skip(1).find_map(|node_id| {
         is_es5_component(ctx.nodes().get_node(node_id)).then(|| ctx.nodes().get_node(node_id))
     })
 }
 
-pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a>) -> Option<&'b AstNode<'a>> {
+pub fn get_parent_es6_component<'a, 'b>(ctx: &'b LintContext<'a, '_>) -> Option<&'b AstNode<'a>> {
     ctx.semantic().symbols().iter_rev().find_map(|symbol| {
         let flags = ctx.semantic().symbols().get_flag(symbol);
         if flags.contains(SymbolFlags::Class) {

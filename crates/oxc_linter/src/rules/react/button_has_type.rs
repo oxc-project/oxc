@@ -10,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LinterContext},
     rule::Rule,
     utils::{get_prop_value, has_jsx_prop_ignore_case, is_create_element_call},
     AstNode,
@@ -65,7 +65,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ButtonHasType {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::JSXOpeningElement(jsx_el) => {
                 let JSXElementName::Identifier(identifier) = &jsx_el.name else {
@@ -147,7 +147,7 @@ impl Rule for ButtonHasType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

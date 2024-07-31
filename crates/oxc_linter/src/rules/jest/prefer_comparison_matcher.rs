@@ -67,7 +67,7 @@ impl Rule for PreferComparisonMatcher {
 }
 
 impl PreferComparisonMatcher {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -178,7 +178,7 @@ impl PreferComparisonMatcher {
         local_name: &str,
         modifiers: &[&KnownMemberExpressionProperty<'a>],
         prefer_matcher_name: &str,
-        fixer: RuleFixer<'_, 'a>,
+        fixer: RuleFixer<'_, '_, 'a>,
     ) -> String {
         let mut content = fixer.codegen();
         content.print_str(local_name);

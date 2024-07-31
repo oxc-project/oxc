@@ -81,7 +81,7 @@ impl Rule for MaxClassesPerFile {
         }
     }
 
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let mut class_count = ctx.semantic().classes().declarations.len();
 
         if self.ignore_expressions {

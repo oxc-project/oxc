@@ -45,7 +45,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessSwitchCase {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::SwitchStatement(switch_statement) = node.kind() else {
             return;
         };

@@ -18,7 +18,7 @@ use crate::{
 pub fn parse_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<ParsedJestFnCall<'a>> {
     let original = possible_jest_node.original;
     let node = possible_jest_node.node;
@@ -116,7 +116,7 @@ pub fn parse_jest_fn_call<'a>(
 }
 
 fn parse_jest_expect_fn_call<'a>(
-    options: ExpectFnCallOptions<'a, '_>,
+    options: ExpectFnCallOptions<'a, '_, '_>,
 ) -> Option<ParsedJestFnCall<'a>> {
     let ExpectFnCallOptions { call_expr, members, name, local, head, node, ctx } = options;
     let (modifiers, matcher, mut expect_error) = match find_modifiers_and_matcher(&members) {
@@ -215,7 +215,7 @@ fn find_modifiers_and_matcher(
     Err(ExpectError::MatcherNotFound)
 }
 
-fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a>) -> bool {
+fn is_top_most_call_expr<'a, 'b>(node: &'b AstNode<'a>, ctx: &'b LintContext<'a, '_>) -> bool {
     let mut node = node;
 
     loop {
@@ -257,14 +257,14 @@ pub enum ExpectError {
     MatcherNotCalled,
 }
 
-pub struct ExpectFnCallOptions<'a, 'b> {
+pub struct ExpectFnCallOptions<'a, 'b, 'c> {
     pub call_expr: &'a CallExpression<'a>,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
     pub name: &'a str,
     pub local: &'a str,
     pub head: KnownMemberExpressionProperty<'a>,
     pub node: &'b AstNode<'a>,
-    pub ctx: &'b LintContext<'a>,
+    pub ctx: &'b LintContext<'a, 'c>,
 }
 
 // If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.

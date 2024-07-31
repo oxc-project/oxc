@@ -56,7 +56,7 @@ impl Rule for NoEval {
         Self { allow_indirect }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let kind = node.kind();
 
         if let AstKind::IdentifierReference(ident) = kind {

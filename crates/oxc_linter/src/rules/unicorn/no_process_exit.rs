@@ -37,7 +37,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoProcessExit {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::CallExpression(expr) = node.kind() {
             if is_method_call(expr, Some(&["process"]), Some(&["exit"]), None, None) {
                 if has_hashbang(ctx)

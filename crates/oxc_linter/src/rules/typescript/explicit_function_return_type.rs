@@ -14,7 +14,7 @@ use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
     ast_util::outermost_paren_parent,
-    context::LintContext,
+    context::{LintContext, LinterContext},
     rule::Rule,
     rules::eslint::array_callback_return::return_checker::{
         check_statement, StatementReturnStatus,
@@ -111,7 +111,7 @@ impl Rule for ExplicitFunctionReturnType {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::Function(func) => {
                 if !func.is_declaration() & !func.is_expression() {
@@ -250,7 +250,7 @@ impl Rule for ExplicitFunctionReturnType {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }
@@ -268,7 +268,7 @@ impl ExplicitFunctionReturnType {
         matches!(unary_expr.operator, UnaryOperator::Void)
     }
 
-    fn is_allowed_function<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+    fn is_allowed_function<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) -> bool {
         match node.kind() {
             AstKind::Function(func) => {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
@@ -305,7 +305,7 @@ impl ExplicitFunctionReturnType {
     fn check_parent_for_is_allowed_function<'a>(
         &self,
         node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) -> bool {
         let Some(parent) = get_parent_node(node, ctx) else { return false };
         match parent.kind() {
@@ -341,7 +341,7 @@ impl ExplicitFunctionReturnType {
     fn is_valid_function_expression_return_type<'a>(
         &self,
         node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) -> bool {
         if check_typed_function_expression(node, ctx) {
             return true;
@@ -420,7 +420,7 @@ impl ExplicitFunctionReturnType {
 }
 
 // check function is IIFE (Immediately Invoked Function Expression)
-fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a, '_>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else {
         return false;
     };
@@ -461,7 +461,7 @@ fn is_setter(node: &AstNode) -> bool {
 
 fn get_parent_node<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b AstNode<'a>> {
     let parent = outermost_paren_parent(node, ctx)?;
     match parent.kind() {
@@ -470,7 +470,7 @@ fn get_parent_node<'a, 'b>(
     }
 }
 
-fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn check_typed_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext<'a, '_>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else { return false };
     is_typed_parent(parent, Some(node))
         || is_property_of_object_with_type(parent, ctx)
@@ -556,7 +556,7 @@ fn is_function(expr: &Expression) -> bool {
     matches!(expr, Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_))
 }
 
-fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
+fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a, '_>) -> bool {
     let Some(parent) = get_parent_node(node, ctx) else { return false };
 
     if let AstKind::ObjectProperty(prop) = parent.kind() {

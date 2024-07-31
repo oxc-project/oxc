@@ -62,7 +62,7 @@ impl Rule for DefaultCase {
         Self(Box::new(cfg))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::SwitchStatement(switch) = node.kind() {
             let cases = &switch.cases;
             if !cases.is_empty() && !cases.iter().any(|case| case.test.is_none()) {

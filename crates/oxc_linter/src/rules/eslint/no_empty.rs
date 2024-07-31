@@ -45,7 +45,7 @@ impl Rule for NoEmpty {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
                 if self.allow_empty_catch

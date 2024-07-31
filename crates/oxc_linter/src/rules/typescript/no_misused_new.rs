@@ -53,7 +53,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMisusedNew {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::TSInterfaceDeclaration(interface_decl) => {
                 let decl_name = &interface_decl.id.name;

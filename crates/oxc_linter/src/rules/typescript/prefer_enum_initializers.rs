@@ -3,7 +3,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_enum_initializers_diagnostic(x0: &str, x1: usize, span2: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("The value of the member {x0:?} should be explicitly defined."))
@@ -34,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferEnumInitializers {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::TSEnumDeclaration(decl) = node.kind() else {
             return;
         };
@@ -52,7 +56,7 @@ impl Rule for PreferEnumInitializers {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

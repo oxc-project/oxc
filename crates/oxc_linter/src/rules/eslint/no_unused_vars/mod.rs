@@ -15,7 +15,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, SymbolFlags, SymbolId};
 use oxc_span::GetSpan;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+};
 use options::NoUnusedVarsOptions;
 
 use symbol::Symbol;
@@ -152,7 +155,7 @@ impl Rule for NoUnusedVars {
         Self(Box::new(NoUnusedVarsOptions::from(value)))
     }
 
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
         let symbol = Symbol::new(ctx.semantic().as_ref(), symbol_id);
         if Self::should_skip_symbol(&symbol) {
             return;
@@ -161,7 +164,7 @@ impl Rule for NoUnusedVars {
         self.run_on_symbol_internal(&symbol, ctx);
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         // ignore .d.ts and vue files.
         // 1. declarations have side effects (they get merged together)
         // 2. vue scripts declare variables that get used in the template, which
@@ -172,7 +175,7 @@ impl Rule for NoUnusedVars {
 }
 
 impl NoUnusedVars {
-    fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a>) {
+    fn run_on_symbol_internal<'a>(&self, symbol: &Symbol<'_, 'a>, ctx: &LintContext<'a, '_>) {
         let is_ignored = self.is_ignored(symbol);
 
         if is_ignored && !self.report_used_ignore_pattern {

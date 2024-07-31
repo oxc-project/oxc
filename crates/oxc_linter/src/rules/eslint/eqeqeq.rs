@@ -56,7 +56,7 @@ impl Rule for Eqeqeq {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::BinaryExpression(binary_expr) = node.kind() else {
             return;
         };

@@ -72,7 +72,7 @@ impl Rule for ArrayCallbackReturn {
         Self { check_for_each, allow_implicit_return }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let (function_body, always_explicit_return) = match node.kind() {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
@@ -133,7 +133,7 @@ impl Rule for ArrayCallbackReturn {
 /// to the target array methods we're interested in.
 pub fn get_array_method_name<'a>(
     node: &AstNode<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<&'static str> {
     let mut current_node = node;
     while let Some(parent) = ctx.nodes().parent_node(current_node.id()) {

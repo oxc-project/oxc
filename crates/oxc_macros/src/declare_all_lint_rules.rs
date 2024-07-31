@@ -53,7 +53,7 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
     let expanded = quote! {
         #(pub use self::#use_stmts::#struct_names;)*
 
-        use crate::{context::LintContext, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
+        use crate::{context::{LinterContext, LintContext}, rule::{Rule, RuleCategory, RuleMeta}, AstNode};
         use oxc_semantic::SymbolId;
 
         #[derive(Debug, Clone)]
@@ -101,25 +101,25 @@ pub fn declare_all_lint_rules(metadata: AllLintRulesMeta) -> TokenStream {
                 }
             }
 
-            pub(super) fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+            pub(super) fn run<'a, 'c>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, 'c>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run(node, ctx)),*
                 }
             }
 
-            pub(super) fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a>) {
+            pub(super) fn run_on_symbol<'a>(&self, symbol_id: SymbolId, ctx: &LintContext<'a, '_>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run_on_symbol(symbol_id, ctx)),*
                 }
             }
 
-            pub(super) fn run_once<'a>(&self, ctx: &LintContext<'a>) {
+            pub(super) fn run_once<'a>(&self, ctx: &LintContext<'a, '_>) {
                 match self {
                     #(Self::#struct_names(rule) => rule.run_once(ctx)),*
                 }
             }
 
-            pub(super) fn should_run(&self, ctx: &LintContext) -> bool {
+            pub(super) fn should_run(&self, ctx: &LinterContext) -> bool {
                 match self {
                     #(Self::#struct_names(rule) => rule.should_run(ctx)),*
                 }

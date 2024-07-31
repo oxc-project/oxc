@@ -118,7 +118,7 @@ impl Rule for ExpectExpect {
 fn run<'a>(
     rule: &ExpectExpect,
     possible_jest_node: &PossibleJestNode<'a, '_>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
@@ -159,7 +159,7 @@ fn check_arguments<'a>(
     call_expr: &'a CallExpression<'a>,
     assert_function_names: &[String],
     visited: &mut FxHashSet<Span>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> bool {
     for argument in &call_expr.arguments {
         if let Some(expr) = argument.as_expression() {
@@ -175,7 +175,7 @@ fn check_assert_function_used<'a>(
     expr: &'a Expression<'a>,
     assert_function_names: &[String],
     visited: &mut FxHashSet<Span>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> bool {
     // If we have visited this node before and didn't find any assert function, we can return
     // `false` to avoid infinite loop.
@@ -246,7 +246,7 @@ fn check_statements<'a>(
     statements: &'a oxc_allocator::Vec<Statement<'a>>,
     assert_function_names: &[String],
     visited: &mut FxHashSet<Span>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> bool {
     statements.iter().any(|statement| {
         if let Statement::ExpressionStatement(expr_stmt) = statement {

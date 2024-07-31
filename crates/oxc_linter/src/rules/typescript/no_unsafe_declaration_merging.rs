@@ -4,7 +4,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_unsafe_declaration_merging_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unsafe declaration merging between classes and interfaces.")
@@ -35,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeDeclarationMerging {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::Class(decl) => {
                 if let Some(ident) = decl.id.as_ref() {
@@ -61,7 +65,7 @@ impl Rule for NoUnsafeDeclarationMerging {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }
@@ -69,14 +73,14 @@ impl Rule for NoUnsafeDeclarationMerging {
 fn check_and_diagnostic(
     ident: &BindingIdentifier,
     scope_ident: &BindingIdentifier,
-    ctx: &LintContext<'_>,
+    ctx: &LintContext,
 ) {
     if scope_ident.name.as_str() == ident.name.as_str() {
         ctx.diagnostic(no_unsafe_declaration_merging_diagnostic(ident.span, scope_ident.span));
     }
 }
 
-fn get_symbol_kind<'a>(symbol_id: SymbolId, ctx: &LintContext<'a>) -> AstKind<'a> {
+fn get_symbol_kind<'a>(symbol_id: SymbolId, ctx: &LintContext<'a, '_>) -> AstKind<'a> {
     return ctx.nodes().get_node(ctx.symbols().get_declaration(symbol_id)).kind();
 }
 

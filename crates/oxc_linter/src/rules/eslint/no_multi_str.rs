@@ -32,7 +32,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoMultiStr {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
             let source = literal.span.source_text(ctx.source_text());
             // https://github.com/eslint/eslint/blob/9e6d6405c3ee774c2e716a3453ede9696ced1be7/lib/shared/ast-utils.js#L12

@@ -38,7 +38,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConstructorSuper {
-    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a>) {}
+    fn run<'a>(&self, _node: &AstNode<'a>, _ctx: &LintContext<'a, '_>) {}
 }
 
 #[test]

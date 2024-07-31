@@ -102,7 +102,7 @@ impl Rule for RequireParam {
             .map_or_else(Self::default, |value| Self(Box::new(value)))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         // Collected targets from `FormalParameters`
         let params_to_check = match node.kind() {
             AstKind::Function(func) if !func.is_typescript_syntax() => collect_params(&func.params),

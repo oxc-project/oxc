@@ -7,7 +7,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LinterContext},
     rule::Rule,
     utils::{has_jsx_prop, is_create_element_call},
     AstNode,
@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoDanger {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
                 if let Some(JSXAttributeItem::Attribute(prop)) =
@@ -75,7 +75,7 @@ impl Rule for NoDanger {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

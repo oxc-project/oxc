@@ -134,7 +134,7 @@ impl RequireTopLevelDescribe {
         &self,
         possible_jest_node: &PossibleJestNode<'a, '_>,
         describe_contexts: &mut HashMap<ScopeId, usize>,
-        ctx: &LintContext<'a>,
+        ctx: &LintContext<'a, '_>,
     ) {
         let node = possible_jest_node.node;
         let scopes = ctx.scopes();

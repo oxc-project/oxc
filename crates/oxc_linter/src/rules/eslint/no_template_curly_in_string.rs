@@ -33,7 +33,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoTemplateCurlyInString {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::StringLiteral(literal) = node.kind() {
             let text = literal.value.as_str();
             if let Some(start_index) = text.find("${") {

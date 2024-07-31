@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LinterContext},
     rule::Rule,
     utils::{is_es5_component, is_es6_component},
     AstNode,
@@ -57,7 +57,7 @@ impl Rule for PreferEs6Class {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if matches!(self.prefer_es6_class_option, PreferES6ClassOptionType::Always) {
             if is_es5_component(node) {
                 let AstKind::CallExpression(call_expr) = node.kind() else {
@@ -75,7 +75,7 @@ impl Rule for PreferEs6Class {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

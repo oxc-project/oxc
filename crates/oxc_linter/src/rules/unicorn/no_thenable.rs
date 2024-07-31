@@ -58,7 +58,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThenable {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::ObjectExpression(expr) => {
                 expr.properties.iter().for_each(|prop| {
@@ -220,7 +220,7 @@ fn check_binding_pattern(pat: &BindingPatternKind, ctx: &LintContext) {
     }
 }
 
-fn check_expression(expr: &Expression, ctx: &LintContext<'_>) -> Option<oxc_span::Span> {
+fn check_expression(expr: &Expression, ctx: &LintContext) -> Option<oxc_span::Span> {
     match expr {
         Expression::StringLiteral(lit) => {
             if lit.value == "then" {

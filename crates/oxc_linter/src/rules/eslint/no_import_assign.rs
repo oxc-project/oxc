@@ -50,7 +50,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
     phf_set!("defineProperty", "deleteProperty", "set", "setPrototypeOf");
 
 impl Rule for NoImportAssign {
-    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
+    fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext) {
         let symbol_table = ctx.semantic().symbols();
         if symbol_table.get_flag(symbol_id).is_import() {
             let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));
@@ -106,7 +106,7 @@ impl Rule for NoImportAssign {
 /// - `Reflect.deleteProperty`
 /// - `Reflect.set`
 /// - `Reflect.setPrototypeOf`
-fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintContext<'_>) -> bool {
+fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintContext) -> bool {
     let current_node = ctx.nodes().get_node(node_id);
     let call_expression_node =
         ctx.nodes().parent_node(node_id).and_then(|node| ctx.nodes().parent_kind(node.id()));

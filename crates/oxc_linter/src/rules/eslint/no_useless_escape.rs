@@ -30,7 +30,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessEscape {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::RegExpLiteral(literal)
                 if literal.regex.pattern.len() + literal.regex.flags.iter().count()
@@ -72,7 +72,7 @@ fn is_within_jsx_attribute_item(id: AstNodeId, ctx: &LintContext) -> bool {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize]) {
+fn check(ctx: &LintContext, node_id: AstNodeId, start: u32, offsets: &[usize]) {
     let source_text = ctx.source_text();
     for offset in offsets {
         let offset = start as usize + offset;

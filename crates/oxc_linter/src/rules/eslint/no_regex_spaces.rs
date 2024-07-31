@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoRegexSpaces {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
                 if let Some(span) = Self::find_literal_to_report(lit) {

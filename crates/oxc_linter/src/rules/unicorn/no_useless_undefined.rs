@@ -125,7 +125,7 @@ fn is_undefined(arg: &Argument) -> bool {
     false
 }
 
-fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+fn is_has_function_return_type(node: &AstNode, ctx: &LintContext) -> bool {
     let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
         return false;
     };
@@ -148,7 +148,7 @@ impl Rule for NoUselessUndefined {
             .unwrap_or(true);
         Self { check_arguments, check_arrow_function_body }
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::IdentifierReference(undefined_literal)
                 if undefined_literal.name == "undefined" =>

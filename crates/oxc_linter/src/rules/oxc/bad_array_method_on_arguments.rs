@@ -41,7 +41,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadArrayMethodOnArguments {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if !node.kind().is_specific_id_reference("arguments") {
             return;
         }

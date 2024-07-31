@@ -39,7 +39,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferDomNodeTextContent {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::MemberExpression(member_expr) = node.kind() {
             if let Some((span, name)) = member_expr.static_property_info() {
                 if name == "innerText" && !member_expr.is_computed() {

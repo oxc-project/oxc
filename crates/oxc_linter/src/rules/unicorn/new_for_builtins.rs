@@ -50,7 +50,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NewForBuiltins {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::NewExpression(new_expr) => {
                 let callee = new_expr.callee.without_parenthesized();
@@ -93,7 +93,7 @@ impl Rule for NewForBuiltins {
 
 fn is_expr_global_builtin<'a, 'b>(
     expr: &'b Expression<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b str> {
     match expr {
         Expression::Identifier(ident) => {

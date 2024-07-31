@@ -35,7 +35,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoEqNull {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::BinaryExpression(binary_expression) = node.kind() {
             let bad_operator = matches!(
                 binary_expression.operator,

@@ -83,7 +83,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NumericSeparatorsStyle {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::NumericLiteral(number) => {
                 if self.only_if_contains_separator && !number.raw.contains('_') {

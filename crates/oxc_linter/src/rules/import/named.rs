@@ -28,7 +28,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for Named {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let semantic = ctx.semantic();
 
         // This rule is disabled in the typescript config.

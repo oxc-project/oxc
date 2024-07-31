@@ -42,7 +42,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for GoogleFontDisplay {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
             return;
         };

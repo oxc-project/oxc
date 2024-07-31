@@ -40,7 +40,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for TabindexNoPositive {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
@@ -50,7 +50,7 @@ impl Rule for TabindexNoPositive {
     }
 }
 
-fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
+fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext) {
     match attr {
         JSXAttributeItem::Attribute(attr) => attr.value.as_ref().map_or((), |value| {
             if let Ok(parsed_value) = parse_jsx_value(value) {

@@ -4,7 +4,11 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn no_duplicate_enum_values_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Disallow duplicate enum member values")
@@ -35,7 +39,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicateEnumValues {
     #[allow(clippy::float_cmp)]
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::TSEnumDeclaration(enum_body) = node.kind() else {
             return;
         };
@@ -65,7 +69,7 @@ impl Rule for NoDuplicateEnumValues {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

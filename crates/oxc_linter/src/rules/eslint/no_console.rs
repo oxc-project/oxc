@@ -67,7 +67,7 @@ impl Rule for NoConsole {
         }))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         if let AstKind::CallExpression(call_expr) = node.kind() {
             if let Some(mem) = call_expr.callee.as_member_expression() {
                 if let Expression::Identifier(ident) = mem.object() {

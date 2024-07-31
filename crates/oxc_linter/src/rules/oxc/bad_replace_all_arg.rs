@@ -47,7 +47,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for BadReplaceAllArg {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -79,7 +79,7 @@ impl Rule for BadReplaceAllArg {
 
 fn resolve_flags<'a>(
     expr: &'a Expression<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) -> Option<(RegExpFlags, Span)> {
     match expr.without_parenthesized() {
         Expression::RegExpLiteral(regexp_literal) => {

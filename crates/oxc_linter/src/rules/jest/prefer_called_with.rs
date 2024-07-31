@@ -48,7 +48,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferCalledWith {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         for possible_jest_node in &collect_possible_jest_call_node(ctx) {
             Self::run(possible_jest_node, ctx);
         }
@@ -56,7 +56,7 @@ impl Rule for PreferCalledWith {
 }
 
 impl PreferCalledWith {
-    pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

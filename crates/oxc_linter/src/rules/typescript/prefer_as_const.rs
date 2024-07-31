@@ -6,7 +6,11 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{
+    context::{LintContext, LinterContext},
+    rule::Rule,
+    AstNode,
+};
 
 fn prefer_as_const_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expected a `const` assertion instead of a literal type annotation.")
@@ -39,7 +43,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferAsConst {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_declarator) => {
                 let Some(type_annotation) = &variable_declarator.id.type_annotation else {
@@ -81,7 +85,7 @@ impl Rule for PreferAsConst {
         }
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }

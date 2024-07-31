@@ -167,7 +167,7 @@ impl Rule for AltText {
         Self(Box::new(alt_text))
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
             return;
         };
@@ -246,7 +246,7 @@ fn aria_label_has_value<'a>(item: &'a JSXAttributeItem<'a>) -> bool {
     }
 }
 
-fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
+fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a, '_>) {
     if let Some(alt_prop) = has_jsx_prop_ignore_case(node, "alt") {
         if !is_valid_alt_prop(alt_prop) {
             ctx.diagnostic(missing_alt_value(node.span));
@@ -279,7 +279,7 @@ fn img_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
 fn object_rule<'a>(
     node: &'a JSXOpeningElement<'a>,
     parent: &'a JSXElement<'a>,
-    ctx: &LintContext<'a>,
+    ctx: &LintContext<'a, '_>,
 ) {
     let has_aria_label =
         has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
@@ -296,7 +296,7 @@ fn object_rule<'a>(
     ctx.diagnostic(object(node.span));
 }
 
-fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
+fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a, '_>) {
     let has_aria_label =
         has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
     let has_aria_labelledby =
@@ -317,7 +317,7 @@ fn area_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
     );
 }
 
-fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a>) {
+fn input_type_image_rule<'a>(node: &'a JSXOpeningElement<'a>, ctx: &LintContext<'a, '_>) {
     let has_aria_label =
         has_jsx_prop_ignore_case(node, "aria-label").map_or(false, aria_label_has_value);
     let has_aria_labelledby =

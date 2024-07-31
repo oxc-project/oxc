@@ -27,7 +27,7 @@ use crate::{config::JSDocPluginSettings, context::LintContext, AstNode};
 /// ```
 pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     node: &'b AstNode<'a>,
-    ctx: &'b LintContext<'a>,
+    ctx: &'b LintContext<'a, '_>,
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`

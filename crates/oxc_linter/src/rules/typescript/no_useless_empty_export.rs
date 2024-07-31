@@ -37,7 +37,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUselessEmptyExport {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::ExportNamedDeclaration(decl) = node.kind() else { return };
         if decl.declaration.is_some() || !decl.specifiers.is_empty() {
             return;

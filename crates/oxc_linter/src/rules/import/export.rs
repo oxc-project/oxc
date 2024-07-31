@@ -31,7 +31,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for Export {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         let module_record = ctx.module_record();
         let named_export = &module_record.exported_bindings;
 

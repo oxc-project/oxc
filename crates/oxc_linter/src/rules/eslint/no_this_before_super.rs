@@ -131,7 +131,7 @@ impl Rule for NoThisBeforeSuper {
 }
 
 impl NoThisBeforeSuper {
-    fn is_wanted_node(node: &AstNode, ctx: &LintContext<'_>) -> bool {
+    fn is_wanted_node(node: &AstNode, ctx: &LintContext) -> bool {
         if let Some(parent) = ctx.nodes().parent_node(node.id()) {
             if let AstKind::MethodDefinition(mdef) = parent.kind() {
                 if matches!(mdef.kind, MethodDefinitionKind::Constructor) {

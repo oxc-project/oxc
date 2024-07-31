@@ -4,7 +4,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{LintContext, LinterContext},
     rule::Rule,
     utils::{get_parent_es5_component, get_parent_es6_component},
     AstNode,
@@ -52,7 +52,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoSetState {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -72,7 +72,7 @@ impl Rule for NoSetState {
         ctx.diagnostic(no_set_state_diagnostic(call_expr.callee.span()));
     }
 
-    fn should_run(&self, ctx: &LintContext) -> bool {
+    fn should_run(&self, ctx: &LinterContext) -> bool {
         ctx.source_type().is_jsx()
     }
 }

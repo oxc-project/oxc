@@ -91,7 +91,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUntypedMockFactory {
-    fn run_once(&self, ctx: &LintContext<'_>) {
+    fn run_once(&self, ctx: &LintContext) {
         if !ctx.source_type().is_typescript() {
             return;
         }
@@ -103,7 +103,7 @@ impl Rule for NoUntypedMockFactory {
 }
 
 impl NoUntypedMockFactory {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
+    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a, '_>) {
         let node = possible_jest_node.node;
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

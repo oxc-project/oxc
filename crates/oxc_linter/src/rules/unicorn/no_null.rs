@@ -172,7 +172,7 @@ impl Rule for NoNull {
         }
     }
 
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a, '_>) {
         let AstKind::NullLiteral(null_literal) = node.kind() else {
             return;
         };
@@ -220,7 +220,7 @@ impl Rule for NoNull {
     }
 }
 
-fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
+fn fix_null<'a>(fixer: RuleFixer<'_, '_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
     fixer.replace(null.span, "undefined")
 }
 #[test]
