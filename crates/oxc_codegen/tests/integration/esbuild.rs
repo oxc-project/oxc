@@ -75,36 +75,36 @@ fn test_number() {
     // crashing in the WebAssembly build due to a bug in the Go runtime.
 
     // int32
-    // test("x = 0x7fff_ffff", "x = 2147483647;\n");
-    // test("x = 0x8000_0000", "x = 2147483648;\n");
-    // test("x = 0x8000_0001", "x = 2147483649;\n");
-    // test("x = -0x7fff_ffff", "x = -2147483647;\n");
-    // test("x = -0x8000_0000", "x = -2147483648;\n");
-    // test("x = -0x8000_0001", "x = -2147483649;\n");
+    test_minify("x = 0x7fff_ffff", "x=2147483647;");
+    test_minify("x = 0x8000_0000", "x=2147483648;");
+    test_minify("x = 0x8000_0001", "x=2147483649;");
+    test_minify("x = -0x7fff_ffff", "x=-2147483647;");
+    test_minify("x = -0x8000_0000", "x=-2147483648;");
+    test_minify("x = -0x8000_0001", "x=-2147483649;");
 
     // uint32
-    // test("x = 0xffff_ffff", "x = 4294967295;\n");
-    // test("x = 0x1_0000_0000", "x = 4294967296;\n");
-    // test("x = 0x1_0000_0001", "x = 4294967297;\n");
-    // test("x = -0xffff_ffff", "x = -4294967295;\n");
-    // test("x = -0x1_0000_0000", "x = -4294967296;\n");
-    // test("x = -0x1_0000_0001", "x = -4294967297;\n");
+    test_minify("x = 0xffff_ffff", "x=4294967295;");
+    test_minify("x = 0x1_0000_0000", "x=4294967296;");
+    test_minify("x = 0x1_0000_0001", "x=4294967297;");
+    test_minify("x = -0xffff_ffff", "x=-4294967295;");
+    test_minify("x = -0x1_0000_0000", "x=-4294967296;");
+    test_minify("x = -0x1_0000_0001", "x=-4294967297;");
 
     // int64
-    // test("x = 0x7fff_ffff_ffff_fdff", "x = 9223372036854775e3;\n");
-    // test("x = 0x8000_0000_0000_0000", "x = 9223372036854776e3;\n");
-    // test("x = 0x8000_0000_0000_3000", "x = 9223372036854788e3;\n");
-    // test("x = -0x7fff_ffff_ffff_fdff", "x = -9223372036854775e3;\n");
-    // test("x = -0x8000_0000_0000_0000", "x = -9223372036854776e3;\n");
-    // test("x = -0x8000_0000_0000_3000", "x = -9223372036854788e3;\n");
+    test_minify("x = 0x7fff_ffff_ffff_fdff", "x=9223372036854775e3;");
+    test_minify("x = 0x8000_0000_0000_0000", "x=9223372036854776e3;");
+    test_minify("x = 0x8000_0000_0000_3000", "x=9223372036854788e3;");
+    test_minify("x = -0x7fff_ffff_ffff_fdff", "x=-9223372036854775e3;");
+    test_minify("x = -0x8000_0000_0000_0000", "x=-9223372036854776e3;");
+    test_minify("x = -0x8000_0000_0000_3000", "x=-9223372036854788e3;");
 
     // uint64
-    // test("x = 0xffff_ffff_ffff_fbff", "x = 1844674407370955e4;\n");
-    // test("x = 0x1_0000_0000_0000_0000", "x = 18446744073709552e3;\n");
-    // test("x = 0x1_0000_0000_0000_1000", "x = 18446744073709556e3;\n");
-    // test("x = -0xffff_ffff_ffff_fbff", "x = -1844674407370955e4;\n");
-    // test("x = -0x1_0000_0000_0000_0000", "x = -18446744073709552e3;\n");
-    // test("x = -0x1_0000_0000_0000_1000", "x = -18446744073709556e3;\n");
+    test_minify("x = 0xffff_ffff_ffff_fbff", "x=1844674407370955e4;");
+    test_minify("x = 0x1_0000_0000_0000_0000", "x=18446744073709552e3;");
+    test_minify("x = 0x1_0000_0000_0000_1000", "x=18446744073709556e3;");
+    test_minify("x = -0xffff_ffff_ffff_fbff", "x=-1844674407370955e4;");
+    test_minify("x = -0x1_0000_0000_0000_0000", "x=-18446744073709552e3;");
+    test_minify("x = -0x1_0000_0000_0000_1000", "x=-18446744073709556e3;");
 
     // Check the hex vs. decimal decision boundary when minifying
     // test("x = 999999999999", "x = 999999999999;\n");
@@ -283,26 +283,26 @@ fn test_string() {
     test("let x = '\\v'", "let x = \"\\v\";\n");
     test("let x = '\\n'", "let x = \"\\n\";\n");
     test("let x = '\\''", "let x = \"'\";\n");
-    // test( "let x = '\\\"'", "let x = '\"';\n");
-    // test( "let x = '\\'\"'", "let x = `'\"`;\n");
-    // test( "let x = '\\\\'", "let x = \"\\\\\";\n");
-    // test( "let x = '\x00'", "let x = \"\\0\";\n");
-    // test( "let x = '\x00!'", "let x = \"\\0!\";\n");
-    // test( "let x = '\x001'", "let x = \"\\x001\";\n");
-    // test( "let x = '\\0'", "let x = \"\\0\";\n");
-    // test( "let x = '\\0!'", "let x = \"\\0!\";\n");
-    // test( "let x = '\x07'", "let x = \"\\x07\";\n");
-    // test( "let x = '\x07!'", "let x = \"\\x07!\";\n");
-    // test( "let x = '\x071'", "let x = \"\\x071\";\n");
-    // test( "let x = '\\7'", "let x = \"\\x07\";\n");
-    // test( "let x = '\\7!'", "let x = \"\\x07!\";\n");
-    // test( "let x = '\\01'", "let x = \"\x01\";\n");
-    // test( "let x = '\x10'", "let x = \"\x10\";\n");
-    // test( "let x = '\\x10'", "let x = \"\x10\";\n");
-    // test( "let x = '\x1B'", "let x = \"\\x1B\";\n");
-    // test( "let x = '\\x1B'", "let x = \"\\x1B\";\n");
-    // test( "let x = '\uABCD'", "let x = \"\uABCD\";\n");
-    // test( "let x = '\\uABCD'", "let x = \"\uABCD\";\n");
+    test("let x = '\\\"'", "let x = \"\\\"\";\n");
+    test("let x = '\\'\"'", "let x = \"'\\\"\";\n");
+    test("let x = '\\\\'", "let x = \"\\\\\";\n");
+    test("let x = '\x00'", "let x = \"\\0\";\n");
+    test("let x = '\x00!'", "let x = \"\\0!\";\n");
+    test("let x = '\x001'", "let x = \"\\x001\";\n");
+    test("let x = '\\0'", "let x = \"\\0\";\n");
+    test("let x = '\\0!'", "let x = \"\\0!\";\n");
+    test("let x = '\x07'", "let x = \"\\x07\";\n");
+    test("let x = '\x07!'", "let x = \"\\x07!\";\n");
+    test("let x = '\x071'", "let x = \"\\x071\";\n");
+    test("let x = '\\7'", "let x = \"\\x07\";\n");
+    test("let x = '\\7!'", "let x = \"\\x07!\";\n");
+    test("let x = '\\01'", "let x = \"\x01\";\n");
+    test("let x = '\x10'", "let x = \"\x10\";\n");
+    test("let x = '\\x10'", "let x = \"\x10\";\n");
+    test("let x = '\x1B'", "let x = \"\\x1B\";\n");
+    test("let x = '\\x1B'", "let x = \"\\x1B\";\n");
+    test("let x = '\u{ABCD}'", "let x = \"\u{ABCD}\";\n");
+    test("let x = '\\uABCD'", "let x = \"\u{ABCD}\";\n");
     // test( "let x = '\U000123AB'", "let x = \"\U000123AB\";\n");
     // test( "let x = '\\u{123AB}'", "let x = \"\U000123AB\";\n");
     // test( "let x = '\\uD808\\uDFAB'", "let x = \"\U000123AB\";\n");
@@ -320,13 +320,13 @@ fn test_string() {
 #[test]
 fn test_template() {
     test("let x = `\\0`", "let x = `\\0`;\n");
-    // test("let x = `\\x01`", "let x = `\x01`;\n");
+    test("let x = `\\x01`", "let x = `\\x01`;\n");
     test("let x = `\\0${0}`", "let x = `\\0${0}`;\n");
-    // test("let x = `\\x01${0}`", "let x = `\x01${0}`;\n");
+    test("let x = `\\x01${0}`", "let x = `\\x01${0}`;\n");
     test("let x = `${0}\\0`", "let x = `${0}\\0`;\n");
-    // test("let x = `${0}\\x01`", "let x = `${0}\x01`;\n");
-    // test("let x = `${0}\\0${1}`", "let x = `${0}\\0${1}`;\n");
-    // test("let x = `${0}\\x01${1}`", "let x = `${0}\x01${1}`;\n");
+    test("let x = `${0}\\x01`", "let x = `${0}\\x01`;\n");
+    test("let x = `${0}\\0${1}`", "let x = `${0}\\0${1}`;\n");
+    test("let x = `${0}\\x01${1}`", "let x = `${0}\\x01${1}`;\n");
 
     test("let x = String.raw`\\1`", "let x = String.raw`\\1`;\n");
     test("let x = String.raw`\\x01`", "let x = String.raw`\\x01`;\n");
@@ -341,8 +341,8 @@ fn test_template() {
     test("let x = `$(y)`", "let x = `$(y)`;\n");
     test("let x = `{y}$`", "let x = `{y}$`;\n");
     test("let x = `$}y{`", "let x = `$}y{`;\n");
-    // test("let x = `\\${y}`", "let x = `\\${y}`;\n");
-    // test("let x = `$\\{y}`", "let x = `\\${y}`;\n");
+    test("let x = `\\${y}`", "let x = `\\${y}`;\n");
+    test("let x = `$\\{y}`", "let x = `$\\{y}`;\n");
 
     test("await tag`x`", "await tag`x`;\n");
     test("await (tag`x`)", "await tag`x`;\n");
@@ -884,18 +884,18 @@ fn test_jsx() {
     test("<A.B/>", "<A.B />;\n");
     test("<a-b/>", "<a-b />;\n");
     test("<a:b/>", "<a:b />;\n");
-    // test("<a></a>", "<a />;\n");
-    // test("<a b></a>", "<a b />;\n");
+    test("<a></a>", "<a></a>;\n");
+    test("<a b></a>", "<a b></a>;\n");
 
-    // test("<a b={true}></a>", "<a b={true} />;\n");
-    // test("<a b='x'></a>", "<a b='x' />;\n");
-    // test("<a b=\"x\"></a>", "<a b=\"x\" />;\n");
-    // test("<a b={'x'}></a>", "<a b={\"x\"} />;\n");
-    // test("<a b={`'`}></a>", "<a b={`'`} />;\n");
-    // test("<a b={`\"`}></a>", "<a b={`\"`} />;\n");
-    // test("<a b={`'\"`}></a>", "<a b={`'\"`} />;\n");
-    // test("<a b=\"&quot;\"></a>", "<a b=\"&quot;\" />;\n");
-    // test("<a b=\"&amp;\"></a>", "<a b=\"&amp;\" />;\n");
+    test("<a b={true}></a>", "<a b={true}></a>;\n");
+    test("<a b='x'></a>", "<a b=\"x\"></a>;\n");
+    test("<a b=\"x\"></a>", "<a b=\"x\"></a>;\n");
+    test("<a b={'x'}></a>", "<a b={\"x\"}></a>;\n");
+    test("<a b={`'`}></a>", "<a b={`'`}></a>;\n");
+    test("<a b={`\"`}></a>", "<a b={`\"`}></a>;\n");
+    test("<a b={`'\"`}></a>", "<a b={`'\"`}></a>;\n");
+    test("<a b=\"&quot;\"></a>", "<a b=\"&quot;\"></a>;\n");
+    test("<a b=\"&amp;\"></a>", "<a b=\"&amp;\"></a>;\n");
 
     test("<a>x</a>", "<a>x</a>;\n");
     test("<a>x\ny</a>", "<a>x\ny</a>;\n");
