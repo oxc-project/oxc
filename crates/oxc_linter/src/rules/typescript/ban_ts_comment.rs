@@ -109,7 +109,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     BanTsComment,
-    pedantic
+    pedantic,
+    conditional_fix
 );
 
 impl Rule for BanTsComment {

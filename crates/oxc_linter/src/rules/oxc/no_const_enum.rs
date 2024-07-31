@@ -36,6 +36,7 @@ declare_oxc_lint!(
     /// ```
     NoConstEnum,
     restriction,
+    fix
 );
 
 impl Rule for NoConstEnum {

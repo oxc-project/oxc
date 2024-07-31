@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// const text = foo.textContent;
     /// ```
     PreferDomNodeTextContent,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for PreferDomNodeTextContent {

@@ -73,7 +73,8 @@ declare_oxc_lint!(
     /// import e from 'bar.js';
     /// ```
     SortImports,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for SortImports {

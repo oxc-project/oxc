@@ -31,7 +31,8 @@ declare_oxc_lint!(
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,
-    restriction
+    restriction,
+    fix
 );
 
 impl Rule for PreferNodeProtocol {

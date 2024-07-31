@@ -35,7 +35,8 @@ declare_oxc_lint!(
     /// let foo = { bar: 'baz' as 'baz' };
     /// ```
     PreferAsConst,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for PreferAsConst {

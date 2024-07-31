@@ -26,6 +26,7 @@ declare_oxc_lint!(
     /// ```
     ArrayType,
     style,
+    fix
 );
 
 fn generic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {

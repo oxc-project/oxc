@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// ```
     UseIsnan,
     correctness,
+    conditional_fix
 );
 
 impl Rule for UseIsnan {

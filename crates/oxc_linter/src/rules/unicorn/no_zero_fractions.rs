@@ -43,7 +43,8 @@ declare_oxc_lint!(
     /// const foo = 1.1;
     /// ```
     NoZeroFractions,
-    style
+    style,
+    fix
 );
 
 impl Rule for NoZeroFractions {

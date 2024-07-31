@@ -66,6 +66,7 @@ declare_oxc_lint!(
     /// ```
     PreferToBe,
     style,
+    fix
 );
 
 #[derive(Clone, Debug, PartialEq)]

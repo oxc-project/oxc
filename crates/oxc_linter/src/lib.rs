@@ -120,18 +120,7 @@ impl Linter {
             .rules
             .iter()
             .filter(|rule| rule.should_run(&ctx))
-            .map(|rule| {
-                let rule_name = rule.name();
-                let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
-
-                (
-                    rule,
-                    ctx.clone()
-                        .with_plugin_name(plugin_name)
-                        .with_rule_name(rule_name)
-                        .with_severity(rule.severity),
-                )
-            })
+            .map(|rule| (rule, self.ctx_for_rule(&ctx, rule)))
             .collect::<Vec<_>>();
 
         for (rule, ctx) in &rules {
@@ -184,6 +173,18 @@ impl Linter {
         }
 
         ctx
+    }
+
+    fn ctx_for_rule<'a>(&self, ctx: &LintContext<'a>, rule: &RuleWithSeverity) -> LintContext<'a> {
+        let rule_name = rule.name();
+        let plugin_name = self.map_jest(rule.plugin_name(), rule_name);
+
+        #[cfg(debug_assertions)]
+        let ctx = ctx.clone().with_rule_fix_capabilities(rule.rule.fix());
+        #[cfg(not(debug_assertions))]
+        let ctx = ctx.clone();
+
+        ctx.with_plugin_name(plugin_name).with_rule_name(rule_name).with_severity(rule.severity)
     }
 
     fn map_jest(&self, plugin_name: &'static str, rule_name: &str) -> &'static str {

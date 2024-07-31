@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// const multiLine: number = 'value';
     /// ```
     PreferTsExpectError,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferTsExpectError {

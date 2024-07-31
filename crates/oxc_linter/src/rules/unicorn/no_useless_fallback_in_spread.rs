@@ -35,7 +35,8 @@ declare_oxc_lint!(
     ///
     /// ```
     NoUselessFallbackInSpread,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for NoUselessFallbackInSpread {

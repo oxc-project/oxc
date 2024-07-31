@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// ```
     NoImportNodeTest,
     style,
+    fix
 );
 
 impl Rule for NoImportNodeTest {
