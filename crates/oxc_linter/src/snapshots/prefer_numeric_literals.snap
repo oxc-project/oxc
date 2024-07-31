@@ -373,3 +373,11 @@ source: crates/oxc_linter/src/tester.rs
  1 │ Number.parseInt('0_0', 16);
    · ──────────────────────────
    ╰────
+
+  ⚠ eslint(prefer-numeric-literals): Use octal literals instead of parseInt().
+   ╭─[prefer_numeric_literals.tsx:2:13]
+ 1 │ 
+ 2 │             parseInt("767", 8) === 503;
+   ·             ──────────────────
+ 3 │             function foo() {
+   ╰────

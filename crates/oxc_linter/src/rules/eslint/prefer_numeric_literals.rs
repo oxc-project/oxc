@@ -1,5 +1,8 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, IdentifierReference, StaticMemberExpression},
+    ast::{
+        Argument, CallExpression, Expression, IdentifierReference, MemberExpression,
+        StaticMemberExpression,
+    },
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -7,7 +10,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, Map};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{ast_util::get_symbol_id_of_variable, context::LintContext, rule::Rule, AstNode};
 
 fn prefer_numeric_literals_diagnostic(span0: Span, x0: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use {x0} literals instead of parseInt().")).with_label(span0)
@@ -74,12 +77,11 @@ impl Rule for PreferNumericLiterals {
                     }
                 }
                 Expression::ChainExpression(chain_expr) => {
-                    if let Some(member_expr) = chain_expr.expression.as_member_expression() {
-                        if let Expression::Identifier(ident) = &member_expr.object() {
-                            if ident.name == "Number"
-                                && member_expr.static_property_name() == Some("parseInt")
-                                && ctx.symbols().get_symbol_id_from_name("Number").is_none()
-                            {
+                    if let Some(MemberExpression::StaticMemberExpression(member_expr)) =
+                        chain_expr.expression.as_member_expression()
+                    {
+                        if let Expression::Identifier(ident) = &member_expr.object {
+                            if is_parse_int_call(ctx, ident, Some(member_expr)) {
                                 check_arguments(call_expr, ctx);
                             }
                         }
@@ -103,10 +105,10 @@ fn is_parse_int_call(
     if let Some(member_expr) = static_member_expr {
         return ident.name == "Number"
             && member_expr.property.name == "parseInt"
-            && ctx.symbols().get_symbol_id_from_name("Number").is_none();
+            && get_symbol_id_of_variable(ident, ctx).is_none();
     }
 
-    ctx.symbols().get_symbol_id_from_name("parseInt").is_none()
+    get_symbol_id_of_variable(ident, ctx).is_none()
 }
 
 fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
@@ -227,6 +229,14 @@ fn test() {
         "Number.parseInt('5_000', 8);",
         "parseInt('0_1', 16);",
         "Number.parseInt('0_0', 16);",
+        r#"
+            parseInt("767", 8) === 503;
+            function foo() {
+                function parseInt() {
+                    throw new Error()
+                }
+            }
+        "#,
     ];
 
     //  let fix = vec![
