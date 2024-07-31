@@ -108,6 +108,24 @@ impl TryFrom<char> for RegExpFlags {
     }
 }
 
+impl TryFrom<u8> for RegExpFlags {
+    type Error = u8;
+
+    fn try_from(value: u8) -> Result<Self, Self::Error> {
+        match value {
+            b'g' => Ok(Self::G),
+            b'i' => Ok(Self::I),
+            b'm' => Ok(Self::M),
+            b's' => Ok(Self::S),
+            b'u' => Ok(Self::U),
+            b'y' => Ok(Self::Y),
+            b'd' => Ok(Self::D),
+            b'v' => Ok(Self::V),
+            _ => Err(value),
+        }
+    }
+}
+
 impl fmt::Display for RegExpFlags {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.contains(Self::G) {

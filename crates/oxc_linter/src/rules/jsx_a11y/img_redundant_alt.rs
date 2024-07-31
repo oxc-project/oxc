@@ -11,7 +11,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_element_type, get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+        get_element_type, get_prop_value, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
     },
     AstNode,
 };
@@ -120,7 +120,7 @@ impl Rule for ImgRedundantAlt {
             return;
         }
 
-        let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "alt") else {
+        let Some(alt_prop) = has_jsx_prop_ignore_case(jsx_el, "alt") else {
             return;
         };
 

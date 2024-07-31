@@ -436,7 +436,7 @@ fn is_valid_data_attr(name: &str) -> bool {
 fn normalize_attribute_case(name: &str) -> &str {
     DOM_PROPERTIES_IGNORE_CASE
         .iter()
-        .find(|camel_name| camel_name.to_lowercase() == name.to_lowercase())
+        .find(|camel_name| camel_name.eq_ignore_ascii_case(name))
         .unwrap_or(&name)
 }
 fn has_uppercase(name: &str) -> bool {

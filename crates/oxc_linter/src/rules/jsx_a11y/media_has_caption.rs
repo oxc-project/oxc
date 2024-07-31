@@ -149,7 +149,7 @@ impl Rule for MediaHasCaption {
                                 if let JSXAttributeName::Identifier(iden) = &attr.name {
                                     if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
                                         return iden.name == "kind"
-                                            && s.value.to_lowercase() == "captions";
+                                            && s.value.eq_ignore_ascii_case("captions");
                                     }
                                 }
                             }

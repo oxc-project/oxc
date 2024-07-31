@@ -6,7 +6,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -55,7 +55,7 @@ impl Rule for GoogleFontDisplay {
             return;
         }
 
-        let Some(href_prop) = has_jsx_prop_lowercase(jsx_opening_element, "href") else {
+        let Some(href_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "href") else {
             return;
         };
 

@@ -7,7 +7,7 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_element_type, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+        get_element_type, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
         object_has_accessible_child,
     },
     AstNode,
@@ -79,7 +79,7 @@ impl Rule for AnchorHasContent {
                 }
 
                 for attr in ["title", "aria-label"] {
-                    if has_jsx_prop_lowercase(&jsx_el.opening_element, attr).is_some() {
+                    if has_jsx_prop_ignore_case(&jsx_el.opening_element, attr).is_some() {
                         return;
                     };
                 }
