@@ -1,4 +1,4 @@
-use oxc_syntax::identifier::is_identifier_start;
+use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use super::{Kind, Lexer, Span};
 use crate::diagnostics;
@@ -189,12 +189,29 @@ impl<'a> Lexer<'a> {
     }
 
     fn check_after_numeric_literal(&mut self, kind: Kind) -> Kind {
-        let offset = self.offset();
-        // The SourceCharacter immediately following a NumericLiteral must not be an IdentifierStart or DecimalDigit.
-        let c = self.peek_char();
-        if c.is_none() || c.is_some_and(|ch| !ch.is_ascii_digit() && !is_identifier_start(ch)) {
-            return kind;
+        // The SourceCharacter immediately following a NumericLiteral must not be
+        // an IdentifierStart or DecimalDigit.
+        // Use a fast path for common case where next char is ASCII.
+        // NB: `!is_identifier_part_ascii(b as char)` is equivalent to
+        // `!b.is_ascii_digit() && !is_identifier_start_ascii(b as char)`
+        match self.peek_byte() {
+            Some(b) if b.is_ascii() => {
+                if !is_identifier_part_ascii(b as char) {
+                    return kind;
+                }
+            }
+            Some(_) => {
+                // Unicode
+                let c = self.peek_char().unwrap();
+                if !is_identifier_start(c) {
+                    return kind;
+                }
+            }
+            None => return kind,
         }
+
+        // Invalid next char
+        let offset = self.offset();
         self.consume_char();
         while let Some(c) = self.peek_char() {
             if is_identifier_start(c) {
