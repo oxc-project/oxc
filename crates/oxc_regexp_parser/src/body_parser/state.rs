@@ -30,8 +30,8 @@ impl<'a> State<'a> {
         }
     }
 
-    pub fn count_capturing_groups(&mut self, source_text: &'a str) {
-        let (num_of_left_parens, named_capture_groups) = count_capturing_groups(source_text);
+    pub fn parse_capturing_groups(&mut self, source_text: &'a str) {
+        let (num_of_left_parens, named_capture_groups) = parse_capturing_groups(source_text);
 
         // Enable `NamedCaptureGroups` if capturing group found
         if !named_capture_groups.is_empty() {
@@ -44,7 +44,7 @@ impl<'a> State<'a> {
 }
 
 /// Returns: (num_of_left_parens, named_capture_groups)
-fn count_capturing_groups(source_text: &str) -> (u32, FxHashSet<&str>) {
+fn parse_capturing_groups(source_text: &str) -> (u32, FxHashSet<&str>) {
     let mut num_of_left_parens = 0;
     let mut named_capture_groups = FxHashSet::default();
 
@@ -58,16 +58,18 @@ fn count_capturing_groups(source_text: &str) -> (u32, FxHashSet<&str>) {
     // IgnoreGroup, and LookaroundAssertions are ignored
     //   (?:...)
     //   (?=...), (?!...), (?<=...), (?<!...)
-    while reader.peek().is_some() {
+    while let Some(cp) = reader.peek() {
         if in_escape {
             in_escape = false;
-        } else if reader.eat('\\') {
+        } else if cp == '\\' as u32 {
             in_escape = true;
-        } else if reader.eat('[') {
+        } else if cp == '[' as u32 {
             in_character_class = true;
-        } else if reader.eat(']') {
+        } else if cp == ']' as u32 {
             in_character_class = false;
-        } else if !in_character_class && reader.eat('(') {
+        } else if !in_character_class && cp == '(' as u32 {
+            reader.advance();
+
             // Skip IgnoreGroup
             if reader.eat2('?', ':')
             // Skip LookAroundAssertion
@@ -113,6 +115,8 @@ mod tests {
     #[test]
     fn test_count_capturing_groups() {
         for (source_text, expected_num_of_left_parens, expected_named_capture_groups_found) in [
+            ("()", 1, false),
+            (r"\1()", 1, false),
             ("(foo)", 1, false),
             ("(foo)(bar)", 2, false),
             ("(foo(bar))", 2, false),
@@ -121,8 +125,9 @@ mod tests {
             ("(foo)(?<n>bar)", 2, true),
             ("(foo)(?=...)(?!...)(?<=...)(?<!...)(?:...)", 1, false),
             ("(foo)(?<n>bar)(?<nn>baz)", 3, true),
+            ("(?<n>.)(?<n>..)", 2, true),
         ] {
-            let (num_of_left_parens, named_capture_groups) = count_capturing_groups(source_text);
+            let (num_of_left_parens, named_capture_groups) = parse_capturing_groups(source_text);
             assert_eq!(expected_num_of_left_parens, num_of_left_parens);
             assert_eq!(expected_named_capture_groups_found, !named_capture_groups.is_empty());
         }

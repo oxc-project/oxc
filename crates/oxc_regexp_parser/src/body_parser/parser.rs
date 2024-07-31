@@ -33,8 +33,12 @@ impl<'a> PatternParser<'a> {
     }
 
     pub fn parse(&mut self) -> Result<ast::Pattern<'a>> {
-        // TODO: Comment
-        self.state.count_capturing_groups(self.source_text);
+        // Pre parse whole pattern to collect:
+        // - 1. the number of (named|unnamed) capturing groups
+        //   - For `\1` in `\1()` to be handled as indexed reference
+        // - 2. names of named capturing groups
+        //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error with `NamedCaptureGroups`
+        self.state.parse_capturing_groups(self.source_text);
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
@@ -433,7 +437,7 @@ impl<'a> PatternParser<'a> {
         // DecimalEscape: \1 means indexed reference
         if let Some(index) = self.consume_decimal_escape() {
             if self.state.unicode_mode {
-                // [SS:EE]  AtomEscape :: DecimalEscape
+                // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
                 if self.state.num_of_capturing_groups < index {
                     return Err(OxcDiagnostic::error("Invalid indexed reference"));
@@ -479,7 +483,7 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
                 if !self.state.found_group_names.contains(name.as_str()) {
-                    return Err(OxcDiagnostic::error("Invalid named reference"));
+                    return Err(OxcDiagnostic::error("Group specifier is empty"));
                 }
 
                 return Ok(Some(ast::Term::NamedReference(Box::new_in(
