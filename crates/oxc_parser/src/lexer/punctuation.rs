@@ -17,13 +17,13 @@ impl<'a> Lexer<'a> {
 
     /// returns None for `SingleLineHTMLOpenComment` `<!--` in script mode
     pub(super) fn read_left_angle(&mut self) -> Option<Kind> {
-        if self.next_ascii_char_eq(b'<') {
-            if self.next_ascii_char_eq(b'=') {
+        if self.next_ascii_byte_eq(b'<') {
+            if self.next_ascii_byte_eq(b'=') {
                 Some(Kind::ShiftLeftEq)
             } else {
                 Some(Kind::ShiftLeft)
             }
-        } else if self.next_ascii_char_eq(b'=') {
+        } else if self.next_ascii_byte_eq(b'=') {
             Some(Kind::LtEq)
         } else if self.peek_byte() == Some(b'!')
             // SingleLineHTMLOpenComment `<!--` in script mode
@@ -38,17 +38,17 @@ impl<'a> Lexer<'a> {
 
     /// returns None for `SingleLineHTMLCloseComment` `-->` in script mode
     pub(super) fn read_minus(&mut self) -> Option<Kind> {
-        if self.next_ascii_char_eq(b'-') {
+        if self.next_ascii_byte_eq(b'-') {
             // SingleLineHTMLCloseComment `-->` in script mode
             if self.token.is_on_new_line
                 && self.source_type.is_script()
-                && self.next_ascii_char_eq(b'>')
+                && self.next_ascii_byte_eq(b'>')
             {
                 None
             } else {
                 Some(Kind::Minus2)
             }
-        } else if self.next_ascii_char_eq(b'=') {
+        } else if self.next_ascii_byte_eq(b'=') {
             Some(Kind::MinusEq)
         } else {
             Some(Kind::Minus)
@@ -62,19 +62,19 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_right_angle(&mut self) -> Kind {
-        if self.next_ascii_char_eq(b'>') {
-            if self.next_ascii_char_eq(b'>') {
-                if self.next_ascii_char_eq(b'=') {
+        if self.next_ascii_byte_eq(b'>') {
+            if self.next_ascii_byte_eq(b'>') {
+                if self.next_ascii_byte_eq(b'=') {
                     Kind::ShiftRight3Eq
                 } else {
                     Kind::ShiftRight3
                 }
-            } else if self.next_ascii_char_eq(b'=') {
+            } else if self.next_ascii_byte_eq(b'=') {
                 Kind::ShiftRightEq
             } else {
                 Kind::ShiftRight
             }
-        } else if self.next_ascii_char_eq(b'=') {
+        } else if self.next_ascii_byte_eq(b'=') {
             Kind::GtEq
         } else {
             Kind::RAngle

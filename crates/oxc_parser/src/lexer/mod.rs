@@ -274,7 +274,7 @@ impl<'a> Lexer<'a> {
     // `#[inline(always)]` to make sure the `assert!` gets optimized out.
     #[allow(clippy::inline_always)]
     #[inline(always)]
-    fn next_ascii_char_eq(&mut self, b: u8) -> bool {
+    fn next_ascii_byte_eq(&mut self, b: u8) -> bool {
         // TODO: can be replaced by `std::ascii:Char` once stabilized.
         // https://github.com/rust-lang/rust/issues/110998
         assert!(b.is_ascii());

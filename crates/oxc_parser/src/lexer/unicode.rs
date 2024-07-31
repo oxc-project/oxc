@@ -141,11 +141,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn unicode_code_point(&mut self) -> Option<SurrogatePair> {
-        if !self.next_ascii_char_eq(b'{') {
+        if !self.next_ascii_byte_eq(b'{') {
             return None;
         }
         let value = self.code_point()?;
-        if !self.next_ascii_char_eq(b'}') {
+        if !self.next_ascii_byte_eq(b'}') {
             return None;
         }
         Some(SurrogatePair::CodePoint(value))
@@ -231,7 +231,7 @@ impl<'a> Lexer<'a> {
                 // <CR> <LF>
                 LF | LS | PS => {}
                 CR => {
-                    self.next_ascii_char_eq(b'\n');
+                    self.next_ascii_byte_eq(b'\n');
                 }
                 // SingleEscapeCharacter :: one of
                 //   ' " \ b f n r t v

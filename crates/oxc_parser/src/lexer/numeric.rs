@@ -29,9 +29,9 @@ impl<'a> Lexer<'a> {
 
     pub(super) fn decimal_literal_after_first_digit(&mut self) -> Kind {
         self.read_decimal_digits_after_first_digit();
-        if self.next_ascii_char_eq(b'.') {
+        if self.next_ascii_byte_eq(b'.') {
             return self.decimal_literal_after_decimal_point_after_digits();
-        } else if self.next_ascii_char_eq(b'n') {
+        } else if self.next_ascii_byte_eq(b'n') {
             return self.check_after_numeric_literal(Kind::Decimal);
         }
 
@@ -71,7 +71,7 @@ impl<'a> Lexer<'a> {
                 _ => break,
             }
         }
-        self.next_ascii_char_eq(b'n');
+        self.next_ascii_byte_eq(b'n');
         self.check_after_numeric_literal(kind)
     }
 
