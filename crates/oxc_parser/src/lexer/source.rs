@@ -501,9 +501,11 @@ impl<'a> Source<'a> {
     /// Peek next two bytes of source without consuming them.
     #[inline]
     pub(super) fn peek_2_bytes(&self) -> Option<[u8; 2]> {
-        if (self.end as usize).saturating_sub(self.ptr as usize) >= 2 {
+        // `end` is always >= `ptr` so `end - ptr` cannot wrap around.
+        // No need to use checked/saturating subtraction here.
+        if (self.end as usize) - (self.ptr as usize) >= 2 {
             // SAFETY: The check above ensures that there are at least 2 bytes to
-            // read from `self.ptr` without overflowing past `self.end`.
+            // read from `self.ptr` without reading past `self.end`
             let bytes = unsafe { self.position().read2() };
             Some(bytes)
         } else {
