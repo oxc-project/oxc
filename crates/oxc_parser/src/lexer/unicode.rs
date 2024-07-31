@@ -54,14 +54,17 @@ impl<'a> Lexer<'a> {
         check_identifier_start: bool,
     ) {
         let start = self.offset();
-        if self.next_char() != Some('u') {
+        if self.peek_byte() == Some(b'u') {
+            self.consume_char();
+        } else {
+            self.next_char();
             let range = Span::new(start, self.offset());
             self.error(diagnostics::unicode_escape_sequence(range));
             return;
         }
 
-        let value = match self.peek_char() {
-            Some('{') => self.unicode_code_point(),
+        let value = match self.peek_byte() {
+            Some(b'{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
 
