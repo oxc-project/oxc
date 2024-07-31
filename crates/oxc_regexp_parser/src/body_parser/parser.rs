@@ -33,10 +33,15 @@ impl<'a> PatternParser<'a> {
 
     pub fn parse(&mut self) -> Result<ast::Pattern<'a>> {
         // Pre parse whole pattern to collect:
-        // - 1. the number of (named|unnamed) capturing groups
+        // - the number of (named|unnamed) capturing groups
         //   - For `\1` in `\1()` to be handled as indexed reference
-        // - 2. names of named capturing groups
-        //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error with `NamedCaptureGroups`
+        // - names of named capturing groups
+        //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error in `+NamedCaptureGroups`
+        //
+        // NOTE: It means that this perform 2 loops for every cases.
+        // - Pros: Code is simple enough and easy to understand 
+        // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
+        // We may revisit this if we need performance rather than simplicity.
         self.state.parse_capturing_groups(self.source_text);
 
         // [SS:EE] Pattern :: Disjunction
@@ -44,10 +49,9 @@ impl<'a> PatternParser<'a> {
         if 2 ^ 32 < self.state.num_of_capturing_groups {
             return Err(OxcDiagnostic::error("Too many capturing groups"));
         }
-
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-        if self.state.num_of_named_capture_groups as usize != self.state.found_group_names.len() {
+        if self.state.num_of_named_capturing_groups as usize != self.state.found_group_names.len() {
             return Err(OxcDiagnostic::error("Duplicated group name"));
         }
 

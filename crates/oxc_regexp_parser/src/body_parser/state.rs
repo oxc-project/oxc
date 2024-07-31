@@ -2,13 +2,16 @@ use rustc_hash::FxHashSet;
 
 use super::reader::Reader;
 
+/// Currently all of properties are read only.
 #[derive(Debug)]
 pub struct State<'a> {
+    // Mode flags
     pub unicode_mode: bool,
     pub unicode_sets_mode: bool,
     pub named_capture_groups: bool,
+    // Other states
     pub num_of_capturing_groups: u32,
-    pub num_of_named_capture_groups: u32,
+    pub num_of_named_capturing_groups: u32,
     pub found_group_names: FxHashSet<&'a str>,
 }
 
@@ -17,7 +20,7 @@ impl<'a> State<'a> {
         let unicode_mode = unicode_flag || unicode_sets_flag;
         let unicode_sets_mode = unicode_sets_flag;
         // In Annex B, this is `false` by default.
-        // But it is `true`
+        // It is `true`
         // - if `u` or `v` flag is set
         // - or if `GroupName` is found in pattern
         let named_capture_groups = unicode_flag || unicode_sets_flag;
@@ -27,38 +30,38 @@ impl<'a> State<'a> {
             unicode_sets_mode,
             named_capture_groups,
             num_of_capturing_groups: 0,
-            num_of_named_capture_groups: 0,
+            num_of_named_capturing_groups: 0,
             found_group_names: FxHashSet::default(),
         }
     }
 
     pub fn parse_capturing_groups(&mut self, source_text: &'a str) {
-        let (num_of_left_parens, num_of_named_capture_groups, named_capture_groups) =
+        let (num_of_left_parens, num_of_named_capturing_groups, named_capturing_groups) =
             parse_capturing_groups(source_text);
 
         // Enable `NamedCaptureGroups` if capturing group found
-        if !named_capture_groups.is_empty() {
+        if 0 < num_of_named_capturing_groups {
             self.named_capture_groups = true;
         }
 
         self.num_of_capturing_groups = num_of_left_parens;
-        self.num_of_named_capture_groups = num_of_named_capture_groups;
-        self.found_group_names = named_capture_groups;
+        self.num_of_named_capturing_groups = num_of_named_capturing_groups;
+        self.found_group_names = named_capturing_groups;
     }
 }
 
-/// Returns: (num_of_left_parens, named_capture_groups)
+/// Returns: (num_of_left_parens, num_of_named_capturing_groups, named_capturing_groups)
 fn parse_capturing_groups(source_text: &str) -> (u32, u32, FxHashSet<&str>) {
     let mut num_of_left_parens = 0;
-    let mut num_of_named_capture_groups = 0;
-    let mut named_capture_groups = FxHashSet::default();
+    let mut num_of_named_capturing_groups = 0;
+    let mut named_capturing_groups = FxHashSet::default();
 
     let mut reader = Reader::new(source_text, true);
 
     let mut in_escape = false;
     let mut in_character_class = false;
 
-    // Count only normal capturing group(named, unnamed)
+    // Count only normal CapturingGroup(named, unnamed)
     //   (?<name>...), (...)
     // IgnoreGroup, and LookaroundAssertions are ignored
     //   (?:...)
@@ -101,8 +104,9 @@ fn parse_capturing_groups(source_text: &str) -> (u32, u32, FxHashSet<&str>) {
 
                 if reader.eat('>') {
                     let group_name = &source_text[span_start..span_end];
-                    named_capture_groups.insert(group_name);
-                    num_of_named_capture_groups += 1;
+                    // May be duplicated
+                    named_capturing_groups.insert(group_name);
+                    num_of_named_capturing_groups += 1;
                     continue;
                 }
             }
@@ -111,7 +115,7 @@ fn parse_capturing_groups(source_text: &str) -> (u32, u32, FxHashSet<&str>) {
         reader.advance();
     }
 
-    (num_of_left_parens, num_of_named_capture_groups, named_capture_groups)
+    (num_of_left_parens, num_of_named_capturing_groups, named_capturing_groups)
 }
 
 #[cfg(test)]
@@ -120,7 +124,7 @@ mod tests {
 
     #[test]
     fn test_count_capturing_groups() {
-        for (source_text, expected_num_of_left_parens, expected_num_of_named_capture_groups) in [
+        for (source_text, expected_num_of_left_parens, expected_num_of_named_capturing_groups) in [
             ("()", 1, 0),
             (r"\1()", 1, 0),
             ("(foo)", 1, 0),
@@ -133,10 +137,10 @@ mod tests {
             ("(foo)(?<n>bar)(?<nn>baz)", 3, 2),
             ("(?<n>.)(?<n>..)", 2, 2),
         ] {
-            let (num_of_left_parens, num_of_named_capture_groups, _) =
+            let (num_of_left_parens, num_of_named_capturing_groups, _) =
                 parse_capturing_groups(source_text);
             assert_eq!(expected_num_of_left_parens, num_of_left_parens);
-            assert_eq!(expected_num_of_named_capture_groups, num_of_named_capture_groups);
+            assert_eq!(expected_num_of_named_capturing_groups, num_of_named_capturing_groups);
         }
     }
 }
