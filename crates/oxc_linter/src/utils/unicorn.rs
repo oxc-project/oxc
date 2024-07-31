@@ -1,8 +1,7 @@
 mod boolean;
 use oxc_ast::{
     ast::{
-        BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
-        MemberExpression, Statement,
+        Argument, ArrayExpression, ArrayExpressionElement, BindingPatternKind, CallExpression, Expression, FormalParameters, FunctionBody, LogicalExpression, MemberExpression, Statement
     },
     AstKind,
 };
@@ -188,6 +187,14 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
             return left_bool.value == right_bool.value;
         }
 
+        (Expression::CallExpression(left_call), Expression::CallExpression(right_call)) => {
+            return is_same_call_expression(left_call, right_call, ctx);
+        }
+
+        (Expression::ArrayExpression(left), Expression::ArrayExpression(right)) => {
+            return is_same_array_expression(left, right, ctx);
+        }
+
         (
             Expression::ChainExpression(left_chain_expr),
             Expression::ChainExpression(right_chain_expr),
@@ -211,11 +218,73 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
     false
 }
 
+fn is_same_expression_elements<T>(
+    left: &[T],
+    right: &[T],
+    ctx: &LintContext,
+    as_expression: fn(&T) -> Option<&Expression>,
+) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+
+    for (left, right) in left.iter().zip(right.iter()) {
+        match (as_expression(left), as_expression(right)) {
+            (Some(left), Some(right)) => {
+                if !is_same_reference(left, right, ctx) {
+                    return false
+                }
+            },
+            _ => return false,
+        }
+    }
+
+    return  true;
+}
+
+fn is_same_array_expression(
+    left: &ArrayExpression,
+    right: &ArrayExpression,
+    ctx: &LintContext,
+) -> bool {
+    return is_same_expression_elements(&left.elements, &right.elements, ctx, |el| {
+        match el {
+            ArrayExpressionElement::SpreadElement(expr) => Some(&expr.argument),
+            expr => expr.as_expression(),
+        }
+    })
+}
+
+pub fn is_same_call_expression(
+    left: &CallExpression,
+    right: &CallExpression,
+    ctx: &LintContext,
+) -> bool {
+    if left.optional != right.optional {
+        return false;
+    }
+
+    if !is_same_reference(&left.callee, &right.callee, ctx) {
+        return false;
+    }
+
+    is_same_expression_elements(&left.arguments, &right.arguments, ctx, |el| {
+        match el {
+            Argument::SpreadElement(expr) => Some(&expr.argument),
+            expr => expr.as_expression(),
+        }
+    })
+}
+
 pub fn is_same_member_expression(
     left: &MemberExpression,
     right: &MemberExpression,
     ctx: &LintContext,
 ) -> bool {
+    if left.optional() != right.optional() {
+        return false;
+    }
+
     let left_static_property_name = left.static_property_name();
     let right_static_property_name = right.static_property_name();
 
