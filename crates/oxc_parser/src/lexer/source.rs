@@ -202,8 +202,7 @@ impl<'a> Source<'a> {
     /// # SAFETY
     ///
     /// Caller must ensure that `ascii_byte` is a valid ASCII character.
-    #[allow(clippy::inline_always)]
-    #[inline(always)]
+    #[inline]
     pub(super) unsafe fn advance_if_ascii_eq(&mut self, ascii_byte: u8) -> bool {
         debug_assert!(ascii_byte.is_ascii());
         let matched = self.peek_byte() == Some(ascii_byte);
@@ -375,6 +374,36 @@ impl<'a> Source<'a> {
         Some(c)
     }
 
+    /// Get next 2 chars of source, and advance position to after them.
+    #[inline]
+    pub(super) fn next_2_chars(&mut self) -> Option<[char; 2]> {
+        // Check not at EOF and handle if 2 x ASCII bytes
+        let [byte1, byte2] = self.peek_2_bytes()?;
+        if byte1.is_ascii() && byte2.is_ascii() {
+            // SAFETY: We just checked that there are at least 2 bytes remaining,
+            // and next 2 bytes are ASCII, so advancing by 2 bytes must put `ptr`
+            // in bounds and on a UTF-8 character boundary
+            unsafe { self.ptr = self.ptr.add(2) };
+            return Some([byte1 as char, byte2 as char]);
+        }
+
+        // Multi-byte Unicode character.
+        // Check invariant that `ptr` is on a UTF-8 character boundary.
+        debug_assert!(!is_utf8_cont_byte(byte1));
+
+        // Create a `Chars` iterator, get next 2 chars from it, and then update `self.ptr`
+        // to match `Chars` iterator's updated pointer afterwards.
+        // `Chars` iterator upholds same invariants as `Source`, so its pointer is guaranteed
+        // to be valid as `self.ptr`.
+        let mut chars = self.remaining().chars();
+        // SAFETY: We know that there's 2 bytes to be consumed, so first call to
+        // `chars.next()` must return `Some(_)`
+        let c1 = unsafe { chars.next().unwrap_unchecked() };
+        let c2 = chars.next()?;
+        self.ptr = chars.as_str().as_ptr();
+        Some([c1, c2])
+    }
+
     /// Get next byte of source, and advance position to after it.
     ///
     /// # SAFETY
@@ -471,23 +500,6 @@ impl<'a> Source<'a> {
         Some(c)
     }
 
-    /// Peek next next char of source, without consuming it.
-    #[inline]
-    pub(super) fn peek_char2(&self) -> Option<char> {
-        // Handle EOF
-        if self.is_eof() {
-            return None;
-        }
-
-        // Check invariant that `ptr` is on a UTF-8 character boundary.
-        debug_assert!(!is_utf8_cont_byte(self.peek_byte().unwrap()));
-
-        let mut chars = self.remaining().chars();
-        // SAFETY: We already checked not at EOF, so `chars.next()` must return `Some(_)`
-        unsafe { chars.next().unwrap_unchecked() };
-        chars.next()
-    }
-
     /// Peek next byte of source without consuming it.
     #[inline]
     pub(super) fn peek_byte(&self) -> Option<u8> {
@@ -496,6 +508,21 @@ impl<'a> Source<'a> {
         } else {
             // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
             Some(unsafe { self.peek_byte_unchecked() })
+        }
+    }
+
+    /// Peek next two bytes of source without consuming them.
+    #[inline]
+    pub(super) fn peek_2_bytes(&self) -> Option<[u8; 2]> {
+        // `end` is always >= `ptr` so `end - ptr` cannot wrap around.
+        // No need to use checked/saturating subtraction here.
+        if (self.end as usize) - (self.ptr as usize) >= 2 {
+            // SAFETY: The check above ensures that there are at least 2 bytes to
+            // read from `self.ptr` without reading past `self.end`
+            let bytes = unsafe { self.position().read2() };
+            Some(bytes)
+        } else {
+            None
         }
     }
 

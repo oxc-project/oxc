@@ -11,7 +11,7 @@ use phf::phf_map;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -90,7 +90,7 @@ impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(name) = get_element_type(ctx, jsx_el) {
-                if let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") {
+                if let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") {
                     Self::check_roles(role_prop, &ROLE_TO_TAG_MAP, &name, ctx);
                 }
             }

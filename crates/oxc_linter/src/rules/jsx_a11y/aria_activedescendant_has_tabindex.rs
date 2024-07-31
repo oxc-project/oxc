@@ -10,7 +10,7 @@ use crate::{
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase, is_interactive_element, parse_jsx_value},
+    utils::{get_element_type, has_jsx_prop_ignore_case, is_interactive_element, parse_jsx_value},
     AstNode,
 };
 
@@ -62,7 +62,7 @@ impl Rule for AriaActivedescendantHasTabindex {
             return;
         };
 
-        if has_jsx_prop_lowercase(jsx_opening_el, "aria-activedescendant").is_none() {
+        if has_jsx_prop_ignore_case(jsx_opening_el, "aria-activedescendant").is_none() {
             return;
         };
 
@@ -75,7 +75,7 @@ impl Rule for AriaActivedescendantHasTabindex {
         };
 
         if let Some(JSXAttributeItem::Attribute(tab_index_attr)) =
-            has_jsx_prop_lowercase(jsx_opening_el, "tabIndex")
+            has_jsx_prop_ignore_case(jsx_opening_el, "tabIndex")
         {
             if !is_valid_tab_index_attr(tab_index_attr) {
                 return;
