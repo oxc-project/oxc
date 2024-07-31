@@ -4,12 +4,14 @@ mod jsx;
 mod jsx_self;
 mod jsx_source;
 mod options;
+mod refresh;
 mod utils;
 
 use std::rc::Rc;
 
 use oxc_ast::ast::*;
 use oxc_traverse::TraverseCtx;
+use refresh::ReactRefresh;
 
 pub use self::{
     display_name::ReactDisplayName,
@@ -29,10 +31,12 @@ use crate::context::Ctx;
 pub struct React<'a> {
     jsx: ReactJsx<'a>,
     display_name: ReactDisplayName<'a>,
+    refresh: ReactRefresh<'a>,
     jsx_plugin: bool,
     display_name_plugin: bool,
     jsx_self_plugin: bool,
     jsx_source_plugin: bool,
+    refresh_plugin: bool,
 }
 
 // Constructors
@@ -49,13 +53,16 @@ impl<'a> React<'a> {
             jsx_source_plugin,
             ..
         } = options;
+        let refresh = options.refresh.clone();
         Self {
+            refresh: ReactRefresh::new(refresh.clone().unwrap_or_default(), Rc::clone(&ctx)),
             jsx: ReactJsx::new(options, Rc::clone(&ctx)),
             display_name: ReactDisplayName::new(ctx),
             jsx_plugin,
             display_name_plugin,
             jsx_self_plugin,
             jsx_source_plugin,
+            refresh_plugin: refresh.is_some(),
         }
     }
 }

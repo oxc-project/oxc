@@ -104,6 +104,9 @@ pub struct ReactOptions {
     ///
     /// This value is used to skip Babel tests, and is not used in oxc.
     pub use_spread: Option<bool>,
+
+    /// Fast Refresh
+    pub refresh: Option<ReactRefreshOptions>,
 }
 
 impl Default for ReactOptions {
@@ -122,6 +125,7 @@ impl Default for ReactOptions {
             pragma_frag: None,
             use_built_ins: None,
             use_spread: None,
+            refresh: None,
         }
     }
 }
@@ -185,4 +189,12 @@ impl ReactOptions {
             }
         }
     }
+}
+
+#[derive(Debug, Default, Clone, Deserialize)]
+#[serde(default, rename_all = "camelCase", deny_unknown_fields)]
+pub struct ReactRefreshOptions {
+    refresh_reg: String,
+    refresh_sig: String,
+    emit_full_signatures: bool,
 }
