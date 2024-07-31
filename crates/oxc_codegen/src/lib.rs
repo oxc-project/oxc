@@ -4,6 +4,7 @@
 //! * [esbuild](https://github.com/evanw/esbuild/blob/main/internal/js_printer/js_printer.go)
 
 mod annotation_comment;
+mod binary_expr_visitor;
 mod context;
 mod gen;
 mod operator;
@@ -14,10 +15,7 @@ use std::{borrow::Cow, ops::Range};
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
-    ast::{
-        BindingIdentifier, BlockStatement, Directive, Expression, IdentifierReference, Program,
-        Statement,
-    },
+    ast::{BindingIdentifier, BlockStatement, Expression, IdentifierReference, Program, Statement},
     Comment, Trivias,
 };
 use oxc_mangler::Mangler;
@@ -28,11 +26,14 @@ use oxc_syntax::{
     precedence::Precedence,
 };
 
+use crate::{
+    binary_expr_visitor::BinaryExpressionVisitor, operator::Operator,
+    sourcemap_builder::SourcemapBuilder,
+};
 pub use crate::{
     context::Context,
     gen::{Gen, GenExpr},
 };
-use crate::{operator::Operator, sourcemap_builder::SourcemapBuilder};
 
 /// Code generator without whitespace removal.
 pub type CodeGenerator<'a> = Codegen<'a, false>;
@@ -75,6 +76,7 @@ pub struct Codegen<'a, const MINIFY: bool> {
     prev_reg_exp_end: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
+    binary_expr_stack: Vec<BinaryExpressionVisitor<'a>>,
 
     /// For avoiding `;` if the previous statement ends with `}`.
     needs_semicolon: bool,
@@ -133,6 +135,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
             needs_semicolon: false,
             need_space_before_dot: 0,
             print_next_indent_as_space: false,
+            binary_expr_stack: Vec::with_capacity(5),
             prev_op_end: 0,
             prev_reg_exp_end: 0,
             prev_op: None,
@@ -392,7 +395,10 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
         self.print_curly_braces(stmt.span, stmt.body.is_empty(), |p| {
-            p.print_directives_and_statements(None, &stmt.body, ctx);
+            for stmt in &stmt.body {
+                p.print_semicolon_if_needed();
+                stmt.gen(p, ctx);
+            }
         });
         self.needs_semicolon = false;
     }
@@ -409,7 +415,7 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
 
     #[inline]
     pub fn print_expression(&mut self, expr: &Expression<'_>) {
-        expr.gen_expr(self, Precedence::lowest(), Context::default());
+        expr.gen_expr(self, Precedence::Lowest, Context::empty());
     }
 
     fn print_expressions<T: GenExpr<MINIFY>>(
@@ -498,33 +504,6 @@ impl<'a, const MINIFY: bool> Codegen<'a, MINIFY> {
         self.print_char(self.quote);
         f(self, self.quote);
         self.print_char(self.quote);
-    }
-
-    fn print_directives_and_statements(
-        &mut self,
-        directives: Option<&[Directive]>,
-        statements: &[Statement<'_>],
-        ctx: Context,
-    ) {
-        if let Some(directives) = directives {
-            if directives.is_empty() {
-                if let Some(Statement::ExpressionStatement(s)) = statements.first() {
-                    if matches!(s.expression.get_inner_expression(), Expression::StringLiteral(_)) {
-                        self.print_semicolon();
-                        self.print_soft_newline();
-                    }
-                }
-            } else {
-                for directive in directives {
-                    directive.gen(self, ctx);
-                    self.print_semicolon_if_needed();
-                }
-            }
-        }
-        for stmt in statements {
-            self.print_semicolon_if_needed();
-            stmt.gen(self, ctx);
-        }
     }
 
     fn add_source_mapping(&mut self, position: u32) {

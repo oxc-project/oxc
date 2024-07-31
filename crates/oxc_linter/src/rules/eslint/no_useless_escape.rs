@@ -26,7 +26,8 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoUselessEscape,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUselessEscape {

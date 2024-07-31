@@ -67,7 +67,10 @@ impl Rule for NoGlobalAssign {
                     if !self.excludes.contains(&CompactStr::from(name))
                         && ctx.env_contains_var(name)
                     {
-                        ctx.diagnostic(no_global_assign_diagnostic(name, reference.span()));
+                        ctx.diagnostic(no_global_assign_diagnostic(
+                            name,
+                            ctx.semantic().reference_span(reference),
+                        ));
                     }
                 }
             }

@@ -22,6 +22,7 @@ pub fn is_jest_rule_adapted_to_vitest(rule_name: &str) -> bool {
         "no-commented-out-tests",
         "no-disabled-tests",
         "no-focused-tests",
+        "no-identical-title",
         "no-test-prefixes",
         "prefer-hooks-in-order",
         "valid-describe-callback",

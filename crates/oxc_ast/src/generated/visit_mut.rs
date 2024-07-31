@@ -2868,6 +2868,8 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut AssignmentTargetPattern<'a>,
     ) {
+        let kind = AstType::AssignmentTargetPattern;
+        visitor.enter_node(kind);
         match it {
             AssignmentTargetPattern::ArrayAssignmentTarget(it) => {
                 visitor.visit_array_assignment_target(it)
@@ -2876,6 +2878,7 @@ pub mod walk_mut {
                 visitor.visit_object_assignment_target(it)
             }
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2883,13 +2886,15 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ArrayAssignmentTarget<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::ArrayAssignmentTarget;
+        visitor.enter_node(kind);
         for elements in it.elements.iter_mut().flatten() {
             visitor.visit_assignment_target_maybe_default(elements);
         }
         if let Some(rest) = &mut it.rest {
             visitor.visit_assignment_target_rest(rest);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -2933,11 +2938,13 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut ObjectAssignmentTarget<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::ObjectAssignmentTarget;
+        visitor.enter_node(kind);
         visitor.visit_assignment_target_properties(&mut it.properties);
         if let Some(rest) = &mut it.rest {
             visitor.visit_assignment_target_rest(rest);
         }
+        visitor.leave_node(kind);
     }
 
     #[inline]
@@ -4095,6 +4102,7 @@ pub mod walk_mut {
         match it {
             TSEnumMemberName::StaticIdentifier(it) => visitor.visit_identifier_name(it),
             TSEnumMemberName::StaticStringLiteral(it) => visitor.visit_string_literal(it),
+            TSEnumMemberName::StaticTemplateLiteral(it) => visitor.visit_template_literal(it),
             TSEnumMemberName::StaticNumericLiteral(it) => visitor.visit_numeric_literal(it),
             match_expression!(TSEnumMemberName) => visitor.visit_expression(it.to_expression_mut()),
         }
@@ -4389,10 +4397,12 @@ pub mod walk_mut {
                 visitor.visit_function(it, flags)
             }
             ExportDefaultDeclarationKind::ClassDeclaration(it) => visitor.visit_class(it),
+            ExportDefaultDeclarationKind::TSInterfaceDeclaration(it) => {
+                visitor.visit_ts_interface_declaration(it)
+            }
             match_expression!(ExportDefaultDeclarationKind) => {
                 visitor.visit_expression(it.to_expression_mut())
             }
-            _ => {}
         }
     }
 
@@ -4443,8 +4453,10 @@ pub mod walk_mut {
         visitor: &mut V,
         it: &mut TSExportAssignment<'a>,
     ) {
-        // NOTE: AstType doesn't exists!
+        let kind = AstType::TSExportAssignment;
+        visitor.enter_node(kind);
         visitor.visit_expression(&mut it.expression);
+        visitor.leave_node(kind);
     }
 
     #[inline]

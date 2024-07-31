@@ -4,6 +4,7 @@ use oxc_allocator::Vec;
 use oxc_ast::{ast::*, visit::walk_mut, VisitMut};
 use oxc_span::{Atom, Span, SPAN};
 use oxc_syntax::{
+    node::AstNodeId,
     number::{NumberBase, ToJsInt32, ToJsString},
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
     reference::ReferenceFlag,
@@ -79,6 +80,7 @@ impl<'a> TypeScriptEnum<'a> {
             enum_name.to_compact_str(),
             SymbolFlags::FunctionScopedVariable,
             func_scope_id,
+            AstNodeId::DUMMY,
         );
         let ident = BindingIdentifier {
             span: decl.id.span,
@@ -201,11 +203,17 @@ impl<'a> TypeScriptEnum<'a> {
         let mut prev_member_name: Option<Atom<'a>> = None;
 
         for member in members {
-            let member_name = match &member.id {
+            let member_name: &Atom<'_> = match &member.id {
                 TSEnumMemberName::StaticIdentifier(id) => &id.name,
-                TSEnumMemberName::StaticStringLiteral(str) => &str.value,
-                #[allow(clippy::unnested_or_patterns)] // Clippy is wrong
-                TSEnumMemberName::StaticNumericLiteral(_) | match_expression!(TSEnumMemberName) => {
+                TSEnumMemberName::StaticStringLiteral(str)
+                | TSEnumMemberName::StringLiteral(str) => &str.value,
+                TSEnumMemberName::StaticTemplateLiteral(template)
+                | TSEnumMemberName::TemplateLiteral(template) => {
+                    &template.quasi().expect("Template enum members cannot have substitutions.")
+                }
+                // parse error, but better than a panic
+                TSEnumMemberName::StaticNumericLiteral(n) => &Atom::from(n.raw),
+                match_expression!(TSEnumMemberName) => {
                     unreachable!()
                 }
             };

@@ -9,7 +9,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -134,7 +134,7 @@ impl Rule for AnchorIsValid {
             };
             if name == "a" {
                 if let Option::Some(herf_attr) =
-                    has_jsx_prop_lowercase(&jsx_el.opening_element, "href")
+                    has_jsx_prop_ignore_case(&jsx_el.opening_element, "href")
                 {
                     // Check if the 'a' element has a correct href attribute
                     match herf_attr {
@@ -142,7 +142,7 @@ impl Rule for AnchorIsValid {
                             Some(value) => {
                                 let is_empty = check_value_is_empty(value, &self.0.valid_hrefs);
                                 if is_empty {
-                                    if has_jsx_prop_lowercase(&jsx_el.opening_element, "onclick")
+                                    if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick")
                                         .is_some()
                                     {
                                         ctx.diagnostic(cant_be_anchor(ident.span));

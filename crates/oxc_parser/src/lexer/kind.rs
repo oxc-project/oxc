@@ -206,12 +206,13 @@ impl Kind {
         )
     }
 
-    pub fn matches_number_char(self, c: char) -> bool {
+    #[inline] // Inline into `read_non_decimal` - see comment there as to why
+    pub fn matches_number_byte(self, b: u8) -> bool {
         match self {
-            Decimal => c.is_ascii_digit(),
-            Binary => matches!(c, '0'..='1'),
-            Octal => matches!(c, '0'..='7'),
-            Hex => c.is_ascii_hexdigit(),
+            Decimal => b.is_ascii_digit(),
+            Binary => matches!(b, b'0'..=b'1'),
+            Octal => matches!(b, b'0'..=b'7'),
+            Hex => b.is_ascii_hexdigit(),
             _ => unreachable!(),
         }
     }

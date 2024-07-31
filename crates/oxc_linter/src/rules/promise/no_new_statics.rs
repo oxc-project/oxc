@@ -26,7 +26,8 @@ declare_oxc_lint!(
     /// new Promise.resolve(value);
     /// ```
     NoNewStatics,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoNewStatics {

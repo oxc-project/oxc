@@ -16,6 +16,13 @@ source: crates/oxc_linter/src/tester.rs
   help: The function type form `() => string` is generally preferred when possible for being more succinct.
 
   ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
+   ╭─[prefer_function_type.tsx:1:47]
+ 1 │ export default interface Foo { /** comment */ (): string; }
+   ·                                               ───────────
+   ╰────
+  help: The function type form `() => string` is generally preferred when possible for being more succinct.
+
+  ⚠ typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.
    ╭─[prefer_function_type.tsx:4:11]
  3 │           // comment
  4 │           (): string;

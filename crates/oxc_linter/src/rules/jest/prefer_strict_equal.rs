@@ -35,6 +35,7 @@ declare_oxc_lint!(
     ///
     PreferStrictEqual,
     style,
+    fix
 );
 
 impl Rule for PreferStrictEqual {

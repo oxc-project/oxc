@@ -115,7 +115,7 @@
     "fmt:js": "prettier --write ./**/*.{js,ts,json}"
   },
   "devDependencies": {
-    "@types/node": "^20.14.2",
+    "@types/node": "^22.0.0",
     "@types/vscode": "1.80.0",
     "@vscode/vsce": "^2.27.0",
     "cross-env": "^7.0.3",

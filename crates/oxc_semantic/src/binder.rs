@@ -71,6 +71,7 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                     // avoid same symbols appear in multi-scopes
                     builder.scope.remove_binding(*scope_id, &name);
                     builder.scope.add_binding(target_scope_id, name, symbol_id);
+                    builder.symbols.scope_ids[symbol_id] = target_scope_id;
                     break;
                 }
             }
@@ -364,6 +365,9 @@ impl<'a> Binder<'a> for TSEnumMember<'a> {
         let name = match &self.id {
             TSEnumMemberName::StaticIdentifier(id) => Cow::Borrowed(id.name.as_str()),
             TSEnumMemberName::StaticStringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+            TSEnumMemberName::StaticTemplateLiteral(s) => Cow::Borrowed(
+                s.quasi().expect("Template enum members must have no substitutions.").as_str(),
+            ),
             TSEnumMemberName::StaticNumericLiteral(n) => Cow::Owned(n.value.to_string()),
             match_expression!(TSEnumMemberName) => panic!("TODO: implement"),
         };

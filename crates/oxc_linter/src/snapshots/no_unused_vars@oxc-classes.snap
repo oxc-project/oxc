@@ -1,0 +1,28 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:32]
+ 1 │ export class Foo { constructor(a: number) {} }
+   ·                                ────┬────
+   ·                                    ╰── 'a' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'value' is declared but never used.
+   ╭─[no_unused_vars.tsx:1:24]
+ 1 │ export class Foo { set(value) { } }
+   ·                        ──┬──
+   ·                          ╰── 'value' is declared here
+   ╰────
+  help: Consider removing this parameter.
+
+  ⚠ eslint(no-unused-vars): Parameter 'a' is declared but never used.
+   ╭─[no_unused_vars.tsx:3:24]
+ 2 │         export abstract class Foo {
+ 3 │             public bar(a: number): string {}
+   ·                        ────┬────
+   ·                            ╰── 'a' is declared here
+ 4 │         }
+   ╰────
+  help: Consider removing this parameter.

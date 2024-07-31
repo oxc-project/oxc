@@ -1,15 +1,15 @@
-use std::collections::HashMap;
 use std::stringify;
+use std::{borrow::Cow, collections::HashMap};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use proc_macro2::TokenStream;
+use proc_macro2::{TokenStream, TokenTree};
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, FnArg, GenericArgument,
-    GenericParam, Ident, ImplItemFn, PatType, PathArguments, PredicateType, Token, Type, TypePath,
-    Variant, WhereClause,
+    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Expr, Field,
+    FnArg, GenericArgument, GenericParam, Ident, ImplItemFn, Lit, Meta, MetaNameValue, PatLit,
+    PatType, PathArguments, PredicateType, Token, Type, TypePath, Variant, WhereClause,
 };
 
 use crate::{
@@ -147,6 +147,7 @@ fn generate_enum_inherit_builder_fn(
     }
 }
 
+/// Create a builder function for an enum variant (e.g. for `Expression::Binary`)
 fn generate_enum_variant_builder_fn(
     enum_: &REnum,
     variant: &Variant,
@@ -174,14 +175,27 @@ fn generate_enum_variant_builder_fn(
     let inner_ident = var_type.get_ident();
 
     let mut inner = quote!(self.#inner_builder(#(#fields),*));
+    let mut does_alloc = false;
     if matches!(inner_ident, TypeIdentResult::Box(_)) {
         inner = quote!(self.alloc(#inner));
+        does_alloc = true;
     }
 
     let from_variant_builder = generate_enum_from_variant_builder_fn(enum_, variant, ctx);
+    let article = article_for(enum_ident.to_string());
+    let mut docs = DocComment::new(format!(" Build {article} [`{enum_ident}::{var_ident}`]"))
+        .with_params(&params);
+    if does_alloc {
+        let inner_name = inner_ident.inner_ident().to_string();
+        let inner_article = article_for(&inner_name);
+        docs = docs.with_description(format!(
+            "This node contains {inner_article} [`{inner_name}`] that will be stored in the memory arena."
+        ));
+    }
 
     quote! {
         endl!();
+        #docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #enum_type #where_clause {
             #enum_ident::#var_ident(#inner)
@@ -191,6 +205,8 @@ fn generate_enum_variant_builder_fn(
     }
 }
 
+/// Generate a conversion function that takes some struct and creates an enum
+/// variant containing that struct using the `IntoIn` trait.
 fn generate_enum_from_variant_builder_fn(
     enum_: &REnum,
     variant: &Variant,
@@ -201,13 +217,19 @@ fn generate_enum_from_variant_builder_fn(
     let enum_type = &enum_.as_type();
     let var_ident = &variant.ident;
     let var_type = &variant.fields.iter().next().expect("we have already asserted this one!").ty;
-    let fn_name = enum_builder_name(
-        enum_ident.to_string(),
-        format!("From{}", var_type.get_ident().inner_ident()),
-    );
+    let struct_ident = var_type.get_ident().inner_ident().to_string();
+    let fn_name = enum_builder_name(enum_ident.to_string(), format!("From{struct_ident}"));
 
+    let from_article = article_for(struct_ident);
+    let to_article = article_for(enum_ident.to_string());
+
+    let docs = DocComment::new(format!(
+        " Convert {from_article} [`{}`] into {to_article} [`{enum_ident}::{var_ident}`]",
+        var_type.get_ident().inner_ident()
+    ));
     quote! {
         endl!();
+        #docs
         #[inline]
         pub fn #fn_name<T>(self, inner: T) -> #enum_type where T: IntoIn<'a, #var_type> {
             #enum_ident::#var_ident(inner.into_in(self.allocator))
@@ -268,13 +290,27 @@ fn generate_struct_builder_fn(ty: &RStruct, ctx: &CodegenCtx) -> TokenStream {
 
     let alloc_fn_name = format_ident!("alloc_{fn_name}");
 
+    let article = article_for(ident.to_string());
+    let fn_docs = DocComment::new(format!("Builds {article} [`{ident}`]"))
+        .with_description(format!("If you want the built node to be allocated in the memory arena, use [`AstBuilder::{alloc_fn_name}`] instead."))
+        .with_params(&params);
+
+    let alloc_docs =
+        DocComment::new(format!("Builds {article} [`{ident}`] and stores it in the memory arena."))
+            .with_description(format!("Returns a [`Box`] containing the newly-allocated node. If you want a stack-allocated node, use [`AstBuilder::{fn_name}`] instead."))
+            .with_params(&params);
+
     quote! {
         endl!();
+        #fn_docs
         #[inline]
         pub fn #fn_name #generic_params (self, #(#params),*) -> #as_type  #where_clause {
             #ident { #(#fields),* }
         }
+
         endl!();
+
+        #alloc_docs
         #[inline]
         pub fn #alloc_fn_name #generic_params (self, #(#params),*) -> Box<'a, #as_type> #where_clause {
             Box::new_in(self.#fn_name(#(#args),*), self.allocator)
@@ -282,6 +318,7 @@ fn generate_struct_builder_fn(ty: &RStruct, ctx: &CodegenCtx) -> TokenStream {
     }
 }
 
+#[derive(Debug)]
 struct Param {
     is_default: bool,
     info: TypeAnalyzeResult,
@@ -289,6 +326,7 @@ struct Param {
     ty: Type,
     generic: Option<(/* predicate */ TokenStream, /* param name */ TokenStream)>,
     into_in: bool,
+    docs: Option<String>,
 }
 
 impl Param {
@@ -309,6 +347,182 @@ impl ToTokens for Param {
     }
 }
 
+/// Represents a rusdoc comment that will be added to a generated function,
+/// struct, etc.
+///
+/// [`DocComment`] implements [`ToTokens`], so you can use it in a [`quote!`]
+/// block as normal.
+///
+/// ```ignore
+/// let docs = DocComment::new("This is a summary")
+///     .with_description("This is a longer description");
+///
+/// let my_function = quote! {
+///     #doc
+///     fn my_function() {
+///     }
+/// }
+/// ```
+///
+/// This generates comments in the following format:
+///
+/// ```md
+/// <summary>
+///
+/// <description>
+///
+/// ## Parameters
+/// - param1: some docs
+/// - param2
+/// ```
+///
+/// 1. [`summary`] is a single-line overview about the thing being documented.
+/// 2. [`description`] is a longer-form description that can span multiple
+///    lines. It will be split into paragraphs for you.
+/// 3. [`parameters`] is a bulleted list of function parameters. Documentation
+///    for them can be extracted from struct fields and enums. This really only applies to functions.
+///
+/// Each section only appears if there is content for it. Only [`summary`] is required.
+///
+/// [`summary`]: DocComment::summary
+/// [`description`]: DocComment::description
+/// [`parameters`]: DocComment::params
+///
+#[derive(Debug)]
+struct DocComment<'p> {
+    /// Single-line summary. Put at the top of the comment.
+    summary: Cow<'static, str>,
+    /// Zero or more description paragraphs.
+    description: Vec<Cow<'static, str>>,
+    /// Function parameters, if applicable. Will be used to create a parameter
+    /// section that looks like this:
+    ///
+    /// ```md
+    /// ## Parameters
+    /// - first_param: some docs taken from the [`Param`]
+    /// - second_param
+    /// ```
+    params: &'p [Param],
+}
+
+impl<'p> DocComment<'p> {
+    pub fn new<S>(summary: S) -> Self
+    where
+        S: Into<Cow<'static, str>>,
+    {
+        Self { summary: Self::maybe_add_space(summary.into()), description: vec![], params: &[] }
+    }
+
+    /// Add a longer-form description to the doc comment.
+    pub fn with_description<S>(mut self, description: S) -> Self
+    where
+        S: Into<Cow<'static, str>>,
+    {
+        self.description = vec![Self::maybe_add_space(description.into())];
+        self
+    }
+
+    /// Add a description section made up of multiple lines.
+    ///
+    /// Each line will be turned into its own paragraph.
+    pub fn with_description_lines<L, S>(mut self, description: L) -> Self
+    where
+        S: Into<Cow<'static, str>>,
+        L: IntoIterator<Item = S>,
+    {
+        self.description =
+            description.into_iter().map(Into::into).map(Self::maybe_add_space).collect();
+        self
+    }
+
+    /// Add a section documenting function parameters.
+    pub fn with_params(mut self, params: &'p Vec<Param>) -> Self {
+        self.params = params.as_slice();
+        self
+    }
+
+    /// Add a leading space to a doc comment line if it doesn't already have one.
+    /// This makes it easier to read, since the comment won't be directly next
+    /// to the `///`.
+    fn maybe_add_space(s: Cow<'static, str>) -> Cow<'static, str> {
+        if s.is_empty() || s.starts_with(' ') {
+            s
+        } else {
+            Cow::Owned(format!(" {s}"))
+        }
+    }
+}
+
+/// Get the correct article (a/an) that should precede a `word`.
+///
+/// # Panics
+/// if `word` is empty
+fn article_for<S: AsRef<str>>(word: S) -> &'static str {
+    match word.as_ref().chars().next().unwrap() {
+        'a' | 'e' | 'i' | 'o' | 'u' => "an",
+        _ => "a",
+    }
+}
+
+impl ToTokens for DocComment<'_> {
+    fn to_tokens(&self, tokens: &mut TokenStream) {
+        macro_rules! newline {
+            () => {
+                tokens.extend(quote!( #[doc = ""]));
+            };
+        }
+
+        let summary = &self.summary;
+        tokens.extend(quote!( #[doc = #summary]));
+
+        // print description
+        for line in &self.description {
+            // extra newline needed to create a new paragraph
+            newline!();
+            tokens.extend(quote!( #[doc = #line]));
+        }
+
+        // print docs for function parameters
+        if !self.params.is_empty() {
+            newline!();
+            tokens.extend(quote!( #[doc = " ## Parameters"]));
+            for param in self.params {
+                match &param.docs {
+                    Some(docs) => {
+                        let docs = format!(" - {}: {}", param.ident, docs.trim());
+                        tokens.extend(quote!(
+                            #[doc = #docs]
+                        ));
+                    }
+                    None if param.ident == "span" => {
+                        tokens.extend(quote!(
+                            #[doc = " - span: The [`Span`] covering this node"]
+                        ));
+                    }
+                    None => {
+                        let docs = format!(" - {}", param.ident);
+                        tokens.extend(quote!(#[doc = #docs]));
+                    }
+                }
+            }
+        }
+    }
+}
+fn get_doc_comment(attrs: &[Attribute]) -> Option<String> {
+    attrs.iter().find_map(|attr| match &attr.meta {
+        Meta::NameValue(MetaNameValue { path, value: Expr::Lit(lit), .. }) => {
+            if !path.is_ident("doc") {
+                return None;
+            }
+
+            match &lit.lit {
+                Lit::Str(lit) => Some(lit.value()),
+                _ => None,
+            }
+        }
+        _ => None,
+    })
+}
 fn get_enum_params(enum_: &REnum, ctx: &CodegenCtx) -> Vec<Param> {
     let as_type = enum_.as_type();
     let inner_type = match &as_type {
@@ -345,6 +559,7 @@ fn get_enum_params(enum_: &REnum, ctx: &CodegenCtx) -> Vec<Param> {
                 ty: inner_type.clone(),
                 generic: None,
                 into_in: false,
+                docs: None,
             }]
         }
         RType::Struct(it) => get_struct_params(it, ctx),
@@ -386,8 +601,13 @@ fn get_struct_params(struct_: &RStruct, ctx: &CodegenCtx) -> Vec<Param> {
         .item
         .fields
         .iter()
-        .map(|f| (f.ident.as_ref().expect("expected named ident!"), &f.ty))
-        .fold(Vec::new(), |mut acc, ref it @ (id, ty)| {
+        .map(|f| {
+            let id = f.ident.as_ref().expect("expected named ident! on struct");
+            let docs = get_doc_comment(&f.attrs);
+            ((id, &f.ty), docs)
+        })
+        .fold(Vec::new(), |mut acc, (ref it, docs)| {
+            let (id, ty) = *it;
             let info = ty.analyze(ctx);
             let (interface_typ, generic_typ) = match (&info.wrapper, &info.type_ref) {
                 (TypeWrapper::Box, Some(ref type_ref)) => {
@@ -421,6 +641,7 @@ fn get_struct_params(struct_: &RStruct, ctx: &CodegenCtx) -> Vec<Param> {
                 ty,
                 into_in: generic_typ.is_some(),
                 generic: generic_typ,
+                docs,
             });
             acc
         })

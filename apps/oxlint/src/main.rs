@@ -1,12 +1,9 @@
-#![cfg(not(miri))] // Miri does not support custom allocators
-
-#[cfg(feature = "allocator")]
-#[cfg(not(target_env = "msvc"))]
+// NB: Miri does not support custom allocators
+#[cfg(all(feature = "allocator", not(miri), not(target_env = "msvc"), not(target_os = "windows")))]
 #[global_allocator]
 static GLOBAL: jemallocator::Jemalloc = jemallocator::Jemalloc;
 
-#[cfg(feature = "allocator")]
-#[cfg(target_os = "windows")]
+#[cfg(all(feature = "allocator", not(miri), target_os = "windows"))]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 

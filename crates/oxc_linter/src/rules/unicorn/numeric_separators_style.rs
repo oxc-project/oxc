@@ -79,7 +79,8 @@ declare_oxc_lint!(
     /// ];
     /// ```
     NumericSeparatorsStyle,
-    style
+    style,
+    fix
 );
 
 impl Rule for NumericSeparatorsStyle {

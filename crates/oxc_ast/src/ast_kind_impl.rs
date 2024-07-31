@@ -261,6 +261,9 @@ impl<'a> AstKind<'a> {
             Self::ArrayExpressionElement(_) => "ArrayExpressionElement".into(),
             Self::AssignmentTarget(_) => "AssignmentTarget".into(),
             Self::SimpleAssignmentTarget(_) => "SimpleAssignmentTarget".into(),
+            Self::AssignmentTargetPattern(_) => "AssignmentTargetPattern".into(),
+            Self::ArrayAssignmentTarget(_) => "ArrayAssignmentTarget".into(),
+            Self::ObjectAssignmentTarget(_) => "ObjectAssignmentTarget".into(),
             Self::AssignmentTargetWithDefault(_) => "AssignmentTargetWithDefault".into(),
             Self::SpreadElement(_) => "SpreadElement".into(),
             Self::Elision(_) => "Elision".into(),
@@ -378,6 +381,7 @@ impl<'a> AstKind<'a> {
             Self::TSMappedType(_) => "TSMappedType".into(),
             Self::TSConstructSignatureDeclaration(_) => "TSConstructSignatureDeclaration".into(),
             Self::TSModuleReference(_) => "TSModuleReference".into(),
+            Self::TSExportAssignment(_) => "TSExportAssignment".into(),
         }
     }
 }

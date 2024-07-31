@@ -1,7 +1,7 @@
 use oxc_allocator::Box;
 use oxc_ast::ast::*;
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     diagnostics,
@@ -59,27 +59,54 @@ impl<'a> ParserImpl<'a> {
             None
         };
 
-        Ok(TSEnumMember { span: self.end_span(span), id, initializer })
+        let span = self.end_span(span);
+        if initializer.is_some() && matches!(id, TSEnumMemberName::StaticTemplateLiteral(_)) {
+            self.error(diagnostics::invalid_assignment(span));
+        }
+
+        Ok(TSEnumMember { span, id, initializer })
     }
 
     fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
         match self.cur_kind() {
             Kind::LBrack => {
                 let node = self.parse_computed_property_name()?;
+                self.check_invalid_ts_enum_computed_property(&node);
                 Ok(self.ast.ts_enum_member_name_expression(node))
             }
             Kind::Str => {
                 let node = self.parse_literal_string()?;
                 Ok(self.ast.ts_enum_member_name_from_string_literal(node))
             }
+            Kind::NoSubstitutionTemplate | Kind::TemplateHead => {
+                let node = self.parse_template_literal(false)?;
+                if !node.expressions.is_empty() {
+                    self.error(diagnostics::computed_property_names_not_allowed_in_enums(
+                        node.span(),
+                    ));
+                }
+                Ok(self.ast.ts_enum_member_name_from_template_literal(node))
+            }
             kind if kind.is_number() => {
                 let node = self.parse_literal_number()?;
+                self.error(diagnostics::enum_member_cannot_have_numeric_name(node.span()));
                 Ok(self.ast.ts_enum_member_name_from_numeric_literal(node))
             }
             _ => {
                 let node = self.parse_identifier_name()?;
                 Ok(self.ast.ts_enum_member_name_from_identifier_name(node))
             }
+        }
+    }
+    fn check_invalid_ts_enum_computed_property(&mut self, property: &Expression<'a>) {
+        match property {
+            Expression::StringLiteral(_) => {}
+            Expression::TemplateLiteral(template) if template.expressions.is_empty() => {}
+            Expression::NumericLiteral(_) => {
+                self.error(diagnostics::enum_member_cannot_have_numeric_name(property.span()));
+            }
+            _ => self
+                .error(diagnostics::computed_property_names_not_allowed_in_enums(property.span())),
         }
     }
 

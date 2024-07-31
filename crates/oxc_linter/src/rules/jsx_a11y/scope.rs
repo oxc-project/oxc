@@ -7,7 +7,7 @@ use crate::{
     context::LintContext,
     globals::HTML_TAG,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -49,7 +49,7 @@ impl Rule for Scope {
             return;
         };
 
-        let scope_attribute = match has_jsx_prop_lowercase(jsx_el, "scope") {
+        let scope_attribute = match has_jsx_prop_ignore_case(jsx_el, "scope") {
             Some(v) => match v {
                 JSXAttributeItem::Attribute(attr) => attr,
                 JSXAttributeItem::SpreadAttribute(_) => {

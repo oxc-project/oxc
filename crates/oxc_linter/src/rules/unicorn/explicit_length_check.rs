@@ -77,7 +77,8 @@ declare_oxc_lint!(
     /// const isEmpty = foo.length === 0;
     /// ```
     ExplicitLengthCheck,
-    pedantic
+    pedantic,
+    conditional_fix
 );
 fn is_literal(expr: &Expression, value: f64) -> bool {
     matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)

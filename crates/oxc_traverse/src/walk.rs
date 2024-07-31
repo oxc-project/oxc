@@ -3695,6 +3695,9 @@ pub(crate) unsafe fn walk_ts_enum_member_name<'a, Tr: Traverse<'a>>(
         TSEnumMemberName::StaticStringLiteral(node) => {
             walk_string_literal(traverser, (&mut **node) as *mut _, ctx)
         }
+        TSEnumMemberName::StaticTemplateLiteral(node) => {
+            walk_template_literal(traverser, (&mut **node) as *mut _, ctx)
+        }
         TSEnumMemberName::StaticNumericLiteral(node) => {
             walk_numeric_literal(traverser, (&mut **node) as *mut _, ctx)
         }

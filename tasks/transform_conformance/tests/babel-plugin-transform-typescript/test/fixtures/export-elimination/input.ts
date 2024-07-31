@@ -9,3 +9,9 @@ namespace Name {
 }
 
 export { Im, Ok, Foo, Bar, Func, Baz, Baq, Name };
+
+type T = number;
+function T(): T {
+  return 123;
+}
+export { T }

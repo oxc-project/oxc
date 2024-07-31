@@ -100,7 +100,7 @@ macro_rules! handle_string_literal_escape {
 
             // Consume bytes until reach end of string, line break, or another escape
             let chunk_start = $lexer.source.position();
-            while let Some(b) = $lexer.source.peek_byte() {
+            while let Some(b) = $lexer.peek_byte() {
                 match b {
                     b if !$table.matches(b) => {
                         // SAFETY: A byte is available, as we just peeked it.

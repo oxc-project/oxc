@@ -103,6 +103,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentTypeImports,
     nursery,
+    conditional_fix
 );
 
 impl Rule for ConsistentTypeImports {

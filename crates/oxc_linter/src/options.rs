@@ -362,6 +362,7 @@ impl LintOptions {
                     }
                     false
                 }
+                "vitest" => self.vitest_plugin,
                 "jsx_a11y" => self.jsx_a11y_plugin,
                 "nextjs" => self.nextjs_plugin,
                 "react_perf" => self.react_perf_plugin,

@@ -407,7 +407,7 @@ impl<'a> ParserImpl<'a> {
     /// `TemplateLiteral`[Yield, Await, Tagged] :
     ///     `NoSubstitutionTemplate`
     ///     `SubstitutionTemplate`[?Yield, ?Await, ?Tagged]
-    fn parse_template_literal(&mut self, tagged: bool) -> Result<TemplateLiteral<'a>> {
+    pub(crate) fn parse_template_literal(&mut self, tagged: bool) -> Result<TemplateLiteral<'a>> {
         let span = self.start_span();
         let mut expressions = self.ast.vec();
         let mut quasis = self.ast.vec();
@@ -1032,7 +1032,7 @@ impl<'a> ParserImpl<'a> {
         }
 
         let span = self.start_span();
-        let lhs = self.parse_binary_expression_or_higher(Precedence::lowest())?;
+        let lhs = self.parse_binary_expression_or_higher(Precedence::Comma)?;
         let kind = self.cur_kind();
 
         // `x => {}`

@@ -1,4 +1,4 @@
-use oxc_syntax::identifier::is_identifier_start;
+use oxc_syntax::identifier::{is_identifier_part_ascii, is_identifier_start};
 
 use super::{Kind, Lexer, Span};
 use crate::diagnostics;
@@ -6,19 +6,19 @@ use crate::diagnostics;
 impl<'a> Lexer<'a> {
     /// 12.9.3 Numeric Literals with `0` prefix
     pub(super) fn read_zero(&mut self) -> Kind {
-        match self.peek() {
-            Some('b' | 'B') => self.read_non_decimal(Kind::Binary),
-            Some('o' | 'O') => self.read_non_decimal(Kind::Octal),
-            Some('x' | 'X') => self.read_non_decimal(Kind::Hex),
-            Some('e' | 'E') => {
+        match self.peek_byte() {
+            Some(b'b' | b'B') => self.read_non_decimal(Kind::Binary),
+            Some(b'o' | b'O') => self.read_non_decimal(Kind::Octal),
+            Some(b'x' | b'X') => self.read_non_decimal(Kind::Hex),
+            Some(b'e' | b'E') => {
                 self.consume_char();
                 self.read_decimal_exponent()
             }
-            Some('.') => {
+            Some(b'.') => {
                 self.consume_char();
                 self.decimal_literal_after_decimal_point_after_digits()
             }
-            Some('n') => {
+            Some(b'n') => {
                 self.consume_char();
                 self.check_after_numeric_literal(Kind::Decimal)
             }
@@ -29,9 +29,9 @@ impl<'a> Lexer<'a> {
 
     pub(super) fn decimal_literal_after_first_digit(&mut self) -> Kind {
         self.read_decimal_digits_after_first_digit();
-        if self.next_eq('.') {
+        if self.next_ascii_byte_eq(b'.') {
             return self.decimal_literal_after_decimal_point_after_digits();
-        } else if self.next_eq('n') {
+        } else if self.next_ascii_byte_eq(b'n') {
             return self.check_after_numeric_literal(Kind::Decimal);
         }
 
@@ -39,52 +39,54 @@ impl<'a> Lexer<'a> {
         self.check_after_numeric_literal(kind)
     }
 
+    // Inline into the 3 calls from `read_zero` so that value of `kind` is known
+    // and `kind.matches_number_byte` can be statically reduced to just the match arm
+    // that applies for this specific kind. `matches_number_byte` is also marked `#[inline]`.
+    #[inline]
     fn read_non_decimal(&mut self, kind: Kind) -> Kind {
         self.consume_char();
 
-        if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
+        if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
             self.consume_char();
         } else {
             self.unexpected_err();
             return Kind::Undetermined;
         }
 
-        while let Some(c) = self.peek() {
-            match c {
-                '_' => {
+        while let Some(b) = self.peek_byte() {
+            match b {
+                b'_' => {
                     self.consume_char();
                     // NOTE: it looks invalid numeric tokens are still parsed.
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is a number character
                     self.token.set_has_separator();
-                    if self.peek().is_some_and(|c| kind.matches_number_char(c)) {
+                    if self.peek_byte().is_some_and(|b| kind.matches_number_byte(b)) {
                         self.consume_char();
                     } else {
                         self.unexpected_err();
                         return Kind::Undetermined;
                     }
                 }
-                c if kind.matches_number_char(c) => {
+                b if kind.matches_number_byte(b) => {
                     self.consume_char();
                 }
                 _ => break,
             }
         }
-        if self.peek() == Some('n') {
-            self.consume_char();
-        }
+        self.next_ascii_byte_eq(b'n');
         self.check_after_numeric_literal(kind)
     }
 
     fn read_legacy_octal(&mut self) -> Kind {
         let mut kind = Kind::Octal;
         loop {
-            match self.peek() {
-                Some('0'..='7') => {
+            match self.peek_byte() {
+                Some(b'0'..=b'7') => {
                     self.consume_char();
                 }
-                Some('8'..='9') => {
+                Some(b'8'..=b'9') => {
                     self.consume_char();
                     kind = Kind::Decimal;
                 }
@@ -92,14 +94,14 @@ impl<'a> Lexer<'a> {
             }
         }
 
-        match self.peek() {
+        match self.peek_byte() {
             // allow 08.5 and 09.5
-            Some('.') if kind == Kind::Decimal => {
+            Some(b'.') if kind == Kind::Decimal => {
                 self.consume_char();
                 self.decimal_literal_after_decimal_point_after_digits()
             }
             // allow 08e1 and 09e1
-            Some('e') if kind == Kind::Decimal => {
+            Some(b'e') if kind == Kind::Decimal => {
                 self.consume_char();
                 self.read_decimal_exponent()
             }
@@ -108,12 +110,12 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_decimal_exponent(&mut self) -> Kind {
-        let kind = match self.peek() {
-            Some('-') => {
+        let kind = match self.peek_byte() {
+            Some(b'-') => {
                 self.consume_char();
                 Kind::NegativeExponential
             }
-            Some('+') => {
+            Some(b'+') => {
                 self.consume_char();
                 Kind::PositiveExponential
             }
@@ -124,7 +126,7 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_decimal_digits(&mut self) {
-        if self.peek().is_some_and(|c| c.is_ascii_digit()) {
+        if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
             self.consume_char();
         } else {
             self.unexpected_err();
@@ -135,23 +137,23 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_decimal_digits_after_first_digit(&mut self) {
-        while let Some(c) = self.peek() {
-            match c {
-                '_' => {
+        while let Some(b) = self.peek_byte() {
+            match b {
+                b'_' => {
                     self.consume_char();
                     // NOTE: it looks invalid numeric tokens are still parsed.
                     // This seems to be a waste. It also requires us to put this
                     // call here instead of after we ensure the next character
                     // is an ASCII digit
                     self.token.set_has_separator();
-                    if self.peek().is_some_and(|c| c.is_ascii_digit()) {
+                    if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
                         self.consume_char();
                     } else {
                         self.unexpected_err();
                         return;
                     }
                 }
-                '0'..='9' => {
+                b'0'..=b'9' => {
                     self.consume_char();
                 }
                 _ => break,
@@ -172,16 +174,14 @@ impl<'a> Lexer<'a> {
     }
 
     fn optional_decimal_digits(&mut self) {
-        if self.peek().is_some_and(|c| c.is_ascii_digit()) {
+        if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
             self.consume_char();
-        } else {
-            return;
+            self.read_decimal_digits_after_first_digit();
         }
-        self.read_decimal_digits_after_first_digit();
     }
 
     fn optional_exponent(&mut self) -> Option<Kind> {
-        if matches!(self.peek(), Some('e' | 'E')) {
+        if matches!(self.peek_byte(), Some(b'e' | b'E')) {
             self.consume_char();
             return Some(self.read_decimal_exponent());
         }
@@ -189,14 +189,31 @@ impl<'a> Lexer<'a> {
     }
 
     fn check_after_numeric_literal(&mut self, kind: Kind) -> Kind {
-        let offset = self.offset();
-        // The SourceCharacter immediately following a NumericLiteral must not be an IdentifierStart or DecimalDigit.
-        let c = self.peek();
-        if c.is_none() || c.is_some_and(|ch| !ch.is_ascii_digit() && !is_identifier_start(ch)) {
-            return kind;
+        // The SourceCharacter immediately following a NumericLiteral must not be
+        // an IdentifierStart or DecimalDigit.
+        // Use a fast path for common case where next char is ASCII.
+        // NB: `!is_identifier_part_ascii(b as char)` is equivalent to
+        // `!b.is_ascii_digit() && !is_identifier_start_ascii(b as char)`
+        match self.peek_byte() {
+            Some(b) if b.is_ascii() => {
+                if !is_identifier_part_ascii(b as char) {
+                    return kind;
+                }
+            }
+            Some(_) => {
+                // Unicode
+                let c = self.peek_char().unwrap();
+                if !is_identifier_start(c) {
+                    return kind;
+                }
+            }
+            None => return kind,
         }
+
+        // Invalid next char
+        let offset = self.offset();
         self.consume_char();
-        while let Some(c) = self.peek() {
+        while let Some(c) = self.peek_char() {
             if is_identifier_start(c) {
                 self.consume_char();
             } else {

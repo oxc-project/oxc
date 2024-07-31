@@ -136,9 +136,30 @@ fn test_export_flag() {
     ",
     );
 
-    tester.has_root_symbol("a").contains_flags(SymbolFlags::Export).test();
-    tester.has_root_symbol("b").contains_flags(SymbolFlags::Export).test();
-    tester.has_root_symbol("c").contains_flags(SymbolFlags::Export).test();
+    tester.has_root_symbol("a").is_exported().test();
+    tester.has_root_symbol("b").is_exported().test();
+    tester.has_root_symbol("c").is_exported().test();
+}
+
+#[test]
+fn test_export_default_flag() {
+    let tester = SemanticTester::ts(
+        "
+        export default function func() {}
+        export default class cls {}
+        export default interface face {}
+
+        export default (function funcExpr() {});
+        export default (function(param) {});
+    ",
+    );
+
+    tester.has_root_symbol("func").is_exported().test();
+    tester.has_root_symbol("cls").is_exported().test();
+    tester.has_root_symbol("face").is_exported().test();
+
+    tester.has_symbol("funcExpr").is_not_exported().test();
+    tester.has_symbol("param").is_not_exported().test();
 }
 
 #[test]

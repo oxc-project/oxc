@@ -241,8 +241,8 @@ impl BinaryOperator {
             | Self::GreaterThan
             | Self::GreaterEqualThan
             | Self::Instanceof
-            | Self::In => Precedence::Equality,
-            Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill => Precedence::Relational,
+            | Self::In => Precedence::Equals,
+            Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill => Precedence::Compare,
             Self::Addition | Self::Subtraction => Precedence::Shift,
             Self::Multiplication | Self::Remainder | Self::Division => Precedence::Add,
             Self::Exponential => Precedence::Multiply,
@@ -257,18 +257,18 @@ impl GetPrecedence for BinaryOperator {
             Self::BitwiseXOR => Precedence::BitwiseXor,
             Self::BitwiseAnd => Precedence::BitwiseAnd,
             Self::Equality | Self::Inequality | Self::StrictEquality | Self::StrictInequality => {
-                Precedence::Equality
+                Precedence::Equals
             }
             Self::LessThan
             | Self::LessEqualThan
             | Self::GreaterThan
             | Self::GreaterEqualThan
             | Self::Instanceof
-            | Self::In => Precedence::Relational,
+            | Self::In => Precedence::Compare,
             Self::ShiftLeft | Self::ShiftRight | Self::ShiftRightZeroFill => Precedence::Shift,
             Self::Subtraction | Self::Addition => Precedence::Add,
             Self::Multiplication | Self::Remainder | Self::Division => Precedence::Multiply,
-            Self::Exponential => Precedence::Exponential,
+            Self::Exponential => Precedence::Exponentiation,
         }
     }
 }
@@ -293,6 +293,14 @@ impl LogicalOperator {
             Self::Coalesce => "??",
         }
     }
+
+    pub fn lower_precedence(&self) -> Precedence {
+        match self {
+            Self::Or => Precedence::NullishCoalescing,
+            Self::And => Precedence::LogicalOr,
+            Self::Coalesce => Precedence::Conditional,
+        }
+    }
 }
 
 impl GetPrecedence for LogicalOperator {
@@ -300,7 +308,7 @@ impl GetPrecedence for LogicalOperator {
         match self {
             Self::Or => Precedence::LogicalOr,
             Self::And => Precedence::LogicalAnd,
-            Self::Coalesce => Precedence::Coalesce,
+            Self::Coalesce => Precedence::NullishCoalescing,
         }
     }
 }
@@ -328,6 +336,13 @@ pub enum UnaryOperator {
 impl UnaryOperator {
     pub fn is_arithmetic(self) -> bool {
         matches!(self, Self::UnaryNegation | Self::UnaryPlus)
+    }
+
+    /// Returns `true` if this operator is a [`LogicalNot`].
+    ///
+    /// [`LogicalNot`]: UnaryOperator::LogicalNot
+    pub fn is_not(self) -> bool {
+        matches!(self, Self::LogicalNot)
     }
 
     pub fn is_bitwise(self) -> bool {

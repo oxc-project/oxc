@@ -50,6 +50,7 @@ declare_oxc_lint!(
     /// ```
     ValidTypeof,
     correctness,
+    conditional_fix
 );
 
 impl Rule for ValidTypeof {

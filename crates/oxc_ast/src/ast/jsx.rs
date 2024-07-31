@@ -20,6 +20,22 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 // 1.2 JSX Elements
 
 /// JSX Element
+///
+/// Note that fragments (`<></>`) are represented as [`JSXFragment`], unless they are written as
+/// members of React (e.g. `<React.Fragment></React.Fragment>`).
+/// ## Examples
+///
+/// ```tsx
+/// <Foo>        // <- opening_element
+///   some text  // <- children
+/// </Foo>       // <- closing_element
+/// ```
+///
+/// ```tsx
+/// <Foo />     // <- opening_element, no closing_element
+/// ```
+///
+/// See: [JSX Syntax](https://facebook.github.io/jsx/)
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -33,6 +49,20 @@ pub struct JSXElement<'a> {
 }
 
 /// JSX Opening Element
+///
+/// Opening tag in a [`JSXElement`].
+///
+/// ## Examples
+/// ```tsx
+/// // element with opening and closing tags (self_closing = false)
+/// //   ___ name
+///     <Foo bar baz={4}>
+/// //       ^^^^^^^^^^^ attributes
+///
+/// // element with self-closing tag (self_closing = true)
+/// <Component<T> />
+/// //         ^ type_parameters
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -40,13 +70,24 @@ pub struct JSXElement<'a> {
 pub struct JSXOpeningElement<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// Is this tag self-closing?
+    ///
+    /// ## Examples
+    /// ```tsx
+    /// <Foo />  // <- self_closing = true
+    /// <Foo>    // <- self_closing = false
+    /// ```
     pub self_closing: bool,
     pub name: JSXElementName<'a>,
+    /// List of JSX attributes. In React-like applications, these become props.
     pub attributes: Vec<'a, JSXAttributeItem<'a>>,
+    /// Type parameters for generic JSX elements.
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
 /// JSX Closing Element
+///
+/// Closing tag in a [`JSXElement`]. Not all JSX elements have a closing tag.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -58,6 +99,13 @@ pub struct JSXClosingElement<'a> {
 }
 
 /// JSX Fragment
+///
+/// A fragment written with the special `<></>` syntax. When written as a `<Fragment>` component,
+/// fragments will be represented as [`JSXElement`]s.
+///
+/// Note that fragments cannot have attributes or type parameters.
+///
+/// See: [`React.Fragment`](https://react.dev/reference/react/Fragment)
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -70,6 +118,7 @@ pub struct JSXFragment<'a> {
     pub children: Vec<'a, JSXChild<'a>>,
 }
 
+/// JSX Opening Fragment (`<>`)
 #[ast]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -79,6 +128,7 @@ pub struct JSXOpeningFragment {
     pub span: Span,
 }
 
+/// JSX Closing Fragment (`</>`)
 #[ast]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -103,6 +153,12 @@ pub enum JSXElementName<'a> {
 }
 
 /// JSX Namespaced Name
+///
+/// ## Example
+///
+/// ```tsx
+/// <Apple:Orange />
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -110,11 +166,27 @@ pub enum JSXElementName<'a> {
 pub struct JSXNamespacedName<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// Namespace portion of the name, e.g. `Apple` in `<Apple:Orange />`
     pub namespace: JSXIdentifier<'a>,
+    /// Name portion of the name, e.g. `Orange` in `<Apple:Orange />`
     pub property: JSXIdentifier<'a>,
 }
 
 /// JSX Member Expression
+///
+/// Used in [`JSXElementName`]. Multiple member expressions may be chained together. In this case,
+/// [`object`] will be a [`member expression`].
+///
+/// ## Example
+///
+/// ```tsx
+/// // <object.property />
+/// <Apple.Orange />
+/// <Foo.Bar.Baz.Bang />
+/// ```
+///
+/// [`object`]: JSXMemberExpression::object
+/// [`member expression`]: JSXMemberExpressionObject::MemberExpression
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -122,7 +194,9 @@ pub struct JSXNamespacedName<'a> {
 pub struct JSXMemberExpression<'a> {
     #[serde(flatten)]
     pub span: Span,
+    /// The object being accessed. This is everything before the last `.`.
     pub object: JSXMemberExpressionObject<'a>,
+    /// The property being accessed. This is everything after the last `.`.
     pub property: JSXIdentifier<'a>,
 }
 
@@ -135,6 +209,19 @@ pub enum JSXMemberExpressionObject<'a> {
     MemberExpression(Box<'a, JSXMemberExpression<'a>>),
 }
 
+/// JSX Expression Container
+///
+/// Expression containers wrap [`JSXExpression`]s in JSX attributes and children using `{}`.
+///
+/// ## Example
+///
+/// ```tsx
+/// // boolean-like and string-like expressions are not wrapped in containers.
+/// // Here, only `container` is a JSXExpressionContainer.
+/// <Foo bar baz="bang" container={4}/>
+///   {4}  // <- wrapped in container
+/// </Foo>
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -148,7 +235,8 @@ pub struct JSXExpressionContainer<'a> {
 inherit_variants! {
 /// JSX Expression
 ///
-/// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
+/// Gets wrapped by a [`JSXExpressionContainer`]. Inherits variants from [`Expression`]. See [`ast`
+/// module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
@@ -163,6 +251,7 @@ pub enum JSXExpression<'a> {
 }
 }
 
+/// An empty JSX expression (`{}`)
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -185,6 +274,12 @@ pub enum JSXAttributeItem<'a> {
 }
 
 /// JSX Attribute
+///
+/// ## Example
+///
+/// ```tsx
+/// <Component has-no-value foo="foo" />
+/// //                 name ^^^ ^^^^ value
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -197,6 +292,12 @@ pub struct JSXAttribute<'a> {
 }
 
 /// JSX Spread Attribute
+///
+/// ## Example
+/// ```tsx
+/// <Component {...props} />
+/// //          ^^^^^^^^ argument
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -208,6 +309,8 @@ pub struct JSXSpreadAttribute<'a> {
 }
 
 /// JSX Attribute Name
+///
+/// Part of a [`JSXAttribute`].
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -218,6 +321,8 @@ pub enum JSXAttributeName<'a> {
 }
 
 /// JSX Attribute Value
+///
+/// Part of a [`JSXAttribute`].
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -229,6 +334,11 @@ pub enum JSXAttributeValue<'a> {
     Fragment(Box<'a, JSXFragment<'a>>),
 }
 
+/// JSX Identifier
+///
+/// Similar to [`IdentifierName`], but used in JSX elements.
+///
+/// [`IdentifierName`]: super::IdentifierName
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -242,18 +352,33 @@ pub struct JSXIdentifier<'a> {
 // 1.4 JSX Children
 
 /// JSX Child
+///
+/// Part of a [`JSXElement`].
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXChild<'a> {
+    /// `<Foo>Some Text</Foo>`
     Text(Box<'a, JSXText<'a>>),
+    /// `<Foo><Child /></Foo>`
     Element(Box<'a, JSXElement<'a>>),
+    /// `<Foo><></></Foo>`
     Fragment(Box<'a, JSXFragment<'a>>),
+    /// `<Foo>{expression}</Foo>`
     ExpressionContainer(Box<'a, JSXExpressionContainer<'a>>),
+    /// `<Foo>{...spread}</Foo>`
     Spread(Box<'a, JSXSpreadChild<'a>>),
 }
+impl<'a> JSXChild<'a> {
+    pub const fn is_expression_container(&self) -> bool {
+        matches!(self, Self::ExpressionContainer(_))
+    }
+}
 
+/// JSX Spread Child.
+///
+/// Variant of [`JSXChild`] that represents an object spread (`{...expression}`).
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -264,6 +389,16 @@ pub struct JSXSpreadChild<'a> {
     pub expression: Expression<'a>,
 }
 
+/// Text inside a JSX element.
+///
+/// Not to be confused with a [`StringLiteral`].
+///
+/// ## Example
+///
+/// ```tsx
+/// <Foo>Some text</Foo>     // `Some Text` is a JSXText,
+/// <Foo>"Some string"</Foo> // but `"Some string"` is a StringLiteral.
+/// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]

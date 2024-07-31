@@ -317,7 +317,7 @@ fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
             false
         });
     }
-    splits.any(|str| str.to_lowercase() == "noreferrer")
+    splits.any(|str| str.eq_ignore_ascii_case("noreferrer"))
 }
 
 fn match_rel_expression<'a>(
@@ -367,7 +367,7 @@ fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool
     let default = (false, "", false, false);
     match expr {
         Expression::StringLiteral(str) => {
-            (str.value.as_str().to_lowercase() == "_blank", "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
         }
         Expression::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
@@ -390,7 +390,7 @@ fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a st
     let default = (false, "", false, false);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            (str.value.as_str().to_lowercase() == "_blank", "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {
