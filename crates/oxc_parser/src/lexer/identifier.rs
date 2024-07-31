@@ -270,7 +270,7 @@ impl<'a> Lexer<'a> {
     /// Handle private identifier whose first byte is not an ASCII identifier start byte.
     #[cold]
     fn private_identifier_not_ascii_id(&mut self) -> Kind {
-        let b = self.source.peek_byte().unwrap();
+        let b = self.peek_byte().unwrap();
         if !b.is_ascii() {
             let c = self.peek_char().unwrap();
             if is_identifier_start_unicode(c) {

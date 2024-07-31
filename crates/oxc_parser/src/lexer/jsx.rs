@@ -99,7 +99,7 @@ impl<'a> Lexer<'a> {
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
     pub(crate) fn continue_lex_jsx_identifier(&mut self) -> Option<Token> {
-        if self.source.peek_byte() != Some(b'-') {
+        if self.peek_byte() != Some(b'-') {
             return None;
         }
         self.consume_char();

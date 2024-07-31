@@ -309,7 +309,7 @@ impl<'a> Lexer<'a> {
             let offset = self.offset();
             self.token.start = offset;
 
-            let Some(byte) = self.source.peek_byte() else {
+            let Some(byte) = self.peek_byte() else {
                 return Kind::Eof;
             };
 
