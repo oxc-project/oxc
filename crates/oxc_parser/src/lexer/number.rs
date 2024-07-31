@@ -71,7 +71,7 @@ fn parse_decimal(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
+    for &b in s.as_bytes() {
         // The latency of the multiplication can be hidden by issuing it
         // before the result is needed to improve performance on
         // modern out-of-order CPU as multiplication here is slower
@@ -79,7 +79,7 @@ fn parse_decimal(s: &str) -> f64 {
         // doing multiplication first and let the CPU spends other cycles
         // doing other computation and get multiplication result later.
         result *= 10;
-        let n = decimal_byte_to_value(*b);
+        let n = decimal_byte_to_value(b);
         result += n as u64;
     }
     result as f64
@@ -97,10 +97,10 @@ fn parse_decimal_with_underscores(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
-        if *b != b'_' {
+    for &b in s.as_bytes() {
+        if b != b'_' {
             result *= 10;
-            let n = decimal_byte_to_value(*b);
+            let n = decimal_byte_to_value(b);
             result += n as u64;
         }
     }
@@ -159,9 +159,9 @@ fn parse_binary(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
+    for &b in s.as_bytes() {
         result <<= 1;
-        result |= binary_byte_to_value(*b) as u64;
+        result |= binary_byte_to_value(b) as u64;
     }
     result as f64
 }
@@ -170,8 +170,8 @@ fn parse_binary(s: &str) -> f64 {
 #[inline(never)]
 fn parse_binary_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for b in s.as_bytes() {
-        let value = f64::from(binary_byte_to_value(*b));
+    for &b in s.as_bytes() {
+        let value = f64::from(binary_byte_to_value(b));
         result = result.mul_add(2.0, value);
     }
     result
@@ -191,10 +191,10 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
-        if *b != b'_' {
+    for &b in s.as_bytes() {
+        if b != b'_' {
             result <<= 1;
-            result |= binary_byte_to_value(*b) as u64;
+            result |= binary_byte_to_value(b) as u64;
         }
     }
     result as f64
@@ -204,9 +204,9 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
 #[inline(never)]
 fn parse_binary_with_underscores_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for b in s.as_bytes() {
-        if *b != b'_' {
-            let value = f64::from(binary_byte_to_value(*b));
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let value = f64::from(binary_byte_to_value(b));
             result = result.mul_add(2.0, value);
         }
     }
@@ -239,8 +239,8 @@ fn parse_octal(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
-        let n = octal_byte_to_value(*b);
+    for &b in s.as_bytes() {
+        let n = octal_byte_to_value(b);
         result <<= 3;
         result |= n as u64;
     }
@@ -252,8 +252,8 @@ fn parse_octal(s: &str) -> f64 {
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for b in s.as_bytes() {
-        let value = f64::from(octal_byte_to_value(*b));
+    for &b in s.as_bytes() {
+        let value = f64::from(octal_byte_to_value(b));
         result = result.mul_add(8.0, value);
     }
     result
@@ -271,9 +271,9 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
-        if *b != b'_' {
-            let n = octal_byte_to_value(*b);
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let n = octal_byte_to_value(b);
             result <<= 3;
             result |= n as u64;
         }
@@ -286,9 +286,9 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
 #[allow(clippy::cast_precision_loss, clippy::cast_lossless)]
 fn parse_octal_with_underscores_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for b in s.as_bytes() {
-        if *b != b'_' {
-            let value = f64::from(octal_byte_to_value(*b));
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let value = f64::from(octal_byte_to_value(b));
             result = result.mul_add(8.0, value);
         }
     }
@@ -333,8 +333,8 @@ fn parse_hex(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
-        let n = hex_byte_to_value(*b);
+    for &b in s.as_bytes() {
+        let n = hex_byte_to_value(b);
         result <<= 4;
         result |= n as u64;
     }
@@ -345,8 +345,8 @@ fn parse_hex(s: &str) -> f64 {
 #[inline(never)]
 fn parse_hex_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for b in s.as_bytes() {
-        let value = f64::from(hex_byte_to_value(*b));
+    for &b in s.as_bytes() {
+        let value = f64::from(hex_byte_to_value(b));
         result = result.mul_add(16.0, value);
     }
     result
@@ -365,9 +365,9 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
     }
 
     let mut result = 0_u64;
-    for b in s.as_bytes() {
-        if *b != b'_' {
-            let n = hex_byte_to_value(*b);
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let n = hex_byte_to_value(b);
             result <<= 4;
             result |= n as u64;
         }
@@ -379,9 +379,9 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
 #[inline(never)]
 fn parse_hex_with_underscores_slow(s: &str) -> f64 {
     let mut result = 0_f64;
-    for b in s.as_bytes() {
-        if *b != b'_' {
-            let value = f64::from(hex_byte_to_value(*b));
+    for &b in s.as_bytes() {
+        if b != b'_' {
+            let value = f64::from(hex_byte_to_value(b));
             result = result.mul_add(16.0, value);
         }
     }
