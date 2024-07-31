@@ -153,6 +153,15 @@ export interface TransformOptions {
    * @see {@link SourceMap}
    */
   sourcemap?: boolean
+  /**
+   * Enable minification.
+   *
+   * Currently, minification will only remove comments and unnecessary
+   * whitespace. Declaration files will not be minified at all.
+   *
+   * @default false
+   */
+  minify?: boolean
 }
 export interface SourceMap {
   file?: string

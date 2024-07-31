@@ -198,6 +198,16 @@ pub struct TransformOptions {
     ///
     /// @see {@link SourceMap}
     pub sourcemap: Option<bool>,
+
+    // todo: should we use oxc_minifier here, or make it a separate
+    // function/package?
+    /// Enable minification.
+    ///
+    /// Currently, minification will only remove comments and unnecessary
+    /// whitespace. Declaration files will not be minified at all.
+    ///
+    /// @default false
+    pub minify: Option<bool>,
 }
 
 impl From<TransformOptions> for oxc_transformer::TransformOptions {

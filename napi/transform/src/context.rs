@@ -28,6 +28,8 @@ pub(crate) struct TransformContext<'a> {
     ///
     /// Used by [`crate::transform`].
     declarations: bool,
+    /// Emit minified code?
+    minify: bool,
 
     /// Path to the file being transformed.
     filename: &'a str,
@@ -53,6 +55,7 @@ impl<'a> TransformContext<'a> {
         // Options that are added by this napi crates and don't exist in
         // oxc_transformer.
         let source_map = options.as_ref().and_then(|o| o.sourcemap).unwrap_or_default();
+        let minify = options.as_ref().and_then(|o| o.minify).unwrap_or_default();
         let declarations = options
             .as_ref()
             .and_then(|o| o.typescript.as_ref())
@@ -74,6 +77,7 @@ impl<'a> TransformContext<'a> {
             options: options_cell,
             source_map,
             declarations,
+            minify,
 
             filename,
             source_text,
@@ -107,6 +111,11 @@ impl<'a> TransformContext<'a> {
     }
 
     #[inline]
+    pub fn minify(&self) -> bool {
+        self.minify
+    }
+
+    #[inline]
     pub fn source_type(&self) -> SourceType {
         self.source_type
     }
@@ -121,6 +130,10 @@ impl<'a> TransformContext<'a> {
         self.program.borrow_mut()
     }
 
+    /// Create a [`Codegen`] using options provided to the context.
+    ///
+    /// Note that this method leaves minification up to the caller for
+    /// flexibility.
     pub fn codegen<const MINIFY: bool>(&self) -> Codegen<'a, MINIFY> {
         let codegen = Codegen::<MINIFY>::new();
         if self.source_map {
