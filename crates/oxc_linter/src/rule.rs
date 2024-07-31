@@ -125,6 +125,8 @@ pub enum RuleFixMeta {
     None,
     /// An auto-fix could be implemented, but it has not been yet.
     FixPending,
+    /// An auto-fix is available for some violations, but not all.
+    Conditional(FixKind),
     /// An auto-fix is available.
     Fixable(FixKind),
 }
@@ -135,17 +137,22 @@ impl RuleFixMeta {
     /// Also returns `true` for suggestions.
     #[inline]
     pub fn has_fix(self) -> bool {
-        matches!(self, Self::Fixable(_))
+        matches!(self, Self::Fixable(_) | Self::Conditional(_))
+    }
+
+    pub fn supports_fix(self, kind: FixKind) -> bool {
+        matches!(self, Self::Fixable(fix_kind) | Self::Conditional(fix_kind) if fix_kind.can_apply(kind))
     }
 
     pub fn description(self) -> Cow<'static, str> {
         match self {
             Self::None => Cow::Borrowed("No auto-fix is available for this rule."),
             Self::FixPending => Cow::Borrowed("An auto-fix is still under development."),
-            Self::Fixable(kind) => {
+            Self::Fixable(kind) | Self::Conditional(kind) => {
                 // e.g. an auto-fix is available for this rule
                 // e.g. a suggestion is available for this rule
                 // e.g. a dangerous auto-fix is available for this rule
+                // e.g. an auto-fix is available for this rule for some violations
                 // e.g. an auto-fix and a suggestion are available for this rule
                 let noun = match (kind.contains(FixKind::Fix), kind.contains(FixKind::Suggestion)) {
                     (true, true) => "auto-fix and a suggestion are available for this rule",
@@ -153,7 +160,7 @@ impl RuleFixMeta {
                     (false, true) => "suggestion is available for this rule",
                     _ => unreachable!(),
                 };
-                let message =
+                let mut message =
                     if kind.is_dangerous() { format!("dangerous {noun}") } else { noun.into() };
 
                 let article = match message.chars().next().unwrap() {
@@ -161,23 +168,21 @@ impl RuleFixMeta {
                     _ => "A",
                 };
 
-                Cow::Owned(format!("{article} {message}"))
+                if matches!(self, Self::Conditional(_)) {
+                    message += " for some violations";
+                }
+
+                Cow::Owned(format!("{article} {message}."))
             }
         }
     }
 }
 
-impl TryFrom<&str> for RuleFixMeta {
-    type Error = ();
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
+impl From<RuleFixMeta> for FixKind {
+    fn from(value: RuleFixMeta) -> Self {
         match value {
-            "none" => Ok(Self::None),
-            "pending" => Ok(Self::FixPending),
-            "fix" => Ok(Self::Fixable(FixKind::Fix)),
-            "fix-dangerous" => Ok(Self::Fixable(FixKind::DangerousFix)),
-            "suggestion" => Ok(Self::Fixable(FixKind::Suggestion)),
-            "suggestion-dangerous" => Ok(Self::Fixable(FixKind::Suggestion | FixKind::Dangerous)),
-            _ => Err(()),
+            RuleFixMeta::None | RuleFixMeta::FixPending => FixKind::None,
+            RuleFixMeta::Fixable(kind) | RuleFixMeta::Conditional(kind) => kind,
         }
     }
 }

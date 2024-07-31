@@ -1,4 +1,5 @@
 use convert_case::{Boundary, Case, Converter};
+use itertools::Itertools as _;
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{
@@ -79,7 +80,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let import_statement = if used_in_test {
         None
     } else {
-        Some(quote! { use crate::rule::{RuleCategory, RuleMeta, RuleFixMeta}; })
+        Some(quote! { use crate::{rule::{RuleCategory, RuleMeta, RuleFixMeta}, fixer::FixKind}; })
     };
 
     let output = quote! {
@@ -119,17 +120,58 @@ fn parse_attr<'a, const LEN: usize>(
 }
 
 fn parse_fix(s: &str) -> proc_macro2::TokenStream {
+    const SEP: char = '_';
+
     match s {
-        "none" => quote! { RuleFixMeta::None },
-        "pending" => quote! { RuleFixMeta::FixPending },
-        "fix" => quote! { RuleFixMeta::Fixable(FixKind::Fix) },
-        "fix-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Fix.union(FixKind::Dangerous)) },
-        "suggestion" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
-        "suggestion-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion.union(FixKind::Dangerous)) },
-        "None" => panic!("Invalid fix kind. Did you mean 'none'?"),
-        "Pending" => panic!("Invalid fix kind. Did you mean 'pending'?"),
-        "Fix" => panic!("Invalid fix kind. Did you mean 'fix'?"),
-        "Suggestion" => panic!("Invalid fix kind. Did you mean 'suggestion'?"),
-        invalid => panic!("invalid fix kind: {invalid}. Valid kinds are none, pending, fix, fix-dangerous, suggestion, and suggestion-dangerous"),
+        "none" => {
+            return quote! { RuleFixMeta::None };
+        }
+        "pending" => { return quote! { RuleFixMeta::FixPending }; }
+        "fix" => {
+            return quote! { RuleFixMeta::Fixable(FixKind::SafeFix) }
+        },
+        "suggestion" => {
+            return quote! { RuleFixMeta::Fixable(FixKind::Suggestion) }
+        },
+        // "fix-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Fix.union(FixKind::Dangerous)) },
+        // "suggestion" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion) },
+        // "suggestion-dangerous" => quote! { RuleFixMeta::Fixable(FixKind::Suggestion.union(FixKind::Dangerous)) },
+        "conditional" => panic!("Invalid fix capabilities: missing a fix kind. Did you mean 'fix-conditional'?"),
+        "None" => panic!("Invalid fix capabilities. Did you mean 'none'?"),
+        "Pending" => panic!("Invalid fix capabilities. Did you mean 'pending'?"),
+        "Fix" => panic!("Invalid fix capabilities. Did you mean 'fix'?"),
+        "Suggestion" => panic!("Invalid fix capabilities. Did you mean 'suggestion'?"),
+        invalid if !invalid.contains(SEP) => panic!("invalid fix capabilities: {invalid}. Valid capabilities are none, pending, fix, suggestion, or [fix|suggestion]_[conditional?]_[dangerous?]."),
+        _ => {}
+    }
+
+    assert!(s.contains(SEP));
+
+    let mut is_conditional = false;
+    let fix_kinds = s
+        .split(SEP)
+        .filter(|seg| {
+            let conditional = *seg == "conditional";
+            is_conditional = is_conditional || conditional;
+            !conditional
+        })
+        .unique()
+        .map(parse_fix_kind)
+        .reduce(|acc, kind| quote! { #acc.union(#kind) })
+        .expect("No fix kinds were found during parsing, but at least one is required.");
+
+    if is_conditional {
+        quote! { RuleFixMeta::Conditional(#fix_kinds) }
+    } else {
+        quote! { RuleFixMeta::Fixable(#fix_kinds) }
+    }
+}
+
+fn parse_fix_kind(s: &str) -> proc_macro2::TokenStream {
+    match s {
+        "fix" => quote! { FixKind::Fix },
+        "suggestion" => quote! { FixKind::Suggestion },
+        "dangerous" => quote! { FixKind::Dangerous },
+        _ => panic!("invalid fix kind: {s}. Valid fix kinds are fix, suggestion, or dangerous."),
     }
 }
