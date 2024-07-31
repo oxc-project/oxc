@@ -10,7 +10,7 @@ use phf::{phf_map, phf_set};
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
+    utils::{get_element_type, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -183,7 +183,7 @@ impl Rule for AutocompleteValid {
                 return;
             }
 
-            let Some(autocomplete_prop) = has_jsx_prop_lowercase(jsx_el, "autocomplete") else {
+            let Some(autocomplete_prop) = has_jsx_prop_ignore_case(jsx_el, "autocomplete") else {
                 return;
             };
             let attr = match autocomplete_prop {

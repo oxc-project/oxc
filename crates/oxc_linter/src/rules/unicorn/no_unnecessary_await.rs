@@ -26,7 +26,8 @@ declare_oxc_lint!(
     /// await await promise;
     /// ```
     NoUnnecessaryAwait,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for NoUnnecessaryAwait {

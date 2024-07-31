@@ -164,6 +164,7 @@ declare_oxc_lint!(
     /// }
     ConsistentTestIt,
     style,
+    fix
 );
 
 impl Rule for ConsistentTestIt {

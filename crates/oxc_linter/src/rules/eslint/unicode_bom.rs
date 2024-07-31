@@ -40,6 +40,7 @@ declare_oxc_lint!(
     /// ```
     UnicodeBom,
     restriction,
+    fix
 );
 
 impl Rule for UnicodeBom {

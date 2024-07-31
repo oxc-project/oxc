@@ -51,6 +51,7 @@ declare_oxc_lint!(
     ///
     PreferToHaveLength,
     style,
+    fix
 );
 
 impl Rule for PreferToHaveLength {

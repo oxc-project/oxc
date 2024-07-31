@@ -330,6 +330,13 @@ impl UnaryOperator {
         matches!(self, Self::UnaryNegation | Self::UnaryPlus)
     }
 
+    /// Returns `true` if this operator is a [`LogicalNot`].
+    ///
+    /// [`LogicalNot`]: UnaryOperator::LogicalNot
+    pub fn is_not(self) -> bool {
+        matches!(self, Self::LogicalNot)
+    }
+
     pub fn is_bitwise(self) -> bool {
         matches!(self, Self::BitwiseNot)
     }

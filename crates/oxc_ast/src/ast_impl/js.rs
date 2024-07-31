@@ -1203,6 +1203,11 @@ impl<'a> Hash for Class<'a> {
 }
 
 impl<'a> ClassElement<'a> {
+    /// Returns `true` if this is a [`ClassElement::StaticBlock`].
+    pub fn is_static_block(&self) -> bool {
+        matches!(self, Self::StaticBlock(_))
+    }
+
     /// Returns `true` if this [`ClassElement`] is a static block or has a
     /// static modifier.
     pub fn r#static(&self) -> bool {

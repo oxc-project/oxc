@@ -41,7 +41,8 @@ declare_oxc_lint!(
     /// <input aria-labelledby="address_label" />
     /// ```
     AriaProps,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for AriaProps {

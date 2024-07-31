@@ -41,7 +41,8 @@ declare_oxc_lint!(
     ///
     /// ```
     NoConsoleSpaces,
-    style
+    style,
+    fix
 );
 
 impl Rule for NoConsoleSpaces {

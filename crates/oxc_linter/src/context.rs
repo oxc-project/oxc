@@ -7,6 +7,8 @@ use oxc_semantic::{AstNodes, JSDocFinder, ScopeTree, Semantic, SymbolTable};
 use oxc_span::{GetSpan, SourceType, Span};
 use oxc_syntax::module_record::ModuleRecord;
 
+#[cfg(debug_assertions)]
+use crate::rule::RuleFixMeta;
 use crate::{
     config::OxlintRules,
     disable_directives::{DisableDirectives, DisableDirectivesBuilder},
@@ -41,6 +43,8 @@ pub struct LintContext<'a> {
     // states
     current_plugin_prefix: &'static str,
     current_rule_name: &'static str,
+    #[cfg(debug_assertions)]
+    current_rule_fix_capabilities: RuleFixMeta,
 
     /// Current rule severity. Allows for user severity overrides, e.g.
     /// ```json
@@ -79,6 +83,8 @@ impl<'a> LintContext<'a> {
             eslint_config: Arc::new(OxlintConfig::default()),
             current_plugin_prefix: "eslint",
             current_rule_name: "",
+            #[cfg(debug_assertions)]
+            current_rule_fix_capabilities: RuleFixMeta::None,
             severity: Severity::Warning,
             frameworks: FrameworkFlags::empty(),
         }
@@ -102,6 +108,12 @@ impl<'a> LintContext<'a> {
 
     pub fn with_rule_name(mut self, name: &'static str) -> Self {
         self.current_rule_name = name;
+        self
+    }
+
+    #[cfg(debug_assertions)]
+    pub fn with_rule_fix_capabilities(mut self, capabilities: RuleFixMeta) -> Self {
+        self.current_rule_fix_capabilities = capabilities;
         self
     }
 
@@ -287,6 +299,7 @@ impl<'a> LintContext<'a> {
         self.diagnostic_with_fix_of_kind(diagnostic, FixKind::DangerousFix, fix);
     }
 
+    #[allow(clippy::missing_panics_doc)] // only panics in debug mode
     pub fn diagnostic_with_fix_of_kind<C, F>(
         &self,
         diagnostic: OxcDiagnostic,
@@ -296,24 +309,18 @@ impl<'a> LintContext<'a> {
         C: Into<RuleFix<'a>>,
         F: FnOnce(RuleFixer<'_, 'a>) -> C,
     {
-        // if let Some(accepted_fix_kind) = self.fix {
-        //     let fixer = RuleFixer::new(fix_kind, self);
-        //     let rule_fix: RuleFix<'a> = fix(fixer).into();
-        //     let diagnostic = match (rule_fix.message(), &diagnostic.help) {
-        //         (Some(message), None) => diagnostic.with_help(message.to_owned()),
-        //         _ => diagnostic,
-        //     };
-        //     if rule_fix.kind() <= accepted_fix_kind {
-        //         let fix = rule_fix.into_fix(self.source_text());
-        //         self.add_diagnostic(Message::new(diagnostic, Some(fix)));
-        //     } else {
-        //         self.diagnostic(diagnostic);
-        //     }
-        // } else {
-        //     self.diagnostic(diagnostic);
-        // }
         let fixer = RuleFixer::new(fix_kind, self);
         let rule_fix: RuleFix<'a> = fix(fixer).into();
+        #[cfg(debug_assertions)]
+        {
+            assert!(
+                self.current_rule_fix_capabilities.supports_fix(fix_kind),
+                "Rule `{}` does not support safe fixes. Did you forget to update fix capabilities in declare_oxc_lint?.\n\tSupported fix kinds: {:?}\n\tAttempted fix kind: {:?}",
+                self.current_rule_name,
+                FixKind::from(self.current_rule_fix_capabilities),
+                rule_fix.kind()
+            );
+        }
         let diagnostic = match (rule_fix.message(), &diagnostic.help) {
             (Some(message), None) => diagnostic.with_help(message.to_owned()),
             _ => diagnostic,

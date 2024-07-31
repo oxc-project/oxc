@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// foo.startsWith("abc");
     /// ```
     PreferStringStartsEndsWith,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for PreferStringStartsEndsWith {

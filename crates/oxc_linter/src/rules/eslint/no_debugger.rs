@@ -27,7 +27,8 @@ declare_oxc_lint!(
     /// debugger;
     /// ```
     NoDebugger,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoDebugger {

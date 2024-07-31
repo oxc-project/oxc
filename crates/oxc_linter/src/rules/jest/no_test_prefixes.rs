@@ -53,7 +53,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoTestPrefixes,
-    style
+    style,
+    fix
 );
 
 impl Rule for NoTestPrefixes {

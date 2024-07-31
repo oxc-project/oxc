@@ -1,4 +1,5 @@
-use oxc_semantic::ScopeFlags;
+use oxc_ast::AstKind;
+use oxc_semantic::{ScopeFlags, SymbolFlags};
 
 use crate::util::{Expect, SemanticTester};
 
@@ -137,6 +138,49 @@ fn test_catch_clause_parameters() {
     .has_root_symbol("a")
     .has_number_of_references(1)
     .test();
+}
+
+#[test]
+fn test_enums() {
+    let test = SemanticTester::ts(
+        "
+        enum A {
+            X,
+            Y,
+            Z
+        }",
+    );
+    test.has_root_symbol("A").contains_flags(SymbolFlags::RegularEnum).test();
+    test.has_some_symbol("X").contains_flags(SymbolFlags::EnumMember).test();
+
+    let semantic = test.build();
+    let program = semantic
+        .nodes()
+        .iter()
+        .find(|node| matches!(node.kind(), AstKind::Program(_)))
+        .expect("No program node found");
+    assert_eq!(program.scope_id(), semantic.scopes().root_scope_id());
+
+    let (enum_node, enum_decl) = semantic
+        .nodes()
+        .iter()
+        .find_map(|node| {
+            if let AstKind::TSEnumDeclaration(e) = node.kind() {
+                Some((node, e))
+            } else {
+                None
+            }
+        })
+        .expect("Expected TS test case to have an enum declaration for A.");
+
+    assert_eq!(
+        enum_node.scope_id(),
+        program.scope_id(),
+        "Expected `enum A` to be created in the top-level scope."
+    );
+    let enum_decl_scope_id = enum_decl.scope_id.get().expect("Enum declaration has no scope id");
+    assert_ne!(enum_node.scope_id(), enum_decl_scope_id, "Enum declaration nodes should contain the scope ID they create, not the scope ID they're created in.");
+    assert_eq!(enum_decl.members.len(), 3);
 }
 
 #[test]

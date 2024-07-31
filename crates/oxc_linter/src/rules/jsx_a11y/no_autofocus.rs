@@ -58,7 +58,8 @@ declare_oxc_lint!(
     /// ```
     ///
     NoAutofocus,
-    correctness
+    correctness,
+    fix
 );
 
 impl NoAutofocus {

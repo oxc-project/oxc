@@ -37,7 +37,7 @@ declare_oxc_lint!(
     /// declare namespace foo {}
     /// ```
     NoNamespace,
-    correctness
+    restriction
 );
 
 impl Rule for NoNamespace {

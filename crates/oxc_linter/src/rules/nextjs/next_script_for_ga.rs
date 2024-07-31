@@ -12,7 +12,7 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
@@ -58,7 +58,7 @@ impl Rule for NextScriptForGa {
         // Check if the Alternative async tag is being used to add GA.
         // https://developers.google.com/analytics/devguides/collection/analyticsjs#alternative_async_tag
         // https://developers.google.com/analytics/devguides/collection/gtagjs
-        if let Some(src_prop) = has_jsx_prop_lowercase(jsx_opening_element, "src") {
+        if let Some(src_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "src") {
             if let Some(src_prop_value) = get_string_literal_prop_value(src_prop) {
                 if SUPPORTED_SRCS.iter().any(|s| src_prop_value.contains(s)) {
                     ctx.diagnostic(next_script_for_ga_diagnostic(jsx_opening_element_name.span));
@@ -92,7 +92,7 @@ fn get_dangerously_set_inner_html_prop_value<'a>(
     jsx_opening_element: &'a JSXOpeningElement<'a>,
 ) -> Option<&'a ObjectProperty<'a>> {
     let Some(JSXAttributeItem::Attribute(dangerously_set_inner_html_prop)) =
-        has_jsx_prop_lowercase(jsx_opening_element, "dangerouslysetinnerhtml")
+        has_jsx_prop_ignore_case(jsx_opening_element, "dangerouslysetinnerhtml")
     else {
         return None;
     };

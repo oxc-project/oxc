@@ -34,7 +34,8 @@ declare_oxc_lint!(
     /// });
     /// ```
     NoJasmineGlobals,
-    style
+    style,
+    conditional_fix
 );
 
 const NON_JASMINE_PROPERTY_NAMES: [&str; 4] = ["spyOn", "spyOnProperty", "fail", "pending"];

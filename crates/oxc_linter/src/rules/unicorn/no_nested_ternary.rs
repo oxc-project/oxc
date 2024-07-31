@@ -39,7 +39,8 @@ declare_oxc_lint!(
     /// const foo = i > 5 ? (i < 100 ? true : false) : (i < 100 ? true : false);
     /// ```
     NoNestedTernary,
-    restriction
+    restriction,
+    conditional_fix
 );
 
 impl Rule for NoNestedTernary {

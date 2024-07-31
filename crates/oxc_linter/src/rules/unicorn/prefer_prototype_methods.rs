@@ -44,7 +44,8 @@ declare_oxc_lint!(
     /// const maxValue = Math.max.apply(Math, numbers);
     /// ```
     PreferPrototypeMethods,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferPrototypeMethods {

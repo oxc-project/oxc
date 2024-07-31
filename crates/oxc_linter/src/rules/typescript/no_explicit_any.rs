@@ -82,7 +82,8 @@ declare_oxc_lint!(
     /// Whether to enable auto-fixing in which the `any` type is converted to the `unknown` type.
     /// `false` by default.
     NoExplicitAny,
-    restriction
+    restriction,
+    conditional_fix
 );
 
 impl Rule for NoExplicitAny {

@@ -307,6 +307,7 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    #[inline]
     pub fn current_scope_flags(&self) -> ScopeFlags {
         self.scope.get_flags(self.current_scope_id)
     }
@@ -522,14 +523,6 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.current_scope_id = self.scope.add_scope(parent_scope_id, self.current_node_id, flags);
         scope_id.set(Some(self.current_scope_id));
 
-        if self.scope.get_flags(parent_scope_id).is_catch_clause() {
-            // Move all bindings from parent scope to current scope
-            // to make it easier to resole references and check redeclare errors.
-            let parent_bindings =
-                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
-            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
-        }
-
         self.unresolved_references.increment_scope_depth();
     }
 
@@ -672,6 +665,27 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             self.visit_ts_class_implementses(implements);
         }
         self.visit_class_body(&class.body);
+
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
+        let kind = AstKind::BlockStatement(self.alloc(it));
+        self.enter_node(kind);
+
+        let parent_scope_id = self.current_scope_id;
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+
+        // Move all bindings from catch clause param scope to catch clause body scope
+        // to make it easier to resolve references and check redeclare errors
+        if self.scope.get_flags(parent_scope_id).is_catch_clause() {
+            let parent_bindings =
+                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
+            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+        }
+
+        self.visit_statements(&it.body);
 
         self.leave_scope();
         self.leave_node(kind);

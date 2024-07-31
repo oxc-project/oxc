@@ -370,6 +370,11 @@ pub enum JSXChild<'a> {
     /// `<Foo>{...spread}</Foo>`
     Spread(Box<'a, JSXSpreadChild<'a>>),
 }
+impl<'a> JSXChild<'a> {
+    pub const fn is_expression_container(&self) -> bool {
+        matches!(self, Self::ExpressionContainer(_))
+    }
+}
 
 /// JSX Spread Child.
 ///

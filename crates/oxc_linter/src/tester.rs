@@ -93,6 +93,10 @@ pub struct Tester {
     expect_fail: Vec<TestCase>,
     expect_fix: Vec<ExpectFix>,
     snapshot: String,
+    /// Suffix added to end of snapshot name.
+    ///
+    /// See: [insta::Settings::set_snapshot_suffix]
+    snapshot_suffix: Option<&'static str>,
     current_working_directory: Box<Path>,
     import_plugin: bool,
     jest_plugin: bool,
@@ -120,6 +124,7 @@ impl Tester {
             expect_fail,
             expect_fix: vec![],
             snapshot: String::new(),
+            snapshot_suffix: None,
             current_working_directory,
             import_plugin: false,
             jest_plugin: false,
@@ -139,6 +144,11 @@ impl Tester {
     /// Change the extension of the path
     pub fn change_rule_path_extension(mut self, ext: &str) -> Self {
         self.rule_path = self.rule_path.with_extension(ext);
+        self
+    }
+
+    pub fn with_snapshot_suffix(mut self, suffix: &'static str) -> Self {
+        self.snapshot_suffix = Some(suffix);
         self
     }
 
@@ -210,9 +220,17 @@ impl Tester {
         self.snapshot();
     }
 
-    pub fn snapshot(&self) {
+    fn snapshot(&self) {
         let name = self.rule_name.replace('-', "_");
-        insta::with_settings!({ prepend_module_to_snapshot => false, omit_expression => true }, {
+        let mut settings = insta::Settings::clone_current();
+
+        settings.set_prepend_module_to_snapshot(false);
+        settings.set_omit_expression(true);
+        if let Some(suffix) = self.snapshot_suffix {
+            settings.set_snapshot_suffix(suffix);
+        }
+
+        settings.bind(|| {
             insta::assert_snapshot!(name, self.snapshot);
         });
     }

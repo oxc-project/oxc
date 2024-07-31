@@ -47,7 +47,8 @@ declare_oxc_lint!(
     /// async () => bar;
     /// ```
     NoUselessPromiseResolveReject,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for NoUselessPromiseResolveReject {
