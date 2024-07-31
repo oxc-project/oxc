@@ -1,4 +1,7 @@
-use oxc_ast::AstKind;
+use oxc_ast::{
+    ast::{BindingPatternKind, FormalParameters, PropertyKey},
+    AstKind,
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
@@ -7,7 +10,10 @@ use oxc_span::Span;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
+    utils::{
+        is_type_of_jest_fn_call, parse_expect_jest_fn_call, JestFnKind, JestGeneralFnKind,
+        PossibleJestNode,
+    },
 };
 
 fn require_local_test_context(span0: Span) -> OxcDiagnostic {
@@ -51,28 +57,58 @@ declare_oxc_lint!(
 
 impl Rule for RequireLocalTestContextForConcurrentSnapshots {
     fn run_once(&self, ctx: &LintContext) {
-        for node in ctx.nodes().iter() {
-            Self::check(node, ctx);
+        let mut function_args: Vec<String> = vec![];
+        let nodes = ctx.nodes();
+
+        for node in nodes.iter() {
+            if let AstKind::Function(func) = node.kind() {
+                Self::collect_functions_params(&func.params, &mut function_args);
+            } else if let AstKind::ArrowFunctionExpression(arrow_func) = node.kind() {
+                Self::collect_functions_params(&arrow_func.params, &mut function_args);
+            }
+        }
+
+        for node in nodes.iter() {
+            Self::check(node, &mut function_args, ctx);
         }
     }
 }
 
 impl RequireLocalTestContextForConcurrentSnapshots {
-    fn check<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
+    fn collect_functions_params(params: &FormalParameters, function_args: &mut Vec<String>) {
+        if !params.is_empty() {
+            for params in &params.items {
+                match &params.pattern.kind {
+                    BindingPatternKind::BindingIdentifier(ident) => {
+                        function_args.push(ident.name.to_string());
+                    }
+                    BindingPatternKind::ObjectPattern(obj_pat) => {
+                        for prop in &obj_pat.properties {
+                            if let PropertyKey::StaticIdentifier(ident) = &prop.key {
+                                function_args.push(ident.name.to_string());
+                            }
+                        }
+                    }
+                    _ => (),
+                }
+            }
+        }
+    }
+
+    fn check<'a>(node: &AstNode<'a>, function_args: &mut [String], ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
         let Some(callee_name) = call_expr.callee_name() else {
             return;
         };
-        let is_not_assertion = !is_type_of_jest_fn_call(
-            call_expr,
-            &PossibleJestNode { node, original: None },
-            ctx,
-            &[JestFnKind::Expect],
-        );
+        let Some(expect_fn_call) =
+            parse_expect_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+        else {
+            return;
+        };
 
-        if is_not_assertion {
+        if function_args.contains(&expect_fn_call.name.to_string()) {
             return;
         }
 
@@ -131,20 +167,19 @@ fn tests() {
         (r#"it("something", () => { expect(true).toBe(true) })"#, None),
         (r#"it.concurrent("something", () => { expect(true).toBe(true) })"#, None),
         (r#"it("something", () => { expect(1).toMatchSnapshot() })"#, None),
-        // Todo: currently the expect will recognize expect is a jest function.
-        // (r#"it.concurrent("something", ({ expect }) => { expect(1).toMatchSnapshot() })"#, None),
-        // (
-        //     r#"it.concurrent("something", ({ expect }) => { expect(1).toMatchInlineSnapshot("1") })"#,
-        //     None,
-        // ),
-        // (
-        //     r#"describe.concurrent("something", () => { it("something", ({ expect }) => { expect(1).toMatchSnapshot() }) })"#,
-        //     None,
-        // ),
-        // (
-        //     r#"describe.concurrent("something", () => { it("something", ({ expect }) => { expect(1).toMatchInlineSnapshot() }) })"#,
-        //     None,
-        // ),
+        (r#"it.concurrent("something", ({ expect }) => { expect(1).toMatchSnapshot() })"#, None),
+        (
+            r#"it.concurrent("something", ({ expect }) => { expect(1).toMatchInlineSnapshot("1") })"#,
+            None,
+        ),
+        (
+            r#"describe.concurrent("something", () => { it("something", ({ expect }) => { expect(1).toMatchSnapshot() }) })"#,
+            None,
+        ),
+        (
+            r#"describe.concurrent("something", () => { it("something", ({ expect }) => { expect(1).toMatchInlineSnapshot() }) })"#,
+            None,
+        ),
         (
             r#"describe.concurrent("something", () => { it("something", () => { expect(true).toBe(true) }) })"#,
             None,
