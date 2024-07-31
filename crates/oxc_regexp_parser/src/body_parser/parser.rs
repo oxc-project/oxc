@@ -39,7 +39,7 @@ impl<'a> PatternParser<'a> {
         //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error in `+NamedCaptureGroups`
         //
         // NOTE: It means that this perform 2 loops for every cases.
-        // - Pros: Code is simple enough and easy to understand 
+        // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
         // We may revisit this if we need performance rather than simplicity.
         self.state.parse_capturing_groups(self.source_text);
