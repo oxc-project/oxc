@@ -217,25 +217,33 @@ static B64_CHARS: Aligned64 = Aligned64([
 unsafe fn encode_vlq(out: &mut String, num: i64) {
     let mut num = if num < 0 { ((-num) << 1) + 1 } else { num << 1 };
 
+    // Breaking out of loop early when have reached last char (rather than conditionally adding
+    // 32 for last char within the loop) removes 3 instructions from the loop.
+    // https://godbolt.org/z/Es4Pavh9j
+    // This translates to a 16% speed-up for VLQ encoding.
+    let mut digit;
     loop {
-        let mut digit = num & 0b11111;
+        digit = num & 0b11111;
         num >>= 5;
-        if num > 0 {
-            digit |= 1 << 5;
-        }
-
-        let b = B64_CHARS.0[digit as usize];
-        // SAFETY:
-        // * This loop can execute a maximum of 7 times, caller promises there are at least
-        //   7 bytes spare capacity in `out` at start, and we only push 1 byte on each turn,
-        //   so guaranteed there is at least 1 byte capacity in `out` here.
-        // * All values in `B64_CHARS` lookup table are ASCII bytes.
-        push_byte_unchecked(out, b);
-
         if num == 0 {
             break;
         }
+
+        let b = B64_CHARS.0[digit as usize + 32];
+        // SAFETY:
+        // * This loop can execute a maximum of 7 times, and on last turn will exit before getting here.
+        //   Caller promises there are at least 7 bytes spare capacity in `out` at start. We only
+        //   push 1 byte on each turn, so guaranteed there is at least 1 byte capacity in `out` here.
+        // * All values in `B64_CHARS` lookup table are ASCII bytes.
+        push_byte_unchecked(out, b);
     }
+
+    let b = B64_CHARS.0[digit as usize];
+    // SAFETY:
+    // * The loop above pushes max 6 bytes. Caller promises there are at least 7 bytes spare capacity
+    //   in `out` at start. So guaranteed there is at least 1 byte capacity in `out` here.
+    // * All values in `B64_CHARS` lookup table are ASCII bytes.
+    push_byte_unchecked(out, b);
 }
 
 /// Push a byte to `out` without bounds checking.
