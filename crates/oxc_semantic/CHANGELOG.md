@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+- cf1854b semantic: Remove `ReferenceFlags::Value` from non-type-only exports that referenced type binding (#4511) (Dunqing)
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Refactor
+
+- 16c7b98 semantic: Move CatchClause scope binding logic to visit_block_statement (#4505) (Dunqing)
+- d6974d4 semantic: `AstNodeParentIter` fetch nodes lazily (#4533) (overlookmotel)
+- d914b14 semantic: Reusing the same reference (#4529) (Dunqing)
+- 7b5e1f5 semantic: Use `is_empty()` instead of `len() == 0` (#4532) (overlookmotel)
+- 9db4259 semantic: Inline trivial methods (#4531) (overlookmotel)
+
 ## [0.22.1] - 2024-07-27
 
 ### Features
