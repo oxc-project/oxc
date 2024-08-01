@@ -5,7 +5,7 @@ use regex::Regex;
 use serde_json::Value;
 
 /// See [ESLint - no-unused-vars config schema](https://github.com/eslint/eslint/blob/53b1ff047948e36682fade502c949f4e371e53cd/lib/rules/no-unused-vars.js#L61)
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Clone)]
 #[must_use]
 #[non_exhaustive]
 pub struct NoUnusedVarsOptions {
@@ -20,6 +20,9 @@ pub struct NoUnusedVarsOptions {
 
     /// Specifies exceptions to this rule for unused variables. Variables whose
     /// names match this pattern will be ignored.
+    ///
+    /// By default, this pattern is `^_` unless options are configured with an
+    /// object. In this case it will default to [`None`].
     ///
     /// ## Example
     ///
@@ -37,12 +40,15 @@ pub struct NoUnusedVarsOptions {
     /// 1. `after-used` - Unused positional arguments that occur before the last
     ///    used argument will not be checked, but all named arguments and all
     ///    positional arguments after the last used argument will be checked.
+    ///    This is the default setting.
     /// 2. `all` - All named arguments must be used.
     /// 3. `none` - Do not check arguments.
     pub args: ArgsOption,
 
     /// Specifies exceptions to this rule for unused arguments. Arguments whose
     /// names match this pattern will be ignored.
+    ///
+    /// By default this pattern is [`None`].
     ///
     /// ## Example
     ///
@@ -60,6 +66,8 @@ pub struct NoUnusedVarsOptions {
     /// object, but by default the sibling properties are marked as "unused".
     /// With this option enabled the rest property's siblings are ignored.
     ///
+    /// By default this option is `false`.
+    ///
     /// ## Example
     /// Examples of **correct** code when this option is set to `true`:
     /// ```js
@@ -72,10 +80,10 @@ pub struct NoUnusedVarsOptions {
     pub ignore_rest_siblings: bool,
 
     /// Used for `catch` block validation.
-    /// It has two settings:
-    /// * `none` - do not check error objects. This is the default setting
-    /// * `all` - all named arguments must be used`
     ///
+    /// It has two settings:
+    /// * `none` - do not check error objects. This is the default setting.
+    /// * `all` - all named arguments must be used`.
     #[doc(hidden)]
     /// `none` corresponds to `false`, while `all` corresponds to `true`.
     pub caught_errors: CaughtErrors,
@@ -100,6 +108,8 @@ pub struct NoUnusedVarsOptions {
     /// This option specifies exceptions within destructuring patterns that will
     /// not be checked for usage. Variables declared within array destructuring
     /// whose names match this pattern will be ignored.
+    ///
+    /// By default this pattern is [`None`].
     ///
     /// ## Example
     ///
@@ -190,6 +200,23 @@ pub struct NoUnusedVarsOptions {
     /// console.log(firstVar, secondVar);
     /// ```
     pub report_used_ignore_pattern: bool,
+}
+
+impl Default for NoUnusedVarsOptions {
+    fn default() -> Self {
+        Self {
+            vars: VarsOption::default(),
+            vars_ignore_pattern: Some(Regex::new("^_").unwrap()),
+            args: ArgsOption::default(),
+            args_ignore_pattern: None,
+            ignore_rest_siblings: false,
+            caught_errors: CaughtErrors::default(),
+            caught_errors_ignore_pattern: None,
+            destructured_array_ignore_pattern: None,
+            ignore_class_with_static_init_block: false,
+            report_used_ignore_pattern: false,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -390,6 +417,9 @@ impl From<Value> for NoUnusedVarsOptions {
                     })
                     .unwrap_or_default();
 
+                // NOTE: when a configuration object is provided, do not provide
+                // a default ignore pattern here. They've opted into configuring
+                // this rule, and we'll give them full control over it.
                 let vars_ignore_pattern: Option<Regex> =
                     parse_unicode_rule(config.get("varsIgnorePattern"), "varsIgnorePattern");
 
@@ -472,7 +502,7 @@ mod tests {
     fn test_options_default() {
         let rule = NoUnusedVarsOptions::default();
         assert_eq!(rule.vars, VarsOption::All);
-        assert!(rule.vars_ignore_pattern.is_none());
+        assert!(rule.vars_ignore_pattern.is_some_and(|v| v.as_str() == "^_"));
         assert_eq!(rule.args, ArgsOption::AfterUsed);
         assert!(rule.args_ignore_pattern.is_none());
         assert_eq!(rule.caught_errors, CaughtErrors::all());
@@ -522,12 +552,24 @@ mod tests {
     }
 
     #[test]
+    fn test_options_from_sparse_object() {
+        let rule: NoUnusedVarsOptions = json!([
+            {
+                "argsIgnorePattern": "^_",
+            }
+        ])
+        .into();
+        // option object provided, no default varsIgnorePattern
+        assert!(rule.vars_ignore_pattern.is_none());
+        assert!(rule.args_ignore_pattern.unwrap().as_str() == "^_");
+    }
+
+    #[test]
     fn test_options_from_null() {
         let opts = NoUnusedVarsOptions::from(json!(null));
         let default = NoUnusedVarsOptions::default();
         assert_eq!(opts.vars, default.vars);
-        assert!(opts.vars_ignore_pattern.is_none());
-        assert!(default.vars_ignore_pattern.is_none());
+        assert!(default.vars_ignore_pattern.unwrap().as_str() == "^_");
 
         assert_eq!(opts.args, default.args);
         assert!(opts.args_ignore_pattern.is_none());
