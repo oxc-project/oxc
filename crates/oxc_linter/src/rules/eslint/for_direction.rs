@@ -127,7 +127,10 @@ fn get_assignment_direction(assign: &AssignmentExpression) -> UpdateDirection {
     let operator = &assign.operator;
     let right = &assign.right;
     let positive = match right {
-        Expression::NumericLiteral(r) => r.value.is_sign_positive(),
+        Expression::NumericLiteral(r) => match r.value {
+            0.0 => return UNKNOWN,
+            _ => r.value.is_sign_positive(),
+        },
         Expression::UnaryExpression(right) => right.operator != UnaryOperator::UnaryNegation,
         _ => return UNKNOWN,
     };
@@ -175,6 +178,10 @@ fn test() {
         ("for(var i = 10; i >= 0;){}", None),
         ("for(var i = 10; i < 0;){}", None),
         ("for(var i = 10; i <= 0;){}", None),
+        ("for(var i = 0; i < 10; i+=0){}", None),
+        ("for(var i = 0; i < 10; i-=0){}", None),
+        ("for(var i = 10; i > 0; i+=0){}", None),
+        ("for(var i = 10; i > 0; i-=0){}", None),
         ("for(var i = 10; i <= 0; j++){}", None),
         ("for(var i = 10; i <= 0; j--){}", None),
         ("for(var i = 10; i >= 0; j++){}", None),
