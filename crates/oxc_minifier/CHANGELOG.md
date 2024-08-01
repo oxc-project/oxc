@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- a558492 codegen: Implement `BinaryExpressionVisitor` (#4548) (Boshen)
+
+### Bug Fixes
+
+- 6a94e3f codegen: Fixes for esbuild test cases (#4503) (Boshen)
+
 ## [0.22.0] - 2024-07-23
 
 ### Features
