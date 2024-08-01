@@ -112,6 +112,9 @@ fn serialize_sourcemap_mappings(sm: &SourceMap) -> String {
     )
 }
 
+// Max length of a single VLQ encoding
+const MAX_VLQ_BYTES: usize = 7;
+
 fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
     let TokenChunk {
         start,
@@ -129,33 +132,48 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
     let mut rv = String::with_capacity(capacity);
 
     for (idx, token) in tokens[start as usize..end as usize].iter().enumerate() {
+        // Max length of a single VLQ encoding is 7 bytes. Max number of calls to `encode_vlq_diff` is 5.
+        // Also need 1 byte for each line number difference, or 1 byte if no line num difference.
+        // Reserve this amount of capacity in `rv` early, so can skip bounds checks in code below.
+        // As well as skipping the bounds checks, this also removes a function call to
+        // `alloc::raw_vec::RawVec::grow_one` for every byte that's pushed.
+        // https://godbolt.org/z/44G8jjss3
+        const MAX_TOTAL_VLQ_BYTES: usize = 5 * MAX_VLQ_BYTES;
+
+        let num_line_breaks = token.get_dst_line() - prev_dst_line;
         let index = start as usize + idx;
-        if token.get_dst_line() != prev_dst_line {
+        if num_line_breaks != 0 {
+            rv.reserve(MAX_TOTAL_VLQ_BYTES + num_line_breaks as usize);
+            // SAFETY: We have reserved sufficient capacity for `num_line_breaks` bytes
+            unsafe { push_bytes_unchecked(&mut rv, b';', num_line_breaks) };
             prev_dst_col = 0;
-            while token.get_dst_line() != prev_dst_line {
-                rv.push(';');
-                prev_dst_line += 1;
-            }
+            prev_dst_line += num_line_breaks;
         } else if index > 0 {
             if Some(token) == tokens.get(index - 1) {
                 continue;
             }
-            rv.push(',');
+            rv.reserve(MAX_TOTAL_VLQ_BYTES + 1);
+            // SAFETY: We have reserved sufficient capacity for 1 byte
+            unsafe { push_byte_unchecked(&mut rv, b',') };
         }
 
-        encode_vlq_diff(&mut rv, token.get_dst_col(), prev_dst_col);
-        prev_dst_col = token.get_dst_col();
+        // SAFETY: We have reserved enough capacity above to satisfy safety contract
+        // of `encode_vlq_diff` for all calls below
+        unsafe {
+            encode_vlq_diff(&mut rv, token.get_dst_col(), prev_dst_col);
+            prev_dst_col = token.get_dst_col();
 
-        if let Some(source_id) = token.get_source_id() {
-            encode_vlq_diff(&mut rv, source_id, prev_source_id);
-            prev_source_id = source_id;
-            encode_vlq_diff(&mut rv, token.get_src_line(), prev_src_line);
-            prev_src_line = token.get_src_line();
-            encode_vlq_diff(&mut rv, token.get_src_col(), prev_src_col);
-            prev_src_col = token.get_src_col();
-            if let Some(name_id) = token.get_name_id() {
-                encode_vlq_diff(&mut rv, name_id, prev_name_id);
-                prev_name_id = name_id;
+            if let Some(source_id) = token.get_source_id() {
+                encode_vlq_diff(&mut rv, source_id, prev_source_id);
+                prev_source_id = source_id;
+                encode_vlq_diff(&mut rv, token.get_src_line(), prev_src_line);
+                prev_src_line = token.get_src_line();
+                encode_vlq_diff(&mut rv, token.get_src_col(), prev_src_col);
+                prev_src_col = token.get_src_col();
+                if let Some(name_id) = token.get_name_id() {
+                    encode_vlq_diff(&mut rv, name_id, prev_name_id);
+                    prev_name_id = name_id;
+                }
             }
         }
     }
@@ -163,8 +181,14 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
     rv
 }
 
+/// Encode diff as VLQ and push encoding into `out`.
+/// Will push between 1 byte (num = 0) and 7 bytes (num = -u32::MAX).
+///
+/// # SAFETY
+/// Caller must ensure at least 7 bytes spare capacity in `out`,
+/// as this function does not perform any bounds checks.
 #[inline]
-fn encode_vlq_diff(out: &mut String, a: u32, b: u32) {
+unsafe fn encode_vlq_diff(out: &mut String, a: u32, b: u32) {
     encode_vlq(out, i64::from(a) - i64::from(b));
 }
 
@@ -179,8 +203,18 @@ static B64_CHARS: Aligned64 = Aligned64([
     b'w', b'x', b'y', b'z', b'0', b'1', b'2', b'3', b'4', b'5', b'6', b'7', b'8', b'9', b'+', b'/',
 ]);
 
-#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-fn encode_vlq(out: &mut String, num: i64) {
+/// Encode number as VLQ and push encoding into `out`.
+/// Will push between 1 byte (num = 0) and 7 bytes (num = -u32::MAX).
+///
+/// # SAFETY
+/// Caller must ensure at least 7 bytes spare capacity in `out`,
+/// as this function does not perform any bounds checks.
+#[allow(
+    clippy::cast_possible_truncation,
+    clippy::cast_sign_loss,
+    clippy::unnecessary_safety_comment
+)]
+unsafe fn encode_vlq(out: &mut String, num: i64) {
     let mut num = if num < 0 { ((-num) << 1) + 1 } else { num << 1 };
 
     loop {
@@ -189,11 +223,59 @@ fn encode_vlq(out: &mut String, num: i64) {
         if num > 0 {
             digit |= 1 << 5;
         }
-        out.push(B64_CHARS.0[digit as usize] as char);
+
+        let b = B64_CHARS.0[digit as usize];
+        // SAFETY:
+        // * This loop can execute a maximum of 7 times, caller promises there are at least
+        //   7 bytes spare capacity in `out` at start, and we only push 1 byte on each turn,
+        //   so guaranteed there is at least 1 byte capacity in `out` here.
+        // * All values in `B64_CHARS` lookup table are ASCII bytes.
+        push_byte_unchecked(out, b);
+
         if num == 0 {
             break;
         }
     }
+}
+
+/// Push a byte to `out` without bounds checking.
+///
+/// # SAFETY
+/// * `out` must have at least 1 byte spare capacity.
+/// * `b` must be an ASCII byte (i.e. not `>= 128`).
+//
+// `#[inline(always)]` to ensure that `len` is stored in a register during `encode_vlq`'s loop.
+#[allow(clippy::inline_always)]
+#[inline(always)]
+unsafe fn push_byte_unchecked(out: &mut String, b: u8) {
+    debug_assert!(out.len() < out.capacity());
+    debug_assert!(b.is_ascii());
+
+    let out = out.as_mut_vec();
+    let len = out.len();
+    let ptr = out.as_mut_ptr().add(len);
+    ptr.write(b);
+    out.set_len(len + 1);
+}
+
+/// Push a byte to `out` a number of times without bounds checking.
+///
+/// # SAFETY
+/// * `out` must have at least `repeats` bytes spare capacity.
+/// * `b` must be an ASCII byte (i.e. not `>= 128`).
+#[inline]
+unsafe fn push_bytes_unchecked(out: &mut String, b: u8, repeats: u32) {
+    debug_assert!(out.capacity() - out.len() >= repeats as usize);
+    debug_assert!(b.is_ascii());
+
+    let out = out.as_mut_vec();
+    let len = out.len();
+    let mut ptr = out.as_mut_ptr().add(len);
+    for _ in 0..repeats {
+        ptr.write(b);
+        ptr = ptr.add(1);
+    }
+    out.set_len(len + repeats as usize);
 }
 
 /// A helper for pre-allocate string buffer.
@@ -312,4 +394,52 @@ fn test_encode_escape_string() {
         sm.to_json_string(),
         r#"{"version":3,"names":["name_length_greater_than_16_\u0000"],"sources":["\u0000"],"sourcesContent":["emoji-👀-\u0000"],"x_google_ignoreList":[0],"mappings":""}"#
     );
+}
+
+#[test]
+fn test_vlq_encode_diff() {
+    // Most import tests here are that with maximum values, `encode_vlq_diff` pushes maximum of 7 bytes.
+    // This invariant is essential to safety of `encode_vlq_diff`.
+    #[rustfmt::skip]
+    const FIXTURES: &[(u32, u32, &str)] = &[
+        (0,           0, "A"),
+        (1,           0, "C"),
+        (2,           0, "E"),
+        (15,          0, "e"),
+        (16,          0, "gB"),
+        (511,         0, "+f"),
+        (512,         0, "ggB"),
+        (16_383,      0, "+/f"),
+        (16_384,      0, "gggB"),
+        (524_287,     0, "+//f"),
+        (524_288,     0, "ggggB"),
+        (16_777_215,  0, "+///f"),
+        (16_777_216,  0, "gggggB"),
+        (536_870_911, 0, "+////f"),
+        (536_870_912, 0, "ggggggB"),
+        (u32::MAX,    0, "+/////H"), // 7 bytes
+
+        (0, 1,           "D"),
+        (0, 2,           "F"),
+        (0, 15,          "f"),
+        (0, 16,          "hB"),
+        (0, 511,         "/f"),
+        (0, 512,         "hgB"),
+        (0, 16_383,      "//f"),
+        (0, 16_384,      "hggB"),
+        (0, 524_287,     "///f"),
+        (0, 524_288,     "hgggB"),
+        (0, 16_777_215,  "////f"),
+        (0, 16_777_216,  "hggggB"),
+        (0, 536_870_911, "/////f"),
+        (0, 536_870_912, "hgggggB"),
+        (0, u32::MAX,    "//////H"), // 7 bytes
+    ];
+
+    for (a, b, res) in FIXTURES.iter().copied() {
+        let mut out = String::with_capacity(MAX_VLQ_BYTES);
+        // SAFETY: `out` has 7 bytes spare capacity
+        unsafe { encode_vlq_diff(&mut out, a, b) };
+        assert_eq!(&out, res);
+    }
 }
