@@ -327,6 +327,7 @@ impl<'a> ParsedJestFnCall<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
