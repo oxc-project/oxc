@@ -153,7 +153,9 @@ pub struct CharacterClass<'a> {
 #[derive(Debug)]
 pub enum CharacterClassContentsKind {
     Union,
+    /// `UnicodeSetsMode` only
     Intersection,
+    /// `UnicodeSetsMode` only
     Subtraction,
 }
 #[derive(Debug)]
@@ -162,12 +164,26 @@ pub enum CharacterClassContents<'a> {
     CharacterClassEscape(CharacterClassEscape),
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>),
     Character(Character),
+    /// `UnicodeSetsMode` only
+    NestedCharacterClass(Box<'a, CharacterClass<'a>>),
+    /// `UnicodeSetsMode` only
+    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
 }
 #[derive(Debug)]
 pub struct CharacterClassRange {
     pub span: Span,
     pub min: Character,
     pub max: Character,
+}
+#[derive(Debug)]
+pub struct ClassStringDisjunction<'a> {
+    pub span: Span,
+    pub body: Vec<'a, ClassString<'a>>,
+}
+#[derive(Debug)]
+pub struct ClassString<'a> {
+    pub span: Span,
+    pub body: Vec<'a, Character>,
 }
 
 #[derive(Debug)]

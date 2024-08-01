@@ -11,6 +11,61 @@ pub fn is_syntax_character(cp: u32) -> bool {
     })
 }
 
+// ```
+// ClassSetSyntaxCharacter :: one of
+//   ( ) [ ] { } / - \ |
+// ```
+pub fn is_class_set_syntax_character(cp: u32) -> bool {
+    char::from_u32(cp)
+        .map_or(false, |c| matches!(c, '(' | ')' | '[' | ']' | '{' | '}' | '/' | '-' | '\\' | '|'))
+}
+
+// ```
+// ClassSetReservedDoublePunctuator :: one of
+//   && !! ## $$ %% ** ++ ,, .. :: ;; << == >> ?? @@ ^^ `` ~~
+// ````
+pub fn is_class_set_reserved_double_punctuator(cp1: u32, cp2: u32) -> bool {
+    char::from_u32(cp1).map_or(false, |c1| {
+        char::from_u32(cp2).map_or(false, |c2| {
+            matches!(
+                (c1, c2),
+                ('&', '&')
+                    | ('!', '!')
+                    | ('#', '#')
+                    | ('$', '$')
+                    | ('%', '%')
+                    | ('*', '*')
+                    | ('+', '+')
+                    | (',', ',')
+                    | ('.', '.')
+                    | (':', ':')
+                    | (';', ';')
+                    | ('<', '<')
+                    | ('=', '=')
+                    | ('>', '>')
+                    | ('?', '?')
+                    | ('@', '@')
+                    | ('^', '^')
+                    | ('`', '`')
+                    | ('~', '~')
+            )
+        })
+    })
+}
+
+// ```
+// ClassSetReservedPunctuator :: one of
+//   & - ! # % , : ; < = > @ ` ~
+// ```
+pub fn is_class_set_reserved_punctuator(cp: u32) -> bool {
+    char::from_u32(cp).map_or(false, |c| {
+        matches!(
+            c,
+            '&' | '-' | '!' | '#' | '%' | ',' | ':' | ';' | '<' | '=' | '>' | '@' | '`' | '~'
+        )
+    })
+}
+
 pub fn is_decimal_digit(cp: u32) -> bool {
     char::from_u32(cp).map_or(false, |c| c.is_ascii_digit())
 }

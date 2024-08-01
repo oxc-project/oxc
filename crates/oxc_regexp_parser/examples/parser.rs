@@ -26,6 +26,13 @@ fn main() {
         (r"/^(?<!ab)$/", ParserOptions::default()),
         (r"/a)/", ParserOptions::default()), // Error
         (r"/c]/", ParserOptions::default()),
+        (r"/[abc]/", ParserOptions::default()),
+        (r"/[|\]]/", ParserOptions::default()),
+        (r"/[a&&b]/v", ParserOptions::default()),
+        (r"/[a--b]/v", ParserOptions::default()),
+        (r"/[a&&&]/v", ParserOptions::default()), // Error
+        (r"/[a---]/v", ParserOptions::default()), // Error
+        (r"/[^a--b--c]/v", ParserOptions::default()),
     ] {
         println!("Test: {pat} + {options:?}");
         let parser = Parser::new(&allocator, pat, options);

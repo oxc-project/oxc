@@ -277,7 +277,7 @@ impl<'a> PatternParser<'a> {
     //   .
     //   \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
     //   CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
-    //   ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     //   (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     fn parse_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
@@ -321,7 +321,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
-        // ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
             return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
@@ -339,7 +339,7 @@ impl<'a> PatternParser<'a> {
     //   \ AtomEscape[~UnicodeMode, ?NamedCaptureGroups]
     //   \ [lookahead = c]
     //   CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
-    //   ( GroupSpecifier[~UnicodeMode]opt Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   ( GroupSpecifier[~UnicodeMode][opt] Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     //   (?: Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     //   InvalidBracedQuantifier
     //   ExtendedPatternCharacter
@@ -385,7 +385,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
-        // ( GroupSpecifier[~UnicodeMode]opt Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( GroupSpecifier[~UnicodeMode][opt] Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
             return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
@@ -724,7 +724,7 @@ impl<'a> PatternParser<'a> {
 
         // [+UnicodeSetsMode] ClassSetExpression
         if self.state.unicode_sets_mode {
-            return Err(OxcDiagnostic::error("TODO: ClassSetExpression"));
+            return self.parse_class_set_expression();
         }
         // [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
         self.parse_nonempty_class_ranges()
@@ -961,7 +961,289 @@ impl<'a> PatternParser<'a> {
     }
 
     // ```
-    // ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // ClassSetExpression ::
+    //   ClassUnion
+    //   ClassIntersection
+    //   ClassSubtraction
+    // ```
+    fn parse_class_set_expression(
+        &mut self,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        // ClassUnion :: ClassSetRange ClassUnion[opt]
+        if let Some(class_set_range) = self.parse_class_set_range()? {
+            return self.parse_class_set_union(class_set_range);
+        }
+
+        if let Some(class_set_operand) = self.parse_class_set_operand()? {
+            // ClassIntersection
+            if self.reader.peek().filter(|&cp| cp == '&' as u32).is_some()
+                && self.reader.peek2().filter(|&cp| cp == '&' as u32).is_some()
+            {
+                return self.parse_class_set_intersection(class_set_operand);
+            }
+            // ClassSubtraction
+            if self.reader.peek().filter(|&cp| cp == '-' as u32).is_some()
+                && self.reader.peek2().filter(|&cp| cp == '-' as u32).is_some()
+            {
+                return self.parse_class_set_subtraction(class_set_operand);
+            }
+
+            // ClassUnion :: ClassSetOperand ClassUnion[opt]
+            return self.parse_class_set_union(class_set_operand);
+        }
+
+        Err(OxcDiagnostic::error("Invalid character in character class"))
+    }
+
+    // ```
+    // ClassUnion ::
+    //   ClassSetRange ClassUnion[opt]
+    //   ClassSetOperand ClassUnion[opt]
+    // ```
+    fn parse_class_set_union(
+        &mut self,
+        class_set_range_or_class_set_operand: ast::CharacterClassContents<'a>,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        let mut body = Vec::new_in(self.allocator);
+        body.push(class_set_range_or_class_set_operand);
+
+        loop {
+            if let Some(class_set_range) = self.parse_class_set_range()? {
+                body.push(class_set_range);
+                continue;
+            }
+            if let Some(class_set_operand) = self.parse_class_set_operand()? {
+                body.push(class_set_operand);
+                continue;
+            }
+
+            break;
+        }
+
+        Ok((ast::CharacterClassContentsKind::Union, body))
+    }
+
+    // ```
+    // ClassIntersection ::
+    //   ClassSetOperand && [lookahead ≠ &] ClassSetOperand
+    //   ClassIntersection && [lookahead ≠ &] ClassSetOperand
+    // ```
+    fn parse_class_set_intersection(
+        &mut self,
+        class_set_operand: ast::CharacterClassContents<'a>,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        let mut body = Vec::new_in(self.allocator);
+        body.push(class_set_operand);
+
+        loop {
+            if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+                break;
+            }
+
+            if self.reader.eat2('&', '&') {
+                if self.reader.eat('&') {
+                    return Err(OxcDiagnostic::error("Unexpected &"));
+                }
+
+                if let Some(class_set_operand) = self.parse_class_set_operand()? {
+                    body.push(class_set_operand);
+                    continue;
+                }
+            }
+
+            return Err(OxcDiagnostic::error("Invalid character in character class"));
+        }
+
+        Ok((ast::CharacterClassContentsKind::Intersection, body))
+    }
+
+    // ```
+    // ClassSubtraction ::
+    //   ClassSetOperand -- ClassSetOperand
+    //   ClassSubtraction -- ClassSetOperand
+    // ```
+    fn parse_class_set_subtraction(
+        &mut self,
+        class_set_operand: ast::CharacterClassContents<'a>,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        let mut body = Vec::new_in(self.allocator);
+        body.push(class_set_operand);
+
+        loop {
+            if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+                break;
+            }
+
+            if self.reader.eat2('-', '-') {
+                if let Some(class_set_operand) = self.parse_class_set_operand()? {
+                    body.push(class_set_operand);
+                    continue;
+                }
+            }
+
+            return Err(OxcDiagnostic::error("Invalid character in character class"));
+        }
+
+        Ok((ast::CharacterClassContentsKind::Subtraction, body))
+    }
+
+    // ```
+    // ClassSetRange ::
+    //   ClassSetCharacter - ClassSetCharacter
+    // ```
+    fn parse_class_set_range(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        let checkpoint = self.reader.checkpoint();
+        if let Some(class_set_character) = self.parse_class_set_character()? {
+            if self.reader.eat('-') {
+                if let Some(class_set_character_to) = self.parse_class_set_character()? {
+                    return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
+                        Box::new_in(
+                            ast::CharacterClassRange {
+                                span: class_set_character.span.merge(&class_set_character_to.span),
+                                min: class_set_character,
+                                max: class_set_character_to,
+                            },
+                            self.allocator,
+                        ),
+                    )));
+                }
+            }
+        }
+        self.reader.rewind(checkpoint);
+
+        Ok(None)
+    }
+
+    // ```
+    // ClassSetOperand ::
+    //   NestedClass
+    //   ClassStringDisjunction
+    //   ClassSetCharacter
+    //
+    // NestedClass ::
+    //   [ [lookahead ≠ ^] ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
+    //   [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
+    //   \ CharacterClassEscape[+UnicodeMode]
+    //
+    // ClassStringDisjunction ::
+    //   \q{ ClassStringDisjunctionContents }
+    // ```
+    fn parse_class_set_operand(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        // NestedClass :: CharacterClass
+        if let Some(character_class) = self.parse_character_class()? {
+            return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
+                character_class,
+                self.allocator,
+            ))));
+        }
+
+        // NestedClass :: \ CharacterClassEscape
+        let span_start = self.reader.span_position();
+        let checkpoint = self.reader.checkpoint();
+        if self.reader.eat('\\') {
+            if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
+                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
+                    character_class_escape,
+                )));
+            }
+            if let Some(unicode_property_escape) =
+                self.parse_character_class_escape_unicode(span_start)?
+            {
+                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
+                    unicode_property_escape,
+                    self.allocator,
+                ))));
+            }
+
+            self.reader.rewind(checkpoint);
+        }
+
+        // ClassStringDisjunction
+        let span_start = self.reader.span_position();
+        if self.reader.eat3('\\', 'q', '{') {
+            // TODO
+            // let class_string_disjunction_contents = self.parse_class_string_disjunction_contents()?;
+            let class_string_disjunction_contents = Vec::new_in(self.allocator);
+
+            if self.reader.eat('}') {
+                return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(Box::new_in(
+                    ast::ClassStringDisjunction {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        body: class_string_disjunction_contents,
+                    },
+                    self.allocator,
+                ))));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated class string disjunction"));
+        }
+
+        // ClassSetCharacter
+        if let Some(class_set_character) = self.parse_class_set_character()? {
+            return Ok(Some(ast::CharacterClassContents::Character(class_set_character)));
+        }
+
+        Ok(None)
+    }
+
+    // TODO
+    // fn parse_class_string_disjunction_contents(&mut self) {}
+
+    // ```
+    // ClassSetCharacter ::
+    //   [lookahead ∉ ClassSetReservedDoublePunctuator] SourceCharacter but not ClassSetSyntaxCharacter
+    //   \ CharacterEscape[+UnicodeMode]
+    //   \ ClassSetReservedPunctuator
+    //   \b
+    // ```
+    fn parse_class_set_character(&mut self) -> Result<Option<ast::Character>> {
+        let span_start = self.reader.span_position();
+
+        if let (Some(cp1), Some(cp2)) = (self.reader.peek(), self.reader.peek2()) {
+            if !unicode::is_class_set_reserved_double_punctuator(cp1, cp2)
+                && !unicode::is_class_set_syntax_character(cp1)
+            {
+                self.reader.advance();
+
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::CharacterKind::Symbol,
+                    value: cp1,
+                }));
+            }
+        }
+
+        let checkpoint = self.reader.checkpoint();
+        if self.reader.eat('\\') {
+            if let Some(character_escape) = self.parse_character_escape(span_start)? {
+                return Ok(Some(character_escape));
+            }
+            if let Some(cp) =
+                self.reader.peek().filter(|&cp| unicode::is_class_set_reserved_punctuator(cp))
+            {
+                self.reader.advance();
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::CharacterKind::Identifier,
+                    value: cp,
+                }));
+            }
+            if self.reader.eat('b') {
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::CharacterKind::Symbol,
+                    value: 'b' as u32,
+                }));
+            }
+
+            self.reader.rewind(checkpoint);
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     //
     // GroupSpecifier[UnicodeMode] ::
     //   ? GroupName[?UnicodeMode]
@@ -1093,7 +1375,7 @@ impl<'a> PatternParser<'a> {
 
     // ```
     // DecimalEscape ::
-    //   NonZeroDigit DecimalDigits[~Sep]opt [lookahead ∉ DecimalDigit]
+    //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
     fn consume_decimal_escape(&mut self) -> Option<u32> {
         if let Some(index) = self.consume_decimal_digits() {
