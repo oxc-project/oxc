@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 216
 ---
   ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:1:1]
@@ -248,7 +249,7 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint-plugin-vitest(no-disabled-tests): Disabled test suite
    ╭─[no_disabled_tests.tsx:3:13]
- 2 │             import { describe } from 'vitest'; 
+ 2 │             import { describe } from 'vitest';
  3 │             describe.skip("foo", function () {})
    ·             ─────────────
  4 │         

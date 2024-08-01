@@ -205,11 +205,17 @@ fn tests() {
             None,
         ),
         (
-            r#"describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchSnapshot() }) })"#,
+            r#"
+                import { describe, expect, it } from 'vitest';
+                describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchSnapshot() }) })
+            "#,
             None,
         ),
         (
-            r#"describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })"#,
+            r#"
+                import { describe, expect, it } from 'vitest';
+                describe.concurrent("failing", () => { it("should fail", () => { expect(true).toMatchInlineSnapshot("true") }) })
+            "#,
             None,
         ),
         (r#"it.concurrent("something", (context) => { expect(true).toMatchSnapshot() })"#, None),

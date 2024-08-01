@@ -265,7 +265,7 @@ fn test() {
         r#"it("contains a call to pending", function () { pending() })"#,
         "pending();",
         r#"
-            import { describe } from 'vitest'; 
+            import { describe } from 'vitest';
             describe.skip("foo", function () {})
         "#,
     ];
