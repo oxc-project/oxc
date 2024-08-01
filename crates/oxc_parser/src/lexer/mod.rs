@@ -281,6 +281,18 @@ impl<'a> Lexer<'a> {
         self.source.peek_char()
     }
 
+    /// Advance source cursor by the given amount of bytes.
+    ///
+    /// # SAFETY
+    ///
+    /// Caller must ensure that:
+    ///  * there are at least `count` bytes remaining in the buffer, and
+    ///  * the resulting cursor position lays at a valid UTF-8 char boundary.
+    #[inline]
+    unsafe fn advance_bytes(&mut self, count: usize) {
+        self.source.advance_bytes(count);
+    }
+
     /// Peek the next byte, and advance the current position if it matches
     /// the given ASCII char.
     // `#[inline(always)]` to make sure the `assert!` gets optimized out.

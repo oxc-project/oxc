@@ -197,6 +197,18 @@ impl<'a> Source<'a> {
         self.ptr = self.end;
     }
 
+    /// Advance `Source`'s cursor by the given amount of bytes.
+    ///
+    /// # SAFETY
+    ///
+    /// Caller must ensure that:
+    ///  * there are at least `count` bytes remaining in the buffer, and
+    ///  * the resulting cursor position lays at a valid UTF-8 char boundary.
+    #[inline]
+    pub(super) unsafe fn advance_bytes(&mut self, count: usize) {
+        self.ptr = self.ptr.add(count);
+    }
+
     /// Advance `Source`'s cursor by one byte if it is equal to the given ASCII value.
     ///
     /// # SAFETY

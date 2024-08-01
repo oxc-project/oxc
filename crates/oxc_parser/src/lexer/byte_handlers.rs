@@ -209,15 +209,14 @@ ascii_byte_handler!(LIN(lexer) {
 // !
 ascii_byte_handler!(EXL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Neq2
-        } else {
-            Kind::Neq
-        }
-    } else {
-        Kind::Bang
-    }
+    let (kind, bytescount) = match lexer.peek_2_bytes() {
+        Some([b'=', b'=']) => (Kind::Neq2, 2 ),
+        Some([b'=', _]) => (Kind::Neq, 1 ),
+        _ => (Kind::Bang, 0),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // "
@@ -251,28 +250,29 @@ ascii_identifier_handler!(IDT(_id_without_first_char) {
 
 // %
 ascii_byte_handler!(PRC(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        Kind::PercentEq
-    } else {
-        Kind::Percent
-    }
+    let (kind, bytescount) = match lexer.peek_2_bytes() {
+        Some([b'%', b'=']) => (Kind::PercentEq, 2 ),
+        _ => (Kind::Percent, 1),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // &
 ascii_byte_handler!(AMP(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'&') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Amp2Eq
-        } else {
-            Kind::Amp2
-        }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::AmpEq
-    } else {
-        Kind::Amp
-    }
+    let nextnext = lexer.peek_2_bytes().map(|v| v[1]);
+    let next = lexer.peek_byte();
+    let (kind, bytescount) = match (next, nextnext) {
+        (Some(b'&'), Some(b'=')) => (Kind::Amp2Eq, 2 ),
+        (Some(b'&'), _) => (Kind::Amp2, 1 ),
+        (Some(b'='), _) => (Kind::AmpEq, 1 ),
+        _ => (Kind::Amp, 0),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // (
@@ -290,29 +290,29 @@ ascii_byte_handler!(PNC(lexer) {
 // *
 ascii_byte_handler!(ATR(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'*') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Star2Eq
-        } else {
-            Kind::Star2
-        }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::StarEq
-    } else {
-        Kind::Star
-    }
+    let nextnext = lexer.peek_2_bytes().map(|v| v[1]);
+    let next = lexer.peek_byte();
+    let (kind, bytescount) = match (next, nextnext) {
+        (Some(b'*'), Some(b'=')) => (Kind::Star2Eq, 2 ),
+        (Some(b'*'), _) => (Kind::Star2, 1 ),
+        (Some(b'='), _) => (Kind::StarEq, 1 ),
+        _ => (Kind::Star, 0),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // +
 ascii_byte_handler!(PLS(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'+') {
-        Kind::Plus2
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::PlusEq
-    } else {
-        Kind::Plus
-    }
+    let (kind, bytescount) = match lexer.peek_2_bytes() {
+        Some([b'+', b'+']) => (Kind::Plus2, 2 ),
+        Some([b'+', b'=']) => (Kind::PlusEq, 2 ),
+        _ => (Kind::Plus, 1),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // ,
@@ -335,24 +335,19 @@ ascii_byte_handler!(PRD(lexer) {
 
 // /
 ascii_byte_handler!(SLH(lexer) {
-    lexer.consume_char();
-    match lexer.peek_byte() {
-        Some(b'/') => {
-            lexer.consume_char();
-            lexer.skip_single_line_comment()
-        }
-        Some(b'*') => {
-            lexer.consume_char();
-            lexer.skip_multi_line_comment()
-        }
-        _ => {
-            // regex is handled separately, see `next_regex`
-            if lexer.next_ascii_byte_eq(b'=') {
-                Kind::SlashEq
-            } else {
-                Kind::Slash
-            }
-        }
+    let (kind, bytescount, comment_is_multiline) = match lexer.peek_2_bytes() {
+        Some([b'/', b'/']) => (Kind::Skip, 2 , Some(false)),
+        Some([b'/', b'*']) => (Kind::Skip, 2 , Some(true)),
+        Some([b'/', b'=']) => (Kind::SlashEq, 2 , None),
+        _ => (Kind::Slash, 1, None),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+
+    match comment_is_multiline {
+        Some(true) => lexer.skip_multi_line_comment(),
+        Some(false) => lexer.skip_single_line_comment(),
+        None => kind,
     }
 });
 
@@ -389,17 +384,17 @@ ascii_byte_handler!(LSS(lexer) {
 // =
 ascii_byte_handler!(EQL(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Eq3
-        } else {
-            Kind::Eq2
-        }
-    } else if lexer.next_ascii_byte_eq(b'>') {
-        Kind::Arrow
-    } else {
-        Kind::Eq
-    }
+    let nextnext = lexer.peek_2_bytes().map(|v| v[1]);
+    let next = lexer.peek_byte();
+    let (kind, bytescount) = match (next, nextnext) {
+        (Some(b'='), Some(b'=')) => (Kind::Eq3, 2 ),
+        (Some(b'='), _) => (Kind::Eq2, 1 ),
+        (Some(b'>'), _) => (Kind::Arrow, 1 ),
+        _ => (Kind::Eq, 0),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // >
@@ -413,38 +408,19 @@ ascii_byte_handler!(GTR(lexer) {
 ascii_byte_handler!(QST(lexer) {
     lexer.consume_char();
 
-    if let Some(next_2_bytes) = lexer.peek_2_bytes() {
-        match next_2_bytes[0] {
-            b'?' => {
-                if next_2_bytes[1] == b'=' {
-                    lexer.consume_2_chars();
-                    Kind::Question2Eq
-                } else {
-                    lexer.consume_char();
-                    Kind::Question2
-                }
-            }
-            // parse `?.1` as `?` `.1`
-            b'.' if !next_2_bytes[1].is_ascii_digit() => {
-                lexer.consume_char();
-                Kind::QuestionDot
-            }
-            _ => Kind::Question,
-        }
-    } else {
-        // At EOF, or only 1 byte left
-        match lexer.peek_byte() {
-            Some(b'?') => {
-                lexer.consume_char();
-                Kind::Question2
-            }
-            Some(b'.') => {
-                lexer.consume_char();
-                Kind::QuestionDot
-            }
-            _ => Kind::Question,
-        }
-    }
+    let nextnext = lexer.peek_2_bytes().map(|v| v[1]);
+    let next = lexer.peek_byte();
+    let (kind, bytescount) = match (next, nextnext) {
+        (Some(b'?'), Some(b'=')) => (Kind::Question2Eq, 2 ),
+        (Some(b'?'), _) => (Kind::Question2, 1 ),
+        // parse `?.1` as `?` `.1`
+        (Some(b'.'), Some(b'0'..=b'9')) => (Kind::Question, 0 ),
+        (Some(b'.'), _) => (Kind::QuestionDot, 1 ),
+        _ => (Kind::Question, 0),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // @
@@ -472,12 +448,13 @@ ascii_byte_handler!(BTC(lexer) {
 
 // ^
 ascii_byte_handler!(CRT(lexer) {
-    lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'=') {
-        Kind::CaretEq
-    } else {
-        Kind::Caret
-    }
+    let (kind, bytescount) = match lexer.peek_2_bytes() {
+        Some([b'^', b'=']) => (Kind::CaretEq, 2),
+        _ => (Kind::Caret, 1),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // `
@@ -495,22 +472,17 @@ ascii_byte_handler!(BEO(lexer) {
 // |
 ascii_byte_handler!(PIP(lexer) {
     lexer.consume_char();
-
-    match lexer.peek_byte() {
-        Some(b'|') => {
-            lexer.consume_char();
-            if lexer.next_ascii_byte_eq(b'=') {
-                Kind::Pipe2Eq
-            } else {
-                Kind::Pipe2
-            }
-        }
-        Some(b'=') => {
-            lexer.consume_char();
-            Kind::PipeEq
-        }
-        _ => Kind::Pipe
-    }
+    let nextnext = lexer.peek_2_bytes().map(|v| v[1]);
+    let next = lexer.peek_byte();
+    let (kind, bytescount) = match (next, nextnext) {
+        (Some(b'|'), Some(b'=')) => (Kind::Pipe2Eq, 2 ),
+        (Some(b'|'), _) => (Kind::Pipe2, 1 ),
+        (Some(b'='), _) => (Kind::PipeEq, 1 ),
+        _ => (Kind::Pipe, 0),
+    };
+    // SAFETY: we peeked this amount of ASCII chars above here.
+    unsafe { lexer.advance_bytes(bytescount) };
+    kind
 });
 
 // }
