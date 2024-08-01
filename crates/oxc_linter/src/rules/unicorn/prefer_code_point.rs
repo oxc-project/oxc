@@ -37,7 +37,8 @@ declare_oxc_lint!(
     /// String.fromCodePoint(0x1f984);
     /// ```
     PreferCodePoint,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferCodePoint {

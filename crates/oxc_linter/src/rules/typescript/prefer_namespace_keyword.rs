@@ -30,7 +30,8 @@ declare_oxc_lint!(
     /// module Example {}
     /// ```
     PreferNamespaceKeyword,
-    style
+    style,
+    fix
 );
 
 impl Rule for PreferNamespaceKeyword {

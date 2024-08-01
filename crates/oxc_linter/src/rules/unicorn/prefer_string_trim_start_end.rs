@@ -34,7 +34,8 @@ declare_oxc_lint!(
     /// str.trimEnd();
     /// ```
     PreferStringTrimStartEnd,
-    style
+    style,
+    fix
 );
 
 impl Rule for PreferStringTrimStartEnd {

@@ -53,6 +53,7 @@ declare_oxc_lint!(
     /// ```
     PreferSpyOn,
     style,
+    fix
 );
 
 impl Rule for PreferSpyOn {

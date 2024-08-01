@@ -54,14 +54,17 @@ impl<'a> Lexer<'a> {
         check_identifier_start: bool,
     ) {
         let start = self.offset();
-        if self.next_char() != Some('u') {
+        if self.peek_byte() == Some(b'u') {
+            self.consume_char();
+        } else {
+            self.next_char();
             let range = Span::new(start, self.offset());
             self.error(diagnostics::unicode_escape_sequence(range));
             return;
         }
 
-        let value = match self.peek_char() {
-            Some('{') => self.unicode_code_point(),
+        let value = match self.peek_byte() {
+            Some(b'{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
 
@@ -160,14 +163,30 @@ impl<'a> Lexer<'a> {
     }
 
     fn hex_digit(&mut self) -> Option<u32> {
-        let value = match self.peek_byte() {
-            Some(b @ b'0'..=b'9') => u32::from(b) - '0' as u32,
-            Some(b @ b'a'..=b'f') => 10 + (u32::from(b) - 'a' as u32),
-            Some(b @ b'A'..=b'F') => 10 + (u32::from(b) - 'A' as u32),
-            _ => return None,
+        // Reduce instructions and remove 1 branch by comparing against `A-F` and `a-f` simultaneously
+        // https://godbolt.org/z/9caMMzvP3
+        let value = if let Some(b) = self.peek_byte() {
+            if b.is_ascii_digit() {
+                b - b'0'
+            } else {
+                // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
+                // but leaves lowercase as they are
+                let lower_case = b | 32;
+                if matches!(lower_case, b'a'..=b'f') {
+                    lower_case + 10 - b'a'
+                } else {
+                    return None;
+                }
+            }
+        } else {
+            return None;
         };
-        self.consume_char();
-        Some(value)
+        // Because of `b | 32` above, compiler cannot deduce that next byte is definitely ASCII
+        // so `next_byte_unchecked` is necessary to produce compact assembly, rather than `consume_char`.
+        // SAFETY: This code is only reachable if there is a byte remaining, and it's ASCII.
+        // Therefore it's safe to consume that byte, and will leave position on a UTF-8 char boundary.
+        unsafe { self.source.next_byte_unchecked() };
+        Some(u32::from(value))
     }
 
     fn code_point(&mut self) -> Option<u32> {

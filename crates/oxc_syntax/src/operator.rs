@@ -293,6 +293,14 @@ impl LogicalOperator {
             Self::Coalesce => "??",
         }
     }
+
+    pub fn lower_precedence(&self) -> Precedence {
+        match self {
+            Self::Or => Precedence::NullishCoalescing,
+            Self::And => Precedence::LogicalOr,
+            Self::Coalesce => Precedence::Conditional,
+        }
+    }
 }
 
 impl GetPrecedence for LogicalOperator {
@@ -328,6 +336,13 @@ pub enum UnaryOperator {
 impl UnaryOperator {
     pub fn is_arithmetic(self) -> bool {
         matches!(self, Self::UnaryNegation | Self::UnaryPlus)
+    }
+
+    /// Returns `true` if this operator is a [`LogicalNot`].
+    ///
+    /// [`LogicalNot`]: UnaryOperator::LogicalNot
+    pub fn is_not(self) -> bool {
+        matches!(self, Self::LogicalNot)
     }
 
     pub fn is_bitwise(self) -> bool {

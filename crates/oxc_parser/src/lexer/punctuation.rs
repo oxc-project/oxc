@@ -16,41 +16,45 @@ impl<'a> Lexer<'a> {
 
     /// returns None for `SingleLineHTMLOpenComment` `<!--` in script mode
     pub(super) fn read_left_angle(&mut self) -> Option<Kind> {
-        if self.next_ascii_byte_eq(b'<') {
-            if self.next_ascii_byte_eq(b'=') {
-                Some(Kind::ShiftLeftEq)
-            } else {
-                Some(Kind::ShiftLeft)
+        match self.peek_byte() {
+            Some(b'<') => {
+                self.consume_char();
+                if self.next_ascii_byte_eq(b'=') {
+                    Some(Kind::ShiftLeftEq)
+                } else {
+                    Some(Kind::ShiftLeft)
+                }
             }
-        } else if self.next_ascii_byte_eq(b'=') {
-            Some(Kind::LtEq)
-        } else if self.peek_byte() == Some(b'!')
-            // SingleLineHTMLOpenComment `<!--` in script mode
-            && self.source_type.is_script()
-            && self.remaining().starts_with("!--")
-        {
-            None
-        } else {
-            Some(Kind::LAngle)
+            Some(b'=') => {
+                self.consume_char();
+                Some(Kind::LtEq)
+            }
+            Some(b'!') if self.source_type.is_script() && self.remaining().starts_with("!--") => {
+                None
+            }
+            _ => Some(Kind::LAngle),
         }
     }
 
     /// returns None for `SingleLineHTMLCloseComment` `-->` in script mode
     pub(super) fn read_minus(&mut self) -> Option<Kind> {
-        if self.next_ascii_byte_eq(b'-') {
-            // SingleLineHTMLCloseComment `-->` in script mode
-            if self.token.is_on_new_line
-                && self.source_type.is_script()
-                && self.next_ascii_byte_eq(b'>')
-            {
-                None
-            } else {
-                Some(Kind::Minus2)
+        match self.peek_byte() {
+            Some(b'-') => {
+                self.consume_char();
+                if self.token.is_on_new_line
+                    && self.source_type.is_script()
+                    && self.next_ascii_byte_eq(b'>')
+                {
+                    None
+                } else {
+                    Some(Kind::Minus2)
+                }
             }
-        } else if self.next_ascii_byte_eq(b'=') {
-            Some(Kind::MinusEq)
-        } else {
-            Some(Kind::Minus)
+            Some(b'=') => {
+                self.consume_char();
+                Some(Kind::MinusEq)
+            }
+            _ => Some(Kind::Minus),
         }
     }
 

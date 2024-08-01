@@ -47,6 +47,7 @@ declare_oxc_lint!(
     /// ```
     PreferTodo,
     style,
+    fix
 );
 
 impl Rule for PreferTodo {

@@ -48,7 +48,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConsistentTypeDefinitions,
-    style
+    style,
+    fix
 );
 
 impl Rule for ConsistentTypeDefinitions {

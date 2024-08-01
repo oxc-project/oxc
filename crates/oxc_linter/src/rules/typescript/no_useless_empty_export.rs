@@ -33,7 +33,8 @@ declare_oxc_lint!(
     /// ```
     ///
     NoUselessEmptyExport,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUselessEmptyExport {

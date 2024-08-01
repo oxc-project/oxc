@@ -53,7 +53,8 @@ declare_oxc_lint!(
     /// type Foo = Record<string, unknown>;
     /// ```
     ConsistentIndexedObjectStyle,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for ConsistentIndexedObjectStyle {

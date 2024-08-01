@@ -106,6 +106,7 @@ mod eslint {
     pub mod no_unsafe_optional_chaining;
     pub mod no_unused_labels;
     pub mod no_unused_private_class_members;
+    pub mod no_unused_vars;
     pub mod no_useless_catch;
     pub mod no_useless_concat;
     pub mod no_useless_constructor;
@@ -115,6 +116,7 @@ mod eslint {
     pub mod no_void;
     pub mod no_with;
     pub mod prefer_exponentiation_operator;
+    pub mod prefer_numeric_literals;
     pub mod radix;
     pub mod require_await;
     pub mod require_yield;
@@ -216,6 +218,7 @@ mod jest {
 mod react {
     pub mod button_has_type;
     pub mod checked_requires_onchange_or_readonly;
+    pub mod jsx_curly_brace_presence;
     pub mod jsx_key;
     pub mod jsx_no_comment_textnodes;
     pub mod jsx_no_duplicate_props;
@@ -525,6 +528,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_unsafe_negation,
     eslint::no_unsafe_optional_chaining,
     eslint::no_unused_labels,
+    eslint::no_unused_vars,
     eslint::no_unused_private_class_members,
     eslint::no_useless_catch,
     eslint::no_useless_escape,
@@ -545,6 +549,7 @@ oxc_macros::declare_all_lint_rules! {
     eslint::no_new_native_nonconstructor,
     eslint::no_restricted_globals,
     eslint::prefer_exponentiation_operator,
+    eslint::prefer_numeric_literals,
     eslint::no_constructor_return,
     typescript::adjacent_overload_signatures,
     typescript::array_type,
@@ -715,6 +720,7 @@ oxc_macros::declare_all_lint_rules! {
     react::button_has_type,
     react::checked_requires_onchange_or_readonly,
     react::jsx_no_target_blank,
+    react::jsx_curly_brace_presence,
     react::jsx_key,
     react::jsx_no_comment_textnodes,
     react::jsx_no_duplicate_props,

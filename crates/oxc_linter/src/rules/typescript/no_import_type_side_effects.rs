@@ -52,6 +52,7 @@ declare_oxc_lint!(
     /// ```
     NoImportTypeSideEffects,
     restriction,
+    fix
 );
 
 impl Rule for NoImportTypeSideEffects {

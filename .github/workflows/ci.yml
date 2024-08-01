@@ -92,8 +92,29 @@ jobs:
           cargo test
           cargo ck
 
-  wasm:
-    name: Check Wasm
+  test-wasm32-wasip1-threads:
+    name: Test wasm32-wasip1-threads
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
+      CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
+      # Insta is not able to run on wasmtime, omit the packages that depend on it
+      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_js_regex -p oxc_module_lexer -- --nocapture"
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: Boshen/setup-rust@main
+        with:
+          cache-key: wasi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - run: rustup target add wasm32-wasip1-threads
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+      - run: cargo test --target wasm32-wasip1-threads ${{ env.TEST_FLAGS }}
+      - run: git diff --exit-code # Must commit everything
+
+  test-wasm32-unknown-unknown:
+    name: Check wasm32-unknown-unknown
+    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1

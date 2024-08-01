@@ -74,7 +74,8 @@ declare_oxc_lint!(
     /// type Intersection = ((data: string) => number) & ((id: number) => string);
     /// ```
     PreferFunctionType,
-    style
+    style,
+    conditional_fix
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {

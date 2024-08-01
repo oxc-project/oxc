@@ -61,7 +61,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoFocusedTests,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoFocusedTests {

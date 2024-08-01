@@ -27,7 +27,8 @@ declare_oxc_lint!(
     /// someCode();
     /// ```
     BanTslintComment,
-    style
+    style,
+    fix
 );
 
 impl Rule for BanTslintComment {

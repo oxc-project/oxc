@@ -438,11 +438,12 @@ impl<'a> Source<'a> {
     #[allow(dead_code)]
     #[inline]
     unsafe fn next_byte(&mut self) -> Option<u8> {
-        if self.is_eof() {
-            None
-        } else {
+        #[allow(clippy::if_not_else)] // Hot path first
+        if !self.is_eof() {
             // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
             Some(self.next_byte_unchecked())
+        } else {
+            None
         }
     }
 
@@ -503,11 +504,12 @@ impl<'a> Source<'a> {
     /// Peek next byte of source without consuming it.
     #[inline]
     pub(super) fn peek_byte(&self) -> Option<u8> {
-        if self.is_eof() {
-            None
-        } else {
+        #[allow(clippy::if_not_else)] // Hot path first
+        if !self.is_eof() {
             // SAFETY: Safe to read from `ptr` as we just checked it's not out of bounds
             Some(unsafe { self.peek_byte_unchecked() })
+        } else {
+            None
         }
     }
 

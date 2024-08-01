@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// ```
     PreferJestMocked,
     style,
+    fix
 );
 
 impl Rule for PreferJestMocked {

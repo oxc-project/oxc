@@ -495,16 +495,21 @@ ascii_byte_handler!(BEO(lexer) {
 // |
 ascii_byte_handler!(PIP(lexer) {
     lexer.consume_char();
-    if lexer.next_ascii_byte_eq(b'|') {
-        if lexer.next_ascii_byte_eq(b'=') {
-            Kind::Pipe2Eq
-        } else {
-            Kind::Pipe2
+
+    match lexer.peek_byte() {
+        Some(b'|') => {
+            lexer.consume_char();
+            if lexer.next_ascii_byte_eq(b'=') {
+                Kind::Pipe2Eq
+            } else {
+                Kind::Pipe2
+            }
         }
-    } else if lexer.next_ascii_byte_eq(b'=') {
-        Kind::PipeEq
-    } else {
-        Kind::Pipe
+        Some(b'=') => {
+            lexer.consume_char();
+            Kind::PipeEq
+        }
+        _ => Kind::Pipe
     }
 });
 

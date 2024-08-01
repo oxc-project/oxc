@@ -75,6 +75,7 @@ declare_oxc_lint!(
     /// ```
     NoDeprecatedFunctions,
     style,
+    fix
 );
 
 const DEPRECATED_FUNCTIONS_MAP: Map<&'static str, (usize, &'static str)> = phf_map! {
