@@ -4,6 +4,27 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.0] - 2024-08-01
+
+### Features
+
+- 35654e6 codegen: Align operator precedence with esbuild (#4509) (Boshen)
+- b952942 linter: Add eslint/no-unused-vars (⭐ attempt 3.2) (#4445) (DonIsaac)
+- 85e8418 linter: Add react/jsx-curly-brace-presence (#3949) (Don Isaac)
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Performance
+
+- c9c38a1 parser: Support peeking over bytes (#4304) (lucab)
+
+### Documentation
+
+- 0914e47 ast: Add doc comments to literal nodes (#4551) (DonIsaac)
+- c6a11be ast: Auto-generate doc comments for AstBuilder methods (#4471) (DonIsaac)
+
 ## [0.22.1] - 2024-07-27
 
 ### Features
