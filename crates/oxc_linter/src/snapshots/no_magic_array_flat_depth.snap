@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
+   ╭─[no_magic_array_flat_depth.tsx:1:12]
+ 1 │ array.flat(2)
+   ·            ─
+   ╰────
+  help: Add a comment explaining the depth.
+
+  ⚠ eslint-plugin-unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
+   ╭─[no_magic_array_flat_depth.tsx:1:13]
+ 1 │ array?.flat(2)
+   ·             ─
+   ╰────
+  help: Add a comment explaining the depth.
+
+  ⚠ eslint-plugin-unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
+   ╭─[no_magic_array_flat_depth.tsx:1:12]
+ 1 │ array.flat(99,)
+   ·            ──
+   ╰────
+  help: Add a comment explaining the depth.
+
+  ⚠ eslint-plugin-unicorn(no-magic-array-flat-depth): Magic number for `Array.prototype.flat` depth is not allowed.
+   ╭─[no_magic_array_flat_depth.tsx:1:12]
+ 1 │ array.flat(0b10,)
+   ·            ────
+   ╰────
+  help: Add a comment explaining the depth.

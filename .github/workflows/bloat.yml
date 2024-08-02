@@ -14,30 +14,31 @@ jobs:
     name: Cargo Bloat
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: taiki-e/checkout-action@v1
+      - uses: taiki-e/checkout-action@v1
 
-      - name: Cache
-        uses: Swatinem/rust-cache@v2
-
-      - name: Install cargo-bloat
-        uses: taiki-e/install-action@v2
+      - uses: Boshen/setup-rust@main
         with:
-          tool: cargo-bloat
+          cache-key: warm
+          tools: cargo-bloat
 
       - name: Run
+        env:
+          RUSTFLAGS: "-C debuginfo=2 -C strip=none"
+        shell: bash
         run: |
-          export CMD="cargo bloat --profile release-debug -p oxc_cli --bin oxlint"
+          echo "# Bloat Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
 
-          # Get largest functions
-          export BLOAT_FUNC_CMD="${CMD} -n 10"
-          export BLOAT_FUNC=`${BLOAT_FUNC_CMD}`
-          echo "${BLOAT_FUNC}"
+          echo "## Largest functions" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cargo bloat --release -p oxlint --features allocator -n 15 >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
-          # Get largest crates
-          export BLOAT_CRATE_CMD="${CMD} --crates -n 10"
-          export BLOAT_CRATE=`${BLOAT_CRATE_CMD}`
-          echo "${BLOAT_CRATE}"
-
-          # Render summary
-          envsubst < .github/workflows/bloat.tmpl > $GITHUB_STEP_SUMMARY
+          echo "## Largest crates" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cargo bloat --release -p oxlint --features allocator --crates -n 15 >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

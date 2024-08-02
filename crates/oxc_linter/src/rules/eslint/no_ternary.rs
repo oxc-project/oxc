@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-ternary): Unexpected use of ternary expression")]
-#[diagnostic(severity(warning), help("Do not use the ternary expression."))]
-struct NoTernaryDiagnostic(#[label] pub Span);
+fn no_ternary_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected use of ternary expression")
+        .with_help("Do not use the ternary expression.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTernary;
@@ -38,7 +36,7 @@ declare_oxc_lint!(
 impl Rule for NoTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ConditionalExpression(cond_expr) = node.kind() {
-            ctx.diagnostic(NoTernaryDiagnostic(Span::new(
+            ctx.diagnostic(no_ternary_diagnostic(Span::new(
                 cond_expr.span.start,
                 cond_expr.span.end,
             )));

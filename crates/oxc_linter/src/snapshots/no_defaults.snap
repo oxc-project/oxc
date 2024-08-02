@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_defaults
 ---
   ⚠ eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.
    ╭─[no_defaults.tsx:3:33]

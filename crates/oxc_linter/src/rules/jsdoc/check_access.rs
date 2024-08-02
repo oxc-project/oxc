@@ -1,29 +1,23 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_internal};
 
-#[derive(Debug, Error, Diagnostic)]
-enum CheckAccessDiagnostic {
-    #[error("eslint-plugin-jsdoc(check-access): Invalid access level is specified or missing.")]
-    #[diagnostic(
-        severity(warning),
-        help("Valid access levels are `package`, `private`, `protected`, and `public`.")
-    )]
-    InvalidAccessLevel(#[label] Span),
+fn invalid_access_level(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid access level is specified or missing.")
+        .with_help("Valid access levels are `package`, `private`, `protected`, and `public`.")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-jsdoc(check-access): Mixing of @access with @public, @private, @protected, or @package on the same doc block.")]
-    #[diagnostic(
-        severity(warning),
-        help("There should be only one instance of access tag in a JSDoc comment.")
-    )]
-    RedundantAccessTags(#[label] Span),
+fn redundant_access_tags(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Mixing of @access with @public, @private, @protected, or @package on the same doc block.",
+    )
+    .with_help("There should be only one instance of access tag in a JSDoc comment.")
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -75,7 +69,12 @@ impl Rule for CheckAccess {
             access_related_tag_names.insert(settings.resolve_tag_name(level));
         }
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+        {
             let mut access_related_tags_count = 0;
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
@@ -89,14 +88,12 @@ impl Rule for CheckAccess {
                 if tag_name == resolved_access_tag_name
                     && !ACCESS_LEVELS.contains(&comment.parsed())
                 {
-                    ctx.diagnostic(CheckAccessDiagnostic::InvalidAccessLevel(
-                        comment.span_trimmed_first_line(),
-                    ));
+                    ctx.diagnostic(invalid_access_level(comment.span_trimmed_first_line()));
                 }
 
                 // Has redundant access level?
                 if 1 < access_related_tags_count {
-                    ctx.diagnostic(CheckAccessDiagnostic::RedundantAccessTags(tag.kind.span));
+                    ctx.diagnostic(redundant_access_tags(tag.kind.span));
                 }
             }
         }

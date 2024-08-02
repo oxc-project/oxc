@@ -1,17 +1,14 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(default-case-last): Enforce default clauses in switch statements to be last")]
-#[diagnostic(severity(warning))]
-struct DefaultCaseLastDiagnostic(#[label("Default clause should be the last clause.")] pub Span);
+fn default_case_last_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce default clauses in switch statements to be last")
+        .with_label(span0.label("Default clause should be the last clause."))
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct DefaultCaseLast;
@@ -55,14 +52,16 @@ declare_oxc_lint!(
 
 impl Rule for DefaultCaseLast {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::SwitchStatement(switch) = node.kind() else { return };
+        let AstKind::SwitchStatement(switch) = node.kind() else {
+            return;
+        };
         let cases = &switch.cases;
         let index_of_default = cases.iter().position(|c| c.test.is_none());
 
         if let Some(index) = index_of_default {
             if index != cases.len() - 1 {
                 let default_clause = &cases[index];
-                ctx.diagnostic(DefaultCaseLastDiagnostic(Span::new(
+                ctx.diagnostic(default_case_last_diagnostic(Span::new(
                     default_clause.span.start,
                     default_clause.span.start + 7,
                 )));

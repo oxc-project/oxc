@@ -1,5 +1,5 @@
+use napi::{bindgen_prelude::AsyncTask, Task};
 use napi_derive::napi;
-
 use oxc_allocator::Allocator;
 use oxc_module_lexer::ImportType;
 
@@ -106,10 +106,9 @@ pub struct ModuleLexer {
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn module_lexer(source_text: String, options: Option<ParserOptions>) -> ModuleLexer {
-    let options = options.unwrap_or_default();
+fn module_lexer(source_text: &str, options: &ParserOptions) -> ModuleLexer {
     let allocator = Allocator::default();
-    let ret = parse(&allocator, &source_text, &options);
+    let ret = parse(&allocator, source_text, options);
     let module_lexer = oxc_module_lexer::ModuleLexer::new().build(&ret.program);
     let imports = module_lexer.imports.into_iter().map(ImportSpecifier::from).collect();
     let exports = module_lexer.exports.into_iter().map(ExportSpecifier::from).collect();
@@ -130,7 +129,27 @@ fn module_lexer(source_text: String, options: Option<ParserOptions>) -> ModuleLe
 #[napi]
 #[allow(clippy::needless_pass_by_value)]
 pub fn module_lexer_sync(source_text: String, options: Option<ParserOptions>) -> ModuleLexer {
-    module_lexer(source_text, options)
+    let options = options.unwrap_or_default();
+    module_lexer(&source_text, &options)
+}
+
+pub struct ResolveTask {
+    source_text: String,
+    options: ParserOptions,
+}
+
+#[napi]
+impl Task for ResolveTask {
+    type Output = ModuleLexer;
+    type JsValue = ModuleLexer;
+
+    fn compute(&mut self) -> napi::Result<Self::Output> {
+        Ok(module_lexer(&self.source_text, &self.options))
+    }
+
+    fn resolve(&mut self, _: napi::Env, result: Self::Output) -> napi::Result<Self::JsValue> {
+        Ok(result)
+    }
 }
 
 /// # Panics
@@ -138,9 +157,10 @@ pub fn module_lexer_sync(source_text: String, options: Option<ParserOptions>) ->
 /// * Tokio crashes
 #[napi]
 #[allow(clippy::needless_pass_by_value)]
-pub async fn module_lexer_async(
+pub fn module_lexer_async(
     source_text: String,
     options: Option<ParserOptions>,
-) -> ModuleLexer {
-    tokio::spawn(async move { module_lexer(source_text, options) }).await.unwrap()
+) -> AsyncTask<ResolveTask> {
+    let options = options.unwrap_or_default();
+    AsyncTask::new(ResolveTask { source_text, options })
 }

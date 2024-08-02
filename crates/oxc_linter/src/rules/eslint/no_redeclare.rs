@@ -2,40 +2,25 @@ use oxc_ast::{
     ast::{BindingIdentifier, BindingPatternKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-redeclare): '{0}' is already defined.")]
-#[diagnostic(severity(warning))]
-struct NoRedeclareDiagnostic(
-    CompactStr,
-    #[label("'{0}' is already defined.")] pub Span,
-    #[label("It can not be redeclare here.")] pub Span,
-);
+fn no_redeclare_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{x0}' is already defined.")).with_labels([
+        span1.label(format!("'{x0}' is already defined.")),
+        span2.label("It can not be redeclare here."),
+    ])
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-redeclare): '{0}' is already defined as a built-in global variable.")]
-#[diagnostic(severity(warning))]
-struct NoRedeclareAsBuiltiInDiagnostic(
-    CompactStr,
-    #[label("'{0}' is already defined as a built-in global variable.")] pub Span,
-);
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-redeclare): '{0}' is already defined by a variable declaration.")]
-#[diagnostic(severity(warning))]
-struct NoRedeclareBySyntaxDiagnostic(
-    CompactStr,
-    #[label("'{0}' is already defined by a variable declaration.")] pub Span,
-    #[label("It cannot be redeclared here.")] pub Span,
-);
+fn no_redeclare_as_builti_in_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{x0}' is already defined as a built-in global variable."))
+        .with_label(
+            span1.label(format!("'{x0}' is already defined as a built-in global variable.")),
+        )
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRedeclare {
@@ -81,7 +66,7 @@ impl Rule for NoRedeclare {
                 AstKind::VariableDeclarator(var) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &var.id.kind {
                         if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                            for span in ctx.symbols().get_redeclarations(symbol_id) {
                                 self.report_diagnostic(ctx, *span, ident);
                             }
                         }
@@ -90,7 +75,7 @@ impl Rule for NoRedeclare {
                 AstKind::FormalParameter(param) => {
                     if let BindingPatternKind::BindingIdentifier(ident) = &param.pattern.kind {
                         if symbol_name == ident.name.as_str() {
-                            for span in ctx.symbols().get_redeclare_variables(symbol_id) {
+                            for span in ctx.symbols().get_redeclarations(symbol_id) {
                                 self.report_diagnostic(ctx, *span, ident);
                             }
                         }
@@ -105,12 +90,9 @@ impl Rule for NoRedeclare {
 impl NoRedeclare {
     fn report_diagnostic(&self, ctx: &LintContext, span: Span, ident: &BindingIdentifier) {
         if self.built_in_globals && ctx.env_contains_var(&ident.name) {
-            ctx.diagnostic(NoRedeclareAsBuiltiInDiagnostic(
-                ident.name.to_compact_str(),
-                ident.span,
-            ));
+            ctx.diagnostic(no_redeclare_as_builti_in_diagnostic(ident.name.as_str(), ident.span));
         } else {
-            ctx.diagnostic(NoRedeclareDiagnostic(ident.name.to_compact_str(), ident.span, span));
+            ctx.diagnostic(no_redeclare_diagnostic(ident.name.as_str(), ident.span, span));
         }
     }
 }

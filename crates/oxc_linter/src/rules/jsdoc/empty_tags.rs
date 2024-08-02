@@ -1,18 +1,16 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsdoc(empty-tags): Expects the void tags to be empty of any content.")]
-#[diagnostic(severity(warning), help("`@{1}` tag should not have body."))]
-struct EmptyTagsDiagnostic(#[label] Span, String);
+fn empty_tags_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Expects the void tags to be empty of any content.")
+        .with_help(format!("`@{x1}` tag should not have body."))
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct EmptyTags(Box<EmptyTagsConfig>);
@@ -95,6 +93,8 @@ impl Rule for EmptyTags {
     }
 
     fn run_once(&self, ctx: &LintContext) {
+        let settings = &ctx.settings().jsdoc;
+
         let is_empty_tag_kind = |tag_name: &str| {
             if EMPTY_TAGS.contains(tag_name) {
                 return true;
@@ -105,7 +105,12 @@ impl Rule for EmptyTags {
             false
         };
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
@@ -118,10 +123,7 @@ impl Rule for EmptyTags {
                     continue;
                 }
 
-                ctx.diagnostic(EmptyTagsDiagnostic(
-                    comment.span_trimmed_first_line(),
-                    tag_name.to_string(),
-                ));
+                ctx.diagnostic(empty_tags_diagnostic(comment.span_trimmed_first_line(), tag_name));
             }
         }
     }
@@ -138,7 +140,7 @@ fn test() {
 			           * @abstract
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -150,7 +152,7 @@ fn test() {
 			           *
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -162,7 +164,7 @@ fn test() {
 			           * @param aName
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -176,7 +178,7 @@ fn test() {
 			           * @async
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -204,7 +206,7 @@ fn test() {
 			       * @private
 			       */
 			      function quux () {
-			
+
 			      }
 			      ",
             None,
@@ -216,7 +218,7 @@ fn test() {
 			       * @internal
 			       */
 			      function quux () {
-			
+
 			      }
 			      ",
             None,
@@ -247,7 +249,7 @@ fn test() {
 			           * @abstract extra text
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -273,7 +275,7 @@ fn test() {
 			           * @abstract extra text
 			           */
 			          quux () {
-			
+
 			          }
 			      }
 			      ",
@@ -288,7 +290,7 @@ fn test() {
 			           * @async out of place
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             None,
@@ -300,7 +302,7 @@ fn test() {
 			           * @event anEvent
 			           */
 			          function quux () {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([
@@ -319,7 +321,7 @@ fn test() {
 			       * bar
 			       */
 			      function quux () {
-			
+
 			      }
 			      ",
             None,
@@ -332,7 +334,7 @@ fn test() {
                    * foo
 			       */
 			      function quux () {
-			
+
 			      }
 			      ",
             None,
@@ -344,7 +346,7 @@ fn test() {
 			       * @private {someType}
 			       */
 			      function quux () {
-			
+
 			      }
 			      ",
             None,

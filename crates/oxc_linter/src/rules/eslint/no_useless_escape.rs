@@ -1,20 +1,15 @@
 use memchr::memmem;
-
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-useless-escape): Unnecessary escape character {0:?}")]
-#[diagnostic(severity(warning))]
-struct NoUselessEscapeDiagnostic(char, #[label] pub Span);
+fn no_useless_escape_diagnostic(x0: char, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unnecessary escape character {x0:?}")).with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUselessEscape;
@@ -31,7 +26,8 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     NoUselessEscape,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUselessEscape {
@@ -87,8 +83,8 @@ fn check(ctx: &LintContext<'_>, node_id: AstNodeId, start: u32, offsets: &[usize
 
         if !is_within_jsx_attribute_item(node_id, ctx) {
             let span = Span::new(offset - 1, offset + len);
-            ctx.diagnostic_with_fix(NoUselessEscapeDiagnostic(c, span), || {
-                Fix::new(c.to_string(), span)
+            ctx.diagnostic_with_fix(no_useless_escape_diagnostic(c, span), |fixer| {
+                fixer.replace(span, c.to_string())
             });
         }
     }
@@ -164,7 +160,7 @@ fn check_string(string: &str) -> Vec<usize> {
     for offset in escapes {
         // Safety:
         // The offset comes from a utf8 checked string
-        #[allow(unsafe_code)]
+
         let s = unsafe { std::str::from_utf8_unchecked(&bytes[offset..]) };
         if let Some(c) = s.chars().nth(1) {
             if !(c == quote_char
@@ -190,7 +186,7 @@ fn check_template(string: &str) -> Vec<usize> {
 
     let mut offsets = vec![];
     let mut in_escape = false;
-    let mut prev_char = '`';
+    let mut prev_non_escape_char = '`';
     let mut byte_offset = 1;
 
     let mut chars = string.chars().peekable();
@@ -203,7 +199,7 @@ fn check_template(string: &str) -> Vec<usize> {
             match c {
                 c if c.is_ascii_digit() || c == '`' => { /* noop */ }
                 '{' => {
-                    if prev_char != '$' {
+                    if prev_non_escape_char != '$' {
                         offsets.push(byte_offset - c.len_utf8());
                     }
                 }
@@ -217,10 +213,11 @@ fn check_template(string: &str) -> Vec<usize> {
                 }
                 _ => {}
             }
+            prev_non_escape_char = c;
         } else if c == '\\' {
             in_escape = true;
         } else {
-            prev_char = c;
+            prev_non_escape_char = c;
         }
     }
 
@@ -404,7 +401,7 @@ fn test() {
         ("var foo = '\\#';", "var foo = '#';", None),
         ("var foo = '\\$';", "var foo = '$';", None),
         ("var foo = '\\p';", "var foo = 'p';", None),
-        ("var foo = '\\p\\a\\@';", "var foo = 'p\\a@';", None),
+        ("var foo = '\\p\\a\\@';", "var foo = 'pa@';", None),
         ("<foo attr={\"\\d\"}/>", "<foo attr={\"d\"}/>", None),
         ("var foo = '\\`';", "var foo = '`';", None),
         ("var foo = `\\\"`;", "var foo = `\"`;", None),

@@ -1,0 +1,46 @@
+name: Release Crates
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - crates/oxc/Cargo.toml
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release crates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.PAT }} # required for git tag push
+
+      - uses: Boshen/setup-rust@main
+        with:
+          cache-key: warm
+          tools: cargo-release-oxc
+
+      - run: cargo ck
+
+      - name: Run
+        id: run
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          cargo release-oxc publish --release crates
+          echo "TAG=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
+
+      - name: Tag and Push
+        run: |
+          git tag ${{ steps.run.outputs.TAG }}
+          git push origin tag ${{ steps.run.outputs.TAG }}

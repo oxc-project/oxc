@@ -3,13 +3,13 @@
  * @typedef {{ isImplemented: number; isNotSupported: number; total: number }} CounterView
  */
 
-/** @param {{ npm: string; }} props */
+/** @param {{ npm: string[]; }} props */
 const renderIntroduction = ({ npm }) => `
 > [!WARNING]
 > This comment is maintained by CI. Do not edit this comment directly.
 > To update comment template, see https://github.com/oxc-project/oxc/tree/main/tasks/lint_rules
 
-This is tracking issue for \`${npm}\`.
+This is tracking issue for ${npm.map(n => "`" + n + "`").join(", ")}.
 `;
 
 /**

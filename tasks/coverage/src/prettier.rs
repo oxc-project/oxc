@@ -20,12 +20,12 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     let allocator = Allocator::default();
     let ParserReturn { program, trivias, .. } =
         Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
-    let source_text1 = Prettier::new(&allocator, source_text, &trivias, options).build(&program);
+    let source_text1 = Prettier::new(&allocator, source_text, trivias, options).build(&program);
 
     let allocator = Allocator::default();
     let ParserReturn { program, trivias, .. } =
         Parser::new(&allocator, &source_text1, source_type).preserve_parens(false).parse();
-    let source_text2 = Prettier::new(&allocator, &source_text1, &trivias, options).build(&program);
+    let source_text2 = Prettier::new(&allocator, &source_text1, trivias, options).build(&program);
 
     if source_text1 == source_text2 {
         TestResult::Passed
@@ -127,10 +127,16 @@ impl Case for PrettierTypeScriptCase {
     }
 
     fn run(&mut self) {
-        let source_text = self.base.code();
-        let source_type = self.base.source_type();
-        let result = get_result(source_text, source_type);
-        self.base.set_result(result);
+        let units = self.base.units.clone();
+        for unit in units {
+            self.base.code = unit.content.to_string();
+            let result = get_result(&unit.content, unit.source_type);
+            if result != TestResult::Passed {
+                self.base.result = result;
+                return;
+            }
+        }
+        self.base.result = TestResult::Passed;
     }
 }
 

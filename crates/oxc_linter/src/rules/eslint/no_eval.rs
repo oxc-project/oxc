@@ -1,20 +1,15 @@
 // Ported from https://github.com/eslint/eslint/tree/main/lib/rules/no-eval.js
-
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-eval): eval can be harmful.")]
-#[diagnostic(severity(warning))]
-struct NoEvalDiagnostic(#[label] pub Span);
+fn no_eval_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("eval can be harmful.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEval {
@@ -66,7 +61,7 @@ impl Rule for NoEval {
 
         if let AstKind::IdentifierReference(ident) = kind {
             if ident.name == "eval" {
-                ctx.diagnostic(NoEvalDiagnostic(ident.span));
+                ctx.diagnostic(no_eval_diagnostic(ident.span));
             }
             return;
         }
@@ -116,7 +111,7 @@ impl Rule for NoEval {
             };
         }
 
-        ctx.diagnostic(NoEvalDiagnostic(eval_span));
+        ctx.diagnostic(no_eval_diagnostic(eval_span));
     }
 }
 

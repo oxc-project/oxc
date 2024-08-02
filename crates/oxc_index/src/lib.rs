@@ -133,18 +133,22 @@
 #![no_std]
 extern crate alloc;
 
-use alloc::borrow::{Cow, ToOwned};
-use alloc::boxed::Box;
-use alloc::vec;
-use alloc::vec::Vec;
-use core::borrow::{Borrow, BorrowMut};
-use core::fmt;
-use core::fmt::Debug;
-use core::hash::Hash;
-use core::iter::{self, FromIterator};
-use core::marker::PhantomData;
-use core::ops::Range;
-use core::slice;
+use alloc::{
+    borrow::{Cow, ToOwned},
+    boxed::Box,
+    vec,
+    vec::Vec,
+};
+use core::{
+    borrow::{Borrow, BorrowMut},
+    fmt,
+    fmt::Debug,
+    hash::Hash,
+    iter::{self, FromIterator},
+    marker::PhantomData,
+    ops::Range,
+    slice,
+};
 mod idxslice;
 mod indexing;
 pub use idxslice::{IndexBox, IndexSlice};
@@ -152,9 +156,6 @@ pub use indexing::{IdxRangeBounds, IdxSliceIndex};
 
 #[macro_use]
 mod macros;
-
-#[cfg(any(test, feature = "example_generated"))]
-pub mod example_generated;
 
 /// Represents a wrapped value convertible to and from a `usize`.
 ///
@@ -228,7 +229,6 @@ pub struct IndexVec<I: Idx, T> {
     _marker: PhantomData<fn(&I)>,
 }
 
-#[allow(unsafe_code)]
 // SAFETY: Whether `IndexVec` is `Send` depends only on the data,
 // not the phantom data.
 unsafe impl<I: Idx, T> Send for IndexVec<I, T> where T: Send {}
@@ -348,10 +348,8 @@ impl<I: Idx, T> IndexVec<I, T> {
     pub fn into_boxed_slice(self) -> alloc::boxed::Box<IndexSlice<I, [T]>> {
         let b = self.raw.into_boxed_slice();
         // SAFETY: `IndexSlice` is a thin wrapper around `[T]` with the added marker for the index.
-        #[allow(unsafe_code)]
-        unsafe {
-            Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>)
-        }
+
+        unsafe { Box::from_raw(Box::into_raw(b) as *mut IndexSlice<I, [T]>) }
     }
 
     /// Return an iterator that removes the items from the requested range. See
@@ -536,8 +534,8 @@ impl<I: Idx, T> FromIterator<T> for IndexVec<I, T> {
 }
 
 impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
-    type Item = T;
     type IntoIter = vec::IntoIter<T>;
+    type Item = T;
 
     #[inline]
     fn into_iter(self) -> vec::IntoIter<T> {
@@ -546,8 +544,8 @@ impl<I: Idx, T> IntoIterator for IndexVec<I, T> {
 }
 
 impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
-    type Item = &'a T;
     type IntoIter = slice::Iter<'a, T>;
+    type Item = &'a T;
 
     #[inline]
     fn into_iter(self) -> slice::Iter<'a, T> {
@@ -556,8 +554,8 @@ impl<'a, I: Idx, T> IntoIterator for &'a IndexVec<I, T> {
 }
 
 impl<'a, I: Idx, T> IntoIterator for &'a mut IndexVec<I, T> {
-    type Item = &'a mut T;
     type IntoIter = slice::IterMut<'a, T>;
+    type Item = &'a mut T;
 
     #[inline]
     fn into_iter(self) -> slice::IterMut<'a, T> {
@@ -614,6 +612,7 @@ impl<I: Idx, T: Clone> Clone for IndexVec<I, T> {
     fn clone(&self) -> Self {
         Self { raw: self.raw.clone(), _marker: PhantomData }
     }
+
     #[inline]
     fn clone_from(&mut self, o: &Self) {
         self.raw.clone_from(&o.raw);
@@ -650,6 +649,7 @@ impl<I: Idx, A> AsMut<IndexSlice<I, [A]>> for IndexVec<I, A> {
 
 impl<I: Idx, A> core::ops::Deref for IndexVec<I, A> {
     type Target = IndexSlice<I, [A]>;
+
     #[inline]
     fn deref(&self) -> &IndexSlice<I, [A]> {
         IndexSlice::new(&self.raw)
@@ -687,6 +687,7 @@ macro_rules! impl_partialeq {
             fn eq(&self, other: &$Rhs) -> bool {
                 self[..] == other[..]
             }
+
             #[inline]
             fn ne(&self, other: &$Rhs) -> bool {
                 self[..] != other[..]
@@ -705,6 +706,7 @@ macro_rules! impl_partialeq2 {
             fn eq(&self, other: &$Rhs) -> bool {
                 self.raw[..] == other.raw[..]
             }
+
             #[inline]
             fn ne(&self, other: &$Rhs) -> bool {
                 self.raw[..] != other.raw[..]

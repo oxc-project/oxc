@@ -1,0 +1,18 @@
+---
+source: crates/oxc_semantic/tests/integration/cfg.rs
+expression: snapshot
+input_file: crates/oxc_semantic/tests/integration/cfg_fixtures/expression_spread.js
+---
+bb0: {
+
+}
+
+bb1: {
+	statement
+}
+
+digraph {
+    0 [ label = "" ]
+    1 [ label = "VariableDeclaration" ]
+    1 -> 0 [ label = "Error(Implicit)" ]
+}

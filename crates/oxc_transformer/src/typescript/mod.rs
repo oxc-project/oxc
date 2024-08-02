@@ -1,32 +1,19 @@
 mod annotations;
-mod collector;
 mod diagnostics;
 mod r#enum;
 mod module;
 mod namespace;
+mod options;
 
 use std::rc::Rc;
 
-use serde::Deserialize;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use oxc_syntax::scope::ScopeFlags;
+use oxc_traverse::TraverseCtx;
 
+pub use self::options::TypeScriptOptions;
+use self::{annotations::TypeScriptAnnotations, r#enum::TypeScriptEnum};
 use crate::context::Ctx;
-
-use self::{
-    annotations::TypeScriptAnnotations, collector::TypeScriptReferenceCollector,
-    r#enum::TypeScriptEnum,
-};
-
-#[derive(Debug, Default, Clone, Deserialize)]
-#[serde(default, rename_all = "camelCase")]
-pub struct TypeScriptOptions {
-    /// When set to true, the transform will only remove type-only imports (introduced in TypeScript 3.8).
-    /// This should only be used if you are using TypeScript >= 3.8.
-    only_remove_type_imports: bool,
-}
 
 /// [Preset TypeScript](https://babeljs.io/docs/babel-preset-typescript)
 ///
@@ -56,31 +43,40 @@ pub struct TypeScript<'a> {
 
     annotations: TypeScriptAnnotations<'a>,
     r#enum: TypeScriptEnum<'a>,
-    reference_collector: TypeScriptReferenceCollector<'a>,
 }
 
 impl<'a> TypeScript<'a> {
-    pub fn new(options: TypeScriptOptions, ctx: &Ctx<'a>) -> Self {
-        let options = Rc::new(options);
+    pub fn new(options: TypeScriptOptions, ctx: Ctx<'a>) -> Self {
+        let options = Rc::new(options.update_with_comments(&ctx));
 
         Self {
-            annotations: TypeScriptAnnotations::new(&options, ctx),
-            r#enum: TypeScriptEnum::new(ctx),
-            reference_collector: TypeScriptReferenceCollector::new(),
+            annotations: TypeScriptAnnotations::new(Rc::clone(&options), Rc::clone(&ctx)),
+            r#enum: TypeScriptEnum::new(Rc::clone(&ctx)),
             options,
-            ctx: Rc::clone(ctx),
+            ctx,
         }
     }
 }
 
 // Transforms
 impl<'a> TypeScript<'a> {
-    pub fn transform_program(&self, program: &mut Program<'a>) {
-        self.transform_program_for_namespace(program);
+    pub fn transform_program(&self, program: &mut Program<'a>, ctx: &mut TraverseCtx) {
+        if self.ctx.source_type.is_typescript_definition() {
+            // Output empty file for TS definitions
+            program.directives.clear();
+            program.hashbang = None;
+            program.body.clear();
+        } else {
+            self.transform_program_for_namespace(program, ctx);
+        }
     }
 
-    pub fn transform_program_on_exit(&self, program: &mut Program<'a>) {
-        self.annotations.transform_program_on_exit(program, &self.reference_collector);
+    pub fn transform_program_on_exit(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_program_on_exit(program, ctx);
     }
 
     pub fn transform_arrow_expression(&mut self, expr: &mut ArrowFunctionExpression<'a>) {
@@ -103,20 +99,28 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_class_body(body);
     }
 
-    pub fn transform_export_named_declaration(&mut self, decl: &mut ExportNamedDeclaration<'a>) {
-        self.reference_collector.visit_transform_export_named_declaration(decl);
+    pub fn transform_ts_module_declaration(&mut self, decl: &mut TSModuleDeclaration<'a>) {
+        self.annotations.transform_ts_module_declaration(decl);
     }
 
     pub fn transform_expression(&mut self, expr: &mut Expression<'a>) {
         self.annotations.transform_expression(expr);
     }
 
+    pub fn transform_simple_assignment_target(&mut self, target: &mut SimpleAssignmentTarget<'a>) {
+        self.annotations.transform_simple_assignment_target(target);
+    }
+
+    pub fn transform_assignment_target(&mut self, target: &mut AssignmentTarget<'a>) {
+        self.annotations.transform_assignment_target(target);
+    }
+
     pub fn transform_formal_parameter(&mut self, param: &mut FormalParameter<'a>) {
         self.annotations.transform_formal_parameter(param);
     }
 
-    pub fn transform_function(&mut self, func: &mut Function<'a>, flags: Option<ScopeFlags>) {
-        self.annotations.transform_function(func, flags);
+    pub fn transform_function(&mut self, func: &mut Function<'a>) {
+        self.annotations.transform_function(func);
     }
 
     pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
@@ -127,8 +131,12 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_method_definition(def);
     }
 
-    pub fn transform_method_definition_on_exit(&mut self, def: &mut MethodDefinition<'a>) {
-        self.annotations.transform_method_definition_on_exit(def);
+    pub fn transform_method_definition_on_exit(
+        &mut self,
+        def: &mut MethodDefinition<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_method_definition_on_exit(def, ctx);
     }
 
     pub fn transform_new_expression(&mut self, expr: &mut NewExpression<'a>) {
@@ -139,42 +147,52 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_property_definition(def);
     }
 
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
-        self.annotations.transform_statements_on_exit(stmts);
+    pub fn transform_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        self.annotations.transform_statements(stmts);
     }
 
-    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>) {
-        let new_stmt = match stmt {
-            match_declaration!(Statement) => {
-                if let Declaration::TSEnumDeclaration(ts_enum_decl) = &stmt.to_declaration() {
-                    self.r#enum.transform_ts_enum(ts_enum_decl, false)
-                } else {
-                    None
-                }
-            }
-            match_module_declaration!(Statement) => {
-                if let ModuleDeclaration::ExportNamedDeclaration(decl) =
-                    stmt.to_module_declaration_mut()
-                {
-                    if let Some(Declaration::TSEnumDeclaration(ts_enum_decl)) = &decl.declaration {
-                        self.r#enum.transform_ts_enum(ts_enum_decl, true)
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            }
-            _ => None,
-        };
-
-        if let Some(new_stmt) = new_stmt {
-            *stmt = new_stmt;
-        }
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_statements_on_exit(stmts, ctx);
     }
 
-    pub fn transform_if_statement(&mut self, stmt: &mut IfStatement<'a>) {
-        self.annotations.transform_if_statement(stmt);
+    pub fn transform_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.r#enum.transform_statement(stmt, ctx);
+    }
+
+    pub fn transform_if_statement(
+        &mut self,
+        stmt: &mut IfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_if_statement(stmt, ctx);
+    }
+
+    pub fn transform_while_statement(
+        &mut self,
+        stmt: &mut WhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_while_statement(stmt, ctx);
+    }
+
+    pub fn transform_do_while_statement(
+        &mut self,
+        stmt: &mut DoWhileStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_do_while_statement(stmt, ctx);
+    }
+
+    pub fn transform_for_statement(
+        &mut self,
+        stmt: &mut ForStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.annotations.transform_for_statement(stmt, ctx);
     }
 
     pub fn transform_tagged_template_expression(
@@ -184,24 +202,11 @@ impl<'a> TypeScript<'a> {
         self.annotations.transform_tagged_template_expression(expr);
     }
 
-    pub fn transform_identifier_reference(&mut self, ident: &mut IdentifierReference<'a>) {
-        self.reference_collector.visit_identifier_reference(ident);
+    pub fn transform_jsx_element(&mut self, elem: &mut JSXElement<'a>) {
+        self.annotations.transform_jsx_element(elem);
     }
 
-    pub fn transform_declaration(&mut self, decl: &mut Declaration<'a>) {
-        match decl {
-            Declaration::TSImportEqualsDeclaration(ts_import_equals)
-                if ts_import_equals.import_kind.is_value() =>
-            {
-                *decl = self.transform_ts_import_equals(ts_import_equals);
-            }
-            _ => {}
-        }
-    }
-
-    pub fn transform_module_declaration(&mut self, module_decl: &mut ModuleDeclaration<'a>) {
-        if let ModuleDeclaration::TSExportAssignment(ts_export_assignment) = &mut *module_decl {
-            self.transform_ts_export_assignment(ts_export_assignment);
-        }
+    pub fn transform_jsx_fragment(&mut self, elem: &mut JSXFragment<'a>) {
+        self.annotations.transform_jsx_fragment(elem);
     }
 }

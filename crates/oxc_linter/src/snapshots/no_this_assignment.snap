@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_this_assignment
 ---
   ⚠ eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `foo`
    ╭─[no_this_assignment.tsx:1:7]

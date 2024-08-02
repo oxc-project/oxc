@@ -1,6 +1,8 @@
+commit: a1587416
+
 parser_test262 Summary:
-AST Parsed     : 45289/45289 (100.00%)
-Positive Passed: 45289/45289 (100.00%)
+AST Parsed     : 45859/45859 (100.00%)
+Positive Passed: 45859/45859 (100.00%)
 Negative Passed: 3925/3929 (99.90%)
 Expect Syntax Error: "language/import/import-assertions/json-invalid.js"
 Expect Syntax Error: "language/import/import-assertions/json-named-bindings.js"
@@ -72,7 +74,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/asi/S7.9.2_A1_T1.js:16:4]
  15 │ //CHECK#1
  16 │ { 1 2 } 3
-    ·    ─
+    ·    ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -117,7 +119,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/asi/S7.9_A10_T8.js:16:3]
  15 │ //CHECK#1
  16 │ {1 2} 3
-    ·   ─
+    ·   ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -125,7 +127,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/asi/S7.9_A11_T4.js:17:17]
  16 │ var x = 0;
  17 │ if (false) x = 1 else x = -1
-    ·                 ─
+    ·                 ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -1460,7 +1462,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
    ╭─[language/comments/hashbang/multi-line-comment.js:3:6]
  2 │ throw "Test262: This statement should not be evaluated.";
  3 │ these characters should not be considered within a comment
-   ·      ─
+   ·      ▲
  4 │ */
    ╰────
   help: Try insert a semicolon here
@@ -1531,7 +1533,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/comments/multi-line-html-close-extra.js:25:7]
  24 │ /*
  25 │ */ the comment should not include these characters, regardless of AnnexB extensions -->
-    ·       ─
+    ·       ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -2124,7 +2126,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  131 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/arrow-function/rest-params-trailing-comma-early-error.js:54:5]
  53 │ 
  54 │ 0, (...a,) => {
@@ -2317,14 +2319,14 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·           ─────
     ╰────
 
-  × Unexpected token
+  × Line terminator not permitted before arrow
     ╭─[language/expressions/arrow-function/syntax/early-errors/asi-restriction-invalid-parenless-parameters-expression-body.js:16:1]
  15 │ var af = x
  16 │ => x;
     · ──
     ╰────
 
-  × Unexpected token
+  × Line terminator not permitted before arrow
     ╭─[language/expressions/arrow-function/syntax/early-errors/asi-restriction-invalid-parenless-parameters.js:18:1]
  17 │ var af = x
  18 │ => {};
@@ -3034,7 +3036,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/assignmenttargettype/direct-arrowfunction-0.js:20:9]
  19 │ 
  20 │ () => {} = 1;
-    ·         ─
+    ·         ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -3084,7 +3086,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/assignmenttargettype/direct-asyncarrowfunction-0.js:20:15]
  19 │ 
  20 │ async () => {} = 1;
-    ·               ─
+    ·               ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -3585,12 +3587,28 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     · ───
     ╰────
 
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncfunctionexpression.js:16:16]
+ 15 │ 
+ 16 │ async function () {} = 1;
+    ·                ─
+    ╰────
+  help: Function name is required in function declaration or named export
+
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncfunctionexpression.js:16:22]
  15 │ 
  16 │ async function () {} = 1;
     ·                      ─
     ╰────
+
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncgeneratorexpression.js:16:16]
+ 15 │ 
+ 16 │ async function () {} = 1;
+    ·                ─
+    ╰────
+  help: Function name is required in function declaration or named export
 
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-asyncgeneratorexpression.js:16:22]
@@ -3606,12 +3624,28 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·          ─
     ╰────
 
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-functionexpression.js:16:9]
+ 15 │ 
+ 16 │ function() {} = 1;
+    ·         ─
+    ╰────
+  help: Function name is required in function declaration or named export
+
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-functionexpression.js:16:15]
  15 │ 
  16 │ function() {} = 1;
     ·               ─
     ╰────
+
+  × Expected function name
+    ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-generatorexpression.js:16:12]
+ 15 │ 
+ 16 │ function * () {} = 1;
+    ·            ─
+    ╰────
+  help: Function name is required in function declaration or named export
 
   × Unexpected token
     ╭─[language/expressions/assignmenttargettype/direct-primaryexpression-generatorexpression.js:16:18]
@@ -5263,7 +5297,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-await-in-formals-default.js:14:17]
  13 │ $DONOTEVALUATE();
  14 │ async(x = await) => {  }
-    ·                 ─
+    ·                 ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -5275,7 +5309,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-call.js:15:17]
  14 │ 
  15 │ async(foo) => { super() };
@@ -5283,7 +5316,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-body-contains-super-property.js:15:17]
  14 │ 
  15 │ async(foo) => { super.prop };
@@ -5316,7 +5348,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-call.js:15:13]
  14 │ 
  15 │ async(foo = super()) => {}
@@ -5324,7 +5355,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-contains-super-property.js:15:14]
  14 │ 
  15 │ async (foo = super.foo) => { }
@@ -5335,7 +5365,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/async-arrow-function/early-errors-arrow-formals-lineterminator.js:33:6]
  32 │ async
  33 │ (foo) => { }
-    ·      ─
+    ·      ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -5362,7 +5392,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  123 │ });
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-arrow-function/rest-params-trailing-comma-early-error.js:46:9]
  45 │ 
  46 │ (async (...a,) => {
@@ -5457,7 +5487,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/async-function/early-errors-expression-body-contains-super-call.js:15:29]
  14 │ 
  15 │ (async function foo (foo) { super() })
@@ -5465,7 +5494,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/async-function/early-errors-expression-body-contains-super-property.js:15:29]
  14 │ 
  15 │ (async function foo (foo) { super.prop });
@@ -5490,7 +5518,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/async-function/early-errors-expression-formals-contains-super-call.js:15:28]
  14 │ 
  15 │ (async function foo (foo = super()) { var bar; });
@@ -5498,7 +5525,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/async-function/early-errors-expression-formals-contains-super-property.js:15:28]
  14 │ 
  15 │ (async function foo (foo = super.foo) { var bar; });
@@ -5625,7 +5651,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  109 │ });
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-function/named-rest-params-trailing-comma-early-error.js:33:19]
  32 │ 
  33 │ (async function f(...a,) {
@@ -5675,7 +5701,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  109 │ });
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-function/nameless-rest-params-trailing-comma-early-error.js:33:17]
  32 │ 
  33 │ (async function(...a,) {
@@ -6001,7 +6027,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/async-generator/early-errors-expression-body-contains-super-call.js:17:22]
  16 │ 
  17 │ (async function*() { super(); });
@@ -6009,7 +6034,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/async-generator/early-errors-expression-body-contains-super-property.js:17:22]
  16 │ 
  17 │ (async function*() { super.prop; });
@@ -6057,7 +6081,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-super-call.js:17:22]
  16 │ 
  17 │ (async function*(a = super()) { });
@@ -6065,7 +6088,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/async-generator/early-errors-expression-formals-contains-super-property.js:17:22]
  16 │ 
  17 │ (async function*(a = super.prop) { });
@@ -6253,7 +6275,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  112 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-generator/named-rest-params-trailing-comma-early-error.js:36:22]
  35 │ 
  36 │ 0, async function* g(...a,) {
@@ -6383,7 +6405,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  112 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/async-generator/rest-params-trailing-comma-early-error.js:36:20]
  35 │ 
  36 │ 0, async function*(...a,) {
@@ -6634,7 +6656,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  136 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-gen-method/rest-params-trailing-comma-early-error.js:60:17]
  59 │ 0, class {
  60 │   async *method(...a,) {
@@ -6854,7 +6876,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  136 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:60:24]
  59 │ 0, class {
  60 │   static async *method(...a,) {
@@ -7074,7 +7096,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  134 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-method/rest-params-trailing-comma-early-error.js:57:23]
  56 │ var C = class {
  57 │   static async method(...a,) {
@@ -7188,7 +7210,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  134 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/async-method-static/rest-params-trailing-comma-early-error.js:57:23]
  56 │ var C = class {
  57 │   static async method(...a,) {
@@ -8427,7 +8449,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/arrow-fnc-init-err-contains-super.js:26:13]
  25 │ var C = class {
  26 │   x = () => super();
@@ -8912,7 +8933,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/comp-name-init-err-contains-super.js:27:9]
  26 │ var C = class {
  27 │   [x] = super();
@@ -8929,7 +8949,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/equality-init-err-contains-super.js:26:13]
  25 │ var C = class {
  26 │   x = {} == super();
@@ -8941,7 +8960,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/fields-asi-3.js:17:8]
  16 │   x = "string"
  17 │   [0]() {}
-    ·        ─
+    ·        ▲
  18 │ }
     ╰────
   help: Try insert a semicolon here
@@ -8950,7 +8969,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/fields-asi-4.js:17:9]
  16 │   x = 42
  17 │   *gen() {}
-    ·         ─
+    ·         ▲
  18 │ }
     ╰────
   help: Try insert a semicolon here
@@ -8959,7 +8978,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/fields-asi-same-line-1.js:16:8]
  15 │ var C = class {
  16 │   field /* no ASI here */ method(){}
-    ·        ───────────────────
+    ·        ▲
  17 │ }
     ╰────
   help: Try insert a semicolon here
@@ -8968,7 +8987,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/fields-asi-same-line-2.js:16:12]
  15 │ var C = class {
  16 │   field = 1 /* no ASI here */ method(){}
-    ·            ───────────────────
+    ·            ▲
  17 │ }
     ╰────
   help: Try insert a semicolon here
@@ -9254,7 +9273,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/literal-name-init-err-contains-super.js:26:7]
  25 │ var C = class {
  26 │   x = super();
@@ -9271,7 +9289,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-arrow-fnc-init-err-contains-super.js:27:19]
  26 │   x = () => {
  27 │     var t = () => super();
@@ -9288,7 +9305,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-comp-name-init-err-contains-super.js:26:15]
  25 │ var C = class {
  26 │   [x] = () => super();
@@ -9300,7 +9316,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/nested-equality-init-err-contains-arguments.js:32:15]
  31 │ var C = class {
  32 │   x = () => {} == arguments;
-    ·               ─
+    ·               ▲
  33 │ }
     ╰────
   help: Try insert a semicolon here
@@ -9309,7 +9325,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/nested-equality-init-err-contains-super.js:25:15]
  24 │ var C = class {
  25 │   x = () => {} == super();
-    ·               ─
+    ·               ▲
  26 │ }
     ╰────
   help: Try insert a semicolon here
@@ -9323,7 +9339,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-literal-name-init-err-contains-super.js:25:13]
  24 │ var C = class {
  25 │   x = () => super();
@@ -9340,7 +9355,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:27:19]
  26 │   #x = () => {
  27 │     var t = () => super();
@@ -9357,7 +9371,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-private-literal-name-init-err-contains-super.js:25:14]
  24 │ var C = class {
  25 │   #x = () => super();
@@ -9374,7 +9387,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-private-ternary-init-err-contains-super.js:25:26]
  24 │ var C = class {
  25 │   #x = () => true ? {} : super();
@@ -9391,7 +9403,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-private-typeof-init-err-contains-super.js:25:21]
  24 │ var C = class {
  25 │   #x = () => typeof super();
@@ -9408,7 +9419,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-static-comp-name-init-err-contains-super.js:26:22]
  25 │ var C = class {
  26 │   static [x] = () => super();
@@ -9425,7 +9435,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-static-literal-init-err-contains-super.js:25:20]
  24 │ var C = class {
  25 │   static x = () => super();
@@ -9442,7 +9451,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-static-private-init-err-contains-super.js:25:21]
  24 │ var C = class {
  25 │   static #x = () => super();
@@ -9459,7 +9467,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-static-string-literal-name-init-err-contains-super.js:25:22]
  24 │ var C = class {
  25 │   static 'x' = () => super();
@@ -9476,7 +9483,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-string-literal-name-init-err-contains-super.js:25:15]
  24 │ var C = class {
  25 │   'x' = () => super();
@@ -9493,7 +9499,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-ternary-init-err-contains-super.js:25:25]
  24 │ var C = class {
  25 │   x = () => true ? {} : super();
@@ -9510,7 +9515,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/nested-typeof-init-err-contains-super.js:25:20]
  24 │ var C = class {
  25 │   x = () => typeof super();
@@ -9527,7 +9531,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/private-arrow-fnc-init-err-contains-super.js:26:14]
  25 │ var C = class {
  26 │   #x = () => super();
@@ -9544,7 +9547,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/private-literal-name-init-err-contains-super.js:26:8]
  25 │ var C = class {
  26 │   #x = super();
@@ -9561,7 +9563,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/private-ternary-init-err-contains-super.js:26:20]
  25 │ var C = class {
  26 │   #x = true ? {} : super();
@@ -9578,7 +9579,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/private-typeof-init-err-contains-super.js:26:15]
  25 │ var C = class {
  26 │   #x = typeof super();
@@ -9595,7 +9595,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/static-comp-name-init-err-contains-super.js:27:16]
  26 │ var C = class {
  27 │   static [x] = super();
@@ -9612,7 +9611,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/static-literal-init-err-contains-super.js:26:14]
  25 │ var C = class {
  26 │   static x = super();
@@ -9629,7 +9627,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/static-private-init-err-contains-super.js:26:15]
  25 │ var C = class {
  26 │   static #x = super();
@@ -9646,7 +9643,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/static-string-literal-name-init-err-contains-super.js:26:16]
  25 │ var C = class {
  26 │   static 'x' = super();
@@ -9663,7 +9659,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/string-literal-name-init-err-contains-super.js:26:9]
  25 │ var C = class {
  26 │   'x' = super();
@@ -11037,7 +11032,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:32:4]
  31 │ var C = class {
  32 │   x y
-    ·    ─
+    ·    ▲
  33 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11348,7 +11343,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:28:6]
  27 │ var C = class {
  28 │   get # m() {}
-    ·      ─
+    ·      ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11365,7 +11360,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:28:6]
  27 │ var C = class {
  28 │   set # m(_) {}
-    ·      ─
+    ·      ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11390,7 +11385,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:28:8]
  27 │ var C = class {
  28 │   async # m() {}
-    ·        ─
+    ·        ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11455,7 +11450,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:28:13]
  27 │ var C = class {
  28 │   static get # m() {}
-    ·             ─
+    ·             ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11472,7 +11467,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:28:13]
  27 │ var C = class {
  28 │   static set # m(_) {}
-    ·             ─
+    ·             ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11497,7 +11492,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:28:15]
  27 │ var C = class {
  28 │   static async # m() {}
-    ·               ─
+    ·               ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11514,7 +11509,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:28:9]
  27 │ var C = class {
  28 │   static # x = 1;
-    ·         ─
+    ·         ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11531,7 +11526,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:28:9]
  27 │ var C = class {
  28 │   static # x;
-    ·         ─
+    ·         ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11556,7 +11551,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:28:9]
  27 │ var C = class {
  28 │   static # m() {}
-    ·         ─
+    ·         ▲
  29 │ };
     ╰────
   help: Try insert a semicolon here
@@ -11565,13 +11560,12 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:35:5]
  34 │ var C = class {
  35 │   #x #y
-    ·     ─
+    ·     ▲
  36 │ };
     ╰────
   help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:25:7]
  24 │   async * method() {
  25 │       super();
@@ -11580,7 +11574,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:25:7]
  24 │   async method() {
  25 │       super();
@@ -11589,7 +11582,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:25:7]
  24 │   * method() {
  25 │       super();
@@ -11598,7 +11590,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:25:7]
  24 │   get method() {
  25 │       super();
@@ -11607,7 +11598,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:25:7]
  24 │   method() {
  25 │       super();
@@ -11616,7 +11606,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:25:7]
  24 │   async * #method() {
  25 │       super();
@@ -11625,7 +11614,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:25:7]
  24 │   async #method() {
  25 │       super();
@@ -11634,7 +11622,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:25:7]
  24 │   * #method() {
  25 │       super();
@@ -11643,7 +11630,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:25:7]
  24 │   #method() {
  25 │       super();
@@ -11652,7 +11638,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:25:7]
  24 │   set method(_) {
  25 │       super();
@@ -11717,7 +11702,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:25:7]
  24 │   static async * method() {
  25 │       super();
@@ -11734,7 +11718,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:25:7]
  24 │   static async method() {
  25 │       super();
@@ -11751,7 +11734,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:25:7]
  24 │   static * method() {
  25 │       super();
@@ -11768,7 +11750,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:25:7]
  24 │   static get method() {
  25 │       super();
@@ -11785,7 +11766,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-meth-super.js:25:7]
  24 │   static method() {
  25 │       super();
@@ -11802,7 +11782,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:25:7]
  24 │   static async * #method() {
  25 │       super();
@@ -11819,7 +11798,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:25:7]
  24 │   static async #method() {
  25 │       super();
@@ -11836,7 +11814,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:25:7]
  24 │   static * #method() {
  25 │       super();
@@ -11853,7 +11830,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:25:7]
  24 │   static #method() {
  25 │       super();
@@ -11878,7 +11854,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:25:7]
  24 │   static set method(_) {
  25 │       super();
@@ -12183,7 +12158,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/ternary-init-err-contains-super.js:26:19]
  25 │ var C = class {
  26 │   x = true ? {} : super();
@@ -12200,7 +12174,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/class/elements/typeof-init-err-contains-super.js:26:14]
  25 │ var C = class {
  26 │   x = typeof super();
@@ -12250,7 +12223,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  157 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/gen-method/rest-params-trailing-comma-early-error.js:81:11]
  80 │ 0, class {
  81 │   *method(...a,) {
@@ -12415,7 +12388,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  157 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/gen-method-static/rest-params-trailing-comma-early-error.js:81:18]
  80 │ 0, class {
  81 │   static *method(...a,) {
@@ -12578,7 +12551,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  153 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/method/rest-params-trailing-comma-early-error.js:76:10]
  75 │ 0, class {
  76 │   method(...a,) {
@@ -12636,7 +12609,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  153 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/class/method-static/rest-params-trailing-comma-early-error.js:76:17]
  75 │ 0, class {
  76 │   static method(...a,) {
@@ -12654,6 +12627,14 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Cannot use `await` as an identifier in an async context
+    ╭─[language/expressions/class/static-init-await-binding.js:21:12]
+ 20 │   static {
+ 21 │     (class await {});
+    ·            ─────
+ 22 │   }
+    ╰────
+
+  × Cannot use await in class static initialization block
     ╭─[language/expressions/class/static-init-await-binding.js:21:12]
  20 │   static {
  21 │     (class await {});
@@ -13961,7 +13942,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/function/early-body-super-call.js:17:3]
  16 │ 0, function() {
  17 │   super();
@@ -13970,7 +13950,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/function/early-body-super-prop.js:17:3]
  16 │ 0, function() {
  17 │   super.x;
@@ -14007,7 +13986,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/function/early-params-super-call.js:16:17]
  15 │ 
  16 │ 0, function(x = super()) {};
@@ -14015,7 +13993,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/expressions/function/early-params-super-prop.js:16:17]
  15 │ 
  16 │ 0, function(x = super.x) {};
@@ -14153,7 +14130,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  132 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/function/rest-params-trailing-comma-early-error.js:55:13]
  54 │ 
  55 │ 0, function(...a,) {
@@ -14421,7 +14398,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │ };
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/generators/rest-params-trailing-comma-early-error.js:57:14]
  56 │ 
  57 │ 0, function*(...a,) {
@@ -14591,7 +14568,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/generators/yield-weak-binding.js:16:38]
  15 │ 
  16 │ var g = function*() { yield 3 + yield 4; };
-    ·                                      ─
+    ·                                      ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -15470,7 +15447,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  117 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/async-gen-meth-rest-params-trailing-comma-early-error.js:41:17]
  40 │ 0, {
  41 │   async *method(...a,) {
@@ -15634,7 +15611,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  110 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/async-meth-rest-params-trailing-comma-early-error.js:34:17]
  33 │ ({
  34 │   async *method(...a,) {
@@ -15694,7 +15671,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/object/method-definition/early-errors-object-method-body-contains-super-call.js:16:18]
  15 │ ({
  16 │   async foo () { super() }
@@ -15730,7 +15706,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/object/method-definition/early-errors-object-method-formals-contains-super-call.js:15:19]
  14 │ ({
  15 │   async foo(foo = super()) { }
@@ -15844,7 +15819,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  139 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/gen-meth-rest-params-trailing-comma-early-error.js:63:11]
  62 │ 0, {
  63 │   *method(...a,) {
@@ -16000,7 +15975,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/object/method-definition/generator-super-call-body.js:21:9]
  20 │     *foo(a) {
  21 │         super();
@@ -16009,7 +15983,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/object/method-definition/generator-super-call-param.js:20:14]
  19 │ var obj = {
  20 │     *foo(a = super()) {
@@ -16067,7 +16040,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  135 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/expressions/object/method-definition/meth-rest-params-trailing-comma-early-error.js:58:10]
  57 │ 0, {
  58 │   method(...a,) {
@@ -16088,7 +16061,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/object/method-definition/name-super-call-body.js:17:5]
  16 │   method() {
  17 │     super();
@@ -16097,7 +16069,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/expressions/object/method-definition/name-super-call-param.js:16:18]
  15 │ ({
  16 │   method(param = super()) {}
@@ -16261,7 +16232,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/expressions/object/method-definition/yield-weak-binding.js:17:25]
  16 │ var obj = {
  17 │   *g() { yield 3 + yield 4; }
-    ·                         ─
+    ·                         ▲
  18 │ };
     ╰────
   help: Try insert a semicolon here
@@ -17067,7 +17038,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
   help: new.target is only allowed in constructors and functions invoked using thew `new` operator
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/global-code/return.js:22:1]
  21 │ 
  22 │ return;
@@ -17075,7 +17046,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/global-code/super-call-arrow.js:36:3]
  35 │ () => {
  36 │   super();
@@ -17084,7 +17054,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/global-code/super-call.js:20:1]
  19 │ 
  20 │ super();
@@ -17092,7 +17061,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/global-code/super-prop-arrow.js:36:3]
  35 │ () => {
  36 │   super.property;
@@ -17101,7 +17069,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/global-code/super-prop.js:20:1]
  19 │ 
  20 │ super.property;
@@ -18219,7 +18186,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
   × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[language/line-terminators/invalid-comment-single-cr.js:17:6]
  16 │ // this text is not included in the single-line comment that precedes it
-    ·        ─
+    ·        ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -18227,7 +18194,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/line-terminators/invalid-comment-single-lf.js:17:5]
  16 │ //single
  17 │ line comment
-    ·     ─
+    ·     ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -19611,7 +19578,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
   help: replace with `super()` or `super.prop` or `super[prop]`
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/module-code/early-super.js:15:1]
  14 │ 
  15 │ super;
@@ -19622,8 +19588,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/early-undef-break.js:17:9]
  16 │ while (false) {
  17 │   break undef;
-    ·         ──┬──
-    ·           ╰── This label is used, but not defined
+    ·         ─────
  18 │ }
     ╰────
 
@@ -19631,8 +19596,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/early-undef-continue.js:17:12]
  16 │ while (false) {
  17 │   continue undef;
-    ·            ──┬──
-    ·              ╰── This label is used, but not defined
+    ·            ─────
  18 │ }
     ╰────
 
@@ -20101,24 +20065,8 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'export statement' declaration can only be used at the top level of a module
-    ╭─[language/module-code/parse-err-decl-pos-export-try-catch-finally.js:15:3]
- 14 │ try { } catch (err) { } finally {
- 15 │   export default null;
-    ·   ──────
- 16 │ }
-    ╰────
-
-  × 'export statement' declaration can only be used at the top level of a module
     ╭─[language/module-code/parse-err-decl-pos-export-try-catch.js:15:3]
  14 │ try { } catch (err) {
- 15 │   export default null;
-    ·   ──────
- 16 │ }
-    ╰────
-
-  × 'export statement' declaration can only be used at the top level of a module
-    ╭─[language/module-code/parse-err-decl-pos-export-try-finally.js:15:3]
- 14 │ try { } finally {
  15 │   export default null;
     ·   ──────
  16 │ }
@@ -20422,25 +20370,9 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'import statement' declaration can only be used at the top level of a module
-    ╭─[language/module-code/parse-err-decl-pos-import-try-catch-finally.js:15:3]
- 14 │ try { } catch (err) { } finally {
- 15 │   import v from './decl-pos-import-try-catch-finally.js';
-    ·   ──────
- 16 │ }
-    ╰────
-
-  × 'import statement' declaration can only be used at the top level of a module
     ╭─[language/module-code/parse-err-decl-pos-import-try-catch.js:15:3]
  14 │ try { } catch (err) {
  15 │   import v from './decl-pos-import-try-catch.js';
-    ·   ──────
- 16 │ }
-    ╰────
-
-  × 'import statement' declaration can only be used at the top level of a module
-    ╭─[language/module-code/parse-err-decl-pos-import-try-finally.js:15:3]
- 14 │ try { } finally {
- 15 │   import v from './decl-pos-import-try-finally.js';
     ·   ──────
  16 │ }
     ╰────
@@ -20487,7 +20419,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/parse-err-export-dflt-let.js:15:19]
  14 │ 
  15 │ export default let x;
-    ·                   ─
+    ·                   ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -20534,7 +20466,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·                               ──
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/module-code/parse-err-return.js:32:1]
  31 │ 
  32 │ return;
@@ -20545,7 +20477,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/parse-err-semi-dflt-expr.js:27:20]
  26 │ 
  27 │ export default null null;
-    ·                    ─
+    ·                    ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -20553,7 +20485,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/parse-err-semi-export-star.js:27:48]
  26 │ 
  27 │ export * from './parse-err-semi-export-star.js' null;
-    ·                                                ─
+    ·                                                ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -20561,7 +20493,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/parse-err-semi-name-space-export.js:28:67]
  27 │ 
  28 │ export * as namespace from './parse-err-semi-name-space-export.js' null;
-    ·                                                                   ─
+    ·                                                                   ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -20569,7 +20501,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/parse-err-semi-named-export-from.js:27:56]
  26 │ 
  27 │ export {} from './parse-err-semi-export-clause-from.js' null;
-    ·                                                        ─
+    ·                                                        ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -20577,7 +20509,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/module-code/parse-err-semi-named-export.js:27:10]
  26 │ 
  27 │ export {} null;
-    ·          ─
+    ·          ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -21031,7 +20963,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
   help: Try insert a semicolon here
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/rest-parameters/position-invalid.js:13:15]
  12 │ $DONOTEVALUATE();
  13 │ function f(a, ...b, c) {}
@@ -21173,7 +21105,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/async-function/early-errors-declaration-body-contains-super-call.js:15:28]
  14 │ 
  15 │ async function foo (foo) { super() };
@@ -21181,7 +21112,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/statements/async-function/early-errors-declaration-body-contains-super-property.js:15:28]
  14 │ 
  15 │ async function foo (foo) { super.prop };
@@ -21214,7 +21144,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/async-function/early-errors-declaration-formals-contains-super-call.js:15:27]
  14 │ 
  15 │ async function foo (foo = super()) { let bar; }
@@ -21222,7 +21151,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/statements/async-function/early-errors-declaration-formals-contains-super-property.js:15:27]
  14 │ 
  15 │ async function foo (foo = super.foo) { let bar; }
@@ -21248,7 +21176,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/async-function/let-newline-await-in-async-function.js:23:10]
  22 │     let
  23 │     await 0;
-    ·          ─
+    ·          ▲
  24 │ }
     ╰────
   help: Try insert a semicolon here
@@ -21269,7 +21197,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  109 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/async-function/rest-params-trailing-comma-early-error.js:33:18]
  32 │ 
  33 │ async function f(...a,) {
@@ -21486,7 +21414,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  112 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/async-generator/rest-params-trailing-comma-early-error.js:36:19]
  35 │ 
  36 │ async function* f(...a,) {
@@ -21746,8 +21674,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/break/S12.8_A1_T2.js:20:7]
  19 │ var x=1;
  20 │ break LABEL;
-    ·       ──┬──
-    ·         ╰── This label is used, but not defined
+    ·       ─────
  21 │ var y=2;
     ╰────
 
@@ -21764,8 +21691,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/break/S12.8_A1_T4.js:23:11]
  22 │     var x=1;
  23 │     break LABEL;
-    ·           ──┬──
-    ·             ╰── This label is used, but not defined
+    ·           ─────
  24 │     var y=2;
     ╰────
 
@@ -21773,8 +21699,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/break/S12.8_A5_T1.js:23:15]
  22 │             return;
  23 │         break LABEL_ANOTHER_LOOP;
-    ·               ─────────┬────────
-    ·                        ╰── This label is used, but not defined
+    ·               ──────────────────
  24 │         LABEL_IN_2 : y++;
     ╰────
 
@@ -21782,8 +21707,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/break/S12.8_A5_T2.js:25:15]
  24 │             return;
  25 │         break IN_DO_FUNC;
-    ·               ─────┬────
-    ·                    ╰── This label is used, but not defined
+    ·               ──────────
  26 │         LABEL_IN_2 : y++;
     ╰────
 
@@ -21791,8 +21715,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/break/S12.8_A5_T3.js:25:15]
  24 │             return;
  25 │         break LABEL_IN;
-    ·               ────┬───
-    ·                   ╰── This label is used, but not defined
+    ·               ────────
  26 │         LABEL_IN_2 : y++;
     ╰────
 
@@ -21808,8 +21731,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/break/S12.8_A8_T1.js:19:8]
  18 │ } catch(e){
  19 │     break LABEL2;
-    ·           ───┬──
-    ·              ╰── This label is used, but not defined
+    ·           ──────
  20 │     LABEL2 : do {
     ╰────
 
@@ -21945,7 +21867,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  135 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-gen-method/rest-params-trailing-comma-early-error.js:59:17]
  58 │ class C {
  59 │   async *method(...a,) {
@@ -22165,7 +22087,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  136 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-gen-method-static/rest-params-trailing-comma-early-error.js:60:24]
  59 │ class C {
  60 │   static async *method(...a,) {
@@ -22393,7 +22315,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  134 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-method/rest-params-trailing-comma-early-error.js:57:16]
  56 │ class C {
  57 │   async method(...a,) {
@@ -22507,7 +22429,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/async-method-static/rest-params-trailing-comma-early-error.js:56:23]
  55 │ class C {
  56 │   static async method(...a,) {
@@ -22628,7 +22550,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/definition/early-errors-class-method-body-contains-super-call.js:15:18]
  14 │ class Foo {
  15 │   async foo () { super() }
@@ -22664,7 +22585,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/definition/early-errors-class-method-formals-contains-super-call.js:15:19]
  14 │ class Foo {
  15 │   async foo(foo = super()) { }
@@ -22732,7 +22652,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/definition/methods-gen-yield-weak-binding.js:17:25]
  16 │ class A {
  17 │   *g() { yield 3 + yield 4; }
-    ·                         ─
+    ·                         ▲
  18 │ }
     ╰────
   help: Try insert a semicolon here
@@ -23898,7 +23818,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/arrow-fnc-init-err-contains-super.js:26:13]
  25 │ class C {
  26 │   x = () => super();
@@ -24383,7 +24302,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/comp-name-init-err-contains-super.js:27:9]
  26 │ class C {
  27 │   [x] = super();
@@ -24400,7 +24318,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/equality-init-err-contains-super.js:26:13]
  25 │ class C {
  26 │   x = {} == super();
@@ -24412,7 +24329,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/fields-asi-3.js:17:8]
  16 │   x = "string"
  17 │   [0]() {}
-    ·        ─
+    ·        ▲
  18 │ }
     ╰────
   help: Try insert a semicolon here
@@ -24421,7 +24338,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/fields-asi-4.js:17:9]
  16 │   x = 42
  17 │   *gen() {}
-    ·         ─
+    ·         ▲
  18 │ }
     ╰────
   help: Try insert a semicolon here
@@ -24430,7 +24347,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/fields-asi-same-line-1.js:16:8]
  15 │ class C {
  16 │   field /* no ASI here */ method(){}
-    ·        ───────────────────
+    ·        ▲
  17 │ }
     ╰────
   help: Try insert a semicolon here
@@ -24439,7 +24356,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/fields-asi-same-line-2.js:16:12]
  15 │ class C {
  16 │   field = 1 /* no ASI here */ method(){}
-    ·            ───────────────────
+    ·            ▲
  17 │ }
     ╰────
   help: Try insert a semicolon here
@@ -24725,7 +24642,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/literal-name-init-err-contains-super.js:26:7]
  25 │ class C {
  26 │   x = super();
@@ -24742,7 +24658,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-arrow-fnc-init-err-contains-super.js:27:19]
  26 │   x = () => {
  27 │     var t = () => super();
@@ -24759,7 +24674,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-comp-name-init-err-contains-super.js:26:15]
  25 │ class C {
  26 │   [x] = () => super();
@@ -24771,7 +24685,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/nested-equality-init-err-contains-arguments.js:32:15]
  31 │ class C {
  32 │   x = () => {} == arguments;
-    ·               ─
+    ·               ▲
  33 │ }
     ╰────
   help: Try insert a semicolon here
@@ -24780,7 +24694,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/nested-equality-init-err-contains-super.js:25:15]
  24 │ class C {
  25 │   x = () => {} == super();
-    ·               ─
+    ·               ▲
  26 │ }
     ╰────
   help: Try insert a semicolon here
@@ -24794,7 +24708,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-literal-name-init-err-contains-super.js:25:13]
  24 │ class C {
  25 │   x = () => super();
@@ -24811,7 +24724,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-private-arrow-fnc-init-err-contains-super.js:27:19]
  26 │   #x = () => {
  27 │     var t = () => super();
@@ -24828,7 +24740,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-private-literal-name-init-err-contains-super.js:25:14]
  24 │ class C {
  25 │   #x = () => super();
@@ -24845,7 +24756,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-private-ternary-init-err-contains-super.js:25:27]
  24 │ class C {
  25 │   #x = () => false ? {} : super();
@@ -24862,7 +24772,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-private-typeof-init-err-contains-super.js:25:21]
  24 │ class C {
  25 │   #x = () => typeof super();
@@ -24879,7 +24788,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-static-comp-name-init-err-contains-super.js:26:22]
  25 │ class C {
  26 │   static [x] = () => super();
@@ -24896,7 +24804,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-static-literal-init-err-contains-super.js:25:20]
  24 │ class C {
  25 │   static x = () => super();
@@ -24913,7 +24820,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-static-private-init-err-contains-super.js:25:21]
  24 │ class C {
  25 │   static #x = () => super();
@@ -24930,7 +24836,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-static-string-literal-name-init-err-contains-super.js:25:22]
  24 │ class C {
  25 │   static 'x' = () => super();
@@ -24947,7 +24852,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-string-literal-name-init-err-contains-super.js:25:15]
  24 │ class C {
  25 │   'x' = () => super();
@@ -24964,7 +24868,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-ternary-init-err-contains-super.js:25:26]
  24 │ class C {
  25 │   x = () => false ? {} : super();
@@ -24981,7 +24884,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/nested-typeof-init-err-contains-super.js:25:20]
  24 │ class C {
  25 │   x = () => typeof super();
@@ -24998,7 +24900,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/private-arrow-fnc-init-err-contains-super.js:26:14]
  25 │ class C {
  26 │   #x = () => super();
@@ -25015,7 +24916,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/private-literal-name-init-err-contains-super.js:26:8]
  25 │ class C {
  26 │   #x = super();
@@ -25032,7 +24932,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/private-ternary-init-err-contains-super.js:26:21]
  25 │ class C {
  26 │   #x = false ? {} : super();
@@ -25049,7 +24948,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/private-typeof-init-err-contains-super.js:26:15]
  25 │ class C {
  26 │   #x = typeof super();
@@ -25127,7 +25025,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/static-comp-name-init-err-contains-super.js:27:16]
  26 │ class C {
  27 │   static [x] = super();
@@ -25144,7 +25041,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/static-literal-init-err-contains-super.js:26:14]
  25 │ class C {
  26 │   static x = super();
@@ -25161,7 +25057,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/static-private-init-err-contains-super.js:26:15]
  25 │ class C {
  26 │   static #x = super();
@@ -25178,7 +25073,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/static-string-literal-name-init-err-contains-super.js:26:16]
  25 │ class C {
  26 │   static 'x' = super();
@@ -25195,7 +25089,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/string-literal-name-init-err-contains-super.js:26:9]
  25 │ class C {
  26 │   'x' = super();
@@ -26569,7 +26462,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-fields-same-line-error.js:32:4]
  31 │ class C {
  32 │   x y
-    ·    ─
+    ·    ▲
  33 │ }
     ╰────
   help: Try insert a semicolon here
@@ -26880,7 +26773,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-get-meth.js:28:6]
  27 │ class C {
  28 │   get # m() {}
-    ·      ─
+    ·      ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -26897,7 +26790,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-accessor-set-meth.js:28:6]
  27 │ class C {
  28 │   set # m(_) {}
-    ·      ─
+    ·      ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -26922,7 +26815,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-async-meth.js:28:8]
  27 │ class C {
  28 │   async # m() {}
-    ·        ─
+    ·        ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -26987,7 +26880,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-get-meth.js:28:13]
  27 │ class C {
  28 │   static get # m() {}
-    ·             ─
+    ·             ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -27004,7 +26897,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-accessor-set-meth.js:28:13]
  27 │ class C {
  28 │   static set # m(_) {}
-    ·             ─
+    ·             ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -27029,7 +26922,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-async-meth.js:28:15]
  27 │ class C {
  28 │   static async # m() {}
-    ·               ─
+    ·               ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -27046,7 +26939,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field-init.js:28:9]
  27 │ class C {
  28 │   static # x = 1;
-    ·         ─
+    ·         ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -27063,7 +26956,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-field.js:28:9]
  27 │ class C {
  28 │   static # x;
-    ·         ─
+    ·         ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -27088,7 +26981,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatename-whitespace-error-static-meth.js:28:9]
  27 │ class C {
  28 │   static # m() {}
-    ·         ─
+    ·         ▲
  29 │ }
     ╰────
   help: Try insert a semicolon here
@@ -27097,13 +26990,12 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-privatenames-same-line-error.js:35:5]
  34 │ class C {
  35 │   #x #y
-    ·     ─
+    ·     ▲
  36 │ }
     ╰────
   help: Try insert a semicolon here
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async-gen.js:25:7]
  24 │   async * method() {
  25 │       super();
@@ -27112,7 +27004,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-async.js:25:7]
  24 │   async method() {
  25 │       super();
@@ -27121,7 +27012,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-gen.js:25:7]
  24 │   * method() {
  25 │       super();
@@ -27130,7 +27020,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-get.js:25:7]
  24 │   get method() {
  25 │       super();
@@ -27139,7 +27028,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-method.js:25:7]
  24 │   method() {
  25 │       super();
@@ -27148,7 +27036,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async-gen.js:25:7]
  24 │   async * #method() {
  25 │       super();
@@ -27157,7 +27044,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-async.js:25:7]
  24 │   async #method() {
  25 │       super();
@@ -27166,7 +27052,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-gen.js:25:7]
  24 │   * #method() {
  25 │       super();
@@ -27175,7 +27060,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-private-method.js:25:7]
  24 │   #method() {
  25 │       super();
@@ -27184,7 +27068,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-special-meth-contains-super-set.js:25:7]
  24 │   set method(_) {
  25 │       super();
@@ -27249,7 +27132,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-async-gen-meth-super.js:25:7]
  24 │   static async * method() {
  25 │       super();
@@ -27266,7 +27148,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-async-meth-super.js:25:7]
  24 │   static async method() {
  25 │       super();
@@ -27283,7 +27164,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-gen-meth-super.js:25:7]
  24 │   static * method() {
  25 │       super();
@@ -27300,7 +27180,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-get-meth-super.js:25:7]
  24 │   static get method() {
  25 │       super();
@@ -27317,7 +27196,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-meth-super.js:25:7]
  24 │   static method() {
  25 │       super();
@@ -27334,7 +27212,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-async-gen-meth-super.js:25:7]
  24 │   static async * #method() {
  25 │       super();
@@ -27351,7 +27228,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-async-meth-super.js:25:7]
  24 │   static async #method() {
  25 │       super();
@@ -27368,7 +27244,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-gen-meth-super.js:25:7]
  24 │   static * #method() {
  25 │       super();
@@ -27385,7 +27260,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-private-meth-super.js:25:7]
  24 │   static #method() {
  25 │       super();
@@ -27410,7 +27284,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/syntax/early-errors/grammar-static-set-meth-super.js:25:7]
  24 │   static set method(_) {
  25 │       super();
@@ -27715,7 +27588,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/ternary-init-err-contains-super.js:26:20]
  25 │ class C {
  26 │   x = false ? {} : super();
@@ -27732,7 +27604,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/elements/typeof-init-err-contains-super.js:26:14]
  25 │ class C {
  26 │   x = typeof super();
@@ -27782,7 +27653,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  155 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/gen-method/rest-params-trailing-comma-early-error.js:79:11]
  78 │ class C {
  79 │   *method(...a,) {
@@ -27947,7 +27818,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  155 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/gen-method-static/rest-params-trailing-comma-early-error.js:79:18]
  78 │ class C {
  79 │   static *method(...a,) {
@@ -28110,7 +27981,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  152 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/method/rest-params-trailing-comma-early-error.js:75:10]
  74 │ class C {
  75 │   method(...a,) {
@@ -28168,7 +28039,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  152 │   }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/class/method-static/rest-params-trailing-comma-early-error.js:75:17]
  74 │ class C {
  75 │   static method(...a,) {
@@ -28299,7 +28170,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  24 │   }
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/class/static-init-invalid-return.js:24:7]
  23 │     static {
  24 │       return;
@@ -28308,7 +28179,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/class/static-init-invalid-super-call.js:20:5]
  19 │   static {
  20 │     super();
@@ -28320,8 +28190,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/static-init-invalid-undefined-break-target.js:22:13]
  21 │     x: while (false) {
  22 │       break y;
-    ·             ┬
-    ·             ╰── This label is used, but not defined
+    ·             ─
  23 │     }
     ╰────
 
@@ -28329,8 +28198,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/class/static-init-invalid-undefined-continue-target.js:22:16]
  21 │     x: while (false) {
  22 │       continue y;
-    ·                ┬
-    ·                ╰── This label is used, but not defined
+    ·                ─
  23 │     }
     ╰────
 
@@ -28659,8 +28527,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/continue/S12.7_A1_T2.js:22:10]
  21 │ var x=1;
  22 │ continue LABEL;
-    ·          ──┬──
-    ·            ╰── This label is used, but not defined
+    ·          ─────
  23 │ var y=2;
     ╰────
 
@@ -28668,8 +28535,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/continue/S12.7_A1_T3.js:23:14]
  22 │     var x=1;
  23 │     continue LABEL;
-    ·              ──┬──
-    ·                ╰── This label is used, but not defined
+    ·              ─────
  24 │     var y=2;
     ╰────
 
@@ -28686,8 +28552,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/continue/S12.7_A5_T1.js:22:13]
  21 │    if(x===10)break;
  22 │    continue LABEL_ANOTHER_LOOP;
-    ·             ─────────┬────────
-    ·                      ╰── This label is used, but not defined
+    ·             ──────────────────
  23 │    LABEL_IN_2 : y++;
     ╰────
 
@@ -28695,8 +28560,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/continue/S12.7_A5_T2.js:22:13]
  21 │    if(x===10)break;
  22 │    continue IN_DO_FUNC;
-    ·             ─────┬────
-    ·                  ╰── This label is used, but not defined
+    ·             ──────────
  23 │    LABEL_IN_2 : y++;
     ╰────
 
@@ -28704,8 +28568,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/continue/S12.7_A5_T3.js:23:13]
  22 │    if(x===10)break;
  23 │    continue LABEL_IN;
-    ·             ────┬───
-    ·                 ╰── This label is used, but not defined
+    ·             ────────
  24 │    LABEL_IN_2 : y++;
     ╰────
 
@@ -28721,8 +28584,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/continue/S12.7_A8_T1.js:19:11]
  18 │ } catch(e){
  19 │     continue LABEL2;
-    ·              ───┬──
-    ·                 ╰── This label is used, but not defined
+    ·              ──────
  20 │     LABEL2 : do {
     ╰────
 
@@ -28903,7 +28765,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/do-while/decl-let.js:14:7]
  13 │ 
  14 │ do let x; while (false)
-    ·       ─
+    ·       ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -28924,6 +28786,15 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
   help: Wrap this declaration in a block statement
 
+  × Expected function name
+    ╭─[language/statements/expression/S12.4_A1.js:19:9]
+ 18 │ //CHECK#1
+ 19 │ function(){}();
+    ·         ─
+ 20 │ //
+    ╰────
+  help: Function name is required in function declaration or named export
+
   × Empty parenthesized expression
     ╭─[language/statements/expression/S12.4_A1.js:19:13]
  18 │ //CHECK#1
@@ -28936,8 +28807,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for/S12.6.3_A11.1_T3.js:24:40]
  23 │     nested:for(var index_n=0;index_n<=index;index_n++){
  24 │         if(index*index_n == 6)continue nonexist;
-    ·                                        ────┬───
-    ·                                            ╰── This label is used, but not defined
+    ·                                        ────────
  25 │         __str+=""+index+index_n;
     ╰────
 
@@ -28945,8 +28815,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for/S12.6.3_A11_T3.js:24:40]
  23 │     nested:for(index_n=0;index_n<=index;index_n++){
  24 │         if(index*index_n == 6)continue nonexist;
-    ·                                        ────┬───
-    ·                                            ╰── This label is used, but not defined
+    ·                                        ────────
  25 │         __str+=""+index+index_n;
     ╰────
 
@@ -28954,8 +28823,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for/S12.6.3_A12.1_T3.js:24:37]
  23 │     nested:for(var index_n=0;index_n<=index;index_n++){
  24 │         if(index*index_n >= 4)break nonexist;
-    ·                                     ────┬───
-    ·                                         ╰── This label is used, but not defined
+    ·                                     ────────
  25 │         __str+=""+index+index_n;
     ╰────
 
@@ -28963,8 +28831,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for/S12.6.3_A12_T3.js:24:37]
  23 │     nested:for(index_n=0;index_n<=index;index_n++){
  24 │         if(index*index_n >= 4)break nonexist;
-    ·                                     ────┬───
-    ·                                         ╰── This label is used, but not defined
+    ·                                     ────────
  25 │         __str+=""+index+index_n;
     ╰────
 
@@ -29156,7 +29023,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for/decl-let.js:14:21]
  13 │ 
  14 │ for ( ; false; ) let x;
-    ·                     ─
+    ·                     ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -30171,7 +30038,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for-in/decl-let.js:14:22]
  13 │ 
  14 │ for (var x in {}) let y;
-    ·                      ─
+    ·                      ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -30677,7 +30544,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/for-of/decl-let.js:14:22]
  13 │ 
  14 │ for (var x of []) let y;
-    ·                      ─
+    ·                      ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -31487,7 +31354,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/function/early-body-super-call.js:17:3]
  16 │ function f() {
  17 │   super();
@@ -31496,7 +31362,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/statements/function/early-body-super-prop.js:17:3]
  16 │ function f() {
  17 │   super.x;
@@ -31533,7 +31398,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × Super calls are not permitted outside constructors or in nested functions inside constructors.
-  │ 
     ╭─[language/statements/function/early-params-super-call.js:16:16]
  15 │ 
  16 │ function f(x = super()) {}
@@ -31541,7 +31405,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╰────
 
   × 'super' can only be referenced in members of derived classes or object literal expressions.
-  │ 
     ╭─[language/statements/function/early-params-super-prop.js:16:16]
  15 │ 
  16 │ function f(x = super.x) {}
@@ -31782,7 +31645,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/function/rest-params-trailing-comma-early-error.js:56:12]
  55 │ 
  56 │ function f(...a,) {
@@ -31952,7 +31815,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  133 │ }
      ╰────
 
-  × A rest element must be last in a destructuring pattern
+  × A rest parameter must be last in a parameter list
     ╭─[language/statements/generators/rest-params-trailing-comma-early-error.js:57:13]
  56 │ 
  57 │ function* f(...a,) {
@@ -32115,7 +31978,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/generators/yield-weak-binding.js:16:32]
  15 │ 
  16 │ function* g() { yield 3 + yield 4; }
-    ·                                ─
+    ·                                ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32465,7 +32328,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/if/if-let-else-let.js:14:14]
  13 │ 
  14 │ if (true) let x; else let y;
-    ·              ─
+    ·              ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32473,7 +32336,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/if/if-let-else-stmt.js:14:14]
  13 │ 
  14 │ if (true) let x; else ;
-    ·              ─
+    ·              ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32481,7 +32344,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/if/if-let-no-else.js:14:14]
  13 │ 
  14 │ if (true) let x;
-    ·              ─
+    ·              ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32566,7 +32429,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/if/if-stmt-else-let.js:14:22]
  13 │ 
  14 │ if (false) ; else let x;
-    ·                      ─
+    ·                      ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32687,7 +32550,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/labeled/decl-let.js:14:11]
  13 │ 
  14 │ label: let x;
-    ·           ─
+    ·           ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32851,7 +32714,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/let-newline-await-in-normal-function.js:23:10]
  22 │     let
  23 │     await 0;
-    ·          ─
+    ·          ▲
  24 │ }
     ╰────
   help: Try insert a semicolon here
@@ -32868,7 +32731,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/let-newline-yield-in-generator-function.js:24:10]
  23 │     let
  24 │     yield 0;
-    ·          ─
+    ·          ▲
  25 │ }
     ╰────
   help: Try insert a semicolon here
@@ -32877,7 +32740,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/let-newline-yield-in-normal-function.js:22:10]
  21 │     let
  22 │     yield 0;
-    ·          ─
+    ·          ▲
  23 │ }
     ╰────
   help: Try insert a semicolon here
@@ -32886,7 +32749,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/with-initialisers-in-statement-positions-do-statement-while-expression.js:14:7]
  13 │ $DONOTEVALUATE();
  14 │ do let x = 1; while (false)
-    ·       ─
+    ·       ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32894,7 +32757,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/with-initialisers-in-statement-positions-for-statement.js:14:18]
  13 │ $DONOTEVALUATE();
  14 │ for (;false;) let x = 1;
-    ·                  ─
+    ·                  ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32902,7 +32765,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/with-initialisers-in-statement-positions-if-expression-statement-else-statement.js:14:22]
  13 │ $DONOTEVALUATE();
  14 │ if (true) {} else let x = 1;
-    ·                      ─
+    ·                      ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32910,7 +32773,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/with-initialisers-in-statement-positions-if-expression-statement.js:14:14]
  13 │ $DONOTEVALUATE();
  14 │ if (true) let x = 1;
-    ·              ─
+    ·              ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32918,7 +32781,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/with-initialisers-in-statement-positions-label-statement.js:14:11]
  13 │ $DONOTEVALUATE();
  14 │ label: let x = 1;
-    ·           ─
+    ·           ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32926,7 +32789,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/with-initialisers-in-statement-positions-while-expression-statement.js:14:18]
  13 │ $DONOTEVALUATE();
  14 │ while (false) let x = 1;
-    ·                  ─
+    ·                  ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32934,7 +32797,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/without-initialisers-in-statement-positions-do-statement-while-expression.js:14:7]
  13 │ $DONOTEVALUATE();
  14 │ do let x; while (false)
-    ·       ─
+    ·       ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32942,7 +32805,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/without-initialisers-in-statement-positions-for-statement.js:14:18]
  13 │ $DONOTEVALUATE();
  14 │ for (;false;) let x;
-    ·                  ─
+    ·                  ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32950,7 +32813,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/without-initialisers-in-statement-positions-if-expression-statement-else-statement.js:14:22]
  13 │ $DONOTEVALUATE();
  14 │ if (true) {} else let x;
-    ·                      ─
+    ·                      ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32958,7 +32821,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/without-initialisers-in-statement-positions-if-expression-statement.js:14:14]
  13 │ $DONOTEVALUATE();
  14 │ if (true) let x;
-    ·              ─
+    ·              ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32966,7 +32829,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/without-initialisers-in-statement-positions-label-statement.js:14:11]
  13 │ $DONOTEVALUATE();
  14 │ label: let x;
-    ·           ─
+    ·           ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -32974,11 +32837,11 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/let/syntax/without-initialisers-in-statement-positions-while-expression-statement.js:14:18]
  13 │ $DONOTEVALUATE();
  14 │ while (false) let x;
-    ·                  ─
+    ·                  ▲
     ╰────
   help: Try insert a semicolon here
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T1.js:18:1]
  17 │ var x=1;
  18 │ return;
@@ -32986,7 +32849,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  19 │ var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T10.js:17:1]
  16 │ //CHECK#1
  17 │ return (0);
@@ -32994,7 +32857,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  18 │ //
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T2.js:18:1]
  17 │ var x=1;
  18 │ return x;
@@ -33002,7 +32865,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  19 │ var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T3.js:18:5]
  17 │ try {
  18 │     return 1;
@@ -33010,7 +32873,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  19 │ } catch(e){
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T3.js:20:5]
  19 │ } catch(e){
  20 │     return 1;
@@ -33018,7 +32881,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  21 │ }
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T4.js:17:1]
  16 │ //CHECK#1
  17 │ return;
@@ -33026,7 +32889,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  18 │ //
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T5.js:21:5]
  20 │     var x=1;
  21 │     return;
@@ -33034,7 +32897,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T6.js:21:5]
  20 │     var x=1;
  21 │     return;
@@ -33042,7 +32905,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T7.js:21:5]
  20 │     var x=1;
  21 │     return x;
@@ -33050,7 +32913,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T8.js:21:5]
  20 │     var x=1;
  21 │     return x;
@@ -33058,7 +32921,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  22 │     var y=2;
     ╰────
 
-  × TS1108: A 'return' statement can only be used within a function body
+  × TS(1108): A 'return' statement can only be used within a function body.
     ╭─[language/statements/return/S12.9_A1_T9.js:20:5]
  19 │ } catch(e){
  20 │     return e;
@@ -33926,7 +33789,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/variable/S12.2_A8_T1.js:17:6]
  16 │ //CHECK#1
  17 │ var x += 1;
-    ·      ─
+    ·      ▲
  18 │ //
     ╰────
   help: Try insert a semicolon here
@@ -33935,7 +33798,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/variable/S12.2_A8_T2.js:17:6]
  16 │ //CHECK#1
  17 │ var x | true;
-    ·      ─
+    ·      ▲
  18 │ //
     ╰────
   help: Try insert a semicolon here
@@ -33944,7 +33807,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/variable/S12.2_A8_T3.js:17:6]
  16 │ //CHECK#1
  17 │ var x && 1;
-    ·      ─
+    ·      ▲
  18 │ //
     ╰────
   help: Try insert a semicolon here
@@ -33988,7 +33851,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/variable/S12.2_A8_T8.js:19:6]
  18 │ //CHECK#1
  19 │ var x in __arr;
-    ·      ─
+    ·      ▲
  20 │ //
     ╰────
   help: Try insert a semicolon here
@@ -34450,7 +34313,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/while/decl-let.js:14:18]
  13 │ 
  14 │ while (false) let x;
-    ·                  ─
+    ·                  ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -34550,7 +34413,7 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ╭─[language/statements/with/decl-let.js:15:14]
  14 │ 
  15 │ with ({}) let x;
-    ·              ─
+    ·              ▲
     ╰────
   help: Try insert a semicolon here
 
@@ -34577,13 +34440,6 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  24 │     }
     ╰────
   help: Wrap this declaration in a block statement
-
-  × 'with' statements are not allowed
-    ╭─[language/statements/with/stict-script.js:17:1]
- 16 │ 
- 17 │ with ({}) {}
-    · ────
-    ╰────
 
   × 'with' statements are not allowed
     ╭─[language/statements/with/strict-fn-decl-nested-1.js:21:5]
@@ -34622,6 +34478,13 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  16 │ 
  17 │ var obj = { get(a) { with(a){} } };
     ·                      ────
+    ╰────
+
+  × 'with' statements are not allowed
+    ╭─[language/statements/with/strict-script.js:17:1]
+ 16 │ 
+ 17 │ with ({}) {}
+    · ────
     ╰────
 
   × Cannot assign to this expression

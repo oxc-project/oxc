@@ -1,17 +1,15 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{Span, VALID_EXTENSIONS};
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(default): No default export found in imported module {0:?}")]
-#[diagnostic(severity(warning), help("does {0:?} have the default export?"))]
-struct DefaultDiagnostic(String, #[label] pub Span);
+fn default_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("No default export found in imported module {x0:?}"))
+        .with_help(format!("does {x0:?} have the default export?"))
+        .with_label(span1)
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/default.md>
 #[derive(Debug, Default, Clone)]
@@ -32,12 +30,12 @@ declare_oxc_lint!(
     /// import bar from './bar' // no default export found in ./bar
     /// ```
     Default,
-    nursery
+    correctness
 );
 
 impl Rule for Default {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(default_span) = import_entry.import_name else {
                 continue;
@@ -50,10 +48,18 @@ impl Rule for Default {
             if remote_module_record_ref.not_esm {
                 continue;
             }
+            if !remote_module_record_ref
+                .resolved_absolute_path
+                .extension()
+                .and_then(|ext| ext.to_str())
+                .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext))
+            {
+                continue;
+            }
             if remote_module_record_ref.export_default.is_none()
                 && !remote_module_record_ref.exported_bindings.contains_key("default")
             {
-                ctx.diagnostic(DefaultDiagnostic(specifier.to_string(), default_span));
+                ctx.diagnostic(default_diagnostic(specifier, default_span));
             }
         }
     }
@@ -103,6 +109,7 @@ fn test() {
         // r#"import foobar from "./typescript-export-assign-property""#,
         // r#"import foobar from "./typescript-export-assign-default-reexport""#,
         // r#"import React from "./typescript-export-assign-default-namespace"#,
+        r#"import Foo from "./vue/main.vue""#,
     ];
 
     let fail = vec![

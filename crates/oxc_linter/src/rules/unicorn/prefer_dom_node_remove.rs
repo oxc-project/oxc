@@ -1,8 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -13,15 +10,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-dom-node-remove): Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Replace `parentNode.removeChild(childNode)` with `childNode{{dotOrQuestionDot}}remove()`."
-    )
-)]
-struct PreferDomNodeRemoveDiagnostic(#[label] pub Span);
+fn prefer_dom_node_remove_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.")
+        .with_help("Replace `parentNode.removeChild(childNode)` with `childNode{dotOrQuestionDot}remove()`.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeRemove;
@@ -49,7 +42,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferDomNodeRemove {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if call_expr.optional {
             return;
@@ -78,7 +73,7 @@ impl Rule for PreferDomNodeRemove {
             return;
         }
 
-        ctx.diagnostic(PreferDomNodeRemoveDiagnostic(
+        ctx.diagnostic(prefer_dom_node_remove_diagnostic(
             call_expr_method_callee_info(call_expr).unwrap().0,
         ));
     }

@@ -2,20 +2,18 @@ use oxc_ast::{
     ast::{match_member_expression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-spread): Prefer the spread operator (`...`) over {1}")]
-#[diagnostic(severity(warning), help("The spread operator (`...`) is more concise and readable."))]
-struct PreferSpreadDiagnostic(#[label] pub Span, pub &'static str);
+fn prefer_spread_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer the spread operator (`...`) over {x1}"))
+        .with_help("The spread operator (`...`) is more concise and readable.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferSpread;
@@ -39,19 +37,24 @@ declare_oxc_lint!(
     ///
     /// ```
     PreferSpread,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for PreferSpread {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         let Some(member_expr) = call_expr.callee.without_parenthesized().as_member_expression()
         else {
             return;
         };
 
-        let Some(static_property_name) = member_expr.static_property_name() else { return };
+        let Some(static_property_name) = member_expr.static_property_name() else {
+            return;
+        };
 
         match static_property_name {
             // `Array.from()`
@@ -60,7 +63,9 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                let Some(expr) = call_expr.arguments[0].as_expression() else { return };
+                let Some(expr) = call_expr.arguments[0].as_expression() else {
+                    return;
+                };
                 if matches!(expr.without_parenthesized(), Expression::ObjectExpression(_)) {
                     return;
                 }
@@ -74,7 +79,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "Array.from()"));
+                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "Array.from()"));
             }
             // `array.concat()`
             "concat" => {
@@ -82,7 +87,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.concat()"));
+                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "array.concat()"));
             }
             // `array.slice()`
             "slice" => {
@@ -106,7 +111,9 @@ impl Rule for PreferSpread {
                 }
 
                 if let Some(first_arg) = call_expr.arguments.first() {
-                    let Some(first_arg) = first_arg.as_expression() else { return };
+                    let Some(first_arg) = first_arg.as_expression() else {
+                        return;
+                    };
                     if let Expression::NumericLiteral(num_lit) = first_arg.without_parenthesized() {
                         if num_lit.value != 0.0 {
                             return;
@@ -116,7 +123,7 @@ impl Rule for PreferSpread {
                     }
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.slice()"));
+                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "array.slice()"));
             }
             // `array.toSpliced()`
             "toSpliced" => {
@@ -131,7 +138,7 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                ctx.diagnostic(PreferSpreadDiagnostic(call_expr.span, "array.toSpliced()"));
+                ctx.diagnostic(prefer_spread_diagnostic(call_expr.span, "array.toSpliced()"));
             }
             // `string.split()`
             "split" => {
@@ -139,7 +146,9 @@ impl Rule for PreferSpread {
                     return;
                 }
 
-                let Some(expr) = call_expr.arguments[0].as_expression() else { return };
+                let Some(expr) = call_expr.arguments[0].as_expression() else {
+                    return;
+                };
                 let Expression::StringLiteral(string_lit) = expr.without_parenthesized() else {
                     return;
                 };
@@ -149,12 +158,12 @@ impl Rule for PreferSpread {
                 }
 
                 ctx.diagnostic_with_fix(
-                    PreferSpreadDiagnostic(call_expr.span, "string.split()"),
-                    || {
+                    prefer_spread_diagnostic(call_expr.span, "string.split()"),
+                    |fixer| {
                         let callee_obj = member_expr.object().without_parenthesized();
-                        Fix::new(
-                            format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
+                        fixer.replace(
                             call_expr.span,
+                            format!("[...{}]", callee_obj.span().source_text(ctx.source_text())),
                         )
                     },
                 );

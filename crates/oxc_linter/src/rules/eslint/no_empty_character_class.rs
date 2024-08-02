@@ -1,20 +1,18 @@
 // Ported from https://github.com/eslint/eslint/blob/main/lib/rules/no-empty-character-class.js
 use lazy_static::lazy_static;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-empty-character-class): Empty character class")]
-#[diagnostic(severity(warning), help("Try to remove empty character class `[]` in regexp literal"))]
-struct NoEmptyCharacterClassDiagnostic(#[label] pub Span);
+fn no_empty_character_class_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Empty character class")
+        .with_help("Try to remove empty character class `[]` in regexp literal")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyCharacterClass;
@@ -52,7 +50,7 @@ impl Rule for NoEmptyCharacterClass {
 
         if let AstKind::RegExpLiteral(lit) = node.kind() {
             if !NO_EMPTY_CLASS_REGEX_PATTERN.is_match(&lit.regex.pattern) {
-                ctx.diagnostic(NoEmptyCharacterClassDiagnostic(lit.span));
+                ctx.diagnostic(no_empty_character_class_diagnostic(lit.span));
             }
         }
     }

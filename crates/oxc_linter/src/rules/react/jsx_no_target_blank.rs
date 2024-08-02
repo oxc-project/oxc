@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{
         match_expression, Expression, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
@@ -5,29 +7,28 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, GetSpan, Span};
-use std::ops::Deref;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum JsxNoTargetBlankDiagnostic {
-    #[error("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")]
-    #[diagnostic(severity(warning), help("add rel=`noreferrer` to the element"))]
-    TargetBlankWithoutNoreferrer(#[label] Span),
+fn target_blank_without_noreferrer(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` (which implies rel=`noopener`) is a security risk in older browsers: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
+.with_help("add rel=`noreferrer` to the element")
+.with_label(span0)
+}
 
-    #[error("eslint-plugin-react(jsx-no-target-blank): Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")]
-    #[diagnostic(severity(warning), help("add rel=`noreferrer` or rel=`noopener` to the element"))]
-    TargetBlankWithoutNoopener(#[label] Span),
+fn target_blank_without_noopener(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Using target=`_blank` without rel=`noreferrer` or rel=`noopener` (the former implies the latter and is preferred due to wider support) is a security risk: see https://mathiasbynens.github.io/rel-noopener/#recommendations")
+.with_help("add rel=`noreferrer` or rel=`noopener` to the element")
+.with_label(span0)
+}
 
-    #[error("eslint-plugin-react(jsx-no-target-blank): all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")]
-    #[diagnostic(severity(warning), help("add rel=`noreferrer` to the element"))]
-    ExplicitPropsInSpreadAttributes(#[label] Span),
+fn explicit_props_in_spread_attributes(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("all spread attributes are treated as if they contain an unsafe combination of props, unless specifically overridden by props after the last spread attribute prop.")
+.with_help("add rel=`noreferrer` to the element")
+.with_label(span0)
 }
 
 #[derive(Debug, Clone)]
@@ -60,11 +61,12 @@ impl Default for JsxNoTargetBlank {
 impl JsxNoTargetBlank {
     fn diagnostic(&self, span: Span, ctx: &LintContext) {
         if self.allow_referrer {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::TargetBlankWithoutNoopener(span));
+            ctx.diagnostic(target_blank_without_noopener(span));
         } else {
-            ctx.diagnostic(JsxNoTargetBlankDiagnostic::TargetBlankWithoutNoreferrer(span));
+            ctx.diagnostic(target_blank_without_noreferrer(span));
         }
     }
+
     fn check_is_link(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.links {
             return false;
@@ -74,6 +76,7 @@ impl JsxNoTargetBlank {
         }
         return ctx.settings().react.get_link_component_attrs(tag_name).is_some();
     }
+
     fn check_is_forms(&self, tag_name: &str, ctx: &LintContext) -> bool {
         if !self.forms {
             return false;
@@ -185,11 +188,7 @@ impl Rule for JsxNoTargetBlank {
                         if (has_href_value && is_href_valid) || rel_valid_tuple.0 {
                             return;
                         }
-                        ctx.diagnostic(
-                            JsxNoTargetBlankDiagnostic::ExplicitPropsInSpreadAttributes(
-                                spread_span,
-                            ),
-                        );
+                        ctx.diagnostic(explicit_props_in_spread_attributes(spread_span));
                         return;
                     }
 
@@ -214,6 +213,7 @@ impl Rule for JsxNoTargetBlank {
             }
         }
     }
+
     fn from_configuration(value: serde_json::Value) -> Self {
         let value = value.as_array().and_then(|arr| arr.first()).and_then(|val| val.as_object());
 
@@ -227,7 +227,6 @@ impl Rule for JsxNoTargetBlank {
                         EnforceDynamicLinksEnum::Never
                     }
                 }),
-
             warn_on_spread_attributes: value
                 .and_then(|val| {
                     val.get("warnOnSpreadAttributes").and_then(serde_json::Value::as_bool)
@@ -244,10 +243,14 @@ impl Rule for JsxNoTargetBlank {
                 .unwrap_or(false),
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
+    }
 }
 
-fn check_is_external_link(link: &Atom) -> bool {
-    link.as_str().contains("//")
+fn check_is_external_link(link: &str) -> bool {
+    link.contains("//")
 }
 
 fn match_href_expression(
@@ -314,7 +317,7 @@ fn check_rel_val(str: &StringLiteral, allow_referrer: bool) -> bool {
             false
         });
     }
-    splits.any(|str| str.to_lowercase() == "noreferrer")
+    splits.any(|str| str.eq_ignore_ascii_case("noreferrer"))
 }
 
 fn match_rel_expression<'a>(
@@ -364,7 +367,7 @@ fn match_target_expression<'a>(expr: &'a Expression<'a>) -> (bool, &'a str, bool
     let default = (false, "", false, false);
     match expr {
         Expression::StringLiteral(str) => {
-            (str.value.as_str().to_lowercase() == "_blank", "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
         }
         Expression::ConditionalExpression(expr) => {
             let consequent = match_target_expression(&expr.consequent);
@@ -387,7 +390,7 @@ fn check_target<'a>(attribute_value: &'a JSXAttributeValue<'a>) -> (bool, &'a st
     let default = (false, "", false, false);
     match attribute_value {
         JSXAttributeValue::StringLiteral(str) => {
-            (str.value.as_str().to_lowercase() == "_blank", "", false, false)
+            (str.value.eq_ignore_ascii_case("_blank"), "", false, false)
         }
         JSXAttributeValue::ExpressionContainer(expr) => {
             if let Some(expr) = expr.expression.as_expression() {

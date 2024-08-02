@@ -1,6 +1,6 @@
 {
   "name": "@oxc-parser/wasm",
-  "version": "0.1.0",
+  "version": "0.23.0",
   "description": "Wasm target for the oxc parser.",
   "keywords": [
     "JavaScript",
@@ -9,7 +9,7 @@
   ],
   "author": "Boshen and oxc contributors",
   "license": "MIT",
-  "homepage": "https://oxc-project.github.io",
+  "homepage": "https://oxc.rs",
   "repository": {
     "type": "git",
     "url": "https://github.com/oxc-project/oxc",
@@ -21,7 +21,10 @@
   "main": "./node/oxc_parser_wasm.js",
   "browser": "./web/oxc_parser_wasm.js",
   "types": "./node/oxc_parser_wasm.d.ts",
-  "files": ["node", "web"],
+  "files": [
+    "node",
+    "web"
+  ],
   "scripts": {
     "build": "pnpm run build-node && pnpm run build-web && pnpm run copy-files && pnpm run clean-files",
     "build-node": "pnpm run build-base --target nodejs --out-dir ../../npm/parser-wasm/node .",
@@ -32,6 +35,6 @@
     "test": "node ./test-node.mjs"
   },
   "devDependencies": {
-    "wasm-pack": "^0.12.1"
+    "wasm-pack": "^0.13.0"
   }
 }

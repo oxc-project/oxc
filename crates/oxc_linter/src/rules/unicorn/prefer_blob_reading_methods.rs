@@ -1,17 +1,14 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-blob-reading-methods): Prefer `Blob#{1}()` over `FileReader#{2}(blob)`.")]
-#[diagnostic(severity(warning))]
-struct PreferBlobReadingMethodsDiagnostic(#[label] pub Span, pub &'static str, pub &'static str);
+fn prefer_blob_reading_methods_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Blob#{x1}()` over `FileReader#{x2}(blob)`."))
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferBlobReadingMethods;
@@ -48,9 +45,13 @@ declare_oxc_lint!(
 
 impl Rule for PreferBlobReadingMethods {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-        let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
+        let Some(member_expr) = call_expr.callee.as_member_expression() else {
+            return;
+        };
 
         if member_expr.is_computed()
             || member_expr.optional()
@@ -66,7 +67,7 @@ impl Rule for PreferBlobReadingMethods {
             _ => return,
         };
 
-        ctx.diagnostic(PreferBlobReadingMethodsDiagnostic(span, replacement, current));
+        ctx.diagnostic(prefer_blob_reading_methods_diagnostic(span, replacement, current));
     }
 }
 

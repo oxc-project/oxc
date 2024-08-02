@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: max_params
 ---
   ⚠ eslint(max-params): "Function 'test' has too many parameters (3). Maximum allowed is 2."
    ╭─[max_params.tsx:1:14]

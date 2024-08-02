@@ -5,25 +5,23 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(adjacent-overload-signatures): All {0:?} signatures should be adjacent."
-)]
-#[diagnostic(severity(warning))]
-struct AdjacentOverloadSignaturesDiagnostic(
-    CompactStr,
-    #[label] pub Option<Span>,
-    #[label] pub Span,
-);
+fn adjacent_overload_signatures_diagnostic(
+    x0: &str,
+    span1: Option<Span>,
+    span2: Span,
+) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn(format!("All {x0:?} signatures should be adjacent."));
+    if let Some(span) = span1 {
+        d = d.and_label(span);
+    }
+    d.and_label(span2)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct AdjacentOverloadSignatures;
@@ -93,7 +91,7 @@ fn get_kind_from_key(key: &PropertyKey) -> MethodKind {
         PropertyKey::PrivateIdentifier(_) => MethodKind::Private,
         PropertyKey::StringLiteral(_) => MethodKind::Normal,
         PropertyKey::NumericLiteral(_)
-        | PropertyKey::BigintLiteral(_)
+        | PropertyKey::BigIntLiteral(_)
         | PropertyKey::TemplateLiteral(_)
         | PropertyKey::RegExpLiteral(_)
         | PropertyKey::NullLiteral(_) => MethodKind::Quoted,
@@ -129,7 +127,7 @@ impl GetMethod for ClassElement<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
             ClassElement::MethodDefinition(def) => def.key.static_name().map(|name| Method {
-                name,
+                name: name.into(),
                 r#static: def.r#static,
                 call_signature: false,
                 kind: get_kind_from_key(&def.key),
@@ -144,21 +142,21 @@ impl GetMethod for TSSignature<'_> {
     fn get_method(&self) -> Option<Method> {
         match self {
             TSSignature::TSMethodSignature(sig) => sig.key.static_name().map(|name| Method {
-                name,
+                name: name.into(),
                 r#static: false,
                 call_signature: false,
                 kind: get_kind_from_key(&sig.key),
                 span: sig.key.span(),
             }),
             TSSignature::TSCallSignatureDeclaration(sig) => Some(Method {
-                name: CompactStr::from("call"),
+                name: "call".into(),
                 r#static: false,
                 call_signature: true,
                 kind: MethodKind::Normal,
                 span: sig.span,
             }),
             TSSignature::TSConstructSignatureDeclaration(decl) => Some(Method {
-                name: CompactStr::from("new"),
+                name: "new".into(),
                 r#static: false,
                 call_signature: false,
                 kind: MethodKind::Normal,
@@ -258,16 +256,16 @@ fn check_and_report(methods: &Vec<Option<Method>>, ctx: &LintContext<'_>) {
 
             if index.is_some() && !method.is_same_method(last_method) {
                 let name = if method.r#static {
-                    CompactStr::from(format!("static {0}", method.name))
+                    format!("static {0}", method.name)
                 } else {
-                    method.name.clone()
+                    method.name.to_string()
                 };
 
                 let last_same_method =
                     seen_methods.iter().rev().find(|m| m.is_same_method(Some(method)));
 
-                ctx.diagnostic(AdjacentOverloadSignaturesDiagnostic(
-                    name,
+                ctx.diagnostic(adjacent_overload_signatures_diagnostic(
+                    &name,
                     last_same_method.map(|m| m.span),
                     method.span,
                 ));
@@ -320,6 +318,10 @@ impl Rule for AdjacentOverloadSignatures {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

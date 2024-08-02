@@ -1,17 +1,15 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-string-trim-start-end): Prefer `{1}` over `{2}`")]
-#[diagnostic(severity(warning), help("Replace with `{1}`"))]
-struct PreferStringTrimStartEndDiagnostic(#[label] pub Span, CompactStr, &'static str);
+fn prefer_string_trim_start_end_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`"))
+        .with_help(format!("Replace with `{x1}`"))
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStringTrimStartEnd;
@@ -36,7 +34,8 @@ declare_oxc_lint!(
     /// str.trimEnd();
     /// ```
     PreferStringTrimStartEnd,
-    style
+    style,
+    fix
 );
 
 impl Rule for PreferStringTrimStartEnd {
@@ -49,7 +48,9 @@ impl Rule for PreferStringTrimStartEnd {
             return;
         }
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         let (span, name) = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
@@ -65,11 +66,14 @@ impl Rule for PreferStringTrimStartEnd {
             return;
         }
 
-        ctx.diagnostic(PreferStringTrimStartEndDiagnostic(
-            span,
-            name.to_compact_str(),
-            get_replacement(name.as_str()),
-        ));
+        ctx.diagnostic_with_fix(
+            prefer_string_trim_start_end_diagnostic(
+                span,
+                get_replacement(name.as_str()),
+                name.as_str(),
+            ),
+            |fixer| fixer.replace(span, get_replacement(name.as_str())),
+        );
     }
 }
 
@@ -111,5 +115,14 @@ fn test() {
         r"foo?.trimLeft()",
     ];
 
-    Tester::new(PreferStringTrimStartEnd::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r"foo.trimLeft()", r"foo.trimStart()"),
+        (r"foo.trimRight()", r"foo.trimEnd()"),
+        (r"trimLeft.trimRight()", r"trimLeft.trimEnd()"),
+        (r"foo.trimLeft.trimRight()", r"foo.trimLeft.trimEnd()"),
+        (r#""foo".trimLeft()"#, r#""foo".trimStart()"#),
+        (r"foo?.trimLeft()", r"foo?.trimStart()"),
+    ];
+
+    Tester::new(PreferStringTrimStartEnd::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

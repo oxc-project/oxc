@@ -1,0 +1,227 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo {
+ 3 │               [key: string]: any;
+   ·               ───────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo {
+ 3 │               readonly [key: string]: any;
+   ·               ────────────────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo<A> {
+ 3 │               [key: string]: A;
+   ·               ─────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo<A = any> {
+ 3 │               [key: string]: A;
+   ·               ─────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface B extends A {
+ 3 │               [index: number]: unknown;
+   ·               ─────────────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo<A> {
+ 3 │               readonly [key: string]: A;
+   ·               ──────────────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo<A, B> {
+ 3 │               [key: A]: B;
+   ·               ────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo<A, B> {
+ 3 │               readonly [key: A]: B;
+   ·               ─────────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [key: string]: string | Bar };
+   ·              ───────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [key: boolean]: any };
+   ·              ───────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { readonly [key: string]: any };
+   ·              ───────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:22]
+ 1 │ type Foo = Generic<{ [key: boolean]: any }>;
+   ·                      ───────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:22]
+ 1 │ type Foo = Generic<{ readonly [key: string]: any }>;
+   ·                      ───────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:21]
+ 1 │ function foo(arg: { [key: string]: any }) {}
+   ·                     ──────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:19]
+ 1 │ function foo(): { [key: string]: any } {}
+   ·                   ──────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:21]
+ 1 │ function foo(arg: { readonly [key: string]: any }) {}
+   ·                     ───────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:19]
+ 1 │ function foo(): { readonly [key: string]: any } {}
+   ·                   ───────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A index signature is preferred over an record.
+   ╭─[consistent_indexed_object_style.tsx:1:12]
+ 1 │ type Foo = Record<string, any>;
+   ·            ───────────────────
+   ╰────
+  help: A index signature is preferred over an record.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A index signature is preferred over an record.
+   ╭─[consistent_indexed_object_style.tsx:1:15]
+ 1 │ type Foo<T> = Record<string, T>;
+   ·               ─────────────────
+   ╰────
+  help: A index signature is preferred over an record.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [k: string]: A.Foo };
+   ·              ──────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [key: string]: AnotherFoo };
+   ·              ─────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [key: string]: { [key: string]: Foo } };
+   ·              ─────────────────────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:1:14]
+ 1 │ type Foo = { [key: string]: string } | Foo;
+   ·              ─────────────────────
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo<T> {
+ 3 │               [k: string]: T;
+   ·               ───────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo {
+ 3 │               [k: string]: A.Foo;
+   ·               ───────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A record is preferred over an index signature.
+   ╭─[consistent_indexed_object_style.tsx:3:12]
+ 2 │             interface Foo {
+ 3 │               [k: string]: { [key: string]: Foo };
+   ·               ────────────────────────────────────
+ 4 │             }
+   ╰────
+  help: A record is preferred over an index signature.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A index signature is preferred over an record.
+   ╭─[consistent_indexed_object_style.tsx:1:20]
+ 1 │ type Foo = Generic<Record<string, any>>;
+   ·                    ───────────────────
+   ╰────
+  help: A index signature is preferred over an record.
+
+  ⚠ typescript-eslint(consistent-indexed-object-style): A index signature is preferred over an record.
+   ╭─[consistent_indexed_object_style.tsx:1:19]
+ 1 │ function foo(arg: Record<string, any>) {}
+   ·                   ───────────────────
+   ╰────
+  help: A index signature is preferred over an record.
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[consistent_indexed_object_style.tsx:1:10]
+ 1 │ funcction foo(): Record<string, any> {}
+   ·          ▲
+   ╰────
+  help: Try insert a semicolon here

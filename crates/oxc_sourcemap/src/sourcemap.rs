@@ -1,11 +1,12 @@
+use std::sync::Arc;
+
 use crate::{
-    decode::decode,
-    encode::encode,
+    decode::{decode, decode_from_string, JSONSourceMap},
+    encode::{encode, encode_to_string},
     error::Result,
     token::{Token, TokenChunk},
     SourceViewToken,
 };
-use std::sync::Arc;
 
 #[derive(Debug, Clone, Default)]
 pub struct SourceMap {
@@ -45,29 +46,36 @@ impl SourceMap {
         }
     }
 
-    /// Convert `SourceMap` to vlq sourcemap string.
+    /// Convert the vlq sourcemap to to `SourceMap`.
     /// # Errors
     ///
     /// The `serde_json` deserialize Error.
-    pub fn from_json_string(value: &str) -> Result<Self> {
+    pub fn from_json(value: JSONSourceMap) -> Result<Self> {
         decode(value)
     }
 
     /// Convert the vlq sourcemap string to `SourceMap`.
     /// # Errors
     ///
-    /// The `serde_json` serialization Error.
-    pub fn to_json_string(&self) -> Result<String> {
+    /// The `serde_json` deserialize Error.
+    pub fn from_json_string(value: &str) -> Result<Self> {
+        decode_from_string(value)
+    }
+
+    /// Convert `SourceMap` to vlq sourcemap.
+    pub fn to_json(&self) -> JSONSourceMap {
         encode(self)
     }
 
+    /// Convert `SourceMap` to vlq sourcemap string.
+    pub fn to_json_string(&self) -> String {
+        encode_to_string(self)
+    }
+
     /// Convert `SourceMap` to vlq sourcemap data url.
-    /// # Errors
-    ///
-    /// The `serde_json` serialization Error.
-    pub fn to_data_url(&self) -> Result<String> {
-        let base_64_str = base64_simd::STANDARD.encode_to_string(self.to_json_string()?.as_bytes());
-        Ok(format!("data:application/json;charset=utf-8;base64,{base_64_str}"))
+    pub fn to_data_url(&self) -> String {
+        let base_64_str = base64_simd::STANDARD.encode_to_string(self.to_json_string().as_bytes());
+        format!("data:application/json;charset=utf-8;base64,{base_64_str}")
     }
 
     pub fn get_file(&self) -> Option<&str> {

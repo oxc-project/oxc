@@ -27,13 +27,13 @@ mod typescript;
 mod unicode;
 mod whitespace;
 
-use rustc_hash::FxHashMap;
 use std::collections::VecDeque;
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::RegExpFlags;
-use oxc_diagnostics::Error;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{SourceType, Span};
+use rustc_hash::FxHashMap;
 
 use self::{
     byte_handlers::handle_byte,
@@ -80,7 +80,7 @@ pub struct Lexer<'a> {
 
     token: Token,
 
-    pub(crate) errors: Vec<Error>,
+    pub(crate) errors: Vec<OxcDiagnostic>,
 
     lookahead: VecDeque<Lookahead<'a>>,
 
@@ -170,8 +170,8 @@ impl<'a> Lexer<'a> {
         let n = n as usize;
         debug_assert!(n > 0);
 
-        if self.lookahead.len() > n - 1 {
-            return self.lookahead[n - 1].token;
+        if let Some(lookahead) = self.lookahead.get(n - 1) {
+            return lookahead.token;
         }
 
         let position = self.source.position();
@@ -223,8 +223,8 @@ impl<'a> Lexer<'a> {
     }
 
     // ---------- Private Methods ---------- //
-    fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.push(error.into());
+    fn error(&mut self, error: OxcDiagnostic) {
+        self.errors.push(error);
     }
 
     /// Get the length offset from the source, in UTF-8 bytes
@@ -251,26 +251,47 @@ impl<'a> Lexer<'a> {
         self.source.next_char().unwrap()
     }
 
+    /// Consume the current char and the next if not at EOF
+    #[inline]
+    fn next_2_chars(&mut self) -> Option<[char; 2]> {
+        self.source.next_2_chars()
+    }
+
+    /// Consume the current char and the next
+    #[inline]
+    fn consume_2_chars(&mut self) -> [char; 2] {
+        self.next_2_chars().unwrap()
+    }
+
+    /// Peek the next byte without advancing the position
+    #[inline]
+    fn peek_byte(&self) -> Option<u8> {
+        self.source.peek_byte()
+    }
+
+    /// Peek the next two bytes without advancing the position
+    #[inline]
+    fn peek_2_bytes(&self) -> Option<[u8; 2]> {
+        self.source.peek_2_bytes()
+    }
+
     /// Peek the next char without advancing the position
     #[inline]
-    fn peek(&self) -> Option<char> {
+    fn peek_char(&self) -> Option<char> {
         self.source.peek_char()
     }
 
-    /// Peek the next next char without advancing the position
-    #[inline]
-    fn peek2(&self) -> Option<char> {
-        self.source.peek_char2()
-    }
-
-    /// Peek the next character, and advance the current position if it matches
-    #[inline]
-    fn next_eq(&mut self, c: char) -> bool {
-        let matched = self.peek() == Some(c);
-        if matched {
-            self.source.next_char().unwrap();
-        }
-        matched
+    /// Peek the next byte, and advance the current position if it matches
+    /// the given ASCII char.
+    // `#[inline(always)]` to make sure the `assert!` gets optimized out.
+    #[allow(clippy::inline_always)]
+    #[inline(always)]
+    fn next_ascii_byte_eq(&mut self, b: u8) -> bool {
+        // TODO: can be replaced by `std::ascii:Char` once stabilized.
+        // https://github.com/rust-lang/rust/issues/110998
+        assert!(b.is_ascii());
+        // SAFETY: `b` is a valid ASCII char.
+        unsafe { self.source.advance_if_ascii_eq(b) }
     }
 
     fn current_offset(&self) -> Span {
@@ -281,9 +302,9 @@ impl<'a> Lexer<'a> {
     /// Return `IllegalCharacter` Error or `UnexpectedEnd` if EOF
     fn unexpected_err(&mut self) {
         let offset = self.current_offset();
-        match self.peek() {
-            Some(c) => self.error(diagnostics::InvalidCharacter(c, offset)),
-            None => self.error(diagnostics::UnexpectedEnd(offset)),
+        match self.peek_char() {
+            Some(c) => self.error(diagnostics::invalid_character(c, offset)),
+            None => self.error(diagnostics::unexpected_end(offset)),
         }
     }
 
@@ -294,7 +315,7 @@ impl<'a> Lexer<'a> {
             let offset = self.offset();
             self.token.start = offset;
 
-            let Some(byte) = self.source.peek_byte() else {
+            let Some(byte) = self.peek_byte() else {
                 return Kind::Eof;
             };
 
@@ -308,6 +329,8 @@ impl<'a> Lexer<'a> {
 }
 
 /// Call a closure while hinting to compiler that this branch is rarely taken.
+/// "Cold trampoline function", suggested in:
+/// <https://users.rust-lang.org/t/is-cold-the-only-reliable-way-to-hint-to-branch-predictor/106509/2>
 #[cold]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()

@@ -8,19 +8,18 @@ use std::{
 };
 
 use dashmap::DashMap;
-use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
-use rustc_hash::FxHashSet;
-
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, FailedToOpenFileError};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_resolver::Resolver;
 use oxc_semantic::{ModuleRecord, SemanticBuilder};
 use oxc_span::{SourceType, VALID_EXTENSIONS};
+use rayon::{iter::ParallelBridge, prelude::ParallelIterator};
+use rustc_hash::FxHashSet;
 
 use crate::{
     partial_loader::{JavaScriptSource, PartialLoader, LINT_PARTIAL_LOADER_EXT},
-    Fixer, LintContext, Linter, Message,
+    Fixer, Linter, Message,
 };
 
 pub struct LintServiceOptions {
@@ -177,8 +176,11 @@ impl Runtime {
             return None;
         }
         let source_type = source_type.unwrap_or_default();
-        let file_result = fs::read_to_string(path)
-            .map_err(|e| Error::new(FailedToOpenFileError(path.to_path_buf(), e)));
+        let file_result = fs::read_to_string(path).map_err(|e| {
+            Error::new(OxcDiagnostic::error(format!(
+                "Failed to open file {path:?} with error \"{e}\""
+            )))
+        });
         Some(match file_result {
             Ok(source_text) => Ok((source_type, source_text)),
             Err(e) => Err(e),
@@ -225,13 +227,14 @@ impl Runtime {
                 self.process_source(path, &allocator, source_text, source_type, true, tx_error);
 
             // TODO: Span is wrong, ban this feature for file process by `PartialLoader`.
-            if !is_processed_by_partial_loader && self.linter.options().fix {
+            if !is_processed_by_partial_loader && self.linter.options().fix.is_some() {
                 let fix_result = Fixer::new(source_text, messages).fix();
                 fs::write(path, fix_result.fixed_code.as_bytes()).unwrap();
                 messages = fix_result.messages;
             }
 
             if !messages.is_empty() {
+                self.ignore_path(path);
                 let errors = messages.into_iter().map(|m| m.error).collect();
                 let path = path.strip_prefix(&self.cwd).unwrap_or(path);
                 let diagnostics = DiagnosticService::wrap_diagnostics(path, source_text, errors);
@@ -260,10 +263,14 @@ impl Runtime {
 
         let program = allocator.alloc(ret.program);
 
+        let trivias = ret.trivias;
+
         // Build the module record to unblock other threads from waiting for too long.
         // The semantic model is not built at this stage.
         let semantic_builder = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
+            .with_cfg(true)
+            .with_build_jsdoc(true)
+            .with_trivias(trivias)
             .with_check_syntax_error(check_syntax_errors)
             .build_module_record(path.to_path_buf(), program);
         let module_record = semantic_builder.module_record();
@@ -288,7 +295,9 @@ impl Runtime {
                 .for_each_with(tx_error, |tx_error, (specifier, resolution)| {
                     let path = resolution.path();
                     self.process_path(path, tx_error);
-                    let Some(target_module_record_ref) = self.module_map.get(path) else { return };
+                    let Some(target_module_record_ref) = self.module_map.get(path) else {
+                        return;
+                    };
                     let ModuleState::Resolved(target_module_record) =
                         target_module_record_ref.value()
                     else {
@@ -344,9 +353,7 @@ impl Runtime {
             return semantic_ret.errors.into_iter().map(|err| Message::new(err, None)).collect();
         };
 
-        let lint_ctx =
-            LintContext::new(path.to_path_buf().into_boxed_path(), &Rc::new(semantic_ret.semantic));
-        self.linter.run(lint_ctx)
+        self.linter.run(path, Rc::new(semantic_ret.semantic))
     }
 
     fn init_cache_state(&self, path: &Path) -> bool {

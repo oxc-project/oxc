@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc"
-version                = "0.12.5"
+version                = "0.23.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -11,6 +11,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/src"]
 
 [lints]
 workspace = true
@@ -20,23 +21,30 @@ test    = false
 doctest = false
 
 [dependencies]
-oxc_allocator   = { workspace = true }
-oxc_ast         = { workspace = true }
-oxc_diagnostics = { workspace = true }
-oxc_index       = { workspace = true }
-oxc_parser      = { workspace = true }
-oxc_span        = { workspace = true }
-oxc_syntax      = { workspace = true }
-oxc_semantic    = { workspace = true, optional = true }
-oxc_transformer = { workspace = true, optional = true }
-oxc_minifier    = { workspace = true, optional = true }
-oxc_codegen     = { workspace = true, optional = true }
-oxc_sourcemap   = { workspace = true, optional = true }
+oxc_allocator             = { workspace = true }
+oxc_ast                   = { workspace = true }
+oxc_diagnostics           = { workspace = true }
+oxc_index                 = { workspace = true }
+oxc_parser                = { workspace = true }
+oxc_span                  = { workspace = true }
+oxc_syntax                = { workspace = true }
+oxc_semantic              = { workspace = true, optional = true }
+oxc_transformer           = { workspace = true, optional = true }
+oxc_minifier              = { workspace = true, optional = true }
+oxc_mangler               = { workspace = true, optional = true }
+oxc_codegen               = { workspace = true, optional = true }
+oxc_sourcemap             = { workspace = true, optional = true }
+oxc_isolated_declarations = { workspace = true, optional = true }
 
 [features]
-serialize   = ["oxc_ast/serialize", "oxc_span/serialize", "oxc_syntax/serialize", "oxc_semantic?/serialize"]
-semantic    = ["oxc_semantic"]
-transformer = ["oxc_transformer"]
-minifier    = ["oxc_minifier"]
-codegen     = ["oxc_codegen"]
-sourcemap   = ["oxc_sourcemap"]
+serialize             = ["oxc_ast/serialize", "oxc_semantic?/serialize", "oxc_span/serialize", "oxc_syntax/serialize"]
+semantic              = ["oxc_semantic"]
+transformer           = ["oxc_transformer"]
+minifier              = ["oxc_mangler", "oxc_minifier"]
+codegen               = ["oxc_codegen"]
+isolated_declarations = ["oxc_isolated_declarations"]
+
+sourcemap            = ["oxc_sourcemap"]
+sourcemap_concurrent = ["oxc_sourcemap/concurrent", "sourcemap"]
+
+wasm = ["oxc_transformer/wasm"]

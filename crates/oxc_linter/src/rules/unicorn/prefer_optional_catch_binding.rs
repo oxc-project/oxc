@@ -2,19 +2,16 @@ use oxc_ast::{
     ast::{BindingPattern, BindingPatternKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-optional-catch-binding): Prefer omitting the catch binding parameter if it is unused")]
-#[diagnostic(severity(warning))]
-struct PreferOptionalCatchBindingDiagnostic(#[label] pub Span);
+fn prefer_optional_catch_binding_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer omitting the catch binding parameter if it is unused")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferOptionalCatchBinding;
@@ -46,12 +43,14 @@ declare_oxc_lint!(
 
 impl Rule for PreferOptionalCatchBinding {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CatchParameter(catch_param) = node.kind() else { return };
+        let AstKind::CatchParameter(catch_param) = node.kind() else {
+            return;
+        };
         let references_count = get_param_references_count(&catch_param.pattern, ctx);
         if references_count != 0 {
             return;
         }
-        ctx.diagnostic(PreferOptionalCatchBindingDiagnostic(catch_param.pattern.span()));
+        ctx.diagnostic(prefer_optional_catch_binding_diagnostic(catch_param.pattern.span()));
     }
 }
 

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_danger
 ---
   ⚠ eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop
    ╭─[no_danger.tsx:1:6]

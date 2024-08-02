@@ -1,8 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: bad_replace_all_arg
 ---
-  ⚠ deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
  1 │ withSpaces.replaceAll(/\s+/, ',');
    ·            ─────┬──── ──┬──
@@ -11,7 +10,7 @@ expression: bad_replace_all_arg
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
 
-  ⚠ deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
  1 │ withSpaces.replaceAll(/\s+/i, ',');
    ·            ─────┬──── ───┬──
@@ -20,7 +19,7 @@ expression: bad_replace_all_arg
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
 
-  ⚠ deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
  1 │ withSpaces.replaceAll(new RegExp('\s+'), ',');
    ·            ─────┬──── ────────┬────────
@@ -29,7 +28,7 @@ expression: bad_replace_all_arg
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
 
-  ⚠ deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:1:12]
  1 │ withSpaces.replaceAll(new RegExp('\s+','i'), ',');
    ·            ─────┬──── ──────────┬──────────
@@ -38,13 +37,13 @@ expression: bad_replace_all_arg
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
 
-  ⚠ deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:2:25]
  1 │ 
  2 │             const foo = /\s+/;
    ·                         ──┬──
    ·                           ╰── RegExp supplied here
- 3 │             
+ 3 │ 
  4 │             withSpaces.replaceAll(foo, ',');
    ·                        ─────┬────
    ·                             ╰── `replaceAll` called here
@@ -52,13 +51,13 @@ expression: bad_replace_all_arg
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
 
-  ⚠ deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:2:25]
  1 │ 
  2 │             const foo = /\s+/i;
    ·                         ───┬──
    ·                            ╰── RegExp supplied here
- 3 │             
+ 3 │ 
  4 │             withSpaces.replaceAll(foo, ',');
    ·                        ─────┬────
    ·                             ╰── `replaceAll` called here
@@ -66,13 +65,13 @@ expression: bad_replace_all_arg
    ╰────
   help: To replace all occurrences of a string, use the `replaceAll` method with the global flag (g) in the regular expression.
 
-  ⚠ deepscan(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
+  ⚠ oxc(bad-replace-all-arg): Global flag (g) is missing in the regular expression supplied to the `replaceAll` method.
    ╭─[bad_replace_all_arg.tsx:2:25]
  1 │ 
  2 │             const foo = new RegExp('\s+');
    ·                         ────────┬────────
    ·                                 ╰── RegExp supplied here
- 3 │         
+ 3 │ 
  4 │             withSpaces.replaceAll(foo, ',');
    ·                        ─────┬────
    ·                             ╰── `replaceAll` called here

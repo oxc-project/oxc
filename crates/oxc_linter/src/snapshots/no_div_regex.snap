@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-div-regex): A regular expression literal can be confused with '/='.
+   ╭─[no_div_regex.tsx:1:29]
+ 1 │ var f = function() { return /=foo/; };
+   ·                             ──────
+   ╰────
+  help: Rewrite `/=` into `/[=]`

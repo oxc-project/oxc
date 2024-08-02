@@ -1,32 +1,63 @@
 #![allow(clippy::wildcard_imports)]
+// TODO: I'm not sure if it is a but or intentional but clippy needs this allowed both on this
+// module and the generated one.
+#![allow(clippy::self_named_module_files)]
 
 //! # Oxc AST
 //!
+//! Abstract Syntax Tree nodes for Oxc. Supports both TypeScript and JavaScript.
+//!
 //! This is almost similar to [estree](https://github.com/estree/estree) except a few places:
-//! * `Identifier` is replaced with explicit `BindingIdentifier`, `IdentifierReference`, `IdentifierName` per spec
-//! * `AssignmentExpression`.`left` `Pattern` is replaced with `AssignmentTarget`
+//! * `Identifier` is replaced with explicit [`BindingIdentifier`], [`IdentifierReference`], [`IdentifierName`] per spec
+//! * `AssignmentExpression`.`left` `Pattern` is replaced with [`AssignmentTarget`]
+//!
+//! ## Parsing
+//!
+//! You can obtain an AST by parsing source code with a [`Parser`] from [`oxc_parser`].
 //!
 //! ## Cargo Features
 //! * `"serde"` enables support for serde serialization
+//!
+//! [`BindingIdentifier`]: ast::BindingIdentifier
+//! [`IdentifierReference`]: ast::IdentifierReference
+//! [`IdentifierName`]: ast::IdentifierName
+//! [`AssignmentTarget`]: ast::AssignmentTarget
+//! [`oxc_parser`]: <https://docs.rs/oxc_parser>
+//! [`Parser`]: <https://docs.rs/oxc_parser/latest/oxc_parser/struct.Parser.html>
 
 #[cfg(feature = "serialize")]
 mod serialize;
 
 pub mod ast;
-mod ast_builder;
-mod ast_kind;
+mod ast_builder_impl;
+mod ast_impl;
+mod ast_kind_impl;
 pub mod precedence;
-mod span;
 pub mod syntax_directed_operations;
 mod trivia;
-pub mod visit;
+
+mod generated {
+    pub mod ast_builder;
+    pub mod ast_kind;
+    pub mod span;
+    pub mod visit;
+    pub mod visit_mut;
+}
+
+pub mod visit {
+    pub use crate::generated::visit::*;
+    pub use crate::generated::visit_mut::*;
+}
+
+pub use generated::ast_builder;
+pub use generated::ast_kind;
 
 pub use num_bigint::BigUint;
 
 pub use crate::{
     ast_builder::AstBuilder,
     ast_kind::{AstKind, AstType},
-    trivia::{Comment, CommentKind, Trivias, TriviasMap},
+    trivia::{Comment, CommentKind, SortedComments, Trivias},
     visit::{Visit, VisitMut},
 };
 
@@ -55,8 +86,9 @@ pub use crate::{
 #[cfg(target_pointer_width = "64")]
 #[test]
 fn size_asserts() {
-    use crate::ast;
     use static_assertions::assert_eq_size;
+
+    use crate::ast;
 
     assert_eq_size!(ast::Statement, [u8; 16]);
     assert_eq_size!(ast::Expression, [u8; 16]);

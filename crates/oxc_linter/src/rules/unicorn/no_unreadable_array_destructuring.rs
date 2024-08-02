@@ -1,21 +1,16 @@
 use oxc_allocator::Vec;
 use oxc_ast::{ast::AssignmentTarget, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-unreadable-array-destructuring): Disallow unreadable array destructuring")]
-#[diagnostic(
-    severity(warning),
-    help("Array destructuring may not contain consecutive ignored values.")
-)]
-struct NoUnreadableArrayDestructuringDiagnostic(#[label] pub Span);
+fn no_unreadable_array_destructuring_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow unreadable array destructuring")
+        .with_help("Array destructuring may not contain consecutive ignored values.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnreadableArrayDestructuring;
@@ -58,7 +53,7 @@ impl Rule for NoUnreadableArrayDestructuring {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ArrayPattern(array_pattern) = node.kind() {
             if is_unreadable_array_destructuring(&array_pattern.elements, &array_pattern.rest) {
-                ctx.diagnostic(NoUnreadableArrayDestructuringDiagnostic(array_pattern.span));
+                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
             }
         }
 
@@ -66,7 +61,7 @@ impl Rule for NoUnreadableArrayDestructuring {
             node.kind()
         {
             if is_unreadable_array_destructuring(&array_pattern.elements, &array_pattern.rest) {
-                ctx.diagnostic(NoUnreadableArrayDestructuringDiagnostic(array_pattern.span));
+                ctx.diagnostic(no_unreadable_array_destructuring_diagnostic(array_pattern.span));
             }
         }
     }

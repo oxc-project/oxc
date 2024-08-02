@@ -2,15 +2,12 @@ use oxc_ast::{
     ast::{TSType, TSTypeName, TSTypeOperatorOperator, TSTypeReference},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule};
+use crate::{context::LintContext, rule::Rule};
 
 #[derive(Debug, Default, Clone)]
 pub struct ArrayType(Box<ArrayTypeConfig>);
@@ -29,31 +26,32 @@ declare_oxc_lint!(
     /// ```
     ArrayType,
     style,
+    fix
 );
 
-#[derive(Debug, Diagnostic, Error)]
-pub enum ArrayTypeDiagnostic {
-    #[error("typescript-eslint(array-type): Array type using '{0}{2}[]' is forbidden. Use '{1}<{2}>' instead.")]
-    #[diagnostic(severity(warning))]
-    // readonlyPrefix className type
-    Generic(String, String, String, #[label] Span),
+fn generic(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Array type using '{x0}{x2}[]' is forbidden. Use '{x1}<{x2}>' instead."
+    ))
+    .with_label(span3)
+}
 
-    #[error(
-        "typescript-eslint(array-type): Array type using '{0}{2}[]' is forbidden for non-simple types. Use '{1}<{2}>' instead."
-    )]
-    #[diagnostic(severity(warning))]
-    // readonlyPrefix className type
-    GenericSimple(String, String, String, #[label] Span),
+fn generic_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Array type using '{x0}{x2}[]' is forbidden for non-simple types. Use '{x1}<{x2}>' instead.")).with_label(span3)
+}
 
-    #[error("typescript-eslint(array-type): Array type using '{1}<{2}>' is forbidden. Use '{0}{2}[]' instead.")]
-    #[diagnostic(severity(warning))]
-    // readonlyPrefix className type
-    Array(String, String, String, #[label] Span),
+fn array(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Array type using '{x1}<{x2}>' is forbidden. Use '{x0}{x2}[]' instead."
+    ))
+    .with_label(span3)
+}
 
-    #[error("typescript-eslint(array-type): Array type using '{1}<{2}>' is forbidden for simple types. Use '{0}{2}[]' instead.")]
-    #[diagnostic(severity(warning))]
-    // readonlyPrefix className type
-    ArraySimple(String, String, String, #[label] Span),
+fn array_simple(x0: &str, x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Array type using '{x1}<{x2}>' is forbidden for simple types. Use '{x0}{x2}[]' instead."
+    ))
+    .with_label(span3)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -129,6 +127,10 @@ impl Rule for ArrayType {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 fn check(
@@ -194,6 +196,7 @@ fn check_and_report_error_generic(
     if matches!(config, ArrayOption::Array) {
         return;
     }
+    let type_param = type_param.without_parenthesized();
     if matches!(config, ArrayOption::ArraySimple) && is_simple_type(type_param) {
         return;
     }
@@ -204,31 +207,22 @@ fn check_and_report_error_generic(
     let message_type = get_message_type(type_param, &source_text);
 
     let diagnostic = match config {
-        ArrayOption::Generic => ArrayTypeDiagnostic::Generic(
-            readonly_prefix.to_string(),
-            class_name.to_string(),
-            message_type.to_string(),
-            type_reference_span,
-        ),
-        _ => ArrayTypeDiagnostic::GenericSimple(
-            readonly_prefix.to_string(),
-            class_name.to_string(),
-            message_type.to_string(),
-            type_reference_span,
-        ),
+        ArrayOption::Generic => {
+            generic(readonly_prefix, class_name, message_type, type_reference_span)
+        }
+        _ => generic_simple(readonly_prefix, class_name, message_type, type_reference_span),
     };
     let element_type_span = get_ts_element_type_span(type_param);
-    let Some(element_type_span) = element_type_span else { return };
+    let Some(element_type_span) = element_type_span else {
+        return;
+    };
 
-    ctx.diagnostic_with_fix(diagnostic, || {
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
         let type_text =
             &source_text[element_type_span.start as usize..element_type_span.end as usize];
         let array_type_identifier = if is_readonly { "ReadonlyArray" } else { "Array" };
 
-        Fix::new(
-            array_type_identifier.to_string() + "<" + type_text + ">",
-            Span::new(type_reference_span.start, type_reference_span.end),
-        )
+        fixer.replace(type_reference_span, format!("{array_type_identifier}<{type_text}>"))
     });
 }
 
@@ -252,27 +246,22 @@ fn check_and_report_error_array(
     if matches!(config, ArrayOption::Generic) {
         return;
     }
-    let readonly_prefix: &str = if is_readonly_array_type { "readonly " } else { "" };
+    let readonly_prefix: &'static str = if is_readonly_array_type { "readonly " } else { "" };
     let class_name = if is_readonly_array_type { "ReadonlyArray" } else { "Array" };
     let type_params = &ts_type_reference.type_parameters;
 
     if type_params.is_none() || type_params.as_ref().unwrap().params.len() == 0 {
         let diagnostic = match config {
-            ArrayOption::Array => ArrayTypeDiagnostic::Array(
-                readonly_prefix.to_string(),
-                class_name.to_string(),
-                "any".to_string(),
-                ts_type_reference.span,
-            ),
-            _ => ArrayTypeDiagnostic::ArraySimple(
-                readonly_prefix.to_string(),
-                ident_ref_type_name.name.to_string(),
-                "any".to_string(),
+            ArrayOption::Array => array(readonly_prefix, class_name, "any", ts_type_reference.span),
+            _ => array_simple(
+                readonly_prefix,
+                &ident_ref_type_name.name,
+                "any",
                 ts_type_reference.span,
             ),
         };
-        ctx.diagnostic_with_fix(diagnostic, || {
-            Fix::new(readonly_prefix.to_string() + "any[]", ts_type_reference.span)
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            fixer.replace(ts_type_reference.span, readonly_prefix.to_string() + "any[]")
         });
         return;
     }
@@ -295,36 +284,33 @@ fn check_and_report_error_array(
     let parent_parens = false;
 
     let element_type_span = get_ts_element_type_span(first_type_param);
-    let Some(element_type_span) = element_type_span else { return };
-
-    let type_text =
-        &ctx.source_text()[element_type_span.start as usize..element_type_span.end as usize];
-
-    let mut start = String::from(if parent_parens { "(" } else { "" });
-    start.push_str(readonly_prefix);
-    start.push_str(if type_parens { "(" } else { "" });
-
-    let mut end = String::from(if type_parens { ")" } else { "" });
-    end.push_str("[]");
-    end.push_str(if parent_parens { ")" } else { "" });
+    let Some(element_type_span) = element_type_span else {
+        return;
+    };
 
     let message_type = get_message_type(first_type_param, ctx.source_text());
     let diagnostic = match config {
-        ArrayOption::Array => ArrayTypeDiagnostic::Array(
-            readonly_prefix.to_string(),
-            class_name.to_string(),
-            message_type.to_string(),
-            ts_type_reference.span,
-        ),
-        _ => ArrayTypeDiagnostic::ArraySimple(
-            readonly_prefix.to_string(),
-            ident_ref_type_name.name.to_string(),
-            message_type.to_string(),
+        ArrayOption::Array => {
+            array(readonly_prefix, class_name, message_type, ts_type_reference.span)
+        }
+        _ => array_simple(
+            readonly_prefix,
+            &ident_ref_type_name.name,
+            message_type,
             ts_type_reference.span,
         ),
     };
-    ctx.diagnostic_with_fix(diagnostic, || {
-        Fix::new(start + type_text + end.as_str(), ts_type_reference.span)
+    ctx.diagnostic_with_fix(diagnostic, |fixer| {
+        let mut start = String::from(if parent_parens { "(" } else { "" });
+        start.push_str(readonly_prefix);
+        start.push_str(if type_parens { "(" } else { "" });
+
+        let mut end = String::from(if type_parens { ")" } else { "" });
+        end.push_str("[]");
+        end.push_str(if parent_parens { ")" } else { "" });
+
+        let type_text = fixer.source_range(element_type_span);
+        fixer.replace(ts_type_reference.span, start + type_text + end.as_str())
     });
 }
 
@@ -376,7 +362,9 @@ fn is_simple_type(ts_type: &TSType) -> bool {
 fn get_message_type<'a>(type_param: &'a TSType, source_text: &'a str) -> &'a str {
     if is_simple_type(type_param) {
         let element_type_span = get_ts_element_type_span(type_param);
-        let Some(element_type_span) = element_type_span else { return "T" };
+        let Some(element_type_span) = element_type_span else {
+            return "T";
+        };
         return &source_text[element_type_span.start as usize..element_type_span.end as usize];
     }
     "T"

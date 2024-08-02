@@ -1,12 +1,14 @@
 use rustc_hash::FxHashMap;
+use schemars::JsonSchema;
 use serde::Deserialize;
 
-/// <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
-#[derive(Debug, Deserialize, Default)]
+// <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
+#[derive(Debug, Deserialize, JsonSchema)]
 pub struct JSDocPluginSettings {
     /// For all rules but NOT apply to `check-access` and `empty-tags` rule
     #[serde(default, rename = "ignorePrivate")]
     pub ignore_private: bool,
+
     /// For all rules but NOT apply to `empty-tags` rule
     #[serde(default, rename = "ignoreInternal")]
     pub ignore_internal: bool,
@@ -14,12 +16,15 @@ pub struct JSDocPluginSettings {
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default = "default_true", rename = "ignoreReplacesDocs")]
     pub ignore_replaces_docs: bool,
+
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default = "default_true", rename = "overrideReplacesDocs")]
     pub override_replaces_docs: bool,
+
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default, rename = "augmentsExtendsReplacesDocs")]
-    pub arguments_extends_replaces_docs: bool,
+    pub augments_extends_replaces_docs: bool,
+
     /// Only for `require-(yields|returns|description|example|param|throws)` rule
     #[serde(default, rename = "implementsReplacesDocs")]
     pub implements_replaces_docs: bool,
@@ -70,6 +75,23 @@ pub struct JSDocPluginSettings {
     // }[]
 }
 
+// `Default` attribute does not call custom `default = "path"` function!
+impl Default for JSDocPluginSettings {
+    fn default() -> Self {
+        Self {
+            ignore_private: false,
+            ignore_internal: false,
+            // Exists only for these defaults
+            ignore_replaces_docs: true,
+            override_replaces_docs: true,
+            augments_extends_replaces_docs: false,
+            implements_replaces_docs: false,
+            exempt_destructured_roots_from_checks: false,
+            tag_name_preference: FxHashMap::default(),
+        }
+    }
+}
+
 impl JSDocPluginSettings {
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if blocked
@@ -80,6 +102,7 @@ impl JSDocPluginSettings {
             _ => None,
         }
     }
+
     /// Only for `check-tag-names` rule
     /// Return `Some(reason)` if replacement found or default aliased
     pub fn check_preferred_tag_name(&self, original_name: &str) -> Option<String> {
@@ -122,6 +145,7 @@ impl JSDocPluginSettings {
             }
         }
     }
+
     /// Only for `check-tag-names` rule
     /// Return all user replacement tag names
     pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
@@ -156,7 +180,7 @@ fn default_true() -> bool {
     true
 }
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
 #[serde(untagged)]
 enum TagNamePreference {
     TagNameOnly(String),
@@ -173,8 +197,9 @@ enum TagNamePreference {
 
 #[cfg(test)]
 mod test {
-    use super::JSDocPluginSettings;
     use serde::Deserialize;
+
+    use super::JSDocPluginSettings;
 
     #[test]
     fn parse_defaults() {
@@ -185,7 +210,17 @@ mod test {
         assert_eq!(settings.tag_name_preference.len(), 0);
         assert!(settings.ignore_replaces_docs);
         assert!(settings.override_replaces_docs);
-        assert!(!settings.arguments_extends_replaces_docs);
+        assert!(!settings.augments_extends_replaces_docs);
+        assert!(!settings.implements_replaces_docs);
+
+        let settings = JSDocPluginSettings::default();
+
+        assert!(!settings.ignore_private);
+        assert!(!settings.ignore_internal);
+        assert_eq!(settings.tag_name_preference.len(), 0);
+        assert!(settings.ignore_replaces_docs);
+        assert!(settings.override_replaces_docs);
+        assert!(!settings.augments_extends_replaces_docs);
         assert!(!settings.implements_replaces_docs);
     }
 

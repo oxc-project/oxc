@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{JSXAttributeValue, JSXExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -17,13 +14,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(aria-role): Elements with ARIA roles must use a valid, non-abstract ARIA role.")]
-#[diagnostic(
-    severity(warning),
-    help("Set a valid, non-abstract ARIA role for element with ARIA{1}")
-)]
-struct AriaRoleDiagnostic(#[label] pub Span, String);
+fn aria_role_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Elements with ARIA roles must use a valid, non-abstract ARIA role.")
+        .with_help(format!("Set a valid, non-abstract ARIA role for element with ARIA{x1}"))
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct AriaRole(Box<AriaRoleConfig>);
@@ -96,10 +91,13 @@ declare_oxc_lint!(
 
 impl Rule for AriaRole {
     fn from_configuration(value: serde_json::Value) -> Self {
+        let Some(value) = value.as_array() else {
+            return Self::default();
+        };
         let mut ignore_non_dom = false;
         let mut allowed_invalid_roles: Vec<String> = vec![];
 
-        let _ = value.as_array().unwrap().iter().find(|v| {
+        let _ = value.iter().find(|v| {
             if let serde_json::Value::Object(obj) = v {
                 if let Some(serde_json::Value::Bool(val)) = obj.get("ignoreNonDOM") {
                     ignore_non_dom = *val;
@@ -137,7 +135,7 @@ impl Rule for AriaRole {
                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
                         let jsexp = &container.expression;
                         if matches!(jsexp, JSXExpression::NullLiteral(_)) || jsexp.is_undefined() {
-                            ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
+                            ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                         }
                     }
                     Some(JSXAttributeValue::StringLiteral(str)) => {
@@ -147,14 +145,14 @@ impl Rule for AriaRole {
                             !VALID_ARIA_ROLES.contains(word)
                                 && !self.allowed_invalid_roles.contains(&(*word).to_string())
                         }) {
-                            ctx.diagnostic(AriaRoleDiagnostic(
+                            ctx.diagnostic(aria_role_diagnostic(
                                 str.span,
-                                format!(", `{error_prop}` is an invalid aria role"),
+                                &format!(", `{error_prop}` is an invalid aria role"),
                             ));
                         }
                     }
                     _ => {
-                        ctx.diagnostic(AriaRoleDiagnostic(attr.span, String::new()));
+                        ctx.diagnostic(aria_role_diagnostic(attr.span, ""));
                     }
                 }
             }

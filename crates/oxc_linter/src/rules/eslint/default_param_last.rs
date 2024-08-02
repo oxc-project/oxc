@@ -1,18 +1,15 @@
-use oxc_ast::ast::FormalParameter;
-use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_ast::{ast::FormalParameter, AstKind};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(default-param-last): Default parameters should be last")]
-#[diagnostic(severity(warning), help("Enforce default parameters to be last."))]
-struct DefaultParamLastDiagnostic(#[label] pub Span);
+fn default_param_last_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Default parameters should be last")
+        .with_help("Enforce default parameters to be last.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct DefaultParamLast;
@@ -61,7 +58,7 @@ fn check_params<'a>(items: &'a [FormalParameter<'a>], ctx: &LintContext<'a>) {
             continue;
         }
         if has_seen_plain_param && param.pattern.kind.is_assignment_pattern() {
-            ctx.diagnostic(DefaultParamLastDiagnostic(param.span));
+            ctx.diagnostic(default_param_last_diagnostic(param.span));
         }
     }
 }

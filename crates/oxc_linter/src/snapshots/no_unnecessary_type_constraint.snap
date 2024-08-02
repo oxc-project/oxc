@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_unnecessary_type_constraint
 ---
   ⚠ typescript-eslint(no-unnecessary-type-constraint): constraining the generic type "T" to "any" does nothing and is unnecessary
    ╭─[no_unnecessary_type_constraint.tsx:1:15]

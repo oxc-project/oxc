@@ -1,0 +1,176 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:2:1]
+ 1 │ switch(foo) { case 0: a();
+ 2 │ case 1: b() }
+   · ───────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:2:1]
+ 1 │ switch(foo) { case 0: a();
+ 2 │ default: b() }
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:28]
+ 1 │ switch(foo) { case 0: a(); default: b() }
+   ·                            ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:41]
+ 1 │ switch(foo) { case 0: if (a) { break; } default: b() }
+   ·                                         ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:55]
+ 1 │ switch(foo) { case 0: try { throw 0; } catch (err) {} default: b() }
+   ·                                                       ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:44]
+ 1 │ switch(foo) { case 0: while (a) { break; } default: b() }
+   ·                                            ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:48]
+ 1 │ switch(foo) { case 0: do { break; } while (a); default: b() }
+   ·                                                ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:3:2]
+ 2 │ 
+ 3 │  default: b() }
+   ·  ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:26]
+ 1 │ switch(foo) { case 0: {} default: b() }
+   ·                          ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:52]
+ 1 │ switch(foo) { case 0: a(); { /* falls through */ } default: b() }
+   ·                                                    ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:52]
+ 1 │ switch(foo) { case 0: { /* falls through */ } a(); default: b() }
+   ·                                                    ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:54]
+ 1 │ switch(foo) { case 0: if (a) { /* falls through */ } default: b() }
+   ·                                                      ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:51]
+ 1 │ switch(foo) { case 0: { { /* falls through */ } } default: b() }
+   ·                                                   ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:41]
+ 1 │ switch(foo) { case 0: { /* comment */ } default: b() }
+   ·                                         ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:3:2]
+ 2 │  // comment
+ 3 │  default: b() }
+   ·  ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:1:50]
+ 1 │ switch(foo) { case 0: a(); /* falling through */ default: b() }
+   ·                                                  ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:3:1]
+ 2 │ /* no break */
+ 3 │ case 1: b(); }
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:4:1]
+ 3 │ /* todo: fix readability */
+ 4 │ default: b() }
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'default'.
+   ╭─[no_fallthrough.tsx:4:1]
+ 3 │ /* todo: fix readability */ }
+ 4 │ default: b() }
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:3:1]
+ 2 │  /* with comments */  
+ 3 │ case 1: b(); }
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:3:1]
+ 2 │ 
+ 3 │ case 1: b(); }
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:3:1]
+ 2 │ 
+ 3 │ case 1: b(); }
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:2:4]
+ 1 │ switch (a) { case 1: 
+ 2 │  ; case 2:  }
+   ·    ───────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:1:24]
+ 1 │ switch (a) { case 1: ; case 2: ; case 3: }
+   ·                        ─────────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:1:34]
+ 1 │ switch (a) { case 1: ; case 2: ; case 3: }
+   ·                                  ───────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Expected a 'break' statement before 'case'.
+   ╭─[no_fallthrough.tsx:3:2]
+ 2 │ // eslint-enable no-fallthrough
+ 3 │  case 1: }
+   ·  ───────
+   ╰────
+
+  ⚠ eslint(no-fallthrough): Found a comment that would permit fallthrough, but case cannot fall through.
+   ╭─[no_fallthrough.tsx:1:34]
+ 1 │ switch(foo) { case 0: a(); break; /* falls through */ case 1: b(); }
+   ·                                  ─────────────────────
+   ╰────

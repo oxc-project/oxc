@@ -2,23 +2,17 @@ use oxc_ast::{
     ast::{ExportDefaultDeclarationKind, TSType},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(consistent-type-definitions):")]
-#[diagnostic(severity(warning), help("Use an `{0}` instead of a `{1}`"))]
-struct ConsistentTypeDefinitionsDiagnostic(
-    &'static str,
-    &'static str,
-    #[label("Use an `{0}` instead of a `{1}`")] pub Span,
-);
+fn consistent_type_definitions_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use an `{x0}` instead of a `{x1}`"))
+        .with_help(format!("Use an `{x0}` instead of a `{x1}`"))
+        .with_label(span2)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ConsistentTypeDefinitions {
@@ -54,7 +48,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     ConsistentTypeDefinitions,
-    style
+    style,
+    fix
 );
 
 impl Rule for ConsistentTypeDefinitions {
@@ -75,11 +70,7 @@ impl Rule for ConsistentTypeDefinitions {
                 TSType::TSTypeLiteral(_)
                     if self.config == ConsistentTypeDefinitionsConfig::Interface =>
                 {
-                    let start = if decl.modifiers.is_contains_declare() {
-                        decl.span.start + 8
-                    } else {
-                        decl.span.start
-                    };
+                    let start = if decl.declare { decl.span.start + 8 } else { decl.span.start };
 
                     let name_span_start = &decl.id.span.start;
                     let mut name_span_end = &decl.id.span.end;
@@ -97,15 +88,15 @@ impl Rule for ConsistentTypeDefinitions {
                             &ctx.source_text()[body_span.start as usize..body_span.end as usize];
 
                         ctx.diagnostic_with_fix(
-                            ConsistentTypeDefinitionsDiagnostic(
+                            consistent_type_definitions_diagnostic(
                                 "interface",
                                 "type",
                                 Span::new(start, start + 4),
                             ),
-                            || {
-                                Fix::new(
-                                    format!("interface {name} {body}"),
+                            |fixer| {
+                                fixer.replace(
                                     Span::new(start, decl.span.end),
+                                    format!("interface {name} {body}"),
                                 )
                             },
                         );
@@ -154,15 +145,15 @@ impl Rule for ConsistentTypeDefinitions {
                     };
 
                     ctx.diagnostic_with_fix(
-                        ConsistentTypeDefinitionsDiagnostic(
+                        consistent_type_definitions_diagnostic(
                             "type",
                             "interface",
                             Span::new(decl.span.start, decl.span.start + 9),
                         ),
-                        || {
-                            Fix::new(
+                        |fixer| {
+                            fixer.replace(
+                                exp.span,
                                 format!("type {name} = {body}{extends}\nexport default {name}"),
-                                Span::new(exp.span.start, exp.span.end),
                             )
                         },
                     );
@@ -173,11 +164,7 @@ impl Rule for ConsistentTypeDefinitions {
             AstKind::TSInterfaceDeclaration(decl)
                 if self.config == ConsistentTypeDefinitionsConfig::Type =>
             {
-                let start = if decl.modifiers.is_contains_declare() {
-                    decl.span.start + 8
-                } else {
-                    decl.span.start
-                };
+                let start = if decl.declare { decl.span.start + 8 } else { decl.span.start };
 
                 let name_span_start = &decl.id.span.start;
                 let mut name_span_end = &decl.id.span.end;
@@ -212,21 +199,25 @@ impl Rule for ConsistentTypeDefinitions {
                 };
 
                 ctx.diagnostic_with_fix(
-                    ConsistentTypeDefinitionsDiagnostic(
+                    consistent_type_definitions_diagnostic(
                         "type",
                         "interface",
                         Span::new(start, start + 9),
                     ),
-                    || {
-                        Fix::new(
-                            format!("type {name} = {body}{extends}"),
+                    |fixer| {
+                        fixer.replace(
                             Span::new(start, decl.span.end),
+                            format!("type {name} = {body}{extends}"),
                         )
                     },
                 );
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

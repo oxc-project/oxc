@@ -2,30 +2,32 @@ use oxc_ast::{
     ast::{
         match_expression, Argument, ArrayExpressionElement, AssignmentExpression, AssignmentTarget,
         BindingPatternKind, CallExpression, Declaration, Expression, ModuleDeclaration,
-        ModuleExportName, ObjectPropertyKind, PropertyKey, VariableDeclarator,
+        ObjectPropertyKind, PropertyKey, VariableDeclarator,
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoThenableDiagnostic {
-    #[error("eslint-plugin-unicorn(no-thenable): Do not add `then` to an object.")]
-    #[diagnostic(severity(warning), help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems"))]
-    Object(#[label] Span),
-    #[error("eslint-plugin-unicorn(no-thenable): Do not export `then`.")]
-    #[diagnostic(severity(warning), help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems"))]
-    Export(#[label] Span),
-    #[error("eslint-plugin-unicorn(no-thenable): Do not add `then` to a class.")]
-    #[diagnostic(severity(warning), help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems"))]
-    Class(#[label] Span),
+fn object(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not add `then` to an object.")
+        .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
+        .with_label(span0)
+}
+
+fn export(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not export `then`.")
+        .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
+        .with_label(span0)
+}
+
+fn class(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not add `then` to a class.")
+        .with_help("If an object is defined as 'thenable', once it's accidentally used in an await expression, it may cause problems")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -62,19 +64,19 @@ impl Rule for NoThenable {
                 expr.properties.iter().for_each(|prop| {
                     if let ObjectPropertyKind::ObjectProperty(prop) = prop {
                         if let Some(span) = contains_then(&prop.key, ctx) {
-                            ctx.diagnostic(NoThenableDiagnostic::Object(span));
+                            ctx.diagnostic(object(span));
                         }
                     }
                 });
             }
             AstKind::PropertyDefinition(def) => {
                 if let Some(span) = contains_then(&def.key, ctx) {
-                    ctx.diagnostic(NoThenableDiagnostic::Class(span));
+                    ctx.diagnostic(class(span));
                 }
             }
             AstKind::MethodDefinition(def) => {
                 if let Some(span) = contains_then(&def.key, ctx) {
-                    ctx.diagnostic(NoThenableDiagnostic::Class(span));
+                    ctx.diagnostic(class(span));
                 }
             }
             AstKind::ModuleDeclaration(ModuleDeclaration::ExportNamedDeclaration(decl)) => {
@@ -89,14 +91,14 @@ impl Rule for NoThenable {
                         Declaration::FunctionDeclaration(decl) => {
                             if let Some(bind) = decl.id.as_ref() {
                                 if bind.name == "then" {
-                                    ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
+                                    ctx.diagnostic(export(bind.span));
                                 }
                             };
                         }
                         Declaration::ClassDeclaration(decl) => {
                             if let Some(bind) = decl.id.as_ref() {
                                 if bind.name == "then" {
-                                    ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
+                                    ctx.diagnostic(export(bind.span));
                                 }
                             };
                         }
@@ -105,17 +107,8 @@ impl Rule for NoThenable {
                 }
                 // check specifier
                 for spec in &decl.specifiers {
-                    match spec.exported {
-                        ModuleExportName::Identifier(ref ident) => {
-                            if ident.name == "then" {
-                                ctx.diagnostic(NoThenableDiagnostic::Export(ident.span));
-                            }
-                        }
-                        ModuleExportName::StringLiteral(ref lit) => {
-                            if lit.value == "then" {
-                                ctx.diagnostic(NoThenableDiagnostic::Export(lit.span));
-                            }
-                        }
+                    if spec.exported.name() == "then" {
+                        ctx.diagnostic(export(spec.exported.span()));
                     }
                 }
             }
@@ -124,12 +117,12 @@ impl Rule for NoThenable {
             AstKind::AssignmentExpression(AssignmentExpression { left, .. }) => match left {
                 AssignmentTarget::ComputedMemberExpression(expr) => {
                     if let Some(span) = check_expression(&expr.expression, ctx) {
-                        ctx.diagnostic(NoThenableDiagnostic::Class(span));
+                        ctx.diagnostic(class(span));
                     }
                 }
                 AssignmentTarget::StaticMemberExpression(expr) => {
                     if expr.property.name == "then" {
-                        ctx.diagnostic(NoThenableDiagnostic::Class(expr.span));
+                        ctx.diagnostic(class(expr.span));
                     }
                 }
                 _ => {}
@@ -158,7 +151,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
     } {
     } else if let Some(inner) = expr.arguments[1].as_expression() {
         if let Some(span) = check_expression(inner, ctx) {
-            ctx.diagnostic(NoThenableDiagnostic::Object(span));
+            ctx.diagnostic(object(span));
         }
     }
 
@@ -187,7 +180,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 {
                     if let Some(expr) = inner.elements[0].as_expression() {
                         if let Some(span) = check_expression(expr, ctx) {
-                            ctx.diagnostic(NoThenableDiagnostic::Object(span));
+                            ctx.diagnostic(object(span));
                         }
                     }
                 }
@@ -200,7 +193,7 @@ fn check_binding_pattern(pat: &BindingPatternKind, ctx: &LintContext) {
     match pat {
         BindingPatternKind::BindingIdentifier(bind) => {
             if bind.name == "then" {
-                ctx.diagnostic(NoThenableDiagnostic::Export(bind.span));
+                ctx.diagnostic(export(bind.span));
             }
         }
         BindingPatternKind::ObjectPattern(obj) => {

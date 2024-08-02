@@ -1,0 +1,62 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:16]
+ 1 │ async function foo() { doSomething() }
+   ·                ───
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:2]
+ 1 │ (async function() { doSomething() })
+   ·  ──────────────────────────────────
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:1]
+ 1 │ async () => { doSomething() }
+   · ─────────────────────────────
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:1]
+ 1 │ async () => doSomething()
+   · ─────────────────────────
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:10]
+ 1 │ ({ async foo() { doSomething() } })
+   ·          ───
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:20]
+ 1 │ class A { async foo() { doSomething() } }
+   ·                    ────────────────────
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:19]
+ 1 │ (class { async foo() { doSomething() } })
+   ·                   ────────────────────
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:18]
+ 1 │ (class { async ''() { doSomething() } })
+   ·                  ────────────────────
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:16]
+ 1 │ async function foo() { async () => { await doSomething() } }
+   ·                ───
+   ╰────
+
+  ⚠ eslint(require-await): Async function has no 'await' expression.
+   ╭─[require_await.tsx:1:31]
+ 1 │ async function foo() { await (async () => { doSomething() }) }
+   ·                               ─────────────────────────────
+   ╰────

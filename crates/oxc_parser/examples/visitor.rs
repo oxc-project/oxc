@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout)]
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
@@ -45,7 +46,7 @@ struct CountASTNodes {
 }
 
 impl<'a> Visit<'a> for CountASTNodes {
-    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.functions += 1;
         walk::walk_function(self, func, flags);
     }

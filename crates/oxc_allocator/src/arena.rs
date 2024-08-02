@@ -24,7 +24,6 @@ use crate::Allocator;
 pub struct Box<'alloc, T: ?Sized>(NonNull<T>, PhantomData<(&'alloc (), T)>);
 
 impl<'alloc, T> Box<'alloc, T> {
-    #[allow(unsafe_code)]
     pub fn unbox(self) -> T {
         // SAFETY:
         // This pointer read is safe because the reference `self.0` is
@@ -37,8 +36,8 @@ impl<'alloc, T> Box<'alloc, T> {
 }
 
 impl<'alloc, T> Box<'alloc, T> {
-    pub fn new_in(x: T, alloc: &Allocator) -> Self {
-        Self(alloc.alloc(x).into(), PhantomData)
+    pub fn new_in(value: T, allocator: &Allocator) -> Self {
+        Self(NonNull::from(allocator.alloc(value)), PhantomData)
     }
 
     /// Create a fake `Box` with a dangling pointer.
@@ -54,7 +53,6 @@ impl<'alloc, T> Box<'alloc, T> {
 impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
     type Target = T;
 
-    #[allow(unsafe_code)]
     fn deref(&self) -> &T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_ref() }
@@ -62,10 +60,15 @@ impl<'alloc, T: ?Sized> ops::Deref for Box<'alloc, T> {
 }
 
 impl<'alloc, T: ?Sized> ops::DerefMut for Box<'alloc, T> {
-    #[allow(unsafe_code)]
     fn deref_mut(&mut self) -> &mut T {
         // SAFETY: self.0 is always a unique reference allocated from a Bump in Box::new_in
         unsafe { self.0.as_mut() }
+    }
+}
+
+impl<'alloc, T: ?Sized> AsRef<T> for Box<'alloc, T> {
+    fn as_ref(&self) -> &T {
+        self
     }
 }
 
@@ -121,7 +124,9 @@ impl<'alloc, T> Vec<'alloc, T> {
 
     #[inline]
     pub fn from_iter_in<I: IntoIterator<Item = T>>(iter: I, allocator: &'alloc Allocator) -> Self {
-        let mut vec = vec::Vec::new_in(&**allocator);
+        let iter = iter.into_iter();
+        let capacity = iter.size_hint().1.unwrap_or(0);
+        let mut vec = vec::Vec::with_capacity_in(capacity, &**allocator);
         vec.extend(iter);
         Self(vec)
     }

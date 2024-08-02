@@ -1,18 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{ast_util::get_declaration_of_variable, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-typeof-undefined): Compare with `undefined` directly instead of using `typeof`.")]
-#[diagnostic(severity(warning))]
-struct NoTypeofUndefinedDiagnostic(#[label] pub Span);
+fn no_typeof_undefined_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Compare with `undefined` directly instead of using `typeof`.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTypeofUndefined {
@@ -43,7 +40,9 @@ declare_oxc_lint!(
 
 impl Rule for NoTypeofUndefined {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(bin_expr) = node.kind() else { return };
+        let AstKind::BinaryExpression(bin_expr) = node.kind() else {
+            return;
+        };
 
         if !matches!(
             bin_expr.operator,
@@ -55,7 +54,9 @@ impl Rule for NoTypeofUndefined {
             return;
         }
 
-        let Expression::UnaryExpression(unary_expr) = &bin_expr.left else { return };
+        let Expression::UnaryExpression(unary_expr) = &bin_expr.left else {
+            return;
+        };
 
         if unary_expr.operator != UnaryOperator::Typeof {
             return;
@@ -69,7 +70,7 @@ impl Rule for NoTypeofUndefined {
             return;
         }
 
-        ctx.diagnostic(NoTypeofUndefinedDiagnostic(bin_expr.span));
+        ctx.diagnostic(no_typeof_undefined_diagnostic(bin_expr.span));
     }
 
     fn from_configuration(value: serde_json::Value) -> Self {
@@ -81,7 +82,9 @@ impl Rule for NoTypeofUndefined {
 }
 
 fn is_global_variable(ident: &Expression, ctx: &LintContext) -> bool {
-    let Expression::Identifier(ident) = ident else { return false };
+    let Expression::Identifier(ident) = ident else {
+        return false;
+    };
 
     get_declaration_of_variable(ident, ctx).is_none()
 }

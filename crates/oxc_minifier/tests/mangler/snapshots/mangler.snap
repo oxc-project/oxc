@@ -1,0 +1,23 @@
+---
+source: crates/oxc_minifier/tests/mangler/mod.rs
+---
+function foo(a) {a}
+function a(b) {
+	b;
+}
+
+function foo(a) { let _ = { x } }
+function a(b) {
+	let c = { x };
+}
+
+function foo(a) { let { x } = y }
+function a(b) {
+	let { x: c } = y;
+}
+
+var x; function foo(a) { ({ x } = y) }
+var a;
+function b(c) {
+	({x: a} = y);
+}

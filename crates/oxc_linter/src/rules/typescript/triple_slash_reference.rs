@@ -4,19 +4,17 @@ use oxc_ast::{
     ast::{Statement, TSModuleReference},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(triple-slash-reference): Do not use a triple slash reference for {0}, use `import` style instead.")]
-#[diagnostic(severity(warning), help("Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports."))]
-struct TripleSlashReferenceDiagnostic(String, #[label] pub Span);
+fn triple_slash_reference_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use a triple slash reference for {x0}, use `import` style instead."))
+        .with_help("Use of triple-slash reference type directives is generally discouraged in favor of ECMAScript Module imports.")
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct TripleSlashReference(Box<TripleSlashReferenceConfig>);
@@ -102,8 +100,11 @@ impl Rule for TripleSlashReference {
                 }),
         }))
     }
+
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().root_node() else { return };
+        let Some(root) = ctx.nodes().root_node() else {
+            return;
+        };
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
         // We don't need to iterate over all comments since Triple-slash directives are only valid at the top of their containing file.
@@ -111,21 +112,23 @@ impl Rule for TripleSlashReference {
         let comments_range_end = program.body.first().map_or(program.span.end, |v| v.span().start);
         let mut refs_for_import = HashMap::new();
 
-        for (start, comment) in ctx.semantic().trivias().comments_range(0..comments_range_end) {
-            let raw = &ctx.semantic().source_text()[*start as usize..comment.end as usize];
+        for comment in ctx.semantic().trivias().comments_range(0..comments_range_end) {
+            let raw = &ctx.semantic().source_text()
+                [comment.span.start as usize..comment.span.end as usize];
             if let Some((group1, group2)) = get_attr_key_and_value(raw) {
                 if (group1 == "types" && self.types == TypesOption::Never)
                     || (group1 == "path" && self.path == PathOption::Never)
                     || (group1 == "lib" && self.lib == LibOption::Never)
                 {
-                    ctx.diagnostic(TripleSlashReferenceDiagnostic(
-                        group2.to_string(),
-                        Span::new(*start - 2, comment.end),
+                    ctx.diagnostic(triple_slash_reference_diagnostic(
+                        &group2,
+                        Span::new(comment.span.start - 2, comment.span.end),
                     ));
                 }
 
                 if group1 == "types" && self.types == TypesOption::PreferImport {
-                    refs_for_import.insert(group2, Span::new(*start - 2, comment.end));
+                    refs_for_import
+                        .insert(group2, Span::new(comment.span.start - 2, comment.span.end));
                 }
             }
         }
@@ -137,8 +140,8 @@ impl Rule for TripleSlashReference {
                         TSModuleReference::ExternalModuleReference(ref mod_ref) => {
                             if let Some(v) = refs_for_import.get(mod_ref.expression.value.as_str())
                             {
-                                ctx.diagnostic(TripleSlashReferenceDiagnostic(
-                                    mod_ref.expression.value.to_string(),
+                                ctx.diagnostic(triple_slash_reference_diagnostic(
+                                    &mod_ref.expression.value,
                                     *v,
                                 ));
                             }
@@ -148,8 +151,8 @@ impl Rule for TripleSlashReference {
                     },
                     Statement::ImportDeclaration(decl) => {
                         if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
-                            ctx.diagnostic(TripleSlashReferenceDiagnostic(
-                                decl.source.value.to_string(),
+                            ctx.diagnostic(triple_slash_reference_diagnostic(
+                                &decl.source.value,
                                 *v,
                             ));
                         }
@@ -158,6 +161,10 @@ impl Rule for TripleSlashReference {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

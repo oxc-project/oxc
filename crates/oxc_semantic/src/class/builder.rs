@@ -5,15 +5,14 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_span::{Atom, GetSpan};
+use oxc_span::GetSpan;
 use oxc_syntax::class::{ClassId, ElementKind};
-
-use crate::{AstNodeId, AstNodes};
 
 use super::{
     table::{Element, PrivateIdentifierReference},
     ClassTable,
 };
+use crate::{AstNodeId, AstNodes};
 
 #[derive(Debug, Default)]
 pub struct ClassTableBuilder {
@@ -64,7 +63,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.into(),
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -84,7 +83,7 @@ impl ClassTableBuilder {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.into(),
                         property.key.span(),
                         property.r#static,
                         is_private,
@@ -125,18 +124,14 @@ impl ClassTableBuilder {
             return;
         }
         let is_private = method.key.is_private_identifier();
-        let name = if is_private {
-            method.key.private_name().map(Atom::to_compact_str)
-        } else {
-            method.key.static_name()
-        };
+        let name = method.key.name();
 
         if let Some(name) = name {
             if let Some(class_id) = self.current_class_id {
                 self.classes.add_element(
                     class_id,
                     Element::new(
-                        name,
+                        name.into(),
                         method.key.span(),
                         method.r#static,
                         is_private,
@@ -154,6 +149,7 @@ impl ClassTableBuilder {
             }
         }
     }
+
     pub fn pop_class(&mut self) {
         self.current_class_id = self
             .current_class_id

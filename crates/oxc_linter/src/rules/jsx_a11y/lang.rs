@@ -3,24 +3,22 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, get_prop_value, has_jsx_prop_lowercase},
+    utils::{get_element_type, get_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(lang): Lang attribute must have a valid value.")]
-#[diagnostic(severity(warning), help("Set a valid value for lang attribute."))]
-struct LangDiagnostic(#[label] pub Span);
+fn lang_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Lang attribute must have a valid value.")
+        .with_help("Set a valid value for lang attribute.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct Lang;
@@ -77,12 +75,12 @@ impl Rule for Lang {
             return;
         };
 
-        has_jsx_prop_lowercase(jsx_el, "lang").map_or_else(
-            || ctx.diagnostic(LangDiagnostic(identifier.span)),
+        has_jsx_prop_ignore_case(jsx_el, "lang").map_or_else(
+            || ctx.diagnostic(lang_diagnostic(identifier.span)),
             |lang_prop| {
                 if !is_valid_lang_prop(lang_prop) {
                     if let JSXAttributeItem::Attribute(attr) = lang_prop {
-                        ctx.diagnostic(LangDiagnostic(attr.span));
+                        ctx.diagnostic(lang_diagnostic(attr.span));
                     }
                 }
             },

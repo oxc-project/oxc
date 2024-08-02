@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: empty_brace_spaces
 ---
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:1]
@@ -83,13 +82,6 @@ expression: empty_brace_spaces
    ╭─[empty_brace_spaces.tsx:1:18]
  1 │ try {} catch(foo){ }
    ·                  ───
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:29]
- 1 │ try {} catch(foo){} finally { }
-   ·                             ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
@@ -269,13 +261,6 @@ expression: empty_brace_spaces
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:29]
- 1 │ try {} catch(foo){} finally {   }
-   ·                             ─────
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:4]
  1 │ do {    } while (foo)
    ·    ──────
@@ -440,13 +425,6 @@ expression: empty_brace_spaces
    ╭─[empty_brace_spaces.tsx:1:18]
  1 │ try {} catch(foo){       }
    ·                  ─────────
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:29]
- 1 │ try {} catch(foo){} finally {        }
-   ·                             ──────────
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
@@ -639,14 +617,6 @@ expression: empty_brace_spaces
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:29]
- 1 │ ╭─▶ try {} catch(foo){} finally {
- 2 │ │   
- 3 │ ╰─▶ }
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:4]
  1 │ ╭─▶ do {
  2 │ │   
@@ -814,13 +784,6 @@ expression: empty_brace_spaces
   ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:18]
  1 │ ╭─▶ try {} catch(foo){
- 2 │ ╰─▶ }
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ eslint-plugin-unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:29]
- 1 │ ╭─▶ try {} catch(foo){} finally {
  2 │ ╰─▶ }
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.

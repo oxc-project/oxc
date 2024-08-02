@@ -47,8 +47,10 @@ pub struct PrettierOptions {
     pub trailing_comma: TrailingComma,
 
     /// Print spaces between brackets in object literals.
+    ///
     /// * true - Example: `{ foo: bar }`.
     /// * false - Example: `{foo: bar}`.
+    ///
     /// Default: true
     pub bracket_spacing: bool,
 

@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_semantic"
-version                = "0.12.5"
+version                = "0.23.0"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -10,7 +10,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
-include                = ["/src"]
+include                = ["/examples", "/src"]
 
 [lints]
 workspace = true
@@ -22,15 +22,17 @@ doctest = false
 oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
 oxc_syntax      = { workspace = true }
+oxc_cfg         = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_index       = { workspace = true }
 oxc_allocator   = { workspace = true }
 
-indexmap   = { workspace = true }
-phf        = { workspace = true, features = ["macros"] }
-rustc-hash = { workspace = true }
-serde      = { workspace = true, features = ["derive"], optional = true }
-petgraph   = { workspace = true }
+assert-unchecked = { workspace = true }
+indexmap         = { workspace = true }
+phf              = { workspace = true, features = ["macros"] }
+rustc-hash       = { workspace = true }
+serde            = { workspace = true, features = ["derive"], optional = true }
+itertools        = { workspace = true }
 
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
@@ -38,12 +40,12 @@ wasm-bindgen = { workspace = true, optional = true }
 [dev-dependencies]
 oxc_parser = { workspace = true }
 
-itertools  = { workspace = true }
 indexmap   = { workspace = true }
 insta      = { workspace = true, features = ["glob"] }
 phf        = { workspace = true, features = ["macros"] }
 rustc-hash = { workspace = true }
+serde_json = { workspace = true }
 
 [features]
 default   = []
-serialize = ["dep:serde", "oxc_span/serialize", "oxc_syntax/serialize", "dep:tsify", "dep:wasm-bindgen"]
+serialize = ["dep:serde", "dep:tsify", "dep:wasm-bindgen", "oxc_span/serialize", "oxc_syntax/serialize"]

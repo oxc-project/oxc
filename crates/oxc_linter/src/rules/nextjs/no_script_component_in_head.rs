@@ -2,22 +2,17 @@ use oxc_ast::{
     ast::{ImportDeclarationSpecifier, JSXChild, JSXElementName, ModuleDeclaration},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-script-component-in-head): Prevent usage of `next/script` in `next/head` component.")]
-#[diagnostic(
-    severity(warning),
-    help("See https://nextjs.org/docs/messages/no-script-component-in-head")
-)]
-struct NoScriptComponentInHeadDiagnostic(#[label] pub Span);
+fn no_script_component_in_head_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prevent usage of `next/script` in `next/head` component.")
+        .with_help("See https://nextjs.org/docs/messages/no-script-component-in-head")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoScriptComponentInHead;
@@ -48,7 +43,9 @@ impl Rule for NoScriptComponentInHead {
             return;
         }
 
-        let Some(import_specifiers) = &import_decl.specifiers else { return };
+        let Some(import_specifiers) = &import_decl.specifiers else {
+            return;
+        };
 
         let Some(default_import) = import_specifiers.iter().find_map(|import_specifier| {
             let ImportDeclarationSpecifier::ImportDefaultSpecifier(import_default_specifier) =
@@ -65,9 +62,13 @@ impl Rule for NoScriptComponentInHead {
         for reference in
             ctx.semantic().symbol_references(default_import.local.symbol_id.get().unwrap())
         {
-            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else { return };
+            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
+                return;
+            };
 
-            let AstKind::JSXElementName(_) = node.kind() else { continue };
+            let AstKind::JSXElementName(_) = node.kind() else {
+                continue;
+            };
             let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
             let AstKind::JSXOpeningElement(jsx_opening_element) = parent_node.kind() else {
                 continue;
@@ -83,7 +84,7 @@ impl Rule for NoScriptComponentInHead {
                         &child_element.opening_element.name
                     {
                         if child_element_name.name.as_str() == "Script" {
-                            ctx.diagnostic(NoScriptComponentInHeadDiagnostic(
+                            ctx.diagnostic(no_script_component_in_head_diagnostic(
                                 jsx_opening_element.name.span(),
                             ));
                         }

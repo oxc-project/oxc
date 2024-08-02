@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{match_member_expression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -14,10 +11,11 @@ use crate::{
     rule::Rule, AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly")]
-#[diagnostic(severity(warning), help("Use the Cookie Store API or a cookie library instead"))]
-struct NoDocumentCookieDiagnostic(#[label] pub Span);
+fn no_document_cookie_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use `document.cookie` directly")
+        .with_help("Use the Cookie Store API or a cookie library instead")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDocumentCookie;
@@ -75,7 +73,7 @@ impl Rule for NoDocumentCookie {
             return;
         }
 
-        ctx.diagnostic(NoDocumentCookieDiagnostic(assignment_expr.left.span()));
+        ctx.diagnostic(no_document_cookie_diagnostic(assignment_expr.left.span()));
     }
 }
 
@@ -104,7 +102,9 @@ fn is_document_cookie_reference<'a, 'b>(
         }
         match_member_expression!(Expression) => {
             let member_expr = expr.to_member_expression();
-            let Some(static_prop_name) = member_expr.static_property_name() else { return false };
+            let Some(static_prop_name) = member_expr.static_property_name() else {
+                return false;
+            };
             if static_prop_name != "document" {
                 return false;
             }

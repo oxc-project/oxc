@@ -1,17 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-unnecessary-await): Disallow awaiting non-promise values")]
-#[diagnostic(severity(warning), help("consider to remove the `await`"))]
-struct NoUnnecessaryAwaitDiagnostic(#[label] pub Span);
+fn no_unnecessary_await_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow awaiting non-promise values")
+        .with_help("consider to remove the `await`")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnnecessaryAwait;
@@ -28,7 +26,8 @@ declare_oxc_lint!(
     /// await await promise;
     /// ```
     NoUnnecessaryAwait,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for NoUnnecessaryAwait {
@@ -55,18 +54,17 @@ impl Rule for NoUnnecessaryAwait {
                     }
                 })
             } {
-                ctx.diagnostic(NoUnnecessaryAwaitDiagnostic(Span::new(
+                ctx.diagnostic(no_unnecessary_await_diagnostic(Span::new(
                     expr.span.start,
                     expr.span.start + 5,
                 )));
             } else {
                 ctx.diagnostic_with_fix(
-                    NoUnnecessaryAwaitDiagnostic(Span::new(expr.span.start, expr.span.start + 5)),
-                    || {
-                        let mut codegen = String::new();
-                        codegen.push_str(expr.argument.span().source_text(ctx.source_text()));
-                        Fix::new(codegen, expr.span)
-                    },
+                    no_unnecessary_await_diagnostic(Span::new(
+                        expr.span.start,
+                        expr.span.start + 5,
+                    )),
+                    |fixer| fixer.replace(expr.span, fixer.source_range(expr.argument.span())),
                 );
             };
         }
@@ -86,7 +84,7 @@ fn not_promise(expr: &Expression) -> bool {
         | Expression::BooleanLiteral(_)
         | Expression::NullLiteral(_)
         | Expression::NumericLiteral(_)
-        | Expression::BigintLiteral(_)
+        | Expression::BigIntLiteral(_)
         | Expression::RegExpLiteral(_)
         | Expression::StringLiteral(_)
         | Expression::TemplateLiteral(_)

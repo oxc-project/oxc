@@ -1,18 +1,16 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-logical-operator-over-ternary): Prefer using a logical operator over a ternary.")]
-#[diagnostic(severity(warning), help("Switch to \"||\" or \"??\" operator"))]
-struct PreferLogicalOperatorOverTernaryDiagnostic(#[label] pub Span);
+fn prefer_logical_operator_over_ternary_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer using a logical operator over a ternary.")
+        .with_help("Switch to \"||\" or \"??\" operator")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferLogicalOperatorOverTernary;
@@ -44,10 +42,14 @@ declare_oxc_lint!(
 
 impl Rule for PreferLogicalOperatorOverTernary {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ConditionalExpression(conditional_expression) = node.kind() else { return };
+        let AstKind::ConditionalExpression(conditional_expression) = node.kind() else {
+            return;
+        };
 
         if is_same_node(&conditional_expression.test, &conditional_expression.consequent, ctx) {
-            ctx.diagnostic(PreferLogicalOperatorOverTernaryDiagnostic(conditional_expression.span));
+            ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
+                conditional_expression.span,
+            ));
         }
 
         // `!bar ? foo : bar;`
@@ -55,7 +57,7 @@ impl Rule for PreferLogicalOperatorOverTernary {
             if unary_expression.operator == UnaryOperator::LogicalNot
                 && is_same_node(&unary_expression.argument, &conditional_expression.alternate, ctx)
             {
-                ctx.diagnostic(PreferLogicalOperatorOverTernaryDiagnostic(
+                ctx.diagnostic(prefer_logical_operator_over_ternary_diagnostic(
                     conditional_expression.span,
                 ));
             }
@@ -78,7 +80,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
             Expression::LogicalExpression(right_await_expr),
         ) => {
             return is_same_node(&left_await_expr.left, &right_await_expr.left, ctx)
-                && is_same_node(&left_await_expr.right, &right_await_expr.right, ctx)
+                && is_same_node(&left_await_expr.right, &right_await_expr.right, ctx);
         }
         (
             Expression::UnaryExpression(left_await_expr),
@@ -86,7 +88,7 @@ fn is_same_node(left: &Expression, right: &Expression, ctx: &LintContext) -> boo
         ) => return is_same_node(&left_await_expr.argument, &right_await_expr.argument, ctx),
         (Expression::UpdateExpression(_), Expression::UpdateExpression(_)) => return false,
         (Expression::ParenthesizedExpression(left_paren_expr), _) => {
-            return is_same_node(&left_paren_expr.expression, right, ctx)
+            return is_same_node(&left_paren_expr.expression, right, ctx);
         }
         (_, Expression::ParenthesizedExpression(right_paren_expr)) => {
             return is_same_node(left, &right_paren_expr.expression, ctx);

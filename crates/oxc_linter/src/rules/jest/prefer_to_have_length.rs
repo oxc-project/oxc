@@ -2,16 +2,13 @@ use oxc_ast::{
     ast::{match_member_expression, CallExpression, Expression, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::RuleFixer,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
@@ -19,10 +16,9 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.")]
-#[diagnostic(severity(warning))]
-struct UseToHaveLength(#[label] pub Span);
+fn use_to_have_length(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toHaveLength()`.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToHaveLength;
@@ -55,6 +51,7 @@ declare_oxc_lint!(
     ///
     PreferToHaveLength,
     style,
+    fix
 );
 
 impl Rule for PreferToHaveLength {
@@ -146,46 +143,46 @@ impl PreferToHaveLength {
             return;
         }
 
-        ctx.diagnostic_with_fix(UseToHaveLength(matcher.span), || {
-            let code = Self::build_code(static_mem_expr, kind, property_name, ctx);
+        ctx.diagnostic_with_fix(use_to_have_length(matcher.span), |fixer| {
+            let code = Self::build_code(fixer, static_mem_expr, kind, property_name);
             let end = if call_expr.arguments.len() > 0 {
                 call_expr.arguments.first().unwrap().span().start
             } else {
                 matcher.span.end
             };
-            Fix::new(code, Span::new(call_expr.span.start, end - 1))
+            fixer.replace(Span::new(call_expr.span.start, end - 1), code)
         });
     }
 
-    fn build_code(
-        mem_expr: &MemberExpression,
+    fn build_code<'a>(
+        fixer: RuleFixer<'_, 'a>,
+        mem_expr: &MemberExpression<'a>,
         kind: Option<&str>,
         property_name: Option<&str>,
-        ctx: &LintContext<'_>,
     ) -> String {
-        let mut formatter = ctx.codegen();
+        let mut formatter = fixer.codegen();
         let Expression::Identifier(prop_ident) = mem_expr.object() else {
             return formatter.into_source_text();
         };
 
-        formatter.print_str(b"expect(");
-        formatter.print_str(prop_ident.name.as_bytes());
-        formatter.print_str(b")");
+        formatter.print_str("expect(");
+        formatter.print_str(prop_ident.name.as_str());
+        formatter.print_str(")");
 
         if let Some(kind_val) = kind {
             if kind_val == "ComputedMember" {
                 let property = property_name.unwrap();
-                formatter.print_str(b"[\"");
-                formatter.print_str(property.as_bytes());
-                formatter.print_str(b"\"]");
+                formatter.print_str("[\"");
+                formatter.print_str(property);
+                formatter.print_str("\"]");
             } else if kind_val == "StaticMember" {
-                formatter.print_str(b".");
+                formatter.print_str(".");
                 let property = property_name.unwrap();
-                formatter.print_str(property.as_bytes());
+                formatter.print_str(property);
             }
         }
 
-        formatter.print_str(b".toHaveLength");
+        formatter.print_str(".toHaveLength");
         formatter.into_source_text()
     }
 }

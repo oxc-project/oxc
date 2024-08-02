@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_zero_fractions
 ---
   ⚠ eslint-plugin-unicorn(no-zero-fractions): Don't use a zero fraction in the number.
    ╭─[no_zero_fractions.tsx:1:13]

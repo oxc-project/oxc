@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_useless_spread
 ---
   ⚠ eslint-plugin-unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.tsx:1:16]

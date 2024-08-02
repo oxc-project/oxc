@@ -1,30 +1,27 @@
+use oxc_ast::{
+    ast::{Argument, BinaryExpression, Expression},
+    AstKind,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_syntax::operator::BinaryOperator;
+
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::RuleFixer,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, is_equality_matcher, parse_expect_jest_fn_call,
         KnownMemberExpressionProperty, PossibleJestNode,
     },
 };
-use oxc_ast::{
-    ast::{Argument, BinaryExpression, Expression},
-    AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::BinaryOperator;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jest(prefer-comparison-matcher): Suggest using the built-in comparison matchers"
-)]
-#[diagnostic(severity(warning), help("Prefer using `{0:?}` instead"))]
-struct UseToBeComparison(&'static str, #[label] pub Span);
+fn use_to_be_comparison(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using the built-in comparison matchers")
+        .with_help(format!("Prefer using `{x0:?}` instead"))
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferComparisonMatcher;
@@ -59,6 +56,7 @@ declare_oxc_lint!(
     ///
     PreferComparisonMatcher,
     style,
+    fix
 );
 
 impl Rule for PreferComparisonMatcher {
@@ -116,26 +114,26 @@ impl PreferComparisonMatcher {
             return;
         };
 
-        ctx.diagnostic_with_fix(UseToBeComparison(prefer_matcher_name, matcher.span), || {
+        ctx.diagnostic_with_fix(use_to_be_comparison(prefer_matcher_name, matcher.span), |fixer| {
             // This is to handle the case can be transform into the following case:
             // expect(value > 1,).toEqual(true,) => expect(value,).toBeGreaterThan(1,)
             //                 ^              ^
             // Therefore the range starting after ',' and before '.' is called as call_span_end,
             // and the same as `arg_span_end`.
-            let call_span_end = Span::new(binary_expr.span.end, parent_call_expr.span.end)
-                .source_text(ctx.source_text());
-            let arg_span_end = Span::new(matcher_arg_value.span.end, call_expr.span.end)
-                .source_text(ctx.source_text());
+            let call_span_end =
+                fixer.source_range(Span::new(binary_expr.span.end, parent_call_expr.span.end));
+            let arg_span_end =
+                fixer.source_range(Span::new(matcher_arg_value.span.end, call_expr.span.end));
             let content = Self::building_code(
                 binary_expr,
                 call_span_end,
                 arg_span_end,
-                parse_expect_jest_fn.local.as_bytes(),
+                &parse_expect_jest_fn.local,
                 &parse_expect_jest_fn.modifiers(),
                 prefer_matcher_name,
-                ctx,
+                fixer,
             );
-            Fix::new(content, call_expr.span)
+            fixer.replace(call_expr.span, content)
         });
     }
 
@@ -174,35 +172,35 @@ impl PreferComparisonMatcher {
         }
     }
 
-    fn building_code(
-        binary_expr: &BinaryExpression,
+    fn building_code<'a>(
+        binary_expr: &BinaryExpression<'a>,
         call_span_end: &str,
         arg_span_end: &str,
-        local_name: &[u8],
-        modifiers: &[&KnownMemberExpressionProperty],
+        local_name: &str,
+        modifiers: &[&KnownMemberExpressionProperty<'a>],
         prefer_matcher_name: &str,
-        ctx: &LintContext,
+        fixer: RuleFixer<'_, 'a>,
     ) -> String {
-        let mut content = ctx.codegen();
+        let mut content = fixer.codegen();
         content.print_str(local_name);
-        content.print(b'(');
+        content.print_char(b'(');
         content.print_expression(&binary_expr.left);
-        content.print_str(call_span_end.as_bytes());
-        content.print(b'.');
+        content.print_str(call_span_end);
+        content.print_char(b'.');
         for modifier in modifiers {
             let Some(modifier_name) = modifier.name() else {
                 continue;
             };
 
             if !modifier_name.eq("not") {
-                content.print_str(modifier_name.as_bytes());
-                content.print(b'.');
+                content.print_str(&modifier_name);
+                content.print_char(b'.');
             }
         }
-        content.print_str(prefer_matcher_name.as_bytes());
-        content.print(b'(');
+        content.print_str(prefer_matcher_name);
+        content.print_char(b'(');
         content.print_expression(&binary_expr.right);
-        content.print_str(arg_span_end.as_bytes());
+        content.print_str(arg_span_end);
         content.into_source_text()
     }
 }

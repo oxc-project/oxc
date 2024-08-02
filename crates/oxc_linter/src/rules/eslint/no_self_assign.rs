@@ -6,20 +6,16 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-self-assign): this expression is assigned to itself")]
-#[diagnostic(severity(warning))]
-struct NoSelfAssignDiagnostic(#[label] pub Span);
+fn no_self_assign_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("this expression is assigned to itself").with_label(span0)
+}
 
 #[derive(Debug, Clone)]
 pub struct NoSelfAssign {
@@ -63,7 +59,9 @@ impl Rule for NoSelfAssign {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AssignmentExpression(assignment) = node.kind() else { return };
+        let AstKind::AssignmentExpression(assignment) = node.kind() else {
+            return;
+        };
         if matches!(
             assignment.operator,
             AssignmentOperator::Assign
@@ -91,14 +89,14 @@ impl NoSelfAssign {
                         || matches!(simple_assignment_target, SimpleAssignmentTarget::AssignmentTargetIdentifier(id1) if id1.name == id2.name);
 
                     if self_assign {
-                        ctx.diagnostic(NoSelfAssignDiagnostic(right.span()));
+                        ctx.diagnostic(no_self_assign_diagnostic(right.span()));
                     }
                 }
 
                 if let Some(member_target) = simple_assignment_target.as_member_expression() {
                     if let Some(member_expr) = right.without_parenthesized().get_member_expr() {
                         if self.is_member_expression_same_reference(member_expr, member_target) {
-                            ctx.diagnostic(NoSelfAssignDiagnostic(member_expr.span()));
+                            ctx.diagnostic(no_self_assign_diagnostic(member_expr.span()));
                         }
                     }
                 }
@@ -240,7 +238,7 @@ impl NoSelfAssign {
                         if key.static_name().is_some_and(|name| name == id1.binding.name) {
                             if let Expression::Identifier(id2) = expr.without_parenthesized() {
                                 if id1.binding.name == id2.name {
-                                    ctx.diagnostic(NoSelfAssignDiagnostic(*span));
+                                    ctx.diagnostic(no_self_assign_diagnostic(*span));
                                 }
                             }
                         }

@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-array-constructor): Disallow `Array` constructors")]
-#[diagnostic(severity(warning), help("Use array literal instead"))]
-struct NoArrayConstructorDiagnostic(#[label] pub Span);
+fn no_array_constructor_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow `Array` constructors")
+        .with_help("Use array literal instead")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoArrayConstructor;
@@ -58,7 +56,7 @@ impl Rule for NoArrayConstructor {
             && type_parameters.is_none()
             && !optional
         {
-            ctx.diagnostic(NoArrayConstructorDiagnostic(span));
+            ctx.diagnostic(no_array_constructor_diagnostic(span));
         }
     }
 }

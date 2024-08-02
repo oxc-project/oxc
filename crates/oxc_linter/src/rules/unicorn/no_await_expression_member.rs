@@ -1,17 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-await-expression-member): Disallow member access from await expression")]
-#[diagnostic(severity(warning), help("When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable."))]
-struct NoAwaitExpressionMemberDiagnostic(#[label] pub Span);
+fn no_await_expression_member_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow member access from await expression")
+        .with_help("When accessing a member from an await expression, the await expression has to be parenthesized, which is not readable.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAwaitExpressionMember;
@@ -40,7 +38,9 @@ declare_oxc_lint!(
 
 impl Rule for NoAwaitExpressionMember {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expr) = node.kind() else { return };
+        let AstKind::MemberExpression(member_expr) = node.kind() else {
+            return;
+        };
 
         let Expression::ParenthesizedExpression(paren_expr) = member_expr.object() else {
             return;
@@ -48,7 +48,7 @@ impl Rule for NoAwaitExpressionMember {
 
         if matches!(paren_expr.expression, Expression::AwaitExpression(_)) {
             let node_span = member_expr.span();
-            ctx.diagnostic(NoAwaitExpressionMemberDiagnostic(node_span));
+            ctx.diagnostic(no_await_expression_member_diagnostic(node_span));
         }
     }
 }

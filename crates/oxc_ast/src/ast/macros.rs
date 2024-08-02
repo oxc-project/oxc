@@ -1,6 +1,11 @@
 /// Macro to inherit enum variants from another enum.
 ///
+/// (for further details see <https://github.com/oxc-project/oxc/pull/3115>)
+///
+/// # Types which can be inherited
+///
 /// The following types' variants can be inherited:
+///
 /// * `Expression`
 /// * `MemberExpression`
 /// * `AssignmentTarget`
@@ -11,9 +16,11 @@
 /// * `TSType`
 /// * `TSTypeName`
 ///
+/// # Expansion
+///
 /// ```
 /// inherit_variants! {
-///     #[repr(C, u8)]
+///     #[ast]
 ///     enum Statement<'a> {
 ///         pub enum Statement<'a> {
 ///             BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
@@ -28,7 +35,7 @@
 /// expands to:
 ///
 /// ```
-/// #[repr(C, u8)]
+/// #[ast]
 /// enum Statement<'a> {
 ///     pub enum Statement<'a> {
 ///         BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
@@ -86,7 +93,7 @@ macro_rules! inherit_variants {
                 /// Inherited from [`Expression`]
                 NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
                 /// Inherited from [`Expression`]
-                BigintLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+                BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
                 /// Inherited from [`Expression`]
                 RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
                 /// Inherited from [`Expression`]
@@ -182,7 +189,7 @@ macro_rules! inherit_variants {
                 BooleanLiteral,
                 NullLiteral,
                 NumericLiteral,
-                BigintLiteral,
+                BigIntLiteral,
                 RegExpLiteral,
                 StringLiteral,
                 TemplateLiteral,
@@ -240,12 +247,15 @@ macro_rules! inherit_variants {
                 $($(#[$variant_attr])* $variant_name($variant_type) = $variant_discrim,)*
 
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
                 ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] . IdentifierName`
                 StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
                 /// Inherited from [`MemberExpression`].
+                ///
                 /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
                 PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 
@@ -303,6 +313,7 @@ macro_rules! inherit_variants {
                 TSSatisfiesExpression,
                 TSNonNullExpression,
                 TSTypeAssertion,
+                TSInstantiationExpression,
                 ArrayAssignmentTarget,
                 ObjectAssignmentTarget,
             ]
@@ -334,6 +345,8 @@ macro_rules! inherit_variants {
                 TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 3,
                 /// Inherited from [`SimpleAssignmentTarget`]
                 TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 4,
+                /// Inherited from [`SimpleAssignmentTarget`]
+                TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 5,
 
                 // Inherited from `MemberExpression`
                 @inherit MemberExpression
@@ -358,7 +371,8 @@ macro_rules! inherit_variants {
                 TSAsExpression,
                 TSSatisfiesExpression,
                 TSNonNullExpression,
-                TSTypeAssertion
+                TSTypeAssertion,
+                TSInstantiationExpression
             ]
         );
     };
@@ -539,73 +553,79 @@ macro_rules! inherit_variants {
                 /// Inherited from [`TSType`]
                 TSBooleanKeyword(Box<'a, TSBooleanKeyword>) = 2,
                 /// Inherited from [`TSType`]
-                TSNeverKeyword(Box<'a, TSNeverKeyword>) = 3,
+                TSIntrinsicKeyword(Box<'a, TSIntrinsicKeyword>) = 3,
                 /// Inherited from [`TSType`]
-                TSNullKeyword(Box<'a, TSNullKeyword>) = 4,
+                TSNeverKeyword(Box<'a, TSNeverKeyword>) = 4,
                 /// Inherited from [`TSType`]
-                TSNumberKeyword(Box<'a, TSNumberKeyword>) = 5,
+                TSNullKeyword(Box<'a, TSNullKeyword>) = 5,
                 /// Inherited from [`TSType`]
-                TSObjectKeyword(Box<'a, TSObjectKeyword>) = 6,
+                TSNumberKeyword(Box<'a, TSNumberKeyword>) = 6,
                 /// Inherited from [`TSType`]
-                TSStringKeyword(Box<'a, TSStringKeyword>) = 7,
+                TSObjectKeyword(Box<'a, TSObjectKeyword>) = 7,
                 /// Inherited from [`TSType`]
-                TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 8,
+                TSStringKeyword(Box<'a, TSStringKeyword>) = 8,
                 /// Inherited from [`TSType`]
-                TSThisType(Box<'a, TSThisType>) = 9,
+                TSSymbolKeyword(Box<'a, TSSymbolKeyword>) = 9,
                 /// Inherited from [`TSType`]
-                TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 10,
+                TSThisType(Box<'a, TSThisType>) = 10,
                 /// Inherited from [`TSType`]
-                TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 11,
+                TSUndefinedKeyword(Box<'a, TSUndefinedKeyword>) = 11,
                 /// Inherited from [`TSType`]
-                TSVoidKeyword(Box<'a, TSVoidKeyword>) = 12,
+                TSUnknownKeyword(Box<'a, TSUnknownKeyword>) = 12,
+                /// Inherited from [`TSType`]
+                TSVoidKeyword(Box<'a, TSVoidKeyword>) = 13,
 
                 // Compound
                 /// Inherited from [`TSType`]
-                TSArrayType(Box<'a, TSArrayType<'a>>) = 13,
+                TSArrayType(Box<'a, TSArrayType<'a>>) = 14,
                 /// Inherited from [`TSType`]
-                TSConditionalType(Box<'a, TSConditionalType<'a>>) = 14,
+                TSConditionalType(Box<'a, TSConditionalType<'a>>) = 15,
                 /// Inherited from [`TSType`]
-                TSConstructorType(Box<'a, TSConstructorType<'a>>) = 15,
+                TSConstructorType(Box<'a, TSConstructorType<'a>>) = 16,
                 /// Inherited from [`TSType`]
-                TSFunctionType(Box<'a, TSFunctionType<'a>>) = 16,
+                TSFunctionType(Box<'a, TSFunctionType<'a>>) = 17,
                 /// Inherited from [`TSType`]
-                TSImportType(Box<'a, TSImportType<'a>>) = 17,
+                TSImportType(Box<'a, TSImportType<'a>>) = 18,
                 /// Inherited from [`TSType`]
-                TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 18,
+                TSIndexedAccessType(Box<'a, TSIndexedAccessType<'a>>) = 19,
                 /// Inherited from [`TSType`]
-                TSInferType(Box<'a, TSInferType<'a>>) = 19,
+                TSInferType(Box<'a, TSInferType<'a>>) = 20,
                 /// Inherited from [`TSType`]
-                TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 20,
+                TSIntersectionType(Box<'a, TSIntersectionType<'a>>) = 21,
                 /// Inherited from [`TSType`]
-                TSLiteralType(Box<'a, TSLiteralType<'a>>) = 21,
+                TSLiteralType(Box<'a, TSLiteralType<'a>>) = 22,
                 /// Inherited from [`TSType`]
-                TSMappedType(Box<'a, TSMappedType<'a>>) = 22,
+                TSMappedType(Box<'a, TSMappedType<'a>>) = 23,
                 /// Inherited from [`TSType`]
-                TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 23,
+                TSNamedTupleMember(Box<'a, TSNamedTupleMember<'a>>) = 24,
                 /// Inherited from [`TSType`]
-                TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 24,
+                TSQualifiedName(Box<'a, TSQualifiedName<'a>>) = 25,
                 /// Inherited from [`TSType`]
-                TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 25,
+                TSTemplateLiteralType(Box<'a, TSTemplateLiteralType<'a>>) = 26,
                 /// Inherited from [`TSType`]
-                TSTupleType(Box<'a, TSTupleType<'a>>) = 26,
+                TSTupleType(Box<'a, TSTupleType<'a>>) = 27,
                 /// Inherited from [`TSType`]
-                TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 27,
+                TSTypeLiteral(Box<'a, TSTypeLiteral<'a>>) = 28,
                 /// Inherited from [`TSType`]
-                TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 28,
+                TSTypeOperatorType(Box<'a, TSTypeOperator<'a>>) = 29,
                 /// Inherited from [`TSType`]
-                TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 29,
+                TSTypePredicate(Box<'a, TSTypePredicate<'a>>) = 30,
                 /// Inherited from [`TSType`]
-                TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 30,
+                TSTypeQuery(Box<'a, TSTypeQuery<'a>>) = 31,
                 /// Inherited from [`TSType`]
-                TSTypeReference(Box<'a, TSTypeReference<'a>>) = 31,
+                TSTypeReference(Box<'a, TSTypeReference<'a>>) = 32,
                 /// Inherited from [`TSType`]
-                TSUnionType(Box<'a, TSUnionType<'a>>) = 32,
+                TSUnionType(Box<'a, TSUnionType<'a>>) = 33,
+                /// Inherited from [`TSType`]
+                TSParenthesizedType(Box<'a, TSParenthesizedType<'a>>) = 34,
 
                 // JSDoc
                 /// Inherited from [`TSType`]
-                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 33,
+                JSDocNullableType(Box<'a, JSDocNullableType<'a>>) = 35,
                 /// Inherited from [`TSType`]
-                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 34,
+                JSDocNonNullableType(Box<'a, JSDocNonNullableType<'a>>) = 36,
+                /// Inherited from [`TSType`]
+                JSDocUnknownType(Box<'a, JSDocUnknownType>) = 37,
 
                 $($rest)*
             }
@@ -623,6 +643,7 @@ macro_rules! inherit_variants {
                 TSAnyKeyword,
                 TSBigIntKeyword,
                 TSBooleanKeyword,
+                TSIntrinsicKeyword,
                 TSNeverKeyword,
                 TSNullKeyword,
                 TSNumberKeyword,
@@ -653,7 +674,9 @@ macro_rules! inherit_variants {
                 TSTypeQuery,
                 TSTypeReference,
                 TSUnionType,
+                TSParenthesizedType,
                 JSDocNullableType,
+                JSDocNonNullableType,
                 JSDocUnknownType,
             ]
         );
@@ -712,7 +735,8 @@ pub(crate) use inherit_variants;
 /// # SAFETY
 /// Both enums must be `#[repr(C, u8)]` or using this macro is unsound.
 ///
-/// # Example
+/// # Expansion
+///
 /// NB: For illustration only - `Statement` and `Declaration` in reality share 9 variants, not 2.
 ///
 /// ```
@@ -828,7 +852,7 @@ macro_rules! shared_enum_variants {
         };
 
         impl<'a> $parent<'a> {
-            #[doc = concat!(" Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]
+            #[doc = concat!("Return if a `", stringify!($parent), "` is a `", stringify!($child), "`.")]
             #[inline]
             pub fn $is_child(&self) -> bool {
                 matches!(
@@ -837,7 +861,7 @@ macro_rules! shared_enum_variants {
                 )
             }
 
-            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
             #[inline]
             pub fn $as_child(&self) -> Option<&$child<'a>> {
                 if self.$is_child() {
@@ -850,7 +874,7 @@ macro_rules! shared_enum_variants {
                 }
             }
 
-            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
             #[inline]
             pub fn $as_child_mut(&mut self) -> Option<&mut $child<'a>> {
                 if self.$is_child() {
@@ -863,7 +887,7 @@ macro_rules! shared_enum_variants {
                 }
             }
 
-            #[doc = concat!(" Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&", stringify!($parent), "` to `&", stringify!($child), "`.")]
             #[doc = "# Panic"]
             #[doc = "Panics if not convertible."]
             #[inline]
@@ -871,7 +895,7 @@ macro_rules! shared_enum_variants {
                 self.$as_child().unwrap()
             }
 
-            #[doc = concat!(" Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
+            #[doc = concat!("Convert `&mut ", stringify!($parent), "` to `&mut ", stringify!($child), "`.")]
             #[doc = "# Panic"]
             #[doc = "Panics if not convertible."]
             #[inline]
@@ -883,7 +907,7 @@ macro_rules! shared_enum_variants {
         impl<'a> TryFrom<$parent<'a>> for $child<'a> {
             type Error = ();
 
-            #[doc = concat!(" Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
+            #[doc = concat!("Convert `", stringify!($parent), "` to `", stringify!($child), "`.")]
             #[inline]
             fn try_from(value: $parent<'a>) -> Result<Self, Self::Error> {
                 // Compiler should implement this as a check of discriminant and then zero-cost transmute,
@@ -896,7 +920,7 @@ macro_rules! shared_enum_variants {
         }
 
         impl<'a> From<$child<'a>> for $parent<'a> {
-            #[doc = concat!(" Convert `", stringify!($child), "` to `", stringify!($parent), "`.")]
+            #[doc = concat!("Convert `", stringify!($child), "` to `", stringify!($parent), "`.")]
             #[inline]
             fn from(value: $child<'a>) -> Self {
                 // Compiler should implement this as zero-cost transmute as discriminants
@@ -916,10 +940,10 @@ pub(crate) use shared_enum_variants;
 /// <https://doc.rust-lang.org/std/mem/fn.discriminant.html>
 macro_rules! discriminant {
     ($ty:ident :: $variant:ident) => {{
-        #[allow(unsafe_code, clippy::ptr_as_ptr, clippy::undocumented_unsafe_blocks)]
+        #[allow(unsafe_code, clippy::undocumented_unsafe_blocks)]
         unsafe {
             let t = std::mem::ManuallyDrop::new($ty::$variant(oxc_allocator::Box::dangling()));
-            *(&t as *const _ as *const u8)
+            *(std::ptr::addr_of!(t).cast::<u8>())
         }
     }};
 }

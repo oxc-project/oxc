@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_duplicate_case
 ---
   ⚠ eslint(no-duplicate-case): Disallow duplicate case labels
    ╭─[no_duplicate_case.tsx:1:29]

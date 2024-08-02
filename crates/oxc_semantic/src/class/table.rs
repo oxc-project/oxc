@@ -1,5 +1,5 @@
 use oxc_index::IndexVec;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::class::{ClassId, ElementId, ElementKind};
 use rustc_hash::FxHashMap;
 
@@ -57,6 +57,10 @@ impl ClassTable {
         std::iter::successors(Some(class_id), |class_id| self.parent_ids.get(class_id).copied())
     }
 
+    pub fn len(&self) -> usize {
+        self.declarations.raw.len()
+    }
+
     pub fn iter_enumerated(&self) -> impl Iterator<Item = (ClassId, &AstNodeId)> + '_ {
         self.declarations.iter_enumerated()
     }
@@ -72,10 +76,10 @@ impl ClassTable {
         self.declarations[class_id]
     }
 
-    pub fn get_element_ids(&self, class_id: ClassId, name: &Atom) -> Vec<ElementId> {
+    pub fn get_element_ids(&self, class_id: ClassId, name: &str) -> Vec<ElementId> {
         let mut element_ids = vec![];
         for (element_id, element) in self.elements[class_id].iter_enumerated() {
-            if element.name == *name {
+            if element.name == name {
                 element_ids.push(element_id);
 
                 // Property or Accessor only has 1 element

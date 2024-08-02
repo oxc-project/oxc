@@ -1,18 +1,15 @@
-use serde_json::Value;
-
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(max-lines): {0:?}")]
-#[diagnostic(severity(warning), help("Reduce the number of lines in this file"))]
-struct MaxLinesDiagnostic(CompactStr, #[label] Span);
+fn max_lines_diagnostic(count: usize, max: usize, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("File has too many lines ({count})."))
+        .with_help(format!("Maximum allowed is {max}."))
+        .with_label(span)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct MaxLines(Box<MaxLinesConfig>);
@@ -81,26 +78,33 @@ impl Rule for MaxLines {
             Self(Box::new(MaxLinesConfig { max, skip_blank_lines, skip_comments }))
         }
     }
+
     fn run_once(&self, ctx: &LintContext) {
         let comment_lines = if self.skip_comments {
             let mut comment_lines: usize = 0;
-            for (kind, span) in ctx.semantic().trivias().comments() {
-                if kind.is_single_line() {
-                    let comment_line =
-                        ctx.source_text()[..span.start as usize].lines().next_back().unwrap_or("");
+            for comment in ctx.semantic().trivias().comments() {
+                if comment.kind.is_single_line() {
+                    let comment_line = ctx.source_text()[..comment.span.start as usize]
+                        .lines()
+                        .next_back()
+                        .unwrap_or("");
                     if line_has_just_comment(comment_line, "//") {
                         comment_lines += 1;
                     }
                 } else {
-                    let mut start_line = ctx.source_text()[..span.start as usize].lines().count();
-                    let comment_start_line =
-                        ctx.source_text()[..span.start as usize].lines().next_back().unwrap_or("");
+                    let mut start_line =
+                        ctx.source_text()[..comment.span.start as usize].lines().count();
+                    let comment_start_line = ctx.source_text()[..comment.span.start as usize]
+                        .lines()
+                        .next_back()
+                        .unwrap_or("");
                     if !line_has_just_comment(comment_start_line, "/*") {
                         start_line += 1;
                     }
-                    let mut end_line = ctx.source_text()[..=span.end as usize].lines().count();
+                    let mut end_line =
+                        ctx.source_text()[..=comment.span.end as usize].lines().count();
                     let comment_end_line =
-                        ctx.source_text()[span.end as usize..].lines().next().unwrap_or("");
+                        ctx.source_text()[comment.span.end as usize..].lines().next().unwrap_or("");
                     if line_has_just_comment(comment_end_line, "*/") {
                         end_line += 1;
                     }
@@ -122,24 +126,7 @@ impl Rule for MaxLines {
         };
 
         if lines_in_file.saturating_sub(blank_lines).saturating_sub(comment_lines) > self.max {
-            let error = CompactStr::from(format!(
-                "File has too many lines ({}). Maximum allowed is {}.",
-                lines_in_file, self.max,
-            ));
-
-            let start = ctx
-                .source_text()
-                .lines()
-                .take(self.max)
-                .map(|line| line.chars().count() + 1) // padding 1 each line for '\n'
-                .sum::<usize>();
-            ctx.diagnostic(MaxLinesDiagnostic(
-                error,
-                Span::new(
-                    u32::try_from(start).unwrap_or(u32::MIN),
-                    u32::try_from(ctx.source_text().len()).unwrap_or(u32::MAX),
-                ),
-            ));
+            ctx.diagnostic(max_lines_diagnostic(lines_in_file, self.max, Span::new(0, 0)));
         }
     }
 }
@@ -189,18 +176,18 @@ fn test() {
         ),
         (
             "var x;
-			
-				
-				  
+
+
+
 			var y;",
             Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
         ),
         (
             "//a single line comment
 			var xy;
-			 
+
 			var xy;
-			 
+
 			 /* a multiline
 			 really really
 			 long comment*/",
@@ -217,18 +204,18 @@ fn test() {
         ("//a single line comment\nvar xy;\nvar xy;", Some(serde_json::json!([2]))),
         (
             "var x;
-			
-			
-			
+
+
+
 			var y;",
             Some(serde_json::json!([{ "max": 2 }])),
         ),
         (
             "//a single line comment
 			var xy;
-			 
+
 			var xy;
-			 
+
 			 /* a multiline
 			 really really
 			 long comment*/",
@@ -250,9 +237,9 @@ fn test() {
         (
             "//a single line comment
 			var xy;
-			 
+
 			var xy;
-			 
+
 			 /* a multiline
 			 really really
 			 long comment*/",
@@ -283,7 +270,7 @@ fn test() {
         ),
         (
             "A
-			
+
 			",
             Some(serde_json::json!([{ "max": 1 }])),
         ),
@@ -310,7 +297,7 @@ fn test() {
         ),
         (
             "
-			
+
 			var a = 'a',
 			c,
 			x;
@@ -322,7 +309,7 @@ fn test() {
 			var x
 			var c;
 			console.log
-			// some block 
+			// some block
 			// comments",
             Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
         ),
@@ -348,37 +335,37 @@ fn test() {
 			var x
 			var c;
 			console.log
-			/** block 
-			
+			/** block
+
 			 comments */",
             Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
         ),
         (
             "var a = 'a';
-			
-			
+
+
 			// comment",
             Some(serde_json::json!([{ "max": 2, "skipComments": true }])),
         ),
         (
             "var a = 'a';
 			var x
-			
-			
+
+
 			var c;
 			console.log
-			
+
 			",
             Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
         ),
         (
             "var a = 'a';
-			
-			
+
+
 			var x
 			var c;
 			console.log
-			
+
 			",
             Some(serde_json::json!([{ "max": 2, "skipBlankLines": true }])),
         ),
@@ -406,14 +393,14 @@ fn test() {
         (
             "
 			var x = '';
-			
+
 			// comment
-			
+
 			var b = '',
 			c,
 			d,
 			e
-			
+
 			// comment",
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
         ),

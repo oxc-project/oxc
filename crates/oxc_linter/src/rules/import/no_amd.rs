@@ -1,18 +1,18 @@
-use oxc_ast::ast::{Argument, Expression};
-use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
+use oxc_ast::{
+    ast::{Argument, Expression},
+    AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-amd): Do not use AMD `require` and `define` calls.")]
-#[diagnostic(severity(warning), help("Expected imports instead of AMD {1}()"))]
-struct NoAmdDiagnostic(#[label] pub Span, CompactStr);
+fn no_amd_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use AMD `require` and `define` calls.")
+        .with_help(format!("Expected imports instead of AMD {x1}()"))
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAmd;
@@ -32,7 +32,7 @@ declare_oxc_lint!(
     /// require(`../name`);
     /// ```
     NoAmd,
-    nursery
+    restriction
 );
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/src/rules/no-amd.js>
@@ -53,10 +53,7 @@ impl Rule for NoAmd {
                 }
 
                 if let Argument::ArrayExpression(_) = call_expr.arguments[0] {
-                    ctx.diagnostic(NoAmdDiagnostic(
-                        identifier.span,
-                        identifier.name.to_compact_str(),
-                    ));
+                    ctx.diagnostic(no_amd_diagnostic(identifier.span, identifier.name.as_str()));
                 }
             }
         }

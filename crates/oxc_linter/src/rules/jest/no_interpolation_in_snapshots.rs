@@ -1,8 +1,5 @@
 use oxc_ast::{ast::Argument, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -12,10 +9,11 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-interpolation-in-snapshots): Do not use string interpolation inside of snapshots")]
-#[diagnostic(severity(warning), help("Remove string interpolation from snapshots"))]
-struct NoInterpolationInSnapshotsDiagnostic(#[label] pub Span);
+fn no_interpolation_in_snapshots_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use string interpolation inside of snapshots")
+        .with_help("Remove string interpolation from snapshots")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoInterpolationInSnapshots;
@@ -66,7 +64,9 @@ impl Rule for NoInterpolationInSnapshots {
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
     let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
@@ -85,7 +85,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     for arg in jest_fn_call.args {
         if let Argument::TemplateLiteral(template_lit) = arg {
             if !template_lit.expressions.is_empty() {
-                ctx.diagnostic(NoInterpolationInSnapshotsDiagnostic(template_lit.span));
+                ctx.diagnostic(no_interpolation_in_snapshots_diagnostic(template_lit.span));
             }
         }
     }

@@ -1,20 +1,19 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use serde::Deserialize;
 
 use crate::{
-    ast_util::is_function_node, context::LintContext, rule::Rule,
-    utils::get_function_nearest_jsdoc_node, AstNode,
+    ast_util::is_function_node,
+    context::LintContext,
+    rule::Rule,
+    utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
+    AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsdoc(no-defaults): Defaults are not permitted.")]
-#[diagnostic(severity(warning), help("{1}"))]
-struct NoDefaultsDiagnostic(#[label] pub Span, String);
+fn no_defaults_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Defaults are not permitted.").with_help(x1.to_string()).with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDefaults(Box<NoDefaultsConfig>);
@@ -74,7 +73,11 @@ impl Rule for NoDefaults {
         let resolved_param_tag_name = settings.resolve_tag_name("param");
         let config = &self.0;
 
-        for jsdoc in jsdocs {
+        for jsdoc in jsdocs
+            .iter()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
@@ -90,13 +93,13 @@ impl Rule for NoDefaults {
                 }
 
                 match (config.no_optional_param_names, name_part.default) {
-                    (true, _) => ctx.diagnostic(NoDefaultsDiagnostic(
+                    (true, _) => ctx.diagnostic(no_defaults_diagnostic(
                         name_part.span,
-                        format!("Optional param names are not permitted on `@{tag_name}` tag."),
+                        &format!("Optional param names are not permitted on `@{tag_name}` tag."),
                     )),
-                    (false, true) => ctx.diagnostic(NoDefaultsDiagnostic(
+                    (false, true) => ctx.diagnostic(no_defaults_diagnostic(
                         name_part.span,
-                        format!("Defaults are not permitted on `@{tag_name}` tag."),
+                        &format!("Defaults are not permitted on `@{tag_name}` tag."),
                     )),
                     (false, false) => {}
                 }
@@ -116,7 +119,7 @@ fn test() {
 			           * @param foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -128,7 +131,7 @@ fn test() {
 			           * @param {number} foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -141,7 +144,7 @@ fn test() {
 			           * @param {number} [bar]
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             None,
@@ -188,7 +191,7 @@ fn test() {
 			           * @param {number} foo
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([
@@ -223,7 +226,7 @@ fn test() {
 			           * @param {number} [foo="7"]
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      "#,
             None,
@@ -236,7 +239,7 @@ fn test() {
 			           * @param {number} [bar = 1]
 			           */
 			          const quux = (foo, bar = 1) => {
-			
+
 			          }
 			      ",
             None,
@@ -249,7 +252,7 @@ fn test() {
 			           * @param {number} [foo="7"]
 			           */
 			          quux (foo) {
-			
+
 			          }
 			      }
 			      "#,
@@ -262,7 +265,7 @@ fn test() {
 			           * @param {number} [foo="7"]
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      "#,
             Some(serde_json::json!([
@@ -278,7 +281,7 @@ fn test() {
 			           * @param {number} [foo]
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      ",
             Some(serde_json::json!([
@@ -294,7 +297,7 @@ fn test() {
 			           * @arg {number} [foo="7"]
 			           */
 			          function quux (foo) {
-			
+
 			          }
 			      "#,
             None,

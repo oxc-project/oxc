@@ -1,0 +1,33 @@
+[package]
+name              = "website"
+version           = "0.0.0"
+publish           = false
+edition.workspace = true
+license.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name    = "website"
+test    = false
+doctest = false
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_linter = { workspace = true }
+oxlint     = { path = "../../apps/oxlint" }
+pico-args  = { workspace = true }
+serde_json = { workspace = true }
+schemars   = { workspace = true }
+handlebars = { workspace = true }
+serde      = { workspace = true }
+bpaf       = { workspace = true, features = ["docgen"] }
+
+[dev-dependencies]
+insta = { workspace = true }
+
+[package.metadata.cargo-shear]
+ignored = ["bpaf"]

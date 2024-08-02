@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -18,10 +15,9 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-to-contain): Suggest using `toContain()`.")]
-#[diagnostic(severity(warning))]
-struct UseToContain(#[label] pub Span);
+fn use_to_contain(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toContain()`.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferToContain;
@@ -122,7 +118,7 @@ impl PreferToContain {
             return;
         }
 
-        ctx.diagnostic(UseToContain(matcher.span));
+        ctx.diagnostic(use_to_contain(matcher.span));
     }
 
     fn is_fixable_includes_call_expression(call_expr: &CallExpression) -> bool {

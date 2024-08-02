@@ -38,11 +38,11 @@ impl<'a> Template<'a> {
             RuleKind::ReactPerf => Path::new("crates/oxc_linter/src/rules/react_perf"),
             RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),
             RuleKind::Oxc => Path::new("crates/oxc_linter/src/rules/oxc"),
-            RuleKind::DeepScan => Path::new("crates/oxc_linter/src/rules/deepscan"),
             RuleKind::NextJS => Path::new("crates/oxc_linter/src/rules/nextjs"),
             RuleKind::JSDoc => Path::new("crates/oxc_linter/src/rules/jsdoc"),
             RuleKind::Node => Path::new("crates/oxc_linter/src/rules/node"),
             RuleKind::TreeShaking => Path::new("crates/oxc_linter/src/rules/tree_shaking"),
+            RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
         };
 
         std::fs::create_dir_all(path)?;

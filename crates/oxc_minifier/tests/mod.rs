@@ -1,14 +1,24 @@
-mod closure;
-mod esbuild;
+#![allow(unused)]
+// mod closure;
+mod mangler;
 mod oxc;
-mod tdewolff;
-mod terser;
+// mod tdewolff;
+// mod terser;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{CodeGenerator, CodegenOptions};
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
+
+fn codegen(source_text: &str, source_type: SourceType) -> String {
+    let allocator = Allocator::default();
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    CodeGenerator::new()
+        .with_options(CodegenOptions { single_quote: true })
+        .build(&ret.program)
+        .source_text
+}
 
 pub(crate) fn minify(
     source_text: &str,
@@ -16,10 +26,13 @@ pub(crate) fn minify(
     options: MinifierOptions,
 ) -> String {
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, source_text, source_type).parse().program;
-    let program = allocator.alloc(program);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = allocator.alloc(ret.program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new("", source_text, CodegenOptions::default()).build(program).source_text
+    CodeGenerator::new()
+        .with_options(CodegenOptions { single_quote: true })
+        .build(program)
+        .source_text
 }
 
 pub(crate) fn test(source_text: &str, expected: &str) {
@@ -30,6 +43,7 @@ pub(crate) fn test(source_text: &str, expected: &str) {
 pub(crate) fn test_with_options(source_text: &str, expected: &str, options: MinifierOptions) {
     let source_type = SourceType::default();
     let minified = minify(source_text, source_type, options);
+    let expected = codegen(expected, source_type);
     assert_eq!(expected, minified, "for source {source_text}");
 }
 

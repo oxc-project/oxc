@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_document_cookie
 ---
   ⚠ eslint-plugin-unicorn(no-document-cookie): Do not use `document.cookie` directly
    ╭─[no_document_cookie.tsx:1:1]

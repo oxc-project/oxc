@@ -1,12 +1,11 @@
 pub mod return_checker;
 
+use std::borrow::Cow;
+
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use phf::phf_set;
 use serde_json::Value;
 
@@ -18,21 +17,16 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum ArrayCallbackReturnDiagnostic {
-    #[error("eslint(array-callback-return): Missing return on some path for array method {0:?}")]
-    #[diagnostic(
-        severity(warning),
-        help("Array method {0:?} needs to have valid return on all code paths")
-    )]
-    ExpectReturn(CompactStr, #[label] Span),
+fn expect_return(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Missing return on some path for array method {x0:?}"))
+        .with_help(format!("Array method {x0:?} needs to have valid return on all code paths"))
+        .with_label(span1)
+}
 
-    #[error("eslint(array-callback-return): Unexpected return for array method {0}")]
-    #[diagnostic(
-        severity(warning),
-        help("Array method {0} expects no useless return from the function")
-    )]
-    ExpectNoReturn(CompactStr, #[label] Span),
+fn expect_no_return(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected return for array method {x0:?}"))
+        .with_help(format!("Array method {x0:?} expects no useless return from the function"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -107,24 +101,24 @@ impl Rule for ArrayCallbackReturn {
                 ("forEach", false, _) => (),
                 ("forEach", true, _) => {
                     if return_status.may_return_explicit() {
-                        ctx.diagnostic(ArrayCallbackReturnDiagnostic::ExpectNoReturn(
-                            full_array_method_name(array_method),
+                        ctx.diagnostic(expect_no_return(
+                            &full_array_method_name(array_method),
                             function_body.span,
                         ));
                     }
                 }
                 (_, _, true) => {
                     if !return_status.must_return() {
-                        ctx.diagnostic(ArrayCallbackReturnDiagnostic::ExpectReturn(
-                            full_array_method_name(array_method),
+                        ctx.diagnostic(expect_return(
+                            &full_array_method_name(array_method),
                             function_body.span,
                         ));
                     }
                 }
                 (_, _, false) => {
                     if !return_status.must_return() || return_status.may_return_implicit() {
-                        ctx.diagnostic(ArrayCallbackReturnDiagnostic::ExpectReturn(
-                            full_array_method_name(array_method),
+                        ctx.diagnostic(expect_return(
+                            &full_array_method_name(array_method),
                             function_body.span,
                         ));
                     }
@@ -159,7 +153,7 @@ pub fn get_array_method_name<'a>(
             //  return function() {}
             // }())
             AstKind::ReturnStatement(_) => {
-                let func_node = get_enclosing_function(parent, ctx).unwrap();
+                let Some(func_node) = get_enclosing_function(parent, ctx) else { break };
                 let func_node = outermost_paren(func_node, ctx);
 
                 // the node that calls func_node
@@ -234,10 +228,10 @@ const TARGET_METHODS: phf::Set<&'static str> = phf_set! {
     "toSorted",
 };
 
-fn full_array_method_name(array_method: &'static str) -> CompactStr {
+fn full_array_method_name(array_method: &'static str) -> Cow<'static, str> {
     match array_method {
-        "from" => CompactStr::from("Array.from"),
-        s => CompactStr::from(format!("Array.prototype.{s}")),
+        "from" => Cow::Borrowed("Array.from"),
+        s => Cow::Owned(format!("Array.prototype.{s}")),
     }
 }
 
@@ -410,6 +404,7 @@ fn test() {
         ("var every = function() {}", None),
         ("foo[`${every}`](function() {})", None),
         ("foo.every(() => true)", None),
+        ("return function() {}", None),
     ];
 
     let fail = vec![

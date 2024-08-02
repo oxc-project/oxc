@@ -4,25 +4,30 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{
+    ast_util::is_method_call,
+    context::LintContext,
+    fixer::{RuleFix, RuleFixer},
+    rule::Rule,
+    AstNode,
+};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")]
-#[diagnostic(severity(warning), help("Replace the `null` literal with `undefined`."))]
-struct ReplaceNullDiagnostic(#[label] pub Span);
+fn replace_null_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow the use of the `null` literal")
+        .with_help("Replace the `null` literal with `undefined`.")
+        .with_label(span0)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-null): Disallow the use of the `null` literal")]
-#[diagnostic(severity(warning), help("Remove the `null` literal."))]
-struct RemoveNullDiagnostic(#[label] pub Span);
+fn remove_null_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow the use of the `null` literal")
+        .with_help("Remove the `null` literal.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNull {
@@ -50,7 +55,8 @@ declare_oxc_lint!(
     /// let foo
     /// ```
     NoNull,
-    style
+    style,
+    fix
 );
 
 fn match_null_arg(call_expr: &CallExpression, index: usize, span: Span) -> bool {
@@ -81,16 +87,16 @@ fn diagnose_binary_expression(
 
     // `if (foo != null) {}`
     if matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
-        ctx.diagnostic_with_fix(ReplaceNullDiagnostic(null_literal.span), || {
-            Fix::new("undefined", null_literal.span)
+        ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+            fix_null(fixer, null_literal)
         });
 
         return;
     }
 
     // checkStrictEquality=true && `if (foo !== null) {}`
-    ctx.diagnostic_with_fix(ReplaceNullDiagnostic(null_literal.span), || {
-        Fix::new("undefined", null_literal.span)
+    ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+        fix_null(fixer, null_literal)
     });
 }
 
@@ -104,16 +110,16 @@ fn diagnose_variable_declarator(
     if matches!(&variable_declarator.init, Some(Expression::NullLiteral(expr)) if expr.span == null_literal.span)
         && matches!(parent_kind, Some(AstKind::VariableDeclaration(var_declaration)) if !var_declaration.kind.is_const() )
     {
-        ctx.diagnostic_with_fix(RemoveNullDiagnostic(null_literal.span), || {
-            Fix::delete(Span::new(variable_declarator.id.span().end, null_literal.span.end))
+        ctx.diagnostic_with_fix(remove_null_diagnostic(null_literal.span), |fixer| {
+            fixer.delete_range(Span::new(variable_declarator.id.span().end, null_literal.span.end))
         });
 
         return;
     }
 
     // `const foo = null`
-    ctx.diagnostic_with_fix(ReplaceNullDiagnostic(null_literal.span), || {
-        Fix::new("undefined", null_literal.span)
+    ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+        fix_null(fixer, null_literal)
     });
 }
 
@@ -201,20 +207,23 @@ impl Rule for NoNull {
 
             // `function foo() { return null; }`,
             if matches!(parent_node.kind(), AstKind::ReturnStatement(_)) {
-                ctx.diagnostic_with_fix(RemoveNullDiagnostic(null_literal.span), || {
-                    Fix::delete(null_literal.span)
+                ctx.diagnostic_with_fix(remove_null_diagnostic(null_literal.span), |fixer| {
+                    fixer.delete_range(null_literal.span)
                 });
 
                 return;
             }
         }
 
-        ctx.diagnostic_with_fix(ReplaceNullDiagnostic(null_literal.span), || {
-            Fix::new("undefined", null_literal.span)
+        ctx.diagnostic_with_fix(replace_null_diagnostic(null_literal.span), |fixer| {
+            fix_null(fixer, null_literal)
         });
     }
 }
 
+fn fix_null<'a>(fixer: RuleFixer<'_, 'a>, null: &NullLiteral) -> RuleFix<'a> {
+    fixer.replace(null.span, "undefined")
+}
 #[test]
 fn test() {
     use crate::tester::Tester;

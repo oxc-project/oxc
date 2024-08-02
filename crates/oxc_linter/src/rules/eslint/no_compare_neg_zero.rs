@@ -1,21 +1,16 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-compare-neg-zero): Do not use the {0} operator to compare against -0.")]
-#[diagnostic(
-    severity(warning),
-    help("Use Object.is(x, -0) to test equality with -0 and use 0 for other cases")
-)]
-struct NoCompareNegZeroDiagnostic(&'static str, #[label] pub Span);
+fn no_compare_neg_zero_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use the {x0} operator to compare against -0."))
+        .with_help("Use Object.is(x, -0) to test equality with -0 and use 0 for other cases")
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCompareNegZero;
@@ -45,7 +40,7 @@ impl Rule for NoCompareNegZero {
         if Self::should_check(expr.operator) {
             let op = expr.operator.as_str();
             if is_neg_zero(&expr.left) || is_neg_zero(&expr.right) {
-                ctx.diagnostic(NoCompareNegZeroDiagnostic(op, expr.span));
+                ctx.diagnostic(no_compare_neg_zero_diagnostic(op, expr.span));
             }
         }
     }
@@ -66,7 +61,7 @@ fn is_neg_zero(expr: &Expression) -> bool {
     }
     match &unary.argument {
         Expression::NumericLiteral(number) => number.value == 0.0,
-        Expression::BigintLiteral(bigint) => bigint.is_zero(),
+        Expression::BigIntLiteral(bigint) => bigint.is_zero(),
         _ => false,
     }
 }

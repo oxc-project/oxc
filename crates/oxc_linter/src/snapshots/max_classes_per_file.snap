@@ -1,0 +1,66 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(max-classes-per-file): File has too many classes (2). Maximum allowed is 1
+   ╭─[max_classes_per_file.tsx:2:4]
+ 1 │ class Foo {}
+ 2 │             class Bar {}
+   ·             ────────────
+   ╰────
+  help: Reduce the number of classes in this file
+
+  ⚠ eslint(max-classes-per-file): File has too many classes (2). Maximum allowed is 1
+   ╭─[max_classes_per_file.tsx:2:25]
+ 1 │ class Foo {}
+ 2 │             const myExpression = class {}
+   ·                                  ────────
+   ╰────
+  help: Reduce the number of classes in this file
+
+  ⚠ eslint(max-classes-per-file): File has too many classes (2). Maximum allowed is 1
+   ╭─[max_classes_per_file.tsx:2:12]
+ 1 │ var x = class {};
+ 2 │             var y = class {};
+   ·                     ────────
+   ╰────
+  help: Reduce the number of classes in this file
+
+  ⚠ eslint(max-classes-per-file): File has too many classes (2). Maximum allowed is 1
+   ╭─[max_classes_per_file.tsx:2:12]
+ 1 │ class Foo {}
+ 2 │             var x = class {};
+   ·                     ────────
+   ╰────
+  help: Reduce the number of classes in this file
+
+  ⚠ eslint(max-classes-per-file): File has too many classes (2). Maximum allowed is 1
+   ╭─[max_classes_per_file.tsx:1:14]
+ 1 │ class Foo {} class Bar {}
+   ·              ────────────
+   ╰────
+  help: Reduce the number of classes in this file
+
+  ⚠ eslint(max-classes-per-file): File has too many classes (3). Maximum allowed is 2
+   ╭─[max_classes_per_file.tsx:1:27]
+ 1 │ class Foo {} class Bar {} class Baz {}
+   ·                           ────────────
+   ╰────
+  help: Reduce the number of classes in this file
+
+  ⚠ eslint(max-classes-per-file): File has too many classes (2). Maximum allowed is 1
+   ╭─[max_classes_per_file.tsx:3:20]
+ 2 │                             class Foo {}
+ 3 │                             class Bar {}
+   ·                             ────────────
+ 4 │                             const myExpression = class {}
+   ╰────
+  help: Reduce the number of classes in this file
+
+  ⚠ eslint(max-classes-per-file): File has too many classes (3). Maximum allowed is 2
+   ╭─[max_classes_per_file.tsx:4:20]
+ 3 │                             class Bar {}
+ 4 │                             class Baz {}
+   ·                             ────────────
+ 5 │                             const myExpression = class {}
+   ╰────
+  help: Reduce the number of classes in this file

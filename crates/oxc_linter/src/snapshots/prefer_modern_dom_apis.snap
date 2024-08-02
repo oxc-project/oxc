@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_modern_dom_apis
 ---
   ⚠ eslint-plugin-unicorn(prefer-modern-dom-apis): Prefer using `replaceWith` over `replaceChild`.
    ╭─[prefer_modern_dom_apis.tsx:1:12]

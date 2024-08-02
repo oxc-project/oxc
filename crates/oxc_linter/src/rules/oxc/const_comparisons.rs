@@ -5,41 +5,36 @@ use oxc_ast::{
     ast::{Expression, NumericLiteral},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, utils::is_same_reference, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum ConstComparisonsDiagnostic {
-    #[error("oxc(const-comparisons): Left-hand side of `&&` operator has no effect.")]
-    #[diagnostic(severity(warning), help("{2}"))]
-    RedundantLeftHandSide(
-        #[label("If this evaluates to `true`")] Span,
-        #[label("This will always evaluate to true.")] Span,
-        String,
-    ),
-    #[error("oxc(const-comparisons): Right-hand side of `&&` operator has no effect.")]
-    #[diagnostic(severity(warning), help("{2}"))]
-    RedundantRightHandSide(
-        #[label("If this evaluates to `true`")] Span,
-        #[label("This will always evaluate to true.")] Span,
-        String,
-    ),
-    #[error("oxc(const-comparisons): Unexpected constant comparison")]
-    #[diagnostic(severity(warning), help("{4}"))]
-    Impossible(
-        #[label("Requires that {2}")] Span,
-        #[label("Requires that {3}")] Span,
-        String,
-        String,
-        String,
-    ),
+fn redundant_left_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Left-hand side of `&&` operator has no effect.")
+        .with_help(x2.to_string())
+        .with_labels([
+            span0.label("If this evaluates to `true`"),
+            span1.label("This will always evaluate to true."),
+        ])
+}
+
+fn redundant_right_hand_side(span0: Span, span1: Span, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Right-hand side of `&&` operator has no effect.")
+        .with_help(x2.to_string())
+        .with_labels([
+            span0.label("If this evaluates to `true`"),
+            span1.label("This will always evaluate to true."),
+        ])
+}
+
+fn impossible(span0: Span, span1: Span, x2: &str, x3: &str, x4: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected constant comparison").with_help(x4.to_string()).with_labels([
+        span0.label(format!("Requires that {x2}")),
+        span1.label(format!("Requires that {x3}")),
+    ])
 }
 
 /// <https://rust-lang.github.io/rust-clippy/master/index.html#/impossible>
@@ -116,17 +111,9 @@ impl Rule for ConstComparisons {
                 // We already know that either side of `&&` has no effect,
                 // but emit a different error message depending on which side it is
                 if left_side_is_useless(left_cmp_op, ordering) {
-                    ctx.diagnostic(ConstComparisonsDiagnostic::RedundantLeftHandSide(
-                        left_span,
-                        logical_expr.right.span(),
-                        format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")
-                    ));
+                    ctx.diagnostic(redundant_left_hand_side(left_span, logical_expr.right.span(), &format!("if `{rhs_str}` evaluates to true, `{lhs_str}` will always evaluate to true as well")));
                 } else {
-                    ctx.diagnostic(ConstComparisonsDiagnostic::RedundantRightHandSide(
-                        logical_expr.right.span(),
-                        left_span,
-                        format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")
-                    ));
+                    ctx.diagnostic(redundant_right_hand_side(logical_expr.right.span(), left_span, &format!("if `{lhs_str}` evaluates to true, `{rhs_str}` will always evaluate to true as well")));
                 }
             } else if !comparison_is_possible(left_cmp_op.direction(), ordering) {
                 let lhs_str = left_const_expr.span.source_text(ctx.source_text());
@@ -137,29 +124,31 @@ impl Rule for ConstComparisons {
                         "since `{lhs_str}` < `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
                     ),
                     Ordering::Equal => {
-                        format!("`{expr_str}` cannot simultaneously be greater than and less than `{lhs_str}`")
-                    },
+                        format!(
+                            "`{expr_str}` cannot simultaneously be greater than and less than `{lhs_str}`"
+                        )
+                    }
                     Ordering::Greater => format!(
                         "since `{lhs_str}` > `{rhs_str}`, the expression evaluates to false for any value of `{expr_str}`"
                     ),
                 };
 
-                ctx.diagnostic(ConstComparisonsDiagnostic::Impossible(
+                ctx.diagnostic(impossible(
                     left_span,
                     logical_expr.right.without_parenthesized().span(),
-                    format!(
+                    &format!(
                         "`{} {} {}` ",
                         expr_str,
                         left_cmp_op,
                         left_const_expr.span.source_text(ctx.source_text())
                     ),
-                    format!(
+                    &format!(
                         "`{} {} {}` ",
                         expr_str,
                         right_cmp_op,
                         right_const_expr.span.source_text(ctx.source_text())
                     ),
-                    diagnostic_note,
+                    &diagnostic_note,
                 ));
             }
         }

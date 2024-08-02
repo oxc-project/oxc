@@ -2,22 +2,17 @@ use oxc_ast::{
     ast::{ExportDefaultDeclarationKind, Expression, TSInterfaceDeclaration, TSSignature, TSType},
     AstKind, CommentKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(prefer-function-type): Enforce using function types instead of interfaces with call signatures.")]
-#[diagnostic(
-    severity(warning),
-    help("The function type form `{0}` is generally preferred when possible for being more succinct.")
-)]
-struct PreferFunctionTypeDiagnostic(String, #[label] pub Span);
+fn prefer_function_type_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce using function types instead of interfaces with call signatures.")
+        .with_help(format!("The function type form `{x0}` is generally preferred when possible for being more succinct."))
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferFunctionType;
@@ -79,7 +74,8 @@ declare_oxc_lint!(
     /// type Intersection = ((data: string) => number) & ((id: number) => string);
     /// ```
     PreferFunctionType,
-    style
+    style,
+    conditional_fix
 );
 
 fn has_one_super_type(decl: &TSInterfaceDeclaration) -> bool {
@@ -128,24 +124,22 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                 match node.kind() {
                     AstKind::TSInterfaceDeclaration(interface_decl) => {
                         if let Some(type_parameters) = &interface_decl.type_parameters {
-                            let node_start = interface_decl.span.start;
-                            let node_end = interface_decl.span.end;
-                            let type_name = &source_code[interface_decl.id.span.start as usize
-                                ..type_parameters.span.end as usize];
-
                             ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
-                                || {
-                                    Fix::new(
+                                prefer_function_type_diagnostic(&suggestion, decl.span),
+                                |fixer| {
+                                    let mut span = interface_decl.id.span;
+                                    span.end = type_parameters.span.end;
+                                    let type_name = fixer.source_range(span);
+                                    fixer.replace(
+                                        interface_decl.span,
                                         format!("type {type_name} = {suggestion};"),
-                                        Span::new(node_start, node_end),
                                     )
                                 },
                             );
                         } else {
                             ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
-                                || {
+                                prefer_function_type_diagnostic(&suggestion, decl.span),
+                                |_| {
                                     let mut is_parent_exported = false;
                                     let mut node_start = interface_decl.span.start;
                                     let mut node_end = interface_decl.span.end;
@@ -169,9 +163,7 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                             .semantic()
                                             .trivias()
                                             .comments_range(node_start..node_end)
-                                            .map(|(start, comment)| {
-                                                (*comment, Span::new(*start, comment.end))
-                                            });
+                                            .map(|comment| (*comment, comment.span));
 
                                         let comments_text = {
                                             let mut comments_vec: Vec<String> = vec![];
@@ -224,42 +216,31 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                         }
                     }
 
-                    AstKind::TSTypeAnnotation(ts_type_annotation) => {
-                        match &ts_type_annotation.type_annotation {
-                            TSType::TSUnionType(union_type) => {
-                                union_type.types.iter().for_each(|ts_type| {
-                                    if let TSType::TSTypeLiteral(literal) = ts_type {
-                                        ctx.diagnostic_with_fix(
-                                            PreferFunctionTypeDiagnostic(
-                                                suggestion.clone(),
-                                                decl.span,
-                                            ),
-                                            || {
-                                                Fix::new(
-                                                    format!("({suggestion})"),
-                                                    Span::new(literal.span.start, literal.span.end),
-                                                )
-                                            },
-                                        );
-                                    }
-                                });
-                            }
-
-                            TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
-                                || {
-                                    Fix::new(
-                                        suggestion.to_string(),
-                                        Span::new(literal.span.start, literal.span.end),
-                                    )
-                                },
-                            ),
-
-                            _ => {
-                                ctx.diagnostic(PreferFunctionTypeDiagnostic(suggestion, decl.span));
-                            }
+                    AstKind::TSTypeAnnotation(ts_type_annotation) => match &ts_type_annotation
+                        .type_annotation
+                    {
+                        TSType::TSUnionType(union_type) => {
+                            union_type.types.iter().for_each(|ts_type| {
+                                if let TSType::TSTypeLiteral(literal) = ts_type {
+                                    ctx.diagnostic_with_fix(
+                                        prefer_function_type_diagnostic(&suggestion, decl.span),
+                                        |fixer| {
+                                            fixer.replace(literal.span, format!("({suggestion})"))
+                                        },
+                                    );
+                                }
+                            });
                         }
-                    }
+
+                        TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
+                            prefer_function_type_diagnostic(&suggestion, decl.span),
+                            |fixer| fixer.replace(literal.span, suggestion),
+                        ),
+
+                        _ => {
+                            ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span));
+                        }
+                    },
 
                     AstKind::TSTypeAliasDeclaration(ts_type_alias_decl) => {
                         match &ts_type_alias_decl.type_annotation {
@@ -269,17 +250,14 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         let body = &literal.members;
                                         if body.len() == 1 {
                                             ctx.diagnostic_with_fix(
-                                                PreferFunctionTypeDiagnostic(
-                                                    suggestion.clone(),
+                                                prefer_function_type_diagnostic(
+                                                    &suggestion,
                                                     decl.span,
                                                 ),
-                                                || {
-                                                    Fix::new(
+                                                |fixer| {
+                                                    fixer.replace(
+                                                        literal.span,
                                                         format!("({suggestion})"),
-                                                        Span::new(
-                                                            literal.span.start,
-                                                            literal.span.end,
-                                                        ),
                                                     )
                                                 },
                                             );
@@ -294,17 +272,14 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                                         let body = &literal.members;
                                         if body.len() == 1 {
                                             ctx.diagnostic_with_fix(
-                                                PreferFunctionTypeDiagnostic(
-                                                    suggestion.clone(),
+                                                prefer_function_type_diagnostic(
+                                                    &suggestion,
                                                     decl.span,
                                                 ),
-                                                || {
-                                                    Fix::new(
+                                                |fixer| {
+                                                    fixer.replace(
+                                                        literal.span,
                                                         format!("({suggestion})"),
-                                                        Span::new(
-                                                            literal.span.start,
-                                                            literal.span.end,
-                                                        ),
                                                     )
                                                 },
                                             );
@@ -314,20 +289,15 @@ fn check_member(member: &TSSignature, node: &AstNode<'_>, ctx: &LintContext<'_>)
                             }
 
                             TSType::TSTypeLiteral(literal) => ctx.diagnostic_with_fix(
-                                PreferFunctionTypeDiagnostic(suggestion.clone(), decl.span),
-                                || {
-                                    Fix::new(
-                                        suggestion.to_string(),
-                                        Span::new(literal.span.start, literal.span.end),
-                                    )
-                                },
+                                prefer_function_type_diagnostic(&suggestion, decl.span),
+                                |fixer| fixer.replace(literal.span, suggestion),
                             ),
 
                             _ => {}
                         }
                     }
 
-                    _ => ctx.diagnostic(PreferFunctionTypeDiagnostic(suggestion, decl.span)),
+                    _ => ctx.diagnostic(prefer_function_type_diagnostic(&suggestion, decl.span)),
                 }
             }
         }
@@ -422,6 +392,10 @@ impl Rule for PreferFunctionType {
 
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

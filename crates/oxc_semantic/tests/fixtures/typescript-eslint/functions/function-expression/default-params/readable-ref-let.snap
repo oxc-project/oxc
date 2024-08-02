@@ -1,0 +1,51 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/function-expression/default-params/readable-ref-let.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 1,
+        "node": "Function(<anonymous>)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 2,
+            "name": "b",
+            "node": "FormalParameter",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable)",
+        "id": 0,
+        "name": "a",
+        "node": "VariableDeclarator",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "a",
+            "node_id": 12
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable)",
+        "id": 1,
+        "name": "foo",
+        "node": "VariableDeclarator",
+        "references": []
+      }
+    ]
+  }
+]

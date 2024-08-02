@@ -1,8 +1,5 @@
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
@@ -36,10 +33,11 @@ declare_oxc_lint! {
 #[derive(Debug, Default, Clone)]
 pub struct AriaUnsupportedElements;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(aria-unsupported-elements): This element does not support ARIA roles, states and properties.")]
-#[diagnostic(severity(warning), help("Try removing the prop `{1}`."))]
-struct AriaUnsupportedElementsDiagnostic(#[label] pub Span, String);
+fn aria_unsupported_elements_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("This element does not support ARIA roles, states and properties.")
+        .with_help(format!("Try removing the prop `{x1}`."))
+        .with_label(span0)
+}
 
 impl Rule for AriaUnsupportedElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -55,7 +53,7 @@ impl Rule for AriaUnsupportedElements {
                     };
                     let attr_name = get_jsx_attribute_name(&attr.name).to_lowercase();
                     if INVALID_ATTRIBUTES.contains(&attr_name) {
-                        ctx.diagnostic(AriaUnsupportedElementsDiagnostic(attr.span, attr_name));
+                        ctx.diagnostic(aria_unsupported_elements_diagnostic(attr.span, &attr_name));
                     }
                 }
             }

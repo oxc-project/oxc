@@ -1,34 +1,25 @@
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
-    AstNode,
-};
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_map;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsx-a11y(no-redundant-roles): The element `{element}` has an implicit role of `{role}`. Defining this explicitly is redundant and should be avoided."
-)]
-#[diagnostic(
-    severity(warning),
-    help("Remove the redundant role `{role}` from the element `{element}`.")
-)]
-struct NoRedundantRolesDiagnostic {
-    #[label]
-    pub span: Span,
-    pub element: String,
-    pub role: String,
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_ignore_case},
+    AstNode,
+};
+
+fn no_redundant_roles_diagnostic(span: Span, element: &str, role: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "The element `{element}` has an implicit role of `{role}`. Defining this explicitly is redundant and should be avoided."
+    ))
+    .with_help(format!("Remove the redundant role `{role}` from the element `{element}`."))
+    .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -64,7 +55,7 @@ impl Rule for NoRedundantRoles {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(component) = get_element_type(ctx, jsx_el) {
                 if let Some(JSXAttributeItem::Attribute(attr)) =
-                    has_jsx_prop_lowercase(jsx_el, "role")
+                    has_jsx_prop_ignore_case(jsx_el, "role")
                 {
                     if let Some(JSXAttributeValue::StringLiteral(role_values)) = &attr.value {
                         let roles: Vec<String> = role_values
@@ -75,11 +66,9 @@ impl Rule for NoRedundantRoles {
                         for role in &roles {
                             let exceptions = DEFAULT_ROLE_EXCEPTIONS.get(&component);
                             if exceptions.map_or(false, |set| set.contains(role)) {
-                                ctx.diagnostic(NoRedundantRolesDiagnostic {
-                                    span: attr.span,
-                                    element: component.clone(),
-                                    role: role.to_string(),
-                                });
+                                ctx.diagnostic(no_redundant_roles_diagnostic(
+                                    attr.span, &component, role,
+                                ));
                             }
                         }
                     }
@@ -91,8 +80,7 @@ impl Rule for NoRedundantRoles {
 
 #[test]
 fn test() {
-    use crate::rules::NoRedundantRoles;
-    use crate::tester::Tester;
+    use crate::{rules::NoRedundantRoles, tester::Tester};
 
     fn settings() -> serde_json::Value {
         serde_json::json!({

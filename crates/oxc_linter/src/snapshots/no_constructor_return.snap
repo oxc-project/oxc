@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-constructor-return): Unexpected return statement in constructor.
+   ╭─[no_constructor_return.tsx:1:27]
+ 1 │ class C { constructor() { return '' } }
+   ·                           ─────────
+   ╰────
+
+  ⚠ eslint(no-constructor-return): Unexpected return statement in constructor.
+   ╭─[no_constructor_return.tsx:1:38]
+ 1 │ class C { constructor(a) { if (!a) { return '' } else { a() } } }
+   ·                                      ─────────
+   ╰────

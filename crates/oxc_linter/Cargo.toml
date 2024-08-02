@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_linter"
-version                = "0.0.0"
+version                = "0.6.1"
 publish                = false
 authors.workspace      = true
 description.workspace  = true
@@ -11,6 +11,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/examples", "/src"]
 
 [lints]
 workspace = true
@@ -23,33 +24,36 @@ oxc_allocator   = { workspace = true }
 oxc_parser      = { workspace = true }
 oxc_span        = { workspace = true }
 oxc_ast         = { workspace = true }
+oxc_cfg         = { workspace = true }
 oxc_diagnostics = { workspace = true }
+oxc_index       = { workspace = true }
 oxc_macros      = { workspace = true }
 oxc_semantic    = { workspace = true }
 oxc_syntax      = { workspace = true }
 oxc_codegen     = { workspace = true }
 oxc_resolver    = { workspace = true }
 
-rayon         = { workspace = true }
-lazy_static   = { workspace = true }                        # used in oxc_macros
-serde_json    = { workspace = true }
-serde         = { workspace = true, features = ["derive"] }
-regex         = { workspace = true }
-rustc-hash    = { workspace = true }
-phf           = { workspace = true, features = ["macros"] }
-itertools     = { workspace = true }
-dashmap       = { workspace = true }
-convert_case  = { workspace = true }
-language-tags = { workspace = true }
-mime_guess    = { workspace = true }
-url           = { workspace = true }
-
+rayon               = { workspace = true }
+bitflags            = { workspace = true }
+lazy_static         = { workspace = true }
+serde_json          = { workspace = true }
+serde               = { workspace = true, features = ["derive"] }
+regex               = { workspace = true }
+rustc-hash          = { workspace = true }
+phf                 = { workspace = true, features = ["macros"] }
+itertools           = { workspace = true }
+dashmap             = { workspace = true }
+convert_case        = { workspace = true }
+language-tags       = { workspace = true }
+mime_guess          = { workspace = true }
+url                 = { workspace = true }
 rust-lapper         = { workspace = true }
 once_cell           = { workspace = true }
 memchr              = { workspace = true }
 json-strip-comments = { workspace = true }
-
-static_assertions = { workspace = true }
+schemars            = { workspace = true, features = ["indexmap2"] }
 
 [dev-dependencies]
-insta = { workspace = true }
+static_assertions = { workspace = true }
+insta             = { workspace = true }
+project-root      = { workspace = true }

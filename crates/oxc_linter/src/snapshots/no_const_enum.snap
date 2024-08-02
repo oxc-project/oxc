@@ -1,0 +1,9 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(no-const-enum): Unexpected const enum
+   ╭─[no_const_enum.tsx:1:1]
+ 1 │ const enum Color { Red, Green, Blue }
+   · ─────
+   ╰────
+  help: Const enums are not supported by bundlers and are incompatible with the isolatedModules mode. Their use can lead to import nonexistent values (because const enums are erased).

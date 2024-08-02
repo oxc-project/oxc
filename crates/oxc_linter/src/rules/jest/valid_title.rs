@@ -4,12 +4,9 @@ use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use regex::Regex;
 
 use crate::{
@@ -21,10 +18,9 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(valid-title): {0:?}")]
-#[diagnostic(severity(warning), help("{1:?}"))]
-struct ValidTitleDiagnostic(CompactStr, &'static str, #[label] pub Span);
+fn valid_title_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x0:?}")).with_help(format!("{x1:?}")).with_label(span2)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitle(Box<ValidTitleConfig>);
@@ -292,8 +288,8 @@ fn validate_title(
 
         if let Some(matched) = disallowed_words_reg.find(title) {
             let error = format!("{} is not allowed in test title", matched.as_str());
-            ctx.diagnostic(ValidTitleDiagnostic(
-                CompactStr::from(error),
+            ctx.diagnostic(valid_title_diagnostic(
+                &error,
                 "It is included in the `disallowedWords` of your config file, try to remove it from your title",
                 span,
             ));
@@ -325,11 +321,11 @@ fn validate_title(
         if !regex.is_match(title) {
             let raw_pattern = regex.as_str();
             let message = message.as_ref().map_or_else(
-                || CompactStr::from(format!("{un_prefixed_name} should match {raw_pattern}")),
-                |message| CompactStr::from(message.as_str()),
+                || format!("{un_prefixed_name} should match {raw_pattern}"),
+                std::clone::Clone::clone,
             );
-            ctx.diagnostic(ValidTitleDiagnostic(
-                message,
+            ctx.diagnostic(valid_title_diagnostic(
+                &message,
                 "Make sure the title matches the `mustMatch` of your config file",
                 span,
             ));
@@ -340,12 +336,12 @@ fn validate_title(
         if regex.is_match(title) {
             let raw_pattern = regex.as_str();
             let message = message.as_ref().map_or_else(
-                || CompactStr::from(format!("{un_prefixed_name} should not match {raw_pattern}")),
-                |message| CompactStr::from(message.as_str()),
+                || format!("{un_prefixed_name} should not match {raw_pattern}"),
+                std::string::ToString::to_string,
             );
 
-            ctx.diagnostic(ValidTitleDiagnostic(
-                message,
+            ctx.diagnostic(valid_title_diagnostic(
+                &message,
                 "Make sure the title not matches the `mustNotMatch` of your config file",
                 span,
             ));
@@ -374,15 +370,26 @@ enum Message {
 impl Message {
     fn detail(&self) -> (&'static str, &'static str) {
         match self {
-            Self::TitleMustBeString => ("Title must be a string", "Replace your title with a string"),
-            Self::EmptyTitle => ("Should not have an empty title", "Write a meaningful title for your test"),
-            Self::DuplicatePrefix => ("Should not have duplicate prefix", "The function name has already contains the prefix, try remove the duplicate prefix"),
-            Self::AccidentalSpace => ("Should not have leading or trailing spaces", "Remove the leading or trailing spaces"),
+            Self::TitleMustBeString => {
+                ("Title must be a string", "Replace your title with a string")
+            }
+            Self::EmptyTitle => {
+                ("Should not have an empty title", "Write a meaningful title for your test")
+            }
+            Self::DuplicatePrefix => (
+                "Should not have duplicate prefix",
+                "The function name has already contains the prefix, try remove the duplicate prefix",
+            ),
+            Self::AccidentalSpace => (
+                "Should not have leading or trailing spaces",
+                "Remove the leading or trailing spaces",
+            ),
         }
     }
+
     fn diagnostic(&self, ctx: &LintContext, span: Span) {
         let (error, help) = self.detail();
-        ctx.diagnostic(ValidTitleDiagnostic(CompactStr::from(error), help, span));
+        ctx.diagnostic(valid_title_diagnostic(error, help, span));
     }
 }
 

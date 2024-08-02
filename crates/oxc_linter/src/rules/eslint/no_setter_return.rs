@@ -1,16 +1,13 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-setter-return): Setter cannot return a value")]
-struct NoSetterReturnDiagnostic(#[label] pub Span);
+fn no_setter_return_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Setter cannot return a value").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSetterReturn;
@@ -41,9 +38,11 @@ declare_oxc_lint!(
 
 impl Rule for NoSetterReturn {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ReturnStatement(stmt) = node.kind() else { return };
+        let AstKind::ReturnStatement(stmt) = node.kind() else {
+            return;
+        };
         if stmt.argument.is_some() && ctx.scopes().get_flags(node.scope_id()).is_set_accessor() {
-            ctx.diagnostic(NoSetterReturnDiagnostic(stmt.span));
+            ctx.diagnostic(no_setter_return_diagnostic(stmt.span));
         }
     }
 }

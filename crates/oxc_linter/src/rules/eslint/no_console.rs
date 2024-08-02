@@ -1,17 +1,13 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-console): Unexpected console statement.")]
-#[diagnostic(severity(warning))]
-struct NoConsoleDiagnostic(#[label] pub Span);
+fn no_console_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected console statement.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConsole(Box<NoConsoleConfig>);
@@ -83,7 +79,7 @@ impl Rule for NoConsole {
                             .any(|s| mem.static_property_name().is_some_and(|f| f == s))
                     {
                         if let Some(mem) = mem.static_property_info() {
-                            ctx.diagnostic(NoConsoleDiagnostic(mem.0));
+                            ctx.diagnostic(no_console_diagnostic(mem.0));
                         }
                     }
                 }

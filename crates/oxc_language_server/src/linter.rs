@@ -1,4 +1,3 @@
-use log::debug;
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -6,15 +5,15 @@ use std::{
     sync::Arc,
 };
 
-use miette::NamedSource;
+use log::debug;
 use oxc_allocator::Allocator;
-use oxc_diagnostics::{miette, Error, Severity};
+use oxc_diagnostics::{Error, NamedSource, Severity};
 use oxc_linter::{
     partial_loader::{
         AstroPartialLoader, JavaScriptSource, SveltePartialLoader, VuePartialLoader,
         LINT_PARTIAL_LOADER_EXT,
     },
-    LintContext, Linter,
+    FixKind, Linter,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -153,7 +152,6 @@ pub struct FixedContent {
     pub range: Range,
 }
 
-#[derive(Debug)]
 pub struct IsolatedLintHandler {
     linter: Arc<Linter>,
 }
@@ -279,13 +277,17 @@ impl IsolatedLintHandler {
                 let reports = ret
                     .errors
                     .into_iter()
-                    .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
+                    .map(|diagnostic| ErrorReport {
+                        error: Error::from(diagnostic),
+                        fixed_content: None,
+                    })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
 
             let program = allocator.alloc(ret.program);
             let semantic_ret = SemanticBuilder::new(javascript_source_text, source_type)
+                .with_cfg(true)
                 .with_trivias(ret.trivias)
                 .with_check_syntax_error(true)
                 .build(program);
@@ -294,17 +296,15 @@ impl IsolatedLintHandler {
                 let reports = semantic_ret
                     .errors
                     .into_iter()
-                    .map(|diagnostic| ErrorReport { error: diagnostic, fixed_content: None })
+                    .map(|diagnostic| ErrorReport {
+                        error: Error::from(diagnostic),
+                        fixed_content: None,
+                    })
                     .collect();
                 return Some(Self::wrap_diagnostics(path, &original_source_text, reports, start));
             };
 
-            let lint_ctx = LintContext::new(
-                path.to_path_buf().into_boxed_path(),
-                &Rc::new(semantic_ret.semantic),
-            );
-
-            let result = linter.run(lint_ctx);
+            let result = linter.run(path, Rc::new(semantic_ret.semantic));
 
             let reports = result
                 .into_iter()
@@ -325,7 +325,7 @@ impl IsolatedLintHandler {
                         },
                     });
 
-                    ErrorReport { error: msg.error, fixed_content }
+                    ErrorReport { error: Error::from(msg.error), fixed_content }
                 })
                 .collect::<Vec<ErrorReport>>();
             let (_, errors_with_position) =
@@ -377,14 +377,13 @@ fn offset_to_position(offset: usize, source_text: &str) -> Option<Position> {
     Some(Position::new(line as u32, column as u32))
 }
 
-#[derive(Debug)]
 pub struct ServerLinter {
     linter: Arc<Linter>,
 }
 
 impl ServerLinter {
     pub fn new() -> Self {
-        let linter = Linter::default().with_fix(true);
+        let linter = Linter::default().with_fix(FixKind::SafeFix);
         Self { linter: Arc::new(linter) }
     }
 

@@ -3,11 +3,7 @@ use oxc_ast::{
     ast::{match_member_expression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use regex::Regex;
@@ -19,10 +15,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(throw-new-error): Require `new` when throwing an error.")]
-#[diagnostic(severity(warning), help("While it's possible to create a new error without using the `new` keyword, it's better to be explicit."))]
-struct ThrowNewErrorDiagnostic(#[label] pub Span);
+fn throw_new_error_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Require `new` when throwing an error.")
+        .with_help("While it's possible to create a new error without using the `new` keyword, it's better to be explicit.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ThrowNewError;
@@ -55,9 +52,13 @@ declare_oxc_lint!(
 
 impl Rule for ThrowNewError {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-        let Some(outermost_paren_node) = outermost_paren_parent(node, ctx) else { return };
+        let Some(outermost_paren_node) = outermost_paren_parent(node, ctx) else {
+            return;
+        };
 
         let AstKind::ThrowStatement(_) = outermost_paren(outermost_paren_node, ctx).kind() else {
             return;
@@ -83,7 +84,7 @@ impl Rule for ThrowNewError {
             _ => return,
         }
 
-        ctx.diagnostic(ThrowNewErrorDiagnostic(call_expr.span));
+        ctx.diagnostic(throw_new_error_diagnostic(call_expr.span));
     }
 }
 

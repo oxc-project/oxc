@@ -1,5 +1,5 @@
 //! Parse files in parallel and then `Send` them to the main thread for processing.
-
+#![allow(clippy::print_stdout)]
 #![allow(clippy::future_not_send)] // clippy warns `Allocator` is not `Send`
 #![allow(clippy::redundant_pub_crate)] // comes from  `ouroboros`'s macro
 
@@ -7,23 +7,25 @@
 // run `cargo run -p oxc_parser --example multi-thread`
 // or `cargo watch -x "run -p oxc_parser --example multi-thread"`
 
-use std::sync::mpsc;
+use std::{
+    sync::{mpsc, Arc},
+    thread,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 use oxc_allocator::Allocator;
 use oxc_ast::ast::Program;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-use std::time::{SystemTime, UNIX_EPOCH};
-use std::{sync::Arc, thread};
 
 /// Wrap the AST for unsafe `Send` and `Sync`
 struct BumpaloProgram<'a>(Program<'a>);
 
 #[allow(clippy::non_send_fields_in_send_ty)]
-#[allow(unsafe_code)]
+
 // SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
 unsafe impl<'a> Send for BumpaloProgram<'a> {}
-#[allow(unsafe_code)]
+
 // SAFETY: It is now our responsibility to never simultaneously mutate the AST across threads.
 unsafe impl<'a> Sync for BumpaloProgram<'a> {}
 

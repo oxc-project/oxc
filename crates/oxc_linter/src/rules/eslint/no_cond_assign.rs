@@ -2,19 +2,17 @@ use oxc_ast::{
     ast::{AssignmentExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-cond-assign): Expected a conditional expression and instead saw an assignment")]
-#[diagnostic(severity(warning), help("Consider wrapping the assignment in additional parentheses"))]
-struct NoCondAssignDiagnostic(#[label] pub Span);
+fn no_cond_assign_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Expected a conditional expression and instead saw an assignment")
+        .with_help("Consider wrapping the assignment in additional parentheses")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCondAssign {
@@ -99,8 +97,9 @@ impl NoCondAssign {
         operator_span.start += start;
         operator_span.end = operator_span.start + expr.operator.as_str().len() as u32;
 
-        ctx.diagnostic(NoCondAssignDiagnostic(operator_span));
+        ctx.diagnostic(no_cond_assign_diagnostic(operator_span));
     }
+
     fn check_expression(&self, ctx: &LintContext<'_>, expr: &Expression<'_>) {
         let mut expr = expr;
         if self.config == NoCondAssignConfig::Always {

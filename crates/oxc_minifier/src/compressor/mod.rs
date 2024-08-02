@@ -1,16 +1,11 @@
 #![allow(clippy::unused_self)]
 
-mod ast_util;
-mod fold;
+pub(crate) mod ast_util;
 mod options;
-mod prepass;
 mod util;
 
 use oxc_allocator::{Allocator, Vec};
-use oxc_ast::visit::walk_mut::{
-    walk_binary_expression_mut, walk_expression_mut, walk_return_statement_mut, walk_statement_mut,
-    walk_statements_mut,
-};
+use oxc_ast::visit::walk_mut;
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstBuilder, VisitMut};
 use oxc_span::Span;
@@ -20,21 +15,27 @@ use oxc_syntax::{
     precedence::GetPrecedence,
 };
 
+use crate::ast_passes::RemoveParens;
+use crate::folder::Folder;
+
 pub use self::options::CompressOptions;
-use self::prepass::Prepass;
 
 pub struct Compressor<'a> {
     ast: AstBuilder<'a>,
     options: CompressOptions,
 
-    prepass: Prepass<'a>,
+    prepass: RemoveParens<'a>,
+    folder: Folder<'a>,
 }
 
 const SPAN: Span = Span::new(0, 0);
 
 impl<'a> Compressor<'a> {
     pub fn new(allocator: &'a Allocator, options: CompressOptions) -> Self {
-        Self { ast: AstBuilder::new(allocator), options, prepass: Prepass::new(allocator) }
+        let ast = AstBuilder::new(allocator);
+        let folder = Folder::new(ast).with_evaluate(options.evaluate);
+        let prepass = RemoveParens::new(allocator);
+        Self { ast, options, prepass, folder }
     }
 
     pub fn build(mut self, program: &mut Program<'a>) {
@@ -47,11 +48,19 @@ impl<'a> Compressor<'a> {
     /// `1/0`
     #[allow(unused)]
     fn create_one_div_zero(&mut self) -> Expression<'a> {
-        let left = self.ast.number_literal(SPAN, 1.0, "1", NumberBase::Decimal);
-        let left = self.ast.literal_number_expression(left);
-        let right = self.ast.number_literal(SPAN, 0.0, "0", NumberBase::Decimal);
-        let right = self.ast.literal_number_expression(right);
-        self.ast.binary_expression(SPAN, left, BinaryOperator::Division, right)
+        let left = self.ast.expression_numeric_literal(SPAN, 1.0, "1", NumberBase::Decimal);
+        let right = self.ast.expression_numeric_literal(SPAN, 0.0, "0", NumberBase::Decimal);
+        self.ast.expression_binary(SPAN, left, BinaryOperator::Division, right)
+    }
+
+    /// Test `Object.defineProperty(exports, ...)`
+    fn is_object_define_property_exports(expr: &Expression<'a>) -> bool {
+        let Expression::CallExpression(call_expr) = expr else { return false };
+        let Some(Argument::Identifier(ident)) = call_expr.arguments.first() else { return false };
+        if ident.name != "exports" {
+            return false;
+        }
+        call_expr.callee.is_specific_member_access("Object", "defineProperty")
     }
 
     /* Statements */
@@ -127,7 +136,7 @@ impl<'a> Compressor<'a> {
         }
 
         // Reconstruct the stmts array by joining consecutive ranges
-        let mut new_stmts = self.ast.new_vec_with_capacity(stmts.len() - capacity);
+        let mut new_stmts = self.ast.vec_with_capacity(stmts.len() - capacity);
         for (i, stmt) in stmts.drain(..).enumerate() {
             if i > 0 && ranges.iter().any(|range| range.contains(&(i - 1)) && range.contains(&i)) {
                 if let Statement::VariableDeclaration(prev_decl) = new_stmts.last_mut().unwrap() {
@@ -146,10 +155,10 @@ impl<'a> Compressor<'a> {
     fn compress_while(&mut self, stmt: &mut Statement<'a>) {
         let Statement::WhileStatement(while_stmt) = stmt else { return };
         if self.options.loops {
-            let dummy_test = self.ast.this_expression(SPAN);
+            let dummy_test = self.ast.expression_this(SPAN);
             let test = std::mem::replace(&mut while_stmt.test, dummy_test);
             let body = self.ast.move_statement(&mut while_stmt.body);
-            *stmt = self.ast.for_statement(SPAN, None, Some(test), None, body);
+            *stmt = self.ast.statement_for(SPAN, None, Some(test), None, body);
         }
     }
 
@@ -187,57 +196,54 @@ impl<'a> Compressor<'a> {
     fn compress_boolean(&mut self, expr: &mut Expression<'a>) -> bool {
         let Expression::BooleanLiteral(lit) = expr else { return false };
         if self.options.booleans {
-            let num = self.ast.number_literal(
+            let num = self.ast.expression_numeric_literal(
                 SPAN,
                 if lit.value { 0.0 } else { 1.0 },
                 if lit.value { "0" } else { "1" },
                 NumberBase::Decimal,
             );
-            let num = self.ast.literal_number_expression(num);
-            *expr = self.ast.unary_expression(SPAN, UnaryOperator::LogicalNot, num);
+            *expr = self.ast.expression_unary(SPAN, UnaryOperator::LogicalNot, num);
             return true;
         }
         false
     }
 
-    /// Transforms `typeof foo == "undefined"` into `foo === void 0`
+    /// Compress `typeof foo == "undefined"` into `typeof foo > "u"`
     /// Enabled by `compress.typeofs`
     fn compress_typeof_undefined(&self, expr: &mut BinaryExpression<'a>) {
         if !self.options.typeofs {
             return;
         }
-        match expr.operator {
-            BinaryOperator::Equality | BinaryOperator::StrictEquality => {
-                let pair = self.commutative_pair(
-                    (&expr.left, &expr.right),
-                    |a| {
-                        if a.is_specific_string_literal("undefined") {
-                            return Some(());
+        if !matches!(expr.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) {
+            return;
+        }
+        let pair = self.commutative_pair(
+            (&expr.left, &expr.right),
+            |a| a.is_specific_string_literal("undefined").then_some(()),
+            |b| {
+                if let Expression::UnaryExpression(op) = b {
+                    if op.operator == UnaryOperator::Typeof {
+                        if let Expression::Identifier(id) = &op.argument {
+                            return Some((*id).clone());
                         }
-                        None
-                    },
-                    |b| {
-                        if let Expression::UnaryExpression(op) = b {
-                            if op.operator == UnaryOperator::Typeof {
-                                if let Expression::Identifier(id) = &op.argument {
-                                    return Some((*id).clone());
-                                }
-                            }
-                        }
-                        None
-                    },
-                );
-                if let Some((_void_exp, id_ref)) = pair {
-                    let span = expr.span;
-                    let left = self.ast.void_0();
-                    let operator = BinaryOperator::StrictEquality;
-                    let right = self.ast.identifier_reference_expression(id_ref);
-                    let cmp = BinaryExpression { span, left, operator, right };
-                    *expr = cmp;
+                    }
                 }
-            }
-            _ => {}
+                None
+            },
+        );
+        let Some((_void_exp, id_ref)) = pair else {
+            return;
         };
+        let argument = self.ast.expression_from_identifier_reference(id_ref);
+        let left = self.ast.unary_expression(SPAN, UnaryOperator::Typeof, argument);
+        let right = self.ast.string_literal(SPAN, "u");
+        let binary_expr = self.ast.binary_expression(
+            expr.span,
+            self.ast.expression_from_unary(left),
+            BinaryOperator::GreaterThan,
+            self.ast.expression_from_string_literal(right),
+        );
+        *expr = binary_expr;
     }
 
     fn commutative_pair<A, F, G, RetF: 'a, RetG: 'a>(
@@ -319,20 +325,22 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
             true
         });
 
-        self.join_vars(stmts);
+        if self.options.join_vars {
+            self.join_vars(stmts);
+        }
 
-        walk_statements_mut(self, stmts);
+        walk_mut::walk_statements(self, stmts);
     }
 
     fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
         self.compress_block(stmt);
         self.compress_while(stmt);
-        self.fold_condition(stmt);
-        walk_statement_mut(self, stmt);
+        self.folder.fold_condition(stmt);
+        walk_mut::walk_statement(self, stmt);
     }
 
     fn visit_return_statement(&mut self, stmt: &mut ReturnStatement<'a>) {
-        walk_return_statement_mut(self, stmt);
+        walk_mut::walk_return_statement(self, stmt);
         // We may fold `void 1` to `void 0`, so compress it after visiting
         self.compress_return_statement(stmt);
     }
@@ -345,16 +353,20 @@ impl<'a> VisitMut<'a> for Compressor<'a> {
     }
 
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
-        walk_expression_mut(self, expr);
+        // Bail cjs `Object.defineProperty(exports, ...)`
+        if Self::is_object_define_property_exports(expr) {
+            return;
+        }
+        walk_mut::walk_expression(self, expr);
         self.compress_console(expr);
-        self.fold_expression(expr);
+        self.folder.fold_expression(expr);
         if !self.compress_undefined(expr) {
             self.compress_boolean(expr);
         }
     }
 
     fn visit_binary_expression(&mut self, expr: &mut BinaryExpression<'a>) {
-        walk_binary_expression_mut(self, expr);
+        walk_mut::walk_binary_expression(self, expr);
         self.compress_typeof_undefined(expr);
     }
 }

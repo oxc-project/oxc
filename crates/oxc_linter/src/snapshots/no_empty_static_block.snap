@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_empty_static_block
 ---
   ⚠ eslint(no-empty-static-block): Disallow empty static blocks
    ╭─[no_empty_static_block.tsx:1:13]

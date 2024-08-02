@@ -4,9 +4,12 @@ use std::{
 };
 
 mod arena;
+mod convert;
+
+use bumpalo::Bump;
 
 pub use arena::{Box, String, Vec};
-use bumpalo::Bump;
+pub use convert::{FromIn, IntoIn};
 
 #[derive(Default)]
 pub struct Allocator {
@@ -37,8 +40,9 @@ impl DerefMut for Allocator {
 mod test {
     use std::ops::Deref;
 
-    use crate::Allocator;
     use bumpalo::Bump;
+
+    use crate::Allocator;
 
     #[test]
     fn test_api() {

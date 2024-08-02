@@ -2,21 +2,18 @@ use oxc_ast::{
     ast::{match_member_expression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use phf::phf_set;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-use phf::phf_set;
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`")]
-#[diagnostic(severity(warning), help("Replace it with a for` loop. For loop is faster, more readable, and you can use `break` or `return` to exit early."))]
-struct NoArrayForEachDiagnostic(#[label] pub Span);
+fn no_array_for_each_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use `Array#forEach`")
+        .with_help("Replace it with a for` loop. For loop is faster, more readable, and you can use `break` or `return` to exit early.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoArrayForEach;
@@ -89,7 +86,7 @@ impl Rule for NoArrayForEach {
                 return;
             };
 
-            ctx.diagnostic(NoArrayForEachDiagnostic(span));
+            ctx.diagnostic(no_array_for_each_diagnostic(span));
         }
     }
 }

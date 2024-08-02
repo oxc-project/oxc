@@ -1,5 +1,5 @@
+#![allow(clippy::print_stdout, clippy::print_stderr)]
 use std::{
-    borrow::Cow,
     collections::HashMap,
     fmt::{self, Display, Formatter},
 };
@@ -29,8 +29,7 @@ const ESLINT_TEST_PATH: &str =
 const JEST_TEST_PATH: &str =
     "https://raw.githubusercontent.com/jest-community/eslint-plugin-jest/main/src/rules/__tests__";
 
-const TYPESCRIPT_ESLINT_TEST_PATH: &str =
-    "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/tests/rules";
+const TYPESCRIPT_ESLINT_TEST_PATH: &str = "https://raw.githubusercontent.com/typescript-eslint/typescript-eslint/main/packages/eslint-plugin/tests/rules";
 
 const UNICORN_TEST_PATH: &str =
     "https://raw.githubusercontent.com/sindresorhus/eslint-plugin-unicorn/main/test";
@@ -56,22 +55,31 @@ const NODE_TEST_PATH: &str =
 const TREE_SHAKING_PATH: &str =
     "https://raw.githubusercontent.com/lukastaegert/eslint-plugin-tree-shaking/master/src/rules";
 
-struct TestCase<'a> {
+const PROMISE_TEST_PATH: &str =
+    "https://raw.githubusercontent.com/eslint-community/eslint-plugin-promise/main/__tests__";
+
+struct TestCase {
     source_text: String,
     code: Option<String>,
+    output: Option<String>,
     group_comment: Option<String>,
-    config: Option<Cow<'a, str>>,
-    settings: Option<Cow<'a, str>>,
+    config: Option<String>,
+    settings: Option<String>,
+    filename: Option<String>,
+    language_options: Option<String>,
 }
 
-impl<'a> TestCase<'a> {
-    fn new(source_text: &str, arg: &'a Expression<'a>) -> Self {
+impl TestCase {
+    fn new(source_text: &str, arg: &Expression<'_>) -> Self {
         let mut test_case = Self {
             source_text: source_text.to_string(),
             code: None,
+            output: None,
             config: None,
             settings: None,
             group_comment: None,
+            filename: None,
+            language_options: None,
         };
         test_case.visit_expression(arg);
         test_case
@@ -82,21 +90,11 @@ impl<'a> TestCase<'a> {
         self
     }
 
-    fn code(&self, need_config: bool, need_settings: bool) -> String {
+    fn code(&self, need_config: bool, need_settings: bool, need_filename: bool) -> String {
         self.code
             .as_ref()
             .map(|code| {
-                let mut code = if code.contains('\n') {
-                    code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
-                } else {
-                    code.to_string()
-                };
-
-                if code.contains('"') {
-                    // handle " to \" and then \\" to \"
-                    code = code.replace('"', "\\\"").replace("\\\\\"", "\\\"");
-                }
-
+                let code_str = format_code_snippet(code);
                 let config = self.config.as_ref().map_or_else(
                     || "None".to_string(),
                     |config| format!("Some(serde_json::json!({config}))"),
@@ -105,17 +103,23 @@ impl<'a> TestCase<'a> {
                     || "None".to_string(),
                     |settings| format!(r#"Some(serde_json::json!({{ "settings": {settings} }}))"#),
                 );
-                let code_str = if code.contains('"') {
-                    format!("r#\"{}\"#", code.replace("\\\"", "\""))
-                } else {
-                    format!("\"{code}\"")
-                };
-                if need_settings {
+                let filename = self.filename.as_ref().map_or_else(
+                    || "None".to_string(),
+                    |filename| format!(r#"Some(PathBuf::from("{filename}"))"#),
+                );
+                let code_str = if need_filename {
+                    format!("({code_str}, {config}, {settings}, {filename})")
+                } else if need_settings {
                     format!("({code_str}, {config}, {settings})")
                 } else if need_config {
                     format!("({code_str}, {config})")
                 } else {
-                    code_str.to_string()
+                    code_str
+                };
+                if let Some(language_options) = &self.language_options {
+                    format!("{code_str}, // {language_options}")
+                } else {
+                    code_str
                 }
             })
             .unwrap_or_default()
@@ -124,9 +128,42 @@ impl<'a> TestCase<'a> {
     fn group_comment(&self) -> Option<&str> {
         self.group_comment.as_deref()
     }
+
+    fn output(&self) -> Option<String> {
+        let code = format_code_snippet(self.code.as_ref()?);
+        let output = format_code_snippet(self.output.as_ref()?);
+        let config = self.config.as_ref().map_or_else(
+            || "None".to_string(),
+            |config| format!("Some(serde_json::json!({config}))"),
+        );
+
+        // ("null==null", "null === null", None),
+        Some(format!(r#"({code}, {output}, {config})"#))
+    }
 }
 
-impl<'a> Visit<'a> for TestCase<'a> {
+fn format_code_snippet(code: &str) -> String {
+    let code = if code.contains('\n') {
+        code.replace('\n', "\n\t\t\t").replace('\\', "\\\\").replace('\"', "\\\"")
+    } else {
+        code.to_string()
+    };
+
+    // "debugger" => "debugger"
+    if !code.contains('"') {
+        return format!("\"{code}\"");
+    }
+
+    // "document.querySelector("#foo");" => r##"document.querySelector("#foo");"##
+    if code.contains("\"#") {
+        return format!("r##\"{code}\"##");
+    }
+
+    // 'import foo from "foo";' => r#"import foo from "foo";"#
+    format!("r#\"{}\"#", code.replace("\\\"", "\""))
+}
+
+impl<'a> Visit<'a> for TestCase {
     fn visit_expression(&mut self, expr: &Expression<'a>) {
         match expr {
             Expression::StringLiteral(lit) => self.visit_string_literal(lit),
@@ -169,10 +206,10 @@ impl<'a> Visit<'a> for TestCase<'a> {
                                 // There are `dedent`(in eslint-plugin-jest), `outdent`(in eslint-plugin-unicorn) and `noFormat`(in typescript-eslint)
                                 // are known to be used to format test cases for their own purposes.
                                 // We read the quasi of tagged template directly also for the future usage.
-                                tag_expr.quasi.quasi().map(ToString::to_string)
+                                tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
                             }
                             Expression::TemplateLiteral(tag_expr) => {
-                                tag_expr.quasi().map(ToString::to_string)
+                                tag_expr.quasi().map(|quasi| quasi.to_string())
                             }
                             // handle code like ["{", "a: 1", "}"].join("\n")
                             Expression::CallExpression(call_expr) => {
@@ -206,18 +243,39 @@ impl<'a> Visit<'a> for TestCase<'a> {
                             _ => continue,
                         }
                     }
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "output" => {
+                        self.output = match &prop.value {
+                            Expression::StringLiteral(s) => Some(s.value.to_string()),
+                            Expression::TaggedTemplateExpression(tag_expr) => {
+                                tag_expr.quasi.quasi().map(|quasi| quasi.to_string())
+                            }
+                            Expression::TemplateLiteral(tag_expr) => {
+                                tag_expr.quasi().map(|quasi| quasi.to_string())
+                            }
+                            _ => None,
+                        }
+                    }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "options" => {
                         let span = prop.value.span();
                         let option_text = &self.source_text[span.start as usize..span.end as usize];
-                        self.config =
-                            Some(Cow::Owned(json::convert_config_to_json_literal(option_text)));
+                        self.config = Some(json::convert_config_to_json_literal(option_text));
                     }
                     PropertyKey::StaticIdentifier(ident) if ident.name == "settings" => {
                         let span = prop.value.span();
-                        let setting_text =
-                            &self.source_text[span.start as usize..span.end as usize];
-                        self.settings =
-                            Some(Cow::Owned(json::convert_config_to_json_literal(setting_text)));
+                        let setting_text = span.source_text(&self.source_text);
+                        self.settings = Some(json::convert_config_to_json_literal(setting_text));
+                    }
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "filename" => {
+                        let span = prop.value.span();
+                        let filename = span.source_text(&self.source_text);
+                        self.filename = Some(filename.to_string());
+                    }
+                    PropertyKey::StaticIdentifier(ident) if ident.name == "languageOptions" => {
+                        let span = prop.value.span();
+                        let language_options = span.source_text(&self.source_text);
+                        let language_options =
+                            json::convert_config_to_json_literal(language_options);
+                        self.language_options = Some(language_options);
                     }
                     _ => continue,
                 },
@@ -243,7 +301,7 @@ impl<'a> Visit<'a> for TestCase<'a> {
         if ident.name != "dedent" && ident.name != "outdent" {
             return;
         }
-        self.code = expr.quasi.quasi().map(std::string::ToString::to_string);
+        self.code = expr.quasi.quasi().map(|quasi| quasi.to_string());
         self.config = None;
     }
 }
@@ -256,6 +314,8 @@ pub struct Context {
     snake_rule_name: String,
     pass_cases: String,
     fail_cases: String,
+    fix_cases: Option<String>,
+    has_filename: bool,
 }
 
 impl Context {
@@ -270,7 +330,19 @@ impl Context {
             snake_rule_name: underscore_rule_name,
             pass_cases,
             fail_cases,
+            fix_cases: None,
+            has_filename: false,
         }
+    }
+
+    fn with_filename(mut self, has_filename: bool) -> Self {
+        self.has_filename = has_filename;
+        self
+    }
+
+    fn with_fix_cases(mut self, fix_cases: String) -> Self {
+        self.fix_cases = Some(fix_cases);
+        self
     }
 }
 
@@ -476,7 +548,8 @@ fn find_parser_arguments<'a, 'b>(
                             return Some(&call_expr.arguments);
                         }
                         return None;
-                    } else if arg.is_expression() {
+                    }
+                    if arg.is_expression() {
                         return None;
                     }
                 }
@@ -496,11 +569,11 @@ pub enum RuleKind {
     ReactPerf,
     JSXA11y,
     Oxc,
-    DeepScan,
     NextJS,
     JSDoc,
     Node,
     TreeShaking,
+    Promise,
 }
 
 impl RuleKind {
@@ -513,11 +586,11 @@ impl RuleKind {
             "react-perf" => Self::ReactPerf,
             "jsx-a11y" => Self::JSXA11y,
             "oxc" => Self::Oxc,
-            "deepscan" => Self::DeepScan,
             "nextjs" => Self::NextJS,
             "jsdoc" => Self::JSDoc,
             "n" => Self::Node,
             "tree-shaking" => Self::TreeShaking,
+            "promise" => Self::Promise,
             _ => Self::ESLint,
         }
     }
@@ -533,12 +606,12 @@ impl Display for RuleKind {
             Self::React => write!(f, "eslint-plugin-react"),
             Self::ReactPerf => write!(f, "eslint-plugin-react-perf"),
             Self::JSXA11y => write!(f, "eslint-plugin-jsx-a11y"),
-            Self::DeepScan => write!(f, "deepscan"),
             Self::Oxc => write!(f, "oxc"),
             Self::NextJS => write!(f, "eslint-plugin-next"),
             Self::JSDoc => write!(f, "eslint-plugin-jsdoc"),
             Self::Node => write!(f, "eslint-plugin-n"),
             Self::TreeShaking => write!(f, "eslint-plugin-tree-shaking"),
+            Self::Promise => write!(f, "eslint-plugin-promise"),
         }
     }
 }
@@ -565,7 +638,8 @@ fn main() {
         RuleKind::JSDoc => format!("{JSDOC_TEST_PATH}/{camel_rule_name}.js"),
         RuleKind::Node => format!("{NODE_TEST_PATH}/{kebab_rule_name}.js"),
         RuleKind::TreeShaking => format!("{TREE_SHAKING_PATH}/{kebab_rule_name}.test.ts"),
-        RuleKind::Oxc | RuleKind::DeepScan => String::new(),
+        RuleKind::Promise => format!("{PROMISE_TEST_PATH}/{kebab_rule_name}.js"),
+        RuleKind::Oxc => String::new(),
     };
 
     println!("Reading test file from {rule_test_path}");
@@ -598,12 +672,17 @@ fn main() {
             let fail_has_settings = fail_cases.iter().any(|case| case.settings.is_some());
             let has_settings = pass_has_settings || fail_has_settings;
 
+            let pass_has_filename = pass_cases.iter().any(|case| case.filename.is_some());
+            let fail_has_filename = fail_cases.iter().any(|case| case.filename.is_some());
+            let has_filename = pass_has_filename || fail_has_filename;
+
             let gen_cases_string = |cases: Vec<TestCase>| {
                 let mut codes = vec![];
+                let mut fix_codes = vec![];
                 let mut last_comment = String::new();
                 for case in cases {
                     let current_comment = case.group_comment();
-                    let mut code = case.code(has_config, has_settings);
+                    let mut code = case.code(has_config, has_settings, has_filename);
                     if code.is_empty() {
                         continue;
                     }
@@ -613,21 +692,28 @@ fn main() {
                             code = format!(
                                 "// {}\n{}",
                                 &last_comment,
-                                case.code(has_config, has_settings)
+                                case.code(has_config, has_settings, has_filename)
                             );
                         }
+                    }
+
+                    if let Some(output) = case.output() {
+                        fix_codes.push(output);
                     }
 
                     codes.push(code);
                 }
 
-                codes.join(",\n")
+                (codes.join(",\n"), fix_codes.join(",\n"))
             };
 
-            let pass_cases = gen_cases_string(pass_cases);
-            let fail_cases = gen_cases_string(fail_cases);
+            // pass cases don't need to be fixed
+            let (pass_cases, _) = gen_cases_string(pass_cases);
+            let (fail_cases, fix_cases) = gen_cases_string(fail_cases);
 
             Context::new(plugin_name, &rule_name, pass_cases, fail_cases)
+                .with_filename(has_filename)
+                .with_fix_cases(fix_cases)
         }
         Err(_err) => {
             println!("Rule {rule_name} cannot be found in {rule_kind}, use empty template.");

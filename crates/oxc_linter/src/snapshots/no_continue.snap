@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_continue
 ---
   ⚠ eslint(no-continue): Unexpected use of `continue` statement.
    ╭─[no_continue.tsx:1:55]

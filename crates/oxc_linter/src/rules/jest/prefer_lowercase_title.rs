@@ -1,14 +1,10 @@
 use oxc_ast::{ast::Argument, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
@@ -16,10 +12,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names")]
-#[diagnostic(severity(warning), help("`{0:?}`s should begin with lowercase"))]
-struct UnexpectedLowercase(CompactStr, #[label] Span);
+fn unexpected_lowercase(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce lowercase test names")
+        .with_help(format!("`{x0:?}`s should begin with lowercase"))
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferLowercaseTitleConfig {
@@ -132,6 +129,7 @@ declare_oxc_lint!(
     ///
     PreferLowercaseTitle,
     style,
+    fix
 );
 
 impl Rule for PreferLowercaseTitle {
@@ -172,9 +170,7 @@ impl Rule for PreferLowercaseTitle {
 
 impl PreferLowercaseTitle {
     fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let scopes = ctx.scopes();
         let node = possible_jest_node.node;
-        let ignores = Self::populate_ignores(&self.ignore);
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -183,6 +179,9 @@ impl PreferLowercaseTitle {
         else {
             return;
         };
+
+        let scopes = ctx.scopes();
+        let ignores = Self::populate_ignores(&self.ignore);
 
         if ignores.contains(&jest_fn_call.name.as_ref()) {
             return;
@@ -201,61 +200,12 @@ impl PreferLowercaseTitle {
         };
 
         if let Argument::StringLiteral(string_expr) = arg {
-            if string_expr.value.is_empty()
-                || self.allowed_prefixes.iter().any(|name| string_expr.value.starts_with(name))
-            {
-                return;
-            }
-
-            let Some(first_char) = string_expr.value.chars().next() else {
-                return;
-            };
-
-            if first_char == first_char.to_ascii_lowercase() {
-                return;
-            }
-
-            ctx.diagnostic_with_fix(
-                UnexpectedLowercase(string_expr.value.to_compact_str(), string_expr.span),
-                || {
-                    let mut content = ctx.codegen();
-                    content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
-                    Fix::new(
-                        content.into_source_text(),
-                        Span::new(string_expr.span.start + 1, string_expr.span.start + 2),
-                    )
-                },
-            );
+            self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
         } else if let Argument::TemplateLiteral(template_expr) = arg {
             let Some(template_string) = template_expr.quasi() else {
                 return;
             };
-
-            if template_string.is_empty()
-                || self.allowed_prefixes.iter().any(|name| template_string.starts_with(name))
-            {
-                return;
-            }
-
-            let Some(first_char) = template_string.chars().next() else {
-                return;
-            };
-
-            if first_char == first_char.to_ascii_lowercase() {
-                return;
-            }
-
-            ctx.diagnostic_with_fix(
-                UnexpectedLowercase(template_string.to_compact_str(), template_expr.span),
-                || {
-                    let mut content = ctx.codegen();
-                    content.print_str(first_char.to_ascii_lowercase().to_string().as_bytes());
-                    Fix::new(
-                        content.into_source_text(),
-                        Span::new(template_expr.span.start + 1, template_expr.span.start + 2),
-                    )
-                },
-            );
+            self.lint_string(ctx, template_string.as_str(), template_expr.span);
         }
     }
 
@@ -279,6 +229,26 @@ impl PreferLowercaseTitle {
         }
 
         ignores
+    }
+
+    fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
+        if literal.is_empty() || self.allowed_prefixes.iter().any(|name| literal.starts_with(name))
+        {
+            return;
+        }
+
+        let Some(first_char) = literal.chars().next() else {
+            return;
+        };
+
+        let lower = first_char.to_ascii_lowercase();
+        if first_char == lower {
+            return;
+        }
+
+        ctx.diagnostic_with_fix(unexpected_lowercase(literal, span), |fixer| {
+            fixer.replace(Span::sized(span.start + 1, 1), lower.to_string())
+        });
     }
 }
 

@@ -1,26 +1,22 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-dupe-class-members): Duplicate class member: {0:?}")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "The last declaration overwrites previous ones, remove one of them or rename if both should be retained"
-    )
-)]
-struct NoDupeClassMembersDiagnostic(
-    CompactStr, /*Class member name */
-    #[label("{0:?} is previously declared here")] pub Span,
-    #[label("{0:?} is re-declared here")] pub Span,
-);
+fn no_dupe_class_members_diagnostic(
+    x0: &str, /*Class member name */
+    span1: Span,
+    span2: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Duplicate class member: {x0:?}"))
+        .with_help("The last declaration overwrites previous ones, remove one of them or rename if both should be retained")
+        .with_labels([
+            span1.label(format!("{x0:?} is previously declared here")),
+            span2.label(format!("{x0:?} is re-declared here")),
+        ])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDupeClassMembers;
@@ -60,8 +56,8 @@ impl Rule for NoDupeClassMembers {
                             && prev_element.kind.is_setter_or_getter())
                             || element.kind == prev_element.kind)
                     {
-                        ctx.diagnostic(NoDupeClassMembersDiagnostic(
-                            element.name.clone(),
+                        ctx.diagnostic(no_dupe_class_members_diagnostic(
+                            &element.name,
                             prev_element.span,
                             element.span,
                         ));

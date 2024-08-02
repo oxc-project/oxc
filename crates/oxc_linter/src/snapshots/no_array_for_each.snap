@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_array_for_each
 ---
   ⚠ eslint-plugin-unicorn(no-array-for-each): Do not use `Array#forEach`
    ╭─[no_array_for_each.tsx:1:5]

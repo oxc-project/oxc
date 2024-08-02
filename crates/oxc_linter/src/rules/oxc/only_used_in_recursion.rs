@@ -2,24 +2,21 @@ use oxc_ast::{
     ast::{BindingIdentifier, BindingPatternKind, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("oxc(only-used-in-recursion): Parameter `{1}` is only used in recursive calls")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Remove the argument and its usage. Alternatively, use the argument in the function body."
+fn only_used_in_recursion_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "Parameter `{x1}` is only used in recursive calls"
+    ))
+    .with_help(
+        "Remove the argument and its usage. Alternatively, use the argument in the function body.",
     )
-)]
-struct OnlyUsedInRecursionDiagnostic(#[label] pub Span, pub CompactStr);
+    .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct OnlyUsedInRecursion;
@@ -63,9 +60,13 @@ declare_oxc_lint!(
 
 impl Rule for OnlyUsedInRecursion {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Function(function) = node.kind() else { return };
+        let AstKind::Function(function) = node.kind() else {
+            return;
+        };
 
-        let Some(function_id) = &function.id else { return };
+        let Some(function_id) = &function.id else {
+            return;
+        };
 
         if function.is_typescript_syntax() {
             return;
@@ -76,10 +77,12 @@ impl Rule for OnlyUsedInRecursion {
         }
 
         for (arg_index, arg) in function.params.items.iter().enumerate() {
-            let BindingPatternKind::BindingIdentifier(arg) = &arg.pattern.kind else { continue };
+            let BindingPatternKind::BindingIdentifier(arg) = &arg.pattern.kind else {
+                continue;
+            };
 
             if is_argument_only_used_in_recursion(function_id, arg, arg_index, ctx) {
-                ctx.diagnostic(OnlyUsedInRecursionDiagnostic(arg.span, arg.name.to_compact_str()));
+                ctx.diagnostic(only_used_in_recursion_diagnostic(arg.span, arg.name.as_str()));
             }
         }
     }

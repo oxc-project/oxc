@@ -3,12 +3,11 @@ use super::{Kind, Lexer, Token};
 impl<'a> Lexer<'a> {
     /// Section 12.8 Punctuators
     pub(super) fn read_dot(&mut self) -> Kind {
-        if self.peek() == Some('.') && self.peek2() == Some('.') {
-            self.consume_char();
-            self.consume_char();
+        if self.peek_2_bytes() == Some([b'.', b'.']) {
+            self.consume_2_chars();
             return Kind::Dot3;
         }
-        if self.peek().is_some_and(|c| c.is_ascii_digit()) {
+        if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
             self.decimal_literal_after_decimal_point()
         } else {
             Kind::Dot
@@ -17,38 +16,45 @@ impl<'a> Lexer<'a> {
 
     /// returns None for `SingleLineHTMLOpenComment` `<!--` in script mode
     pub(super) fn read_left_angle(&mut self) -> Option<Kind> {
-        if self.next_eq('<') {
-            if self.next_eq('=') {
-                Some(Kind::ShiftLeftEq)
-            } else {
-                Some(Kind::ShiftLeft)
+        match self.peek_byte() {
+            Some(b'<') => {
+                self.consume_char();
+                if self.next_ascii_byte_eq(b'=') {
+                    Some(Kind::ShiftLeftEq)
+                } else {
+                    Some(Kind::ShiftLeft)
+                }
             }
-        } else if self.next_eq('=') {
-            Some(Kind::LtEq)
-        } else if self.peek() == Some('!')
-            // SingleLineHTMLOpenComment `<!--` in script mode
-            && self.source_type.is_script()
-            && self.remaining().starts_with("!--")
-        {
-            None
-        } else {
-            Some(Kind::LAngle)
+            Some(b'=') => {
+                self.consume_char();
+                Some(Kind::LtEq)
+            }
+            Some(b'!') if self.source_type.is_script() && self.remaining().starts_with("!--") => {
+                None
+            }
+            _ => Some(Kind::LAngle),
         }
     }
 
     /// returns None for `SingleLineHTMLCloseComment` `-->` in script mode
     pub(super) fn read_minus(&mut self) -> Option<Kind> {
-        if self.next_eq('-') {
-            // SingleLineHTMLCloseComment `-->` in script mode
-            if self.token.is_on_new_line && self.source_type.is_script() && self.next_eq('>') {
-                None
-            } else {
-                Some(Kind::Minus2)
+        match self.peek_byte() {
+            Some(b'-') => {
+                self.consume_char();
+                if self.token.is_on_new_line
+                    && self.source_type.is_script()
+                    && self.next_ascii_byte_eq(b'>')
+                {
+                    None
+                } else {
+                    Some(Kind::Minus2)
+                }
             }
-        } else if self.next_eq('=') {
-            Some(Kind::MinusEq)
-        } else {
-            Some(Kind::Minus)
+            Some(b'=') => {
+                self.consume_char();
+                Some(Kind::MinusEq)
+            }
+            _ => Some(Kind::Minus),
         }
     }
 
@@ -59,19 +65,19 @@ impl<'a> Lexer<'a> {
     }
 
     fn read_right_angle(&mut self) -> Kind {
-        if self.next_eq('>') {
-            if self.next_eq('>') {
-                if self.next_eq('=') {
+        if self.next_ascii_byte_eq(b'>') {
+            if self.next_ascii_byte_eq(b'>') {
+                if self.next_ascii_byte_eq(b'=') {
                     Kind::ShiftRight3Eq
                 } else {
                     Kind::ShiftRight3
                 }
-            } else if self.next_eq('=') {
+            } else if self.next_ascii_byte_eq(b'=') {
                 Kind::ShiftRightEq
             } else {
                 Kind::ShiftRight
             }
-        } else if self.next_eq('=') {
+        } else if self.next_ascii_byte_eq(b'=') {
             Kind::GtEq
         } else {
             Kind::RAngle

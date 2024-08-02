@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: ban_types
 ---
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:1:8]
@@ -176,6 +175,14 @@ expression: ban_types
  3 │           constructor(foo: String | Object | Function) {}
    ╰────
 
+  ⚠ typescript-eslint(ban-types): 'The `Object` type actually means "any non-nullish value"
+   ╭─[ban_types.tsx:2:68]
+ 1 │ 
+ 2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
+   ·                                                                    ──────
+ 3 │           constructor(foo: String | Object | Function) {}
+   ╰────
+
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:3:28]
  2 │         class Test<T = Boolean> extends Foo<String> implements Bar<Object> {
@@ -202,6 +209,14 @@ expression: ban_types
   help: The `Function` type accepts any function-like value
 
   ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
+   ╭─[ban_types.tsx:5:24]
+ 4 │ 
+ 5 │           arg(): Array<String> {
+   ·                        ──────
+ 6 │             const foo: String = 1 as String;
+   ╰────
+
+  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
    ╭─[ban_types.tsx:6:24]
  5 │           arg(): Array<String> {
  6 │             const foo: String = 1 as String;
@@ -215,14 +230,6 @@ expression: ban_types
  6 │             const foo: String = 1 as String;
    ·                                      ──────
  7 │           }
-   ╰────
-
-  ⚠ typescript-eslint(ban-types): Do not use "String" as a type. Use "string" instead
-   ╭─[ban_types.tsx:5:24]
- 4 │ 
- 5 │           arg(): Array<String> {
-   ·                        ──────
- 6 │             const foo: String = 1 as String;
    ╰────
 
   ⚠ typescript-eslint(ban-types): Don't use `Function` as a type

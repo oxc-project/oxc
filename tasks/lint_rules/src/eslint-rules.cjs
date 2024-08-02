@@ -181,12 +181,12 @@ const loadPluginReactRules = (linter) => {
 
     linter.defineRule(prefixedName, rule);
   }
-};
 
-/** @param {import("eslint").Linter} linter */
-const loadPluginReactHooksRules = (linter) => {
+  // `react-hooks` plugin is available along with `react` plugin
   for (const [name, rule] of Object.entries(pluginReactHooksAllRules)) {
-    const prefixedName = `react-hooks/${name}`;
+    // This may be conflict with `react` plugin
+    // (but `react-hooks` plugin has only 2 rules, so it's fine...!)
+    const prefixedName = `react/${name}`;
 
     // @ts-expect-error: The types of 'meta.type', 'string' is not assignable to type '"problem" | "suggestion" | "layout" | undefined'.
     linter.defineRule(prefixedName, rule);
@@ -219,31 +219,34 @@ const loadPluginNextRules = (linter) => {
 
 /**
  * @typedef {{
- *   npm: string;
+ *   npm: string[];
  *   issueNo: number;
  * }} TargetPluginMeta
  * @type {Map<string, TargetPluginMeta>}
  */
 exports.ALL_TARGET_PLUGINS = new Map([
-  ["eslint", { npm: "eslint", issueNo: 479 }],
-  ["typescript", { npm: "@typescript-eslint/eslint-plugin", issueNo: 2180 }],
-  ["n", { npm: "eslint-plugin-n", issueNo: 493 }],
-  ["unicorn", { npm: "eslint-plugin-unicorn", issueNo: 684 }],
-  ["jsdoc", { npm: "eslint-plugin-jsdoc", issueNo: 1170 }],
-  ["import", { npm: "eslint-plugin-import", issueNo: 1117 }],
-  ["jsx-a11y", { npm: "eslint-plugin-jsx-a11y", issueNo: 1141 }],
-  ["jest", { npm: "eslint-plugin-jest", issueNo: 492 }],
-  ["react", { npm: "eslint-plugin-react", issueNo: 1022 }],
-  ["react-hooks", { npm: "eslint-plugin-react-hooks", issueNo: 2174 }],
-  ["react-perf", { npm: "eslint-plugin-react-perf", issueNo: 2041 }],
-  ["nextjs", { npm: "@next/eslint-plugin-next", issueNo: 1929 }],
+  ["eslint", { npm: ["eslint"], issueNo: 479 }],
+  ["typescript", { npm: ["@typescript-eslint/eslint-plugin"], issueNo: 2180 }],
+  ["n", { npm: ["eslint-plugin-n"], issueNo: 493 }],
+  ["unicorn", { npm: ["eslint-plugin-unicorn"], issueNo: 684 }],
+  ["jsdoc", { npm: ["eslint-plugin-jsdoc"], issueNo: 1170 }],
+  ["import", { npm: ["eslint-plugin-import"], issueNo: 1117 }],
+  ["jsx-a11y", { npm: ["eslint-plugin-jsx-a11y"], issueNo: 1141 }],
+  ["jest", { npm: ["eslint-plugin-jest"], issueNo: 492 }],
+  [
+    "react",
+    {
+      npm: ["eslint-plugin-react", "eslint-plugin-react-hooks"],
+      issueNo: 1022,
+    },
+  ],
+  ["react-perf", { npm: ["eslint-plugin-react-perf"], issueNo: 2041 }],
+  ["nextjs", { npm: ["@next/eslint-plugin-next"], issueNo: 1929 }],
 ]);
 
 // All rules(including deprecated, recommended) are loaded initially.
 exports.createESLintLinter = () =>
   new Linter({
-    // XXX: We need to adapt to flat ESLint in near future!
-    // @ts-expect-error: Type '"eslintrc"' is not assignable to type '"flat"'.
     configType: "eslintrc",
   });
 
@@ -257,7 +260,10 @@ exports.loadTargetPluginRules = (linter) => {
   loadPluginJSXA11yRules(linter);
   loadPluginJestRules(linter);
   loadPluginReactRules(linter);
-  loadPluginReactHooksRules(linter);
   loadPluginReactPerfRules(linter);
   loadPluginNextRules(linter);
 };
+
+// some typescript rules are some extension of the basic eslint rules
+// we need them later to map them for both
+exports.pluginTypeScriptRulesNames = Object.keys(pluginTypeScriptAllRules);

@@ -1,20 +1,15 @@
 use oxc_ast::{ast::BindingPatternKind, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-assign-module-variable): Do not assign to the variable `module`.")]
-#[diagnostic(
-    severity(warning),
-    help("See https://nextjs.org/docs/messages/no-assign-module-variable")
-)]
-struct NoAssignModuleVariableDiagnostic(#[label] pub Span);
+fn no_assign_module_variable_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not assign to the variable `module`.")
+        .with_help("See https://nextjs.org/docs/messages/no-assign-module-variable")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAssignModuleVariable;
@@ -35,7 +30,9 @@ declare_oxc_lint!(
 
 impl Rule for NoAssignModuleVariable {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::VariableDeclaration(variable_decl) = node.kind() else { return };
+        let AstKind::VariableDeclaration(variable_decl) = node.kind() else {
+            return;
+        };
 
         for decl in &variable_decl.declarations {
             let BindingPatternKind::BindingIdentifier(binding_ident) = &decl.id.kind else {
@@ -43,7 +40,7 @@ impl Rule for NoAssignModuleVariable {
             };
 
             if binding_ident.name == "module" {
-                ctx.diagnostic(NoAssignModuleVariableDiagnostic(binding_ident.span));
+                ctx.diagnostic(no_assign_module_variable_diagnostic(binding_ident.span));
             }
         }
     }

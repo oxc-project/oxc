@@ -1,16 +1,14 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::is_jest_file};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-export): Do not export from a test file.")]
-#[diagnostic(severity(warning), help("If you want to share code between tests, move it into a separate file and import it from there."))]
-struct NoExportDiagnostic(#[label] pub Span);
+fn no_export_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not export from a test file.")
+        .with_help("If you want to share code between tests, move it into a separate file and import it from there.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExport;
@@ -44,20 +42,21 @@ impl Rule for NoExport {
             return;
         }
 
-        for span in ctx.semantic().module_record().exported_bindings.values() {
-            ctx.diagnostic(NoExportDiagnostic(*span));
+        for span in ctx.module_record().exported_bindings.values() {
+            ctx.diagnostic(no_export_diagnostic(*span));
         }
 
-        if let Some(span) = ctx.semantic().module_record().export_default {
-            ctx.diagnostic(NoExportDiagnostic(span));
+        if let Some(span) = ctx.module_record().export_default {
+            ctx.diagnostic(no_export_diagnostic(span));
         }
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

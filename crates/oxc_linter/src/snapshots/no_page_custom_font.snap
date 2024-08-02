@@ -1,0 +1,35 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-next(no-page-custom-font): Custom fonts not added in `pages/_document.js` will only load for a single page. This is discouraged.
+    ╭─[no_page_custom_font.tsx:7:18]
+  6 │                             <Head>
+  7 │ ╭─▶                           <link
+  8 │ │                               href="https://fonts.googleapis.com/css2?family=Inter"
+  9 │ │                               rel="stylesheet"
+ 10 │ ╰─▶                           />
+ 11 │                             </Head>
+    ╰────
+  help: See: https://nextjs.org/docs/messages/no-page-custom-font
+
+  ⚠ eslint-plugin-next(no-page-custom-font): Using `<link />` outside of `<Head>` will disable automatic font optimization. This is discouraged.
+    ╭─[no_page_custom_font.tsx:8:16]
+  7 │                           <>
+  8 │ ╭─▶                         <link
+  9 │ │                             href="https://fonts.googleapis.com/css2?family=Inter"
+ 10 │ │                             rel="stylesheet"
+ 11 │ ╰─▶                         />
+ 12 │                             <link
+    ╰────
+  help: See: 'https://nextjs.org/docs/messages/no-page-custom-font
+
+  ⚠ eslint-plugin-next(no-page-custom-font): Using `<link />` outside of `<Head>` will disable automatic font optimization. This is discouraged.
+    ╭─[no_page_custom_font.tsx:12:16]
+ 11 │                             />
+ 12 │ ╭─▶                         <link
+ 13 │ │                             href="https://fonts.googleapis.com/css2?family=Open+Sans"
+ 14 │ │                             rel="stylesheet"
+ 15 │ ╰─▶                           />
+ 16 │                           </>
+    ╰────
+  help: See: 'https://nextjs.org/docs/messages/no-page-custom-font

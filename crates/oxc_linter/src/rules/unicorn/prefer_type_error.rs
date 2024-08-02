@@ -2,20 +2,20 @@ use oxc_ast::{
     ast::{match_member_expression, CallExpression, Expression, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement")]
-#[diagnostic(severity(warning), help("Change to `throw new TypeError(...)`"))]
-struct PreferTypeErrorDiagnostic(#[label] pub Span);
+fn prefer_type_error_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement",
+    )
+    .with_help("Change to `throw new TypeError(...)`")
+    .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferTypeError;
@@ -47,7 +47,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferTypeError {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::ThrowStatement(throw_stmt) = node.kind() else { return };
+        let AstKind::ThrowStatement(throw_stmt) = node.kind() else {
+            return;
+        };
 
         let Expression::NewExpression(new_expr) = &throw_stmt.argument.without_parenthesized()
         else {
@@ -58,20 +60,28 @@ impl Rule for PreferTypeError {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(node.id()) else { return };
+        let Some(parent) = ctx.nodes().parent_node(node.id()) else {
+            return;
+        };
 
-        let AstKind::BlockStatement(block_stmt) = parent.kind() else { return };
+        let AstKind::BlockStatement(block_stmt) = parent.kind() else {
+            return;
+        };
 
         if block_stmt.body.len() != 1 {
             return;
         }
 
-        let Some(parent) = ctx.nodes().parent_node(parent.id()) else { return };
+        let Some(parent) = ctx.nodes().parent_node(parent.id()) else {
+            return;
+        };
 
-        let AstKind::IfStatement(if_stmt) = parent.kind() else { return };
+        let AstKind::IfStatement(if_stmt) = parent.kind() else {
+            return;
+        };
 
         if is_type_checking_expr(&if_stmt.test) {
-            ctx.diagnostic(PreferTypeErrorDiagnostic(new_expr.callee.span()));
+            ctx.diagnostic(prefer_type_error_diagnostic(new_expr.callee.span()));
         }
     }
 }

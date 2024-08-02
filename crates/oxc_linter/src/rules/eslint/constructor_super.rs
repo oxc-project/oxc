@@ -1,24 +1,20 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
+// use oxc_span::Span;
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(constructor-super): Expected to call 'super()'.")]
-#[diagnostic(severity(warning), help("Ensure 'super()' is called from constructor"))]
-struct ConstructorSuperDiagnostic(#[label] pub Span);
+// #[derive(Debug, Error, Diagnostic)]
+// #[error("Expected to call 'super()'.")]
+// #[diagnostic(severity(warning), help("Ensure 'super()' is called from constructor"))]
+// struct ConstructorSuperDiagnostic(#[label] pub Span);
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(constructor-super): Unexpected 'super()' because 'super' is not a constructor.")]
-#[diagnostic(severity(warning), help("Do not call 'super()' from constructor."))]
-struct SuperNotConstructorDiagnostic(
-    #[label("unexpected 'super()'")] pub Span,
-    #[label("because this is not a constructor")] pub Span,
-);
+// #[derive(Debug, Error, Diagnostic)]
+// #[error("Unexpected 'super()' because 'super' is not a constructor.")]
+// #[diagnostic(severity(warning), help("Do not call 'super()' from constructor."))]
+// struct SuperNotConstructorDiagnostic(
+//     #[label("unexpected 'super()'")] pub Span,
+//     #[label("because this is not a constructor")] pub Span,
+// );
 
 #[derive(Debug, Default, Clone)]
 pub struct ConstructorSuper;

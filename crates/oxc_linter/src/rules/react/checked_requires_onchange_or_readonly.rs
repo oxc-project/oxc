@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -16,15 +13,16 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum CheckedRequiresOnchangeOrReadonlyDiagnostic {
-    #[error("eslint-plugin-react(checked-requires-onchange-or-readonly): `checked` should be used with either `onChange` or `readOnly`.")]
-    #[diagnostic(severity(warning), help("Add either `onChange` or `readOnly`."))]
-    MissingProperty(#[label] Span),
+fn missing_property(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`checked` should be used with either `onChange` or `readOnly`.")
+        .with_help("Add either `onChange` or `readOnly`.")
+        .with_label(span)
+}
 
-    #[error("eslint-plugin-react(checked-requires-onchange-or-readonly): Use either `checked` or `defaultChecked`, but not both.")]
-    #[diagnostic(severity(warning), help("Remove either `checked` or `defaultChecked`."))]
-    ExclusiveCheckedAttribute(#[label] Span, #[label] Span),
+fn exclusive_checked_attribute(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use either `checked` or `defaultChecked`, but not both.")
+        .with_help("Remove either `checked` or `defaultChecked`.")
+        .with_labels([span0, span1])
 }
 
 #[derive(Debug, Default, Clone)]
@@ -68,7 +66,9 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXOpeningElement(jsx_opening_el) => {
-                let Some(element_type) = get_element_type(ctx, jsx_opening_el) else { return };
+                let Some(element_type) = get_element_type(ctx, jsx_opening_el) else {
+                    return;
+                };
                 if element_type != "input" {
                     return;
                 }
@@ -102,21 +102,15 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                 if let Some(checked_span) = checked_span {
                     if !self.ignore_exclusive_checked_attribute {
                         if let Some(default_checked_span) = default_checked_span {
-                            ctx.diagnostic(
-                                CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
-                                    checked_span,
-                                    default_checked_span,
-                                ),
-                            );
+                            ctx.diagnostic(exclusive_checked_attribute(
+                                checked_span,
+                                default_checked_span,
+                            ));
                         }
                     }
 
                     if !self.ignore_missing_properties && is_missing_property {
-                        ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(
-                                checked_span,
-                            ),
-                        );
+                        ctx.diagnostic(missing_property(checked_span));
                     }
                 }
             }
@@ -172,21 +166,15 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                 if let Some(checked_span) = checked_span {
                     if !self.ignore_exclusive_checked_attribute {
                         if let Some(default_checked_span) = default_checked_span {
-                            ctx.diagnostic(
-                                CheckedRequiresOnchangeOrReadonlyDiagnostic::ExclusiveCheckedAttribute(
-                                    checked_span,
-                                    default_checked_span,
-                                ),
-                            );
+                            ctx.diagnostic(exclusive_checked_attribute(
+                                checked_span,
+                                default_checked_span,
+                            ));
                         }
                     }
 
                     if !self.ignore_missing_properties && is_missing_property {
-                        ctx.diagnostic(
-                            CheckedRequiresOnchangeOrReadonlyDiagnostic::MissingProperty(
-                                checked_span,
-                            ),
-                        );
+                        ctx.diagnostic(missing_property(checked_span));
                     }
                 }
             }

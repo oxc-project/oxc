@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-new): Do not use 'new' for side effects.
+   ╭─[no_new.tsx:1:1]
+ 1 │ new Date()
+   · ────────
+   ╰────
+
+  ⚠ eslint(no-new): Do not use 'new' for side effects.
+   ╭─[no_new.tsx:1:10]
+ 1 │ (() => { new Date() })
+   ·          ────────
+   ╰────

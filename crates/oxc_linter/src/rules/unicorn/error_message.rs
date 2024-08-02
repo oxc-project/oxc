@@ -2,24 +2,22 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression, NewExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[diagnostic(severity(warning))]
-pub enum ErrorMessageDiagnostic {
-    #[error("eslint-plugin-unicorn(error-message): Pass a message to the {0:1} constructor.")]
-    MissingMessage(CompactStr, #[label] Span),
-    #[error("eslint-plugin-unicorn(error-message): Error message should not be an empty string.")]
-    EmptyMessage(#[label] Span),
-    #[error("eslint-plugin-unicorn(error-message): Error message should be a string.")]
-    NotString(#[label] Span),
+fn missing_message(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Pass a message to the {x0:1} constructor.")).with_label(span1)
+}
+
+fn empty_message(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Error message should not be an empty string.").with_label(span0)
+}
+
+fn not_string(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Error message should be a string.").with_label(span0)
 }
 
 #[derive(Default, Debug, Clone)]
@@ -83,28 +81,25 @@ impl Rule for ErrorMessage {
         let message_argument = args.get(message_argument_idx);
 
         let Some(arg) = message_argument else {
-            return ctx.diagnostic(ErrorMessageDiagnostic::MissingMessage(
-                constructor_name.to_compact_str(),
-                span,
-            ));
+            return ctx.diagnostic(missing_message(constructor_name.as_str(), span));
         };
 
         match arg {
             Argument::StringLiteral(lit) => {
                 if lit.value.is_empty() {
-                    ctx.diagnostic(ErrorMessageDiagnostic::EmptyMessage(lit.span));
+                    ctx.diagnostic(empty_message(lit.span));
                 }
             }
             Argument::TemplateLiteral(template_lit) => {
                 if template_lit.span.source_text(ctx.source_text()).len() == 2 {
-                    ctx.diagnostic(ErrorMessageDiagnostic::EmptyMessage(template_lit.span));
+                    ctx.diagnostic(empty_message(template_lit.span));
                 }
             }
             Argument::ObjectExpression(object_expr) => {
-                ctx.diagnostic(ErrorMessageDiagnostic::NotString(object_expr.span));
+                ctx.diagnostic(not_string(object_expr.span));
             }
             Argument::ArrayExpression(array_expr) => {
-                ctx.diagnostic(ErrorMessageDiagnostic::NotString(array_expr.span));
+                ctx.diagnostic(not_string(array_expr.span));
             }
             _ => {}
         }

@@ -3,19 +3,17 @@ use oxc_ast::{
     ast::{Argument, CallExpression, NewExpression, RegExpLiteral},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-regex-spaces): Spaces are hard to count.")]
-#[diagnostic(severity(warning), help("Use a quantifier, e.g. {{2}}"))]
-struct NoRegexSpacesDiagnostic(#[label] pub Span);
+fn no_regex_spaces_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Spaces are hard to count.")
+        .with_help("Use a quantifier, e.g. {2}")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoRegexSpaces;
@@ -47,19 +45,19 @@ impl Rule for NoRegexSpaces {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
                 if let Some(span) = Self::find_literal_to_report(lit) {
-                    ctx.diagnostic(NoRegexSpacesDiagnostic(span)); // /a  b/
+                    ctx.diagnostic(no_regex_spaces_diagnostic(span)); // /a  b/
                 }
             }
 
             AstKind::CallExpression(expr) if Self::is_regexp_call_expression(expr) => {
                 if let Some(span) = Self::find_expr_to_report(&expr.arguments) {
-                    ctx.diagnostic(NoRegexSpacesDiagnostic(span)); // RegExp('a  b')
+                    ctx.diagnostic(no_regex_spaces_diagnostic(span)); // RegExp('a  b')
                 }
             }
 
             AstKind::NewExpression(expr) if Self::is_regexp_new_expression(expr) => {
                 if let Some(span) = Self::find_expr_to_report(&expr.arguments) {
-                    ctx.diagnostic(NoRegexSpacesDiagnostic(span)); // new RegExp('a  b')
+                    ctx.diagnostic(no_regex_spaces_diagnostic(span)); // new RegExp('a  b')
                 }
             }
 

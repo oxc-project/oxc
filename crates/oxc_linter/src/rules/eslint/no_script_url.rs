@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-script-url): Script URL is a form of eval")]
-#[diagnostic(severity(warning), help("Disallow `javascript:` urls"))]
-struct NoScriptUrlDiagnostic(#[label] pub Span);
+fn no_script_url_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Script URL is a form of eval")
+        .with_help("Disallow `javascript:` urls")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoScriptUrl;
@@ -65,7 +63,7 @@ impl Rule for NoScriptUrl {
 }
 
 fn emit_diagnostic(ctx: &LintContext, span: Span) {
-    ctx.diagnostic(NoScriptUrlDiagnostic(Span::new(span.start, span.end)));
+    ctx.diagnostic(no_script_url_diagnostic(Span::new(span.start, span.end)));
 }
 
 fn is_tagged_template_expression(ctx: &LintContext, node: &AstNode, literal_span: Span) -> bool {

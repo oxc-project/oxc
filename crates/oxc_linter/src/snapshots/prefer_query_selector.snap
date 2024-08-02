@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_query_selector
 ---
   ⚠ eslint-plugin-unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
    ╭─[prefer_query_selector.tsx:1:10]

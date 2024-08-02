@@ -2,7 +2,7 @@
   "name": "oxc-vscode",
   "description": "oxc vscode extension",
   "license": "MIT",
-  "version": "0.3.1",
+  "version": "0.6.1",
   "icon": "icon.png",
   "publisher": "oxc",
   "displayName": "Oxc",
@@ -22,7 +22,7 @@
     "oxc"
   ],
   "engines": {
-    "vscode": "^1.80.0"
+    "vscode": "^1.90.0"
   },
   "sponsor": {
     "url": "https://github.com/sponsors/boshen"
@@ -104,7 +104,7 @@
     }
   },
   "scripts": {
-    "preinstall": "[ -f icon.png ] || curl https://raw.githubusercontent.com/Boshen/oxc-assets/main/logo-square-min.png --output icon.png",
+    "preinstall": "[ -f icon.png ] || curl https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/square.png --output icon.png",
     "build": "pnpm run server:build:release && pnpm run compile && pnpm run package",
     "compile": "esbuild client/extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node --target=node16 --minify --sourcemap",
     "watch": "pnpm run compile --watch",
@@ -115,14 +115,14 @@
     "fmt:js": "prettier --write ./**/*.{js,ts,json}"
   },
   "devDependencies": {
-    "@types/node": "^20.11.5",
+    "@types/node": "^22.0.0",
     "@types/vscode": "1.80.0",
-    "@vscode/vsce": "^2.22.0",
+    "@vscode/vsce": "^2.27.0",
     "cross-env": "^7.0.3",
-    "esbuild": "^0.20.0",
-    "ovsx": "^0.9.0",
-    "prettier": "^3.2.4",
-    "typescript": "^5.3.3"
+    "esbuild": "^0.23.0",
+    "ovsx": "^0.9.1",
+    "prettier": "^3.3.1",
+    "typescript": "^5.4.5"
   },
   "dependencies": {
     "vscode-languageclient": "^9.0.1"

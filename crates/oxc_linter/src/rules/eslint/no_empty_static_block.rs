@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-empty-static-block): Disallow empty static blocks")]
-#[diagnostic(severity(warning), help("Unexpected empty static block."))]
-struct NoEmptyStaticBlockDiagnostic(#[label] pub Span);
+fn no_empty_static_block_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow empty static blocks")
+        .with_help("Unexpected empty static block.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyStaticBlock;
@@ -44,7 +42,7 @@ impl Rule for NoEmptyStaticBlock {
                 if ctx.semantic().trivias().has_comments_between(static_block.span) {
                     return;
                 }
-                ctx.diagnostic(NoEmptyStaticBlockDiagnostic(static_block.span));
+                ctx.diagnostic(no_empty_static_block_diagnostic(static_block.span));
             }
         }
     }

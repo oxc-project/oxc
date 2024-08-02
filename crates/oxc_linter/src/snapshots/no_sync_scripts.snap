@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_sync_scripts
 ---
   ⚠ eslint-plugin-next(no-sync-scripts): Prevent synchronous scripts.
     ╭─[no_sync_scripts.tsx:9:21]

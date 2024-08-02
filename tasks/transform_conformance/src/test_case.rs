@@ -3,20 +3,18 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use serde::de::DeserializeOwned;
-use serde_json::Value;
-
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
-use oxc_diagnostics::{miette::miette, Error};
+use oxc_codegen::CodeGenerator;
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use oxc_parser::Parser;
 use oxc_span::{SourceType, VALID_EXTENSIONS};
-use oxc_tasks_common::{normalize_path, print_diff_in_terminal, BabelOptions, TestOs};
-use oxc_transformer::{
-    ES2015Options, ReactOptions, TransformOptions, Transformer, TypeScriptOptions,
-};
+use oxc_tasks_common::{normalize_path, print_diff_in_terminal};
+use oxc_transformer::{BabelOptions, TransformOptions, Transformer};
 
-use crate::{fixture_root, packages_root, TestRunnerEnv, PLUGINS_NOT_SUPPORTED_YET};
+use crate::{
+    constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
+    fixture_root, packages_root, TestRunnerEnv,
+};
 
 #[derive(Debug)]
 pub enum TestCaseKind {
@@ -39,9 +37,12 @@ impl TestCaseKind {
             return Some(Self::Exec(ExecTestCase::new(cwd, path)));
         }
 
-        // named `input.[ext]``
-        if path.file_stem().is_some_and(|name| name == "input")
-            && path.extension().is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap()))
+        // named `input.[ext]` or `input.d.ts`
+        if (path.file_stem().is_some_and(|name| name == "input")
+            && path
+                .extension()
+                .is_some_and(|ext| VALID_EXTENSIONS.contains(&ext.to_str().unwrap())))
+            || path.file_name().is_some_and(|name| name == "input.d.ts")
         {
             return Some(Self::Transform(ConformanceTestCase::new(cwd, path)));
         }
@@ -71,49 +72,8 @@ impl TestCaseKind {
     }
 }
 
-fn transform_options(options: &BabelOptions) -> serde_json::Result<TransformOptions> {
-    fn get_options<T: Default + DeserializeOwned>(value: Option<Value>) -> serde_json::Result<T> {
-        match value {
-            Some(v) => serde_json::from_value::<T>(v),
-            None => Ok(T::default()),
-        }
-    }
-
-    let react = if let Some(options) = options.get_preset("react") {
-        get_options::<ReactOptions>(options)?
-    } else {
-        let jsx_plugin = options.get_plugin("transform-react-jsx");
-        let has_jsx_plugin = jsx_plugin.as_ref().is_some();
-        let mut react_options =
-            jsx_plugin.map(get_options::<ReactOptions>).transpose()?.unwrap_or_default();
-        react_options.development = options.get_plugin("transform-react-jsx-development").is_some();
-        react_options.jsx_plugin = has_jsx_plugin;
-        react_options.display_name_plugin =
-            options.get_plugin("transform-react-display-name").is_some();
-        react_options.jsx_self_plugin = options.get_plugin("transform-react-jsx-self").is_some();
-        react_options.jsx_source_plugin =
-            options.get_plugin("transform-react-jsx-source").is_some();
-        react_options
-    };
-
-    let es2015 = ES2015Options {
-        arrow_function: options
-            .get_plugin("transform-arrow-functions")
-            .map(get_options)
-            .transpose()?,
-    };
-
-    Ok(TransformOptions {
-        cwd: options.cwd.clone().unwrap(),
-        assumptions: serde_json::from_value(options.assumptions.clone()).unwrap_or_default(),
-        typescript: options
-            .get_plugin("transform-typescript")
-            .map(get_options::<TypeScriptOptions>)
-            .transpose()?
-            .unwrap_or_default(),
-        react,
-        es2015,
-    })
+fn transform_options(options: &BabelOptions) -> Result<TransformOptions, Vec<Error>> {
+    TransformOptions::from_babel_options(options)
 }
 
 pub trait TestCase {
@@ -121,7 +81,7 @@ pub trait TestCase {
 
     fn options(&self) -> &BabelOptions;
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions>;
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>>;
 
     fn test(&self, filtered: bool) -> bool;
 
@@ -129,11 +89,6 @@ pub trait TestCase {
 
     fn skip_test_case(&self) -> bool {
         let options = self.options();
-
-        // Skip windows
-        if options.os.as_ref().is_some_and(|os| os.iter().any(TestOs::is_windows)) {
-            return true;
-        }
 
         // Skip plugins we don't support yet
         if PLUGINS_NOT_SUPPORTED_YET.iter().any(|plugin| options.get_plugin(plugin).is_some()) {
@@ -184,25 +139,35 @@ pub trait TestCase {
             return true;
         }
 
+        // Skip tests that are known to fail
+        let full_path = self.path().to_string_lossy();
+        if SKIP_TESTS.iter().any(|path| full_path.ends_with(path)) {
+            return true;
+        }
+
         false
     }
 
-    fn transform(&self, path: &Path) -> Result<String, Vec<Error>> {
+    fn transform(&self, path: &Path) -> Result<String, Vec<OxcDiagnostic>> {
         let transform_options = match self.transform_options() {
             Ok(transform_options) => transform_options,
             Err(json_err) => {
-                return Err(vec![miette!(format!("{json_err:?}"))]);
+                return Err(vec![OxcDiagnostic::error(format!("{json_err:?}"))]);
             }
         };
 
         let allocator = Allocator::default();
         let source_text = fs::read_to_string(path).unwrap();
 
-        let source_type = SourceType::from_path(path).unwrap().with_typescript(
-            // Some babel test cases have a js extension, but contain typescript code.
-            // Therefore, if the typescript plugin exists, enable the typescript.
-            self.options().get_plugin("transform-typescript").is_some(),
-        );
+        // Some babel test cases have a js extension, but contain typescript code.
+        // Therefore, if the typescript plugin exists, enable typescript.
+        let mut source_type = SourceType::from_path(path).unwrap();
+        if !source_type.is_typescript()
+            && (self.options().get_plugin("transform-typescript").is_some()
+                || self.options().get_plugin("syntax-typescript").is_some())
+        {
+            source_type = source_type.with_typescript(true);
+        }
 
         let ret = Parser::new(&allocator, &source_text, source_type).parse();
         let mut program = ret.program;
@@ -211,16 +176,15 @@ pub trait TestCase {
             path,
             source_type,
             &source_text,
-            &ret.trivias,
+            ret.trivias.clone(),
             transform_options.clone(),
         )
         .build(&mut program);
-
-        result.map(|()| {
-            Codegen::<false>::new("", &source_text, CodegenOptions::default())
-                .build(&program)
-                .source_text
-        })
+        if result.errors.is_empty() {
+            Ok(CodeGenerator::new().build(&program).source_text)
+        } else {
+            Err(result.errors)
+        }
     }
 }
 
@@ -228,12 +192,12 @@ pub trait TestCase {
 pub struct ConformanceTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: serde_json::Result<TransformOptions>,
+    transform_options: Result<TransformOptions, Vec<Error>>,
 }
 
 impl TestCase for ConformanceTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
-        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
@@ -243,7 +207,7 @@ impl TestCase for ConformanceTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>> {
         &self.transform_options
     }
 
@@ -266,21 +230,26 @@ impl TestCase for ConformanceTestCase {
             .as_ref()
             .is_some_and(|path| path.extension().and_then(std::ffi::OsStr::to_str) == Some("js"));
 
-        let source_type = SourceType::from_path(&self.path)
+        let mut source_type = SourceType::from_path(&self.path)
             .unwrap()
             .with_script(if self.options.source_type.is_some() {
                 !self.options.is_module()
             } else {
                 input_is_js && output_is_js
             })
-            .with_typescript(self.options.get_plugin("transform-typescript").is_some());
+            .with_jsx(self.options.get_plugin("syntax-jsx").is_some());
+        if !source_type.is_typescript()
+            && (self.options.get_plugin("transform-typescript").is_some()
+                || self.options.get_plugin("syntax-typescript").is_some())
+        {
+            source_type = source_type.with_typescript(true);
+        }
 
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("output_path: {output_path:?}");
         }
 
-        let codegen_options = CodegenOptions::default();
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
 
@@ -294,21 +263,17 @@ impl TestCase for ConformanceTestCase {
                         &self.path,
                         source_type,
                         &input,
-                        &ret.trivias,
+                        ret.trivias.clone(),
                         transform_options.clone(),
                     );
-                    let result = transformer.build(&mut program);
-                    if result.is_ok() {
-                        transformed_code =
-                            Codegen::<false>::new("", &input, codegen_options.clone())
-                                .build(&program)
-                                .source_text;
+                    let ret = transformer.build(&mut program);
+                    if ret.errors.is_empty() {
+                        transformed_code = CodeGenerator::new().build(&program).source_text;
                     } else {
-                        let error = result
-                            .err()
-                            .unwrap()
-                            .iter()
-                            .map(ToString::to_string)
+                        let error = ret
+                            .errors
+                            .into_iter()
+                            .map(|e| Error::from(e).to_string())
                             .collect::<Vec<_>>()
                             .join("\n");
                         actual_errors = get_babel_error(&error);
@@ -325,7 +290,7 @@ impl TestCase for ConformanceTestCase {
                 Some(transform_options.clone())
             }
             Err(json_err) => {
-                let error = json_err.to_string();
+                let error = json_err.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n");
                 actual_errors = get_babel_error(&error);
                 None
             }
@@ -343,10 +308,8 @@ impl TestCase for ConformanceTestCase {
             },
             |output| {
                 // Get expected code by parsing the source text, so we can get the same code generated result.
-                let program = Parser::new(&allocator, &output, source_type).parse().program;
-                Codegen::<false>::new("", &output, codegen_options.clone())
-                    .build(&program)
-                    .source_text
+                let ret = Parser::new(&allocator, &output, source_type).parse();
+                CodeGenerator::new().build(&ret.program).source_text
             },
         );
 
@@ -388,7 +351,7 @@ impl TestCase for ConformanceTestCase {
 pub struct ExecTestCase {
     path: PathBuf,
     options: BabelOptions,
-    transform_options: serde_json::Result<TransformOptions>,
+    transform_options: Result<TransformOptions, Vec<Error>>,
 }
 
 impl ExecTestCase {
@@ -399,7 +362,7 @@ impl ExecTestCase {
     fn write_to_test_files(&self, content: &str) -> PathBuf {
         let allocator = Allocator::default();
         let new_file_name: String =
-            normalize_path(self.path.strip_prefix(&packages_root()).unwrap())
+            normalize_path(self.path.strip_prefix(packages_root()).unwrap())
                 .split('/')
                 .collect::<Vec<&str>>()
                 .join("-");
@@ -410,21 +373,16 @@ impl ExecTestCase {
         fs::write(&target_path, content).unwrap();
         let source_text = fs::read_to_string(&target_path).unwrap();
         let source_type = SourceType::from_path(&target_path).unwrap();
-        let transformed_program =
-            Parser::new(&allocator, &source_text, source_type).parse().program;
-        let result = Codegen::<false>::new("", &source_text, CodegenOptions::default())
-            .build(&transformed_program)
-            .source_text;
-
+        let transformed_ret = Parser::new(&allocator, &source_text, source_type).parse();
+        let result = CodeGenerator::new().build(&transformed_ret.program).source_text;
         fs::write(&target_path, result).unwrap();
-
         target_path
     }
 }
 
 impl TestCase for ExecTestCase {
     fn new(cwd: &Path, path: &Path) -> Self {
-        let mut options = BabelOptions::from_path(path.parent().unwrap());
+        let mut options = BabelOptions::from_test_path(path.parent().unwrap());
         options.cwd.replace(cwd.to_path_buf());
         let transform_options = transform_options(&options);
         Self { path: path.to_path_buf(), options, transform_options }
@@ -434,7 +392,7 @@ impl TestCase for ExecTestCase {
         &self.options
     }
 
-    fn transform_options(&self) -> &serde_json::Result<TransformOptions> {
+    fn transform_options(&self) -> &Result<TransformOptions, Vec<Error>> {
         &self.transform_options
     }
 
@@ -443,12 +401,27 @@ impl TestCase for ExecTestCase {
     }
 
     fn test(&self, filtered: bool) -> bool {
-        let result = self.transform(&self.path).expect("Transform failed");
-        let target_path = self.write_to_test_files(&result);
-        let passed = Self::run_test(&target_path);
         if filtered {
             println!("input_path: {:?}", &self.path);
             println!("Input:\n{}\n", fs::read_to_string(&self.path).unwrap());
+        }
+
+        let result = match self.transform(&self.path) {
+            Ok(result) => result,
+            Err(error) => {
+                if filtered {
+                    println!(
+                        "Transform Errors:\n{}\n",
+                        error.iter().map(ToString::to_string).collect::<Vec<_>>().join("\n")
+                    );
+                }
+                return false;
+            }
+        };
+        let target_path = self.write_to_test_files(&result);
+        let passed = Self::run_test(&target_path);
+
+        if filtered {
             println!("Transformed:\n{result}\n");
             println!("Test Result:\n{}\n", TestRunnerEnv::get_test_result(&target_path));
         }
@@ -459,7 +432,7 @@ impl TestCase for ExecTestCase {
 
 fn get_babel_error(error: &str) -> String {
     match error {
-        "unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
+        "transform-react-jsx: unknown variant `invalidOption`, expected `classic` or `automatic`" => "Runtime must be either \"classic\" or \"automatic\".",
         "Duplicate __self prop found." => "Duplicate __self prop found. You are most likely using the deprecated transform-react-jsx-self Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Duplicate __source prop found." => "Duplicate __source prop found. You are most likely using the deprecated transform-react-jsx-source Babel plugin. Both __source and __self are automatically set when using the automatic runtime. Please remove transform-react-jsx-source and transform-react-jsx-self from your Babel config.",
         "Expected `>` but found `/`" => "Unexpected token, expected \",\"",

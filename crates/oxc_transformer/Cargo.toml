@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_transformer"
-version                = "0.12.5"
+version                = "0.23.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -11,11 +11,13 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/examples", "/src"]
 
 [lints]
 workspace = true
 
 [lib]
+test    = false
 doctest = false
 
 [dependencies]
@@ -24,11 +26,21 @@ oxc_span        = { workspace = true }
 oxc_allocator   = { workspace = true }
 oxc_diagnostics = { workspace = true }
 oxc_syntax      = { workspace = true, features = ["to_js_string"] }
+oxc_traverse    = { workspace = true }
+oxc_semantic    = { workspace = true }
 
-rustc-hash = { workspace = true }
-indexmap   = { workspace = true }
-serde      = { workspace = true, features = ["derive"] }
+dashmap          = { workspace = true }
+indexmap         = { workspace = true }
+serde            = { workspace = true, features = ["derive"] }
+serde_json       = { workspace = true }
+ropey            = { workspace = true }
+rustc-hash       = { workspace = true }
+oxc-browserslist = { workspace = true }
 
 [dev-dependencies]
 oxc_parser  = { workspace = true }
 oxc_codegen = { workspace = true }
+
+[features]
+default = []
+wasm    = ["oxc-browserslist/wasm_bindgen"]

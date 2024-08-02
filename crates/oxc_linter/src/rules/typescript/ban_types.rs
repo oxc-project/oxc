@@ -1,32 +1,30 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-pub enum BanTypesDiagnostic {
-    #[error("typescript-eslint(ban-types): Do not use {0:?} as a type. Use \"{1}\" instead")]
-    #[diagnostic(severity(warning))]
-    Type(CompactStr, String, #[label] Span),
+fn type_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not use {x0:?} as a type. Use \"{x1}\" instead"))
+        .with_label(span2)
+}
 
-    #[error("typescript-eslint(ban-types): Prefer explicitly define the object shape")]
-    #[diagnostic(severity(warning), help("This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type"))]
-    TypeLiteral(#[label] Span),
+fn type_literal(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer explicitly define the object shape")
+        .with_help("This type means \"any non-nullish value\", which is slightly better than 'unknown', but it's still a broad type")
+        .with_label(span0)
+}
 
-    #[error("typescript-eslint(ban-types): Don't use `Function` as a type")]
-    #[diagnostic(severity(warning), help("The `Function` type accepts any function-like value"))]
-    Function(#[label] Span),
+fn function(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Don't use `Function` as a type")
+        .with_help("The `Function` type accepts any function-like value")
+        .with_label(span0)
+}
 
-    #[error(
-        "typescript-eslint(ban-types): 'The `Object` type actually means \"any non-nullish value\""
-    )]
-    #[diagnostic(severity(warning))]
-    Object(#[label] Span),
+fn object(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("'The `Object` type actually means \"any non-nullish value\"")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -62,28 +60,32 @@ impl Rule for BanTypes {
 
                 match name.as_str() {
                     "String" | "Boolean" | "Number" | "Symbol" | "BigInt" => {
-                        ctx.diagnostic(BanTypesDiagnostic::Type(
-                            name.to_compact_str(),
-                            name.to_lowercase(),
+                        ctx.diagnostic(type_diagnostic(
+                            name.as_str(),
+                            &name.to_lowercase(),
                             typ.span,
                         ));
                     }
                     "Object" => {
-                        ctx.diagnostic(BanTypesDiagnostic::Object(typ.span));
+                        ctx.diagnostic(object(typ.span));
                     }
                     "Function" => {
-                        ctx.diagnostic(BanTypesDiagnostic::Function(typ.span));
+                        ctx.diagnostic(function(typ.span));
                     }
                     _ => {}
                 }
             }
             AstKind::TSTypeLiteral(typ) => {
                 if typ.members.is_empty() {
-                    ctx.diagnostic(BanTypesDiagnostic::TypeLiteral(typ.span));
+                    ctx.diagnostic(type_literal(typ.span));
                 }
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

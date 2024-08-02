@@ -5,15 +5,15 @@
 
 mod command;
 
-use oxc_allocator::Allocator;
 use std::collections::{HashMap, VecDeque};
 
+use oxc_allocator::Allocator;
+
+use self::command::{Command, Indent, Mode};
 use crate::{
     doc::{Doc, DocBuilder, Fill, IfBreak, IndentIfBreak, Line},
     GroupId, PrettierOptions,
 };
-
-use self::command::{Command, Indent, Mode};
 
 pub struct Printer<'a> {
     options: PrettierOptions,
@@ -68,10 +68,8 @@ impl<'a> Printer<'a> {
     pub fn build(mut self) -> String {
         self.print_doc_to_string();
         // SAFETY: We should have constructed valid UTF8 strings
-        #[allow(unsafe_code)]
-        unsafe {
-            String::from_utf8_unchecked(self.out)
-        }
+
+        unsafe { String::from_utf8_unchecked(self.out) }
     }
 
     /// Turn Doc into a string

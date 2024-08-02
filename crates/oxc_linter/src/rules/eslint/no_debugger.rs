@@ -1,17 +1,13 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-debugger): `debugger` statement is not allowed")]
-#[diagnostic(severity(warning))]
-struct NoDebuggerDiagnostic(#[label] pub Span);
+fn no_debugger_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`debugger` statement is not allowed").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDebugger;
@@ -31,13 +27,37 @@ declare_oxc_lint!(
     /// debugger;
     /// ```
     NoDebugger,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoDebugger {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::DebuggerStatement(stmt) = node.kind() {
-            ctx.diagnostic_with_fix(NoDebuggerDiagnostic(stmt.span), || Fix::delete(stmt.span));
+            ctx.diagnostic_with_fix(no_debugger_diagnostic(stmt.span), |fixer| {
+                let Some(parent) = ctx
+                    .nodes()
+                    .iter_parents(node.id())
+                    .skip(1)
+                    .find(|p| !matches!(p.kind(), AstKind::ParenthesizedExpression(_)))
+                else {
+                    return fixer.delete(&stmt.span);
+                };
+
+                // For statements like `if (foo) debugger;`, we can't just
+                // delete the `debugger` statement; we need to replace it with an empty block.
+                match parent.kind() {
+                    AstKind::IfStatement(_)
+                    | AstKind::WhileStatement(_)
+                    | AstKind::ForStatement(_)
+                    | AstKind::ForInStatement(_)
+                    | AstKind::ForOfStatement(_) => return fixer.replace(stmt.span, "{}"),
+                    // NOTE: no need to check for
+                    // AstKind::ArrowFunctionExpression because
+                    // `const x = () => debugger` is a parse error
+                    _ => fixer.delete(&stmt.span),
+                }
+            });
         }
     }
 }
@@ -49,6 +69,14 @@ fn test() {
     let pass = vec![("var test = { debugger: 1 }; test.debugger;", None)];
 
     let fail = vec![("if (foo) debugger", None)];
+    let fix = vec![
+        ("let x; debugger; let y;", "let x;  let y;", None),
+        ("if (foo) debugger", "if (foo) {}", None),
+        ("for (;;) debugger", "for (;;) {}", None),
+        ("while (i > 0) debugger", "while (i > 0) {}", None),
+        ("if (foo) { debugger; }", "if (foo) {  }", None),
+        ("if (foo) { debugger }", "if (foo) {  }", None),
+    ];
 
-    Tester::new(NoDebugger::NAME, pass, fail).test_and_snapshot();
+    Tester::new(NoDebugger::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

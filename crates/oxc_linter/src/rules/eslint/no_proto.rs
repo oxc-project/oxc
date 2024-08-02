@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-proto): The '__proto__' property is deprecated")]
-#[diagnostic(severity(warning), help("Disallow the use of the `__proto__` property."))]
-struct NoProtoDiagnostic(#[label] pub Span);
+fn no_proto_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("The '__proto__' property is deprecated")
+        .with_help("Disallow the use of the `__proto__` property.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoProto;
@@ -41,10 +39,12 @@ declare_oxc_lint!(
 
 impl Rule for NoProto {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MemberExpression(member_expression) = node.kind() else { return };
+        let AstKind::MemberExpression(member_expression) = node.kind() else {
+            return;
+        };
         if let Some(static_property_name) = member_expression.static_property_name() {
             if static_property_name == "__proto__" {
-                ctx.diagnostic(NoProtoDiagnostic(Span::new(
+                ctx.diagnostic(no_proto_diagnostic(Span::new(
                     member_expression.span().start,
                     member_expression.span().end,
                 )));

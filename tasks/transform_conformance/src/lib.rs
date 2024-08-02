@@ -1,11 +1,15 @@
-use indexmap::IndexMap;
-use oxc_tasks_common::{normalize_path, project_root};
+#![allow(clippy::print_stdout, clippy::print_stderr)]
+
+mod constants;
 use std::{
-    fs::{self, File},
-    io::Write,
+    fs,
     path::{Path, PathBuf},
     process::Command,
 };
+
+use constants::PLUGINS;
+use indexmap::IndexMap;
+use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 use test_case::TestCaseKind;
 use walkdir::WalkDir;
 
@@ -26,6 +30,7 @@ pub struct TestRunnerOptions {
 /// The test runner which walks the babel repository and searches for transformation tests.
 pub struct TestRunner {
     options: TestRunnerOptions,
+    snapshot: Snapshot,
 }
 
 fn babel_root() -> PathBuf {
@@ -48,79 +53,6 @@ fn fixture_root() -> PathBuf {
     snap_root().join("fixtures")
 }
 
-const PLUGINS: &[&str] = &[
-    // // ES2024
-    // "babel-plugin-transform-unicode-sets-regex",
-    // // ES2022
-    // "babel-plugin-transform-class-properties",
-    // "babel-plugin-transform-class-static-block",
-    // "babel-plugin-transform-private-methods",
-    // "babel-plugin-transform-private-property-in-object",
-    // // [Syntax] "babel-plugin-transform-syntax-top-level-await",
-    // // ES2021
-    // "babel-plugin-transform-logical-assignment-operators",
-    // "babel-plugin-transform-numeric-separator",
-    // // ES2020
-    // "babel-plugin-transform-export-namespace-from",
-    // "babel-plugin-transform-dynamic-import",
-    // "babel-plugin-transform-nullish-coalescing-operator",
-    // "babel-plugin-transform-optional-chaining",
-    // // [Syntax] "babel-plugin-transform-syntax-bigint",
-    // // [Syntax] "babel-plugin-transform-syntax-dynamic-import",
-    // // [Syntax] "babel-plugin-transform-syntax-import-meta",
-    // // ES2019
-    // "babel-plugin-transform-optional-catch-binding",
-    // "babel-plugin-transform-json-strings",
-    // // ES2018
-    // "babel-plugin-transform-async-generator-functions",
-    // "babel-plugin-transform-object-rest-spread",
-    // // [Regex] "babel-plugin-transform-unicode-property-regex",
-    // "babel-plugin-transform-dotall-regex",
-    // // [Regex] "babel-plugin-transform-named-capturing-groups-regex",
-    // // ES2017
-    // "babel-plugin-transform-async-to-generator",
-    // // ES2016
-    // "babel-plugin-transform-exponentiation-operator",
-    // // ES2015
-    "babel-plugin-transform-arrow-functions",
-    // "babel-plugin-transform-function-name",
-    // "babel-plugin-transform-shorthand-properties",
-    // "babel-plugin-transform-sticky-regex",
-    // "babel-plugin-transform-unicode-regex",
-    // "babel-plugin-transform-template-literals",
-    // "babel-plugin-transform-duplicate-keys",
-    // "babel-plugin-transform-instanceof",
-    // "babel-plugin-transform-new-target",
-    // // ES3
-    // "babel-plugin-transform-property-literals",
-    // TypeScript
-    "babel-preset-typescript",
-    "babel-plugin-transform-typescript",
-    // React
-    "babel-preset-react",
-    "babel-plugin-transform-react-jsx",
-    "babel-plugin-transform-react-display-name",
-    "babel-plugin-transform-react-jsx-self",
-    "babel-plugin-transform-react-jsx-source",
-    "babel-plugin-transform-react-jsx-development",
-    // // Proposal
-    // "babel-plugin-proposal-decorators",
-];
-
-pub(crate) const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
-    "proposal-decorators",
-    "transform-class-properties",
-    "transform-classes",
-    "transform-destructuring",
-    "transform-modules-commonjs",
-    "transform-object-rest-spread",
-    "transform-optional-chaining",
-    "transform-parameters",
-    "transform-private-methods",
-    "transform-property-literals",
-    "transform-react-constant-elements",
-];
-
 const CONFORMANCE_SNAPSHOT: &str = "babel.snap.md";
 const OXC_CONFORMANCE_SNAPSHOT: &str = "oxc.snap.md";
 const EXEC_SNAPSHOT: &str = "babel_exec.snap.md";
@@ -139,7 +71,8 @@ impl SnapshotOption {
 
 impl TestRunner {
     pub fn new(options: TestRunnerOptions) -> Self {
-        Self { options }
+        let snapshot = Snapshot::new(&babel_root(), /* show_commit */ true);
+        Self { options, snapshot }
     }
 
     /// # Panics
@@ -246,8 +179,7 @@ impl TestRunner {
             let snapshot = format!(
                 "Passed: {all_passed_count}/{total}\n\n# All Passed:\n{all_passed}\n\n\n{snapshot}"
             );
-            let mut file = File::create(dest).unwrap();
-            file.write_all(snapshot.as_bytes()).unwrap();
+            self.snapshot.save(&dest, &snapshot);
         }
     }
 }

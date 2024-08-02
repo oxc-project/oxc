@@ -1,22 +1,18 @@
-use miette::{miette, LabeledSpan};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic, Severity},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_internal, should_ignore_as_private},
+};
 
-#[derive(Debug, Error, Diagnostic)]
-enum CheckPropertyNamesDiagnostic {
-    #[error("eslint-plugin-jsdoc(check-property-names): No root defined for @property path.")]
-    #[diagnostic(
-        severity(warning),
-        help("@property path declaration `{1}` appears before any real property.")
-    )]
-    NoRoot(#[label] Span, String),
+fn no_root(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("No root defined for @property path.")
+        .with_help(format!("@property path declaration `{x1}` appears before any real property."))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -63,7 +59,13 @@ impl Rule for CheckPropertyNames {
         let settings = &ctx.settings().jsdoc;
         let resolved_property_tag_name = settings.resolve_tag_name("property");
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             let mut seen: FxHashMap<&str, FxHashSet<Span>> = FxHashMap::default();
             for tag in jsdoc.tags() {
                 if tag.kind.parsed() != resolved_property_tag_name {
@@ -85,10 +87,7 @@ impl Rule for CheckPropertyNames {
                     let parent_name = parent_name.trim_end_matches("[]");
 
                     if !seen.contains_key(&parent_name) {
-                        ctx.diagnostic(CheckPropertyNamesDiagnostic::NoRoot(
-                            name_part.span,
-                            type_name.to_string(),
-                        ));
+                        ctx.diagnostic(no_root(name_part.span, type_name));
                     }
                 }
 
@@ -97,18 +96,22 @@ impl Rule for CheckPropertyNames {
             }
 
             for (type_name, spans) in seen.iter().filter(|(_, spans)| 1 < spans.len()) {
-                ctx.diagnostic(miette!(
-                    severity = Severity::Warning,
-                    labels = spans
-                        .iter()
-                        .map(|span| LabeledSpan::at(
+                let labels = spans
+                    .iter()
+                    .map(|span| {
+                        LabeledSpan::at(
                             (span.start as usize)..(span.end as usize),
                             "Duplicated property".to_string(),
+                        )
+                    })
+                    .collect::<Vec<_>>();
+                ctx.diagnostic(
+                    OxcDiagnostic::warn("Duplicate @property found.")
+                        .with_help(format!(
+                            "@property `{type_name}` is duplicated on the same block."
                         ))
-                        .collect::<Vec<_>>(),
-                    help = format!("@property `{type_name}` is duplicated on the same block."),
-                    "eslint-plugin-jsdoc(check-property-names): Duplicate @property found."
-                ));
+                        .with_labels(labels),
+                );
             }
         }
     }

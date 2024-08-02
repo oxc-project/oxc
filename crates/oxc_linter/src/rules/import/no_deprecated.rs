@@ -1,16 +1,13 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+// use oxc_span::{CompactStr, Span};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(namespace): ")]
-#[diagnostic(severity(warning), help(""))]
-struct NoDeprecatedDiagnostic(CompactStr, #[label] pub Span);
+// #[derive(Debug, Error, Diagnostic)]
+// #[error("")]
+// #[diagnostic(severity(warning), help(""))]
+// struct NoDeprecatedDiagnostic(CompactStr, #[label] pub Span);
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-deprecated.md>
 #[derive(Debug, Default, Clone)]

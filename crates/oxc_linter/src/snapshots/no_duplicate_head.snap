@@ -1,0 +1,30 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`
+    ╭─[no_duplicate_head.tsx:9:19]
+  8 │                         <Html>
+  9 │                           <Head />
+    ·                            ────
+ 10 │                           <Head />
+    ·                            ────
+ 11 │                           <Head />
+    ·                            ────
+ 12 │                         </Html>
+    ╰────
+  help: Only use a single `<Head />` component in your custom document in `pages/_document.js`. See: https://nextjs.org/docs/messages/no-duplicate-head
+
+  ⚠ eslint-plugin-next(no-duplicate-head): Do not include multiple instances of `<Head/>`
+    ╭─[no_duplicate_head.tsx:9:19]
+  8 │                         <Html>
+  9 │                           <Head>
+    ·                            ────
+ 10 │                             <meta charSet="utf-8" />
+    ╰────
+    ╭─[no_duplicate_head.tsx:20:19]
+ 19 │                           </body>
+ 20 │                           <Head>
+    ·                            ────
+ 21 │                             <script
+    ╰────
+  help: Only use a single `<Head />` component in your custom document in `pages/_document.js`. See: https://nextjs.org/docs/messages/no-duplicate-head

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_non_null_asserted_optional_chain
 ---
   ⚠ typescript-eslint(no-non-null-asserted-optional-chain): non-null assertions after an optional chain expression
    ╭─[no_non_null_asserted_optional_chain.tsx:1:4]

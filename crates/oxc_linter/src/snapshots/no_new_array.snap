@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_new_array
 ---
   ⚠ eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.
    ╭─[no_new_array.tsx:1:15]

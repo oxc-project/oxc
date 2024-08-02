@@ -1,12 +1,13 @@
+use std::cmp::max;
+
+use oxc_allocator::String;
+
 use super::{
     cold_branch,
     search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
     Kind, Lexer, LexerContext, Span, Token,
 };
 use crate::diagnostics;
-
-use oxc_allocator::String;
-use std::cmp::max;
 
 const MIN_ESCAPED_STR_LEN: usize = 16;
 
@@ -42,7 +43,7 @@ macro_rules! handle_string_literal {
             table: $table,
             start: after_opening_quote,
             handle_eof: {
-                $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
                 return Kind::Undetermined;
             },
         };
@@ -64,7 +65,7 @@ macro_rules! handle_string_literal {
                 cold_branch(|| {
                     debug_assert!(matches!(next_byte, b'\r' | b'\n'));
                     $lexer.consume_char();
-                    $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                    $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
                     Kind::Undetermined
                 })
             }
@@ -94,12 +95,12 @@ macro_rules! handle_string_literal_escape {
             $lexer.read_string_escape_sequence(&mut str, false, &mut is_valid_escape_sequence);
             if !is_valid_escape_sequence {
                 let range = Span::new(escape_start_offset, $lexer.offset());
-                $lexer.error(diagnostics::InvalidEscapeSequence(range));
+                $lexer.error(diagnostics::invalid_escape_sequence(range));
             }
 
             // Consume bytes until reach end of string, line break, or another escape
             let chunk_start = $lexer.source.position();
-            while let Some(b) = $lexer.source.peek_byte() {
+            while let Some(b) = $lexer.peek_byte() {
                 match b {
                     b if !$table.matches(b) => {
                         // SAFETY: A byte is available, as we just peeked it.
@@ -127,12 +128,12 @@ macro_rules! handle_string_literal_escape {
                         str.push_str(chunk);
                         continue 'outer;
                     }
-                    _  => {
+                    _ => {
                         // Line break. This is impossible in valid JS, so cold path.
                         return cold_branch(|| {
                             debug_assert!(matches!(b, b'\r' | b'\n'));
                             $lexer.consume_char();
-                            $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+                            $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
                             Kind::Undetermined
                         });
                     }
@@ -140,7 +141,7 @@ macro_rules! handle_string_literal_escape {
             }
 
             // EOF
-            $lexer.error(diagnostics::UnterminatedString($lexer.unterminated_range()));
+            $lexer.error(diagnostics::unterminated_string($lexer.unterminated_range()));
             return Kind::Undetermined;
         }
 
@@ -148,7 +149,7 @@ macro_rules! handle_string_literal_escape {
         $lexer.save_string(true, str.into_bump_str());
 
         Kind::Str
-    }}
+    }};
 }
 
 impl<'a> Lexer<'a> {

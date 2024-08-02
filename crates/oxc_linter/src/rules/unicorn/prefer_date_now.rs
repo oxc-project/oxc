@@ -2,32 +2,29 @@ use oxc_ast::{
     ast::{Argument, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[allow(clippy::enum_variant_names)]
-enum PreferDateNowDiagnostic {
-    #[error("eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date()`")]
-    #[diagnostic(severity(warning), help("Change to `Date.now()`."))]
-    PreferDateNow(#[label] Span),
+fn prefer_date_now(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Date.now()` over `new Date()`")
+        .with_help("Change to `Date.now()`.")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `new Date().{1}()`")]
-    #[diagnostic(severity(warning), help("Change to `Date.now()`."))]
-    PreferDateNowOverMethods(#[label] Span, CompactStr),
+fn prefer_date_now_over_methods(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Date.now()` over `new Date().{x1}()`"))
+        .with_help("Change to `Date.now()`.")
+        .with_label(span0)
+}
 
-    #[error(
-        "eslint-plugin-unicorn(prefer-date-now): Prefer `Date.now()` over `Number(new Date())`"
-    )]
-    #[diagnostic(severity(warning), help("Change to `Date.now()`."))]
-    PreferDateNowOverNumberDateObject(#[label] Span),
+fn prefer_date_now_over_number_date_object(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Date.now()` over `Number(new Date())`")
+        .with_help("Change to `Date.now()`.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -69,9 +66,9 @@ impl Rule for PreferDateNow {
                         && matches!(member_expr.static_property_name(), Some("getTime" | "valueOf"))
                         && is_new_date(member_expr.object().without_parenthesized())
                     {
-                        ctx.diagnostic(PreferDateNowDiagnostic::PreferDateNowOverMethods(
+                        ctx.diagnostic(prefer_date_now_over_methods(
                             call_expr.span,
-                            member_expr.static_property_name().unwrap().into(),
+                            member_expr.static_property_name().unwrap(),
                         ));
                     }
                 }
@@ -85,11 +82,9 @@ impl Rule for PreferDateNow {
                             call_expr.arguments.first().and_then(Argument::as_expression)
                         {
                             if is_new_date(expr.without_parenthesized()) {
-                                ctx.diagnostic(
-                                    PreferDateNowDiagnostic::PreferDateNowOverNumberDateObject(
-                                        call_expr.span,
-                                    ),
-                                );
+                                ctx.diagnostic(prefer_date_now_over_number_date_object(
+                                    call_expr.span,
+                                ));
                             }
                         }
                     }
@@ -103,9 +98,7 @@ impl Rule for PreferDateNow {
                     return;
                 }
                 if is_new_date(&unary_expr.argument) {
-                    ctx.diagnostic(PreferDateNowDiagnostic::PreferDateNow(
-                        unary_expr.argument.span(),
-                    ));
+                    ctx.diagnostic(prefer_date_now(unary_expr.argument.span()));
                 }
             }
             AstKind::AssignmentExpression(assignment_expr) => {
@@ -121,9 +114,7 @@ impl Rule for PreferDateNow {
                 }
 
                 if is_new_date(&assignment_expr.right) {
-                    ctx.diagnostic(PreferDateNowDiagnostic::PreferDateNow(
-                        assignment_expr.right.span(),
-                    ));
+                    ctx.diagnostic(prefer_date_now(assignment_expr.right.span()));
                 }
             }
             AstKind::BinaryExpression(bin_expr) => {
@@ -139,10 +130,10 @@ impl Rule for PreferDateNow {
                 }
 
                 if is_new_date(&bin_expr.left) {
-                    ctx.diagnostic(PreferDateNowDiagnostic::PreferDateNow(bin_expr.left.span()));
+                    ctx.diagnostic(prefer_date_now(bin_expr.left.span()));
                 }
                 if is_new_date(&bin_expr.right) {
-                    ctx.diagnostic(PreferDateNowDiagnostic::PreferDateNow(bin_expr.right.span()));
+                    ctx.diagnostic(prefer_date_now(bin_expr.right.span()));
                 }
             }
             _ => {}
@@ -151,7 +142,9 @@ impl Rule for PreferDateNow {
 }
 
 fn is_new_date(expr: &Expression) -> bool {
-    let Expression::NewExpression(new_expr) = expr.without_parenthesized() else { return false };
+    let Expression::NewExpression(new_expr) = expr.without_parenthesized() else {
+        return false;
+    };
 
     if let Expression::Identifier(ident) = &new_expr.callee {
         return ident.name == "Date" && new_expr.arguments.is_empty();

@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout)]
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
@@ -15,14 +16,20 @@ fn main() -> Result<(), String> {
     let source_text = std::fs::read_to_string(path).map_err(|_| format!("Missing '{name}'"))?;
     let allocator = Allocator::default();
     let source_type = SourceType::from_path(path).unwrap();
+    let now = std::time::Instant::now();
     let ret = Parser::new(&allocator, &source_text, source_type).parse();
+    let elapsed_time = now.elapsed();
+    println!("{}ms.", elapsed_time.as_millis());
 
     println!("AST:");
     println!("{}", serde_json::to_string_pretty(&ret.program).unwrap());
 
     println!("Comments:");
-    let comments =
-        ret.trivias.comments().map(|(_, span)| span.source_text(&source_text)).collect::<Vec<_>>();
+    let comments = ret
+        .trivias
+        .comments()
+        .map(|comment| comment.span.source_text(&source_text))
+        .collect::<Vec<_>>();
     println!("{comments:?}");
 
     if ret.errors.is_empty() {

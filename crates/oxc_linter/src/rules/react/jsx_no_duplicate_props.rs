@@ -2,25 +2,18 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, CompactStr, Span};
+use oxc_span::{Atom, Span};
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-react(jsx-no-duplicate-props): No duplicate props allowed. The prop \"{0}\" is duplicated."
-)]
-#[diagnostic(
-    severity(warning),
-    help("Remove one of the props, or rename them so each prop is distinct.")
-)]
-struct JsxNoDuplicatePropsDiagnostic(CompactStr, #[label] pub Span, #[label] pub Span);
+fn jsx_no_duplicate_props_diagnostic(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("No duplicate props allowed. The prop \"{x0}\" is duplicated."))
+        .with_help("Remove one of the props, or rename them so each prop is distinct.")
+        .with_labels([span1, span2])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoDuplicateProps;
@@ -52,23 +45,33 @@ declare_oxc_lint!(
 
 impl Rule for JsxNoDuplicateProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_opening_elem) = node.kind() else {
+            return;
+        };
 
         let mut props: FxHashMap<Atom, Span> = FxHashMap::default();
 
         for attr in &jsx_opening_elem.attributes {
-            let JSXAttributeItem::Attribute(jsx_attr) = attr else { continue };
+            let JSXAttributeItem::Attribute(jsx_attr) = attr else {
+                continue;
+            };
 
-            let JSXAttributeName::Identifier(ident) = &jsx_attr.name else { continue };
+            let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
+                continue;
+            };
 
             if let Some(old_span) = props.insert(ident.name.clone(), ident.span) {
-                ctx.diagnostic(JsxNoDuplicatePropsDiagnostic(
-                    ident.name.to_compact_str(),
+                ctx.diagnostic(jsx_no_duplicate_props_diagnostic(
+                    ident.name.as_str(),
                     old_span,
                     ident.span,
                 ));
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

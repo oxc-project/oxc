@@ -1,22 +1,8 @@
-use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElement},
-    AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use crate::utils::ReactPerfRule;
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-
-use crate::{context::LintContext, rule::Rule, utils::get_prop_value, AstNode};
-
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-react-perf(jsx-no-jsx-as-prop): JSX attribute values should not contain other JSX."
-)]
-#[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
-struct JsxNoJsxAsPropDiagnostic(#[label] pub Span);
+use oxc_semantic::SymbolId;
+use oxc_span::{GetSpan, Span};
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoJsxAsProp;
@@ -37,30 +23,26 @@ declare_oxc_lint!(
     /// <Item callback={this.props.jsx} />
     /// ```
     JsxNoJsxAsProp,
-    correctness
+    perf
 );
 
-impl Rule for JsxNoJsxAsProp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_elem) = node.kind() {
-            check_jsx_element(jsx_elem, ctx);
-        }
-    }
-}
+impl ReactPerfRule for JsxNoJsxAsProp {
+    const MESSAGE: &'static str = "JSX attribute values should not contain other JSX.";
 
-fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    for item in &jsx_elem.opening_element.attributes {
-        match get_prop_value(item) {
-            None => return,
-            Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                if let Some(expr) = container.expression.as_expression() {
-                    if let Some(span) = check_expression(expr) {
-                        ctx.diagnostic(JsxNoJsxAsPropDiagnostic(span));
-                    }
-                }
-            }
-            _ => {}
+    fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
+        check_expression(expr)
+    }
+
+    fn check_for_violation_on_ast_kind(
+        &self,
+        kind: &AstKind<'_>,
+        _symbol_id: SymbolId,
+    ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
+        let AstKind::VariableDeclarator(decl) = kind else {
+            return None;
         };
+        let init_span = decl.init.as_ref().and_then(check_expression)?;
+        Some((decl.id.span(), Some(init_span)))
     }
 }
 
@@ -81,13 +63,22 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![r"<Item callback={this.props.jsx} />"];
-
-    let fail = vec![
+    let pass = vec![
+        r"<Item callback={this.props.jsx} />",
+        r"const Foo = () => <Item callback={this.props.jsx} />",
         r"<Item jsx={<SubItem />} />",
         r"<Item jsx={this.props.jsx || <SubItem />} />",
         r"<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />",
         r"<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />",
+        r"const Icon = <svg />; const Foo = () => (<IconButton icon={Icon} />)",
+    ];
+
+    let fail = vec![
+        r"const Foo = () => (<Item jsx={<SubItem />} />)",
+        r"const Foo = () => (<Item jsx={this.props.jsx || <SubItem />} />)",
+        r"const Foo = () => (<Item jsx={this.props.jsx ? this.props.jsx : <SubItem />} />)",
+        r"const Foo = () => (<Item jsx={this.props.jsx || (this.props.component ? this.props.component : <SubItem />)} />)",
+        r"const Foo = () => { const Icon = <svg />; return (<IconButton icon={Icon} />) }",
     ];
 
     Tester::new(JsxNoJsxAsProp::NAME, pass, fail).with_react_perf_plugin(true).test_and_snapshot();

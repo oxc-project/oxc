@@ -10,8 +10,8 @@ use oxc_index::{index_vec, IndexSlice, IndexVec};
 
 oxc_index::define_index_type! {
     pub struct USize16 = usize;
-    MAX_INDEX = u16::max_value() as usize;
-    DEFAULT = USize16::from_raw_unchecked(usize::max_value());
+    MAX_INDEX = u16::MAX as usize;
+    DEFAULT = USize16::from_raw_unchecked(usize::MAX);
 }
 
 oxc_index::define_index_type! {
@@ -66,10 +66,10 @@ oxc_index::define_index_type! {
 
 #[test]
 fn test_idx_default_max() {
-    assert_eq!(Idx32::MAX_INDEX, u32::max_value() as usize);
-    assert_eq!(IdxSz::MAX_INDEX, usize::max_value());
-    assert_eq!(Idx16::MAX_INDEX, u16::max_value() as usize);
-    assert_eq!(Idx8::MAX_INDEX, u8::max_value() as usize);
+    assert_eq!(Idx32::MAX_INDEX, u32::MAX as usize);
+    assert_eq!(IdxSz::MAX_INDEX, usize::MAX);
+    assert_eq!(Idx16::MAX_INDEX, u16::MAX as usize);
+    assert_eq!(Idx8::MAX_INDEX, u8::MAX as usize);
 
     assert!(Idx32::CHECKS_MAX_INDEX);
     assert!(IdxSz::CHECKS_MAX_INDEX);
@@ -162,16 +162,16 @@ fn test_idx_checks2() {
     let v = SmallChecked::from_usize_unchecked(300);
     assert_eq!(v.raw(), 300usize as u8);
 
-    assert_eq!(<USize16 as Default>::default().index(), usize::max_value());
+    assert_eq!(<USize16 as Default>::default().index(), usize::MAX);
 
-    let v = ZeroMaxIgnore::new((u16::max_value() as usize) + 1);
+    let v = ZeroMaxIgnore::new((u16::MAX as usize) + 1);
     assert_eq!(v, 0);
     let v = ZeroMaxIgnore::new(0) + 1;
     assert_eq!(v, 1);
     // let _ = ZeroMaxIgnore::new(0) - 1;
     let v = ZeroMaxIgnore::new(2);
     assert_eq!(v, 2);
-    let v = ZeroMaxIgnore::new((u16::max_value() as usize) + 1);
+    let v = ZeroMaxIgnore::new((u16::MAX as usize) + 1);
     assert_eq!(v, 0);
 }
 
@@ -242,7 +242,7 @@ fn test_idx_zm_of_sub0() {
 #[test]
 #[should_panic]
 fn test_idx_zm_of_nowrap() {
-    let _ = ZeroMax::new((u16::max_value() as usize) + 1);
+    let _ = ZeroMax::new((u16::MAX as usize) + 1);
 }
 
 #[test]

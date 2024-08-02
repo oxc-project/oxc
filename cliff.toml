@@ -4,25 +4,43 @@
 [changelog]
 # changelog header
 header = """
-# Changelog\n
-All notable changes to this crate will be documented in this file.
+# Changelog
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.\n
+All notable changes to this package will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.\n
 """
 # template for the changelog body
 # https://keats.github.io/tera/docs/#introduction
 body = """
+{% macro print_commit(commit) -%}
+  - {{ commit.id | truncate(length=7, end="") }} \
+    {% if commit.scope %}{{ commit.scope }}: {% endif %}\
+    {% if commit.breaking %}[**BREAKING**] {% endif %}\
+    {{ commit.message | trim | upper_first }}\
+    {% if commit.author.name %} ({{ commit.author.name }}){% endif %}\
+{% endmacro -%}
+
 {% if version -%}
     ## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
 {% else -%}
     ## [Unreleased]
 {% endif -%}
-{% for group, commits in commits | group_by(attribute="group") %}
+
+{% for commit in commits | filter(attribute="breaking", value=true) %}
+   {{ self::print_commit(commit=commit) }}
+{% endfor -%}
+
+{% for group, commits in commits | sort(attribute="group") | group_by(attribute="group") %}
     ### {{ group | striptags | trim | upper_first }}
-    {% for commit in commits %}
-        - {{ commit.message | upper_first }}\
-    {% endfor %}
+    {% for commit in commits | filter(attribute="breaking", value=false) | filter(attribute="scope") | sort(attribute="scope") %}
+        {{ self::print_commit(commit=commit) }}
+    {%- endfor -%}
+    {%- for commit in commits | filter(attribute="breaking", value=false) %}
+        {%- if not commit.scope -%}
+          {{ self::print_commit(commit=commit) }}
+        {%- endif -%}
+    {%- endfor %}
 {% endfor %}\n
 """
 # remove the leading and trailing whitespace from the templates
@@ -37,10 +55,10 @@ filter_unconventional = true
 split_commits = false
 # regex for parsing and grouping commits
 commit_parsers = [
+  { message = "^doc", group = "<!-- 3 -->Documentation" },
   { message = "^feat", group = "<!-- 0 -->Features" },
   { message = "^fix", group = "<!-- 1 -->Bug Fixes" },
   { message = "^perf", group = "<!-- 2 -->Performance" },
-  { message = "^doc", group = "<!-- 3 -->Documentation" },
   { message = "^refactor", group = "<!-- 4 -->Refactor" },
   { message = "^style", group = "<!-- 5 -->Styling" },
   { message = "^test", group = "<!-- 6 -->Testing" },
@@ -49,9 +67,12 @@ commit_parsers = [
 protect_breaking_commits = false
 # filter out the commits that are not matched by commit parsers
 filter_commits = true
-# regex for matching git tags
-tag_pattern = "crates_v[0-9].*"
 # sort the tags topologically
 topo_order = false
 # sort the commits inside sections by oldest/newest order
-sort_commits = "oldest"
+sort_commits = "newest"
+
+# https://git-cliff.org/docs/configuration/bump
+[bump]
+features_always_bump_minor = false
+breaking_always_bump_major = false

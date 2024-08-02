@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, ReferenceId};
 use oxc_span::{GetSpan, Span};
@@ -15,28 +12,20 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_jest_fn_call, PossibleJestNode},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
-#[diagnostic(severity(warning), help("`jest.setTimeout` should be call in `global` scope"))]
-struct NoGlobalSetTimeoutDiagnostic(#[label] pub Span);
+fn no_global_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`jest.setTimeout` should be call in `global` scope").with_label(span0)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Do not call `jest.setTimeout` multiple times, as only the last call will have an effect"
-    )
-)]
-struct NoMultipleSetTimeoutsDiagnostic(#[label] pub Span);
+fn no_multiple_set_timeouts_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not call `jest.setTimeout` multiple times")
+        .with_help("Only the last call to `jest.setTimeout` will have an effect.")
+        .with_label(span0)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-confusing-set-timeout)")]
-#[diagnostic(
-    severity(warning),
-    help("`jest.setTimeout` should be placed before any other jest methods")
-)]
-struct NoUnorderSetTimeoutDiagnostic(#[label] pub Span);
+fn no_unorder_set_timeout_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`jest.setTimeout` should be placed before any other jest methods")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConfusingSetTimeout;
@@ -98,15 +87,19 @@ impl Rule for NoConfusingSetTimeout {
         let mut jest_reference_id_list: Vec<(ReferenceId, Span)> = vec![];
         let mut seen_jest_set_timeout = false;
 
-        for reference_ids in scopes.root_unresolved_references().values() {
+        for reference_ids in scopes.root_unresolved_references_ids() {
             collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
         }
 
         for reference_ids in &symbol_table.resolved_references {
-            collect_jest_reference_id(reference_ids, &mut jest_reference_id_list, ctx);
+            collect_jest_reference_id(
+                reference_ids.iter().copied(),
+                &mut jest_reference_id_list,
+                ctx,
+            );
         }
 
-        for reference_id_list in scopes.root_unresolved_references().values() {
+        for reference_id_list in scopes.root_unresolved_references_ids() {
             handle_jest_set_time_out(
                 ctx,
                 reference_id_list,
@@ -119,7 +112,7 @@ impl Rule for NoConfusingSetTimeout {
         for reference_id_list in &symbol_table.resolved_references {
             handle_jest_set_time_out(
                 ctx,
-                reference_id_list,
+                reference_id_list.iter().copied(),
                 &jest_reference_id_list,
                 &mut seen_jest_set_timeout,
                 &id_to_jest_node_map,
@@ -129,7 +122,7 @@ impl Rule for NoConfusingSetTimeout {
 }
 
 fn collect_jest_reference_id(
-    reference_id_list: &Vec<ReferenceId>,
+    reference_id_list: impl Iterator<Item = ReferenceId>,
     jest_reference_list: &mut Vec<(ReferenceId, Span)>,
     ctx: &LintContext,
 ) {
@@ -137,8 +130,9 @@ fn collect_jest_reference_id(
     let nodes = ctx.nodes();
 
     for reference_id in reference_id_list {
-        let reference = symbol_table.get_reference(*reference_id);
-        if !is_jest_call(reference.name()) {
+        let reference = symbol_table.get_reference(reference_id);
+
+        if !is_jest_call(ctx.semantic().reference_name(reference)) {
             continue;
         }
         let Some(parent_node) = nodes.parent_node(reference.node_id()) else {
@@ -147,13 +141,13 @@ fn collect_jest_reference_id(
         let AstKind::MemberExpression(member_expr) = parent_node.kind() else {
             continue;
         };
-        jest_reference_list.push((*reference_id, member_expr.span()));
+        jest_reference_list.push((reference_id, member_expr.span()));
     }
 }
 
 fn handle_jest_set_time_out<'a>(
     ctx: &LintContext<'a>,
-    reference_id_list: &Vec<ReferenceId>,
+    reference_id_list: impl Iterator<Item = ReferenceId>,
     jest_reference_id_list: &Vec<(ReferenceId, Span)>,
     seen_jest_set_timeout: &mut bool,
     id_to_jest_node_map: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
@@ -162,18 +156,18 @@ fn handle_jest_set_time_out<'a>(
     let scopes = ctx.scopes();
     let symbol_table = ctx.symbols();
 
-    for &reference_id in reference_id_list {
+    for reference_id in reference_id_list {
         let reference = symbol_table.get_reference(reference_id);
 
         let Some(parent_node) = nodes.parent_node(reference.node_id()) else {
             continue;
         };
 
-        if !is_jest_call(reference.name()) {
+        if !is_jest_call(ctx.semantic().reference_name(reference)) {
             if is_jest_fn_call(parent_node, id_to_jest_node_map, ctx) {
                 for (jest_reference_id, span) in jest_reference_id_list {
                     if jest_reference_id > &reference_id {
-                        ctx.diagnostic(NoUnorderSetTimeoutDiagnostic(*span));
+                        ctx.diagnostic(no_unorder_set_timeout_diagnostic(*span));
                     }
                 }
             }
@@ -190,11 +184,11 @@ fn handle_jest_set_time_out<'a>(
 
         if expr.property.name == "setTimeout" {
             if !scopes.get_flags(parent_node.scope_id()).is_top() {
-                ctx.diagnostic(NoGlobalSetTimeoutDiagnostic(member_expr.span()));
+                ctx.diagnostic(no_global_set_timeout_diagnostic(member_expr.span()));
             }
 
             if *seen_jest_set_timeout {
-                ctx.diagnostic(NoMultipleSetTimeoutsDiagnostic(member_expr.span()));
+                ctx.diagnostic(no_multiple_set_timeouts_diagnostic(member_expr.span()));
             } else {
                 *seen_jest_set_timeout = true;
             }
@@ -447,7 +441,7 @@ fn test() {
                 jest.setTimeout(800);
                 jest.setTimeout(900);
             ",
-            None
+            None,
         ),
         (
             "

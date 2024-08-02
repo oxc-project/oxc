@@ -1,11 +1,13 @@
+use schemars::JsonSchema;
 use serde::Deserialize;
 
-/// <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
-#[derive(Debug, Deserialize, Default)]
+// <https://github.com/jsx-eslint/eslint-plugin-react#configuration-legacy-eslintrc->
+#[derive(Debug, Deserialize, Default, JsonSchema)]
 pub struct ReactPluginSettings {
     #[serde(default)]
     #[serde(rename = "formComponents")]
     form_components: Vec<CustomComponent>,
+
     #[serde(default)]
     #[serde(rename = "linkComponents")]
     link_components: Vec<CustomComponent>,
@@ -24,7 +26,7 @@ impl ReactPluginSettings {
 
 // Deserialize helper types
 
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Debug, Deserialize, JsonSchema)]
 #[serde(untagged)]
 enum CustomComponent {
     NameOnly(String),

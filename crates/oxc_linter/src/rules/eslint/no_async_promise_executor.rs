@@ -2,19 +2,15 @@ use oxc_ast::{
     ast::{Argument, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-async-promise-executor): Promise executor functions should not be `async`.")]
-#[diagnostic(severity(warning))]
-struct NoAsyncPromiseExecutorDiagnostic(#[label] pub Span);
+fn no_async_promise_executor_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Promise executor functions should not be `async`.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAsyncPromiseExecutor;
@@ -51,7 +47,9 @@ declare_oxc_lint!(
 
 impl Rule for NoAsyncPromiseExecutor {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(new_expression) = node.kind() else { return };
+        let AstKind::NewExpression(new_expression) = node.kind() else {
+            return;
+        };
         if !new_expression.callee.is_specific_id("Promise") {
             return;
         }
@@ -68,7 +66,7 @@ impl Rule for NoAsyncPromiseExecutor {
 
         span.end = span.start + 5;
 
-        ctx.diagnostic(NoAsyncPromiseExecutorDiagnostic(span));
+        ctx.diagnostic(no_async_promise_executor_diagnostic(span));
     }
 }
 

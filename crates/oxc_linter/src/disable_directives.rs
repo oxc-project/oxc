@@ -27,8 +27,8 @@ pub struct DisableDirectives<'a> {
 }
 
 impl<'a> DisableDirectives<'a> {
-    pub fn contains(&self, rule_name: &'static str, start: u32) -> bool {
-        self.intervals.find(start, start + 1).any(|interval| {
+    pub fn contains(&self, rule_name: &'static str, span: Span) -> bool {
+        self.intervals.find(span.start, span.end).any(|interval| {
             interval.val == DisabledRule::All
                 // Our rule name currently does not contain the prefix.
                 // For example, this will match `@typescript-eslint/no-var-requires` given
@@ -46,9 +46,9 @@ impl<'a> DisableDirectives<'a> {
     }
 }
 
-pub struct DisableDirectivesBuilder<'a, 'b> {
+pub struct DisableDirectivesBuilder<'a> {
     source_text: &'a str,
-    trivias: &'b Trivias,
+    trivias: Trivias,
     /// All the disabled rules with their corresponding covering spans
     intervals: Lapper<u32, DisabledRule<'a>>,
     /// Start of `eslint-disable` or `oxlint-disable`
@@ -61,8 +61,8 @@ pub struct DisableDirectivesBuilder<'a, 'b> {
     disable_rule_comments: Vec<DisableRuleComment<'a>>,
 }
 
-impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
-    pub fn new(source_text: &'a str, trivias: &'b Trivias) -> Self {
+impl<'a> DisableDirectivesBuilder<'a> {
+    pub fn new(source_text: &'a str, trivias: Trivias) -> Self {
         Self {
             source_text,
             trivias,
@@ -93,8 +93,8 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
         // This algorithm iterates through the comments and builds all intervals
         // for matching disable and enable pairs.
         // Wrongly ordered matching pairs are not taken into consideration.
-        for (_, span) in self.trivias.comments() {
-            let text = span.source_text(self.source_text);
+        for comment in self.trivias.clone().comments() {
+            let text = comment.span.source_text(self.source_text);
             let text = text.trim_start();
 
             if let Some(text) =
@@ -103,30 +103,35 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                 // `eslint-disable`
                 if text.trim().is_empty() {
                     if self.disable_all_start.is_none() {
-                        self.disable_all_start = Some(span.end);
+                        self.disable_all_start = Some(comment.span.end);
                     }
-                    self.disable_all_comments.push(span);
+                    self.disable_all_comments.push(comment.span);
                     continue;
                 }
 
                 // `eslint-disable-next-line`
                 if let Some(text) = text.strip_prefix("-next-line") {
                     // Get the span up to the next new line
-                    let stop = self.source_text[span.end as usize..]
+                    let stop = self.source_text[comment.span.end as usize..]
                         .lines()
                         .take(2)
-                        .fold(span.end, |acc, line| acc + line.len() as u32);
+                        .fold(comment.span.end, |acc, line| acc + line.len() as u32);
                     if text.trim().is_empty() {
-                        self.add_interval(span.end, stop, DisabledRule::All);
-                        self.disable_all_comments.push(span);
+                        self.add_interval(comment.span.end, stop, DisabledRule::All);
+                        self.disable_all_comments.push(comment.span);
                     } else {
                         // `eslint-disable-next-line rule_name1, rule_name2`
                         let mut rules = vec![];
                         Self::get_rule_names(text, |rule_name| {
-                            self.add_interval(span.end, stop, DisabledRule::Single(rule_name));
+                            self.add_interval(
+                                comment.span.end,
+                                stop,
+                                DisabledRule::Single(rule_name),
+                            );
                             rules.push(rule_name);
                         });
-                        self.disable_rule_comments.push(DisableRuleComment { span, rules });
+                        self.disable_rule_comments
+                            .push(DisableRuleComment { span: comment.span, rules });
                     }
                     continue;
                 }
@@ -134,16 +139,16 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                 // `eslint-disable-line`
                 if let Some(text) = text.strip_prefix("-line") {
                     // Get the span between the preceding newline to this comment
-                    let start = self.source_text[..=span.start as usize]
+                    let start = self.source_text[..=comment.span.start as usize]
                         .lines()
                         .next_back()
-                        .map_or(0, |line| span.start - (line.len() as u32 - 1));
-                    let stop = span.start;
+                        .map_or(0, |line| comment.span.start - (line.len() as u32 - 1));
+                    let stop = comment.span.start;
 
                     // `eslint-disable-line`
                     if text.trim().is_empty() {
                         self.add_interval(start, stop, DisabledRule::All);
-                        self.disable_all_comments.push(span);
+                        self.disable_all_comments.push(comment.span);
                     } else {
                         // `eslint-disable-line rule-name1, rule-name2`
                         let mut rules = vec![];
@@ -151,7 +156,8 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                             self.add_interval(start, stop, DisabledRule::Single(rule_name));
                             rules.push(rule_name);
                         });
-                        self.disable_rule_comments.push(DisableRuleComment { span, rules });
+                        self.disable_rule_comments
+                            .push(DisableRuleComment { span: comment.span, rules });
                     }
                     continue;
                 }
@@ -159,10 +165,10 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                 // `eslint-disable rule-name1, rule-name2`
                 let mut rules = vec![];
                 Self::get_rule_names(text, |rule_name| {
-                    self.disable_start_map.entry(rule_name).or_insert(span.end);
+                    self.disable_start_map.entry(rule_name).or_insert(comment.span.end);
                     rules.push(rule_name);
                 });
-                self.disable_rule_comments.push(DisableRuleComment { span, rules });
+                self.disable_rule_comments.push(DisableRuleComment { span: comment.span, rules });
 
                 continue;
             }
@@ -173,13 +179,17 @@ impl<'a, 'b> DisableDirectivesBuilder<'a, 'b> {
                 // `eslint-enable`
                 if text.trim().is_empty() {
                     if let Some(start) = self.disable_all_start.take() {
-                        self.add_interval(start, span.start, DisabledRule::All);
+                        self.add_interval(start, comment.span.start, DisabledRule::All);
                     }
                 } else {
                     // `eslint-enable rule-name1, rule-name2`
                     Self::get_rule_names(text, |rule_name| {
                         if let Some(start) = self.disable_start_map.remove(rule_name) {
-                            self.add_interval(start, span.start, DisabledRule::Single(rule_name));
+                            self.add_interval(
+                                start,
+                                comment.span.start,
+                                DisabledRule::Single(rule_name),
+                            );
                         }
                     });
                 }
@@ -214,36 +224,45 @@ fn test() {
         // [Disabling Rules](https://eslint.org/docs/latest/use/configure/rules#disabling-rules)
         // Using configuration comments
         let pass = vec![
-        // To disable rule warnings in a part of a file, use block comments in the following format:
-        format!("
+            // To disable rule warnings in a part of a file, use block comments in the following format:
+            format!(
+                "
         /* {prefix}-disable */
             debugger;
         /* {prefix}-enable */
-        "),
-        // You can also disable or enable warnings for specific rules:
-        format!("
+        "
+            ),
+            // You can also disable or enable warnings for specific rules:
+            format!(
+                "
         /* {prefix}-disable no-debugger, no-console */
             debugger;
         /* {prefix}-enable no-debugger, no-console */
-        "),
-        // To disable rule warnings in an entire file, put a /* eslint-disable */ block comment at the top of the file:
-        format!("
+        "
+            ),
+            // To disable rule warnings in an entire file, put a /* eslint-disable */ block comment at the top of the file:
+            format!(
+                "
         /* {prefix}-disable */
             debugger;
-        "),
-        // You can also disable or enable specific rules for an entire file:
-        format!("
+        "
+            ),
+            // You can also disable or enable specific rules for an entire file:
+            format!(
+                "
         /* {prefix}-disable no-debugger */
             debugger;
-        "),
-        // To ensure that a rule is never applied (regardless of any future enable/disable lines):
-        // This is not supported.
-        // "
-        // /* eslint no-debugger: \"off\" */
-        //     debugger;
-        // "),
-        // To disable all rules on a specific line, use a line or block comment in one of the following formats:
-        format!("debugger; // {prefix}-disable-line
+        "
+            ),
+            // To ensure that a rule is never applied (regardless of any future enable/disable lines):
+            // This is not supported.
+            // "
+            // /* eslint no-debugger: \"off\" */
+            //     debugger;
+            // "),
+            // To disable all rules on a specific line, use a line or block comment in one of the following formats:
+            format!(
+                "debugger; // {prefix}-disable-line
             debugger; // {prefix}-disable-line
 
             // {prefix}-disable-next-line
@@ -253,9 +272,11 @@ fn test() {
             debugger;
 
             debugger; /* {prefix}-disable-line */
-        "),
-        // To disable a specific rule on a specific line:
-        format!("
+        "
+            ),
+            // To disable a specific rule on a specific line:
+            format!(
+                "
             debugger; // {prefix}-disable-line no-debugger
 
             // {prefix}-disable-next-line no-debugger
@@ -265,9 +286,11 @@ fn test() {
 
             /* {prefix}-disable-next-line no-debugger */
             debugger;
-        "),
-        // To disable multiple rules on a specific line:
-        format!("
+        "
+            ),
+            // To disable multiple rules on a specific line:
+            format!(
+                "
             debugger; // {prefix}-disable-line no-debugger, quotes, semi
 
             // {prefix}-disable-next-line no-debugger, quotes, semi
@@ -284,23 +307,29 @@ fn test() {
               semi
             */
             debugger;
-        "),
-        // To disable all rules twice:
-        format!("
+        "
+            ),
+            // To disable all rules twice:
+            format!(
+                "
         /* {prefix}-disable */
             debugger;
         /* {prefix}-disable */
             debugger;
-        "),
-        // To disable a rule twice:
-        format!("
+        "
+            ),
+            // To disable a rule twice:
+            format!(
+                "
         /* {prefix}-disable no-debugger */
             debugger;
         /* {prefix}-disable no-debugger */
             debugger;
-        "),
-        // Comment descriptions
-        format!("
+        "
+            ),
+            // Comment descriptions
+            format!(
+                "
             // {prefix}-disable-next-line no-debugger -- Here's a description about why this configuration is necessary.
             debugger;
 
@@ -309,8 +338,9 @@ fn test() {
              * along with some additional information
             **/
             debugger;
-        ")
-    ];
+        "
+            ),
+        ];
 
         let fail = vec![
             "debugger".to_string(),

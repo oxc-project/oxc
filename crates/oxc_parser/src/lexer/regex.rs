@@ -1,7 +1,7 @@
+use oxc_syntax::identifier::is_line_terminator;
+
 use super::{Kind, Lexer, RegExpFlags, Token};
 use crate::diagnostics;
-
-use oxc_syntax::identifier::is_line_terminator;
 
 impl<'a> Lexer<'a> {
     /// Re-tokenize the current `/` or `/=` and return `RegExp`
@@ -30,11 +30,11 @@ impl<'a> Lexer<'a> {
         loop {
             match self.next_char() {
                 None => {
-                    self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                     return (self.offset(), RegExpFlags::empty());
                 }
                 Some(c) if is_line_terminator(c) => {
-                    self.error(diagnostics::UnterminatedRegExp(self.unterminated_range()));
+                    self.error(diagnostics::unterminated_reg_exp(self.unterminated_range()));
                     #[allow(clippy::cast_possible_truncation)]
                     let pattern_end = self.offset() - c.len_utf8() as u32;
                     return (pattern_end, RegExpFlags::empty());
@@ -58,14 +58,16 @@ impl<'a> Lexer<'a> {
         let pattern_end = self.offset() - 1; // -1 to exclude `/`
         let mut flags = RegExpFlags::empty();
 
-        while let Some(ch @ ('$' | '_' | 'a'..='z' | 'A'..='Z' | '0'..='9')) = self.peek() {
+        while let Some(b @ (b'$' | b'_' | b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9')) =
+            self.peek_byte()
+        {
             self.consume_char();
-            let Ok(flag) = RegExpFlags::try_from(ch) else {
-                self.error(diagnostics::RegExpFlag(ch, self.current_offset()));
+            let Ok(flag) = RegExpFlags::try_from(b) else {
+                self.error(diagnostics::reg_exp_flag(b as char, self.current_offset()));
                 continue;
             };
             if flags.contains(flag) {
-                self.error(diagnostics::RegExpFlagTwice(ch, self.current_offset()));
+                self.error(diagnostics::reg_exp_flag_twice(b as char, self.current_offset()));
                 continue;
             }
             flags |= flag;

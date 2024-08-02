@@ -18,6 +18,21 @@ impl<T: Case> MiscSuite<T> {
     pub fn new() -> Self {
         Self { test_root: project_root().join(FIXTURES_PATH), test_cases: vec![] }
     }
+
+    fn extra_cases() -> Vec<T> {
+        vec![Self::huge_binary_expression(), Self::huge_nested_statements()]
+    }
+
+    fn huge_binary_expression() -> T {
+        let code = String::from("a") + &"+ a".repeat(1000);
+        T::new(PathBuf::from("huge_binary_expression.js"), code.to_string())
+    }
+
+    fn huge_nested_statements() -> T {
+        let take = 1000;
+        let code = "if (true) {".repeat(take) + &"}".repeat(take);
+        T::new(PathBuf::from("huge_nested_statements.js"), code.to_string())
+    }
 }
 
 impl<T: Case> Suite<T> for MiscSuite<T> {
@@ -27,11 +42,13 @@ impl<T: Case> Suite<T> for MiscSuite<T> {
 
     fn save_test_cases(&mut self, cases: Vec<T>) {
         self.test_cases = cases;
+        self.test_cases.extend(Self::extra_cases());
     }
 
     fn get_test_cases(&self) -> &Vec<T> {
         &self.test_cases
     }
+
     fn get_test_cases_mut(&mut self) -> &mut Vec<T> {
         &mut self.test_cases
     }

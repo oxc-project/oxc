@@ -2,25 +2,18 @@ use oxc_ast::{
     ast::{BinaryExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, fixer::RuleFixer, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("Unexpected logical not in the left hand side of '{0}' operator")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "use parenthesis to express the negation of the whole boolean expression, as '!' binds more closely than '{0}'"
-    )
-)]
-struct NoUnsafeNegationDiagnostic(&'static str, #[label] pub Span);
+fn no_unsafe_negation_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected logical not in the left hand side of '{x0}' operator"))
+        .with_help(format!("use parenthesis to express the negation of the whole boolean expression, as '!' binds more closely than '{x0}'"))
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnsafeNegation {
@@ -46,7 +39,8 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoUnsafeNegation,
-    correctness
+    correctness,
+    fix
 );
 
 impl Rule for NoUnsafeNegation {
@@ -81,25 +75,25 @@ impl NoUnsafeNegation {
 
     /// Precondition:
     /// expr.left is `UnaryExpression` whose operator is '!'
-    fn report_with_fix(expr: &BinaryExpression, ctx: &LintContext<'_>) {
+    fn report_with_fix<'a>(expr: &BinaryExpression, ctx: &LintContext<'a>) {
         use oxc_codegen::{Context, Gen};
         // Diagnostic points at the unexpected negation
-        let diagnostic = NoUnsafeNegationDiagnostic(expr.operator.as_str(), expr.left.span());
+        let diagnostic = no_unsafe_negation_diagnostic(expr.operator.as_str(), expr.left.span());
 
-        let fix_producer = || {
+        let fix_producer = |fixer: RuleFixer<'_, 'a>| {
             // modify `!a instance of B` to `!(a instanceof B)`
             let modified_code = {
-                let mut codegen = ctx.codegen();
-                codegen.print(b'!');
+                let mut codegen = fixer.codegen();
+                codegen.print_char(b'!');
                 let Expression::UnaryExpression(left) = &expr.left else { unreachable!() };
-                codegen.print(b'(');
+                codegen.print_char(b'(');
                 codegen.print_expression(&left.argument);
                 expr.operator.gen(&mut codegen, Context::default());
                 codegen.print_expression(&expr.right);
-                codegen.print(b')');
+                codegen.print_char(b')');
                 codegen.into_source_text()
             };
-            Fix::new(modified_code, expr.span)
+            fixer.replace(expr.span, modified_code)
         };
 
         ctx.diagnostic_with_fix(diagnostic, fix_producer);

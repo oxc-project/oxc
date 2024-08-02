@@ -186,22 +186,6 @@ impl<'a, 'b> IsConstant<'a, 'b> for SpreadElement<'a> {
     }
 }
 
-pub trait IsPrivate {
-    fn is_private(&self) -> bool;
-}
-
-impl<'a> IsPrivate for MethodDefinition<'a> {
-    fn is_private(&self) -> bool {
-        self.accessibility.map_or(false, |accessibility| accessibility == TSAccessibility::Private)
-    }
-}
-
-impl<'a> IsPrivate for PropertyDefinition<'a> {
-    fn is_private(&self) -> bool {
-        self.accessibility.map_or(false, |accessibility| accessibility == TSAccessibility::Private)
-    }
-}
-
 /// Return the innermost `Function` or `ArrowFunctionExpression` Node
 /// enclosing the specified node
 pub fn get_enclosing_function<'a, 'b>(
@@ -217,7 +201,7 @@ pub fn get_enclosing_function<'a, 'b>(
         {
             return Some(current_node);
         }
-        current_node = ctx.nodes().parent_node(current_node.id()).unwrap();
+        current_node = ctx.nodes().parent_node(current_node.id())?;
     }
 }
 
@@ -334,7 +318,9 @@ pub fn is_method_call<'a>(
     }
 
     if let Some(methods) = methods {
-        let Some(static_property_name) = member_expr.static_property_name() else { return false };
+        let Some(static_property_name) = member_expr.static_property_name() else {
+            return false;
+        };
         if !methods.contains(&static_property_name) {
             return false;
         }

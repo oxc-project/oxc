@@ -1,16 +1,12 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-default-export): Prefer named exports")]
-#[diagnostic(severity(warning))]
-struct NoDefaultExportDiagnostic(#[label] Span);
+fn no_default_export_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer named exports").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDefaultExport;
@@ -40,12 +36,12 @@ declare_oxc_lint!(
     /// ```
     ///
     NoDefaultExport,
-    nursery
+    restriction
 );
 
 impl Rule for NoDefaultExport {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         write_diagnostic_optional(ctx, module_record.export_default);
         module_record.export_default_duplicated.iter().for_each(|it| write_diagnostic(ctx, *it));
         write_diagnostic_optional(ctx, module_record.exported_bindings.get("default").copied());
@@ -53,7 +49,7 @@ impl Rule for NoDefaultExport {
 }
 
 fn write_diagnostic(ctx: &LintContext<'_>, span: Span) {
-    ctx.diagnostic(NoDefaultExportDiagnostic(span));
+    ctx.diagnostic(no_default_export_diagnostic(span));
 }
 fn write_diagnostic_optional(ctx: &LintContext<'_>, span_option: Option<Span>) {
     if let Some(span) = span_option {

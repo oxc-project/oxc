@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_codegen"
-version                = "0.12.5"
+version                = "0.23.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -11,6 +11,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/examples", "/src"]
 
 [lints]
 workspace = true
@@ -22,10 +23,17 @@ doctest = false
 oxc_ast       = { workspace = true }
 oxc_span      = { workspace = true }
 oxc_allocator = { workspace = true }
-oxc_syntax    = { workspace = true }
+oxc_syntax    = { workspace = true, features = ["to_js_string"] }
 oxc_sourcemap = { workspace = true }
-bitflags      = { workspace = true }
+oxc_mangler   = { workspace = true }
+
+bitflags   = { workspace = true }
+once_cell  = { workspace = true }
+daachorse  = { workspace = true }
+rustc-hash = { workspace = true }
 
 [dev-dependencies]
 oxc_parser = { workspace = true }
 base64     = { workspace = true }
+pico-args  = { workspace = true }
+insta      = { workspace = true }

@@ -1,82 +1,120 @@
-use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::ModuleRecord;
 use oxc_syntax::module_graph_visitor::{ModuleGraphVisitorBuilder, VisitFoldWhile};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "oxc(no-barrel-file): \
-            Avoid barrel files, they slow down performance, \
-            and cause large module graphs with modules that go unused.\n\
-            Loading this barrel file results in importing {1:?} modules."
-)]
-#[diagnostic(severity(warning), help("For more information visit this link: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7/>"))]
-struct NoBarrelFileDiagnostic(#[label] pub Span, pub u32);
+#[derive(Debug, Clone)]
+pub struct NoBarrelFile {
+    threshold: usize,
+}
 
-/// Minimum amount of exports to consider module as barrelfile
-const AMOUNT_OF_EXPORTS_TO_CONSIDER_MODULE_AS_BARREL: u8 = 3;
-
-/// <https://github.com/thepassle/eslint-plugin-barrel-files/blob/main/docs/rules/avoid-barrel-files.md>
-#[derive(Debug, Default, Clone)]
-pub struct NoBarrelFile;
+impl Default for NoBarrelFile {
+    fn default() -> Self {
+        Self { threshold: 100 }
+    }
+}
 
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Disallow the use of barrel files.
+    /// Disallow the use of barrel files where the file contains `export *` statements,
+    /// and the total number of modules exceed a threshold.
+    ///
+    /// The default threshold is 100;
+    ///
+    /// References:
+    ///
+    /// * <https://github.com/thepassle/eslint-plugin-barrel-files>
+    /// * <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>
     ///
     /// ### Example
     ///
     /// Invalid:
+    ///
+    /// ```javascript
+    /// export * from 'foo'; // where `foo` loads a subtree of 100 modules
+    /// import * as ns from 'foo'; // where `foo` loads a subtree of 100 modules
+    /// ```
+    ///
+    /// Valid:
+    ///
     /// ```javascript
     /// export { foo } from 'foo';
-    /// export { bar } from 'bar';
-    /// export { baz } from 'baz';
-    /// export { qux } from 'qux';
-    /// ```
-    /// Valid:
-    /// ```javascript
-    /// export type { foo } from './foo.js';
     /// ```
     NoBarrelFile,
-    nursery
+    restriction
 );
 
 impl Rule for NoBarrelFile {
+    #[allow(clippy::cast_possible_truncation)]
+    fn from_configuration(value: serde_json::Value) -> Self {
+        Self {
+            threshold: value
+                .get(0)
+                .and_then(|config| config.get("threshold"))
+                .and_then(serde_json::Value::as_u64)
+                .map_or(NoBarrelFile::default().threshold, |n| n as usize),
+        }
+    }
+
     fn run_once(&self, ctx: &LintContext<'_>) {
         let semantic = ctx.semantic();
         let module_record = semantic.module_record();
-        let Some(root) = semantic.nodes().root_node() else {
-            // Return early if the semantic's root node isn't set.
-            // It usually means we are running on an empty or invalid file.
+
+        if module_record.not_esm {
             return;
-        };
+        }
 
-        let AstKind::Program(program) = root.kind() else { unreachable!() };
+        let module_requests = module_record
+            .indirect_export_entries
+            .iter()
+            .chain(module_record.star_export_entries.iter())
+            .filter_map(|export_entry| {
+                if let Some(module_request) = &export_entry.module_request {
+                    let import_name = &export_entry.import_name;
+                    if import_name.is_all() || import_name.is_all_but_default() {
+                        return Some(module_request);
+                    }
+                }
+                None
+            })
+            .collect::<Vec<_>>();
 
-        let declarations =
-            program
-                .body
-                .iter()
-                .fold(0, |acc, node| if node.is_declaration() { acc + 1 } else { acc });
-        let exports =
-            module_record.star_export_entries.len() + module_record.indirect_export_entries.len();
+        let mut labels = vec![];
+        let mut total: usize = 0;
 
-        if exports > declarations
-            && exports > AMOUNT_OF_EXPORTS_TO_CONSIDER_MODULE_AS_BARREL as usize
-        {
-            let loaded_modules_count = ModuleGraphVisitorBuilder::default()
-                .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
-                .result;
-            ctx.diagnostic(NoBarrelFileDiagnostic(program.span, loaded_modules_count));
+        for module_request in module_requests {
+            if let Some(remote_module) = module_record.loaded_modules.get(module_request.name()) {
+                if let Some(count) = count_loaded_modules(remote_module.value()) {
+                    total += count;
+                    labels.push(module_request.span().label(format!("{count} modules")));
+                }
+            };
+        }
+
+        let threshold = self.threshold;
+        if total >= threshold {
+            let diagnostic = OxcDiagnostic::warn(format!(
+                "Barrel file detected, {total} modules are loaded."
+            ))
+            .with_help(format!("Loading {total} modules is slow for runtimes and bundlers.\nThe configured threshold is {threshold}.\nSee also: <https://marvinh.dev/blog/speeding-up-javascript-ecosystem-part-7>."))
+            .with_labels(labels);
+            ctx.diagnostic(diagnostic);
         }
     }
+}
+
+fn count_loaded_modules(module_record: &ModuleRecord) -> Option<usize> {
+    if module_record.loaded_modules.is_empty() {
+        return None;
+    }
+    Some(
+        ModuleGraphVisitorBuilder::default()
+            .visit_fold(0, module_record, |acc, _, _| VisitFoldWhile::Next(acc + 1))
+            .result,
+    )
 }
 
 #[test]
@@ -84,33 +122,21 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        r#"export type * from "foo";"#,
-        r#"export type { foo } from "foo";"#,
-        r#"export type * from "foo";
-           export type { bar } from "bar";"#,
-        r#"import { foo, bar, baz } from "../feature";
-           export { foo };
-           export { bar };"#,
+        (r#"export type * from "foo";"#, None),
+        (r#"export type { foo } from "foo";"#, None),
+        (r#"export type * from "foo"; export type { bar } from "bar";"#, None),
+        (r#"import { foo, bar, baz } from "../import/export-star/models";"#, None),
     ];
 
-    let fail = vec![
+    let settings = Some(serde_json::json!([{"threshold": 1}]));
+
+    let fail = vec![(
         r#"export * from "./deep/a.js";
            export * from "./deep/b.js";
            export * from "./deep/c.js";
            export * from "./deep/d.js";"#,
-        r#"export { foo } from "foo";
-           export { bar } from "bar";
-           export { baz } from "baz";
-           export { qux } from "qux";"#,
-        r#"export { default as module1 } from "./module1";
-           export { default as module2 } from "./module2";
-           export { default as module3 } from "./module3";
-           export { default as module4 } from "./module4";"#,
-        r#"export { foo, type Foo } from "foo";
-           export { bar, type Bar } from "bar";
-           export { baz, type Baz } from "baz";
-           export { qux, type Qux } from "qux";"#,
-    ];
+        settings,
+    )];
 
     Tester::new(NoBarrelFile::NAME, pass, fail)
         .change_rule_path("index.ts")

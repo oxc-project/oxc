@@ -1,1 +1,1 @@
-See https://oxc-project.github.io/docs/contribute/vscode.html
+See https://oxc.rs/docs/contribute/vscode.html

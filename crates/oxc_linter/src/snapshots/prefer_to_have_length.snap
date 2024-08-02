@@ -1,63 +1,72 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_to_have_length
 ---
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:25]
  1 │ expect(files["length"]).toBe(1);
    ·                         ────
    ╰────
+  help: Replace `expect(files["length"]).toBe` with `expect(files).toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:25]
  1 │ expect(files["length"]).toBe(1,);
    ·                         ────
    ╰────
+  help: Replace `expect(files["length"]).toBe` with `expect(files).toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:32]
  1 │ expect(files["length"])["not"].toBe(1);
    ·                                ────
    ╰────
+  help: Replace `expect(files["length"])["not"].toBe` with `expect(files)["not"].toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:25]
  1 │ expect(files["length"])["toBe"](1);
    ·                         ──────
    ╰────
+  help: Replace `expect(files["length"])["toBe"]` with `expect(files).toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:29]
  1 │ expect(files["length"]).not["toBe"](1);
    ·                             ──────
    ╰────
+  help: Replace `expect(files["length"]).not["toBe"]` with `expect(files).not.toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:32]
  1 │ expect(files["length"])["not"]["toBe"](1);
    ·                                ──────
    ╰────
+  help: Replace `expect(files["length"])["not"]["toBe"]` with `expect(files)["not"].toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:22]
  1 │ expect(files.length).toBe(1);
    ·                      ────
    ╰────
+  help: Replace `expect(files.length).toBe` with `expect(files).toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:22]
  1 │ expect(files.length).toEqual(1);
    ·                      ───────
    ╰────
+  help: Replace `expect(files.length).toEqual` with `expect(files).toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:22]
  1 │ expect(files.length).toStrictEqual(1);
    ·                      ─────────────
    ╰────
+  help: Replace `expect(files.length).toStrictEqual` with `expect(files).toHaveLength`.
 
   ⚠ eslint-plugin-jest(prefer-to-have-length): Suggest using `toHaveLength()`.
    ╭─[prefer_to_have_length.tsx:1:26]
  1 │ expect(files.length).not.toStrictEqual(1);
    ·                          ─────────────
    ╰────
+  help: Replace `expect(files.length).not.toStrictEqual` with `expect(files).not.toHaveLength`.

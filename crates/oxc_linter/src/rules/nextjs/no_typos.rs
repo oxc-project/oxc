@@ -2,20 +2,18 @@ use oxc_ast::{
     ast::{BindingPatternKind, Declaration, ModuleDeclaration},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-typos): {0} may be a typo. Did you mean {1}?")]
-#[diagnostic(severity(warning), help("Prevent common typos in Next.js's data fetching functions"))]
-struct NoTyposDiagnostic(String, String, #[label] pub Span);
+fn no_typos_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x0} may be a typo. Did you mean {x1}?"))
+        .with_help("Prevent common typos in Next.js's data fetching functions")
+        .with_label(span2)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTypos;
@@ -49,8 +47,12 @@ const THRESHOLD: i32 = 1;
 
 impl Rule for NoTypos {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(path) = ctx.file_path().to_str() else { return };
-        let Some(path_after_pages) = path.split("pages").nth(1) else { return };
+        let Some(path) = ctx.file_path().to_str() else {
+            return;
+        };
+        let Some(path_after_pages) = path.split("pages").nth(1) else {
+            return;
+        };
         if path_after_pages.starts_with("/api") {
             return;
         }
@@ -67,19 +69,21 @@ impl Rule for NoTypos {
                             let Some(potential_typo) = get_potential_typo(&id.name) else {
                                 continue;
                             };
-                            ctx.diagnostic(NoTyposDiagnostic(
-                                id.name.to_string(),
-                                potential_typo.to_string(),
+                            ctx.diagnostic(no_typos_diagnostic(
+                                id.name.as_str(),
+                                potential_typo,
                                 id.span,
                             ));
                         }
                     }
                     Declaration::FunctionDeclaration(decl) => {
                         let Some(id) = &decl.id else { return };
-                        let Some(potential_typo) = get_potential_typo(&id.name) else { return };
-                        ctx.diagnostic(NoTyposDiagnostic(
-                            id.name.to_string(),
-                            potential_typo.to_string(),
+                        let Some(potential_typo) = get_potential_typo(&id.name) else {
+                            return;
+                        };
+                        ctx.diagnostic(no_typos_diagnostic(
+                            id.name.as_str(),
+                            potential_typo,
                             id.span,
                         ));
                     }
@@ -135,8 +139,9 @@ fn min_distance(a: &str, b: &str) -> usize {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

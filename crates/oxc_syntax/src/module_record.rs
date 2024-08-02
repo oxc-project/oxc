@@ -3,9 +3,8 @@
 use std::{fmt, hash::BuildHasherDefault, path::PathBuf, sync::Arc};
 
 use dashmap::DashMap;
-use rustc_hash::{FxHashMap, FxHasher};
-
 use oxc_span::{CompactStr, Span};
+use rustc_hash::{FxHashMap, FxHasher};
 
 /// ESM Module Record
 ///
@@ -247,7 +246,8 @@ impl ExportExportName {
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub enum ExportLocalName {
     Name(NameSpan),
-    Default(Span),
+    /// `export default name_span`
+    Default(NameSpan),
     #[default]
     Null,
 }
@@ -263,8 +263,8 @@ impl ExportLocalName {
 
     pub const fn name(&self) -> Option<&CompactStr> {
         match self {
-            Self::Name(name) => Some(name.name()),
-            Self::Default(_) | Self::Null => None,
+            Self::Name(name) | Self::Default(name) => Some(name.name()),
+            Self::Null => None,
         }
     }
 }
@@ -301,8 +301,9 @@ impl RequestedModule {
 
 #[cfg(test)]
 mod test {
-    use super::{ExportExportName, ExportLocalName, ImportImportName, NameSpan};
     use oxc_span::Span;
+
+    use super::{ExportExportName, ExportLocalName, ImportImportName, NameSpan};
 
     #[test]
     fn import_import_name() {
@@ -332,11 +333,11 @@ mod test {
     fn export_local_name() {
         let name = NameSpan::new("name".into(), Span::new(0, 0));
         assert!(!ExportLocalName::Name(name.clone()).is_default());
-        assert!(ExportLocalName::Default(Span::new(0, 0)).is_default());
+        assert!(ExportLocalName::Default(name.clone()).is_default());
         assert!(!ExportLocalName::Null.is_default());
 
-        assert!(!ExportLocalName::Name(name).is_null());
-        assert!(!ExportLocalName::Default(Span::new(0, 0)).is_null());
+        assert!(!ExportLocalName::Name(name.clone()).is_null());
+        assert!(!ExportLocalName::Default(name.clone()).is_null());
         assert!(ExportLocalName::Null.is_null());
     }
 }

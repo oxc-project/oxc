@@ -1,25 +1,24 @@
-use regex::Regex;
-
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use regex::Regex;
 
-use crate::utils::{
-    get_element_type, get_prop_value, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{
+        get_element_type, get_prop_value, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
+    },
+    AstNode,
 };
-use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(img-redundant-alt): Redundant alt attribute.")]
-#[diagnostic(severity(warning), help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop."))]
-struct ImgRedundantAltDiagnostic(#[label] pub Span);
+fn img_redundant_alt_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Redundant alt attribute.").with_help("Provide no redundant alt text for image. Screen-readers already announce `img` tags as an image. You don’t need to use the words `image`, `photo,` or `picture` (or any specified custom words) in the alt prop.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ImgRedundantAlt(Box<ImgRedundantAltConfig>);
@@ -104,8 +103,11 @@ impl Rule for ImgRedundantAlt {
 
         Self(Box::new(img_redundant_alt))
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+            return;
+        };
         let Some(element_type) = get_element_type(ctx, jsx_el) else {
             return;
         };
@@ -118,7 +120,7 @@ impl Rule for ImgRedundantAlt {
             return;
         }
 
-        let Some(alt_prop) = has_jsx_prop_lowercase(jsx_el, "alt") else {
+        let Some(alt_prop) = has_jsx_prop_ignore_case(jsx_el, "alt") else {
             return;
         };
 
@@ -143,7 +145,7 @@ impl Rule for ImgRedundantAlt {
                 let alt_text = lit.value.as_str();
 
                 if is_redundant_alt_text(alt_text, &self.redundant_words) {
-                    ctx.diagnostic(ImgRedundantAltDiagnostic(alt_attribute_name_span));
+                    ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                 }
             }
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
@@ -151,7 +153,7 @@ impl Rule for ImgRedundantAlt {
                     let alt_text = lit.value.as_str();
 
                     if is_redundant_alt_text(alt_text, &self.redundant_words) {
-                        ctx.diagnostic(ImgRedundantAltDiagnostic(alt_attribute_name_span));
+                        ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                     }
                 }
                 JSXExpression::TemplateLiteral(lit) => {
@@ -159,7 +161,7 @@ impl Rule for ImgRedundantAlt {
                         let alt_text = quasi.value.raw.as_str();
 
                         if is_redundant_alt_text(alt_text, &self.redundant_words) {
-                            ctx.diagnostic(ImgRedundantAltDiagnostic(alt_attribute_name_span));
+                            ctx.diagnostic(img_redundant_alt_diagnostic(alt_attribute_name_span));
                         }
                     }
                 }

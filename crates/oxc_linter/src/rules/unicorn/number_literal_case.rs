@@ -1,33 +1,36 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NumberLiteralCaseDiagnostic {
-    #[error("eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase.")]
-    #[diagnostic(severity(warning), help("Use lowercase for the number literal prefix `{1}`."))]
-    UppercasePrefix(#[label] Span, &'static str),
-    #[error(
-        "eslint-plugin-unicorn(number-literal-case): Unexpected exponential notation in uppercase."
-    )]
-    #[diagnostic(severity(warning), help("Use lowercase for `e` in exponential notations."))]
-    UppercaseExponentialNotation(#[label] Span),
-    #[error(
-        "eslint-plugin-unicorn(number-literal-case): Unexpected hexadecimal digits in lowercase."
-    )]
-    #[diagnostic(severity(warning), help("Use uppercase for hexadecimal digits."))]
-    LowercaseHexadecimalDigits(#[label] Span),
-    #[error(
-        "eslint-plugin-unicorn(number-literal-case): Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase."
-    )]
-    #[diagnostic(severity(warning), help("Use lowercase for the number literal prefix `{1}` and uppercase for hexadecimal digits."))]
-    UppercasePrefixAndLowercaseHexadecimalDigits(#[label] Span, &'static str),
+fn uppercase_prefix(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected number literal prefix in uppercase.")
+        .with_help(format!("Use lowercase for the number literal prefix `{x1}`."))
+        .with_label(span0)
+}
+
+fn uppercase_exponential_notation(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected exponential notation in uppercase.")
+        .with_help("Use lowercase for `e` in exponential notations.")
+        .with_label(span0)
+}
+
+fn lowercase_hexadecimal_digits(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected hexadecimal digits in lowercase.")
+        .with_help("Use uppercase for hexadecimal digits.")
+        .with_label(span0)
+}
+
+fn uppercase_prefix_and_lowercase_hexadecimal_digits(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Unexpected number literal prefix in uppercase and hexadecimal digits in lowercase.",
+    )
+    .with_help(format!(
+        "Use lowercase for the number literal prefix `{x1}` and uppercase for hexadecimal digits."
+    ))
+    .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -64,14 +67,15 @@ declare_oxc_lint!(
     /// const foo = 2e+5;
     /// ```
     NumberLiteralCase,
-    style
+    style,
+    fix
 );
 
 impl Rule for NumberLiteralCase {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let (raw_literal, raw_span) = match node.kind() {
             AstKind::NumericLiteral(number) => (number.raw, number.span),
-            AstKind::BigintLiteral(number) => {
+            AstKind::BigIntLiteral(number) => {
                 let span = number.span;
                 (span.source_text(ctx.source_text()), span)
             }
@@ -79,19 +83,16 @@ impl Rule for NumberLiteralCase {
         };
 
         if let Some((diagnostic, fixed_literal)) = check_number_literal(raw_literal, raw_span) {
-            ctx.diagnostic_with_fix(diagnostic, || Fix::new(fixed_literal, raw_span));
+            ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(raw_span, fixed_literal));
         }
     }
 }
 
 #[allow(clippy::cast_possible_truncation)]
-fn check_number_literal(
-    number_literal: &str,
-    raw_span: Span,
-) -> Option<(NumberLiteralCaseDiagnostic, String)> {
+fn check_number_literal(number_literal: &str, raw_span: Span) -> Option<(OxcDiagnostic, String)> {
     if number_literal.starts_with("0B") || number_literal.starts_with("0O") {
         return Some((
-            NumberLiteralCaseDiagnostic::UppercasePrefix(
+            uppercase_prefix(
                 Span::new(raw_span.start + 1, raw_span.start + 2),
                 if number_literal.starts_with("0B") { "0b" } else { "0o" },
             ),
@@ -103,27 +104,19 @@ fn check_number_literal(
         let has_lowercase_digits = number_literal[2..].chars().any(|c| ('a'..='f').contains(&c));
         if has_uppercase_prefix && has_lowercase_digits {
             return Some((
-                NumberLiteralCaseDiagnostic::UppercasePrefixAndLowercaseHexadecimalDigits(
-                    raw_span, "0x",
-                ),
+                uppercase_prefix_and_lowercase_hexadecimal_digits(raw_span, "0x"),
                 "0x".to_owned() + &digits_to_uppercase(&number_literal[2..]),
             ));
         }
         if has_uppercase_prefix {
             return Some((
-                NumberLiteralCaseDiagnostic::UppercasePrefix(
-                    Span::new(raw_span.start + 1, raw_span.start + 2),
-                    "0x",
-                ),
+                uppercase_prefix(Span::new(raw_span.start + 1, raw_span.start + 2), "0x"),
                 "0x".to_owned() + &number_literal[2..],
             ));
         }
         if has_lowercase_digits {
             return Some((
-                NumberLiteralCaseDiagnostic::LowercaseHexadecimalDigits(Span::new(
-                    raw_span.start + 2,
-                    raw_span.end,
-                )),
+                lowercase_hexadecimal_digits(Span::new(raw_span.start + 2, raw_span.end)),
                 "0x".to_owned() + &digits_to_uppercase(&number_literal[2..]),
             ));
         }
@@ -132,10 +125,7 @@ fn check_number_literal(
     if let Some(index) = number_literal.find('E') {
         let char_position = raw_span.start + index as u32;
         return Some((
-            NumberLiteralCaseDiagnostic::UppercaseExponentialNotation(Span::new(
-                char_position,
-                char_position + 1,
-            )),
+            uppercase_exponential_notation(Span::new(char_position, char_position + 1)),
             number_literal.to_lowercase(),
         ));
     }

@@ -1,20 +1,19 @@
 use oxc_ast::{
-    ast::{Argument, CallExpression, Expression, ModuleDeclaration},
+    ast::{Expression, ModuleDeclaration, TSModuleReference},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{Atom, Span};
+use oxc_resolver::NODEJS_BUILTINS;
+use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, utils::NODE_BUILTINS_MODULE, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-node-protocol): Prefer using the `node:` protocol when importing Node.js builtin modules.")]
-#[diagnostic(severity(warning), help("Prefer `node:{1}` over `{1}`."))]
-struct PreferNodeProtocolDiagnostic(#[label] pub Span, String);
+fn prefer_node_protocol_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer using the `node:` protocol when importing Node.js builtin modules.")
+        .with_help(format!("Prefer `node:{x1}` over `{x1}`."))
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferNodeProtocol;
@@ -32,7 +31,8 @@ declare_oxc_lint!(
     /// import fs from "node:fs";
     /// ```
     PreferNodeProtocol,
-    style
+    restriction,
+    fix
 );
 
 impl Rule for PreferNodeProtocol {
@@ -44,7 +44,15 @@ impl Rule for PreferNodeProtocol {
                 }
                 _ => None,
             },
-            AstKind::CallExpression(call) if !call.optional => get_static_require_arg(ctx, call),
+            AstKind::TSImportEqualsDeclaration(import) => match &import.module_reference {
+                TSModuleReference::ExternalModuleReference(external) => {
+                    Some((external.expression.value.clone(), external.expression.span))
+                }
+                _ => None,
+            },
+            AstKind::CallExpression(call) if !call.optional => {
+                call.common_js_require().map(|s| (s.value.clone(), s.span))
+            }
             AstKind::ModuleDeclaration(ModuleDeclaration::ImportDeclaration(import)) => {
                 Some((import.source.value.clone(), import.source.span))
             }
@@ -66,27 +74,25 @@ impl Rule for PreferNodeProtocol {
         } else {
             string_lit_value.to_string()
         };
-        if module_name.starts_with("node:") || !NODE_BUILTINS_MODULE.contains(&module_name) {
+        if module_name.starts_with("node:")
+            || NODEJS_BUILTINS.binary_search(&module_name.as_str()).is_err()
+        {
             return;
         }
 
-        ctx.diagnostic(PreferNodeProtocolDiagnostic(span, string_lit_value.to_string()));
-    }
-}
-
-fn get_static_require_arg<'a>(
-    ctx: &LintContext<'a>,
-    call: &CallExpression<'a>,
-) -> Option<(Atom<'a>, Span)> {
-    let Expression::Identifier(ref id) = call.callee else { return None };
-    match call.arguments.as_slice() {
-        [Argument::StringLiteral(str)] if id.name == "require" => ctx
-            .semantic()
-            .scopes()
-            .root_unresolved_references()
-            .contains_key(id.name.as_str())
-            .then(|| (str.value.clone(), str.span)),
-        _ => None,
+        ctx.diagnostic_with_fix(
+            prefer_node_protocol_diagnostic(span, &string_lit_value),
+            |fixer| {
+                // Smallest module name is 2 chars, plus 2 for quotes = 4.
+                debug_assert!(
+                    span.size() >= 4,
+                    "node stdlib module name should be at least 4 chars long"
+                );
+                // We're replacing inside the string literal, shift to account for quotes.
+                let span = span.shrink_left(1).shrink_right(1);
+                fixer.replace(span, format!("node:{string_lit_value}"))
+            },
+        );
     }
 }
 
@@ -99,7 +105,10 @@ fn test() {
         r#"import fs from "./fs";"#,
         r#"import fs from "unknown-builtin-module";"#,
         r#"import fs from "node:fs";"#,
+        r#"import * as fs from "node:fs";"#,
         r#"import "punycode / ";"#,
+        r#"import fs = require("node:fs");"#,
+        r#"import type fs = require("node:fs");"#,
         r#"const fs = require("node:fs");"#,
         r#"const fs = require("node:fs/promises");"#,
         r"const fs = require(fs);",
@@ -116,6 +125,8 @@ fn test() {
 
     let fail = vec![
         r#"import fs from "fs";"#,
+        r#"import * as fs from "fs";"#,
+        r#"import fs = require("fs");"#,
         r#"export {promises} from "fs";"#,
         r#"import fs from "fs/promises";"#,
         r#"export {default} from "fs/promises";"#,
@@ -131,5 +142,15 @@ fn test() {
         r"await import('assert/strict')",
     ];
 
-    Tester::new(PreferNodeProtocol::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#"import fs from "fs";"#, r#"import fs from "node:fs";"#, None),
+        (r#"import * as fs from "fs";"#, r#"import * as fs from "node:fs";"#, None),
+        (r"import fs from 'fs';", r"import fs from 'node:fs';", None),
+        (r"const fs = require('fs');", r"const fs = require('node:fs');", None),
+        (r"import fs = require('fs');", r"import fs = require('node:fs');", None),
+        (r#"import "child_process";"#, r#"import "node:child_process";"#, None),
+        (r#"import fs from "fs/promises";"#, r#"import fs from "node:fs/promises";"#, None),
+    ];
+
+    Tester::new(PreferNodeProtocol::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::is_global_require_call, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-var-requires): Require statement not part of import statement.")]
-#[diagnostic(severity(warning), help("Use ES6 style imports or import instead."))]
-struct NoVarRequiresDiagnostic(#[label] pub Span);
+fn no_var_requires_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Require statement not part of import statement.")
+        .with_help("Use ES6 style imports or import instead.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoVarRequires;
@@ -36,10 +34,9 @@ declare_oxc_lint!(
 
 impl Rule for NoVarRequires {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !ctx.source_type().is_typescript() {
+        let AstKind::CallExpression(expr) = node.kind() else {
             return;
-        }
-        let AstKind::CallExpression(expr) = node.kind() else { return };
+        };
 
         if is_global_require_call(expr, ctx) {
             // If the parent is an expression statement => this is a top level require()
@@ -64,9 +61,13 @@ impl Rule for NoVarRequires {
             // If this is an expression statement, it means the `require()`'s return value is unused.
             // If the return value is unused, this isn't a problem.
             if !is_expression_statement {
-                ctx.diagnostic(NoVarRequiresDiagnostic(node.kind().span()));
+                ctx.diagnostic(no_var_requires_diagnostic(node.kind().span()));
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

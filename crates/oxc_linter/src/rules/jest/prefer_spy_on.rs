@@ -5,25 +5,23 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::RuleFixer,
     rule::Rule,
     utils::{get_node_name, parse_general_jest_fn_call, PossibleJestNode},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-spy-on): Suggest using `jest.spyOn()`.")]
-#[diagnostic(severity(warning), help("Use jest.spyOn() instead"))]
-struct UseJestSpyOn(#[label] pub Span);
+fn use_jest_spy_on(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `jest.spyOn()`.")
+        .with_help("Use jest.spyOn() instead")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferSpyOn;
@@ -55,6 +53,7 @@ declare_oxc_lint!(
     /// ```
     PreferSpyOn,
     style,
+    fix
 );
 
 impl Rule for PreferSpyOn {
@@ -111,8 +110,8 @@ impl PreferSpyOn {
         }
 
         ctx.diagnostic_with_fix(
-            UseJestSpyOn(Span::new(call_expr.span.start, first_fn_member.span.end)),
-            || {
+            use_jest_spy_on(Span::new(call_expr.span.start, first_fn_member.span.end)),
+            |fixer| {
                 let (end, has_mock_implementation) = if jest_fn_call.members.len() > 1 {
                     let second = &jest_fn_call.members[1];
                     let has_mock_implementation = jest_fn_call
@@ -128,8 +127,8 @@ impl PreferSpyOn {
                     )
                 };
                 let content =
-                    Self::build_code(call_expr, left_assign, has_mock_implementation, ctx);
-                Fix::new(content, Span::new(assign_expr.span.start, end))
+                    Self::build_code(call_expr, left_assign, has_mock_implementation, fixer);
+                fixer.replace(Span::new(assign_expr.span.start, end), content)
             },
         );
     }
@@ -138,41 +137,41 @@ impl PreferSpyOn {
         call_expr: &'a CallExpression<'a>,
         left_assign: &MemberExpression,
         has_mock_implementation: bool,
-        ctx: &LintContext,
+        fixer: RuleFixer<'_, 'a>,
     ) -> String {
-        let mut formatter = ctx.codegen();
-        formatter.print_str(b"jest.spyOn(");
+        let mut formatter = fixer.codegen();
+        formatter.print_str("jest.spyOn(");
 
         match left_assign {
             MemberExpression::ComputedMemberExpression(cmp_mem_expr) => {
                 formatter.print_expression(&cmp_mem_expr.object);
-                formatter.print(b',');
+                formatter.print_char(b',');
                 formatter.print_hard_space();
                 formatter.print_expression(&cmp_mem_expr.expression);
             }
             MemberExpression::StaticMemberExpression(static_mem_expr) => {
                 let name = &static_mem_expr.property.name;
                 formatter.print_expression(&static_mem_expr.object);
-                formatter.print(b',');
+                formatter.print_char(b',');
                 formatter.print_hard_space();
-                formatter.print_str(format!("\'{name}\'").as_bytes());
+                formatter.print_str(format!("\'{name}\'").as_str());
             }
             MemberExpression::PrivateFieldExpression(_) => (),
         }
 
-        formatter.print(b')');
+        formatter.print_char(b')');
 
         if has_mock_implementation {
             return formatter.into_source_text();
         }
 
-        formatter.print_str(b".mockImplementation(");
+        formatter.print_str(".mockImplementation(");
 
         if let Some(expr) = Self::get_jest_fn_call(call_expr) {
             formatter.print_expression(expr);
         }
 
-        formatter.print(b')');
+        formatter.print_char(b')');
         formatter.into_source_text()
     }
 

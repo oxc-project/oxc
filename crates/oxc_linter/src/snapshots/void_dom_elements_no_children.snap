@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: void_dom_elements_no_children
 ---
   ⚠ eslint-plugin-react(void-dom-elements-no-children): Disallow void DOM elements (e.g. `<img />`, `<br />`) from receiving children.
    ╭─[void_dom_elements_no_children.tsx:1:2]

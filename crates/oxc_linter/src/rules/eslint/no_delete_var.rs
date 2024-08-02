@@ -1,18 +1,14 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-delete-var): variables should not be deleted")]
-#[diagnostic(severity(warning))]
-struct NoDeleteVarDiagnostic(#[label] pub Span);
+fn no_delete_var_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("variables should not be deleted").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDeleteVar;
@@ -37,9 +33,11 @@ declare_oxc_lint!(
 
 impl Rule for NoDeleteVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::UnaryExpression(expr) = node.kind() else { return };
+        let AstKind::UnaryExpression(expr) = node.kind() else {
+            return;
+        };
         if expr.operator == UnaryOperator::Delete && expr.argument.is_identifier_reference() {
-            ctx.diagnostic(NoDeleteVarDiagnostic(expr.span));
+            ctx.diagnostic(no_delete_var_diagnostic(expr.span));
         }
     }
 }

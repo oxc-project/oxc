@@ -2,11 +2,10 @@
 #![allow(non_snake_case)]
 #![allow(clippy::needless_pass_by_value)]
 
+use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 use serde::{Deserialize, Serialize};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;
-
-use oxc::{allocator::Allocator, parser::Parser, span::SourceType};
 
 #[derive(Debug, Default, Clone, Deserialize, Tsify)]
 #[tsify(from_wasm_abi)]
@@ -82,13 +81,14 @@ pub fn parse_sync(
         ret.errors
             .iter()
             .flat_map(|error| {
-                let Some(labels) = error.labels() else { return vec![] };
+                let Some(labels) = &error.labels else { return vec![] };
                 labels
+                    .iter()
                     .map(|label| {
                         Diagnostic {
                             start: label.offset(),
                             end: label.offset() + label.len(),
-                            severity: format!("{:?}", error.severity().unwrap_or_default()),
+                            severity: "Error".to_string(),
                             message: format!("{error}"),
                         }
                         .serialize(&serializer)

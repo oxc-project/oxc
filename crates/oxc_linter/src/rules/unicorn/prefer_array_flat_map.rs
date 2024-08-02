@@ -2,19 +2,17 @@ use oxc_ast::{
     ast::{Argument, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-array-flat-map): `Array.flatMap` performs `Array.map` and `Array.flat` in one step.")]
-#[diagnostic(severity(warning), help("Prefer `.flatMap(…)` over `.map(…).flat()`."))]
-struct PreferArrayFlatMapDiagnostic(#[label] pub Span);
+fn prefer_array_flat_map_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`Array.flatMap` performs `Array.map` and `Array.flat` in one step.")
+        .with_help("Prefer `.flatMap(…)` over `.map(…).flat()`.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferArrayFlatMap;
@@ -40,7 +38,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferArrayFlatMap {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(flat_call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(flat_call_expr) = node.kind() else {
+            return;
+        };
 
         if flat_call_expr.arguments.len() > 1 {
             return;
@@ -49,7 +49,9 @@ impl Rule for PreferArrayFlatMap {
         if !is_method_call(flat_call_expr, None, Some(&["flat"]), None, None) {
             return;
         }
-        let Some(member_expr) = flat_call_expr.callee.as_member_expression() else { return };
+        let Some(member_expr) = flat_call_expr.callee.as_member_expression() else {
+            return;
+        };
         let Expression::CallExpression(call_expr) = &member_expr.object().without_parenthesized()
         else {
             return;
@@ -68,7 +70,7 @@ impl Rule for PreferArrayFlatMap {
             }
         }
 
-        ctx.diagnostic(PreferArrayFlatMapDiagnostic(flat_call_expr.span));
+        ctx.diagnostic(prefer_array_flat_map_diagnostic(flat_call_expr.span));
     }
 }
 

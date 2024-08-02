@@ -1,17 +1,16 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: export
 ---
   ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
    ╭─[index.ts:1:19]
  1 │ let foo; export { foo }; export * from "./export-all"
-   ·                   ───
+   ·                   ───    ────────────────────────────
    ╰────
 
   ⚠ eslint-plugin-import(export): Multiple exports of name 'foo'.
    ╭─[index.ts:1:26]
  1 │ let foo; export { foo as "foo" }; export * from "./export-all"
-   ·                          ─────
+   ·                          ─────    ────────────────────────────
    ╰────
 
   × Identifier `Foo` has already been declared
@@ -99,17 +98,12 @@ expression: export
    ╰────
 
   ⚠ eslint-plugin-import(export): Multiple exports of name 'default'.
-    ╭─[index.ts:9:32]
+    ╭─[index.ts:7:32]
+  6 │                 const Bar = 2;
+  7 │                 export {Bar as default};
+    ·                                ───────
   8 │                 const Baz = 3;
   9 │                 export {Baz as default};
     ·                                ───────
  10 │             
     ╰────
-
-  ⚠ eslint-plugin-import(export): Multiple exports of name 'default'.
-   ╭─[index.ts:7:32]
- 6 │                 const Bar = 2;
- 7 │                 export {Bar as default};
-   ·                                ───────
- 8 │                 const Baz = 3;
-   ╰────

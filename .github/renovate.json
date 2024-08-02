@@ -1,40 +1,14 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "timezone": "Asia/Shanghai",
-  "schedule": ["before 8am on monday"],
+  "extends": ["github>Boshen/renovate"],
   "ignorePaths": [
     "crates/oxc_linter/fixtures/**"
   ],
-  "assignees": ["@Boshen"],
-  "lockFileMaintenance": {
-    "enabled": true
-  },
-  "customManagers": [
-    {
-      "customType": "regex",
-      "fileMatch": ["^rust-toolchain\\.toml?$"],
-      "matchStrings": [
-        "channel\\s*=\\s*\"(?<currentValue>\\d+\\.\\d+(\\.\\d+)?)\""
-      ],
-      "depNameTemplate": "rust",
-      "lookupNameTemplate": "rust-lang/rust",
-      "datasourceTemplate": "github-releases"
-    }
-  ],
   "packageRules": [
-    {
-      "groupName": "github-actions",
-      "matchManagers": ["github-actions"]
-    },
-    {
-      "groupName": "rust toolchain",
-      "matchManagers": ["regex"],
-      "matchDepNames": ["rust"]
-    },
     {
       "groupName": "rust crates",
       "matchManagers": ["cargo"],
-      "ignoreDeps": ["textwrap", "owo-colors", "syn", "miette", "ureq"]
+      "ignoreDeps": ["syn", "ureq"]
     },
     {
       "groupName": "website npm packages",

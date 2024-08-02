@@ -48,13 +48,12 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: 'wasm'
+          cache-key: 'wasm'
 
       - name: Build
         working-directory: wasm/parser

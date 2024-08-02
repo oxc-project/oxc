@@ -1,28 +1,24 @@
-use crate::{
-    context::LintContext,
-    fixer::Fix,
-    rule::Rule,
-    utils::{collect_possible_jest_call_node, PossibleJestNode},
-};
-
 use oxc_ast::{
     ast::{Argument, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-untyped-mock-factory): Disallow using `jest.mock()` factories without an explicit type parameter.")]
-#[diagnostic(
-    severity(warning),
-    help("Add a type parameter to the mock factory such as `typeof import({0:?})`")
-)]
-struct AddTypeParameterToModuleMockDiagnostic(CompactStr, #[label] pub Span);
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{collect_possible_jest_call_node, PossibleJestNode},
+};
+
+fn add_type_parameter_to_module_mock_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Disallow using `jest.mock()` factories without an explicit type parameter.",
+    )
+    .with_help(format!("Add a type parameter to the mock factory such as `typeof import({x0:?})`"))
+    .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUntypedMockFactory;
@@ -92,6 +88,7 @@ declare_oxc_lint!(
     ///
     NoUntypedMockFactory,
     style,
+    conditional_fix
 );
 
 impl Rule for NoUntypedMockFactory {
@@ -141,25 +138,23 @@ impl NoUntypedMockFactory {
 
         if let Expression::StringLiteral(string_literal) = expr {
             ctx.diagnostic_with_fix(
-                AddTypeParameterToModuleMockDiagnostic(
-                    string_literal.value.to_compact_str(),
+                add_type_parameter_to_module_mock_diagnostic(
+                    string_literal.value.as_str(),
                     property_span,
                 ),
-                || {
-                    let mut content = ctx.codegen();
-                    content.print_str(b"<typeof import('");
-                    content.print_str(string_literal.value.as_bytes());
-                    content.print_str(b"')>(");
+                |fixer| {
+                    let mut content = fixer.codegen();
+                    content.print_str("<typeof import('");
+                    content.print_str(string_literal.value.as_str());
+                    content.print_str("')>(");
+                    let span = Span::sized(string_literal.span.start - 1, 1);
 
-                    Fix::new(
-                        content.into_source_text(),
-                        Span::new(string_literal.span.start - 1, string_literal.span.start),
-                    )
+                    fixer.replace(span, content)
                 },
             );
         } else if let Expression::Identifier(ident) = expr {
-            ctx.diagnostic(AddTypeParameterToModuleMockDiagnostic(
-                ident.name.to_compact_str(),
+            ctx.diagnostic(add_type_parameter_to_module_mock_diagnostic(
+                ident.name.as_str(),
                 property_span,
             ));
         }

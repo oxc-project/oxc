@@ -1,8 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -11,17 +8,15 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_empty_array_expression, is_empty_object_expression},
-    AstNode, Fix,
+    AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum PreferPrototypeMethodsDiagnostic {
-    #[error("eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `{1}.prototype.{2}`.")]
-    #[diagnostic(severity(warning))]
-    KnownMethod(#[label] Span, &'static str, String),
-    #[error("eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `{1}.prototype`.")]
-    #[diagnostic(severity(warning))]
-    UnknownMethod(#[label] Span, &'static str),
+fn known_method(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer using `{x1}.prototype.{x2}`.")).with_label(span0)
+}
+
+fn unknown_method(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer using method from `{x1}.prototype`.")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -29,6 +24,7 @@ pub struct PreferPrototypeMethods;
 
 declare_oxc_lint!(
     /// ### What it does
+    ///
     /// This rule prefers borrowing methods from the prototype instead of the instance.
     ///
     /// ### Why is this bad?
@@ -48,12 +44,15 @@ declare_oxc_lint!(
     /// const maxValue = Math.max.apply(Math, numbers);
     /// ```
     PreferPrototypeMethods,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferPrototypeMethods {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if call_expr.optional {
             return;
@@ -82,8 +81,12 @@ impl Rule for PreferPrototypeMethods {
                 .map(|member_expr| member_expr.object().without_parenthesized());
         }
 
-        let Some(method_expr) = method_expr else { return };
-        let Some(method_expr) = method_expr.as_member_expression() else { return };
+        let Some(method_expr) = method_expr else {
+            return;
+        };
+        let Some(method_expr) = method_expr.as_member_expression() else {
+            return;
+        };
         let object_expr = method_expr.object().without_parenthesized();
 
         if !is_empty_array_expression(object_expr) && !is_empty_object_expression(object_expr) {
@@ -101,31 +104,20 @@ impl Rule for PreferPrototypeMethods {
 
         ctx.diagnostic_with_fix(
             method_name.map_or_else(
-                || {
-                    PreferPrototypeMethodsDiagnostic::UnknownMethod(
-                        method_expr.span(),
-                        constructor_name,
-                    )
-                },
-                |method_name| {
-                    PreferPrototypeMethodsDiagnostic::KnownMethod(
-                        method_expr.span(),
-                        constructor_name,
-                        method_name.into(),
-                    )
-                },
+                || unknown_method(method_expr.span(), constructor_name),
+                |method_name| known_method(method_expr.span(), constructor_name, method_name),
             ),
-            || {
+            |fixer| {
                 let span = object_expr.span();
                 let need_padding = span.start >= 1
                     && ctx.source_text().as_bytes()[span.start as usize - 1].is_ascii_alphabetic();
-                Fix::new(
+                fixer.replace(
+                    span,
                     format!(
                         "{}{}.prototype",
                         if need_padding { " " } else { "" },
                         constructor_name
                     ),
-                    span,
                 )
             },
         );

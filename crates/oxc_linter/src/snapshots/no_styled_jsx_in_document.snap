@@ -1,0 +1,11 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-next(no-styled-jsx-in-document): `styled-jsx` should not be used in `pages/_document.js`
+    ╭─[no_styled_jsx_in_document.tsx:14:24]
+ 13 │                                 <Head />
+ 14 │                                 <style jsx>{"                    body{                      color:red;                    }                    "}</style>
+    ·                                 ───────────
+ 15 │                                 <body>
+    ╰────
+  help: Possible to fix it please see: https://nextjs.org/docs/messages/no-styled-jsx-in-document#possible-ways-to-fix-it

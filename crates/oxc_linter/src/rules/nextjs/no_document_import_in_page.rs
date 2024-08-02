@@ -1,20 +1,13 @@
 use oxc_ast::{ast::ModuleDeclaration, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::is_document_page, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-document-import-in-page): `<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page")]
-#[diagnostic(
-    severity(warning),
-    help("Prevent importing `next/document` outside of `pages/_document.js`.")
-)]
-struct NoDocumentImportInPageDiagnostic(#[label] pub Span);
+fn no_document_import_in_page_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`<Document />` from `next/document` should not be imported outside of `pages/_document.js`. See: https://nextjs.org/docs/messages/no-document-import-in-page").with_help("Prevent importing `next/document` outside of `pages/_document.js`.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDocumentImportInPage;
@@ -45,20 +38,23 @@ impl Rule for NoDocumentImportInPage {
             return;
         }
 
-        let Some(path) = ctx.file_path().to_str() else { return };
+        let Some(path) = ctx.file_path().to_str() else {
+            return;
+        };
 
         if is_document_page(path) {
             return;
         }
 
-        ctx.diagnostic(NoDocumentImportInPageDiagnostic(import_decl.span));
+        ctx.diagnostic(no_document_import_in_page_diagnostic(import_decl.span));
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use std::path::PathBuf;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (

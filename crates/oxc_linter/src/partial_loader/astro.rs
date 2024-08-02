@@ -1,5 +1,4 @@
 use memchr::memmem::Finder;
-
 use oxc_span::{SourceType, Span};
 
 use super::{JavaScriptSource, SCRIPT_END, SCRIPT_START};
@@ -35,8 +34,12 @@ impl<'a> AstroPartialLoader<'a> {
 
         let start = offsets.first()?;
         let end = offsets.last()?;
-        let Ok(start) = u32::try_from(*start) else { return None };
-        let Ok(end) = u32::try_from(*end) else { return None };
+        let Ok(start) = u32::try_from(*start) else {
+            return None;
+        };
+        let Ok(end) = u32::try_from(*end) else {
+            return None;
+        };
 
         let js_code =
             Span::new(start + ASTRO_SPLIT.len() as u32, end).source_text(self.source_text);

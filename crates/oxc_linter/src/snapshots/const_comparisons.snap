@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: const_comparisons
 ---
   ⚠ oxc(const-comparisons): Unexpected constant comparison
    ╭─[const_comparisons.tsx:1:1]

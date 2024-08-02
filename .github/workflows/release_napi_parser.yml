@@ -11,6 +11,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check:
     name: Check version
@@ -70,11 +74,11 @@ jobs:
             target: aarch64-unknown-linux-musl
             code-target: linux-arm64-musl
 
-          - os: macos-latest
+          - os: macos-13
             target: x86_64-apple-darwin
             code-target: darwin-x64
 
-          - os: macos-latest
+          - os: macos-14 # M1
             target: aarch64-apple-darwin
             code-target: darwin-arm64
 
@@ -120,7 +124,6 @@ jobs:
       ### Build Done
 
       - name: Move file on ${{ matrix.os }}
-        shell: bash
         run: |
           shopt -s extglob
           ls target/${{ matrix.target }}/release/*.@(so|dll|dylib)
@@ -137,13 +140,11 @@ jobs:
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
         if: runner.os == 'Windows'
-        shell: bash
         run: 7z a ${{ matrix.code-target }}.zip napi/parser/parser.${{ matrix.code-target }}.node
 
       # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
       - name: Archive Binary
         if: runner.os != 'Windows'
-        shell: bash
         run: tar czf ${{ matrix.code-target }}.tar.gz napi/parser/parser.${{ matrix.code-target }}.node
 
       - name: Upload artifact
@@ -168,7 +169,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download Artifacts
@@ -182,11 +183,9 @@ jobs:
           args: unzip -qq *.zip -d .
 
       - name: Untar
-        shell: bash
         run: ls *.gz | xargs -i tar xvf {}
 
       - name: Generate npm packages
-        shell: bash
         run: |
           ls
           ls napi/parser
@@ -202,7 +201,6 @@ jobs:
       - name: Publish npm packages as latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        shell: bash
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
           # publish subpackages first

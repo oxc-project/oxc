@@ -2,23 +2,18 @@ use oxc_ast::{
     ast::{Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-negated-condition): Unexpected negated condition.")]
-#[diagnostic(
-    severity(warning),
-    help("Remove the negation operator and switch the consequent and alternate branches.")
-)]
-struct NoNegatedConditionDiagnostic(#[label] pub Span);
+fn no_negated_condition_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected negated condition.")
+        .with_help("Remove the negation operator and switch the consequent and alternate branches.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNegatedCondition;
@@ -62,7 +57,9 @@ impl Rule for NoNegatedCondition {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let stmt_test = match node.kind() {
             AstKind::IfStatement(if_stmt) => {
-                let Some(if_stmt_alternate) = &if_stmt.alternate else { return };
+                let Some(if_stmt_alternate) = &if_stmt.alternate else {
+                    return;
+                };
 
                 if matches!(if_stmt_alternate, Statement::IfStatement(_)) {
                     return;
@@ -97,7 +94,7 @@ impl Rule for NoNegatedCondition {
             }
         }
 
-        ctx.diagnostic(NoNegatedConditionDiagnostic(stmt_test.span()));
+        ctx.diagnostic(no_negated_condition_diagnostic(stmt_test.span()));
     }
 }
 

@@ -2,22 +2,17 @@ use oxc_ast::{
     ast::{AssignmentTarget, BindingPatternKind, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-this-assignment): Do not assign `this` to `{1}`")]
-#[diagnostic(
-    severity(warning),
-    help("Reference `this` directly instead of assigning it to a variable.")
-)]
-struct NoThisAssignmentDiagnostic(#[label] pub Span, CompactStr);
+fn no_this_assignment_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Do not assign `this` to `{x1}`"))
+        .with_help("Reference `this` directly instead of assigning it to a variable.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoThisAssignment;
@@ -76,9 +71,9 @@ impl Rule for NoThisAssignment {
                     return;
                 };
 
-                ctx.diagnostic(NoThisAssignmentDiagnostic(
+                ctx.diagnostic(no_this_assignment_diagnostic(
                     variable_decl.span,
-                    binding_ident.name.to_compact_str(),
+                    binding_ident.name.as_str(),
                 ));
             }
             AstKind::AssignmentExpression(assignment_expr) => {
@@ -94,9 +89,9 @@ impl Rule for NoThisAssignment {
                     return;
                 };
 
-                ctx.diagnostic(NoThisAssignmentDiagnostic(
+                ctx.diagnostic(no_this_assignment_diagnostic(
                     assignment_expr.span,
-                    ident.name.to_compact_str(),
+                    ident.name.as_str(),
                 ));
             }
             _ => {}

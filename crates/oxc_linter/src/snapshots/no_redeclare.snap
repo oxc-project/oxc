@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_redeclare
 ---
   ⚠ eslint(no-redeclare): 'b' is already defined.
    ╭─[no_redeclare.tsx:1:27]

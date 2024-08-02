@@ -3,10 +3,7 @@ use oxc_ast::{
     ast::{Argument, Expression, Statement, VariableDeclarationKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
@@ -20,10 +17,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(require-hook): Require setup and teardown code to be within a hook.")]
-#[diagnostic(severity(warning), help("This should be done within a hook"))]
-struct UseHook(#[label] pub Span);
+fn use_hook(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Require setup and teardown code to be within a hook.")
+        .with_help("This should be done within a hook")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireHookConfig {
@@ -220,7 +218,7 @@ impl RequireHook {
                     !init_call.is_null_or_undefined()
                 })
             {
-                ctx.diagnostic(UseHook(var_decl.span));
+                ctx.diagnostic(use_hook(var_decl.span));
             }
         }
     }
@@ -239,7 +237,7 @@ impl RequireHook {
                 || name.starts_with("jest.")
                 || self.allowed_function_calls.contains(&name))
             {
-                ctx.diagnostic(UseHook(call_expr.span));
+                ctx.diagnostic(use_hook(call_expr.span));
             }
         }
     }

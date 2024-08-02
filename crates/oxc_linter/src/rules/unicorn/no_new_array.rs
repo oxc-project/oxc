@@ -1,17 +1,13 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-new-array): Do not use `new Array(singleArgument)`.")]
-#[diagnostic(severity(warning), help(r#"It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({{ length: n }})`. If the argument is the only element, use `[element]`."#))]
-struct NoNewArrayDiagnostic(#[label] pub Span);
+fn no_new_array_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use `new Array(singleArgument)`.").with_help(r"It's not clear whether the argument is meant to be the length of the array or the only element. If the argument is the array's length, consider using `Array.from({ length: n })`. If the argument is the only element, use `[element]`.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNewArray;
@@ -42,9 +38,13 @@ declare_oxc_lint!(
 
 impl Rule for NoNewArray {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(new_expr) = node.kind() else { return };
+        let AstKind::NewExpression(new_expr) = node.kind() else {
+            return;
+        };
 
-        let Expression::Identifier(ident) = &new_expr.callee else { return };
+        let Expression::Identifier(ident) = &new_expr.callee else {
+            return;
+        };
 
         if ident.name != "Array" {
             return;
@@ -54,7 +54,7 @@ impl Rule for NoNewArray {
             return;
         }
 
-        ctx.diagnostic(NoNewArrayDiagnostic(new_expr.span));
+        ctx.diagnostic(no_new_array_diagnostic(new_expr.span));
     }
 }
 

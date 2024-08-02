@@ -1,29 +1,23 @@
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
-    AstNode,
-};
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::{phf_map, phf_set};
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsx-a11y(autocomplete-valid): `{autocomplete}` is not a valid value for autocomplete."
-)]
-#[diagnostic(severity(warning), help("Change `{autocomplete}` to a valid value for autocomplete."))]
-struct AutocompleteValidDiagnostic {
-    #[label]
-    pub span: Span,
-    pub autocomplete: String,
+
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_ignore_case},
+    AstNode,
+};
+
+fn autocomplete_valid_diagnostic(span: Span, autocomplete: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{autocomplete}` is not a valid value for autocomplete."))
+        .with_help(format!("Change `{autocomplete}` to a valid value for autocomplete."))
+        .with_label(span)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -182,12 +176,14 @@ impl Rule for AutocompleteValid {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
-            let Some(name) = &get_element_type(ctx, jsx_el) else { return };
+            let Some(name) = &get_element_type(ctx, jsx_el) else {
+                return;
+            };
             if !self.input_components.contains(name) {
                 return;
             }
 
-            let Some(autocomplete_prop) = has_jsx_prop_lowercase(jsx_el, "autocomplete") else {
+            let Some(autocomplete_prop) = has_jsx_prop_ignore_case(jsx_el, "autocomplete") else {
                 return;
             };
             let attr = match autocomplete_prop {
@@ -197,12 +193,9 @@ impl Rule for AutocompleteValid {
             let Some(JSXAttributeValue::StringLiteral(autocomplete_values)) = &attr.value else {
                 return;
             };
-            let value = autocomplete_values.value.to_string();
-            if !is_valid_autocomplete_value(&value) {
-                ctx.diagnostic(AutocompleteValidDiagnostic {
-                    span: attr.span,
-                    autocomplete: value,
-                });
+            let value = &autocomplete_values.value;
+            if !is_valid_autocomplete_value(value) {
+                ctx.diagnostic(autocomplete_valid_diagnostic(attr.span, value));
             }
         }
     }
@@ -210,8 +203,7 @@ impl Rule for AutocompleteValid {
 
 #[test]
 fn test() {
-    use crate::rules::AutocompleteValid;
-    use crate::tester::Tester;
+    use crate::{rules::AutocompleteValid, tester::Tester};
 
     fn settings() -> serde_json::Value {
         serde_json::json!({

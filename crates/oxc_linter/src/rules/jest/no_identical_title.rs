@@ -4,13 +4,10 @@ use oxc_ast::{
     ast::{Argument, CallExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNodeId;
-use oxc_span::{Atom, Span};
+use oxc_span::Span;
 
 use crate::{
     context::LintContext,
@@ -22,15 +19,16 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoIdenticalTitleDiagnostic {
-    #[error("eslint-plugin-jest(no-identical-title): Describe block title is used multiple times in the same describe block.")]
-    #[diagnostic(severity(warning), help("Change the title of describe block."))]
-    DescribeRepeat(#[label] Span),
+fn describe_repeat(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Describe block title is used multiple times in the same describe block.")
+        .with_help("Change the title of describe block.")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-jest(no-identical-title): Test title is used multiple times in the same describe block.")]
-    #[diagnostic(severity(warning), help("Change the title of test."))]
-    TestRepeat(#[label] Span),
+fn test_repeat(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Test title is used multiple times in the same describe block.")
+        .with_help("Change the title of test.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -57,6 +55,17 @@ declare_oxc_lint!(
     ///    // Has the same title as a previous test suite
     ///    // ...
     ///  });
+    /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-identical-title.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-identical-title": "error"
+    ///   }
+    /// }
     /// ```
     NoIdenticalTitle,
     style
@@ -103,10 +112,10 @@ impl Rule for NoIdenticalTitle {
                 if kind == prev_kind && parent_id == prev_parent {
                     match kind {
                         JestFnKind::General(JestGeneralFnKind::Describe) => {
-                            ctx.diagnostic(NoIdenticalTitleDiagnostic::DescribeRepeat(span));
+                            ctx.diagnostic(describe_repeat(span));
                         }
                         JestFnKind::General(JestGeneralFnKind::Test) => {
-                            ctx.diagnostic(NoIdenticalTitleDiagnostic::TestRepeat(span));
+                            ctx.diagnostic(test_repeat(span));
                         }
                         _ => {}
                     }
@@ -120,7 +129,7 @@ fn filter_and_process_jest_result<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
-) -> Option<(Span, &'a Atom<'a>, JestFnKind, AstNodeId)> {
+) -> Option<(Span, &'a str, JestFnKind, AstNodeId)> {
     let result = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)?;
     let kind = result.kind;
     // we only need check `describe` or `test` block
@@ -139,7 +148,7 @@ fn filter_and_process_jest_result<'a>(
             Some((string_lit.span, &string_lit.value, kind, parent_id))
         }
         Some(Argument::TemplateLiteral(template_lit)) => {
-            template_lit.quasi().map(|quasi| (template_lit.span, quasi, kind, parent_id))
+            template_lit.quasi().map(|quasi| (template_lit.span, quasi.as_str(), kind, parent_id))
         }
         _ => None,
     }
@@ -161,7 +170,7 @@ fn get_closest_block(node: &AstNode, ctx: &LintContext) -> Option<AstNodeId> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("it(); it();", None),
         ("describe(); describe();", None),
         ("describe('foo', () => {}); it('foo', () => {});", None),
@@ -363,7 +372,7 @@ fn test() {
         ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             "
               describe('foo', () => {
@@ -465,5 +474,63 @@ fn test() {
         // ),
     ];
 
-    Tester::new(NoIdenticalTitle::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        "
+            suite('parent', () => {
+                suite('child 1', () => {
+                    test('grand child 1', () => {})
+                })
+                suite('child 2', () => {
+                    test('grand child 1', () => {})
+                })
+            })
+        ",
+        "it(); it();",
+        r#"test("two", () => {});"#,
+        "
+            fdescribe('a describe', () => {
+                test('a test', () => {
+                    expect(true).toBe(true);
+                });
+            });
+            fdescribe('another describe', () => {
+                test('a test', () => {
+                    expect(true).toBe(true);
+                });
+            });
+        ",
+        "
+            suite('parent', () => {
+                suite('child 1', () => {
+                    test('grand child 1', () => {})
+                })
+                suite('child 2', () => {
+                    test('grand child 1', () => {})
+                })
+            })
+        ",
+    ];
+
+    let fail_vitest = vec![
+        "
+            describe('foo', () => {
+                it('works', () => {});
+                it('works', () => {});
+            });
+        ",
+        "
+            xdescribe('foo', () => {
+                it('works', () => {});
+                it('works', () => {});
+            });
+        ",
+    ];
+
+    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
+    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+
+    Tester::new(NoIdenticalTitle::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }

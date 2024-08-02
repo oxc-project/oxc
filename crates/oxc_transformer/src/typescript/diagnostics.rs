@@ -1,15 +1,27 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("`import lib = require(...);` is only supported when compiling modules to CommonJS.\nPlease consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.")]
-#[diagnostic(severity(warning))]
-pub struct ImportEqualsRequireUnsupported(#[label] pub Span);
+pub fn import_equals_require_unsupported(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`import lib = require(...);` is only supported when compiling modules to CommonJS.\nPlease consider using `import lib from '...';` alongside Typescript's --allowSyntheticDefaultImports option, or add @babel/plugin-transform-modules-commonjs to your Babel config.")
+        .with_label(span)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("`export = <value>;` is only supported when compiling modules to CommonJS.\nPlease consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.")]
-#[diagnostic(severity(warning))]
-pub struct ExportAssignmentUnsupported(#[label] pub Span);
+pub fn export_assignment_unsupported(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`export = <value>;` is only supported when compiling modules to CommonJS.\nPlease consider using `export default <value>;`, or add @babel/plugin-transform-modules-commonjs to your Babel config.")
+        .with_label(span)
+}
+
+pub fn ambient_module_nested(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Ambient modules cannot be nested in other modules or namespaces.")
+        .with_label(span0)
+}
+
+pub fn namespace_exporting_non_const(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Namespaces exporting non-const are not supported by Babel. Change to const or see: https://babeljs.io/docs/en/babel-plugin-transform-typescript")
+        .with_label(span0)
+}
+
+pub fn namespace_not_supported(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Namespace not marked type-only declare. Non-declarative namespaces are only supported experimentally in Babel. To enable and review caveats see: https://babeljs.io/docs/en/babel-plugin-transform-typescript")
+        .with_label(span0)
+}

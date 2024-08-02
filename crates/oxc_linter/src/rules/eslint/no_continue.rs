@@ -1,16 +1,15 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-continue): Unexpected use of `continue` statement.")]
-#[diagnostic(severity(warning), help("Do not use the `continue` statement."))]
-struct NoContinueDiagnostic(#[label] pub Span);
+use crate::{context::LintContext, rule::Rule, AstNode};
+
+fn no_continue_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected use of `continue` statement.")
+        .with_help("Do not use the `continue` statement.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoContinue;
@@ -42,7 +41,7 @@ declare_oxc_lint!(
 impl Rule for NoContinue {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::ContinueStatement(continue_statement) = node.kind() {
-            ctx.diagnostic(NoContinueDiagnostic(Span::new(
+            ctx.diagnostic(no_continue_diagnostic(Span::new(
                 continue_statement.span.start,
                 continue_statement.span.start + 8,
             )));
@@ -61,9 +60,9 @@ fn test() {
 
     let fail = vec![
         "var sum = 0, i; for(i = 0; i < 10; i++){ if(i <= 5) { continue; } sum += i; }",
-"var sum = 0, i; myLabel: for(i = 0; i < 10; i++){ if(i <= 5) { continue myLabel; } sum += i; }",
-"var sum = 0, i = 0; while(i < 10) { if(i <= 5) { i++; continue; } sum += i; i++; }",
-"var sum = 0, i = 0; myLabel: while(i < 10) { if(i <= 5) { i++; continue myLabel; } sum += i; i++; }"
+        "var sum = 0, i; myLabel: for(i = 0; i < 10; i++){ if(i <= 5) { continue myLabel; } sum += i; }",
+        "var sum = 0, i = 0; while(i < 10) { if(i <= 5) { i++; continue; } sum += i; i++; }",
+        "var sum = 0, i = 0; myLabel: while(i < 10) { if(i <= 5) { i++; continue myLabel; } sum += i; i++; }",
     ];
 
     Tester::new(NoContinue::NAME, pass, fail).test_and_snapshot();

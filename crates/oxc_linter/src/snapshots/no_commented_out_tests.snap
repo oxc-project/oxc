@@ -1,106 +1,106 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_commented_out_tests
+assertion_line: 216
 ---
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // fdescribe('foo', function () {})
    ·   ─────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // describe['skip']('foo', function () {})
    ·   ────────────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // describe['skip']('foo', function () {})
    ·   ────────────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // it.skip('foo', function () {})
    ·   ───────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // it.only('foo', function () {})
    ·   ───────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // it.concurrent('foo', function () {})
    ·   ─────────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // it['skip']('foo', function () {})
    ·   ──────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // test.skip('foo', function () {})
    ·   ─────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // test.concurrent('foo', function () {})
    ·   ───────────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // test['skip']('foo', function () {})
    ·   ────────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // xdescribe('foo', function () {})
    ·   ─────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // xit('foo', function () {})
    ·   ───────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // fit('foo', function () {})
    ·   ───────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // xtest('foo', function () {})
    ·   ─────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:2:17]
  1 │ 
  2 │               // test(
@@ -109,7 +109,7 @@ expression: no_commented_out_tests
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:2:17]
  1 │     
  2 │ ╭─▶               /* test
@@ -121,47 +121,98 @@ expression: no_commented_out_tests
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // it('has title but no callback')
    ·   ────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // it()
    ·   ─────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // test.someNewMethodThatMightBeAddedInTheFuture()
    ·   ────────────────────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // test['someNewMethodThatMightBeAddedInTheFuture']()
    ·   ───────────────────────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:1:3]
  1 │ // test('has title but no callback')
    ·   ──────────────────────────────────
    ╰────
   help: Remove or uncomment this comment
 
-  ⚠ eslint-plugin-jest(no-commented-out-tests): Some tests seem to be commented
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
    ╭─[no_commented_out_tests.tsx:3:17]
  2 │                   foo()
  3 │ ╭─▶               /*
  4 │ │                   describe('has title but no callback', () => {})
  5 │ ╰─▶               */
  6 │                   bar()
+   ╰────
+  help: Remove or uncomment this comment
+
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
+   ╭─[no_commented_out_tests.tsx:1:3]
+ 1 │ // describe(\'foo\', function () {})\'
+   ·   ────────────────────────────────────
+   ╰────
+  help: Remove or uncomment this comment
+
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
+   ╭─[no_commented_out_tests.tsx:1:3]
+ 1 │ // test.concurrent("foo", function () {})
+   ·   ───────────────────────────────────────
+   ╰────
+  help: Remove or uncomment this comment
+
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
+   ╭─[no_commented_out_tests.tsx:1:3]
+ 1 │ // test["skip"]("foo", function () {})
+   ·   ────────────────────────────────────
+   ╰────
+  help: Remove or uncomment this comment
+
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
+   ╭─[no_commented_out_tests.tsx:1:3]
+ 1 │ // xdescribe("foo", function () {})
+   ·   ─────────────────────────────────
+   ╰────
+  help: Remove or uncomment this comment
+
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
+   ╭─[no_commented_out_tests.tsx:1:3]
+ 1 │ // xit("foo", function () {})
+   ·   ───────────────────────────
+   ╰────
+  help: Remove or uncomment this comment
+
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
+   ╭─[no_commented_out_tests.tsx:1:3]
+ 1 │ // fit("foo", function () {})
+   ·   ───────────────────────────
+   ╰────
+  help: Remove or uncomment this comment
+
+  ⚠ eslint-plugin-vitest(no-commented-out-tests): Some tests seem to be commented
+   ╭─[no_commented_out_tests.tsx:2:15]
+ 1 │ 
+ 2 │             // test(
+   ·               ──────
+ 3 │             //   "foo", function () {}
    ╰────
   help: Remove or uncomment this comment

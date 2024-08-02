@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_type_error
 ---
   ⚠ eslint-plugin-unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]

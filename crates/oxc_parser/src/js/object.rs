@@ -4,8 +4,7 @@ use oxc_diagnostics::Result;
 use oxc_span::Span;
 use oxc_syntax::operator::AssignmentOperator;
 
-use super::list::ObjectExpressionProperties;
-use crate::{lexer::Kind, list::SeparatedList, ParserImpl};
+use crate::{diagnostics, lexer::Kind, modifiers::Modifier, Context, ParserImpl};
 
 impl<'a> ParserImpl<'a> {
     /// [Object Expression](https://tc39.es/ecma262/#sec-object-initializer)
@@ -15,17 +14,33 @@ impl<'a> ParserImpl<'a> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> Result<Expression<'a>> {
         let span = self.start_span();
-
-        let has_in = self.ctx.has_in();
-        self.ctx = self.ctx.and_in(true);
-        let object_expression_properties = ObjectExpressionProperties::parse(self)?;
-        self.ctx = self.ctx.and_in(has_in);
-
-        Ok(self.ast.object_expression(
+        self.expect(Kind::LCurly)?;
+        let object_expression_properties = self.context(Context::In, Context::empty(), |p| {
+            p.parse_delimited_list(
+                Kind::RCurly,
+                Kind::Comma,
+                /* trailing_separator */ false,
+                Self::parse_object_expression_property,
+            )
+        })?;
+        let trailing_comma = self.at(Kind::Comma).then(|| {
+            let span = self.start_span();
+            self.bump_any();
+            self.end_span(span)
+        });
+        self.expect(Kind::RCurly)?;
+        Ok(self.ast.expression_object(
             self.end_span(span),
-            object_expression_properties.elements,
-            object_expression_properties.trailing_comma,
+            object_expression_properties,
+            trailing_comma,
         ))
+    }
+
+    fn parse_object_expression_property(&mut self) -> Result<ObjectPropertyKind<'a>> {
+        match self.cur_kind() {
+            Kind::Dot3 => self.parse_spread_element().map(ObjectPropertyKind::SpreadProperty),
+            _ => self.parse_property_definition().map(ObjectPropertyKind::ObjectProperty),
+        }
     }
 
     /// `PropertyDefinition`[Yield, Await]
@@ -47,6 +62,23 @@ impl<'a> ParserImpl<'a> {
             }
             // GeneratorMethod
             Kind::Star if class_element_name => self.parse_property_definition_method(),
+            // Report and handle illegal modifiers
+            // e.g. const x = { public foo() {} }
+            modifier_kind
+                if self.ts_enabled()
+                    && modifier_kind.is_modifier_kind()
+                    && peek_kind.is_identifier_or_keyword() =>
+            {
+                if let Ok(modifier) = Modifier::try_from(self.cur_token()) {
+                    self.error(diagnostics::modifier_cannot_be_used_here(&modifier));
+                } else {
+                    #[cfg(debug_assertions)]
+                    panic!("Kind::is_modifier_kind() is true but the token could not be converted to a Modifier.")
+                }
+                // re-parse
+                self.bump_any();
+                self.parse_property_definition()
+            }
             // IdentifierReference
             kind if kind.is_identifier_reference(false, false)
                 // test Kind::Dot to ignore ({ foo.bar: baz })
@@ -68,11 +100,11 @@ impl<'a> ParserImpl<'a> {
 
                 if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::ShiftLeft) {
                     let method = self.parse_method(false, false)?;
-                    return Ok(self.ast.object_property(
+                    return Ok(self.ast.alloc_object_property(
                         self.end_span(span),
                         PropertyKind::Init,
                         key,
-                        self.ast.function_expression(method),
+                        self.ast.expression_from_function(method),
                         /* init */ None,
                         /* method */ true,
                         /* shorthand */ false,
@@ -90,8 +122,8 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_spread_element(&mut self) -> Result<Box<'a, SpreadElement<'a>>> {
         let span = self.start_span();
         self.bump_any(); // advance `...`
-        let argument = self.parse_assignment_expression_base()?;
-        Ok(self.ast.spread_element(self.end_span(span), argument))
+        let argument = self.parse_assignment_expression_or_higher()?;
+        Ok(self.ast.alloc_spread_element(self.end_span(span), argument))
     }
 
     /// `PropertyDefinition`[Yield, Await] :
@@ -106,9 +138,9 @@ impl<'a> ParserImpl<'a> {
         let value = Expression::Identifier(self.ast.alloc(identifier.clone()));
         // CoverInitializedName ({ foo = bar })
         let init = if self.eat(Kind::Eq) {
-            let right = self.parse_assignment_expression_base()?;
+            let right = self.parse_assignment_expression_or_higher()?;
             let left = AssignmentTarget::AssignmentTargetIdentifier(self.ast.alloc(identifier));
-            Some(self.ast.assignment_expression(
+            Some(self.ast.expression_assignment(
                 self.end_span(span),
                 AssignmentOperator::Assign,
                 left,
@@ -117,7 +149,7 @@ impl<'a> ParserImpl<'a> {
         } else {
             None
         };
-        Ok(self.ast.object_property(
+        Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Init,
             PropertyKey::StaticIdentifier(key),
@@ -138,8 +170,8 @@ impl<'a> ParserImpl<'a> {
         computed: bool,
     ) -> Result<Box<'a, ObjectProperty<'a>>> {
         self.bump_any(); // bump `:`
-        let value = self.parse_assignment_expression_base()?;
-        Ok(self.ast.object_property(
+        let value = self.parse_assignment_expression_or_higher()?;
+        Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Init,
             key,
@@ -176,10 +208,11 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn parse_computed_property_name(&mut self) -> Result<Expression<'a>> {
         self.bump_any(); // advance `[`
 
-        let has_in = self.ctx.has_in();
-        self.ctx = self.ctx.and_in(true);
-        let expression = self.parse_assignment_expression_base()?;
-        self.ctx = self.ctx.and_in(has_in);
+        let expression = self.context(
+            Context::In,
+            Context::empty(),
+            Self::parse_assignment_expression_or_higher,
+        )?;
 
         self.expect(Kind::RBrack)?;
         Ok(expression)
@@ -193,8 +226,8 @@ impl<'a> ParserImpl<'a> {
         let generator = self.eat(Kind::Star);
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(r#async, generator)?;
-        let value = self.ast.function_expression(method);
-        Ok(self.ast.object_property(
+        let value = self.ast.expression_from_function(method);
+        Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Init,
             key,
@@ -213,8 +246,8 @@ impl<'a> ParserImpl<'a> {
         self.expect(Kind::Get)?;
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
-        let value = self.ast.function_expression(method);
-        Ok(self.ast.object_property(
+        let value = self.ast.expression_from_function(method);
+        Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Get,
             key,
@@ -234,11 +267,11 @@ impl<'a> ParserImpl<'a> {
         let (key, computed) = self.parse_property_name()?;
         let method = self.parse_method(false, false)?;
 
-        Ok(self.ast.object_property(
+        Ok(self.ast.alloc_object_property(
             self.end_span(span),
             PropertyKind::Set,
             key,
-            self.ast.function_expression(method),
+            self.ast.expression_from_function(method),
             /* init */ None,
             /* method */ false,
             /* shorthand */ false,

@@ -1,20 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-new-buffer): Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.")]
-#[diagnostic(
-    severity(warning),
-    help("`new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.")
-)]
-struct NoNewBufferDiagnostic(#[label] pub Span);
+fn no_new_buffer_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use `Buffer.alloc()` or `Buffer.from()` instead of the deprecated `new Buffer()` constructor.")
+        .with_help("`new Buffer()` is deprecated, use `Buffer.alloc()` or `Buffer.from()` instead.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNewBuffer;
@@ -42,7 +37,9 @@ declare_oxc_lint!(
 
 impl Rule for NoNewBuffer {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(new_expr) = node.kind() else { return };
+        let AstKind::NewExpression(new_expr) = node.kind() else {
+            return;
+        };
 
         let Expression::Identifier(ident) = &new_expr.callee.without_parenthesized() else {
             return;
@@ -50,7 +47,7 @@ impl Rule for NoNewBuffer {
         if ident.name != "Buffer" {
             return;
         }
-        ctx.diagnostic(NoNewBufferDiagnostic(ident.span));
+        ctx.diagnostic(no_new_buffer_diagnostic(ident.span));
     }
 }
 

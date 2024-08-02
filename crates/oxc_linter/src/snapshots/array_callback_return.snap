@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: array_callback_return
 ---
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:26]
@@ -478,110 +477,110 @@ expression: array_callback_return
    ╰────
   help: Array method "Array.prototype.toSorted" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:18]
  1 │ foo.forEach(x => x)
    ·                  ─
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.forEach(function(x) { if (a == b) {return x;}})
    ·                         ──────────────────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo.forEach(function bar(x) { return x;})
    ·                             ────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:18]
  1 │ foo.forEach(x => x)
    ·                  ─
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:20]
  1 │ foo.forEach(val => y += val)
    ·                    ────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:28]
  1 │ ["foo","bar"].forEach(x => ++x)
    ·                            ───
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:24]
  1 │ foo.bar().forEach(x => x === y)
    ·                        ───────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:43]
  1 │ foo.forEach(function() {return function() { if (a == b) { return a; }}}())
    ·                                           ────────────────────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.forEach(function(x) { if (a == b) {return x;}})
    ·                         ──────────────────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:25]
  1 │ foo.forEach(function(x) { if (a == b) {return undefined;}})
    ·                         ──────────────────────────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo.forEach(function bar(x) { return x;})
    ·                             ────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:29]
  1 │ foo.forEach(function bar(x) { return x;})
    ·                             ────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:35]
  1 │ foo.bar().forEach(function bar(x) { return x;})
    ·                                   ────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:39]
  1 │ ["foo","bar"].forEach(function bar(x) { return x;})
    ·                                       ────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:20]
  1 │ foo.forEach((x) => { return x;})
    ·                    ────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.from"
    ╭─[array_callback_return.tsx:1:26]
@@ -654,34 +653,34 @@ expression: array_callback_return
    ╰────
   help: Array method "Array.from" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:20]
  1 │ foo.forEach(bar => bar)
    ·                    ───
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:44]
  1 │ foo.forEach((function () { return (bar) => bar; })())
    ·                                            ───
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:2:16]
  1 │ foo.forEach((() => {
  2 │  return bar => bar; })())
    ·                ───
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:22]
  1 │ foo.forEach((bar) => { if (bar) { return; } else { return bar ; } })
    ·                      ──────────────────────────────────────────────
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
    ╭─[array_callback_return.tsx:1:22]
@@ -748,14 +747,14 @@ expression: array_callback_return
    ╰────
   help: Array method "Array.prototype.filter" needs to have valid return on all code paths
 
-  ⚠ eslint(array-callback-return): Unexpected return for array method Array.prototype.forEach
+  ⚠ eslint(array-callback-return): Unexpected return for array method "Array.prototype.forEach"
    ╭─[array_callback_return.tsx:1:25]
  1 │ ╭─▶ foo.forEach(function () { 
  2 │ │   if (baz) return bar
  3 │ │   else return
  4 │ ╰─▶  })
    ╰────
-  help: Array method Array.prototype.forEach expects no useless return from the function
+  help: Array method "Array.prototype.forEach" expects no useless return from the function
 
   ⚠ eslint(array-callback-return): Missing return on some path for array method "Array.prototype.filter"
    ╭─[array_callback_return.tsx:1:19]

@@ -1,19 +1,18 @@
-use oxc_ast::ast::{Expression, TSLiteral, TSType};
-use oxc_ast::AstKind;
-
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
+use oxc_ast::{
+    ast::{Expression, TSLiteral, TSType},
+    AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(prefer-as-const): Expected a `const` assertion instead of a literal type annotation.")]
-#[diagnostic(severity(warning), help("You should use `as const` instead of type annotation."))]
-struct PreferAsConstDiagnostic(#[label] pub Span);
+fn prefer_as_const_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Expected a `const` assertion instead of a literal type annotation.")
+        .with_help("You should use `as const` instead of type annotation.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferAsConst;
@@ -36,7 +35,8 @@ declare_oxc_lint!(
     /// let foo = { bar: 'baz' as 'baz' };
     /// ```
     PreferAsConst,
-    correctness
+    correctness,
+    conditional_fix
 );
 
 impl Rule for PreferAsConst {
@@ -81,6 +81,10 @@ impl Rule for PreferAsConst {
             _ => {}
         }
     }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
+    }
 }
 
 fn check_and_report(
@@ -119,13 +123,11 @@ fn check_and_report(
         };
         if let Some(span) = error_span {
             if can_fix {
-                ctx.diagnostic_with_fix(PreferAsConstDiagnostic(span), || {
-                    let start = span.start;
-                    let end = span.end;
-                    Fix::new("const", Span::new(start, end))
+                ctx.diagnostic_with_fix(prefer_as_const_diagnostic(span), |fixer| {
+                    fixer.replace(span, "const")
                 });
             } else {
-                ctx.diagnostic(PreferAsConstDiagnostic(span));
+                ctx.diagnostic(prefer_as_const_diagnostic(span));
             }
         }
     }

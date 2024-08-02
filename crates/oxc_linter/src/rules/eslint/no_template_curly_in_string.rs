@@ -1,20 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-template-curly-in-string): Unexpected template string expression")]
-#[diagnostic(
-    severity(warning),
-    help("Disallow template literal placeholder syntax in regular strings")
-)]
-struct NoTemplateCurlyInStringDiagnostic(#[label] pub Span);
+fn no_template_curly_in_string_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected template string expression")
+        .with_help("Disallow template literal placeholder syntax in regular strings")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTemplateCurlyInString;
@@ -64,7 +59,7 @@ impl Rule for NoTemplateCurlyInString {
                         .expect("Conversion from usize to u32 failed for match_start");
                     let match_end = u32::try_from(end_index + 1)
                         .expect("Conversion from usize to u32 failed for match_end");
-                    ctx.diagnostic(NoTemplateCurlyInStringDiagnostic(Span::new(
+                    ctx.diagnostic(no_template_curly_in_string_diagnostic(Span::new(
                         literal_span_start + match_start,
                         literal_span_start + match_end,
                     )));

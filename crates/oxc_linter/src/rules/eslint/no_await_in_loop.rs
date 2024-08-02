@@ -2,19 +2,15 @@ use oxc_ast::{
     ast::{Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-await-in-loop): Unexpected `await` inside a loop.")]
-#[diagnostic(severity(warning))]
-struct NoAwaitInLoopDiagnostic(#[label] pub Span);
+fn no_await_in_loop_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected `await` inside a loop.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAwaitInLoop;
@@ -84,7 +80,7 @@ impl Rule for NoAwaitInLoop {
         }
 
         if is_in_loop {
-            ctx.diagnostic(NoAwaitInLoopDiagnostic(span));
+            ctx.diagnostic(no_await_in_loop_diagnostic(span));
         }
     }
 }

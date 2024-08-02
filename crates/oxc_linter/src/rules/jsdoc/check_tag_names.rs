@@ -1,18 +1,18 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_internal, should_ignore_as_private},
+};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsdoc(check-tag-names): Invalid tag name found.")]
-#[diagnostic(severity(warning), help("{1}"))]
-struct CheckTagNamesDiagnostic(#[label] pub Span, String);
+fn check_tag_names_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Invalid tag name found.").with_help(x1.to_string()).with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct CheckTagNames(Box<CheckTagnamesConfig>);
@@ -212,7 +212,13 @@ impl Rule for CheckTagNames {
         let is_declare = false;
         let is_ambient = is_dts || is_declare;
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
@@ -225,39 +231,33 @@ impl Rule for CheckTagNames {
 
                 // If user explicitly blocked, report
                 if let Some(reason) = settings.check_blocked_tag_name(tag_name) {
-                    ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
+                    ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &reason));
                     continue;
                 }
 
                 // If preferred or default aliased, report to use it
                 if let Some(reason) = settings.check_preferred_tag_name(tag_name) {
-                    ctx.diagnostic(CheckTagNamesDiagnostic(tag.kind.span, reason));
+                    ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &reason));
                     continue;
                 }
 
                 // Additional check for `typed` mode
                 if config.typed {
                     if ALWAYS_INVALID_TAGS_IF_TYPED.contains(tag_name) {
-                        ctx.diagnostic(CheckTagNamesDiagnostic(
+                        ctx.diagnostic(check_tag_names_diagnostic(
                             tag.kind.span,
-                            format!("`@{tag_name}` is redundant when using a type system."),
+                            &format!("`@{tag_name}` is redundant when using a type system."),
                         ));
                         continue;
                     }
 
                     if tag.kind.parsed() == "template" && tag.comment().parsed().is_empty() {
-                        ctx.diagnostic(CheckTagNamesDiagnostic(
-                                tag.kind.span,
-                                format!("`@{tag_name}` without a name is redundant when using a type system."),
-                            ));
+                        ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &format!("`@{tag_name}` without a name is redundant when using a type system.")));
                         continue;
                     }
 
                     if !is_ambient && OUTSIDE_AMBIENT_INVALID_TAGS_IF_TYPED.contains(tag_name) {
-                        ctx.diagnostic(CheckTagNamesDiagnostic(
-                                tag.kind.span,
-                                format!("`@{tag_name}` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system."),
-                            ));
+                        ctx.diagnostic(check_tag_names_diagnostic(tag.kind.span, &format!("`@{tag_name}` is redundant outside of ambient(`declare` or `.d.ts`) contexts when using a type system.")));
                         continue;
                     }
                 }
@@ -266,9 +266,9 @@ impl Rule for CheckTagNames {
                 let is_valid = (config.jsx_tags && JSX_TAGS.contains(tag_name))
                     || VALID_BLOCK_TAGS.contains(tag_name);
                 if !is_valid {
-                    ctx.diagnostic(CheckTagNamesDiagnostic(
+                    ctx.diagnostic(check_tag_names_diagnostic(
                         tag.kind.span,
-                        format!("`@{tag_name}` is invalid tag name."),
+                        &format!("`@{tag_name}` is invalid tag name."),
                     ));
                     continue;
                 }
@@ -282,124 +282,165 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-("
+        (
+            "
 			          /**
 			           * @param foo (pass: valid name)
 			           */
 			          function quux (foo) {
-			
+
 			          }
-			      ", None, None),
-("
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
 			          /**
 			           * @memberof! foo (pass: valid name)
 			           */
 			          function quux (foo) {
-			
+
 			          }
-			      ", None, None),
-("
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
 			          /**
 			           * @bar foo (pass: invalid name but defined)
 			           */
 			          function quux (foo) {
-			
+
 			          }
-			      ", Some(serde_json::json!([
-        {
-          "definedTags": [
-            "bar",
-          ],
-        },
-      ])), None),
-("
+			      ",
+            Some(serde_json::json!([
+              {
+                "definedTags": [
+                  "bar",
+                ],
+              },
+            ])),
+            None,
+        ),
+        (
+            "
 			          /**
 			           * @baz @bar foo (pass: invalid names but defined)
 			           */
 			          function quux (foo) {
-			
+
 			          }
-			      ", Some(serde_json::json!([
-        {
-          "definedTags": [
-            "baz", "bar",
-          ],
-        },
-      ])), None),
-("
+			      ",
+            Some(serde_json::json!([
+              {
+                "definedTags": [
+                  "baz", "bar",
+                ],
+              },
+            ])),
+            None,
+        ),
+        (
+            "
 			          /**
 			           * @baz @bar foo (pass: invalid names but user preferred)
 			           */
 			          function quux (foo) {
-			
+
 			          }
-			      ", None, Some(serde_json::json!({
-        "settings": { "jsdoc": {
-          "tagNamePreference": {
-            "param": "baz",
-            "returns": {
-              "message": "Prefer `bar`",
-              "replacement": "bar",
-            },
-            "todo": false,
-          },
-        }},
-      }))),
-("
+			      ",
+            None,
+            Some(serde_json::json!({
+              "settings": { "jsdoc": {
+                "tagNamePreference": {
+                  "param": "baz",
+                  "returns": {
+                    "message": "Prefer `bar`",
+                    "replacement": "bar",
+                  },
+                  "todo": false,
+                },
+              }},
+            })),
+        ),
+        (
+            "
 			          /**
 			           * @arg foo (pass: invalid name but user preferred)
 			           */
 			          function quux (foo) {
-			
+
 			          }
-			      ", None, Some(serde_json::json!({
-        "settings" : { "jsdoc": {
-          "tagNamePreference": {
-            "param": "arg",
-          },
-        }},
-      }))),
-("
+			      ",
+            None,
+            Some(serde_json::json!({
+              "settings" : { "jsdoc": {
+                "tagNamePreference": {
+                  "param": "arg",
+                },
+              }},
+            })),
+        ),
+        (
+            "
 			      /**
 			       * @returns (pass: valid name)
 			       */
 			      function quux (foo) {}
-			      ", None, None),
-("", None, None),
-("
+			      ",
+            None,
+            None,
+        ),
+        ("", None, None),
+        (
+            "
 			          /**
 			           * (pass: no tag)
 			           */
 			          function quux (foo) {
-			
+
 			          }
-			      ", None, None),
-("
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
 			          /**
 			           * @todo (pass: valid name)
 			           */
 			          function quux () {
-			
+
 			          }
-			      ", None, None),
-("
+			      ",
+            None,
+            None,
+        ),
+        (
+            "
 			          /**
 			           * @extends Foo (pass: invalid name but user preferred)
 			           */
 			          function quux () {
-			
+
 			          }
-			      ", None, Some(serde_json::json!({
-        "settings" : { "jsdoc": {
-          "tagNamePreference": {
-            "augments": {
-              "message": "@extends is to be used over @augments.",
-              "replacement": "extends",
-            },
-          },
-        }},
-      }))),
-("
+			      ",
+            None,
+            Some(serde_json::json!({
+              "settings" : { "jsdoc": {
+                "tagNamePreference": {
+                  "augments": {
+                    "message": "@extends is to be used over @augments.",
+                    "replacement": "extends",
+                  },
+                },
+              }},
+            })),
+        ),
+        (
+            "
 			          /**
 			           * (Set tag name preference to itself to get aliases to
 			           *   work along with main tag name.)
@@ -408,14 +449,18 @@ fn test() {
 			           */
 			          function quux () {
 			          }
-			      ", None, Some(serde_json::json!({
-        "settings" : { "jsdoc": {
-          "tagNamePreference": {
-            "extends": "extends",
-          },
-        }},
-      }))),
-("
+			      ",
+            None,
+            Some(serde_json::json!({
+              "settings" : { "jsdoc": {
+                "tagNamePreference": {
+                  "extends": "extends",
+                },
+              }},
+            })),
+        ),
+        (
+            "
 			      /**
 			       * Registers the `target` class as a transient dependency; each time the dependency is resolved a new instance will be created.
 			       *
@@ -430,32 +475,47 @@ fn test() {
 			      export function transient<T>(target?: T): T {
 			        // ...
 			      }
-			", None, None),
-("
+			",
+            None,
+            None,
+        ),
+        (
+            "
 			        /** @jsx h */
 			        /** @jsxFrag Fragment */
 			        /** @jsxImportSource preact */
 			        /** @jsxRuntime automatic (pass: valid jsx names)*/
-			      ", Some(serde_json::json!([
-        {
-          "jsxTags": true,
-        },
-      ])), None),
-("
+			      ",
+            Some(serde_json::json!([
+              {
+                "jsxTags": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
 			      /**
 			       * @internal (pass: valid name)
 			       */
-			      ", None, Some(serde_json::json!({
-        "settings" : { "jsdoc": { }},
-      }))),
-("
+			      ",
+            None,
+            Some(serde_json::json!({
+              "settings" : { "jsdoc": { }},
+            })),
+        ),
+        (
+            "
 			        /**
 			         * @overload
 			         * @satisfies (pass: valid names)
 			         */
-			      ", None, Some(serde_json::json!({
-        "settings" : { "jsdoc": { }},
-      }))),
+			      ",
+            None,
+            Some(serde_json::json!({
+              "settings" : { "jsdoc": { }},
+            })),
+        ),
         (
             "
 			        /**
@@ -467,30 +527,42 @@ fn test() {
             None,
         ),
         // Typed
-        ("
+        (
+            "
       			        /** @default 0 */
       			        let a;
-      			      ", Some(serde_json::json!([
-        {
-          "typed": true,
-        },
-      ])), None),
-("
+      			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
 			        /** @template name */
 			        let a;
-			      ", Some(serde_json::json!([
-        {
-          "typed": true,
-        },
-      ])), None),
-("
+			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
+        (
+            "
 			        /** @param param - takes information */
 			        function takesOne(param) {}
-			      ", Some(serde_json::json!([
-        {
-          "typed": true,
-        },
-      ])), None),
+			      ",
+            Some(serde_json::json!([
+              {
+                "typed": true,
+              },
+            ])),
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -508,7 +580,7 @@ fn test() {
         			           * @Param (fail: invalid name)
         			           */
         			          function quux () {
-			
+
         			          }
         			      ",
             None,
@@ -520,7 +592,7 @@ fn test() {
         			           * @foo (fail: invalid name)
         			           */
         			          function quux () {
-			
+
         			          }
         			      ",
             None,
@@ -532,7 +604,7 @@ fn test() {
         			           * @arg foo (fail: invalid name, default aliased)
         			           */
         			          function quux (foo) {
-			
+
         			          }
         			      ",
             None,

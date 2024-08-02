@@ -1,11 +1,11 @@
 name: Update implementation status of all linter plugins
 
-on: 
+on:
   push:
     branches:
       - main
     paths:
-      - 'crates/oxc_linter/**'
+      - 'crates/oxc_linter/src/rules.rs'
       - 'tasks/lint_rules/**'
 
 jobs:
@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
 
       - name: Install latest plugins
         working-directory: tasks/lint_rules

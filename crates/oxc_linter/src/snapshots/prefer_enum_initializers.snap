@@ -1,8 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_enum_initializers
 ---
-  ⚠ typescript-eslint(prefer-enum-initializers):The value of the member "Up" should be explicitly defined.
+  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:6]
  2 │             enum Direction {
  3 │               Up,
@@ -11,7 +10,7 @@ expression: prefer_enum_initializers
    ╰────
   help: Can be fixed to "Up" = 1.
 
-  ⚠ typescript-eslint(prefer-enum-initializers):The value of the member "Up" should be explicitly defined.
+  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:6]
  2 │             enum Direction {
  3 │               Up,
@@ -20,7 +19,7 @@ expression: prefer_enum_initializers
    ╰────
   help: Can be fixed to "Up" = 1.
 
-  ⚠ typescript-eslint(prefer-enum-initializers):The value of the member "Down" should be explicitly defined.
+  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:4:6]
  3 │               Up,
  4 │               Down,
@@ -29,7 +28,7 @@ expression: prefer_enum_initializers
    ╰────
   help: Can be fixed to "Down" = 2.
 
-  ⚠ typescript-eslint(prefer-enum-initializers):The value of the member "Down" should be explicitly defined.
+  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Down" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:4:6]
  3 │               Up = 'Up',
  4 │               Down,
@@ -38,7 +37,7 @@ expression: prefer_enum_initializers
    ╰────
   help: Can be fixed to "Down" = 2.
 
-  ⚠ typescript-eslint(prefer-enum-initializers):The value of the member "Up" should be explicitly defined.
+  ⚠ typescript-eslint(prefer-enum-initializers): The value of the member "Up" should be explicitly defined.
    ╭─[prefer_enum_initializers.tsx:3:6]
  2 │             enum Direction {
  3 │               Up,

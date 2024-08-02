@@ -1,8 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -10,24 +7,22 @@ use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
-        get_element_type, has_jsx_prop_lowercase, is_hidden_from_screen_reader,
+        get_element_type, has_jsx_prop_ignore_case, is_hidden_from_screen_reader,
         object_has_accessible_child,
     },
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum AnchorHasContentDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")]
-    #[diagnostic(
-        severity(warning),
-        help("Provide screen reader accessible content when using `a` elements.")
-    )]
-    MissingContent(#[label] Span),
+fn missing_content(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing accessible content when using `a` elements.")
+        .with_help("Provide screen reader accessible content when using `a` elements.")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-jsx-a11y(anchor-has-content): Missing accessible content when using `a` elements.")]
-    #[diagnostic(severity(warning), help("Remove the `aria-hidden` attribute to allow the anchor element and its content visible to assistive technologies."))]
-    RemoveAriaHidden(#[label] Span),
+fn remove_aria_hidden(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing accessible content when using `a` elements.")
+        .with_help("Remove the `aria-hidden` attribute to allow the anchor element and its content visible to assistive technologies.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -70,10 +65,12 @@ declare_oxc_lint!(
 impl Rule for AnchorHasContent {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXElement(jsx_el) = node.kind() {
-            let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else { return };
+            let Some(name) = &get_element_type(ctx, &jsx_el.opening_element) else {
+                return;
+            };
             if name == "a" {
                 if is_hidden_from_screen_reader(ctx, &jsx_el.opening_element) {
-                    ctx.diagnostic(AnchorHasContentDiagnostic::RemoveAriaHidden(jsx_el.span));
+                    ctx.diagnostic(remove_aria_hidden(jsx_el.span));
                     return;
                 }
 
@@ -82,12 +79,12 @@ impl Rule for AnchorHasContent {
                 }
 
                 for attr in ["title", "aria-label"] {
-                    if has_jsx_prop_lowercase(&jsx_el.opening_element, attr).is_some() {
+                    if has_jsx_prop_ignore_case(&jsx_el.opening_element, attr).is_some() {
                         return;
                     };
                 }
 
-                ctx.diagnostic(AnchorHasContentDiagnostic::MissingContent(jsx_el.span));
+                ctx.diagnostic(missing_content(jsx_el.span));
             }
         }
     }

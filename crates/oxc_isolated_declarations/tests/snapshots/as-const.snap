@@ -1,0 +1,22 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/as-const.ts
+---
+==================== .D.TS ====================
+
+declare const F: {
+	readonly string: "string";
+	readonly templateLiteral: "templateLiteral";
+	readonly number: 1.23;
+	readonly bigint: -1_2_3n;
+	readonly boolean: true;
+	readonly null: null;
+	readonly undefined: undefined;
+	readonly function: (a: string) => void;
+	readonly arrow: (a: string) => void;
+	readonly object: {
+		readonly a: "a";
+		readonly b: "b";
+	};
+	readonly array: readonly ["a", undefined, {	readonly b: "\n"}];
+};

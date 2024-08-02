@@ -1,0 +1,29 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsdoc(require-returns-description): Missing JSDoc `@returns` description.
+   ╭─[require_returns_description.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @returns
+   ·                          ────────
+ 4 │                        */
+   ╰────
+  help: Add description comment to `@returns` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-returns-description): Missing JSDoc `@returns` description.
+   ╭─[require_returns_description.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @returns {string}
+   ·                          ────────
+ 4 │                        */
+   ╰────
+  help: Add description comment to `@returns` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-returns-description): Missing JSDoc `@returns` description.
+   ╭─[require_returns_description.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @return
+   ·                          ───────
+ 4 │                        */
+   ╰────
+  help: Add description comment to `@returns` tag.

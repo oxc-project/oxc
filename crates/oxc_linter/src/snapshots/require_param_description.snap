@@ -1,0 +1,47 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsdoc(require-param-description): Missing JSDoc `@param` description.
+   ╭─[require_param_description.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @param foo
+   ·                          ──────
+ 4 │                        */
+   ╰────
+  help: Add description to `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-param-description): Missing JSDoc `@param` description.
+   ╭─[require_param_description.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @arg foo
+   ·                          ────
+ 4 │                        */
+   ╰────
+  help: Add description to `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-param-description): Missing JSDoc `@param` description.
+   ╭─[require_param_description.tsx:4:17]
+ 3 │                        * @param {number} foo Foo description
+ 4 │                        * @param {object} root
+   ·                          ──────
+ 5 │                        * @param {boolean} baz Baz description
+   ╰────
+  help: Add description to `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-param-description): Missing JSDoc `@param` description.
+   ╭─[require_param_description.tsx:4:17]
+ 3 │                        * @param {number} foo Foo description
+ 4 │                        * @param {object} root
+   ·                          ──────
+ 5 │                        * @param {boolean} baz Baz description
+   ╰────
+  help: Add description to `@param` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-param-description): Missing JSDoc `@param` description.
+   ╭─[require_param_description.tsx:4:17]
+ 3 │                        * @param {number} foo Foo description
+ 4 │                        * @param {object} root
+   ·                          ──────
+ 5 │                        * @param {boolean} baz Baz description
+   ╰────
+  help: Add description to `@param` tag.

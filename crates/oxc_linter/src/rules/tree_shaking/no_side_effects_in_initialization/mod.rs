@@ -1,75 +1,111 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
+use serde_json::Value;
 
-use crate::{context::LintContext, rule::Rule};
-
-use self::listener_map::{ListenerMap, NodeListenerOptions};
+use self::listener_map::ListenerMap;
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{ModuleFunctions, NodeListenerOptions, WhitelistModule},
+};
 
 mod listener_map;
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoSideEffectsDiagnostic {
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of assignment to `{0}`")]
-    #[diagnostic(severity(warning))]
-    Assignment(CompactStr, #[label] Span),
+fn assignment(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Cannot determine side-effects of assignment to `{x0}`"))
+        .with_label(span1)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating")]
-    #[diagnostic(severity(warning))]
-    Mutate(#[label] Span),
+fn mutate(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of mutating").with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating `{0}`")]
-    #[diagnostic(severity(warning))]
-    MutateWithName(CompactStr, #[label] Span),
+fn mutate_with_name(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Cannot determine side-effects of mutating `{x0}`"))
+        .with_label(span1)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function return value")]
-    #[diagnostic(severity(warning))]
-    MutateFunctionReturnValue(#[label] Span),
+fn mutate_function_return_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of mutating function return value")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating function parameter")]
-    #[diagnostic(severity(warning))]
-    MutateParameter(#[label] Span),
+fn mutate_parameter(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of mutating function parameter")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating unknown this value")]
-    #[diagnostic(severity(warning))]
-    MutateOfThis(#[label] Span),
+fn mutate_of_this(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of mutating unknown this value")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of mutating imported variable")]
-    #[diagnostic(severity(warning))]
-    MutateImport(#[label] Span),
+fn mutate_import(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of mutating imported variable")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling")]
-    #[diagnostic(severity(warning))]
-    Call(#[label] Span),
+fn call(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of calling").with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function return value")]
-    #[diagnostic(severity(warning))]
-    CallReturnValue(#[label] Span),
+fn call_return_value(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of calling function return value")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling global function `{0}`")]
-    #[diagnostic(severity(warning))]
-    CallGlobal(CompactStr, #[label] Span),
+fn call_global(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Cannot determine side-effects of calling global function `{x0}`"))
+        .with_label(span1)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling function parameter")]
-    #[diagnostic(severity(warning))]
-    CallParameter(#[label] Span),
+fn call_parameter(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of calling function parameter")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Cannot determine side-effects of calling imported function")]
-    #[diagnostic(severity(warning))]
-    CallImport(#[label] Span),
+fn call_import(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of calling imported function")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-tree-shaking(no-side-effects-in-initialization): Debugger statements are side-effects")]
-    #[diagnostic(severity(warning))]
-    Debugger(#[label] Span),
+fn call_member(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of calling member function")
+        .with_label(span0)
+}
+
+fn debugger(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Debugger statements are side-effects").with_label(span0)
+}
+
+fn delete(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Cannot determine side-effects of deleting anything but a MemberExpression")
+        .with_label(span0)
+}
+
+fn throw(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Throwing an error is a side-effect").with_label(span0)
 }
 
 /// <https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/rules/no-side-effects-in-initialization.ts>
 #[derive(Debug, Default, Clone)]
-pub struct NoSideEffectsInInitialization;
+pub struct NoSideEffectsInInitialization(Box<NoSideEffectsInInitiallizationOptions>);
+
+impl std::ops::Deref for NoSideEffectsInInitialization {
+    type Target = NoSideEffectsInInitiallizationOptions;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct NoSideEffectsInInitiallizationOptions {
+    functions: Vec<String>,
+    modules: Vec<WhitelistModule>,
+}
 
 declare_oxc_lint!(
     /// ### What it does
@@ -88,15 +124,119 @@ declare_oxc_lint!(
     /// const x = { [globalFunction()]: "myString" }; // Cannot determine side-effects of calling global function
     /// export default 42;
     /// ```
+    ///
+    /// ### Options
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///     "tree-shaking/no-side-effects-in-initialization": [
+    ///       2,
+    ///       {
+    ///         "noSideEffectsWhenCalled": [
+    ///           // If you want to mark a function call as side-effect free
+    ///           { "function": "Object.freeze" },
+    ///           {
+    ///             "module": "react",
+    ///             "functions": ["createContext", "createRef"]
+    ///           },
+    ///           {
+    ///             "module": "zod",
+    ///             "functions": ["array", "string", "nativeEnum", "number", "object", "optional"]
+    ///           },
+    ///           {
+    ///             "module": "my/local/module",
+    ///             "functions": ["foo", "bar", "baz"]
+    ///           },
+    ///           // If you want to whitelist all functions of a module
+    ///           {
+    ///             "module": "lodash",
+    ///             "functions": "*"
+    ///           }
+    ///         ]
+    ///       }
+    ///     ]
+    ///   }
+    /// }
+    /// ```
+    ///
+    /// ### Magic Comments
+    ///
+    /// Besides the configuration, you can also use magic comments to mark a function call as side effect free.
+    ///
+    /// By default, imported functions are assumed to have side-effects, unless they are marked with a magic comment:
+    ///
+    /// ```js
+    /// import { /* tree-shaking no-side-effects-when-called */ x } from "./some-file";
+    /// x();
+    /// ```
+    ///
+    /// `@__PURE__` is also supported:
+    ///
+    /// ```js
+    /// import {x} from "./some-file";
+    /// /*@__PURE__*/ x();
+    /// ```
     NoSideEffectsInInitialization,
     nursery
 );
 
 impl Rule for NoSideEffectsInInitialization {
+    fn from_configuration(value: serde_json::Value) -> Self {
+        let mut functions = vec![];
+        let mut modules = vec![];
+
+        if let Value::Array(arr) = value {
+            for obj in arr {
+                let Value::Object(obj) = obj else {
+                    continue;
+                };
+
+                // { "function": "Object.freeze" }
+                if let Some(name) = obj.get("function").and_then(Value::as_str) {
+                    functions.push(name.to_string());
+                    continue;
+                }
+
+                // { "module": "react", "functions": ["createContext", "createRef"] }
+                // { "module": "react", "functions": "*" }
+                if let Some(name) = obj.get("module").and_then(Value::as_str) {
+                    let functions = match obj.get("functions") {
+                        Some(Value::Array(arr)) => {
+                            let val = arr
+                                .iter()
+                                .filter_map(Value::as_str)
+                                .map(String::from)
+                                .collect::<Vec<_>>();
+                            Some(ModuleFunctions::Specific(val))
+                        }
+                        Some(Value::String(str)) => {
+                            if str == "*" {
+                                Some(ModuleFunctions::All)
+                            } else {
+                                None
+                            }
+                        }
+                        _ => None,
+                    };
+                    if let Some(functions) = functions {
+                        modules.push(WhitelistModule { name: name.to_string(), functions });
+                    }
+                }
+            }
+        }
+
+        Self(Box::new(NoSideEffectsInInitiallizationOptions { functions, modules }))
+    }
+
     fn run_once(&self, ctx: &LintContext) {
-        let Some(root) = ctx.nodes().root_node() else { return };
+        let Some(root) = ctx.nodes().root_node() else {
+            return;
+        };
         let AstKind::Program(program) = root.kind() else { unreachable!() };
-        let node_listener_options = NodeListenerOptions::new(ctx);
+        let node_listener_options = NodeListenerOptions::new(ctx)
+            .with_whitelist_functions(&self.functions)
+            .with_whitelist_modules(&self.modules);
         program.report_effects(&node_listener_options);
     }
 }
@@ -280,101 +420,120 @@ fn test() {
         r#"class X {}; const x = <X test="3"/>"#,
         // JSXSpreadAttribute
         "class X {}; const x = <X {...{x: 3}}/>",
-        // // LabeledStatement
-        // "loop: for(;true;){continue loop}",
-        // // Literal
-        // "const x = 3",
-        // "if (false) ext()",
-        // r#""use strict""#,
-        // // LogicalExpression
-        // "const x = 3 || 4",
-        // "true || ext()",
-        // "false && ext()",
-        // "if (false && false) ext()",
-        // "if (true && false) ext()",
-        // "if (false && true) ext()",
-        // "if (false || false) ext()",
-        // // MemberExpression
-        // "const x = ext.y",
-        // r#"const x = ext["y"]"#,
-        // "let x = ()=>{}; x.y = 1",
-        // // MemberExpression when called
-        // "const x = Object.keys({})",
-        // // MemberExpression when mutated
-        // "const x = {};x.y = ext",
-        // "const x = {y: 1};delete x.y",
-        // // MetaProperty
-        // "function x(){const y = new.target}; x()",
-        // // MethodDefinition
-        // "class x {a(){}}",
-        // "class x {static a(){}}",
-        // // NewExpression
+        // LabeledStatement
+        "loop: for(;true;){continue loop}",
+        // Literal
+        "const x = 3",
+        "if (false) ext()",
+        r#""use strict""#,
+        // LogicalExpression
+        "const x = 3 || 4",
+        "true || ext()",
+        "false && ext()",
+        "if (false && false) ext()",
+        "if (true && false) ext()",
+        "if (false && true) ext()",
+        "if (false || false) ext()",
+        // MemberExpression
+        "const x = ext.y",
+        r#"const x = ext["y"]"#,
+        "let x = ()=>{}; x.y = 1",
+        // MemberExpression when called
+        "const x = Object.keys({})",
+        // MemberExpression when mutated
+        "const x = {};x.y = ext",
+        "const x = {y: 1};delete x.y",
+        // MetaProperty
+        "function x(){const y = new.target}; x()",
+        // MethodDefinition
+        "class x {a(){}}",
+        "class x {static a(){}}",
+        // NewExpression
         "const x = new (function (){this.x = 1})()",
         "function x(){this.y = 1}; const z = new x()",
         "/*@__PURE__*/ new ext()",
-        // // ObjectExpression
-        // "const x = {y: ext}",
-        // r#"const x = {["y"]: ext}"#,
-        // "const x = {};x.y = ext",
-        // // ObjectPattern
-        // "const {x} = {}",
-        // "const {[ext]: x} = {}",
-        // // RestElement
-        // "const [...x] = []",
-        // // ReturnStatement
-        // "(()=>{return})()",
-        // "(()=>{return 1})()",
-        // // SequenceExpression
-        // "let x = 1; x++, x++",
-        // "if (ext, false) ext()",
-        // // SwitchCase
-        // "switch(ext){case ext:const x = 1;break;default:}",
-        // // SwitchStatement
-        // "switch(ext){}",
-        // "const x = ()=>{}; switch(ext){case 1:const x = ext}; x()",
-        // "const x = ext; switch(ext){case 1:const x = ()=>{}; x()}",
-        // // TaggedTemplateExpression
-        // "const x = ()=>{}; const y = x``",
-        // // TemplateLiteral
-        // "const x = ``",
-        // "const x = `Literal`",
-        // "const x = `Literal ${ext}`",
-        // r#"const x = ()=>"a"; const y = `Literal ${x()}`"#,
-        // // ThisExpression
+        // ObjectExpression
+        "const x = {y: ext}",
+        r#"const x = {["y"]: ext}"#,
+        "const x = {};x.y = ext",
+        // ObjectPattern
+        "const {x} = {}",
+        "const {[ext]: x} = {}",
+        // RestElement
+        "const [...x] = []",
+        // ReturnStatement
+        "(()=>{return})()",
+        "(()=>{return 1})()",
+        // SequenceExpression
+        "let x = 1; x++, x++",
+        "if (ext, false) ext()",
+        // SwitchCase
+        "switch(ext){case ext:const x = 1;break;default:}",
+        // SwitchStatement
+        "switch(ext){}",
+        "const x = ()=>{}; switch(ext){case 1:const x = ext}; x()",
+        "const x = ext; switch(ext){case 1:const x = ()=>{}; x()}",
+        // TaggedTemplateExpression
+        "const x = ()=>{}; const y = x``",
+        // TemplateLiteral
+        "const x = ``",
+        "const x = `Literal`",
+        "const x = `Literal ${ext}`",
+        r#"const x = ()=>"a"; const y = `Literal ${x()}`"#,
+        // ThisExpression
         "const y = this.x",
-        // // ThisExpression when mutated
+        // ThisExpression when mutated
         "const y = new (function (){this.x = 1})()",
         "const y = new (function (){{this.x = 1}})()",
         "const y = new (function (){(()=>{this.x = 1})()})()",
         "function x(){this.y = 1}; const y = new x()",
-        // // TryStatement
-        // "try {} catch (error) {}",
-        // "try {} finally {}",
-        // "try {} catch (error) {} finally {}",
-        // // UnaryExpression
-        // "!ext",
-        // "const x = {};delete x.y",
-        // r#"const x = {};delete x["y"]"#,
-        // // UpdateExpression
-        // "let x=1;x++",
-        // "const x = {};x.y++",
-        // // VariableDeclaration
-        // "const x = 1",
-        // // VariableDeclarator
-        // "var x, y",
-        // "var x = 1, y = 2",
-        // "const x = 1, y = 2",
-        // "let x = 1, y = 2",
-        // "const {x} = {}",
-        // // WhileStatement
-        // "while(true){}",
-        // "while(ext > 0){}",
-        // "const x = ()=>{}; while(true)x()",
-        // // YieldExpression
-        // "function* x(){const a = yield}; x()",
-        // "function* x(){yield ext}; x()",
-        // // Supports TypeScript nodes
-        // "interface Blub {}",
+        // TryStatement
+        "try {} catch (error) {}",
+        "try {} finally {}",
+        "try {} catch (error) {} finally {}",
+        // UnaryExpression
+        "!ext",
+        "const x = {};delete x.y",
+        r#"const x = {};delete x["y"]"#,
+        // UpdateExpression
+        "let x=1;x++",
+        "const x = {};x.y++",
+        // VariableDeclaration
+        "const x = 1",
+        // VariableDeclarator
+        "var x, y",
+        "var x = 1, y = 2",
+        "const x = 1, y = 2",
+        "let x = 1, y = 2",
+        "const {x} = {}",
+        // WhileStatement
+        "while(true){}",
+        "while(ext > 0){}",
+        "const x = ()=>{}; while(true)x()",
+        // YieldExpression
+        "function* x(){const a = yield}; x()",
+        "function* x(){yield ext}; x()",
+        // Supports TypeScript nodes
+        "interface Blub {}",
+        "
+        function a() {
+            a 
+        }
+        function b() {
+            b
+        }
+        export {
+            a,
+            b
+        }
+        ",
+        "
+        const Comp = () => {
+          <div>
+            <Comp />
+          </div>
+        }
+        ",
     ];
 
     let fail = vec![
@@ -531,7 +690,7 @@ fn test() {
         "const x = ()=>{}; const {y} = x(); y()",
         "const x = ()=>{}; const [y] = x(); y()",
         // // Identifier when mutated
-        // "var x = ext; x.y = 1",
+        "var x = ext; x.y = 1",
         // "var x = {}; x = ext; x.y = 1",
         // "var x = {}; var x = ext; x.y = 1",
         // "var x = {}; x = ext; x.y = 1; x.y = 1; x.y = 1",
@@ -568,99 +727,150 @@ fn test() {
         "class X {}; const x = <X test={ext()}/>",
         // JSXSpreadAttribute
         "class X {}; const x = <X {...{x: ext()}}/>",
-        // // LabeledStatement
-        // "loop: for(;true;){ext()}",
-        // // Literal
-        // "if (true) ext()",
-        // // LogicalExpression
-        // "ext() && true",
-        // "true && ext()",
-        // "false || ext()",
-        // "if (true && true) ext()",
-        // "if (false || true) ext()",
-        // "if (true || false) ext()",
-        // "if (true || true) ext()",
-        // // MemberExpression
-        // "const x = {};const y = x[ext()]",
-        // // MemberExpression when called
-        // "ext.x()",
-        // "const x = {}; x.y()",
-        // "const x = ()=>{}; x().y()",
-        // "const Object = {}; const x = Object.keys({})",
-        // "const x = {}; x[ext()]()",
-        // // MemberExpression when mutated
-        // "const x = {y: ext};x.y.z = 1",
-        // "const x = {y:ext};const y = x.y; y.z = 1",
-        // "const x = {y: ext};delete x.y.z",
-        // // MethodDefinition
-        // "class x {static [ext()](){}}",
+        // LabeledStatement
+        "loop: for(;true;){ext()}",
+        // Literal
+        "if (true) ext()",
+        // LogicalExpression
+        "ext() && true",
+        "true && ext()",
+        "false || ext()",
+        "if (true && true) ext()",
+        "if (false || true) ext()",
+        "if (true || false) ext()",
+        "if (true || true) ext()",
+        // MemberExpression
+        "const x = {};const y = x[ext()]",
+        // MemberExpression when called
+        "ext.x()",
+        "const x = {}; x.y()",
+        "const x = ()=>{}; x().y()",
+        "const Object = {}; const x = Object.keys({})",
+        "const x = {}; x[ext()]()",
+        // MemberExpression when mutated
+        "const x = {y: ext};x.y.z = 1",
+        "const x = {y:ext};const y = x.y; y.z = 1",
+        "const x = {y: ext};delete x.y.z",
+        // MethodDefinition
+        "class x {static [ext()](){}}",
         // NewExpression
         "const x = new ext()",
         "new ext()",
-        // // ObjectExpression
-        // "const x = {y: ext()}",
-        // r#"const x = {["y"]: ext()}"#,
-        // "const x = {[ext()]: 1}",
-        // // ObjectPattern
-        // "const {[ext()]: x} = {}",
-        // // ReturnStatement
-        // "(()=>{return ext()})()",
-        // // SequenceExpression
-        // "ext(), 1",
-        // "1, ext()",
-        // "if (1, true) ext()",
-        // "if (1, ext) ext()",
-        // // Super when called
-        // "class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()",
-        // "class y{}; class x extends y{constructor(){super(); super.test()}}; const z = new x()",
-        // "class y{}; class x extends y{constructor(){super()}}; const z = new x()",
-        // // SwitchCase
-        // "switch(ext){case ext():}",
-        // "switch(ext){case 1:ext()}",
-        // // SwitchStatement
-        // "switch(ext()){}",
+        // ObjectExpression
+        "const x = {y: ext()}",
+        r#"const x = {["y"]: ext()}"#,
+        "const x = {[ext()]: 1}",
+        // ObjectPattern
+        "const {[ext()]: x} = {}",
+        // ReturnStatement
+        "(()=>{return ext()})()",
+        // SequenceExpression
+        "ext(), 1",
+        "1, ext()",
+        "if (1, true) ext()",
+        "if (1, ext) ext()",
+        // Super when called
+        "class y {constructor(){ext()}}; class x extends y {constructor(){super()}}; const z = new x()",
+        "class y{}; class x extends y{constructor(){super(); super.test()}}; const z = new x()",
+        "class y{}; class x extends y{constructor(){super()}}; const z = new x()",
+        // SwitchCase
+        "switch(ext){case ext():}",
+        "switch(ext){case 1:ext()}",
+        // SwitchStatement
+        "switch(ext()){}",
         // "var x=()=>{}; switch(ext){case 1:var x=ext}; x()",
-        // // TaggedTemplateExpression
-        // "const x = ext``",
-        // "ext``",
-        // "const x = ()=>{}; const y = x`${ext()}`",
-        // // TemplateLiteral
-        // "const x = `Literal ${ext()}`",
+        // TaggedTemplateExpression
+        "const x = ext``",
+        "ext``",
+        "const x = ()=>{}; const y = x`${ext()}`",
+        // TemplateLiteral
+        "const x = `Literal ${ext()}`",
         // ThisExpression when mutated
         "this.x = 1",
         "(()=>{this.x = 1})()",
         "(function(){this.x = 1}())",
         "const y = new (function (){(function(){this.x = 1}())})()",
         "function x(){this.y = 1}; x()",
-        // // ThrowStatement
-        // r#"throw new Error("Hello Error")"#,
-        // // TryStatement
-        // "try {ext()} catch (error) {}",
-        // "try {} finally {ext()}",
-        // // UnaryExpression
-        // "!ext()",
-        // "delete ext.x",
-        // r#"delete ext["x"]"#,
-        // "const x = ()=>{};delete x()",
-        // // UpdateExpression
-        // "ext++",
-        // "const x = {};x[ext()]++",
-        // // VariableDeclaration
-        // "const x = ext()",
-        // // VariableDeclarator
-        // "var x = ext(),y = ext()",
-        // "const x = ext(),y = ext()",
-        // "let x = ext(),y = ext()",
-        // "const {x = ext()} = {}",
-        // // WhileStatement
-        // "while(ext()){}",
-        // "while(true)ext()",
-        // "while(true){ext()}",
-        // // YieldExpression
-        // "function* x(){yield ext()}; x()",
-        // // YieldExpression when called
-        // "function* x(){yield ext()}; x()"
+        // ThrowStatement
+        r#"throw new Error("Hello Error")"#,
+        // TryStatement
+        "try {ext()} catch (error) {}",
+        "try {} finally {ext()}",
+        // UnaryExpression
+        "!ext()",
+        "delete ext.x",
+        r#"delete ext["x"]"#,
+        "const x = ()=>{};delete x()",
+        // UpdateExpression
+        "ext++",
+        "const x = {};x[ext()]++",
+        // VariableDeclaration
+        "const x = ext()",
+        // VariableDeclarator
+        "var x = ext(),y = ext()",
+        "const x = ext(),y = ext()",
+        "let x = ext(),y = ext()",
+        "const {x = ext()} = {}",
+        // WhileStatement
+        "while(ext()){}",
+        "while(true)ext()",
+        "while(true){ext()}",
+        // YieldExpression
+        "function* x(){yield ext()}; x()",
+        // YieldExpression when called
+        "function* x(){yield ext()}; x()",
+        "
+        function f() {
+          try {
+            f();
+          } catch(e) {
+            a.map(v => v + 1);
+          }
+        }
+        f();
+        ",
     ];
+
+    // test options
+    let pass_with_options = vec![
+        (
+            "Object.freeze({})",
+            Some(serde_json::json!([
+                { "function": "Object.freeze" },
+            ])),
+        ),
+        (
+            "import {createContext, createRef} from 'react'; createContext(); createRef();",
+            Some(serde_json::json!([
+                { "module": "react", "functions": ["createContext", "createRef"] },
+            ])),
+        ),
+        (
+            "import _ from 'lodash'; _.cloneDeep({});",
+            Some(serde_json::json!([
+                { "module": "lodash", "functions": "*" },
+            ])),
+        ),
+        (
+            "import * as React from 'react'; React.createRef();",
+            Some(serde_json::json!([
+                { "module": "react", "functions": "*" },
+            ])),
+        ),
+    ];
+
+    let fail_with_options = vec![
+        ("Object.freeze({})", None),
+        ("import {createContext, createRef} from 'react'; createContext(); createRef();", None),
+        ("import _ from 'lodash'; _.cloneDeep({});", None),
+        ("import * as React from 'react'; React.createRef();", None),
+    ];
+
+    let pass =
+        pass.into_iter().map(|case| (case, None)).chain(pass_with_options).collect::<Vec<_>>();
+
+    let fail =
+        fail.into_iter().map(|case| (case, None)).chain(fail_with_options).collect::<Vec<_>>();
 
     Tester::new(NoSideEffectsInInitialization::NAME, pass, fail).test_and_snapshot();
 }

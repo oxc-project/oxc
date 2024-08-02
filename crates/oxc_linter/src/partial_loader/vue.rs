@@ -1,5 +1,4 @@
 use memchr::memmem::Finder;
-
 use oxc_span::SourceType;
 
 use super::{find_script_closing_angle, JavaScriptSource, SCRIPT_END, SCRIPT_START};
@@ -23,8 +22,12 @@ impl<'a> VuePartialLoader<'a> {
     /// <https://vuejs.org/api/sfc-spec.html#script>
     fn parse_scripts(&self) -> Vec<JavaScriptSource<'a>> {
         let mut pointer = 0;
-        let Some(result1) = self.parse_script(&mut pointer) else { return vec![] };
-        let Some(result2) = self.parse_script(&mut pointer) else { return vec![result1] };
+        let Some(result1) = self.parse_script(&mut pointer) else {
+            return vec![];
+        };
+        let Some(result2) = self.parse_script(&mut pointer) else {
+            return vec![result1];
+        };
         vec![result1, result2]
     }
 

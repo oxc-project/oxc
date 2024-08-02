@@ -1,18 +1,16 @@
-use crate::{context::LintContext, rule::Rule, AstNode};
-
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::UnaryOperator;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-void): Disallow `void` operators")]
-#[diagnostic(severity(warning), help("Expected 'undefined' and instead saw 'void'."))]
-struct NoVoidDiagnostic(#[label] pub Span);
+use crate::{context::LintContext, rule::Rule, AstNode};
+
+fn no_void_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow `void` operators")
+        .with_help("Expected 'undefined' and instead saw 'void'.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoVoid {
@@ -63,7 +61,7 @@ impl Rule for NoVoid {
         };
 
         if unary_expr.operator == UnaryOperator::Void {
-            ctx.diagnostic(NoVoidDiagnostic(Span::new(
+            ctx.diagnostic(no_void_diagnostic(Span::new(
                 unary_expr.span.start,
                 unary_expr.span.start + 4,
             )));

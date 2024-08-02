@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: button_has_type
 ---
   ⚠ eslint-plugin-react(button-has-type): `button` elements must have an explicit `type` attribute.
    ╭─[button_has_type.tsx:1:2]
@@ -96,7 +95,7 @@ expression: button_has_type
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[button_has_type.tsx:1:7]
  1 │ button type/>
-   ·       ─
+   ·       ▲
    ╰────
   help: Try insert a semicolon here
 

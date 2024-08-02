@@ -1,19 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-unicorn(prefer-dom-node-text-content): Prefer `.textContent` over `.innerText`."
-)]
-#[diagnostic(severity(warning), help("Replace `.innerText` with `.textContent`."))]
-struct PreferDomNodeTextContentDiagnostic(#[label] pub Span);
+fn prefer_dom_node_text_content_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `.textContent` over `.innerText`.")
+        .with_help("Replace `.innerText` with `.textContent`.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeTextContent;
@@ -39,7 +35,8 @@ declare_oxc_lint!(
     /// const text = foo.textContent;
     /// ```
     PreferDomNodeTextContent,
-    style
+    style,
+    conditional_fix
 );
 
 impl Rule for PreferDomNodeTextContent {
@@ -47,9 +44,10 @@ impl Rule for PreferDomNodeTextContent {
         if let AstKind::MemberExpression(member_expr) = node.kind() {
             if let Some((span, name)) = member_expr.static_property_info() {
                 if name == "innerText" && !member_expr.is_computed() {
-                    ctx.diagnostic_with_fix(PreferDomNodeTextContentDiagnostic(span), || {
-                        Fix::new("textContent", span)
-                    });
+                    ctx.diagnostic_with_fix(
+                        prefer_dom_node_text_content_diagnostic(span),
+                        |fixer| fixer.replace(span, "textContent"),
+                    );
                 }
             }
         }
@@ -70,9 +68,14 @@ impl Rule for PreferDomNodeTextContent {
             if identifier.name == "innerText"
                 && matches!(parent_node_kind, AstKind::PropertyKey(_))
                 && (matches!(grand_parent_node_kind, AstKind::ObjectPattern(_))
-                    || matches!(grand_parent_node_kind, AstKind::AssignmentTarget(_)))
+                    || matches!(
+                        grand_parent_node_kind,
+                        AstKind::ObjectAssignmentTarget(_)
+                            | AstKind::SimpleAssignmentTarget(_)
+                            | AstKind::AssignmentTarget(_)
+                    ))
             {
-                ctx.diagnostic(PreferDomNodeTextContentDiagnostic(identifier.span));
+                ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier.span));
                 return;
             }
         }
@@ -80,10 +83,15 @@ impl Rule for PreferDomNodeTextContent {
         // `({innerText} = node)`
         if let AstKind::IdentifierReference(identifier_ref) = node.kind() {
             if identifier_ref.name == "innerText"
-                && matches!(parent_node_kind, AstKind::AssignmentTarget(_))
-                && matches!(grand_parent_node_kind, AstKind::AssignmentExpression(_))
+                && matches!(
+                    parent_node_kind,
+                    AstKind::ObjectAssignmentTarget(_)
+                        | AstKind::AssignmentTarget(_)
+                        | AstKind::SimpleAssignmentTarget(_)
+                )
+                && matches!(grand_parent_node_kind, AstKind::AssignmentTargetPattern(_))
             {
-                ctx.diagnostic(PreferDomNodeTextContentDiagnostic(identifier_ref.span));
+                ctx.diagnostic(prefer_dom_node_text_content_diagnostic(identifier_ref.span));
             }
         }
     }
@@ -126,5 +134,13 @@ fn test() {
         ("for (const [{innerText}] of elements);", None),
     ];
 
-    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).test_and_snapshot();
+    // TODO: implement a fixer for destructuring assignment cases
+    let fix = vec![
+        ("node.innerText;", "node.textContent;"),
+        ("node?.innerText;", "node?.textContent;"),
+        ("node.innerText = 'foo';", "node.textContent = 'foo';"),
+        ("innerText.innerText = 'foo';", "innerText.textContent = 'foo';"),
+    ];
+
+    Tester::new(PreferDomNodeTextContent::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

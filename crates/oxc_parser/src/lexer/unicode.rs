@@ -1,11 +1,11 @@
-use super::{Kind, Lexer, Span};
-use crate::diagnostics;
-
 use oxc_allocator::String;
 use oxc_syntax::identifier::{
     is_identifier_part, is_identifier_start, is_identifier_start_unicode,
     is_irregular_line_terminator, is_irregular_whitespace, CR, FF, LF, LS, PS, TAB, VT,
 };
+
+use super::{Kind, Lexer, Span};
+use crate::diagnostics;
 
 enum SurrogatePair {
     // valid \u Hex4Digits \u Hex4Digits
@@ -18,7 +18,7 @@ enum SurrogatePair {
 
 impl<'a> Lexer<'a> {
     pub(super) fn unicode_char_handler(&mut self) -> Kind {
-        let c = self.peek().unwrap();
+        let c = self.peek_char().unwrap();
         match c {
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
@@ -39,7 +39,7 @@ impl<'a> Lexer<'a> {
             }
             _ => {
                 self.consume_char();
-                self.error(diagnostics::InvalidCharacter(c, self.unterminated_range()));
+                self.error(diagnostics::invalid_character(c, self.unterminated_range()));
                 Kind::Undetermined
             }
         }
@@ -54,20 +54,23 @@ impl<'a> Lexer<'a> {
         check_identifier_start: bool,
     ) {
         let start = self.offset();
-        if self.next_char() != Some('u') {
+        if self.peek_byte() == Some(b'u') {
+            self.consume_char();
+        } else {
+            self.next_char();
             let range = Span::new(start, self.offset());
-            self.error(diagnostics::UnicodeEscapeSequence(range));
+            self.error(diagnostics::unicode_escape_sequence(range));
             return;
         }
 
-        let value = match self.peek() {
-            Some('{') => self.unicode_code_point(),
+        let value = match self.peek_byte() {
+            Some(b'{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
 
         let Some(value) = value else {
             let range = Span::new(start, self.offset());
-            self.error(diagnostics::UnicodeEscapeSequence(range));
+            self.error(diagnostics::unicode_escape_sequence(range));
             return;
         };
 
@@ -75,7 +78,7 @@ impl<'a> Lexer<'a> {
         let ch = match value {
             SurrogatePair::Astral(..) | SurrogatePair::HighLow(..) => {
                 let range = Span::new(start, self.offset());
-                self.error(diagnostics::UnicodeEscapeSequence(range));
+                self.error(diagnostics::unicode_escape_sequence(range));
                 return;
             }
             SurrogatePair::CodePoint(code_point) => {
@@ -83,7 +86,7 @@ impl<'a> Lexer<'a> {
                     ch
                 } else {
                     let range = Span::new(start, self.offset());
-                    self.error(diagnostics::UnicodeEscapeSequence(range));
+                    self.error(diagnostics::unicode_escape_sequence(range));
                     return;
                 }
             }
@@ -93,7 +96,7 @@ impl<'a> Lexer<'a> {
             if check_identifier_start { is_identifier_start(ch) } else { is_identifier_part(ch) };
 
         if !is_valid {
-            self.error(diagnostics::InvalidCharacter(ch, self.current_offset()));
+            self.error(diagnostics::invalid_character(ch, self.current_offset()));
             return;
         }
 
@@ -109,13 +112,13 @@ impl<'a> Lexer<'a> {
         text: &mut String<'a>,
         is_valid_escape_sequence: &mut bool,
     ) {
-        let value = match self.peek() {
+        let value = match self.peek_char() {
             Some('{') => self.unicode_code_point(),
             _ => self.surrogate_pair(),
         };
 
         let Some(value) = value else {
-            // error raised within the parser by `diagnostics::TemplateLiteral`
+            // error raised within the parser by `diagnostics::template_literal`
             *is_valid_escape_sequence = false;
             return;
         };
@@ -141,11 +144,11 @@ impl<'a> Lexer<'a> {
     }
 
     fn unicode_code_point(&mut self) -> Option<SurrogatePair> {
-        if !self.next_eq('{') {
+        if !self.next_ascii_byte_eq(b'{') {
             return None;
         }
         let value = self.code_point()?;
-        if !self.next_eq('}') {
+        if !self.next_ascii_byte_eq(b'}') {
             return None;
         }
         Some(SurrogatePair::CodePoint(value))
@@ -160,14 +163,30 @@ impl<'a> Lexer<'a> {
     }
 
     fn hex_digit(&mut self) -> Option<u32> {
-        let value = match self.peek() {
-            Some(c @ '0'..='9') => c as u32 - '0' as u32,
-            Some(c @ 'a'..='f') => 10 + (c as u32 - 'a' as u32),
-            Some(c @ 'A'..='F') => 10 + (c as u32 - 'A' as u32),
-            _ => return None,
+        // Reduce instructions and remove 1 branch by comparing against `A-F` and `a-f` simultaneously
+        // https://godbolt.org/z/9caMMzvP3
+        let value = if let Some(b) = self.peek_byte() {
+            if b.is_ascii_digit() {
+                b - b'0'
+            } else {
+                // Match `A-F` or `a-f`. `b | 32` converts uppercase letters to lowercase,
+                // but leaves lowercase as they are
+                let lower_case = b | 32;
+                if matches!(lower_case, b'a'..=b'f') {
+                    lower_case + 10 - b'a'
+                } else {
+                    return None;
+                }
+            }
+        } else {
+            return None;
         };
-        self.consume_char();
-        Some(value)
+        // Because of `b | 32` above, compiler cannot deduce that next byte is definitely ASCII
+        // so `next_byte_unchecked` is necessary to produce compact assembly, rather than `consume_char`.
+        // SAFETY: This code is only reachable if there is a byte remaining, and it's ASCII.
+        // Therefore it's safe to consume that byte, and will leave position on a UTF-8 char boundary.
+        unsafe { self.source.next_byte_unchecked() };
+        Some(u32::from(value))
     }
 
     fn code_point(&mut self) -> Option<u32> {
@@ -188,15 +207,13 @@ impl<'a> Lexer<'a> {
     fn surrogate_pair(&mut self) -> Option<SurrogatePair> {
         let high = self.hex_4_digits()?;
         // The first code unit of a surrogate pair is always in the range from 0xD800 to 0xDBFF, and is called a high surrogate or a lead surrogate.
-        let is_pair = (0xD800..=0xDBFF).contains(&high)
-            && self.peek() == Some('\\')
-            && self.peek2() == Some('u');
+        let is_pair =
+            (0xD800..=0xDBFF).contains(&high) && self.peek_2_bytes() == Some([b'\\', b'u']);
         if !is_pair {
             return Some(SurrogatePair::CodePoint(high));
         }
 
-        self.consume_char();
-        self.consume_char();
+        self.consume_2_chars();
 
         let low = self.hex_4_digits()?;
 
@@ -220,7 +237,7 @@ impl<'a> Lexer<'a> {
     ) {
         match self.next_char() {
             None => {
-                self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+                self.error(diagnostics::unterminated_string(self.unterminated_range()));
             }
             Some(c) => match c {
                 // \ LineTerminatorSequence
@@ -232,7 +249,7 @@ impl<'a> Lexer<'a> {
                 // <CR> <LF>
                 LF | LS | PS => {}
                 CR => {
-                    self.next_eq(LF);
+                    self.next_ascii_byte_eq(b'\n');
                 }
                 // SingleEscapeCharacter :: one of
                 //   ' " \ b f n r t v
@@ -266,7 +283,7 @@ impl<'a> Lexer<'a> {
                     self.string_unicode_escape_sequence(text, is_valid_escape_sequence);
                 }
                 // 0 [lookahead ∉ DecimalDigit]
-                '0' if !self.peek().is_some_and(|c| c.is_ascii_digit()) => text.push('\0'),
+                '0' if !self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => text.push('\0'),
                 // Section 12.9.4 String Literals
                 // LegacyOctalEscapeSequence
                 // NonOctalDecimalEscapeSequence
@@ -275,16 +292,16 @@ impl<'a> Lexer<'a> {
                     num.push(a);
                     match a {
                         '4'..='7' => {
-                            if matches!(self.peek(), Some('0'..='7')) {
+                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
                                 let b = self.consume_char();
                                 num.push(b);
                             }
                         }
                         '0'..='3' => {
-                            if matches!(self.peek(), Some('0'..='7')) {
+                            if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
                                 let b = self.consume_char();
                                 num.push(b);
-                                if matches!(self.peek(), Some('0'..='7')) {
+                                if matches!(self.peek_byte(), Some(b'0'..=b'7')) {
                                     let c = self.consume_char();
                                     num.push(c);
                                 }
@@ -297,14 +314,14 @@ impl<'a> Lexer<'a> {
                         char::from_u32(u32::from_str_radix(num.as_str(), 8).unwrap()).unwrap();
                     text.push(value);
                 }
-                '0' if in_template && self.peek().is_some_and(|c| c.is_ascii_digit()) => {
+                '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
                     self.consume_char();
-                    // error raised within the parser by `diagnostics::TemplateLiteral`
+                    // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;
                 }
                 // NotEscapeSequence :: DecimalDigit but not 0
                 '1'..='9' if in_template => {
-                    // error raised within the parser by `diagnostics::TemplateLiteral`
+                    // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;
                 }
                 other => {

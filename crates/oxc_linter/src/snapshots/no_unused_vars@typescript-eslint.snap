@@ -1,0 +1,342 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unused-vars): Identifier 'ClassDecoratorFactory' is imported but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ import { ClassDecoratorFactory } from 'decorators'; export class Foo {}
+   ·          ──────────┬──────────
+   ·                    ╰── 'ClassDecoratorFactory' is imported here
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Foo' is imported but never used.
+   ╭─[no_unused_vars.ts:1:10]
+ 1 │ import { Foo, Bar } from 'foo';
+   ·          ─┬─
+   ·           ╰── 'Foo' is imported here
+ 2 │         function baz<Foo>(): Foo {}
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Nullable' is imported but never used.
+   ╭─[no_unused_vars.ts:2:20]
+ 1 │ 
+ 2 │           import { Nullable } from 'nullable';
+   ·                    ────┬───
+   ·                        ╰── 'Nullable' is imported here
+ 3 │           const a: string = 'hello';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'SomeOther' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { SomeOther } from 'other';
+   ·                    ────┬────
+   ·                        ╰── 'SomeOther' is imported here
+ 4 │           const a: Nullable<string> = 'hello';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           class A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           class A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           class A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           export interface A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Another' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { Another } from 'some';
+   ·                    ───┬───
+   ·                       ╰── 'Another' is imported here
+ 4 │           export interface A {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Nullable' is imported but never used.
+   ╭─[no_unused_vars.ts:2:20]
+ 1 │ 
+ 2 │           import { Nullable } from 'nullable';
+   ·                    ────┬───
+   ·                        ╰── 'Nullable' is imported here
+ 3 │           function foo(a: string) {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'Nullable' is imported but never used.
+   ╭─[no_unused_vars.ts:2:20]
+ 1 │ 
+ 2 │           import { Nullable } from 'nullable';
+   ·                    ────┬───
+   ·                        ╰── 'Nullable' is imported here
+ 3 │           function foo(): string | null {
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'SomeOther' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { SomeOther } from 'some';
+   ·                    ────┬────
+   ·                        ╰── 'SomeOther' is imported here
+ 4 │           import { Another } from 'some';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'SomeOther' is imported but never used.
+   ╭─[no_unused_vars.ts:3:20]
+ 2 │           import { Nullable } from 'nullable';
+ 3 │           import { SomeOther } from 'some';
+   ·                    ────┬────
+   ·                        ╰── 'SomeOther' is imported here
+ 4 │           import { Another } from 'some';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Enum 'FormFieldIds' is declared but never used.
+   ╭─[no_unused_vars.ts:2:14]
+ 1 │ 
+ 2 │         enum FormFieldIds {
+   ·              ──────┬─────
+   ·                    ╰── 'FormFieldIds' is declared here
+ 3 │           PHONE = 'phone',
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
+   ╭─[no_unused_vars.ts:2:18]
+ 1 │ 
+ 2 │           import test from 'test';
+   ·                  ──┬─
+   ·                    ╰── 'test' is imported here
+ 3 │           import baz from 'baz';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
+   ╭─[no_unused_vars.ts:2:18]
+ 1 │ 
+ 2 │           import test from 'test';
+   ·                  ──┬─
+   ·                    ╰── 'test' is imported here
+ 3 │           import baz from 'baz';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
+   ╭─[no_unused_vars.ts:2:18]
+ 1 │ 
+ 2 │           import test from 'test';
+   ·                  ──┬─
+   ·                    ╰── 'test' is imported here
+ 3 │           import baz from 'baz';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
+   ╭─[no_unused_vars.ts:2:18]
+ 1 │ 
+ 2 │           import test from 'test';
+   ·                  ──┬─
+   ·                    ╰── 'test' is imported here
+ 3 │           import baz from 'baz';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Identifier 'test' is imported but never used.
+   ╭─[no_unused_vars.ts:2:18]
+ 1 │ 
+ 2 │           import test from 'test';
+   ·                  ──┬─
+   ·                    ╰── 'test' is imported here
+ 3 │           import baz from 'baz';
+   ╰────
+  help: Consider removing this import.
+
+  ⚠ eslint(no-unused-vars): Variable 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:11]
+ 1 │ namespace Foo {}
+   ·           ─┬─
+   ·            ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:11]
+ 1 │ namespace Foo { export const Foo = 1; } 
+   ·           ─┬─
+   ·            ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:2:23]
+ 1 │ 
+ 2 │             namespace Foo {
+   ·                       ─┬─
+   ·                        ╰── 'Foo' is declared here
+ 3 │                 const Foo = 1;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:2:19]
+ 1 │ 
+ 2 │         namespace Foo {
+   ·                   ─┬─
+   ·                    ╰── 'Foo' is declared here
+ 3 │           namespace Foo {
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:6]
+ 1 │ type Foo = Array<Foo>
+   ·      ─┬─
+   ·       ╰── 'Foo' is declared here
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'Test' is declared but never used.
+   ╭─[no_unused_vars.ts:3:18]
+ 2 │         declare module 'foo' {
+ 3 │             type Test = any;
+   ·                  ──┬─
+   ·                    ╰── 'Test' is declared here
+ 4 │             const x = 1;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Bar' is declared but never used.
+   ╭─[no_unused_vars.ts:4:23]
+ 3 │         export namespace Foo {
+ 4 │             namespace Bar {
+   ·                       ─┬─
+   ·                        ╰── 'Bar' is declared here
+ 5 │                 namespace Baz {
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Baz' is declared but never used.
+   ╭─[no_unused_vars.ts:5:27]
+ 4 │             namespace Bar {
+ 5 │                 namespace Baz {
+   ·                           ─┬─
+   ·                            ╰── 'Baz' is declared here
+ 6 │                     namespace Bam {
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'Bam' is declared but never used.
+   ╭─[no_unused_vars.ts:6:31]
+ 5 │                 namespace Baz {
+ 6 │                     namespace Bam {
+   ·                               ─┬─
+   ·                                ╰── 'Bam' is declared here
+ 7 │                         const x = 1;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'x' is declared but never used.
+   ╭─[no_unused_vars.ts:7:31]
+ 6 │                     namespace Bam {
+ 7 │                         const x = 1;
+   ·                               ┬
+   ·                               ╰── 'x' is declared here
+ 8 │                     }
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Interface 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:2:23]
+ 1 │ 
+ 2 │             interface Foo {
+   ·                       ─┬─
+   ·                        ╰── 'Foo' is declared here
+ 3 │                 bar: string;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is assigned a value but never used.
+   ╭─[no_unused_vars.ts:2:15]
+ 1 │ 
+ 2 │           let foo = 1;
+   ·               ─┬─
+   ·                ╰── 'foo' is declared here
+ 3 │           foo += 1;
+   ·           ─┬─
+   ·            ╰── it was last assigned here
+ 4 │                 
+   ╰────
+  help: Did you mean to use this variable?
+
+  ⚠ eslint(no-unused-vars): Interface 'Foo' is declared but never used.
+   ╭─[no_unused_vars.ts:2:21]
+ 1 │ 
+ 2 │           interface Foo {
+   ·                     ─┬─
+   ·                      ╰── 'Foo' is declared here
+ 3 │             bar: string;
+   ╰────
+  help: Consider removing this declaration.
+
+  ⚠ eslint(no-unused-vars): Type alias 'Bar' is declared but never used.
+   ╭─[no_unused_vars.ts:5:16]
+ 4 │           }
+ 5 │           type Bar = 1;
+   ·                ─┬─
+   ·                 ╰── 'Bar' is declared here
+ 6 │           export = Foo;
+   ╰────
+  help: Consider removing this declaration.
+
+  × Unexpected token
+   ╭─[no_unused_vars.ts:7:12]
+ 6 │             import TheFoo = Foo;
+ 7 │           },
+   ·            ─
+ 8 │         
+   ╰────
+
+  ⚠ eslint(no-unused-vars): Variable 'foo' is declared but never used.
+   ╭─[no_unused_vars.ts:1:7]
+ 1 │ const foo: number = 1;
+   ·       ─────┬─────
+   ·            ╰── 'foo' is declared here
+   ╰────
+  help: Consider removing this declaration.

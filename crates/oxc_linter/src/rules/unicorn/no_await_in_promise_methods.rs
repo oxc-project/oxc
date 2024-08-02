@@ -1,17 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{ast_util::is_method_call, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-await-in-promise-methods): Promise in `Promise.{1}()` should not be awaited.")]
-#[diagnostic(severity(warning), help("Remove the `await`"))]
-struct NoAwaitInPromiseMethodsDiagnostic(#[label] pub Span, String);
+fn no_await_in_promise_methods_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Promise in `Promise.{x1}()` should not be awaited."))
+        .with_help("Remove the `await`")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAwaitInPromiseMethods;
@@ -83,9 +81,9 @@ impl Rule for NoAwaitInPromiseMethods {
                         .static_property_name()
                         .expect("callee is a static property");
 
-                    ctx.diagnostic(NoAwaitInPromiseMethodsDiagnostic(
+                    ctx.diagnostic(no_await_in_promise_methods_diagnostic(
                         Span::new(await_expr.span.start, await_expr.span.start + 5),
-                        property_name.to_string(),
+                        property_name,
                     ));
                 }
             }

@@ -1,21 +1,20 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode, Fix};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoZeroFractionsDiagnostic {
-    #[error("eslint-plugin-unicorn(no-zero-fractions): Don't use a zero fraction in the number.")]
-    #[diagnostic(severity(warning), help("Replace the number literal with `{1}`"))]
-    ZeroFraction(#[label] Span, String),
-    #[error("eslint-plugin-unicorn(no-zero-fractions): Don't use a dangling dot in the number.")]
-    #[diagnostic(severity(warning), help("Replace the number literal with `{1}`"))]
-    DanglingDot(#[label] Span, String),
+fn zero_fraction(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Don't use a zero fraction in the number.")
+        .with_help(format!("Replace the number literal with `{x1}`"))
+        .with_label(span0)
+}
+
+fn dangling_dot(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Don't use a dangling dot in the number.")
+        .with_help(format!("Replace the number literal with `{x1}`"))
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -44,7 +43,8 @@ declare_oxc_lint!(
     /// const foo = 1.1;
     /// ```
     NoZeroFractions,
-    style
+    style,
+    fix
 );
 
 impl Rule for NoZeroFractions {
@@ -53,18 +53,20 @@ impl Rule for NoZeroFractions {
             return;
         };
 
-        let Some((fmt, is_dangling_dot)) = format_raw(number_literal.raw) else { return };
+        let Some((fmt, is_dangling_dot)) = format_raw(number_literal.raw) else {
+            return;
+        };
         if fmt == number_literal.raw {
             return;
         };
 
         ctx.diagnostic_with_fix(
             if is_dangling_dot {
-                NoZeroFractionsDiagnostic::DanglingDot(number_literal.span, fmt.clone())
+                dangling_dot(number_literal.span, &fmt)
             } else {
-                NoZeroFractionsDiagnostic::ZeroFraction(number_literal.span, fmt.clone())
+                zero_fraction(number_literal.span, &fmt)
             },
-            || Fix::new(fmt, number_literal.span),
+            |fixer| fixer.replace(number_literal.span, fmt),
         );
     }
 }
@@ -75,8 +77,7 @@ fn format_raw(raw: &str) -> Option<(String, bool)> {
     let dot_and_fractions = after_parts.next()?;
     let after = after_parts.next().unwrap_or("");
 
-    let fixed_dot_and_fractions =
-        dot_and_fractions.trim_end_matches(|c: char| c == '0' || c == '.' || c == '_');
+    let fixed_dot_and_fractions = dot_and_fractions.trim_end_matches(['0', '.', '_']);
     let formatted = format!(
         "{}{}{}{}",
         if before.is_empty() && fixed_dot_and_fractions.is_empty() { "0" } else { before },

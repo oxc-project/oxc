@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_diagnostics"
-version                = "0.12.5"
+version                = "0.23.0"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -10,6 +10,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/src"]
 
 [lints]
 workspace = true
@@ -18,8 +19,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-thiserror = { workspace = true }
-miette    = { workspace = true }
+miette = { workspace = true }
 
 unicode-width = { workspace = true }
 owo-colors    = { workspace = true }

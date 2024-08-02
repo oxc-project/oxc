@@ -1,8 +1,9 @@
+#![allow(clippy::print_stdout)]
 use std::{env, path::Path};
 
 use base64::{prelude::BASE64_STANDARD, Engine};
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions, CodegenReturn};
+use oxc_codegen::{CodeGenerator, CodegenReturn};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -26,14 +27,12 @@ fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    let codegen_options = CodegenOptions { enable_source_map: true, enable_typescript: true };
-
-    let CodegenReturn { source_text, source_map } =
-        Codegen::<false>::new(path.to_string_lossy().as_ref(), &source_text, codegen_options)
-            .build(&ret.program);
+    let CodegenReturn { source_text, source_map } = CodeGenerator::new()
+        .enable_source_map(path.to_string_lossy().as_ref(), &source_text)
+        .build(&ret.program);
 
     if let Some(source_map) = source_map {
-        let result = source_map.to_json_string().unwrap();
+        let result = source_map.to_json_string();
         let hash = BASE64_STANDARD.encode(format!(
             "{}\0{}{}\0{}",
             source_text.len(),

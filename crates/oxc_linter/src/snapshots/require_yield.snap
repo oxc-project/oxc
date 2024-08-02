@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: require_yield
 ---
   ⚠ eslint(require-yield): This generator function does not have 'yield'
    ╭─[require_yield.tsx:1:11]

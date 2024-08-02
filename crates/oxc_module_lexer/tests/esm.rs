@@ -1,10 +1,9 @@
 //! <https://github.com/guybedford/es-module-lexer/blob/main/test/_unit.cjs>
 
 use oxc_allocator::Allocator;
+use oxc_module_lexer::ImportType;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
-use oxc_module_lexer::ImportType;
 
 #[derive(Debug, Clone)]
 struct ImportSpecifier {
@@ -416,7 +415,9 @@ fn regexp_division() {
 
 #[test]
 fn multiline_string_escapes() {
-    parse("const str = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wAAAAAzJ3zzAAAGTElEQV\\\n\t\tRIx+VXe1BU1xn/zjn7ugvL4sIuQnll5U0ELAQxig7WiQYz6NRHa6O206qdSXXSxs60dTK200zNY9q0dcRpMs1jkrRNWmaijCVoaU';\n");
+    parse(
+        "const str = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAABmJLR0QA/wAAAAAzJ3zzAAAGTElEQV\\\n\t\tRIx+VXe1BU1xn/zjn7ugvL4sIuQnll5U0ELAQxig7WiQYz6NRHa6O206qdSXXSxs60dTK200zNY9q0dcRpMs1jkrRNWmaijCVoaU';\n",
+    );
 }
 
 #[test]
@@ -728,7 +729,7 @@ import { g } from './test-circular2.js';
 
 #[test]
 fn comments() {
-    let source = " /*\n                   VERSION\n                 */\nimport util from 'util';\n\n//\nfunction x() {\n}\n\n/**/\n// '\n/* / */\n/*\n\n   * export { b }\n\\*/\nexport { a }\n\n      function () {\n/***/\n      }\n    ";
+    let source = " /*\n                   VERSION\n                 */\nimport util from 'util';\n\n//\nfunction x() {\n}\n\n/**/\n// '\n/* / */\n/*\n\n   * export { b }\n\\*/\nexport { a }\n\n      function d() {\n/***/\n      }\n    ";
     let ModuleLexer { imports, exports, .. } = parse(source);
     assert_eq!(imports.len(), 1);
     assert_eq!(source.slice(imports[0].s, imports[0].e), "util");

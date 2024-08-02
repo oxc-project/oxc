@@ -1,13 +1,11 @@
+#![allow(clippy::print_stdout)]
 //! The simplest linter
 
 use std::{env, path::Path};
 
 use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_span::{SourceType, Span};
@@ -35,18 +33,18 @@ fn main() -> std::io::Result<()> {
     let semantic_ret =
         SemanticBuilder::new(&source_text, source_type).with_trivias(ret.trivias).build(program);
 
-    let mut errors: Vec<oxc_diagnostics::Error> = vec![];
+    let mut errors: Vec<OxcDiagnostic> = vec![];
 
     for node in semantic_ret.semantic.nodes().iter() {
         match node.kind() {
             AstKind::DebuggerStatement(stmt) => {
-                errors.push(NoDebugger(stmt.span).into());
+                errors.push(no_debugger(stmt.span));
             }
             AstKind::ArrayPattern(array) if array.elements.is_empty() => {
-                errors.push(NoEmptyPattern("array", array.span).into());
+                errors.push(no_empty_pattern("array", array.span));
             }
             AstKind::ObjectPattern(object) if object.properties.is_empty() => {
-                errors.push(NoEmptyPattern("object", object.span).into());
+                errors.push(no_empty_pattern("object", object.span));
             }
             _ => {}
         }
@@ -61,7 +59,7 @@ fn main() -> std::io::Result<()> {
     Ok(())
 }
 
-fn print_errors(source_text: &str, errors: Vec<oxc_diagnostics::Error>) {
+fn print_errors(source_text: &str, errors: Vec<OxcDiagnostic>) {
     for error in errors {
         let error = error.with_source_code(source_text.to_string());
         println!("{error:?}");
@@ -75,10 +73,9 @@ fn print_errors(source_text: &str, errors: Vec<oxc_diagnostics::Error>) {
 // 1 │ debugger;
 //   · ─────────
 //   ╰────
-#[derive(Debug, Error, Diagnostic)]
-#[error("`debugger` statement is not allowed")]
-#[diagnostic(severity(warning))]
-struct NoDebugger(#[label] pub Span);
+fn no_debugger(debugger_span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("`debugger` statement is not allowed").with_label(debugger_span)
+}
 
 // This prints:
 //
@@ -88,7 +85,7 @@ struct NoDebugger(#[label] pub Span);
 //   ·     ─┬
 //   ·      ╰── Empty object binding pattern
 //   ╰────
-#[derive(Debug, Error, Diagnostic)]
-#[error("empty destructuring pattern is not allowed")]
-#[diagnostic(severity(warning))]
-struct NoEmptyPattern(&'static str, #[label("Empty {0} binding pattern")] pub Span);
+fn no_empty_pattern(binding_kind: &str, span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::error("empty destructuring pattern is not allowed")
+        .with_label(span.label(format!("Empty {binding_kind} binding pattern")))
+}

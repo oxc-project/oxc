@@ -11,16 +11,18 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/src"]
 
 [lints]
 workspace = true
 
 [lib]
 proc-macro = true
+test       = false
 doctest    = false
 
 [dependencies]
-syn          = { workspace = true, features = ["derive", "parsing", "proc-macro", "printing"] }
+syn          = { workspace = true, features = ["derive", "parsing", "printing", "proc-macro"] }
 quote        = { workspace = true }
 proc-macro2  = { workspace = true }
 itertools    = { workspace = true }

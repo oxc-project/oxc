@@ -1,44 +1,53 @@
-use std::{fmt, fs::read_to_string, str::FromStr};
+use std::{fmt, str::FromStr};
 
-use crate::project_root;
-use crate::request::agent;
+use crate::{project_root, request::agent};
 
 pub struct TestFiles {
     files: Vec<TestFile>,
 }
 
-impl Default for TestFiles {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl TestFiles {
-    pub fn new() -> Self {
-        let files = Self::get_libs().into_iter().map(|file| TestFile::new(&file)).collect();
-        Self { files }
-    }
-
     pub fn files(&self) -> &Vec<TestFile> {
         &self.files
     }
 
-    fn get_libs() -> Vec<String> {
-        let root = project_root();
-        read_to_string(root.join("./tasks/libs.txt"))
-            .unwrap()
-            .lines()
-            .map(ToString::to_string)
-            .collect::<Vec<_>>()
+    pub fn react() -> Self {
+        Self {
+            files: vec![TestFile::new(
+                "https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js",
+            )],
+        }
+    }
+
+    /// These are kept in sync with <https://github.com/privatenumber/minification-benchmarks/tree/master>
+    /// for checking against minification size in `tasks/minsize/minsize.snap`.
+    pub fn minifier() -> Self {
+        Self {
+            files: vec![
+                TestFile::new("https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/d3@6.3.1/dist/d3.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/terser@5.30.3/dist/bundle.min.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/three@0.124.0/build/three.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/victory@35.8.4/dist/victory.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/echarts@5.1.1/dist/echarts.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/typescript@4.9.5/lib/typescript.js"),
+            ],
+        }
     }
 
     pub fn minimal() -> Self {
-        let files = Self::get_libs()
-            .into_iter()
-            .filter(|name| ["react", "antd", "typescript"].iter().any(|f| name.contains(f)))
-            .map(|file| TestFile::new(&file))
-            .collect();
-        Self { files }
+        Self {
+            files: vec![
+                TestFile::new("https://cdn.jsdelivr.net/npm/react@17.0.2/cjs/react.development.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/antd@4.16.1/dist/antd.js"),
+                TestFile::new("https://cdn.jsdelivr.net/npm/typescript@4.9.5/lib/typescript.js"),
+            ],
+        }
     }
 
     pub fn complicated() -> Self {
@@ -94,7 +103,6 @@ impl TestFile {
         let file = project_root().join("target").join(filename);
 
         if let Ok(code) = std::fs::read_to_string(&file) {
-            println!("[{filename}] - using [{}]", file.display());
             Ok((filename.to_string(), code))
         } else {
             println!("[{filename}] - Downloading [{lib}] to [{}]", file.display());

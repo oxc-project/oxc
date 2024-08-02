@@ -2,34 +2,25 @@ use oxc_ast::{
     ast::{match_simple_assignment_target, AssignmentTarget, BindingPatternKind, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-this-alias): Unexpected aliasing of 'this' to local variable.")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well."
-    )
-)]
-struct NoThisAliasDiagnostic(#[label] pub Span);
+fn no_this_alias_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected aliasing of 'this' to local variable.")
+        .with_help("Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES6 practices or not managing scope well.")
+        .with_label(span0)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(no-this-alias): Unexpected aliasing of members of 'this' to local variables."
-)]
-#[diagnostic(
-    severity(warning),
-    help("Disabling destructuring of this is not a default, consider allowing destructuring")
-)]
-struct NoThisDestructureDiagnostic(#[label] pub Span);
+fn no_this_destructure_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected aliasing of members of 'this' to local variables.")
+        .with_help(
+            "Disabling destructuring of this is not a default, consider allowing destructuring",
+        )
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoThisAlias(Box<NoThisAliasConfig>);
@@ -96,9 +87,6 @@ impl Rule for NoThisAlias {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if !ctx.source_type().is_typescript() {
-            return;
-        }
         match node.kind() {
             AstKind::VariableDeclarator(decl) => {
                 let Some(init) = &decl.init else { return };
@@ -115,12 +103,12 @@ impl Rule for NoThisAlias {
 
                 if let BindingPatternKind::BindingIdentifier(identifier) = &decl.id.kind {
                     if !self.allow_names.iter().any(|s| s.as_str() == identifier.name.as_str()) {
-                        ctx.diagnostic(NoThisAliasDiagnostic(identifier.span));
+                        ctx.diagnostic(no_this_alias_diagnostic(identifier.span));
                     }
 
                     return;
                 }
-                ctx.diagnostic(NoThisDestructureDiagnostic(decl.id.kind.span()));
+                ctx.diagnostic(no_this_destructure_diagnostic(decl.id.kind.span()));
             }
             AstKind::AssignmentExpression(assignment) => {
                 if !rhs_is_this_reference(&assignment.right) {
@@ -132,11 +120,11 @@ impl Rule for NoThisAlias {
                         if self.allow_destructuring {
                             return;
                         }
-                        ctx.diagnostic(NoThisDestructureDiagnostic(left.span()));
+                        ctx.diagnostic(no_this_destructure_diagnostic(left.span()));
                     }
                     AssignmentTarget::AssignmentTargetIdentifier(id) => {
                         if !self.allow_names.iter().any(|s| s.as_str() == id.name.as_str()) {
-                            ctx.diagnostic(NoThisAliasDiagnostic(id.span));
+                            ctx.diagnostic(no_this_alias_diagnostic(id.span));
                         }
                     }
                     left @ match_simple_assignment_target!(AssignmentTarget) => {
@@ -145,7 +133,7 @@ impl Rule for NoThisAlias {
                             if let Some(id) = expr.get_identifier_reference() {
                                 if !self.allow_names.iter().any(|s| s.as_str() == id.name.as_str())
                                 {
-                                    ctx.diagnostic(NoThisAliasDiagnostic(id.span));
+                                    ctx.diagnostic(no_this_alias_diagnostic(id.span));
                                 }
                             }
                         }
@@ -154,6 +142,9 @@ impl Rule for NoThisAlias {
             }
             _ => {}
         }
+    }
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

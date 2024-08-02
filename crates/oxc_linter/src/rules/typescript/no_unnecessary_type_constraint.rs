@@ -1,24 +1,22 @@
 use oxc_ast::{ast::TSType, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(no-unnecessary-type-constraint): constraining the generic type {0:?} to {1:?} does nothing and is unnecessary"
-)]
-#[diagnostic(severity(warning), help("Remove the unnecessary {1:?} constraint"))]
-struct NoUnnecessaryTypeConstraintDiagnostic(
-    CompactStr,
-    &'static str,
-    #[label] pub Span,
-    #[label] pub Span,
-);
+fn no_unnecessary_type_constraint_diagnostic(
+    x0: &str,
+    x1: &str,
+    span2: Span,
+    span3: Span,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "constraining the generic type {x0:?} to {x1:?} does nothing and is unnecessary"
+    ))
+    .with_help(format!("Remove the unnecessary {x1:?} constraint"))
+    .with_labels([span2, span3])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnnecessaryTypeConstraint;
@@ -59,8 +57,8 @@ impl Rule for NoUnnecessaryTypeConstraint {
                         TSType::TSUnknownKeyword(t) => ("unknown", t.span),
                         _ => continue,
                     };
-                    ctx.diagnostic(NoUnnecessaryTypeConstraintDiagnostic(
-                        param.name.name.to_compact_str(),
+                    ctx.diagnostic(no_unnecessary_type_constraint_diagnostic(
+                        param.name.name.as_str(),
                         value,
                         param.name.span,
                         ty_span,
@@ -68,6 +66,10 @@ impl Rule for NoUnnecessaryTypeConstraint {
                 }
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

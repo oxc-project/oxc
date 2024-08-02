@@ -1,14 +1,10 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, GetSpan, Span};
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_general_jest_fn_call, JestGeneralFnKind,
@@ -16,10 +12,9 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-test-prefixes): Use {0:?} instead.")]
-#[diagnostic(severity(warning))]
-struct NoTestPrefixesDiagnostic(CompactStr, #[label] pub Span);
+fn no_test_prefixes_diagnostic(x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Use {x1:?} instead.")).with_label(span2)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTestPrefixes;
@@ -46,8 +41,20 @@ declare_oxc_lint!(
     /// xtest('foo'); // invalid
     /// xdescribe('foo'); // invalid
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-test-prefixes.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-test-prefixes": "error"
+    ///   }
+    /// }
+    /// ```
     NoTestPrefixes,
-    style
+    style,
+    fix
 );
 
 impl Rule for NoTestPrefixes {
@@ -60,12 +67,16 @@ impl Rule for NoTestPrefixes {
 
 fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
-    let AstKind::CallExpression(call_expr) = node.kind() else { return };
+    let AstKind::CallExpression(call_expr) = node.kind() else {
+        return;
+    };
     let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
         return;
     };
     let ParsedGeneralJestFnCall { kind, name, .. } = &jest_fn_call;
-    let Some(kind) = kind.to_general() else { return };
+    let Some(kind) = kind.to_general() else {
+        return;
+    };
 
     if !matches!(kind, JestGeneralFnKind::Describe | JestGeneralFnKind::Test) {
         return;
@@ -84,14 +95,13 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     };
 
     let preferred_node_name = get_preferred_node_names(&jest_fn_call);
-    let preferred_node_name_cloned = preferred_node_name.clone();
 
-    ctx.diagnostic_with_fix(NoTestPrefixesDiagnostic(preferred_node_name, span), || {
-        Fix::new(preferred_node_name_cloned.to_string(), span)
+    ctx.diagnostic_with_fix(no_test_prefixes_diagnostic(&preferred_node_name, span), |fixer| {
+        fixer.replace(span, preferred_node_name)
     });
 }
 
-fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> CompactStr {
+fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> String {
     let ParsedGeneralJestFnCall { members, name, .. } = jest_fn_call;
 
     let preferred_modifier = if name.starts_with('f') { "only" } else { "skip" };
@@ -103,9 +113,9 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> CompactSt
     let name_slice = &name[1..];
 
     if member_names.is_empty() {
-        CompactStr::from(format!("{name_slice}.{preferred_modifier}"))
+        format!("{name_slice}.{preferred_modifier}")
     } else {
-        CompactStr::from(format!("{name_slice}.{preferred_modifier}.{member_names}"))
+        format!("{name_slice}.{preferred_modifier}.{member_names}")
     }
 }
 
@@ -113,7 +123,7 @@ fn get_preferred_node_names(jest_fn_call: &ParsedGeneralJestFnCall) -> CompactSt
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("describe('foo', function () {})", None),
         ("it('foo', function () {})", None),
         ("it.concurrent('foo', function () {})", None),
@@ -133,7 +143,7 @@ fn test() {
         ("[1,2,3].forEach()", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("fdescribe('foo', function () {})", None),
         ("xdescribe.each([])('foo', function () {})", None),
         ("fit('foo', function () {})", None),
@@ -167,5 +177,35 @@ fn test() {
         ),
     ];
 
-    Tester::new(NoTestPrefixes::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        ("describe(\"foo\", function () {})", None),
+        ("it(\"foo\", function () {})", None),
+        ("it.concurrent(\"foo\", function () {})", None),
+        ("test(\"foo\", function () {})", None),
+        ("test.concurrent(\"foo\", function () {})", None),
+        ("describe.only(\"foo\", function () {})", None),
+        ("it.only(\"foo\", function () {})", None),
+        ("it.each()(\"foo\", function () {})", None),
+    ];
+
+    let fail_vitest = vec![
+        ("fdescribe(\"foo\", function () {})", None),
+        ("xdescribe.each([])(\"foo\", function () {})", None),
+        ("fit(\"foo\", function () {})", None),
+        ("xdescribe(\"foo\", function () {})", None),
+        ("xit(\"foo\", function () {})", None),
+        ("xtest(\"foo\", function () {})", None),
+        ("xit.each``(\"foo\", function () {})", None),
+        ("xtest.each``(\"foo\", function () {})", None),
+        ("xit.each([])(\"foo\", function () {})", None),
+        ("xtest.each([])(\"foo\", function () {})", None),
+    ];
+
+    pass.extend(pass_vitest);
+    fail.extend(fail_vitest);
+
+    Tester::new(NoTestPrefixes::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }

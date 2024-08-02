@@ -1,0 +1,134 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ event
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo()
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo.bar()
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ event
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo()
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo.bar()
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:17]
+ 1 │ function fn() { foo; }
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'event'. Use local event parameter.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ event
+   · ─────
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo()
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'foo'. Use bar instead.
+   ╭─[no_restricted_globals.tsx:1:1]
+ 1 │ foo.bar()
+   · ───
+   ╰────
+
+  ⚠ eslint(no-restricted-globals): Unexpected use of 'hasOwnProperty'.
+   ╭─[no_restricted_globals.tsx:1:18]
+ 1 │ var foo = obj => hasOwnProperty(obj, 'name');
+   ·                  ──────────────
+   ╰────

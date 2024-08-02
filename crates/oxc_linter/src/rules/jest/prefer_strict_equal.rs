@@ -1,22 +1,19 @@
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use crate::{
     context::LintContext,
-    fixer::Fix,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-strict-equal): Suggest using `toStrictEqual()`.")]
-#[diagnostic(severity(warning), help("Use `toStrictEqual()` instead"))]
-struct UseToStrictEqual(#[label] Span);
+fn use_to_strict_equal(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toStrictEqual()`.")
+        .with_help("Use `toStrictEqual()` instead")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStrictEqual;
@@ -38,6 +35,7 @@ declare_oxc_lint!(
     ///
     PreferStrictEqual,
     style,
+    fix
 );
 
 impl Rule for PreferStrictEqual {
@@ -67,16 +65,14 @@ impl PreferStrictEqual {
         };
 
         if matcher_name.eq("toEqual") {
-            ctx.diagnostic_with_fix(UseToStrictEqual(matcher.span), || {
-                let mut formatter = ctx.codegen();
-                formatter.print_str(
-                    matcher
-                        .span
-                        .source_text(ctx.source_text())
-                        .replace(matcher_name.to_string().as_str(), "toStrictEqual")
-                        .as_bytes(),
-                );
-                Fix::new(formatter.into_source_text(), matcher.span)
+            ctx.diagnostic_with_fix(use_to_strict_equal(matcher.span), |fixer| {
+                let replacement = match fixer.source_range(matcher.span).chars().next().unwrap() {
+                    '\'' => "'toStrictEqual'",
+                    '"' => "\"toStrictEqual\"",
+                    '`' => "`toStrictEqual`",
+                    _ => "toStrictEqual",
+                };
+                fixer.replace(matcher.span, replacement)
             });
         }
     }

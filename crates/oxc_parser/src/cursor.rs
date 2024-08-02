@@ -1,8 +1,9 @@
 //! Code related to navigating `Token`s from the lexer
 
-use oxc_ast::ast::RegExpFlags;
+use oxc_allocator::Vec;
+use oxc_ast::ast::{Decorator, RegExpFlags};
 use oxc_diagnostics::Result;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     diagnostics,
@@ -19,6 +20,7 @@ pub struct ParserCheckpoint<'a> {
 }
 
 impl<'a> ParserImpl<'a> {
+    #[inline]
     pub(crate) fn start_span(&self) -> Span {
         let token = self.cur_token();
         Span::new(token.start, 0)
@@ -32,11 +34,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Get current token
+    #[inline]
     pub(crate) fn cur_token(&self) -> Token {
         self.token
     }
 
     /// Get current Kind
+    #[inline]
     pub(crate) fn cur_kind(&self) -> Kind {
         self.token.kind
     }
@@ -46,10 +50,8 @@ impl<'a> ParserImpl<'a> {
         let range = self.cur_token().span();
         // SAFETY:
         // range comes from the parser, which are ensured to meeting the criteria of `get_unchecked`.
-        #[allow(unsafe_code)]
-        unsafe {
-            self.source_text.get_unchecked(range.start as usize..range.end as usize)
-        }
+
+        unsafe { self.source_text.get_unchecked(range.start as usize..range.end as usize) }
     }
 
     /// Get current string
@@ -63,21 +65,25 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Peek next token, returns EOF for final peek
+    #[inline]
     pub(crate) fn peek_token(&mut self) -> Token {
         self.lexer.lookahead(1)
     }
 
     /// Peek next kind, returns EOF for final peek
+    #[inline]
     pub(crate) fn peek_kind(&mut self) -> Kind {
         self.peek_token().kind
     }
 
     /// Peek at kind
+    #[inline]
     pub(crate) fn peek_at(&mut self, kind: Kind) -> bool {
         self.peek_token().kind == kind
     }
 
     /// Peek nth token
+    #[inline]
     pub(crate) fn nth(&mut self, n: u8) -> Token {
         if n == 0 {
             return self.cur_token();
@@ -86,16 +92,19 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Peek at nth kind
+    #[inline]
     pub(crate) fn nth_at(&mut self, n: u8, kind: Kind) -> bool {
         self.nth(n).kind == kind
     }
 
     /// Peek nth kind
+    #[inline]
     pub(crate) fn nth_kind(&mut self, n: u8) -> Kind {
         self.nth(n).kind
     }
 
     /// Checks if the current index has token `Kind`
+    #[inline]
     pub(crate) fn at(&self, kind: Kind) -> bool {
         self.cur_kind() == kind
     }
@@ -107,7 +116,7 @@ impl<'a> ParserImpl<'a> {
     fn test_escaped_keyword(&mut self, kind: Kind) {
         if self.cur_token().escaped() && kind.is_all_keyword() {
             let span = self.cur_token().span();
-            self.error(diagnostics::EscapedKeyword(span));
+            self.error(diagnostics::escaped_keyword(span));
         }
     }
 
@@ -128,6 +137,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance and return true if we are at `Kind`, return false otherwise
+    #[inline]
     pub(crate) fn eat(&mut self, kind: Kind) -> bool {
         if self.at(kind) {
             self.advance(kind);
@@ -137,6 +147,7 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance and return true if we are at `Kind`
+    #[inline]
     pub(crate) fn bump(&mut self, kind: Kind) {
         if self.at(kind) {
             self.advance(kind);
@@ -144,11 +155,13 @@ impl<'a> ParserImpl<'a> {
     }
 
     /// Advance any token
+    #[inline]
     pub(crate) fn bump_any(&mut self) {
         self.advance(self.cur_kind());
     }
 
     /// Advance and change token type, useful for changing keyword to ident
+    #[inline]
     pub(crate) fn bump_remap(&mut self, kind: Kind) {
         self.advance(kind);
     }
@@ -157,8 +170,8 @@ impl<'a> ParserImpl<'a> {
     /// # Errors
     pub(crate) fn asi(&mut self) -> Result<()> {
         if !self.can_insert_semicolon() {
-            let span = Span::new(self.prev_token_end, self.cur_token().start);
-            return Err(diagnostics::AutoSemicolonInsertion(span).into());
+            let span = Span::new(self.prev_token_end, self.prev_token_end);
+            return Err(diagnostics::auto_semicolon_insertion(span));
         }
         if self.at(Kind::Semicolon) {
             self.advance(Kind::Semicolon);
@@ -178,15 +191,14 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn expect_without_advance(&mut self, kind: Kind) -> Result<()> {
         if !self.at(kind) {
             let range = self.cur_token().span();
-            return Err(
-                diagnostics::ExpectToken(kind.to_str(), self.cur_kind().to_str(), range).into()
-            );
+            return Err(diagnostics::expect_token(kind.to_str(), self.cur_kind().to_str(), range));
         }
         Ok(())
     }
 
     /// Expect a `Kind` or return error
     /// # Errors
+    #[inline]
     pub(crate) fn expect(&mut self, kind: Kind) -> Result<()> {
         self.expect_without_advance(kind)?;
         self.advance(kind);
@@ -241,10 +253,23 @@ impl<'a> ParserImpl<'a> {
         }
     }
 
-    pub(crate) fn re_lex_ts_l_angle(&mut self) {
+    pub(crate) fn re_lex_l_angle(&mut self) -> Kind {
         let kind = self.cur_kind();
         if matches!(kind, Kind::ShiftLeft | Kind::ShiftLeftEq | Kind::LtEq) {
             self.token = self.lexer.re_lex_as_typescript_l_angle(kind);
+            self.token.kind
+        } else {
+            kind
+        }
+    }
+
+    pub(crate) fn re_lex_ts_r_angle(&mut self) -> Kind {
+        let kind = self.cur_kind();
+        if matches!(kind, Kind::ShiftRight | Kind::ShiftRight3) {
+            self.token = self.lexer.re_lex_as_typescript_r_angle(kind);
+            self.token.kind
+        } else {
+            kind
         }
     }
 
@@ -271,15 +296,17 @@ impl<'a> ParserImpl<'a> {
     pub(crate) fn try_parse<T>(
         &mut self,
         func: impl FnOnce(&mut ParserImpl<'a>) -> Result<T>,
-    ) -> Result<T> {
+    ) -> Option<T> {
         let checkpoint = self.checkpoint();
         let ctx = self.ctx;
         let result = func(self);
-        if result.is_err() {
+        if let Ok(result) = result {
+            Some(result)
+        } else {
             self.ctx = ctx;
             self.rewind(checkpoint);
+            None
         }
-        result
     }
 
     pub(crate) fn lookahead<U>(&mut self, predicate: impl Fn(&mut ParserImpl<'a>) -> U) -> U {
@@ -289,31 +316,119 @@ impl<'a> ParserImpl<'a> {
         answer
     }
 
-    pub(crate) fn without_context<F, T>(&mut self, flags: Context, cb: F) -> T
+    #[allow(clippy::inline_always)]
+    #[inline(always)] // inline because this is always on a hot path
+    pub(crate) fn context<F, T>(&mut self, add_flags: Context, remove_flags: Context, cb: F) -> T
     where
         F: FnOnce(&mut Self) -> T,
     {
-        let context_flags_to_clear = flags & self.ctx;
-        if !context_flags_to_clear.is_empty() {
-            self.ctx &= !context_flags_to_clear;
-            let result = cb(self);
-            self.ctx |= context_flags_to_clear;
-            return result;
-        }
-        cb(self)
+        let ctx = self.ctx;
+        self.ctx = ctx.difference(remove_flags).union(add_flags);
+        let result = cb(self);
+        self.ctx = ctx;
+        result
     }
 
-    pub(crate) fn with_context<F, T>(&mut self, flags: Context, cb: F) -> T
+    pub(crate) fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
+        let decorators = std::mem::take(&mut self.state.decorators);
+        self.ast.vec_from_iter(decorators)
+    }
+
+    pub(crate) fn parse_normal_list<F, T>(
+        &mut self,
+        open: Kind,
+        close: Kind,
+        f: F,
+    ) -> Result<Vec<'a, T>>
     where
-        F: FnOnce(&mut Self) -> T,
+        F: Fn(&mut Self) -> Result<Option<T>>,
     {
-        let context_flags_to_set = flags & !self.ctx;
-        if !context_flags_to_set.is_empty() {
-            self.ctx |= context_flags_to_set;
-            let result = cb(self);
-            self.ctx &= !context_flags_to_set;
-            return result;
+        self.expect(open)?;
+        let mut list = self.ast.vec();
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if let Some(e) = f(self)? {
+                list.push(e);
+            } else {
+                break;
+            }
         }
-        cb(self)
+        self.expect(close)?;
+        Ok(list)
+    }
+
+    pub(crate) fn parse_delimited_list<F, T>(
+        &mut self,
+        close: Kind,
+        separator: Kind,
+        trailing_separator: bool,
+        f: F,
+    ) -> Result<Vec<'a, T>>
+    where
+        F: Fn(&mut Self) -> Result<T>,
+    {
+        let mut list = self.ast.vec();
+        let mut first = true;
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if first {
+                first = false;
+            } else {
+                if !trailing_separator && self.at(separator) && self.peek_at(close) {
+                    break;
+                }
+                self.expect(separator)?;
+                if self.at(close) {
+                    break;
+                }
+            }
+            list.push(f(self)?);
+        }
+        Ok(list)
+    }
+
+    pub(crate) fn parse_delimited_list_with_rest<E, R, A, B>(
+        &mut self,
+        close: Kind,
+        parse_element: E,
+        parse_rest: R,
+    ) -> Result<(Vec<'a, A>, Option<B>)>
+    where
+        E: Fn(&mut Self) -> Result<A>,
+        R: Fn(&mut Self) -> Result<B>,
+        B: GetSpan,
+    {
+        let mut list = self.ast.vec();
+        let mut rest = None;
+        let mut first = true;
+        loop {
+            let kind = self.cur_kind();
+            if kind == close || kind == Kind::Eof {
+                break;
+            }
+            if first {
+                first = false;
+            } else {
+                self.expect(Kind::Comma)?;
+                if self.at(close) {
+                    break;
+                }
+            }
+
+            if self.at(Kind::Dot3) {
+                if let Some(r) = rest.replace(parse_rest(self)?) {
+                    self.error(diagnostics::binding_rest_element_last(r.span()));
+                }
+            } else {
+                list.push(parse_element(self)?);
+            }
+        }
+        Ok((list, rest))
     }
 }

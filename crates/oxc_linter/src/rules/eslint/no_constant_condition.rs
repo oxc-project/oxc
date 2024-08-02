@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::IsConstant, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-constant-condition): Unexpected constant condition")]
-#[diagnostic(severity(warning), help("Constant expression as a test condition is not allowed"))]
-struct NoConstantConditionDiagnostic(#[label] pub Span);
+fn no_constant_condition_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected constant condition")
+        .with_help("Constant expression as a test condition is not allowed")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConstantCondition {
@@ -54,12 +52,12 @@ impl Rule for NoConstantCondition {
         match node.kind() {
             AstKind::IfStatement(if_stmt) => {
                 if if_stmt.test.is_constant(true, ctx) {
-                    ctx.diagnostic(NoConstantConditionDiagnostic(if_stmt.test.span()));
+                    ctx.diagnostic(no_constant_condition_diagnostic(if_stmt.test.span()));
                 }
             }
             AstKind::ConditionalExpression(condition_expr) => {
                 if condition_expr.test.is_constant(true, ctx) {
-                    ctx.diagnostic(NoConstantConditionDiagnostic(condition_expr.test.span()));
+                    ctx.diagnostic(no_constant_condition_diagnostic(condition_expr.test.span()));
                 }
             }
             _ => {}

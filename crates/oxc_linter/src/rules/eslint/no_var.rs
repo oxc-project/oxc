@@ -1,17 +1,15 @@
 use oxc_ast::{ast::VariableDeclarationKind, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-var): Unexpected var, use let or const instead.")]
-#[diagnostic(severity(warning), help("Replace var with let or const"))]
-struct NoVarDiagnostic(#[label] pub Span);
+fn no_var_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected var, use let or const instead.")
+        .with_help("Replace var with let or const")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoVar;
@@ -46,7 +44,7 @@ impl Rule for NoVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::VariableDeclaration(dec) = node.kind() {
             if dec.kind == VariableDeclarationKind::Var {
-                ctx.diagnostic(NoVarDiagnostic(Span::new(dec.span.start, dec.span.start + 3)));
+                ctx.diagnostic(no_var_diagnostic(Span::new(dec.span.start, dec.span.start + 3)));
             }
         }
     }

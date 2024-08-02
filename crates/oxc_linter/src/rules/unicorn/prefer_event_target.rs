@@ -1,17 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-event-target): Prefer `EventTarget` over `EventEmitter`")]
-#[diagnostic(severity(warning), help("Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers."))]
-struct PreferEventTargetDiagnostic(#[label] pub Span);
+fn prefer_event_target_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `EventTarget` over `EventEmitter`")
+        .with_help("Change `EventEmitter` to `EventTarget`. EventEmitters are only available in Node.js, while EventTargets are also available in browsers.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferEventTarget;
@@ -43,7 +41,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferEventTarget {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::IdentifierReference(ident) = node.kind() else { return };
+        let AstKind::IdentifierReference(ident) = node.kind() else {
+            return;
+        };
 
         if ident.name.as_str() != "EventEmitter" {
             return;
@@ -67,7 +67,7 @@ impl Rule for PreferEventTarget {
             _ => return,
         };
 
-        ctx.diagnostic(PreferEventTargetDiagnostic(ident.span));
+        ctx.diagnostic(prefer_event_target_diagnostic(ident.span));
     }
 }
 

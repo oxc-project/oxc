@@ -1,16 +1,14 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-irregular-whitespace): Unexpected irregular whitespace")]
-#[diagnostic(severity(warning), help("Try to remove the irregular whitespace"))]
-struct NoIrregularWhitespaceDiagnostic(#[label] pub Span);
+fn no_irregular_whitespace_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected irregular whitespace")
+        .with_help("Try to remove the irregular whitespace")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoIrregularWhitespace;
@@ -37,7 +35,7 @@ impl Rule for NoIrregularWhitespace {
     fn run_once(&self, ctx: &LintContext) {
         let irregular_whitespaces = ctx.semantic().trivias().irregular_whitespaces();
         for irregular_whitespace in irregular_whitespaces {
-            ctx.diagnostic(NoIrregularWhitespaceDiagnostic(*irregular_whitespace));
+            ctx.diagnostic(no_irregular_whitespace_diagnostic(*irregular_whitespace));
         }
     }
 }

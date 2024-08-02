@@ -1,27 +1,23 @@
+use oxc_ast::{
+    ast::{Argument, Expression},
+    AstKind,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_syntax::operator::BinaryOperator;
+
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-use oxc_ast::{
-    ast::{Argument, Expression},
-    AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::BinaryOperator;
-
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jest(prefer-equality-matcher): Suggest using the built-in equality matchers."
-)]
-#[diagnostic(severity(warning), help("Prefer using one of the equality matchers instead"))]
-struct UseEqualityMatcherDiagnostic(#[label] Span);
+fn use_equality_matcher_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using the built-in equality matchers.")
+        .with_help("Prefer using one of the equality matchers instead")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferEqualityMatcher;
@@ -92,7 +88,7 @@ impl PreferEqualityMatcher {
             return;
         };
 
-        ctx.diagnostic(UseEqualityMatcherDiagnostic(matcher.span));
+        ctx.diagnostic(use_equality_matcher_diagnostic(matcher.span));
     }
 }
 

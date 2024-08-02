@@ -1,8 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -17,10 +14,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(click-events-have-key-events): Enforce a clickable non-interactive element has at least one keyboard event listener.")]
-#[diagnostic(severity(warning), help("Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener."))]
-struct ClickEventsHaveKeyEventsDiagnostic(#[label] pub Span);
+fn click_events_have_key_events_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce a clickable non-interactive element has at least one keyboard event listener.")
+        .with_help("Visible, non-interactive elements with click handlers must have one of keyup, keydown, or keypress listener.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ClickEventsHaveKeyEvents;
@@ -82,7 +80,7 @@ impl Rule for ClickEventsHaveKeyEvents {
             return;
         }
 
-        ctx.diagnostic(ClickEventsHaveKeyEventsDiagnostic(jsx_opening_el.span));
+        ctx.diagnostic(click_events_have_key_events_diagnostic(jsx_opening_el.span));
     }
 }
 

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_irregular_whitespace
 ---
   ⚠ eslint(no-irregular-whitespace): Unexpected irregular whitespace
    ╭─[no_irregular_whitespace.tsx:1:9]

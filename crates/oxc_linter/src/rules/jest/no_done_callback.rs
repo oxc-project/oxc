@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression, FormalParameters},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -18,18 +15,16 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoDoneCallbackDiagnostic {
-    #[error("eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument")]
-    #[diagnostic(
-        severity(warning),
-        help("Return a Promise instead of relying on callback parameter")
-    )]
-    NoDoneCallback(#[label] Span),
+fn no_done_callback(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Function parameter(s) use the `done` argument")
+        .with_help("Return a Promise instead of relying on callback parameter")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-jest(no-done-callback): Function parameter(s) use the `done` argument")]
-    #[diagnostic(severity(warning), help("Use await instead of callback in async functions"))]
-    UseAwaitInsteadOfCallback(#[label] Span),
+fn use_await_instead_of_callback(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Function parameter(s) use the `done` argument")
+        .with_help("Use await instead of callback in async functions")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -127,11 +122,11 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                     };
 
                     if func_expr.r#async {
-                        ctx.diagnostic(NoDoneCallbackDiagnostic::UseAwaitInsteadOfCallback(span));
+                        ctx.diagnostic(use_await_instead_of_callback(span));
                         return;
                     }
 
-                    ctx.diagnostic(NoDoneCallbackDiagnostic::NoDoneCallback(span));
+                    ctx.diagnostic(no_done_callback(span));
                 }
                 Argument::ArrowFunctionExpression(arrow_expr) => {
                     if arrow_expr.params.parameters_count() != 1 + callback_arg_index {
@@ -143,11 +138,11 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
                     };
 
                     if arrow_expr.r#async {
-                        ctx.diagnostic(NoDoneCallbackDiagnostic::UseAwaitInsteadOfCallback(span));
+                        ctx.diagnostic(use_await_instead_of_callback(span));
                         return;
                     }
 
-                    ctx.diagnostic(NoDoneCallbackDiagnostic::NoDoneCallback(span));
+                    ctx.diagnostic(no_done_callback(span));
                 }
                 _ => {}
             }

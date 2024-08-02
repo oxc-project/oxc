@@ -1,0 +1,425 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}) {
+   ·                                       ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:34]
+ 4 │                        */
+ 5 │                       function quux (foo, bar, {baz}) {
+   ·                                           ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:34]
+ 4 │                        */
+ 5 │                       function quux (foo, bar, {baz}) {
+   ·                                           ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}) {
+   ·                                       ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:35]
+ 4 │                        */
+ 5 │                       function quux ({foo: bar = 5} = {}) {
+   ·                                            ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}) {
+   ·                                       ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}) {
+   ·                                       ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}) {
+   ·                                       ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:31]
+ 4 │                        */
+ 5 │                       function quux ({ foo, bar: { baz }}) {
+   ·                                        ───  ─────────────
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}, {bar}) {
+   ·                                       ───    ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}, {bar}) {
+   ·                                       ───    ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:30]
+ 4 │                        */
+ 5 │                       function quux ({foo}, {bar}) {
+   ·                                       ───    ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo, bar) {
+   ·                                      ───  ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:34]
+ 4 │                        */
+ 5 │                       function quux (foo, bar) {
+   ·                                           ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo, bar, baz) {
+   ·                                      ───       ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:39]
+ 5 │                        */
+ 6 │                       function quux (foo, bar, baz) {
+   ·                                                ───
+ 7 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo, bar, baz) {
+   ·                                      ───  ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:26]
+ 4 │                    */
+ 5 │                   function quux ({bar, baz}, foo) {
+   ·                                   ───  ───   ───
+ 6 │                   }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:25]
+ 4 │                    */
+ 5 │                   function quux (foo, {bar, baz}) {
+   ·                                  ───   ───  ───
+ 6 │                   }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:26]
+ 4 │                    */
+ 5 │                   function quux ([bar, baz], foo) {
+   ·                                   ───  ───   ───
+ 6 │                   }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │                       }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:8:42]
+ 7 │                        */
+ 8 │                       function assign (employees, name) {
+   ·                                                   ────
+ 9 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:40]
+ 5 │                        */
+ 6 │                       function quux (baz, {foo: bar}) {
+   ·                                                 ───
+ 7 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:29]
+ 4 │                        */
+ 5 │                       function quux (foo) {
+   ·                                      ───
+ 6 │             
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:8:14]
+ 7 │                     async setData(
+ 8 │                       data: { last_modified?: number }
+   ·                       ────────────────────────────────
+ 9 │                     ) {}
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:34]
+ 5 │                    */
+ 6 │                   function quux ({num, ...extra}) {
+   ·                                           ─────
+ 7 │                   }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:41]
+ 6 │                    */
+ 7 │                   function quux ({opts: {num, ...extra}}) {
+   ·                                                  ─────
+ 8 │                   }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:32]
+ 5 │                    */
+ 6 │                   function baar ([a, ...extra]) {
+   ·                                         ─────
+ 7 │                     //
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:5:31]
+ 4 │                    */
+ 5 │                   function baar (a, ...extra) {
+   ·                                        ─────
+ 6 │                     //
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:39]
+ 5 │                    */
+ 6 │                   const bboxToObj = function ({x, y, width, height}) {
+   ·                                                ─  ─  ─────  ──────
+ 7 │                     return {x, y, width, height};
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:39]
+ 5 │                    */
+ 6 │                   const bboxToObj = function ({x, y, width, height}) {
+   ·                                                ─  ─  ─────  ──────
+ 7 │                     return {x, y, width, height};
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:23]
+ 6 │                      */
+ 7 │                     fetch = ({ url, ...options }, cacheKey) => {
+   ·                                ───     ───────
+ 8 │                     }
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:6:16]
+ 5 │                  */
+ 6 │                 function f(param) {
+   ·                            ─────
+ 7 │                     return !param;
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:34]
+ 6 │                    */
+ 7 │                   function quux ({ foo: { bar } }) {}
+   ·                                           ───
+ 8 │                   
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:34]
+ 6 │                    */
+ 7 │                   function quux ({ foo: { bar } }) {}
+   ·                                           ───
+ 8 │                   
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:27]
+ 6 │                    */
+ 7 │                   function quux ({ foo: { bar } }) {}
+   ·                                    ─────────────
+ 8 │                   
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:7:34]
+ 6 │                    */
+ 7 │                   function quux ({ foo: { bar } }) {}
+   ·                                           ───
+ 8 │                   
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:8:39]
+ 7 │                    */
+ 8 │                   function foo({ foo: { bar: { baz } }}) {}
+   ·                                                ───
+ 9 │                   
+   ╰────
+  help: Add `@param` tag with name.
+
+  ⚠ eslint-plugin-jsdoc(require-param): Missing JSDoc `@param` declaration for function parameters.
+   ╭─[require_param.tsx:3:25]
+ 2 │                     /** Foo. */
+ 3 │                     function foo(a, b, c) {}
+   ·                                  ─  ─  ─
+ 4 │                   
+   ╰────
+  help: Add `@param` tag with name.

@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout, clippy::print_stderr)]
 // Core
 mod runtime;
 mod suite;
@@ -5,7 +6,6 @@ mod suite;
 mod babel;
 mod misc;
 mod test262;
-mod test262_meta;
 mod typescript;
 // Tools
 mod codegen;
@@ -33,7 +33,7 @@ use crate::{
         TransformerBabelCase, TransformerMiscCase, TransformerTest262Case,
         TransformerTypeScriptCase,
     },
-    typescript::{TypeScriptCase, TypeScriptSuite},
+    typescript::{TranspileRunner, TypeScriptCase, TypeScriptSuite, TypeScriptTranspileCase},
 };
 
 /// # Panics
@@ -44,6 +44,7 @@ pub fn project_root() -> PathBuf {
 
 #[derive(Debug, Default)]
 pub struct AppArgs {
+    pub debug: bool,
     pub filter: Option<String>,
     pub detail: bool,
     /// Print mismatch diff
@@ -58,8 +59,9 @@ impl AppArgs {
     pub fn run_all(&self) {
         self.run_parser();
         self.run_codegen();
-        self.run_prettier();
+        // self.run_prettier();
         self.run_transformer();
+        self.run_transpiler();
         // self.run_codegen_runtime();
         self.run_minifier();
     }
@@ -91,6 +93,10 @@ impl AppArgs {
         BabelSuite::<TransformerBabelCase>::new().run("transformer_babel", self);
         TypeScriptSuite::<TransformerTypeScriptCase>::new().run("transformer_typescript", self);
         MiscSuite::<TransformerMiscCase>::new().run("transformer_misc", self);
+    }
+
+    pub fn run_transpiler(&self) {
+        TranspileRunner::<TypeScriptTranspileCase>::new().run("transpile", self);
     }
 
     /// # Panics
@@ -148,6 +154,6 @@ impl AppArgs {
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
-    let args = AppArgs { filter: None, detail: false, diff: false };
+    let args = AppArgs { debug: false, filter: None, detail: false, diff: false };
     args.run_all()
 }

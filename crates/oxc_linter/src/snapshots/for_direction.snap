@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: for_direction
 ---
   ⚠ eslint(for-direction): The update clause in this loop moves the variable in the wrong direction
    ╭─[for_direction.tsx:1:17]

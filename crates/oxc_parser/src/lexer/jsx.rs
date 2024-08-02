@@ -1,12 +1,12 @@
+use memchr::{memchr, memchr2};
+use oxc_syntax::identifier::is_identifier_part;
+
 use super::{
     cold_branch,
     search::{byte_search, safe_byte_match_table, SafeByteMatchTable},
     Kind, Lexer, Token,
 };
 use crate::diagnostics;
-
-use memchr::{memchr, memchr2};
-use oxc_syntax::identifier::is_identifier_part;
 
 static NOT_ASCII_JSX_ID_CONTINUE_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| !(b.is_ascii_alphanumeric() || matches!(b, b'_' | b'$' | b'-')));
@@ -43,7 +43,7 @@ impl<'a> Lexer<'a> {
             Kind::Str
         } else {
             self.source.advance_to_end();
-            self.error(diagnostics::UnterminatedString(self.unterminated_range()));
+            self.error(diagnostics::unterminated_string(self.unterminated_range()));
             Kind::Undetermined
         }
     }
@@ -61,12 +61,12 @@ impl<'a> Lexer<'a> {
     /// `JSXFragment`
     /// { `JSXChildExpressionopt` }
     fn read_jsx_child(&mut self) -> Kind {
-        match self.peek() {
-            Some('<') => {
+        match self.peek_byte() {
+            Some(b'<') => {
                 self.consume_char();
                 Kind::LAngle
             }
-            Some('{') => {
+            Some(b'{') => {
                 self.consume_char();
                 Kind::LCurly
             }
@@ -99,7 +99,7 @@ impl<'a> Lexer<'a> {
     ///   `JSXIdentifier` `IdentifierPart`
     ///   `JSXIdentifier` [no `WhiteSpace` or Comment here] -
     pub(crate) fn continue_lex_jsx_identifier(&mut self) -> Option<Token> {
-        if self.source.peek_byte() != Some(b'-') {
+        if self.peek_byte() != Some(b'-') {
             return None;
         }
         self.consume_char();
@@ -122,7 +122,7 @@ impl<'a> Lexer<'a> {
             // Unicode chars are rare in identifiers, so cold branch to keep common path for ASCII
             // as fast as possible
             cold_branch(|| {
-                while let Some(c) = self.peek() {
+                while let Some(c) = self.peek_char() {
                     if c == '-' || is_identifier_part(c) {
                         self.consume_char();
                     } else {

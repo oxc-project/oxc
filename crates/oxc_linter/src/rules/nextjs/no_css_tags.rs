@@ -2,19 +2,17 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, utils::get_string_literal_prop_value, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-css-tags): Do not include stylesheets manually.")]
-#[diagnostic(severity(warning), help("See https://nextjs.org/docs/messages/no-css-tags"))]
-struct NoCssTagsDiagnostic(#[label] pub Span);
+fn no_css_tags_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not include stylesheets manually.")
+        .with_help("See https://nextjs.org/docs/messages/no-css-tags")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCssTags;
@@ -35,7 +33,9 @@ declare_oxc_lint!(
 
 impl Rule for NoCssTags {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
+            return;
+        };
 
         let JSXElementName::Identifier(jsx_opening_element_name) = &jsx_opening_element.name else {
             return;
@@ -52,7 +52,9 @@ impl Rule for NoCssTags {
 
         for attr_item in &jsx_opening_element.attributes {
             if let JSXAttributeItem::Attribute(attr) = attr_item {
-                let JSXAttributeName::Identifier(name) = &attr.name else { continue };
+                let JSXAttributeName::Identifier(name) = &attr.name else {
+                    continue;
+                };
 
                 match name.name.as_str() {
                     "rel" => {
@@ -66,15 +68,21 @@ impl Rule for NoCssTags {
             }
         }
 
-        let (Some(rel_attr), Some(href_attr)) = (rel_attr, href_attr) else { return };
+        let (Some(rel_attr), Some(href_attr)) = (rel_attr, href_attr) else {
+            return;
+        };
 
-        let Some(rel_prop_value) = get_string_literal_prop_value(rel_attr) else { return };
-        let Some(href_prop_value) = get_string_literal_prop_value(href_attr) else { return };
+        let Some(rel_prop_value) = get_string_literal_prop_value(rel_attr) else {
+            return;
+        };
+        let Some(href_prop_value) = get_string_literal_prop_value(href_attr) else {
+            return;
+        };
 
         if rel_prop_value == "stylesheet"
             && !(href_prop_value.starts_with("https://") || href_prop_value.starts_with("http://"))
         {
-            ctx.diagnostic(NoCssTagsDiagnostic(jsx_opening_element_name.span));
+            ctx.diagnostic(no_css_tags_diagnostic(jsx_opening_element_name.span));
         }
     }
 }

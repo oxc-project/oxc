@@ -1,21 +1,21 @@
-use crate::{
-    ast_util::is_function_node, context::LintContext, rule::Rule,
-    utils::get_function_nearest_jsdoc_node, AstNode,
-};
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsdoc(implements-on-classes): `@implements` used on a non-constructor function"
-)]
-#[diagnostic(severity(warning), help("Add `@class` tag or use ES6 class syntax."))]
-struct ImplementsOnClassesDiagnostic(#[label] pub Span);
+use crate::{
+    ast_util::is_function_node,
+    context::LintContext,
+    rule::Rule,
+    utils::{get_function_nearest_jsdoc_node, should_ignore_as_internal, should_ignore_as_private},
+    AstNode,
+};
+
+fn implements_on_classes_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`@implements` used on a non-constructor function")
+        .with_help("Add `@class` tag or use ES6 class syntax.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ImplementsOnClasses;
@@ -93,7 +93,11 @@ impl Rule for ImplementsOnClasses {
         let resolved_constructor_tag_name = settings.resolve_tag_name("constructor");
 
         let (mut implements_found, mut class_or_ctor_found) = (None, false);
-        for jsdoc in &jsdocs {
+        for jsdoc in jsdocs
+            .iter()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind.parsed();
 
@@ -109,7 +113,7 @@ impl Rule for ImplementsOnClasses {
 
         if let Some(span) = implements_found {
             if !class_or_ctor_found {
-                ctx.diagnostic(ImplementsOnClassesDiagnostic(span));
+                ctx.diagnostic(implements_on_classes_diagnostic(span));
             }
         }
     }

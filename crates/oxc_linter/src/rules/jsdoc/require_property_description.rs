@@ -1,16 +1,18 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_internal, should_ignore_as_private},
+};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsdoc(require-property-description): Missing description in @property tag.")]
-#[diagnostic(severity(warning), help("Add a description to this @property tag."))]
-struct RequirePropertyDescriptionDiagnostic(#[label] pub Span);
+fn require_property_description_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Missing description in @property tag.")
+        .with_help("Add a description to this @property tag.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequirePropertyDescription;
@@ -45,7 +47,13 @@ impl Rule for RequirePropertyDescription {
         let settings = &ctx.settings().jsdoc;
         let resolved_property_tag_name = settings.resolve_tag_name("property");
 
-        for jsdoc in ctx.semantic().jsdoc().iter_all() {
+        for jsdoc in ctx
+            .semantic()
+            .jsdoc()
+            .iter_all()
+            .filter(|jsdoc| !should_ignore_as_internal(jsdoc, settings))
+            .filter(|jsdoc| !should_ignore_as_private(jsdoc, settings))
+        {
             for tag in jsdoc.tags() {
                 let tag_name = tag.kind;
 
@@ -57,7 +65,7 @@ impl Rule for RequirePropertyDescription {
                     continue;
                 };
 
-                ctx.diagnostic(RequirePropertyDescriptionDiagnostic(tag_name.span));
+                ctx.diagnostic(require_property_description_diagnostic(tag_name.span));
             }
         }
     }

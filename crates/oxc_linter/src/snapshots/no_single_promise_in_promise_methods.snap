@@ -1,7 +1,20 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_single_promise_in_promise_methods
 ---
+  ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise.all([x])
+   ·               ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:15]
+ 1 │ await Promise['all']([x])
+   ·               ─────
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
   ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
    ╭─[no_single_promise_in_promise_methods.tsx:1:15]
  1 │ await Promise.all([(0, promise)])
@@ -361,6 +374,34 @@ expression: no_single_promise_in_promise_methods
   ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
    ╭─[no_single_promise_in_promise_methods.tsx:1:9]
  1 │ Promise.all([null]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([x] as const).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([x] satisfies any[]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([x as const]).then()
+   ·         ───
+   ╰────
+  help: Either use the value directly, or switch to `Promise.resolve(…)`.
+
+  ⚠ eslint-plugin-unicorn(no-single-promise-in-promise-methods): Wrapping single-element array with `Promise.all()` is unnecessary.
+   ╭─[no_single_promise_in_promise_methods.tsx:1:9]
+ 1 │ Promise.all([x!]).then()
    ·         ───
    ╰────
   help: Either use the value directly, or switch to `Promise.resolve(…)`.

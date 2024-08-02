@@ -1,44 +1,58 @@
 //! Semantic Builder
 
-use std::{cell::RefCell, path::PathBuf, rc::Rc, sync::Arc};
+use std::{
+    cell::{Cell, RefCell},
+    path::PathBuf,
+    sync::Arc,
+};
 
 #[allow(clippy::wildcard_imports)]
 use oxc_ast::{ast::*, AstKind, Trivias, Visit};
-use oxc_diagnostics::Error;
-use oxc_span::{CompactStr, SourceType, Span};
-use oxc_syntax::{
-    identifier::is_identifier_name,
-    module_record::{ExportImportName, ExportLocalName, ModuleRecord},
-    operator::AssignmentOperator,
+use oxc_cfg::{
+    ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
+    IterationInstructionKind, ReturnInstructionKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_span::{Atom, CompactStr, SourceType, Span};
+use oxc_syntax::{module_record::ModuleRecord, operator::AssignmentOperator};
+use rustc_hash::FxHashMap;
 
 use crate::{
     binder::Binder,
-    checker::{EarlyErrorJavaScript, EarlyErrorTypeScript},
+    checker,
     class::ClassTableBuilder,
-    control_flow::{
-        AssignmentValue, ControlFlowGraph, EdgeType, Register, StatementControlFlowType,
-    },
-    diagnostics::Redeclaration,
+    counter::Counter,
+    diagnostics::redeclaration,
     jsdoc::JSDocBuilder,
     label::LabelBuilder,
     module_record::ModuleRecordBuilder,
-    node::{AstNode, AstNodeId, AstNodes, NodeFlags},
+    node::{AstNodeId, AstNodes, NodeFlags},
     reference::{Reference, ReferenceFlag, ReferenceId},
-    scope::{ScopeFlags, ScopeId, ScopeTree},
+    scope::{Bindings, ScopeFlags, ScopeId, ScopeTree},
     symbol::{SymbolFlags, SymbolId, SymbolTable},
-    Semantic,
+    unresolved_stack::UnresolvedReferencesStack,
+    JSDocFinder, Semantic,
 };
+
+macro_rules! control_flow {
+    ($self:ident, |$cfg:tt| $body:expr) => {
+        if let Some(ref mut $cfg) = $self.cfg {
+            $body
+        } else {
+            Default::default()
+        }
+    };
+}
 
 pub struct SemanticBuilder<'a> {
     pub source_text: &'a str,
 
     pub source_type: SourceType,
 
-    trivias: Rc<Trivias>,
+    trivias: Trivias,
 
     /// Semantic early errors such as redeclaration errors.
-    errors: RefCell<Vec<Error>>,
+    errors: RefCell<Vec<OxcDiagnostic>>,
 
     // states
     pub current_node_id: AstNodeId,
@@ -52,31 +66,35 @@ pub struct SemanticBuilder<'a> {
     // and when we reach a value declaration we set it
     // to value like
     pub namespace_stack: Vec<SymbolId>,
-    /// If true, the current node is in the type definition
-    in_type_definition: bool,
     current_reference_flag: ReferenceFlag,
+    pub hoisting_variables: FxHashMap<ScopeId, FxHashMap<Atom<'a>, SymbolId>>,
 
     // builders
     pub nodes: AstNodes<'a>,
     pub scope: ScopeTree,
     pub symbols: SymbolTable,
 
+    unresolved_references: UnresolvedReferencesStack<'a>,
+
     pub(crate) module_record: Arc<ModuleRecord>,
 
     pub label_builder: LabelBuilder<'a>,
 
+    build_jsdoc: bool,
     jsdoc: JSDocBuilder<'a>,
 
     check_syntax_error: bool,
 
-    pub cfg: ControlFlowGraph,
+    pub cfg: Option<ControlFlowGraphBuilder<'a>>,
 
     pub class_table_builder: ClassTableBuilder,
+
+    ast_node_records: Vec<AstNodeId>,
 }
 
 pub struct SemanticBuilderReturn<'a> {
     pub semantic: Semantic<'a>,
-    pub errors: Vec<Error>,
+    pub errors: Vec<OxcDiagnostic>,
 }
 
 impl<'a> SemanticBuilder<'a> {
@@ -84,42 +102,60 @@ impl<'a> SemanticBuilder<'a> {
         let scope = ScopeTree::default();
         let current_scope_id = scope.root_scope_id();
 
-        let trivias = Rc::new(Trivias::default());
+        let trivias = Trivias::default();
         Self {
             source_text,
             source_type,
-            trivias: Rc::clone(&trivias),
+            trivias: trivias.clone(),
             errors: RefCell::new(vec![]),
             current_node_id: AstNodeId::new(0),
             current_node_flags: NodeFlags::empty(),
             current_symbol_flags: SymbolFlags::empty(),
-            in_type_definition: false,
             current_reference_flag: ReferenceFlag::empty(),
             current_scope_id,
             function_stack: vec![],
             namespace_stack: vec![],
             nodes: AstNodes::default(),
+            hoisting_variables: FxHashMap::default(),
             scope,
             symbols: SymbolTable::default(),
+            unresolved_references: UnresolvedReferencesStack::new(),
             module_record: Arc::new(ModuleRecord::default()),
             label_builder: LabelBuilder::default(),
-            jsdoc: JSDocBuilder::new(source_text, &trivias),
+            build_jsdoc: false,
+            jsdoc: JSDocBuilder::new(source_text, trivias),
             check_syntax_error: false,
-            cfg: ControlFlowGraph::new(),
+            cfg: None,
             class_table_builder: ClassTableBuilder::new(),
+            ast_node_records: Vec::new(),
         }
     }
 
     #[must_use]
     pub fn with_trivias(mut self, trivias: Trivias) -> Self {
-        self.trivias = Rc::new(trivias);
-        self.jsdoc = JSDocBuilder::new(self.source_text, &self.trivias);
+        self.trivias = trivias.clone();
+        self.jsdoc = JSDocBuilder::new(self.source_text, trivias);
         self
     }
 
     #[must_use]
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_build_jsdoc(mut self, yes: bool) -> Self {
+        self.build_jsdoc = yes;
+        self
+    }
+
+    /// Enable or disable building a [`ControlFlowGraph`].
+    ///
+    /// [`ControlFlowGraph`]: oxc_cfg::ControlFlowGraph
+    #[must_use]
+    pub fn with_cfg(mut self, cfg: bool) -> Self {
+        self.cfg = if cfg { Some(ControlFlowGraphBuilder::default()) } else { None };
         self
     }
 
@@ -141,17 +177,61 @@ impl<'a> SemanticBuilder<'a> {
         self
     }
 
+    /// Finalize the builder.
+    ///
+    /// # Panics
     pub fn build(mut self, program: &Program<'a>) -> SemanticBuilderReturn<'a> {
         if self.source_type.is_typescript_definition() {
-            self.scope.add_scope(None, ScopeFlags::Top);
+            let scope_id = self.scope.add_root_scope(AstNodeId::DUMMY, ScopeFlags::Top);
+            program.scope_id.set(Some(scope_id));
         } else {
+            // Count the number of nodes, scopes, symbols, and references.
+            // Use these counts to reserve sufficient capacity in `AstNodes`, `ScopeTree`
+            // and `SymbolTable` to store them.
+            // This means that as we traverse the AST and fill up these structures with data,
+            // they never need to grow and reallocate - which is an expensive operation as it
+            // involves copying all the memory from the old allocation to the new one.
+            // For large source files, these structures are very large, so growth is very costly
+            // as it involves copying massive chunks of memory.
+            // Avoiding this growth produces up to 30% perf boost on our benchmarks.
+            // TODO: It would be even more efficient to calculate counts in parser to avoid
+            // this extra AST traversal.
+            let mut counter = Counter::default();
+            counter.visit_program(program);
+            self.nodes.reserve(counter.nodes_count);
+            self.scope.reserve(counter.scopes_count);
+            self.symbols.reserve(counter.symbols_count, counter.references_count);
+
+            // Visit AST to generate scopes tree etc
             self.visit_program(program);
+
+            // Check that `Counter` got accurate counts
+            debug_assert_eq!(self.nodes.len(), counter.nodes_count);
+            debug_assert_eq!(self.scope.len(), counter.scopes_count);
+            debug_assert_eq!(self.symbols.references.len(), counter.references_count);
+            // `Counter` may overestimate number of symbols, because multiple `BindingIdentifier`s
+            // can result in only a single symbol.
+            // e.g. `var x; var x;` = 2 x `BindingIdentifier` but 1 x symbol.
+            // This is not a big problem - allocating a `Vec` with excess capacity is cheap.
+            // It's allocating with *not enough* capacity which is costly, as then the `Vec`
+            // will grow and reallocate.
+            debug_assert!(self.symbols.len() <= counter.symbols_count);
 
             // Checking syntax error on module record requires scope information from the previous AST pass
             if self.check_syntax_error {
-                EarlyErrorJavaScript::check_module_record(&self);
+                checker::check_module_record(&self);
             }
         }
+
+        debug_assert_eq!(self.unresolved_references.scope_depth(), 1);
+        self.scope.root_unresolved_references = self
+            .unresolved_references
+            .into_root()
+            .into_iter()
+            .map(|(k, v)| (k.into(), v))
+            .collect();
+
+        let jsdoc = if self.build_jsdoc { self.jsdoc.build() } else { JSDocFinder::default() };
 
         let semantic = Semantic {
             source_text: self.source_text,
@@ -162,52 +242,32 @@ impl<'a> SemanticBuilder<'a> {
             symbols: self.symbols,
             classes: self.class_table_builder.build(),
             module_record: Arc::clone(&self.module_record),
-            jsdoc: self.jsdoc.build(),
+            jsdoc,
             unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg,
+            cfg: self.cfg.map(ControlFlowGraphBuilder::build),
         };
         SemanticBuilderReturn { semantic, errors: self.errors.into_inner() }
     }
 
-    pub fn build2(self) -> Semantic<'a> {
-        Semantic {
-            source_text: self.source_text,
-            source_type: self.source_type,
-            trivias: self.trivias,
-            nodes: self.nodes,
-            scopes: self.scope,
-            symbols: self.symbols,
-            classes: self.class_table_builder.build(),
-            module_record: Arc::new(ModuleRecord::default()),
-            jsdoc: self.jsdoc.build(),
-            unused_labels: self.label_builder.unused_node_ids,
-            cfg: self.cfg,
-        }
-    }
-
     /// Push a Syntax Error
-    pub fn error<T: Into<Error>>(&self, error: T) {
-        self.errors.borrow_mut().push(error.into());
+    pub fn error(&self, error: OxcDiagnostic) {
+        self.errors.borrow_mut().push(error);
     }
 
     fn create_ast_node(&mut self, kind: AstKind<'a>) {
         let mut flags = self.current_node_flags;
-        if self.jsdoc.retrieve_attached_jsdoc(&kind) {
+        if self.build_jsdoc && self.jsdoc.retrieve_attached_jsdoc(&kind) {
             flags |= NodeFlags::JSDoc;
         }
 
-        let ast_node = AstNode::new(kind, self.current_scope_id, self.cfg.current_node_ix, flags);
-        self.current_node_id = if matches!(kind, AstKind::Program(_)) {
-            let id = self.nodes.add_node(ast_node, None);
-            #[allow(unsafe_code)]
-            // SAFETY: `ast_node` is a `Program` and hence the root of the tree.
-            unsafe {
-                self.nodes.set_root(&ast_node);
-            }
-            id
-        } else {
-            self.nodes.add_node(ast_node, Some(self.current_node_id))
-        };
+        self.current_node_id = self.nodes.add_node(
+            kind,
+            self.current_scope_id,
+            self.current_node_id,
+            control_flow!(self, |cfg| cfg.current_node_ix),
+            flags,
+        );
+        self.record_ast_node();
     }
 
     fn pop_ast_node(&mut self) {
@@ -216,13 +276,44 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
+    #[inline]
+    fn record_ast_nodes(&mut self) {
+        if self.cfg.is_some() {
+            self.ast_node_records.push(AstNodeId::DUMMY);
+        }
+    }
+
+    #[inline]
+    #[allow(clippy::unnecessary_wraps)]
+    fn retrieve_recorded_ast_node(&mut self) -> Option<AstNodeId> {
+        if self.cfg.is_some() {
+            Some(self.ast_node_records.pop().expect("there is no ast node record to stop."))
+        } else {
+            None
+        }
+    }
+
+    #[inline]
+    fn record_ast_node(&mut self) {
+        // The `self.cfg.is_some()` check here could be removed, since `ast_node_records` is empty
+        // if CFG is disabled. But benchmarks showed removing the extra check is a perf regression.
+        // <https://github.com/oxc-project/oxc/pull/4273>
+        if self.cfg.is_some() {
+            if let Some(record) = self.ast_node_records.last_mut() {
+                if *record == AstNodeId::DUMMY {
+                    *record = self.current_node_id;
+                }
+            }
+        }
+    }
+
+    #[inline]
     pub fn current_scope_flags(&self) -> ScopeFlags {
         self.scope.get_flags(self.current_scope_id)
     }
 
     pub fn strict_mode(&self) -> bool {
         self.current_scope_flags().is_strict_mode()
-            || self.current_node_flags.contains(NodeFlags::Class)
     }
 
     pub fn set_function_node_flag(&mut self, flag: NodeFlags) {
@@ -252,9 +343,15 @@ impl<'a> SemanticBuilder<'a> {
         }
 
         let includes = includes | self.current_symbol_flags;
-        let symbol_id = self.symbols.create_symbol(span, name, includes, scope_id);
-        self.symbols.add_declaration(self.current_node_id);
-        self.scope.add_binding(scope_id, CompactStr::from(name), symbol_id);
+        let name = CompactStr::new(name);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            scope_id,
+            self.current_node_id,
+        );
+        self.scope.add_binding(scope_id, name, symbol_id);
         symbol_id
     }
 
@@ -269,37 +366,35 @@ impl<'a> SemanticBuilder<'a> {
     }
 
     pub fn check_redeclaration(
-        &mut self,
+        &self,
         scope_id: ScopeId,
         span: Span,
         name: &str,
         excludes: SymbolFlags,
         report_error: bool,
     ) -> Option<SymbolId> {
-        let symbol_id = self.scope.get_binding(scope_id, name)?;
+        let symbol_id = self.scope.get_binding(scope_id, name).or_else(|| {
+            self.hoisting_variables.get(&scope_id).and_then(|symbols| symbols.get(name).copied())
+        })?;
         if report_error && self.symbols.get_flag(symbol_id).intersects(excludes) {
             let symbol_span = self.symbols.get_span(symbol_id);
-            self.error(Redeclaration(CompactStr::from(name), symbol_span, span));
+            self.error(redeclaration(name, symbol_span, span));
         }
         Some(symbol_id)
     }
 
-    pub fn declare_reference(
-        &mut self,
-        reference: Reference,
-        add_unresolved_reference: bool,
-    ) -> ReferenceId {
-        let reference_name = reference.name().clone();
+    /// Declare an unresolved reference in the current scope.
+    ///
+    /// # Panics
+    pub fn declare_reference(&mut self, name: Atom<'a>, reference: Reference) -> ReferenceId {
+        let reference_flag = *reference.flag();
         let reference_id = self.symbols.create_reference(reference);
-        if add_unresolved_reference {
-            self.scope.add_unresolved_reference(
-                self.current_scope_id,
-                reference_name,
-                reference_id,
-            );
-        } else {
-            self.resolve_reference_ids(reference_name.clone(), vec![reference_id]);
-        }
+
+        self.unresolved_references
+            .current_mut()
+            .entry(name)
+            .or_default()
+            .push((reference_id, reference_flag));
         reference_id
     }
 
@@ -312,115 +407,144 @@ impl<'a> SemanticBuilder<'a> {
         includes: SymbolFlags,
     ) -> SymbolId {
         let includes = includes | self.current_symbol_flags;
-        let symbol_id = self.symbols.create_symbol(span, name, includes, self.current_scope_id);
-        self.symbols.add_declaration(self.current_node_id);
-        self.scope.get_bindings_mut(scope_id).insert(CompactStr::from(name), symbol_id);
+        let name = CompactStr::new(name);
+        let symbol_id = self.symbols.create_symbol(
+            span,
+            name.clone(),
+            includes,
+            self.current_scope_id,
+            self.current_node_id,
+        );
+        self.scope.get_bindings_mut(scope_id).insert(name, symbol_id);
         symbol_id
     }
 
     fn resolve_references_for_current_scope(&mut self) {
-        let all_references = self
-            .scope
-            .unresolved_references_mut(self.current_scope_id)
-            .drain()
-            .collect::<Vec<(_, Vec<_>)>>();
+        let (current_refs, parent_refs) = self.unresolved_references.current_and_parent_mut();
 
-        for (name, reference_ids) in all_references {
-            self.resolve_reference_ids(name, reference_ids);
-        }
-    }
+        for (name, mut references) in current_refs.drain() {
+            // Try to resolve a reference.
+            // If unresolved, transfer it to parent scope's unresolved references.
+            let bindings = self.scope.get_bindings(self.current_scope_id);
+            if let Some(symbol_id) = bindings.get(name.as_str()).copied() {
+                let symbol_flag = self.symbols.get_flag(symbol_id);
 
-    fn resolve_reference_ids(&mut self, name: CompactStr, reference_ids: Vec<ReferenceId>) {
-        let parent_scope_id =
-            self.scope.get_parent_id(self.current_scope_id).unwrap_or(self.current_scope_id);
+                let resolved_references: &mut Vec<_> =
+                    self.symbols.resolved_references[symbol_id].as_mut();
+                // Reserve space for all references to avoid reallocations.
+                resolved_references.reserve(references.len());
 
-        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, &name) {
-            for reference_id in &reference_ids {
-                self.symbols.references[*reference_id].set_symbol_id(symbol_id);
+                references.retain(|(id, flag)| {
+                    if flag.is_type() && symbol_flag.can_be_referenced_by_type()
+                        || flag.is_value() && symbol_flag.can_be_referenced_by_value()
+                        || flag.is_ts_type_query() && symbol_flag.is_import()
+                    {
+                        let reference = &mut self.symbols.references[*id];
+                        // The non type-only ExportSpecifier can reference a type/value symbol,
+                        // If the symbol is a value symbol and reference flag is not type-only, remove the type flag.
+                        if symbol_flag.is_value() && !flag.is_type_only() {
+                            *reference.flag_mut() -= ReferenceFlag::Type;
+                        } else {
+                            // If the symbol is a type symbol and reference flag is not type-only, remove the value flag.
+                            *reference.flag_mut() -= ReferenceFlag::Value;
+                        }
+
+                        // import type { T } from './mod'; type A = typeof T
+                        //                                                 ^ can reference type-only import
+                        // If symbol is type-import, we need to replace the ReferenceFlag::Value with ReferenceFlag::Type
+                        if flag.is_ts_type_query() && symbol_flag.is_type_import() {
+                            *reference.flag_mut() -= ReferenceFlag::Value;
+                            *reference.flag_mut() |= ReferenceFlag::Type;
+                        }
+
+                        reference.set_symbol_id(symbol_id);
+                        resolved_references.push(*id);
+                        false
+                    } else {
+                        true
+                    }
+                });
+
+                if references.is_empty() {
+                    continue;
+                }
             }
-            self.symbols.resolved_references[symbol_id].extend(reference_ids);
-        } else {
-            self.scope.extend_unresolved_reference(parent_scope_id, name, reference_ids);
+
+            if let Some(parent_reference_ids) = parent_refs.get_mut(&name) {
+                parent_reference_ids.extend(references);
+            } else {
+                parent_refs.insert(name, references);
+            }
         }
     }
 
     pub fn add_redeclare_variable(&mut self, symbol_id: SymbolId, span: Span) {
-        self.symbols.add_redeclare_variable(symbol_id, span);
+        self.symbols.add_redeclaration(symbol_id, span);
     }
 
-    fn add_export_flag_for_export_identifier(&mut self) {
-        self.module_record.indirect_export_entries.iter().for_each(|entry| {
-            if let ExportImportName::Name(name) = &entry.import_name {
-                if let Some(symbol_id) = self.symbols.get_symbol_id_from_name(name.name()) {
-                    self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+    fn add_export_flag_to_export_identifiers(&mut self, program: &Program<'a>) {
+        for stmt in &program.body {
+            if let Statement::ExportDefaultDeclaration(decl) = stmt {
+                if let ExportDefaultDeclarationKind::Identifier(ident) = &decl.declaration {
+                    self.add_export_flag_to_identifier(ident.name.as_str());
                 }
             }
-        });
-
-        self.module_record.local_export_entries.iter().for_each(|entry| {
-            match &entry.local_name {
-                ExportLocalName::Name(name_span) => {
-                    if let Some(symbol_id) = self.scope.get_root_binding(name_span.name()) {
-                        self.symbols.union_flag(symbol_id, SymbolFlags::Export);
-                    }
-                }
-                ExportLocalName::Default(_) => {
-                    // export default identifier
-                    //                ^^^^^^^^^^
-                    let identifier = entry.span.source_text(self.source_text);
-                    if is_identifier_name(identifier) {
-                        if let Some(symbol_id) = self.scope.get_root_binding(identifier) {
-                            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+            if let Statement::ExportNamedDeclaration(decl) = stmt {
+                for specifier in &decl.specifiers {
+                    if specifier.export_kind.is_value() {
+                        if let Some(name) = specifier.local.identifier_name() {
+                            self.add_export_flag_to_identifier(name.as_str());
                         }
                     }
                 }
-                ExportLocalName::Null => {}
             }
-        });
+        }
+    }
+
+    fn add_export_flag_to_identifier(&mut self, name: &str) {
+        if let Some(symbol_id) = self.scope.get_binding(self.current_scope_id, name) {
+            self.symbols.union_flag(symbol_id, SymbolFlags::Export);
+        }
     }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
-    fn enter_scope(&mut self, flags: ScopeFlags) {
-        let parent_scope_id =
-            if flags.contains(ScopeFlags::Top) { None } else { Some(self.current_scope_id) };
+    // NB: Not called for `Program`
+    fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+        let parent_scope_id = self.current_scope_id;
 
         let mut flags = flags;
-        // Inherit strict mode for functions
-        // https://tc39.es/ecma262/#sec-strict-mode-code
-        if let Some(parent_scope_id) = parent_scope_id {
-            let mut strict_mode = self.scope.root_flags().is_strict_mode();
-            let parent_scope_flags = self.scope.get_flags(parent_scope_id);
+        if !flags.is_strict_mode() && self.current_node_flags.has_class() {
+            // NOTE A class definition is always strict mode code.
+            flags |= ScopeFlags::StrictMode;
+        };
+        flags = self.scope.get_new_scope_flags(flags, parent_scope_id);
 
-            if !strict_mode
-                && parent_scope_flags.is_function()
-                && parent_scope_flags.is_strict_mode()
-            {
-                strict_mode = true;
-            }
+        self.current_scope_id = self.scope.add_scope(parent_scope_id, self.current_node_id, flags);
+        scope_id.set(Some(self.current_scope_id));
 
-            // inherit flags for non-function scopes
-            if !flags.contains(ScopeFlags::Function) {
-                flags |= parent_scope_flags & ScopeFlags::Modifiers;
-            };
-
-            if strict_mode {
-                flags |= ScopeFlags::StrictMode;
-            }
-        }
-
-        self.current_scope_id = self.scope.add_scope(parent_scope_id, flags);
+        self.unresolved_references.increment_scope_depth();
     }
 
+    // NB: Not called for `Program`
     fn leave_scope(&mut self) {
         self.resolve_references_for_current_scope();
-        if let Some(parent_id) = self.scope.get_parent_id(self.current_scope_id) {
+
+        // `get_parent_id` always returns `Some` because this method is not called for `Program`.
+        // So we could `.unwrap()` here. But that seems to produce a small perf impact, probably because
+        // `leave_scope` then doesn't get inlined because of its larger size due to the panic code.
+        let parent_id = self.scope.get_parent_id(self.current_scope_id);
+        debug_assert!(parent_id.is_some());
+        if let Some(parent_id) = parent_id {
             self.current_scope_id = parent_id;
         }
+
+        self.unresolved_references.decrement_scope_depth();
     }
 
     // Setup all the context for the binder.
     // The order is important here.
+    // NB: Not called for `Program`.
     fn enter_node(&mut self, kind: AstKind<'a>) {
         self.create_ast_node(kind);
         self.enter_kind(kind);
@@ -429,8 +553,7 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
     fn leave_node(&mut self, kind: AstKind<'a>) {
         if self.check_syntax_error {
             let node = self.nodes.get_node(self.current_node_id);
-            EarlyErrorJavaScript::run(node, self);
-            EarlyErrorTypeScript::run(node, self);
+            checker::check(node, self);
         }
         self.leave_kind(kind);
         self.pop_ast_node();
@@ -438,52 +561,60 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_program(&mut self, program: &Program<'a>) {
         let kind = AstKind::Program(self.alloc(program));
-        self.enter_scope({
-            let mut flags = ScopeFlags::Top;
-            if program.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
-        self.enter_node(kind);
-
         /* cfg */
-        let _program_basic_block = self.cfg.new_basic_block();
+        let error_harness = control_flow!(self, |cfg| {
+            let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+            let _program_basic_block = cfg.new_basic_block_normal();
+            error_harness
+        });
         /* cfg - must be above directives as directives are in cfg */
+
+        // Don't call `enter_node` here as `Program` is a special case - node has no `parent_id`.
+        // Inline the specific logic for `Program` here instead.
+        // This avoids `Nodes::add_node` having to handle the special case.
+        // We can also skip calling `self.enter_kind`, and `self.jsdoc.retrieve_attached_jsdoc`
+        // as they are no-ops for `Program`.
+        self.current_node_id = self.nodes.add_program_node(
+            kind,
+            self.current_scope_id,
+            control_flow!(self, |cfg| cfg.current_node_ix),
+            self.current_node_flags,
+        );
+        self.record_ast_node();
+
+        // Don't call `enter_scope` here as `Program` is a special case - scope has no `parent_id`.
+        // Inline the specific logic for `Program` here instead.
+        // This simplifies logic in `enter_scope`, as it doesn't have to handle the special case.
+        let mut flags = ScopeFlags::Top;
+        if program.is_strict() {
+            flags |= ScopeFlags::StrictMode;
+        }
+        self.current_scope_id = self.scope.add_root_scope(self.current_node_id, flags);
+        program.scope_id.set(Some(self.current_scope_id));
+        // NB: Don't call `self.unresolved_references.increment_scope_depth()`
+        // as scope depth is initialized as 1 already (the scope depth for `Program`).
+
+        if let Some(hashbang) = &program.hashbang {
+            self.visit_hashbang(hashbang);
+        }
 
         for directive in &program.directives {
             self.visit_directive(directive);
         }
 
         self.visit_statements(&program.body);
-        self.leave_node(kind);
-        self.leave_scope();
-    }
-
-    fn visit_block_statement(&mut self, stmt: &BlockStatement<'a>) {
-        let kind = AstKind::BlockStatement(self.alloc(stmt));
-        self.enter_scope(ScopeFlags::empty());
-        self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        control_flow!(self, |cfg| cfg.release_error_harness(error_harness));
         /* cfg */
 
-        self.visit_statements(&stmt.body);
-
-        /* cfg */
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
-        /* cfg */
+        // Don't call `leave_scope` here as `Program` is a special case - scope has no `parent_id`.
+        // This simplifies `leave_scope`.
+        self.resolve_references_for_current_scope();
+        // NB: Don't call `self.unresolved_references.decrement_scope_depth()`
+        // as scope depth must remain >= 1.
 
         self.leave_node(kind);
-        self.leave_scope();
     }
 
     fn visit_break_statement(&mut self, stmt: &BreakStatement<'a>) {
@@ -491,50 +622,72 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let node_id = self.current_node_id;
         /* cfg */
 
-        if let Some(break_target) = &stmt.label {
+        if let Some(ref break_target) = stmt.label {
             self.visit_label_identifier(break_target);
-
-            /* cfg */
-            if let Some(label_found) =
-                self.cfg.label_to_ast_node_ix.iter().rev().find(|x| x.0 == break_target.name)
-            {
-                let (_, break_, _) = self.cfg.ast_node_to_break_continue.iter().rev().find(|x| x.0 == label_found.1)
-                                                .expect("expected a corresponding break/continue array for a found label owning ast node");
-                self.cfg.basic_blocks_with_breaks[*break_].push(self.cfg.current_node_ix);
-            } else {
-                self.cfg
-                    .basic_blocks_with_breaks
-                    .last_mut()
-                    .expect(
-                        "expected there to be a stack of control flows that a break can belong to",
-                    )
-                    .push(self.cfg.current_node_ix);
-            }
-            /* cfg */
         }
+
         /* cfg */
-        else {
-            self.cfg
-                .basic_blocks_with_breaks
-                .last_mut()
-                .expect("expected there to be a stack of control flows that a break can belong to")
-                .push(self.cfg.current_node_ix);
-        }
-        self.cfg.put_unreachable();
-
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        control_flow!(self, |cfg| cfg
+            .append_break(node_id, stmt.label.as_ref().map(|it| it.name.as_str())));
         /* cfg */
 
+        self.leave_node(kind);
+    }
+
+    fn visit_class(&mut self, class: &Class<'a>) {
+        let kind = AstKind::Class(self.alloc(class));
+        self.enter_node(kind);
+
+        self.visit_decorators(&class.decorators);
+        if let Some(id) = &class.id {
+            self.visit_binding_identifier(id);
+        }
+
+        self.enter_scope(ScopeFlags::StrictMode, &class.scope_id);
+        if class.is_expression() {
+            // We need to bind class expression in the class scope
+            class.bind(self);
+        }
+
+        if let Some(type_parameters) = &class.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(super_class) = &class.super_class {
+            self.visit_class_heritage(super_class);
+        }
+        if let Some(super_type_parameters) = &class.super_type_parameters {
+            self.visit_ts_type_parameter_instantiation(super_type_parameters);
+        }
+        if let Some(implements) = &class.implements {
+            self.visit_ts_class_implementses(implements);
+        }
+        self.visit_class_body(&class.body);
+
+        self.leave_scope();
+        self.leave_node(kind);
+    }
+
+    fn visit_block_statement(&mut self, it: &BlockStatement<'a>) {
+        let kind = AstKind::BlockStatement(self.alloc(it));
+        self.enter_node(kind);
+
+        let parent_scope_id = self.current_scope_id;
+        self.enter_scope(ScopeFlags::empty(), &it.scope_id);
+
+        // Move all bindings from catch clause param scope to catch clause body scope
+        // to make it easier to resolve references and check redeclare errors
+        if self.scope.get_flags(parent_scope_id).is_catch_clause() {
+            let parent_bindings =
+                self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
+            *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
+        }
+
+        self.visit_statements(&it.body);
+
+        self.leave_scope();
         self.leave_node(kind);
     }
 
@@ -543,80 +696,16 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let node_id = self.current_node_id;
         /* cfg */
 
         if let Some(continue_target) = &stmt.label {
             self.visit_label_identifier(continue_target);
-            /* cfg */
-            if let Some(label_found) =
-                self.cfg.label_to_ast_node_ix.iter().rev().find(|x| x.0 == continue_target.name)
-            {
-                let (_, _, continue_) = self.cfg.ast_node_to_break_continue.iter().rev().find(|x| x.0 == label_found.1)
-                                        .expect("expected a corresponding break/continue array for a found label owning ast node");
-                if let Some(continue_) = continue_ {
-                    self.cfg.basic_blocks_with_breaks[*continue_].push(self.cfg.current_node_ix);
-                } else {
-                    self.cfg
-                    .basic_blocks_with_breaks
-                    .last_mut()
-                    .expect(
-                        "expected there to be a stack of control flows that a break can belong to",
-                    )
-                    .push(self.cfg.current_node_ix);
-                }
-            } else {
-                self.cfg
-                    .basic_blocks_with_breaks
-                    .last_mut()
-                    .expect(
-                        "expected there to be a stack of control flows that a break can belong to",
-                    )
-                    .push(self.cfg.current_node_ix);
-            }
-            /* cfg */
         }
-        /* cfg */
-        else {
-            self.cfg
-                .basic_blocks_with_breaks
-                .last_mut()
-                .expect("expected there to be a stack of control flows that a break can belong to")
-                .push(self.cfg.current_node_ix);
-        }
-        self.cfg.put_unreachable();
-        /* cfg */
 
         /* cfg */
-        let current_node_ix = self.cfg.current_node_ix;
-        // todo: assert on this instead when continues which
-        // aren't in iterations are nonrecoverable errors
-        if let Some(continues) = self.cfg.basic_blocks_with_continues.last_mut() {
-            continues.push(current_node_ix);
-        }
-        self.cfg.put_unreachable();
-
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
-        /* cfg */
-
-        self.leave_node(kind);
-    }
-
-    fn visit_debugger_statement(&mut self, stmt: &DebuggerStatement) {
-        let kind = AstKind::DebuggerStatement(self.alloc(stmt));
-        self.enter_node(kind);
-
-        /* cfg */
-        // just take the next_label since it should be taken by the next
-        // statement regardless of whether the statement can use it or not
-        self.cfg.next_label.take();
+        control_flow!(self, |cfg| cfg
+            .append_continue(node_id, stmt.label.as_ref().map(|it| it.name.as_str())));
         /* cfg */
 
         self.leave_node(kind);
@@ -627,72 +716,49 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let before_do_while_stmt_graph_ix = self.cfg.current_node_ix;
-        let start_body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        let (before_do_while_stmt_graph_ix, start_body_graph_ix) = control_flow!(self, |cfg| {
+            let before_do_while_stmt_graph_ix = cfg.current_node_ix;
+            let start_body_graph_ix = cfg.new_basic_block_normal();
+            cfg.ctx(None).default().allow_break().allow_continue();
+            (before_do_while_stmt_graph_ix, start_body_graph_ix)
+        });
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg - condition basic block */
-        let start_of_condition_graph_ix = self.cfg.new_basic_block();
+        let (after_body_graph_ix, start_of_condition_graph_ix) = control_flow!(self, |cfg| {
+            let after_body_graph_ix = cfg.current_node_ix;
+            let start_of_condition_graph_ix = cfg.new_basic_block_normal();
+            (after_body_graph_ix, start_of_condition_graph_ix)
+        });
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        let test_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
-        let end_of_condition_graph_ix = self.cfg.current_node_ix;
+        control_flow!(self, |cfg| {
+            cfg.append_condition_to(start_of_condition_graph_ix, test_node);
+            let end_of_condition_graph_ix = cfg.current_node_ix;
 
-        let end_do_while_graph_ix = self.cfg.new_basic_block();
+            let end_do_while_graph_ix = cfg.new_basic_block_normal();
 
-        // before do while to start of condition basic block
-        self.cfg.add_edge(
-            before_do_while_stmt_graph_ix,
-            start_of_condition_graph_ix,
-            EdgeType::Normal,
-        );
-        // body of do-while to start of condition
-        self.cfg.add_edge(start_body_graph_ix, start_of_condition_graph_ix, EdgeType::Backedge);
-        // end of condition to after do while
-        self.cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
-        // end of condition to after start of body
-        self.cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Normal);
+            // before do while to start of body basic block
+            cfg.add_edge(before_do_while_stmt_graph_ix, start_body_graph_ix, EdgeType::Normal);
+            // body of do-while to start of condition
+            cfg.add_edge(after_body_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
+            // end of condition to after do while
+            cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
+            // end of condition to after start of body
+            cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
 
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the do-while statement
-            end_do_while_graph_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(start_of_condition_graph_ix),
-        );
-        /* cfg */
-
-        self.leave_node(kind);
-    }
-
-    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
-        let kind = AstKind::ExpressionStatement(self.alloc(stmt));
-        self.enter_node(kind);
-
-        /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-        /* cfg */
-
-        self.visit_expression(&stmt.expression);
-
-        /* cfg */
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+            cfg.ctx(None)
+                .mark_break(end_do_while_graph_ix)
+                .mark_continue(start_of_condition_graph_ix)
+                .resolve_with_upper_label();
+        });
         /* cfg */
 
         self.leave_node(kind);
@@ -710,19 +776,24 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_expression(&expr.left);
 
         /* cfg  */
-        let left_expr_end_ix = self.cfg.current_node_ix;
-        let right_expr_start_ix = self.cfg.new_basic_block();
+        let (left_expr_end_ix, right_expr_start_ix) = control_flow!(self, |cfg| {
+            let left_expr_end_ix = cfg.current_node_ix;
+            let right_expr_start_ix = cfg.new_basic_block_normal();
+            (left_expr_end_ix, right_expr_start_ix)
+        });
         /* cfg  */
 
         self.visit_expression(&expr.right);
 
         /* cfg */
-        let right_expr_end_ix = self.cfg.current_node_ix;
-        let after_logical_expr_ix = self.cfg.new_basic_block();
+        control_flow!(self, |cfg| {
+            let right_expr_end_ix = cfg.current_node_ix;
+            let after_logical_expr_ix = cfg.new_basic_block_normal();
 
-        self.cfg.add_edge(left_expr_end_ix, right_expr_start_ix, EdgeType::Normal);
-        self.cfg.add_edge(left_expr_end_ix, after_logical_expr_ix, EdgeType::Normal);
-        self.cfg.add_edge(right_expr_end_ix, after_logical_expr_ix, EdgeType::Normal);
+            cfg.add_edge(left_expr_end_ix, right_expr_start_ix, EdgeType::Normal);
+            cfg.add_edge(left_expr_end_ix, after_logical_expr_ix, EdgeType::Normal);
+            cfg.add_edge(right_expr_end_ix, after_logical_expr_ix, EdgeType::Normal);
+        });
         /* cfg */
 
         self.leave_node(kind);
@@ -740,26 +811,98 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.visit_assignment_target(&expr.left);
 
         /* cfg  */
-        let cfg_ixs = if expr.operator.is_logical() {
-            let target_end_ix = self.cfg.current_node_ix;
-            let expr_start_ix = self.cfg.new_basic_block();
-            Some((target_end_ix, expr_start_ix))
-        } else {
-            None
-        };
+        let cfg_ixs = control_flow!(self, |cfg| {
+            if expr.operator.is_logical() {
+                let target_end_ix = cfg.current_node_ix;
+                let expr_start_ix = cfg.new_basic_block_normal();
+                Some((target_end_ix, expr_start_ix))
+            } else {
+                None
+            }
+        });
         /* cfg  */
 
         self.visit_expression(&expr.right);
 
         /* cfg */
-        if let Some((target_end_ix, expr_start_ix)) = cfg_ixs {
-            let expr_end_ix = self.cfg.current_node_ix;
-            let after_assignment_ix = self.cfg.new_basic_block();
+        control_flow!(self, |cfg| {
+            if let Some((target_end_ix, expr_start_ix)) = cfg_ixs {
+                let expr_end_ix = cfg.current_node_ix;
+                let after_assignment_ix = cfg.new_basic_block_normal();
 
-            self.cfg.add_edge(target_end_ix, expr_start_ix, EdgeType::Normal);
-            self.cfg.add_edge(target_end_ix, after_assignment_ix, EdgeType::Normal);
-            self.cfg.add_edge(expr_end_ix, after_assignment_ix, EdgeType::Normal);
-        }
+                cfg.add_edge(target_end_ix, expr_start_ix, EdgeType::Normal);
+                cfg.add_edge(target_end_ix, after_assignment_ix, EdgeType::Normal);
+                cfg.add_edge(expr_end_ix, after_assignment_ix, EdgeType::Normal);
+            }
+        });
+        /* cfg */
+
+        self.leave_node(kind);
+    }
+
+    fn visit_conditional_expression(&mut self, expr: &ConditionalExpression<'a>) {
+        let kind = AstKind::ConditionalExpression(self.alloc(expr));
+        self.enter_node(kind);
+
+        /* cfg - condition basic block */
+        let (before_conditional_graph_ix, start_of_condition_graph_ix) =
+            control_flow!(self, |cfg| {
+                let before_conditional_graph_ix = cfg.current_node_ix;
+                let start_of_condition_graph_ix = cfg.new_basic_block_normal();
+                (before_conditional_graph_ix, start_of_condition_graph_ix)
+            });
+        /* cfg */
+
+        self.record_ast_nodes();
+        self.visit_expression(&expr.test);
+        let test_node = self.retrieve_recorded_ast_node();
+
+        /* cfg */
+        let (after_condition_graph_ix, before_consequent_expr_graph_ix) =
+            control_flow!(self, |cfg| {
+                cfg.append_condition_to(start_of_condition_graph_ix, test_node);
+                let after_condition_graph_ix = cfg.current_node_ix;
+                // conditional expression basic block
+                let before_consequent_expr_graph_ix = cfg.new_basic_block_normal();
+                (after_condition_graph_ix, before_consequent_expr_graph_ix)
+            });
+        /* cfg */
+
+        self.visit_expression(&expr.consequent);
+
+        /* cfg */
+        let (after_consequent_expr_graph_ix, start_alternate_graph_ix) =
+            control_flow!(self, |cfg| {
+                let after_consequent_expr_graph_ix = cfg.current_node_ix;
+                let start_alternate_graph_ix = cfg.new_basic_block_normal();
+                (after_consequent_expr_graph_ix, start_alternate_graph_ix)
+            });
+        /* cfg */
+
+        self.visit_expression(&expr.alternate);
+
+        /* cfg */
+        control_flow!(self, |cfg| {
+            let after_alternate_graph_ix = cfg.current_node_ix;
+            /* bb after conditional expression joins consequent and alternate */
+            let after_conditional_graph_ix = cfg.new_basic_block_normal();
+
+            cfg.add_edge(
+                before_conditional_graph_ix,
+                start_of_condition_graph_ix,
+                EdgeType::Normal,
+            );
+
+            cfg.add_edge(
+                after_consequent_expr_graph_ix,
+                after_conditional_graph_ix,
+                EdgeType::Normal,
+            );
+            cfg.add_edge(after_condition_graph_ix, before_consequent_expr_graph_ix, EdgeType::Jump);
+
+            cfg.add_edge(after_condition_graph_ix, start_alternate_graph_ix, EdgeType::Normal);
+            cfg.add_edge(after_alternate_graph_ix, after_conditional_graph_ix, EdgeType::Normal);
+        });
         /* cfg */
 
         self.leave_node(kind);
@@ -767,25 +910,36 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
     fn visit_for_statement(&mut self, stmt: &ForStatement<'a>) {
         let kind = AstKind::ForStatement(self.alloc(stmt));
+        self.enter_node(kind);
         let is_lexical_declaration =
             stmt.init.as_ref().is_some_and(ForStatementInit::is_lexical_declaration);
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         }
-        self.enter_node(kind);
         if let Some(init) = &stmt.init {
             self.visit_for_statement_init(init);
         }
         /* cfg */
-        let before_for_graph_ix = self.cfg.current_node_ix;
-        let test_graph_ix = self.cfg.new_basic_block();
+        let (before_for_graph_ix, test_graph_ix) = control_flow!(self, |cfg| {
+            let before_for_graph_ix = cfg.current_node_ix;
+            let test_graph_ix = cfg.new_basic_block_normal();
+            (before_for_graph_ix, test_graph_ix)
+        });
         /* cfg */
+
         if let Some(test) = &stmt.test {
+            self.record_ast_nodes();
             self.visit_expression(test);
+            let test_node = self.retrieve_recorded_ast_node();
+
+            /* cfg */
+            control_flow!(self, |cfg| cfg.append_condition_to(test_graph_ix, test_node));
+            /* cfg */
         }
 
         /* cfg */
-        let update_graph_ix = self.cfg.new_basic_block();
+        let (after_test_graph_ix, update_graph_ix) =
+            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
         if let Some(update) = &stmt.update {
@@ -793,257 +947,226 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        let body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        let before_body_graph_ix = control_flow!(self, |cfg| {
+            let before_body_graph_ix = cfg.new_basic_block_normal();
+            cfg.ctx(None).default().allow_break().allow_continue();
+            before_body_graph_ix
+        });
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        let after_for_stmt = self.cfg.new_basic_block();
-        self.cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(test_graph_ix, body_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(body_graph_ix, update_graph_ix, EdgeType::Backedge);
-        self.cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
-        self.cfg.add_edge(test_graph_ix, after_for_stmt, EdgeType::Normal);
+        control_flow!(self, |cfg| {
+            let after_body_graph_ix = cfg.current_node_ix;
+            let after_for_stmt = cfg.new_basic_block_normal();
+            cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
+            cfg.add_edge(after_test_graph_ix, before_body_graph_ix, EdgeType::Jump);
+            cfg.add_edge(after_body_graph_ix, update_graph_ix, EdgeType::Backedge);
+            cfg.add_edge(update_graph_ix, test_graph_ix, EdgeType::Backedge);
+            cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the for statement
-            self.cfg.current_node_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(test_graph_ix),
-        );
-
+            cfg.ctx(None)
+                .mark_break(after_for_stmt)
+                .mark_continue(update_graph_ix)
+                .resolve_with_upper_label();
+        });
         /* cfg */
-        self.leave_node(kind);
+
         if is_lexical_declaration {
             self.leave_scope();
-        }
-    }
-
-    fn visit_for_statement_init(&mut self, init: &ForStatementInit<'a>) {
-        let kind = AstKind::ForStatementInit(self.alloc(init));
-        self.enter_node(kind);
-        match init {
-            ForStatementInit::UsingDeclaration(decl) => {
-                self.visit_using_declaration(decl);
-            }
-            ForStatementInit::VariableDeclaration(decl) => {
-                self.visit_variable_declaration(decl);
-            }
-            match_expression!(ForStatementInit) => self.visit_expression(init.to_expression()),
         }
         self.leave_node(kind);
     }
 
     fn visit_for_in_statement(&mut self, stmt: &ForInStatement<'a>) {
         let kind = AstKind::ForInStatement(self.alloc(stmt));
+        self.enter_node(kind);
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         }
-        self.enter_node(kind);
+
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
-        let before_for_stmt_graph_ix = self.cfg.current_node_ix;
-        let start_prepare_cond_graph_ix = self.cfg.new_basic_block();
+        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
+            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.right);
+        let right_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
-        let end_of_prepare_cond_graph_ix = self.cfg.current_node_ix;
-        // this basic block is always empty since there's no update condition in a for-in loop.
-        let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block();
-        let body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
+            control_flow!(self, |cfg| {
+                let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
+                let iteration_graph_ix = cfg.new_basic_block_normal();
+                cfg.append_iteration(right_node, IterationInstructionKind::In);
+                let body_graph_ix = cfg.new_basic_block_normal();
+
+                cfg.ctx(None).default().allow_break().allow_continue();
+                (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix)
+            });
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        let end_of_body_graph_ix = self.cfg.current_node_ix;
-        let after_for_graph_ix = self.cfg.new_basic_block();
-        // connect before for statement to the iterable expression
-        self.cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
-        // connect the end of the iterable expression to the basic block with back edge
-        self.cfg.add_edge(
-            end_of_prepare_cond_graph_ix,
-            basic_block_with_backedge_graph_ix,
-            EdgeType::Normal,
-        );
-        // connect the basic block with back edge to the start of the body
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, body_graph_ix, EdgeType::Normal);
-        // connect the end of the body back to the basic block
-        // with back edge for the next iteration
-        self.cfg.add_edge(
-            end_of_body_graph_ix,
-            basic_block_with_backedge_graph_ix,
-            EdgeType::Backedge,
-        );
-        // connect the basic block with back edge to the basic block after the for loop
-        // for when there are no more iterations left in the iterable
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
+        control_flow!(self, |cfg| {
+            let end_of_body_graph_ix = cfg.current_node_ix;
+            let after_for_graph_ix = cfg.new_basic_block_normal();
+            // connect before for statement to the iterable expression
+            cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
+            // connect the end of the iterable expression to the basic block with back edge
+            cfg.add_edge(end_of_prepare_cond_graph_ix, iteration_graph_ix, EdgeType::Normal);
+            // connect the basic block with back edge to the start of the body
+            cfg.add_edge(iteration_graph_ix, body_graph_ix, EdgeType::Jump);
+            // connect the end of the body back to the basic block
+            // with back edge for the next iteration
+            cfg.add_edge(end_of_body_graph_ix, iteration_graph_ix, EdgeType::Backedge);
+            // connect the basic block with back edge to the basic block after the for loop
+            // for when there are no more iterations left in the iterable
+            cfg.add_edge(iteration_graph_ix, after_for_graph_ix, EdgeType::Normal);
 
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the for-in statement
-            self.cfg.current_node_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(basic_block_with_backedge_graph_ix),
-        );
+            cfg.ctx(None)
+                .mark_break(after_for_graph_ix)
+                .mark_continue(iteration_graph_ix)
+                .resolve_with_upper_label();
+        });
         /* cfg */
 
-        self.leave_node(kind);
         if is_lexical_declaration {
             self.leave_scope();
         }
+        self.leave_node(kind);
     }
 
     fn visit_for_of_statement(&mut self, stmt: &ForOfStatement<'a>) {
         let kind = AstKind::ForOfStatement(self.alloc(stmt));
+        self.enter_node(kind);
         let is_lexical_declaration = stmt.left.is_lexical_declaration();
         if is_lexical_declaration {
-            self.enter_scope(ScopeFlags::empty());
+            self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
         }
-        self.enter_node(kind);
+
         self.visit_for_statement_left(&stmt.left);
 
         /* cfg */
-        let before_for_stmt_graph_ix = self.cfg.current_node_ix;
-        let start_prepare_cond_graph_ix = self.cfg.new_basic_block();
+        let (before_for_stmt_graph_ix, start_prepare_cond_graph_ix) =
+            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.right);
+        let right_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
-        let end_of_prepare_cond_graph_ix = self.cfg.current_node_ix;
-        // this basic block is always empty since there's no update condition in a for-of loop.
-        let basic_block_with_backedge_graph_ix = self.cfg.new_basic_block();
-        let body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        let (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix) =
+            control_flow!(self, |cfg| {
+                let end_of_prepare_cond_graph_ix = cfg.current_node_ix;
+                let iteration_graph_ix = cfg.new_basic_block_normal();
+                cfg.append_iteration(right_node, IterationInstructionKind::Of);
+                let body_graph_ix = cfg.new_basic_block_normal();
+                cfg.ctx(None).default().allow_break().allow_continue();
+                (end_of_prepare_cond_graph_ix, iteration_graph_ix, body_graph_ix)
+            });
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        let end_of_body_graph_ix = self.cfg.current_node_ix;
-        let after_for_graph_ix = self.cfg.new_basic_block();
-        // connect before for statement to the iterable expression
-        self.cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
-        // connect the end of the iterable expression to the basic block with back edge
-        self.cfg.add_edge(
-            end_of_prepare_cond_graph_ix,
-            basic_block_with_backedge_graph_ix,
-            EdgeType::Normal,
-        );
-        // connect the basic block with back edge to the start of the body
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, body_graph_ix, EdgeType::Normal);
-        // connect the end of the body back to the basic block
-        // with back edge for the next iteration
-        self.cfg.add_edge(
-            end_of_body_graph_ix,
-            basic_block_with_backedge_graph_ix,
-            EdgeType::Backedge,
-        );
-        // connect the basic block with back edge to the basic block after the for loop
-        // for when there are no more iterations left in the iterable
-        self.cfg.add_edge(basic_block_with_backedge_graph_ix, after_for_graph_ix, EdgeType::Normal);
+        control_flow!(self, |cfg| {
+            let end_of_body_graph_ix = cfg.current_node_ix;
+            let after_for_graph_ix = cfg.new_basic_block_normal();
+            // connect before for statement to the iterable expression
+            cfg.add_edge(before_for_stmt_graph_ix, start_prepare_cond_graph_ix, EdgeType::Normal);
+            // connect the end of the iterable expression to the basic block with back edge
+            cfg.add_edge(end_of_prepare_cond_graph_ix, iteration_graph_ix, EdgeType::Normal);
+            // connect the basic block with back edge to the start of the body
+            cfg.add_edge(iteration_graph_ix, body_graph_ix, EdgeType::Jump);
+            // connect the end of the body back to the basic block
+            // with back edge for the next iteration
+            cfg.add_edge(end_of_body_graph_ix, iteration_graph_ix, EdgeType::Backedge);
+            // connect the basic block with back edge to the basic block after the for loop
+            // for when there are no more iterations left in the iterable
+            cfg.add_edge(iteration_graph_ix, after_for_graph_ix, EdgeType::Normal);
 
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the for-of statement
-            self.cfg.current_node_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(basic_block_with_backedge_graph_ix),
-        );
+            cfg.ctx(None)
+                .mark_break(after_for_graph_ix)
+                .mark_continue(iteration_graph_ix)
+                .resolve_with_upper_label();
+        });
         /* cfg */
 
-        self.leave_node(kind);
         if is_lexical_declaration {
             self.leave_scope();
         }
+        self.leave_node(kind);
     }
 
     fn visit_if_statement(&mut self, stmt: &IfStatement<'a>) {
         let kind = AstKind::IfStatement(self.alloc(stmt));
         self.enter_node(kind);
 
+        /* cfg - condition basic block */
+        let (before_if_stmt_graph_ix, start_of_condition_graph_ix) =
+            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
+        /* cfg */
+
+        self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        let test_node = self.retrieve_recorded_ast_node();
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-
-        let before_if_stmt_graph_ix = self.cfg.current_node_ix;
-
-        // if statement basic block
-        let before_consequent_stmt_graph_ix = self.cfg.new_basic_block();
+        let (after_test_graph_ix, before_consequent_stmt_graph_ix) = control_flow!(self, |cfg| {
+            cfg.append_condition_to(start_of_condition_graph_ix, test_node);
+            (cfg.current_node_ix, cfg.new_basic_block_normal())
+        });
         /* cfg */
 
         self.visit_statement(&stmt.consequent);
 
         /* cfg */
-        let after_consequent_stmt_graph_ix = self.cfg.current_node_ix;
+        let after_consequent_stmt_graph_ix = control_flow!(self, |cfg| cfg.current_node_ix);
         /* cfg */
 
         let else_graph_ix = if let Some(alternate) = &stmt.alternate {
             /* cfg */
-            let else_graph_ix = self.cfg.new_basic_block();
+            let else_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
             /* cfg */
 
             self.visit_statement(alternate);
 
-            Some((else_graph_ix, self.cfg.current_node_ix))
+            control_flow!(self, |cfg| Some((else_graph_ix, cfg.current_node_ix)))
         } else {
             None
         };
 
         /* cfg - bb after if statement joins consequent and alternate */
-        let after_if_graph_ix = self.cfg.new_basic_block();
+        control_flow!(self, |cfg| {
+            let after_if_graph_ix = cfg.new_basic_block_normal();
 
-        if stmt.alternate.is_some() {
-            self.cfg.put_unreachable();
-        }
-        //  else {
-        self.cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
-        // }
+            cfg.add_edge(before_if_stmt_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
 
-        self.cfg.add_edge(
-            before_if_stmt_graph_ix,
-            before_consequent_stmt_graph_ix,
-            EdgeType::Normal,
-        );
+            cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
 
-        if let Some((start_of_alternate_stmt_graph_ix, after_alternate_stmt_graph_ix)) =
-            else_graph_ix
-        {
-            self.cfg.add_edge(
-                before_if_stmt_graph_ix,
-                start_of_alternate_stmt_graph_ix,
-                EdgeType::Normal,
-            );
-            self.cfg.add_edge(after_alternate_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
-        } else {
-            self.cfg.add_edge(before_if_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
-        }
+            cfg.add_edge(after_test_graph_ix, before_consequent_stmt_graph_ix, EdgeType::Jump);
 
-        self.cfg.after_statement(&statement_state, self.current_node_id, after_if_graph_ix, None);
+            if let Some((start_of_alternate_stmt_graph_ix, after_alternate_stmt_graph_ix)) =
+                else_graph_ix
+            {
+                cfg.add_edge(
+                    before_if_stmt_graph_ix,
+                    start_of_alternate_stmt_graph_ix,
+                    EdgeType::Normal,
+                );
+                cfg.add_edge(after_alternate_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
+            } else {
+                cfg.add_edge(before_if_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
+            }
+        });
         /* cfg */
 
         self.leave_node(kind);
@@ -1054,27 +1177,27 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
+        let label = &stmt.label.name;
+        control_flow!(self, |cfg| {
+            let ctx = cfg.ctx(Some(label.as_str())).default().allow_break();
+            if stmt.body.is_iteration_statement() {
+                ctx.allow_continue();
+            }
+        });
         /* cfg */
 
         self.visit_label_identifier(&stmt.label);
 
-        /* cfg */
-        self.cfg.next_label = Some(stmt.label.name.to_compact_str());
-        /* cfg */
-
         self.visit_statement(&stmt.body);
 
         /* cfg */
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        control_flow!(self, |cfg| {
+            let after_body_graph_ix = cfg.current_node_ix;
+            let after_labeled_stmt_graph_ix = cfg.new_basic_block_normal();
+            cfg.add_edge(after_body_graph_ix, after_labeled_stmt_graph_ix, EdgeType::Normal);
 
+            cfg.ctx(Some(label.as_str())).mark_break(after_labeled_stmt_graph_ix).resolve();
+        });
         /* cfg */
 
         self.leave_node(kind);
@@ -1085,36 +1208,21 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-
-        // returning something is an assignment to the return register
-        self.cfg.use_this_register = Some(Register::Return);
+        let node_id = self.current_node_id;
         /* cfg */
 
-        if let Some(arg) = &stmt.argument {
+        let ret_kind = if let Some(arg) = &stmt.argument {
             self.visit_expression(arg);
-            /* cfg */
-            self.cfg.put_x_in_register(AssignmentValue::NotImplicitUndefined);
-            /* cfg */
-        }
-        /* cfg - put implicit undefined as return arg  */
-        else {
-            self.cfg.put_undefined();
-        }
+            ReturnInstructionKind::NotImplicitUndefined
+        } else {
+            ReturnInstructionKind::ImplicitUndefined
+        };
+
         /* cfg */
-
-        /* cfg - put unreachable after return */
-        let _ = self.cfg.new_basic_block();
-        self.cfg.put_unreachable();
-
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        control_flow!(self, |cfg| {
+            cfg.push_return(ret_kind, node_id);
+            cfg.append_unreachable();
+        });
         /* cfg */
 
         self.leave_node(kind);
@@ -1124,67 +1232,70 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::SwitchStatement(self.alloc(stmt));
         self.enter_node(kind);
         self.visit_expression(&stmt.discriminant);
-        self.enter_scope(ScopeFlags::empty());
+        self.enter_scope(ScopeFlags::empty(), &stmt.scope_id);
 
         /* cfg */
-        let discriminant_graph_ix = self.cfg.current_node_ix;
-        self.cfg.switch_case_conditions.push(vec![]);
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-        let mut ends_of_switch_cases = vec![];
+        let discriminant_graph_ix = control_flow!(self, |cfg| {
+            let discriminant_graph_ix = cfg.current_node_ix;
+            cfg.ctx(None).default().allow_break();
+            discriminant_graph_ix
+        });
+        let mut switch_case_graph_spans = vec![];
+        let mut have_default_case = false;
         /* cfg */
 
         for case in &stmt.cases {
+            let before_case_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
             self.visit_switch_case(case);
-            ends_of_switch_cases.push(self.cfg.current_node_ix);
+            if case.is_default_case() {
+                have_default_case = true;
+            }
+            control_flow!(self, |cfg| switch_case_graph_spans
+                .push((before_case_graph_ix, cfg.current_node_ix)));
         }
 
         /* cfg */
-        let switch_case_conditions = self.cfg.switch_case_conditions.pop().expect(
-            "there must be a corresponding previous_switch_case_last_block in a switch statement",
-        );
-
         // for each switch case
-        for i in 0..switch_case_conditions.len() {
-            let switch_case_condition_graph_ix = switch_case_conditions[i];
+        control_flow!(self, |cfg| {
+            for i in 0..switch_case_graph_spans.len() {
+                let case_graph_span = switch_case_graph_spans[i];
 
-            // every switch case condition can be skipped,
-            // so there's a possible jump from it to the next switch case condition
-            for y in switch_case_conditions.iter().skip(i + 1) {
-                self.cfg.add_edge(switch_case_condition_graph_ix, *y, EdgeType::Normal);
+                // every switch case condition can be skipped,
+                // so there's a possible jump from it to the next switch case condition
+                for y in switch_case_graph_spans.iter().skip(i + 1) {
+                    cfg.add_edge(case_graph_span.0, y.0, EdgeType::Normal);
+                }
+
+                // connect the end of each switch statement to
+                // the condition of the next switch statement
+                if switch_case_graph_spans.len() > i + 1 {
+                    let (_, end_of_switch_case) = switch_case_graph_spans[i];
+                    let (next_switch_statement_condition, _) = switch_case_graph_spans[i + 1];
+
+                    cfg.add_edge(
+                        end_of_switch_case,
+                        next_switch_statement_condition,
+                        EdgeType::Normal,
+                    );
+                }
+
+                cfg.add_edge(discriminant_graph_ix, case_graph_span.0, EdgeType::Normal);
             }
 
-            // connect the end of each switch statement to
-            // the condition of the next switch statement
-            if switch_case_conditions.len() > i + 1 {
-                let end_of_switch_case = ends_of_switch_cases[i];
-                let next_switch_statement_condition = switch_case_conditions[i + 1];
+            let end_of_switch_case_statement = cfg.new_basic_block_normal();
 
-                self.cfg.add_edge(
-                    end_of_switch_case,
-                    next_switch_statement_condition,
-                    EdgeType::Normal,
-                );
+            if let Some(last) = switch_case_graph_spans.last() {
+                cfg.add_edge(last.1, end_of_switch_case_statement, EdgeType::Normal);
             }
 
-            self.cfg.add_edge(
-                discriminant_graph_ix,
-                switch_case_condition_graph_ix,
-                EdgeType::Normal,
-            );
-        }
+            // if we don't have a default case there should be an edge from discriminant to the end of
+            // the statement.
+            if !have_default_case {
+                cfg.add_edge(discriminant_graph_ix, end_of_switch_case_statement, EdgeType::Normal);
+            }
 
-        if let Some(last) = switch_case_conditions.last() {
-            self.cfg.add_edge(*last, self.cfg.current_node_ix, EdgeType::Normal);
-        }
-
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+            cfg.ctx(None).mark_break(end_of_switch_case_statement).resolve();
+        });
         /* cfg */
 
         self.leave_scope();
@@ -1195,24 +1306,19 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::SwitchCase(self.alloc(case));
         self.enter_node(kind);
 
-        /* cfg */
-        // make a new basic block so that we can jump to it later from the switch
-        //   discriminant and the switch cases above it (if they don't test ss true)
-        let switch_cond_graph_ix = self.cfg.new_basic_block();
-        self.cfg
-            .switch_case_conditions
-            .last_mut()
-            .expect("there must be a switch_case_conditions while in a switch case")
-            .push(switch_cond_graph_ix);
-        /* cfg */
-
         if let Some(expr) = &case.test {
+            self.record_ast_nodes();
             self.visit_expression(expr);
+            let test_node = self.retrieve_recorded_ast_node();
+            control_flow!(self, |cfg| cfg.append_condition_to(cfg.current_node_ix, test_node));
         }
 
         /* cfg */
-        let statements_in_switch_graph_ix = self.cfg.new_basic_block();
-        self.cfg.add_edge(switch_cond_graph_ix, statements_in_switch_graph_ix, EdgeType::Normal);
+        control_flow!(self, |cfg| {
+            let after_test_graph_ix = cfg.current_node_ix;
+            let statements_in_switch_graph_ix = cfg.new_basic_block_normal();
+            cfg.add_edge(after_test_graph_ix, statements_in_switch_graph_ix, EdgeType::Jump);
+        });
         /* cfg */
 
         self.visit_statements(&case.consequent);
@@ -1225,24 +1331,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-        let throw_expr = self.cfg.new_register();
-        self.cfg.use_this_register = Some(throw_expr);
+        let node_id = self.current_node_id;
         /* cfg */
 
         self.visit_expression(&stmt.argument);
-        // todo - put unreachable after throw statement
 
         /* cfg */
-        self.cfg.put_throw(throw_expr);
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+        control_flow!(self, |cfg| cfg.append_throw(node_id));
         /* cfg */
 
         self.leave_node(kind);
@@ -1252,196 +1347,130 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         let kind = AstKind::TryStatement(self.alloc(stmt));
         self.enter_node(kind);
 
-        // There are 3 possible kinds of Try Statements (See
-        //    <https://tc39.es/ecma262/#sec-try-statement>):
-        // 1. try-catch
-        // 2. try-finally
-        // 3. try-catch-finally
-        //
-        // We will consider each kind of try statement separately.
-        //
-        // For a try-catch, there are only 2 ways to reach
-        // the outgoing node (after the entire statement):
-        //
-        // 1. after the try block completing successfully
-        // 2. after the catch block completing successfully,
-        //    in which case some statement in the try block
-        //    must have thrown.
-        //
-        // For a try-finally, there is only 1 way to reach
-        // the outgoing node, whereby:
-        // - the try block completed successfully, and
-        // - the finally block completed successfully
-        //
-        // But the finally block can also be reached when the try
-        // fails. We thus need to fork the control flow graph into
-        // 2 different finally statements:
-        //    1. one where the try block completes successfully, (finally_succ)
-        //    2. one where some statement in the try block throws (finally_err)
-        // Only the end of the try block will have an incoming edge to the
-        // finally_succ, and only finally_succ will have an outgoing node to
-        // the next statement.
-        //
-        // For a try-catch-finally, we have seemlingly more cases:
-        //   1. after the try block completing successfully
-        //   2. after the catch block completing successfully
-        //   3. after the try block if the catch block throws
-        // Despite having 3 distings scenarios, we can simplify the control flow
-        // graph by still only using a finally_succ and a finally_err node.
-        // The key is that the outgoing edge going past the entire
-        // try-catch-finally statement is guaranteed that all code paths have
-        // either completed the try block or the catch block in full.
-
-        // Implementation notes:
-        // We will use the following terminology:
-        //
-        // the "parent after_throw block" is the block that would be the target
-        // of a throw if there were no try-catch-finally.
-        //
-        // Within the try block, a throw will not go to the parent after_throw
-        // block. Instead, it will go to the catch block in a try-catch or to
-        // the finally_err block in a try-catch-finally.
-        //
-        // In a catch block, a throw will go to the finally_err block in a
-        // try-catch-finally, or to the parent after_throw block in a basic
-        // try-catch.
-        //
-        // In a finally block, a throw will always go to the parent after_throw
-        // block, both for finally_succ and finally_err.
-
         /* cfg */
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
 
-        // TODO: support unwinding finally/catch blocks that aren't in this function
-        // even if something throws.
-        let parent_after_throw_block_ix = self.cfg.after_throw_block;
+        let (
+            before_try_statement_graph_ix,
+            error_harness,
+            before_finalizer_graph_ix,
+            before_try_block_graph_ix,
+        ) = control_flow!(self, |cfg| {
+            let before_try_statement_graph_ix = cfg.current_node_ix;
+            let error_harness =
+                stmt.handler.as_ref().map(|_| cfg.attach_error_harness(ErrorEdgeKind::Explicit));
+            let before_finalizer_graph_ix = stmt.finalizer.as_ref().map(|_| cfg.attach_finalizer());
+            let before_try_block_graph_ix = cfg.new_basic_block_normal();
 
-        let try_stmt_pre_start_ix = self.cfg.current_node_ix;
-
-        let try_stmt_start_ix = self.cfg.new_basic_block();
-        self.cfg.add_edge(try_stmt_pre_start_ix, try_stmt_start_ix, EdgeType::Normal);
-        let try_after_throw_block_ix = self.cfg.new_basic_block();
-
-        self.cfg.current_node_ix = try_stmt_start_ix;
-
-        // every statement created with this active adds an edge from that node to this node
-        //
-        // NOTE: we oversimplify here, realistically even in between basic blocks we
-        // do throwsy things which could cause problems, but for the most part simply
-        // pointing the end of every basic block to the catch block is enough
-        self.cfg.after_throw_block = Some(try_after_throw_block_ix);
-        // The one case that needs to be handled specially is if the first statement in the
-        // try block throws. In that case, it is not sufficient to rely on an edge after that
-        // statement, because the catch will run before that edge is taken.
-        self.cfg.add_edge(try_stmt_pre_start_ix, try_after_throw_block_ix, EdgeType::Normal);
+            (
+                before_try_statement_graph_ix,
+                error_harness,
+                before_finalizer_graph_ix,
+                before_try_block_graph_ix,
+            )
+        });
         /* cfg */
 
         self.visit_block_statement(&stmt.block);
 
         /* cfg */
-        let end_of_try_block_ix = self.cfg.current_node_ix;
-        self.cfg.add_edge(end_of_try_block_ix, try_after_throw_block_ix, EdgeType::Normal);
-        self.cfg.after_throw_block = parent_after_throw_block_ix;
-
-        let start_of_finally_err_block_ix = if stmt.finalizer.is_some() {
-            if stmt.handler.is_some() {
-                // try-catch-finally
-                Some(self.cfg.new_basic_block())
-            } else {
-                // try-finally
-                Some(try_after_throw_block_ix)
-            }
-        } else {
-            // try-catch
-            None
-        };
+        let after_try_block_graph_ix = control_flow!(self, |cfg| cfg.current_node_ix);
         /* cfg */
 
         let catch_block_end_ix = if let Some(handler) = &stmt.handler {
             /* cfg */
-            let catch_after_throw_block_ix = if stmt.finalizer.is_some() {
-                start_of_finally_err_block_ix
-            } else {
-                parent_after_throw_block_ix
-            };
-            self.cfg.after_throw_block = catch_after_throw_block_ix;
-
-            let catch_block_start_ix = try_after_throw_block_ix;
-            self.cfg.current_node_ix = catch_block_start_ix;
-
-            if let Some(catch_after_throw_block_ix) = catch_after_throw_block_ix {
-                self.cfg.add_edge(
-                    catch_block_start_ix,
-                    catch_after_throw_block_ix,
-                    EdgeType::Normal,
-                );
-            }
+            control_flow!(self, |cfg| {
+                let Some(error_harness) = error_harness else {
+                    unreachable!("we always create an error harness if we have a catch block.");
+                };
+                cfg.release_error_harness(error_harness);
+                let catch_block_start_ix = cfg.new_basic_block_normal();
+                cfg.add_edge(error_harness, catch_block_start_ix, EdgeType::Normal);
+            });
             /* cfg */
 
             self.visit_catch_clause(handler);
 
             /* cfg */
-            Some(self.cfg.current_node_ix)
+            control_flow!(self, |cfg| {
+                let catch_block_end_ix = cfg.current_node_ix;
+                // TODO: we shouldn't directly change the current node index.
+                cfg.current_node_ix = after_try_block_graph_ix;
+                Some(catch_block_end_ix)
+            })
             /* cfg */
         } else {
             None
         };
 
-        // Restore the after_throw_block
-        self.cfg.after_throw_block = parent_after_throw_block_ix;
-
-        if let Some(finalizer) = &stmt.finalizer {
+        let finally_block_end_ix = if let Some(finalizer) = &stmt.finalizer {
             /* cfg */
-            let finally_err_block_start_ix =
-                start_of_finally_err_block_ix.expect("this try statement has a finally_err block");
-
-            self.cfg.current_node_ix = finally_err_block_start_ix;
-            /* cfg */
-
-            self.visit_finally_clause(finalizer);
-
-            /* cfg */
-            // put an unreachable after the finally_err block
-            self.cfg.put_unreachable();
-
-            let finally_succ_block_start_ix = self.cfg.new_basic_block();
-
-            // The end_of_try_block has an outgoing edge to finally_succ also
-            // for when the try block completes successfully.
-            self.cfg.add_edge(end_of_try_block_ix, finally_succ_block_start_ix, EdgeType::Normal);
-
-            // The end_of_catch_block has an outgoing edge to finally_succ for
-            // when the catch block in a try-catch-finally completes successfully.
-            if let Some(end_of_catch_block_ix) = catch_block_end_ix {
-                // try-catch-finally
-                self.cfg.add_edge(
-                    end_of_catch_block_ix,
-                    finally_succ_block_start_ix,
-                    EdgeType::Normal,
-                );
-            }
+            control_flow!(self, |cfg| {
+                let Some(before_finalizer_graph_ix) = before_finalizer_graph_ix else {
+                    unreachable!("we always create a finalizer when there is a finally block.");
+                };
+                cfg.release_finalizer(before_finalizer_graph_ix);
+                let start_finally_graph_ix = cfg.new_basic_block_normal();
+                cfg.add_edge(before_finalizer_graph_ix, start_finally_graph_ix, EdgeType::Normal);
+            });
             /* cfg */
 
             self.visit_finally_clause(finalizer);
-        }
+
+            /* cfg */
+            control_flow!(self, |cfg| {
+                let finally_block_end_ix = cfg.current_node_ix;
+                // TODO: we shouldn't directly change the current node index.
+                cfg.current_node_ix = after_try_block_graph_ix;
+                Some(finally_block_end_ix)
+            })
+            /* cfg */
+        } else {
+            None
+        };
 
         /* cfg */
-        let try_statement_block_end_ix = self.cfg.current_node_ix;
-        let after_try_statement_block_ix = self.cfg.new_basic_block();
-        self.cfg.add_edge(
-            try_statement_block_end_ix,
-            after_try_statement_block_ix,
-            EdgeType::Normal,
-        );
+        control_flow!(self, |cfg| {
+            let after_try_statement_block_ix = cfg.new_basic_block_normal();
+            cfg.add_edge(
+                before_try_statement_graph_ix,
+                before_try_block_graph_ix,
+                EdgeType::Normal,
+            );
+            if let Some(catch_block_end_ix) = catch_block_end_ix {
+                if finally_block_end_ix.is_none() {
+                    cfg.add_edge(
+                        after_try_block_graph_ix,
+                        after_try_statement_block_ix,
+                        EdgeType::Normal,
+                    );
 
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+                    cfg.add_edge(
+                        catch_block_end_ix,
+                        after_try_statement_block_ix,
+                        EdgeType::Normal,
+                    );
+                }
+            }
+            if let Some(finally_block_end_ix) = finally_block_end_ix {
+                if catch_block_end_ix.is_some() {
+                    cfg.add_edge(
+                        finally_block_end_ix,
+                        after_try_statement_block_ix,
+                        EdgeType::Normal,
+                    );
+                } else {
+                    cfg.add_edge(
+                        finally_block_end_ix,
+                        after_try_statement_block_ix,
+                        if cfg.basic_block(after_try_block_graph_ix).unreachable {
+                            EdgeType::Unreachable
+                        } else {
+                            EdgeType::Join
+                        },
+                    );
+                }
+            }
+        });
         /* cfg */
 
         self.leave_node(kind);
@@ -1452,39 +1481,41 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
-        let before_while_stmt_graph_ix = self.cfg.current_node_ix;
-        let condition_graph_ix = self.cfg.new_basic_block();
+        let (before_while_stmt_graph_ix, condition_graph_ix) =
+            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
+        self.record_ast_nodes();
         self.visit_expression(&stmt.test);
+        let test_node = self.retrieve_recorded_ast_node();
 
         /* cfg - body basic block */
-        let body_graph_ix = self.cfg.new_basic_block();
-        let statement_state =
-            self.cfg.before_statement(self.current_node_id, StatementControlFlowType::UsesContinue);
+        let body_graph_ix = control_flow!(self, |cfg| {
+            cfg.append_condition_to(condition_graph_ix, test_node);
+            let body_graph_ix = cfg.new_basic_block_normal();
+
+            cfg.ctx(None).default().allow_break().allow_continue();
+            body_graph_ix
+        });
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg - after body basic block */
-        let after_body_graph_ix = self.cfg.new_basic_block();
+        control_flow!(self, |cfg| {
+            let after_body_graph_ix = cfg.current_node_ix;
+            let after_while_graph_ix = cfg.new_basic_block_normal();
 
-        self.cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(body_graph_ix, after_body_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(body_graph_ix, condition_graph_ix, EdgeType::Backedge);
-        self.cfg.add_edge(condition_graph_ix, after_body_graph_ix, EdgeType::Normal);
+            cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
+            cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Jump);
+            cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
+            cfg.add_edge(condition_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            // all basic blocks are break here so we connect them to the
-            // basic block after the while statement
-            after_body_graph_ix,
-            // all basic blocks are continues here so we connect them to the
-            // basic block of the condition
-            Some(condition_graph_ix),
-        );
+            cfg.ctx(None)
+                .mark_break(after_while_graph_ix)
+                .mark_continue(condition_graph_ix)
+                .resolve_with_upper_label();
+        });
         /* cfg */
         self.leave_node(kind);
     }
@@ -1494,177 +1525,152 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.enter_node(kind);
 
         /* cfg - condition basic block */
-        let before_with_stmt_graph_ix = self.cfg.current_node_ix;
-        let statement_state = self
-            .cfg
-            .before_statement(self.current_node_id, StatementControlFlowType::DoesNotUseContinue);
-        let condition_graph_ix = self.cfg.new_basic_block();
+        let (before_with_stmt_graph_ix, condition_graph_ix) =
+            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
         /* cfg */
 
         self.visit_expression(&stmt.object);
 
         /* cfg - body basic block */
-        let body_graph_ix = self.cfg.new_basic_block();
+        let body_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
         /* cfg */
 
         self.visit_statement(&stmt.body);
 
         /* cfg - after body basic block */
-        let after_body_graph_ix = self.cfg.new_basic_block();
+        control_flow!(self, |cfg| {
+            let after_body_graph_ix = cfg.new_basic_block_normal();
 
-        self.cfg.add_edge(before_with_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(body_graph_ix, after_body_graph_ix, EdgeType::Normal);
-        self.cfg.add_edge(condition_graph_ix, after_body_graph_ix, EdgeType::Normal);
-
-        self.cfg.after_statement(
-            &statement_state,
-            self.current_node_id,
-            self.cfg.current_node_ix,
-            None,
-        );
+            cfg.add_edge(before_with_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
+            cfg.add_edge(condition_graph_ix, body_graph_ix, EdgeType::Normal);
+            cfg.add_edge(body_graph_ix, after_body_graph_ix, EdgeType::Normal);
+            cfg.add_edge(condition_graph_ix, after_body_graph_ix, EdgeType::Normal);
+        });
         /* cfg */
 
         self.leave_node(kind);
     }
 
-    fn visit_function(&mut self, func: &Function<'a>, flags: Option<ScopeFlags>) {
-        let kind = AstKind::Function(self.alloc(func));
-        self.enter_scope({
-            let mut flags = flags.unwrap_or(ScopeFlags::empty()) | ScopeFlags::Function;
-            if func.is_strict() {
-                flags |= ScopeFlags::StrictMode;
-            }
-            flags
-        });
-
+    fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         /* cfg */
-        let preserved = self.cfg.preserve_expression_state();
-
-        let before_function_graph_ix = self.cfg.current_node_ix;
-        let function_graph_ix = self.cfg.new_basic_block_for_function();
+        let (before_function_graph_ix, error_harness, function_graph_ix) =
+            control_flow!(self, |cfg| {
+                let before_function_graph_ix = cfg.current_node_ix;
+                cfg.push_finalization_stack();
+                let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+                let function_graph_ix = cfg.new_basic_block_function();
+                cfg.ctx(None).new_function();
+                (before_function_graph_ix, error_harness, function_graph_ix)
+            });
         /* cfg */
 
         // We add a new basic block to the cfg before entering the node
         // so that the correct cfg_ix is associated with the ast node.
+        let kind = AstKind::Function(self.alloc(func));
         self.enter_node(kind);
+        self.enter_scope(
+            {
+                let mut flags = flags;
+                if func.is_strict() {
+                    flags |= ScopeFlags::StrictMode;
+                }
+                flags
+            },
+            &func.scope_id,
+        );
+
+        if func.is_expression() {
+            // We need to bind function expression in the function scope
+            func.bind(self);
+        }
+
+        if let Some(id) = &func.id {
+            self.visit_binding_identifier(id);
+        }
 
         /* cfg */
-        self.cfg.add_edge(before_function_graph_ix, function_graph_ix, EdgeType::NewFunction);
+        control_flow!(self, |cfg| cfg.add_edge(
+            before_function_graph_ix,
+            function_graph_ix,
+            EdgeType::NewFunction
+        ));
         /* cfg */
 
-        if let Some(ident) = &func.id {
-            self.visit_binding_identifier(ident);
+        if let Some(type_parameters) = &func.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        if let Some(this_param) = &func.this_param {
+            self.visit_ts_this_parameter(this_param);
         }
         self.visit_formal_parameters(&func.params);
+        if let Some(return_type) = &func.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
         if let Some(body) = &func.body {
             self.visit_function_body(body);
         }
 
         /* cfg */
-        self.cfg.restore_expression_state(preserved);
-        let after_function_graph_ix = self.cfg.new_basic_block();
-        self.cfg.add_edge(before_function_graph_ix, after_function_graph_ix, EdgeType::Normal);
-        // self.cfg.put_x_in_register(AssignmentValue::Function(self.current_node_id));
+        control_flow!(self, |cfg| {
+            cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
+            cfg.release_error_harness(error_harness);
+            cfg.pop_finalization_stack();
+            let after_function_graph_ix = cfg.new_basic_block_normal();
+            cfg.add_edge(before_function_graph_ix, after_function_graph_ix, EdgeType::Normal);
+        });
         /* cfg */
 
-        if let Some(parameters) = &func.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
-        if let Some(annotation) = &func.return_type {
-            self.visit_ts_type_annotation(annotation);
-        }
-        self.leave_node(kind);
         self.leave_scope();
-    }
-
-    fn visit_class(&mut self, class: &Class<'a>) {
-        // Class level decorators are transpiled as functions outside of the class taking the class
-        // itself as argument. They should be visited before class is entered. E.g., they inherit
-        // strict mode from the enclosing scope rather than from class.
-        for decorator in &class.decorators {
-            self.visit_decorator(decorator);
-        }
-        let kind = AstKind::Class(self.alloc(class));
-
-        // FIXME(don): Should we enter a scope when visiting class declarations?
-        let is_class_expr = class.r#type == ClassType::ClassExpression;
-        if is_class_expr {
-            // Class expressions create a temporary scope with the class name as its only variable
-            // E.g., `let c = class A { foo() { console.log(A) } }`
-            self.enter_scope(ScopeFlags::empty());
-        }
-
-        self.enter_node(kind);
-
-        /* cfg */
-        let preserved = self.cfg.preserve_expression_state();
-        self.cfg.store_final_assignments_into_this_array.push(vec![]);
-        /* cfg */
-
-        if let Some(id) = &class.id {
-            self.visit_binding_identifier(id);
-        }
-        if let Some(parameters) = &class.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
-
-        if let Some(super_class) = &class.super_class {
-            self.visit_class_heritage(super_class);
-        }
-        if let Some(super_parameters) = &class.super_type_parameters {
-            self.visit_ts_type_parameter_instantiation(super_parameters);
-        }
-        self.visit_class_body(&class.body);
-
-        /* cfg */
-        let _elements = self.cfg.store_final_assignments_into_this_array.pop().expect(
-            "expected there to be atleast one vec in the store_final_assignments_into_this_arrays",
-        );
-        self.cfg.restore_expression_state(preserved);
-        self.cfg.spread_indices.push(vec![]);
-        // self.cfg.put_collection_in_register(self.current_node_id, CollectionType::Class, elements);
-        /* cfg */
-
         self.leave_node(kind);
-        if is_class_expr {
-            self.leave_scope();
-        }
     }
 
-    fn visit_arrow_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
-        let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
-        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow);
-
+    fn visit_arrow_function_expression(&mut self, expr: &ArrowFunctionExpression<'a>) {
         /* cfg */
-        let preserved = self.cfg.preserve_expression_state();
-        let current_node_ix = self.cfg.current_node_ix;
-        let function_graph_ix = self.cfg.new_basic_block_for_function();
+        let (current_node_ix, error_harness, function_graph_ix) = control_flow!(self, |cfg| {
+            let current_node_ix = cfg.current_node_ix;
+            cfg.push_finalization_stack();
+            let error_harness = cfg.attach_error_harness(ErrorEdgeKind::Implicit);
+            let function_graph_ix = cfg.new_basic_block_function();
+            cfg.ctx(None).new_function();
+            (current_node_ix, error_harness, function_graph_ix)
+        });
         /* cfg */
 
         // We add a new basic block to the cfg before entering the node
         // so that the correct cfg_ix is associated with the ast node.
+        let kind = AstKind::ArrowFunctionExpression(self.alloc(expr));
         self.enter_node(kind);
+        self.enter_scope(ScopeFlags::Function | ScopeFlags::Arrow, &expr.scope_id);
+
+        if let Some(parameters) = &expr.type_parameters {
+            self.visit_ts_type_parameter_declaration(parameters);
+        }
 
         self.visit_formal_parameters(&expr.params);
 
         /* cfg */
-        self.cfg.add_edge(current_node_ix, function_graph_ix, EdgeType::NewFunction);
-        if expr.expression {
-            self.cfg.store_assignments_into_this_array.push(vec![]);
-            self.cfg.use_this_register = Some(Register::Return);
-        }
+        control_flow!(self, |cfg| cfg.add_edge(
+            current_node_ix,
+            function_graph_ix,
+            EdgeType::NewFunction
+        ));
         /* cfg */
+
+        if let Some(return_type) = &expr.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
+
         self.visit_function_body(&expr.body);
 
         /* cfg */
-        self.cfg.restore_expression_state(preserved);
-        self.cfg.current_node_ix = current_node_ix;
-        // self.cfg.put_x_in_register(AssignmentValue::Function(self.current_node_id));
+        control_flow!(self, |cfg| {
+            cfg.ctx(None).resolve_expect(CtxFlags::FUNCTION);
+            cfg.release_error_harness(error_harness);
+            cfg.pop_finalization_stack();
+            cfg.current_node_ix = current_node_ix;
+        });
         /* cfg */
-        if let Some(parameters) = &expr.type_parameters {
-            self.visit_ts_type_parameter_declaration(parameters);
-        }
+
         self.leave_node(kind);
         self.leave_scope();
     }
@@ -1672,9 +1678,48 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
 impl<'a> SemanticBuilder<'a> {
     fn enter_kind(&mut self, kind: AstKind<'a>) {
+        /* cfg */
+        control_flow!(self, |cfg| {
+            match kind {
+                AstKind::ReturnStatement(_)
+                | AstKind::BreakStatement(_)
+                | AstKind::ContinueStatement(_)
+                | AstKind::ThrowStatement(_) => { /* These types have their own `InstructionKind`. */
+                }
+                it if it.is_statement() => {
+                    cfg.enter_statement(self.current_node_id);
+                }
+                _ => { /* ignore the rest */ }
+            }
+        });
+        /* cfg */
+
         match kind {
-            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+            AstKind::ExportDefaultDeclaration(decl) => {
+                // Only if the declaration has an id, we mark it as an export
+                if match &decl.declaration {
+                    ExportDefaultDeclarationKind::FunctionDeclaration(ref func) => {
+                        func.id.is_some()
+                    }
+                    ExportDefaultDeclarationKind::ClassDeclaration(ref class) => class.id.is_some(),
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => true,
+                    _ => false,
+                } {
+                    self.current_symbol_flags |= SymbolFlags::Export;
+                }
+            }
+            AstKind::ExportNamedDeclaration(decl) => {
                 self.current_symbol_flags |= SymbolFlags::Export;
+                if decl.export_kind.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Type;
+                }
+            }
+            AstKind::ExportSpecifier(s) => {
+                if self.current_reference_flag.is_type() || s.export_kind.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Type;
+                } else {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
+                }
             }
             AstKind::ImportSpecifier(specifier) => {
                 specifier.bind(self);
@@ -1685,6 +1730,9 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ImportNamespaceSpecifier(specifier) => {
                 specifier.bind(self);
             }
+            AstKind::TSImportEqualsDeclaration(decl) => {
+                decl.bind(self);
+            }
             AstKind::VariableDeclarator(decl) => {
                 decl.bind(self);
                 self.make_all_namespaces_valuelike();
@@ -1692,20 +1740,21 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::StaticBlock(_) => self.label_builder.enter_function_or_static_block(),
             AstKind::Function(func) => {
                 self.function_stack.push(self.current_node_id);
-                func.bind(self);
+                if func.is_declaration() {
+                    func.bind(self);
+                }
                 self.label_builder.enter_function_or_static_block();
-                self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.push(self.current_node_id);
-                self.add_current_node_id_to_current_scope();
                 self.make_all_namespaces_valuelike();
             }
             AstKind::Class(class) => {
                 self.current_node_flags |= NodeFlags::Class;
-                class.bind(self);
-                self.remove_export_flag();
+                if class.is_declaration() {
+                    class.bind(self);
+                }
                 self.make_all_namespaces_valuelike();
             }
             AstKind::ClassBody(body) => {
@@ -1725,15 +1774,10 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::BindingRestElement(element) => {
                 element.bind(self);
             }
-            AstKind::FormalParameters(_) => {
-                self.current_node_flags |= NodeFlags::Parameter;
-                self.remove_export_flag();
-            }
             AstKind::FormalParameter(param) => {
                 param.bind(self);
             }
             AstKind::CatchParameter(param) => {
-                self.current_node_flags |= NodeFlags::Parameter;
                 param.bind(self);
             }
             AstKind::TSModuleDeclaration(module_declaration) => {
@@ -1743,30 +1787,64 @@ impl<'a> SemanticBuilder<'a> {
                     .get_bindings(self.current_scope_id)
                     .get(module_declaration.id.name().as_str());
                 self.namespace_stack.push(*symbol_id.unwrap());
-                self.in_type_definition = true;
+                self.current_symbol_flags -= SymbolFlags::Export;
             }
             AstKind::TSTypeAliasDeclaration(type_alias_declaration) => {
                 type_alias_declaration.bind(self);
-                self.in_type_definition = true;
             }
             AstKind::TSInterfaceDeclaration(interface_declaration) => {
                 interface_declaration.bind(self);
-                self.in_type_definition = true;
             }
             AstKind::TSEnumDeclaration(enum_declaration) => {
                 enum_declaration.bind(self);
                 // TODO: const enum?
                 self.make_all_namespaces_valuelike();
-                self.in_type_definition = true;
-            }
-            AstKind::TSTypeParameterInstantiation(_) | AstKind::TSTypeAnnotation(_) => {
-                self.in_type_definition = true;
             }
             AstKind::TSEnumMember(enum_member) => {
                 enum_member.bind(self);
             }
             AstKind::TSTypeParameter(type_parameter) => {
                 type_parameter.bind(self);
+            }
+            AstKind::TSInterfaceHeritage(_) => {
+                self.current_reference_flag = ReferenceFlag::Type;
+            }
+            AstKind::TSTypeQuery(_) => {
+                // type A = typeof a;
+                //          ^^^^^^^^
+                self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
+            AstKind::TSTypeParameterInstantiation(_) => {
+                // type A<T> = typeof a<T>;
+                //                     ^^^ avoid treat T as a value and TSTypeQuery
+                self.current_reference_flag -= ReferenceFlag::Read | ReferenceFlag::TSTypeQuery;
+            }
+            AstKind::TSTypeName(_) => {
+                match self.nodes.parent_kind(self.current_node_id) {
+                    Some(
+                        // import A = a;
+                        //            ^
+                        AstKind::TSModuleReference(_),
+                    ) => {
+                        self.current_reference_flag = ReferenceFlag::Read;
+                    }
+                    Some(AstKind::TSQualifiedName(_)) => {
+                        // import A = a.b
+                        //            ^^^ Keep the current reference flag
+                    }
+                    _ => {
+                        if !self.current_reference_flag.is_ts_type_query() {
+                            self.current_reference_flag = ReferenceFlag::Type;
+                        }
+                    }
+                }
+            }
+            AstKind::TSExportAssignment(export) => {
+                // export = a;
+                //          ^ can reference value or type
+                if export.expression.is_identifier_reference() {
+                    self.current_reference_flag = ReferenceFlag::Read | ReferenceFlag::Type;
+                }
             }
             AstKind::IdentifierReference(ident) => {
                 self.reference_identifier(ident);
@@ -1775,7 +1853,9 @@ impl<'a> SemanticBuilder<'a> {
                 self.reference_jsx_identifier(ident);
             }
             AstKind::UpdateExpression(_) => {
-                if self.is_not_expression_statement_parent() {
+                if !self.current_reference_flag.is_type()
+                    && self.is_not_expression_statement_parent()
+                {
                     self.current_reference_flag |= ReferenceFlag::Read;
                 }
                 self.current_reference_flag |= ReferenceFlag::Write;
@@ -1788,7 +1868,9 @@ impl<'a> SemanticBuilder<'a> {
                 }
             }
             AstKind::MemberExpression(_) => {
-                self.current_reference_flag = ReferenceFlag::Read;
+                if !self.current_reference_flag.is_type() {
+                    self.current_reference_flag = ReferenceFlag::Read;
+                }
             }
             AstKind::AssignmentTarget(_) => {
                 self.current_reference_flag |= ReferenceFlag::Write;
@@ -1812,15 +1894,20 @@ impl<'a> SemanticBuilder<'a> {
     #[allow(clippy::single_match)]
     fn leave_kind(&mut self, kind: AstKind<'a>) {
         match kind {
-            AstKind::Program(_) => {
-                self.add_export_flag_for_export_identifier();
+            AstKind::Program(program) => {
+                self.add_export_flag_to_export_identifiers(program);
             }
             AstKind::Class(_) => {
                 self.current_node_flags -= NodeFlags::Class;
                 self.class_table_builder.pop_class();
             }
-            AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => {
+            AstKind::BindingIdentifier(_) => {
                 self.current_symbol_flags -= SymbolFlags::Export;
+            }
+            AstKind::ExportSpecifier(_) => {
+                if !self.current_reference_flag.is_type_only() {
+                    self.current_reference_flag = ReferenceFlag::empty();
+                }
             }
             AstKind::LabeledStatement(_) => self.label_builder.leave(),
             AstKind::StaticBlock(_) => {
@@ -1833,19 +1920,23 @@ impl<'a> SemanticBuilder<'a> {
             AstKind::ArrowFunctionExpression(_) => {
                 self.function_stack.pop();
             }
-            AstKind::FormalParameters(_) | AstKind::CatchParameter(_) => {
-                self.current_node_flags -= NodeFlags::Parameter;
+            AstKind::FormalParameters(parameters) => {
+                if parameters.kind != FormalParameterKind::Signature && parameters.has_parameter() {
+                    // `function foo({bar: identifier_reference}) {}`
+                    //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved
+                    //                                          after all parameters have been declared
+                    //                                          to avoid binding to variables inside the scope
+                    self.resolve_references_for_current_scope();
+                }
+            }
+            AstKind::CatchParameter(_) => {
+                self.resolve_references_for_current_scope();
             }
             AstKind::TSModuleBlock(_) => {
                 self.namespace_stack.pop();
             }
-            AstKind::TSEnumDeclaration(_)
-            | AstKind::TSTypeAliasDeclaration(_)
-            | AstKind::TSInterfaceDeclaration(_)
-            | AstKind::TSModuleDeclaration(_)
-            | AstKind::TSTypeParameterInstantiation(_)
-            | AstKind::TSTypeAnnotation(_) => {
-                self.in_type_definition = false;
+            AstKind::TSTypeName(_) => {
+                self.current_reference_flag -= ReferenceFlag::Type;
             }
             AstKind::UpdateExpression(_) => {
                 if self.is_not_expression_statement_parent() {
@@ -1860,17 +1951,14 @@ impl<'a> SemanticBuilder<'a> {
                     self.current_reference_flag -= ReferenceFlag::Read;
                 }
             }
+            AstKind::MemberExpression(_)
+            | AstKind::TSTypeQuery(_)
+            | AstKind::ExportNamedDeclaration(_) => {
+                self.current_reference_flag = ReferenceFlag::empty();
+            }
             AstKind::AssignmentTarget(_) => self.current_reference_flag -= ReferenceFlag::Write,
             _ => {}
         }
-    }
-
-    fn remove_export_flag(&mut self) {
-        self.current_symbol_flags -= SymbolFlags::Export;
-    }
-
-    fn add_current_node_id_to_current_scope(&mut self) {
-        self.scope.add_node_id(self.current_scope_id, self.current_node_id);
     }
 
     fn make_all_namespaces_valuelike(&mut self) {
@@ -1883,30 +1971,23 @@ impl<'a> SemanticBuilder<'a> {
         }
     }
 
-    fn reference_identifier(&mut self, ident: &IdentifierReference) {
+    fn reference_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let flag = self.resolve_reference_usages();
-        let name = ident.name.to_compact_str();
-        let reference = Reference::new(ident.span, name.clone(), self.current_node_id, flag);
-        // `function foo({bar: identifier_reference}) {}`
-        //                     ^^^^^^^^^^^^^^^^^^^^ Parameter initializer must be resolved immediately
-        //                                          to avoid binding to variables inside the scope
-        let add_unresolved_reference = !self.current_node_flags.has_parameter();
-        let reference_id = self.declare_reference(reference, add_unresolved_reference);
+        let reference = Reference::new(self.current_node_id, flag);
+        let reference_id = self.declare_reference(ident.name.clone(), reference);
         ident.reference_id.set(Some(reference_id));
     }
 
     /// Resolve reference flags for the current ast node.
     fn resolve_reference_usages(&self) -> ReferenceFlag {
-        if self.in_type_definition {
-            ReferenceFlag::Type
-        } else if self.current_reference_flag.is_write() {
-            self.current_reference_flag
-        } else {
+        if self.current_reference_flag.is_empty() {
             ReferenceFlag::Read
+        } else {
+            self.current_reference_flag
         }
     }
 
-    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier) {
+    fn reference_jsx_identifier(&mut self, ident: &JSXIdentifier<'a>) {
         match self.nodes.parent_kind(self.current_node_id) {
             Some(AstKind::JSXElementName(_)) => {
                 if !ident.name.chars().next().is_some_and(char::is_uppercase) {
@@ -1916,13 +1997,8 @@ impl<'a> SemanticBuilder<'a> {
             Some(AstKind::JSXMemberExpressionObject(_)) => {}
             _ => return,
         }
-        let reference = Reference::new(
-            ident.span,
-            ident.name.to_compact_str(),
-            self.current_node_id,
-            ReferenceFlag::read(),
-        );
-        self.declare_reference(reference, true);
+        let reference = Reference::new(self.current_node_id, ReferenceFlag::read());
+        self.declare_reference(ident.name.clone(), reference);
     }
 
     fn is_not_expression_statement_parent(&self) -> bool {

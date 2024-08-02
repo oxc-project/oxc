@@ -1,9 +1,6 @@
 use std::path::PathBuf;
 
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ModuleRecord;
 use oxc_span::{CompactStr, Span};
@@ -11,14 +8,8 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-enum ExportDiagnostic {
-    #[error("eslint-plugin-import(export): Multiple exports of name '{1}'.")]
-    #[diagnostic(severity(warning))]
-    MultipleNamedExport(#[label] Span, CompactStr),
-    #[error("eslint-plugin-import(export): No named exports found in module '{1}'")]
-    #[diagnostic(severity(warning))]
-    NoNamedExport(#[label] Span, CompactStr),
+fn no_named_export(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("No named exports found in module '{x1}'")).with_label(span0)
 }
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/export.md>
@@ -41,56 +32,75 @@ declare_oxc_lint!(
 
 impl Rule for Export {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         let named_export = &module_record.exported_bindings;
-        let mut duplicated_named_export = FxHashMap::default();
-        for export_entry in &module_record.star_export_entries {
-            let Some(module_request) = &export_entry.module_request else {
-                continue;
+
+        let mut all_export_names = FxHashMap::default();
+        let mut visited = FxHashSet::default();
+
+        module_record.star_export_entries.iter().for_each(|star_export_entry| {
+            let mut export_names = FxHashSet::default();
+
+            let Some(module_request) = &star_export_entry.module_request else {
+                return;
             };
             let Some(remote_module_record_ref) =
                 module_record.loaded_modules.get(module_request.name())
             else {
-                continue;
+                return;
             };
 
-            let remote_module_record = remote_module_record_ref.value();
-            let mut all_export_names = FxHashSet::default();
-            let mut visited = FxHashSet::default();
-            walk_exported_recursive(remote_module_record, &mut all_export_names, &mut visited);
-            if all_export_names.is_empty() {
-                ctx.diagnostic(ExportDiagnostic::NoNamedExport(
-                    module_request.span(),
-                    module_request.name().clone(),
-                ));
-                continue;
-            }
+            walk_exported_recursive(
+                remote_module_record_ref.value(),
+                &mut export_names,
+                &mut visited,
+            );
 
-            for name in &all_export_names {
-                if let Some(span) = named_export.get(name) {
-                    duplicated_named_export.entry(*span).or_insert_with(|| name.clone());
+            if export_names.is_empty() {
+                ctx.diagnostic(no_named_export(module_request.span(), module_request.name()));
+            } else {
+                all_export_names.insert(star_export_entry.span, export_names);
+            }
+        });
+
+        for (name, span) in named_export {
+            let mut spans = all_export_names
+                .iter()
+                .filter_map(|(star_export_entry_span, export_names)| {
+                    if export_names.contains(name) {
+                        Some(*star_export_entry_span)
+                    } else {
+                        None
+                    }
+                })
+                .collect::<Vec<_>>();
+
+            for name_span in &module_record.exported_bindings_duplicated {
+                if name == name_span.name() {
+                    spans.push(name_span.span());
                 }
             }
-        }
 
-        for (span, name) in duplicated_named_export {
-            ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(span, name));
-        }
+            if !spans.is_empty() {
+                spans.push(*span);
+                let labels = spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
 
-        for name_span in &module_record.exported_bindings_duplicated {
-            let name = name_span.name().clone();
-            if let Some(span) = module_record.exported_bindings.get(&name) {
-                ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(*span, name.clone()));
+                ctx.diagnostic(
+                    OxcDiagnostic::warn(format!("Multiple exports of name '{name}'."))
+                        .with_labels(labels),
+                );
             }
-            ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(name_span.span(), name));
         }
+
         if !module_record.export_default_duplicated.is_empty() {
+            let mut spans = module_record.export_default_duplicated.clone();
             if let Some(span) = module_record.export_default {
-                ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(span, "default".into()));
+                spans.push(span);
+                let labels = spans.into_iter().map(LabeledSpan::underline).collect::<Vec<_>>();
+                ctx.diagnostic(
+                    OxcDiagnostic::warn("Multiple default exports.").with_labels(labels),
+                );
             }
-        }
-        for span in &module_record.export_default_duplicated {
-            ctx.diagnostic(ExportDiagnostic::MultipleNamedExport(*span, "default".into()));
         }
     }
 }

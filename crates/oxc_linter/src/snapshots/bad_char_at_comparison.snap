@@ -1,8 +1,7 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: bad_char_at_comparison
 ---
-  ⚠ deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === 'aa'
    · ─────┬─────     ──┬─
@@ -11,7 +10,7 @@ expression: bad_char_at_comparison
    ╰────
   help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === '/n'
    · ─────┬─────     ──┬─
@@ -20,7 +19,7 @@ expression: bad_char_at_comparison
    ╰────
   help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(3) === '/t'
    · ─────┬─────     ──┬─
@@ -29,7 +28,7 @@ expression: bad_char_at_comparison
    ╰────
   help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === 'ac'
    · ─────┬─────     ──┬─
@@ -38,7 +37,7 @@ expression: bad_char_at_comparison
    ╰────
   help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(822) !== 'foo'
    · ──────┬──────     ──┬──
@@ -47,7 +46,7 @@ expression: bad_char_at_comparison
    ╰────
   help: `String.prototype.charAt` returns a string of length 1. If the return value is compared with a string of length greater than 1, the comparison will always be false.
 
-  ⚠ deepscan(bad-char-at-comparison): Invalid comparison with `charAt` method
+  ⚠ oxc(bad-char-at-comparison): Invalid comparison with `charAt` method
    ╭─[bad_char_at_comparison.tsx:1:1]
  1 │ a.charAt(4) === '\\ukeff'
    · ─────┬─────     ────┬────

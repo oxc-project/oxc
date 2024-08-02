@@ -1,8 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -14,10 +11,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(no-autofocus): The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")]
-#[diagnostic(severity(warning), help("Remove `autofocus` attribute"))]
-struct NoAutofocusDiagnostic(#[label] pub Span);
+fn no_autofocus_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("The `autofocus` attribute is found here, which can cause usability issues for sighted and non-sighted users")
+        .with_help("Remove `autofocus` attribute")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAutofocus {
@@ -60,7 +58,8 @@ declare_oxc_lint!(
     /// ```
     ///
     NoAutofocus,
-    correctness
+    correctness,
+    fix
 );
 
 impl NoAutofocus {
@@ -98,14 +97,18 @@ impl Rule for NoAutofocus {
                 if self.ignore_non_dom {
                     if HTML_TAG.contains(&element_type) {
                         if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                            ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
+                            ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+                                fixer.delete(&attr.span)
+                            });
                         }
                     }
                     return;
                 }
 
                 if let oxc_ast::ast::JSXAttributeItem::Attribute(attr) = autofocus {
-                    ctx.diagnostic(NoAutofocusDiagnostic(attr.span));
+                    ctx.diagnostic_with_fix(no_autofocus_diagnostic(attr.span), |fixer| {
+                        fixer.delete(&attr.span)
+                    });
                 }
             }
         }
@@ -156,5 +159,15 @@ fn test() {
         ("<Button autoFocus />", Some(config()), Some(settings()), None),
     ];
 
-    Tester::new(NoAutofocus::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("<div autoFocus />", "<div  />", None),
+        ("<div autoFocus={true} />", "<div  />", None),
+        ("<div autoFocus='true' />", "<div  />", None),
+        ("<Button autoFocus='true' />", "<Button  />", None),
+        ("<input autoFocus />", "<input  />", None),
+        ("<div autoFocus>foo</div>", "<div >foo</div>", None),
+        ("<div autoFocus id='lol'>foo</div>", "<div  id='lol'>foo</div>", None),
+    ];
+
+    Tester::new(NoAutofocus::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

@@ -1,36 +1,26 @@
-use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase},
-    AstNode,
-};
 use once_cell::sync::Lazy;
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_map;
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsx-a11y(prefer-tag-over-role): Prefer `{tag}` over `role` attribute `{role}`."
-)]
-#[diagnostic(
-    severity(warning),
-    help("Replace HTML elements with `role` attribute `{role}` to corresponding semantic HTML tag `{tag}`.")
-)]
-struct PreferTagOverRoleDiagnostic {
-    #[label]
-    pub span: Span,
-    pub tag: String,
-    pub role: String,
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{get_element_type, has_jsx_prop_ignore_case},
+    AstNode,
+};
+
+fn prefer_tag_over_role_diagnostic(span: Span, tag: &str, role: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{tag}` over `role` attribute `{role}`."))
+        .with_help(format!("Replace HTML elements with `role` attribute `{role}` to corresponding semantic HTML tag `{tag}`."))
+        .with_label(span)
 }
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferTagOverRole;
 
@@ -79,11 +69,7 @@ impl PreferTagOverRole {
     ) {
         if let Some(tag) = role_to_tag.get(role) {
             if jsx_name != *tag {
-                ctx.diagnostic(PreferTagOverRoleDiagnostic {
-                    span,
-                    tag: (*tag).to_string(),
-                    role: role.to_string(),
-                });
+                ctx.diagnostic(prefer_tag_over_role_diagnostic(span, tag, role));
             }
         }
     }
@@ -104,7 +90,7 @@ impl Rule for PreferTagOverRole {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(name) = get_element_type(ctx, jsx_el) {
-                if let Some(role_prop) = has_jsx_prop_lowercase(jsx_el, "role") {
+                if let Some(role_prop) = has_jsx_prop_ignore_case(jsx_el, "role") {
                     Self::check_roles(role_prop, &ROLE_TO_TAG_MAP, &name, ctx);
                 }
             }

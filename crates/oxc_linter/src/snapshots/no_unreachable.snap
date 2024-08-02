@@ -1,0 +1,134 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:28]
+ 1 │ function foo() { return x; var x = 1; }
+   ·                            ──────────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:28]
+ 1 │ function foo() { return x; var x, y = 1; }
+   ·                            ─────────────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:23]
+ 1 │ while (true) { break; var x = 1; }
+   ·                       ──────────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:26]
+ 1 │ while (true) { continue; var x = 1; }
+   ·                          ──────────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:26]
+ 1 │ function foo() { return; x = 1; }
+   ·                          ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:31]
+ 1 │ function foo() { throw error; x = 1; }
+   ·                               ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:23]
+ 1 │ while (true) { break; x = 1; }
+   ·                       ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:26]
+ 1 │ while (true) { continue; x = 1; }
+   ·                          ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:49]
+ 1 │ function foo() { switch (foo) { case 1: return; x = 1; } }
+   ·                                                 ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:50]
+ 1 │ function foo() { switch (foo) { case 1: throw e; x = 1; } }
+   ·                                                  ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:46]
+ 1 │ while (true) { switch (foo) { case 1: break; x = 1; } }
+   ·                                              ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:49]
+ 1 │ while (true) { switch (foo) { case 1: continue; x = 1; } }
+   ·                                                 ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:27]
+ 1 │ var x = 1; throw 'uh oh'; var y = 2;
+   ·                           ──────────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:66]
+ 1 │ function foo() { var x = 1; if (x) { return; } else { throw e; } x = 2; }
+   ·                                                                  ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:59]
+ 1 │ function foo() { var x = 1; if (x) return; else throw -1; x = 2; }
+   ·                                                           ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:56]
+ 1 │ function foo() { var x = 1; try { return; } finally {} x = 2; }
+   ·                                                        ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:57]
+ 1 │ function foo() { var x = 1; try { } finally { return; } x = 2; }
+   ·                                                         ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:55]
+ 1 │ function foo() { var x = 1; do { return; } while (x); x = 2; }
+   ·                                                       ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:70]
+ 1 │ function foo() { var x = 1; while (x) { if (x) break; else continue; x = 2; } }
+   ·                                                                      ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:59]
+ 1 │ function foo() { var x = 1; for (;;) { if (x) continue; } x = 2; }
+   ·                                                           ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:46]
+ 1 │ function foo() { var x = 1; while (true) { } x = 2; }
+   ·                                              ──────
+   ╰────
+
+  ⚠ eslint(no-unreachable): Unreachable code.
+   ╭─[no_unreachable.tsx:1:50]
+ 1 │ function foo() { var x = 1; do { } while (true); x = 2; }
+   ·                                                  ──────
+   ╰────

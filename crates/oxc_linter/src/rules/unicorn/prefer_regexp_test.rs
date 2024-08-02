@@ -2,22 +2,17 @@ use oxc_ast::{
     ast::{Expression, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{ast_util::outermost_paren_parent, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-regexp-test): Prefer RegExp#test() over String#match() and RegExp#exec()")]
-#[diagnostic(
-    severity(warning),
-    help("RegExp#test() exclusively returns a boolean and therefore is more efficient")
-)]
-struct PreferRegexpTestDiagnostic(#[label] pub Span);
+fn prefer_regexp_test_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer RegExp#test() over String#match() and RegExp#exec()")
+        .with_help("RegExp#test() exclusively returns a boolean and therefore is more efficient")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferRegexpTest;
@@ -49,9 +44,13 @@ declare_oxc_lint!(
 
 impl Rule for PreferRegexpTest {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         if call_expr.optional || call_expr.arguments.len() != 1 {
             return;
@@ -71,7 +70,9 @@ impl Rule for PreferRegexpTest {
             _ => return,
         };
 
-        let Some(parent) = outermost_paren_parent(node, ctx) else { return };
+        let Some(parent) = outermost_paren_parent(node, ctx) else {
+            return;
+        };
 
         match parent.kind() {
             AstKind::ForStatement(for_stmt) => {
@@ -98,9 +99,13 @@ impl Rule for PreferRegexpTest {
             }
 
             AstKind::Argument(_) => {
-                let Some(parent) = outermost_paren_parent(parent, ctx) else { return };
+                let Some(parent) = outermost_paren_parent(parent, ctx) else {
+                    return;
+                };
 
-                let AstKind::CallExpression(call_expr) = parent.kind() else { return };
+                let AstKind::CallExpression(call_expr) = parent.kind() else {
+                    return;
+                };
 
                 let Expression::Identifier(ident) = &call_expr.callee else {
                     return;
@@ -141,7 +146,7 @@ impl Rule for PreferRegexpTest {
             _ => unreachable!("match or test {:?}", name),
         }
 
-        ctx.diagnostic(PreferRegexpTestDiagnostic(span));
+        ctx.diagnostic(prefer_regexp_test_diagnostic(span));
     }
 }
 

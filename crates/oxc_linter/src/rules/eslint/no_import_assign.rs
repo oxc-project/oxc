@@ -1,8 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodeId, SymbolId};
 use oxc_span::{GetSpan, Span};
@@ -11,10 +8,11 @@ use phf::phf_set;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-import-assign): do not assign to imported bindings")]
-#[diagnostic(severity(warning), help("imported bindings are readonly"))]
-struct NoImportAssignDiagnostic(#[label] pub Span);
+fn no_import_assign_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("do not assign to imported bindings")
+        .with_help("imported bindings are readonly")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoImportAssign;
@@ -42,7 +40,7 @@ declare_oxc_lint!(
     /// Object.assign(mod_ns, { foo: "foo" }) // ERROR: The members of 'mod_ns' are readonly.
     /// ```
     NoImportAssign,
-    nursery
+    correctness
 );
 
 const OBJECT_MUTATION_METHODS: phf::Set<&'static str> =
@@ -54,7 +52,7 @@ const REFLECT_MUTATION_METHODS: phf::Set<&'static str> =
 impl Rule for NoImportAssign {
     fn run_on_symbol(&self, symbol_id: SymbolId, ctx: &LintContext<'_>) {
         let symbol_table = ctx.semantic().symbols();
-        if symbol_table.get_flag(symbol_id).is_import_binding() {
+        if symbol_table.get_flag(symbol_id).is_import() {
             let kind = ctx.nodes().kind(symbol_table.get_declaration(symbol_id));
             let is_namespace_specifier = matches!(kind, AstKind::ImportNamespaceSpecifier(_));
             for reference in symbol_table.get_resolved_references(symbol_id) {
@@ -76,8 +74,9 @@ impl Rule for NoImportAssign {
                             || matches!(parent_parent_kind, AstKind::ChainExpression(_) if ctx.nodes().parent_kind(parent_parent_node.id()).is_some_and(is_unary_expression_with_delete_operator))
                         {
                             if let Some((span, _)) = expr.static_property_info() {
-                                if span != reference.span() {
-                                    return ctx.diagnostic(NoImportAssignDiagnostic(expr.span()));
+                                if span != ctx.semantic().reference_span(reference) {
+                                    return ctx
+                                        .diagnostic(no_import_assign_diagnostic(expr.span()));
                                 }
                             }
                         }
@@ -88,7 +87,9 @@ impl Rule for NoImportAssign {
                     || (is_namespace_specifier
                         && is_argument_of_well_known_mutation_function(reference.node_id(), ctx))
                 {
-                    ctx.diagnostic(NoImportAssignDiagnostic(reference.span()));
+                    ctx.diagnostic(no_import_assign_diagnostic(
+                        ctx.semantic().reference_span(reference),
+                    ));
                 }
             }
         }
@@ -110,9 +111,13 @@ fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintCon
     let call_expression_node =
         ctx.nodes().parent_node(node_id).and_then(|node| ctx.nodes().parent_kind(node.id()));
 
-    let Some(AstKind::CallExpression(expr)) = call_expression_node else { return false };
+    let Some(AstKind::CallExpression(expr)) = call_expression_node else {
+        return false;
+    };
 
-    let Some(member_expr) = &expr.callee.get_member_expr() else { return false };
+    let Some(member_expr) = &expr.callee.get_member_expr() else {
+        return false;
+    };
 
     if let Expression::Identifier(ident) = member_expr.object() {
         let Some(property_name) = member_expr.static_property_name() else {
@@ -121,7 +126,7 @@ fn is_argument_of_well_known_mutation_function(node_id: AstNodeId, ctx: &LintCon
 
         if ((ident.name == "Object" && OBJECT_MUTATION_METHODS.contains(property_name))
             || (ident.name == "Reflect" && REFLECT_MUTATION_METHODS.contains(property_name)))
-            && !ctx.scopes().has_binding(current_node.scope_id(), &ident.name)
+            && ident.reference_id.get().is_some_and(|id| !ctx.symbols().has_binding(id))
         {
             return expr
                 .arguments

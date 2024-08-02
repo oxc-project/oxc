@@ -2,14 +2,13 @@ use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
+use super::Format;
 use crate::{
     array,
     comments::{CommentFlags, DanglingCommentsPrintOptions},
     doc::{Doc, DocBuilder, Fill, Group},
     group, hardline, if_break, line, softline, ss, Prettier,
 };
-
-use super::Format;
 
 #[allow(clippy::enum_variant_names)]
 pub enum Array<'a, 'b> {
@@ -28,6 +27,7 @@ impl<'a, 'b> Array<'a, 'b> {
             Self::ArrayAssignmentTarget(array) => array.elements.len(),
         }
     }
+
     fn span(&self) -> Span {
         match self {
             Self::ArrayExpression(array) => array.span,

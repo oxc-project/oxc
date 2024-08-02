@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_constant_condition
 ---
   ⚠ eslint(no-constant-condition): Unexpected constant condition
    ╭─[no_constant_condition.tsx:1:4]

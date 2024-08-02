@@ -1,8 +1,9 @@
+use oxc_span::Span;
+
 use super::jsdoc_parts::{
     JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart,
 };
 use crate::jsdoc::parser::utils;
-use oxc_span::Span;
 
 // Initially, I attempted to parse into specific structures such as:
 // - `@param {type} name comment`: `JSDocParameterTag { type, name, comment }`
@@ -182,10 +183,11 @@ impl<'a> JSDocTag<'a> {
 
 #[cfg(test)]
 mod test {
-    use crate::{Semantic, SemanticBuilder};
     use oxc_allocator::Allocator;
     use oxc_parser::Parser;
     use oxc_span::SourceType;
+
+    use crate::{Semantic, SemanticBuilder};
 
     fn build_semantic<'a>(allocator: &'a Allocator, source_text: &'a str) -> Semantic<'a> {
         let source_type = SourceType::default();
@@ -193,6 +195,7 @@ mod test {
         let program = allocator.alloc(ret.program);
         let semantic = SemanticBuilder::new(source_text, source_type)
             .with_trivias(ret.trivias)
+            .with_build_jsdoc(true)
             .build(program)
             .semantic;
         semantic
@@ -354,7 +357,7 @@ mod test {
             ("/** @k */", None, ("", " ")),
             ("/** @k1 {t1} c1 */", Some(("t1", "{t1}")), ("c1", " c1 ")),
             (
-                "/** @k2 
+                "/** @k2
 {t2} */",
                 Some(("t2", "{t2}")),
                 ("", " "),

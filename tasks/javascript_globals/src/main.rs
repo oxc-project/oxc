@@ -1,7 +1,9 @@
+#![allow(clippy::print_stdout, clippy::print_stderr)]
+use std::collections::HashMap;
+
 use lazy_static::lazy_static;
 use oxc_tasks_common::agent;
 use serde::Serialize;
-use std::collections::HashMap;
 mod template;
 
 #[derive(Serialize, Debug)]

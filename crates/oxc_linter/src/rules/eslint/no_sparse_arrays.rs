@@ -1,18 +1,8 @@
-use miette::{miette, LabeledSpan};
 use oxc_ast::{ast::ArrayExpressionElement, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic, Severity},
-    thiserror::Error,
-};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-sparse-arrays): Unexpected comma in middle of array")]
-#[diagnostic(severity(warning), help("remove the comma or insert `undefined`"))]
-struct NoSparseArraysDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSparseArrays;
@@ -55,12 +45,11 @@ impl Rule for NoSparseArrays {
 
             if !violations.is_empty() {
                 if violations.len() < 10 {
-                    ctx.diagnostic(miette!(
-                        severity = Severity::Warning,
-                        labels = violations,
-                        help = "remove the comma or insert `undefined`",
-                        "eslint(no-sparse-arrays): Unexpected comma in middle of array"
-                    ));
+                    ctx.diagnostic(
+                        OxcDiagnostic::warn("Unexpected comma in middle of array")
+                            .with_help("remove the comma or insert `undefined`")
+                            .with_labels(violations),
+                    );
                 } else {
                     let span = if (array_expr.span.end - array_expr.span.start) < 50 {
                         LabeledSpan::at(array_expr.span, "the array here")
@@ -71,13 +60,14 @@ impl Rule for NoSparseArrays {
                         )
                     };
 
-                    ctx.diagnostic(miette!(
-                        severity = Severity::Warning,
-                        labels = vec![span],
-                        help = "remove the comma or insert `undefined`",
-                        "eslint(no-sparse-arrays): {} unexpected commas in middle of array",
-                        violations.len()
-                    ));
+                    ctx.diagnostic(
+                        OxcDiagnostic::warn(format!(
+                            "{} unexpected commas in middle of array",
+                            violations.len()
+                        ))
+                        .with_help("remove the comma or insert `undefined`")
+                        .with_label(span),
+                    );
                 }
             }
         }

@@ -1,35 +1,27 @@
 use oxc_ast::{ast::JSXElementName, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum GoogleFontDisplayDiagnostic {
-    #[error("eslint-plugin-next(google-font-display): A font-display parameter is missing (adding `&display=optional` is recommended).")]
-    #[diagnostic(
-        severity(warning),
-        help("See https://nextjs.org/docs/messages/google-font-display")
-    )]
-    FontDisplayParameterMissing(#[label] Span),
+fn font_display_parameter_missing(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "A font-display parameter is missing (adding `&display=optional` is recommended).",
+    )
+    .with_help("See https://nextjs.org/docs/messages/google-font-display")
+    .with_label(span0)
+}
 
-    #[error(
-        "eslint-plugin-next(google-font-display): `{1}` is not a recommended font-display value."
-    )]
-    #[diagnostic(
-        severity(warning),
-        help("See https://nextjs.org/docs/messages/google-font-display")
-    )]
-    NotRecommendedFontDisplayValue(#[label] Span, String),
+fn not_recommended_font_display_value(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("`{x1}` is not a recommended font-display value."))
+        .with_help("See https://nextjs.org/docs/messages/google-font-display")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -51,7 +43,9 @@ declare_oxc_lint!(
 
 impl Rule for GoogleFontDisplay {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
+            return;
+        };
 
         let JSXElementName::Identifier(jsx_opening_element_name) = &jsx_opening_element.name else {
             return;
@@ -61,27 +55,29 @@ impl Rule for GoogleFontDisplay {
             return;
         }
 
-        let Some(href_prop) = has_jsx_prop_lowercase(jsx_opening_element, "href") else {
+        let Some(href_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "href") else {
             return;
         };
 
-        let Some(href_prop_value) = get_string_literal_prop_value(href_prop) else { return };
+        let Some(href_prop_value) = get_string_literal_prop_value(href_prop) else {
+            return;
+        };
 
         if href_prop_value.starts_with("https://fonts.googleapis.com/css") {
-            let Ok(url) = url::Url::parse(href_prop_value) else { return };
+            let Ok(url) = url::Url::parse(href_prop_value) else {
+                return;
+            };
 
             let Some((_, display_value)) = url.query_pairs().find(|(key, _)| key == "display")
             else {
-                ctx.diagnostic(GoogleFontDisplayDiagnostic::FontDisplayParameterMissing(
-                    jsx_opening_element_name.span,
-                ));
+                ctx.diagnostic(font_display_parameter_missing(jsx_opening_element_name.span));
                 return;
             };
 
             if matches!(&*display_value, "auto" | "block" | "fallback") {
-                ctx.diagnostic(GoogleFontDisplayDiagnostic::NotRecommendedFontDisplayValue(
+                ctx.diagnostic(not_recommended_font_display_value(
                     href_prop.span(),
-                    display_value.to_string(),
+                    &display_value,
                 ));
             }
         }
@@ -94,7 +90,7 @@ fn test() {
 
     let pass = vec![
         r#"import Head from "next/head";
-			
+
 			     export default Test = () => {
 			      return (
 			        <Head>
@@ -116,7 +112,7 @@ fn test() {
 			     };
 			    "#,
         r#"import Document, { Html, Head } from "next/document";
-			
+
 			     class MyDocument extends Document {
 			      render() {
 			        return (
@@ -131,11 +127,11 @@ fn test() {
 			        );
 			      }
 			     }
-			
+
 			     export default MyDocument;
 			    "#,
         r#"import Document, { Html, Head } from "next/document";
-			
+
 			     class MyDocument extends Document {
 			      render() {
 			        return (
@@ -151,14 +147,14 @@ fn test() {
 			        );
 			      }
 			     }
-			
+
 			     export default MyDocument;
 			    "#,
     ];
 
     let fail = vec![
         r#"import Head from "next/head";
-			
+
 			      export default Test = () => {
 			       return (
 			         <Head>
@@ -171,7 +167,7 @@ fn test() {
 			      };
 			     "#,
         r#"import Head from "next/head";
-			
+
 			      export default Test = () => {
 			       return (
 			         <Head>
@@ -184,7 +180,7 @@ fn test() {
 			      };
 			     "#,
         r#"import Head from "next/head";
-			
+
 			      export default Test = () => {
 			       return (
 			         <Head>
@@ -197,7 +193,7 @@ fn test() {
 			      };
 			     "#,
         r#"import Head from "next/head";
-			
+
 			      export default Test = () => {
 			       return (
 			         <Head>

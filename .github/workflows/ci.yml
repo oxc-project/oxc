@@ -12,6 +12,7 @@ on:
   push:
     branches:
       - main
+      - "renovate/**"
     paths-ignore:
       - '**/*.md'
       - '**/*.yml'
@@ -22,75 +23,126 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
   cancel-in-progress: ${{ github.ref_name != 'main' }}
 
-env:
-  CARGO_INCREMENTAL: 0
-  RUSTFLAGS: "-D warnings"
-
 jobs:
-  cache: # Warm cache factory for all other CI jobs
-    name: Check and Build
+  test:
+    name: Test
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: windows-latest
+          # - os: windows-latest # See `test-windows` job below
           - os: ubuntu-latest
           - os: macos-14
     runs-on: ${{ matrix.os }}
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
+          # warm cache factory for all other CI jobs
+          # cache `target` directory to avoid download crates
           save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: warm
+      - run: cargo ck
+      - run: cargo test --no-run
+      - run: cargo test
+      - run: git diff --exit-code # Must commit everything
 
-      - name: Cargo check
-        run: cargo ck
+  test-windows:
+    name: Test (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      # Unsung heros of the internet, who led me here to speed up window's slowness:
+      # https://github.com/actions/cache/issues/752#issuecomment-1847036770
+      # https://github.com/astral-sh/uv/blob/502e04200d52de30d3159894833b3db4f0d6644d/.github/workflows/ci.yml#L158
+      - uses: samypr100/setup-dev-drive@v3
+        with:
+          workspace-copy: true
+          drive-size: 8GB
 
-      # Only need to build the test to create a warm cache on the main branch
-      - name: Build cache by Cargo Check and Cargo Test
-        if: ${{ github.ref_name == 'main' }}
-        run: cargo test --quiet --no-run
+      - name: Install Rust
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
+          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
+        shell: bash
+        run: |
+          sed -i -e 's/profile = "default"/profile = "minimal"/g' rust-toolchain.toml
+          rustup set profile minimal
+          rustup show
+          git restore .
 
-  wasm:
-    name: Check Wasm
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ${{ env.DEV_DRIVE_WORKSPACE }}
+          save-if: ${{ github.ref_name == 'main' }}
+          shared-key: windows-latest
+        env:
+          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
+          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
+
+      - name: Run
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          CARGO_HOME: ${{ env.DEV_DRIVE }}/.cargo
+          RUSTUP_HOME: ${{ env.DEV_DRIVE }}/.rustup
+        shell: bash
+        run: |
+          cargo test --no-run
+          cargo test
+          cargo ck
+
+  test-wasm32-wasip1-threads:
+    name: Test wasm32-wasip1-threads
+    if: ${{ github.ref_name == 'main' }}
+    runs-on: ubuntu-latest
+    env:
+      RUSTFLAGS: "--cfg tokio_unstable -C target-feature=+atomics,+bulk-memory,+mutable-globals,+simd128 -C link-args=--max-memory=67108864"
+      CARGO_TARGET_WASM32_WASIP1_THREADS_RUNNER: "wasmtime run -W bulk-memory=y -W threads=y -S threads=y --dir=${{ github.workspace }}::${{ github.workspace }} --"
+      # Insta is not able to run on wasmtime, omit the packages that depend on it
+      TEST_FLAGS: "-p oxc_sourcemap -p oxc_ast -p oxc_cfg -p oxc_index -p oxc_js_regex -p oxc_module_lexer -- --nocapture"
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: Boshen/setup-rust@main
+        with:
+          cache-key: wasi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - run: rustup target add wasm32-wasip1-threads
+      - uses: bytecodealliance/actions/wasmtime/setup@v1
+      - run: cargo test --target wasm32-wasip1-threads ${{ env.TEST_FLAGS }}
+      - run: git diff --exit-code # Must commit everything
+
+  test-wasm32-unknown-unknown:
+    name: Check wasm32-unknown-unknown
+    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust Toolchain
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          shared-key: 'wasm'
+          cache-key: wasm
           save-cache: ${{ github.ref_name == 'main' }}
-
       - name: Check
         run: |
           rustup target add wasm32-unknown-unknown
           cargo check -p oxc_wasm --target wasm32-unknown-unknown
-
       - name: Build
         run: |
           npx -y wasm-pack build --target web --dev ./crates/oxc_wasm
           npx -y wasm-pack build --target web --dev ./wasm/parser
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-
+          node-version-file: .node-version
       - name: Check output types
-        run: |
-          npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
+        run: npx -y -p typescript tsc --lib es2020,dom crates/oxc_wasm/pkg/oxc_wasm.d.ts
 
   typos:
     name: Spell Check
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - uses: crate-ci/typos@master
+      - uses: crate-ci/typos@v1.23.5
         with:
           files: .
 
@@ -107,14 +159,11 @@ jobs:
             src:
               - 'Cargo.lock'
 
-      - name: Install cargo-deny
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@cargo-deny
-
-      - uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
         with:
           restore-cache: false
+          tools: cargo-deny
 
       - if: steps.filter.outputs.src == 'true'
         run: cargo deny check
@@ -132,13 +181,13 @@ jobs:
               - '**/*.rs'
               - '**/Cargo.toml'
               - 'Cargo.lock'
-      - uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
           restore-cache: false
         if: steps.filter.outputs.src == 'true'
-      - uses: cargo-bins/cargo-binstall@main
+      - uses: cargo-bins/cargo-binstall@v1.8.0
         if: steps.filter.outputs.src == 'true'
-      - run: cargo binstall --no-confirm cargo-shear
+      - run: cargo binstall --no-confirm cargo-shear@1
         if: steps.filter.outputs.src == 'true'
       - run: cargo shear
         if: steps.filter.outputs.src == 'true'
@@ -148,13 +197,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          fmt: true
+          components: rustfmt
           restore-cache: false
-
       - run: cargo fmt --all -- --check
 
   lint:
@@ -162,44 +208,22 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          clippy: true
-
-      - name: Run Clippy
-        run: cargo lint -- -D warnings
+          cache-key: warm
+          components: clippy
+      - run: cargo lint -- -D warnings
 
   doc:
     name: Doc
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1
-
-      - name: Install Rust
-        uses: ./.github/actions/rustup
+      - uses: Boshen/setup-rust@main
         with:
-          docs: true
-
-      - name: Run doc
-        run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
-
-  test:
-    name: Test
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: windows-latest
-          - os: ubuntu-latest
-          - os: macos-14
-    runs-on: ${{ matrix.os }}
-    steps:
-      - uses: taiki-e/checkout-action@v1
-      - name: Install Rust
-        uses: ./.github/actions/rustup
-      - run: cargo test --quiet
+          cache-key: warm
+          components: rust-docs
+      - run: RUSTDOCFLAGS='-D warnings' cargo doc --no-deps --document-private-items
 
   conformance:
     name: Conformance
@@ -214,12 +238,12 @@ jobs:
             src:
               - '!crates/oxc_linter/**'
 
-      - name: Install Rust Toolchain
+      - uses: Boshen/setup-rust@main
         if: steps.filter.outputs.src == 'true'
-        uses: ./.github/actions/rustup
         with:
-          shared-key: 'conformance'
+          cache-key: conformance
           save-cache: ${{ github.ref_name == 'main' }}
+          tools: just
 
       - name: Clone submodules
         if: steps.filter.outputs.src == 'true'
@@ -227,23 +251,45 @@ jobs:
 
       - name: Set up Bun
         if: steps.filter.outputs.src == 'true'
-        uses: oven-sh/setup-bun@v1
+        uses: oven-sh/setup-bun@v2
 
       - name: Install Node.js
         if: steps.filter.outputs.src == 'true'
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Install just
-        if: steps.filter.outputs.src == 'true'
-        uses: taiki-e/install-action@v2
-        with:
-          tool: just
 
       - name: Check Conformance
         if: steps.filter.outputs.src == 'true'
         run: |
           just coverage
+          git diff --exit-code
+
+  ast_changes:
+    name: AST Changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'crates/oxc_ast/src/ast/**'
+              - 'tasks/ast_codegen/src/**'
+
+      - uses: Boshen/setup-rust@main
+        if: steps.filter.outputs.src == 'true'
+        with:
+          components: rustfmt
+          cache-key: codegen
+          save-cache: ${{ github.ref_name == 'main' }}
+
+      - name: Check AST Changes
+        if: steps.filter.outputs.src == 'true'
+        run: |
+          cargo run -p oxc_ast_codegen
+          echo 'AST changes must be commited to the repo.'
           git diff --exit-code

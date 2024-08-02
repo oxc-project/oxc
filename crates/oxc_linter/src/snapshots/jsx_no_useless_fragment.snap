@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: jsx_no_useless_fragment
 ---
   ⚠ eslint-plugin-react(jsx-no-useless-fragment): Fragments should contain more than one child.
    ╭─[jsx_no_useless_fragment.tsx:1:1]

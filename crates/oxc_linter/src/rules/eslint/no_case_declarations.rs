@@ -2,19 +2,15 @@ use oxc_ast::{
     ast::{Statement, VariableDeclarationKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-case-declarations): Unexpected lexical declaration in case block.")]
-#[diagnostic(severity(warning))]
-struct NoCaseDeclarationsDiagnostic(#[label] pub Span);
+fn no_case_declarations_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected lexical declaration in case block.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCaseDeclarations;
@@ -58,12 +54,12 @@ impl Rule for NoCaseDeclarations {
                     Statement::FunctionDeclaration(d) => {
                         let start = d.span.start;
                         let end = start + 8;
-                        ctx.diagnostic(NoCaseDeclarationsDiagnostic(Span::new(start, end)));
+                        ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
                     Statement::ClassDeclaration(d) => {
                         let start = d.span.start;
                         let end = start + 5;
-                        ctx.diagnostic(NoCaseDeclarationsDiagnostic(Span::new(start, end)));
+                        ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
                     Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
                         let start = var.span.start;
@@ -73,7 +69,7 @@ impl Rule for NoCaseDeclarations {
                             VariableDeclarationKind::Let => 3,
                         };
                         let end = start + end;
-                        ctx.diagnostic(NoCaseDeclarationsDiagnostic(Span::new(start, end)));
+                        ctx.diagnostic(no_case_declarations_diagnostic(Span::new(start, end)));
                     }
                     _ => {}
                 };

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: check_property_names
 ---
   ⚠ eslint-plugin-jsdoc(check-property-names): No root defined for @property path.
    ╭─[check_property_names.tsx:4:27]

@@ -2,22 +2,17 @@ use oxc_ast::{
     ast::{BreakStatement, ContinueStatement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-unsafe-finally): Unsafe finally block")]
-#[diagnostic(
-    severity(warning),
-    help("Control flow inside try or catch blocks will be overwritten by this statement")
-)]
-struct NoUnsafeFinallyDiagnostic(#[label] Span);
+fn no_unsafe_finally_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unsafe finally block")
+        .with_help("Control flow inside try or catch blocks will be overwritten by this statement")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnsafeFinally;
@@ -92,7 +87,7 @@ impl Rule for NoUnsafeFinally {
                 if label_name.is_some() && label_inside {
                     break;
                 }
-                ctx.diagnostic(NoUnsafeFinallyDiagnostic(node.kind().span()));
+                ctx.diagnostic(no_unsafe_finally_diagnostic(node.kind().span()));
                 return;
             }
         }

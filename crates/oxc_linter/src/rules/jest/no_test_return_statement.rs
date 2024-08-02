@@ -1,26 +1,22 @@
+use oxc_allocator::Box as OBox;
+use oxc_ast::{
+    ast::{CallExpression, Expression, FunctionBody, Statement},
+    AstKind,
+};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
+use oxc_span::{GetSpan, Span};
+
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind, PossibleJestNode},
 };
 
-use oxc_allocator::Box as OBox;
-use oxc_ast::{
-    ast::{CallExpression, Expression, FunctionBody, Statement},
-    AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_semantic::AstNode;
-use oxc_span::{GetSpan, Span};
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-test-return-statement): Jest tests should not return a value")]
-#[diagnostic(severity(warning))]
-pub struct NoTestReturnStatementDiagnostic(#[label] pub Span);
+fn no_test_return_statement_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Jest tests should not return a value").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoTestReturnStatement;
@@ -120,7 +116,7 @@ fn check_test_return_statement<'a>(func_body: &OBox<'_, FunctionBody<'a>>, ctx: 
         return;
     }
 
-    ctx.diagnostic(NoTestReturnStatementDiagnostic(Span::new(
+    ctx.diagnostic(no_test_return_statement_diagnostic(Span::new(
         return_stmt.span().start,
         call_expr.span.start - 1,
     )));

@@ -1,30 +1,27 @@
-use crate::utils::is_boolean_node;
-use crate::{
-    ast_util::{call_expr_method_callee_info, is_method_call, outermost_paren_parent},
-    context::LintContext,
-    rule::Rule,
-    AstNode,
-};
 use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-#[derive(Debug, Error, Diagnostic)]
-enum PreferArraySomeDiagnostic {
-    #[error("eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.")]
-    #[diagnostic(severity(warning))]
-    OverMethod(#[label] Span),
-    #[error("eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over non-zero length check from `.filter(…)`.")]
-    #[diagnostic(severity(warning))]
-    NonZeroFilter(#[label] Span),
+use crate::{
+    ast_util::{call_expr_method_callee_info, is_method_call, outermost_paren_parent},
+    context::LintContext,
+    rule::Rule,
+    utils::is_boolean_node,
+    AstNode,
+};
+
+fn over_method(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.").with_label(span0)
+}
+
+fn non_zero_filter(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `.some(…)` over non-zero length check from `.filter(…)`.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -64,7 +61,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                ctx.diagnostic(PreferArraySomeDiagnostic::OverMethod(
+                ctx.diagnostic(over_method(
                     // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
                     call_expr_method_callee_info(call_expr).unwrap().0,
                 ));
@@ -77,7 +74,9 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else { return };
+                let Expression::NumericLiteral(right_num_lit) = &bin_expr.right else {
+                    return;
+                };
 
                 if right_num_lit.raw != "0" {
                     return;
@@ -117,7 +116,7 @@ impl Rule for PreferArraySome {
                     return;
                 }
 
-                ctx.diagnostic(PreferArraySomeDiagnostic::NonZeroFilter(
+                ctx.diagnostic(non_zero_filter(
                     // SAFETY: `call_expr_method_callee_info` returns `Some` if `is_method_call` returns `true`.
                     call_expr_method_callee_info(left_call_expr).unwrap().0,
                 ));
@@ -166,9 +165,13 @@ fn is_checking_undefined<'a, 'b>(
     _call_expr: &'b CallExpression<'a>,
     ctx: &'b LintContext<'a>,
 ) -> bool {
-    let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
+    let Some(parent) = outermost_paren_parent(node, ctx) else {
+        return false;
+    };
 
-    let AstKind::BinaryExpression(bin_expr) = parent.kind() else { return false };
+    let AstKind::BinaryExpression(bin_expr) = parent.kind() else {
+        return false;
+    };
 
     let right_without_paren = bin_expr.right.without_parenthesized();
 

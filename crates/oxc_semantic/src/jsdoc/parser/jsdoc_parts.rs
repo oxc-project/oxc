@@ -63,8 +63,7 @@ impl<'a> JSDocCommentPart<'a> {
 
         let start_trimmed = self.raw.trim_start();
         let trimmed_start_offset = base_len - start_trimmed.len();
-        let trimmed_end_offset =
-            trimmed_start_offset + start_trimmed.find(|c| c == '\n').unwrap_or(0);
+        let trimmed_end_offset = trimmed_start_offset + start_trimmed.find('\n').unwrap_or(0);
         Span::new(
             self.span.start + u32::try_from(trimmed_start_offset).unwrap_or_default(),
             self.span.start + u32::try_from(trimmed_end_offset).unwrap_or_default(),
@@ -159,8 +158,9 @@ impl<'a> JSDocTagTypeNamePart<'a> {
 
 #[cfg(test)]
 mod test {
-    use super::{JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart};
     use oxc_span::{Span, SPAN};
+
+    use super::{JSDocCommentPart, JSDocTagKindPart, JSDocTagTypeNamePart, JSDocTagTypePart};
 
     #[test]
     fn comment_part_parsed() {
@@ -247,7 +247,7 @@ mod test {
             (
                 "
  extra text
-* 
+*
 ",
                 "extra text",
             ),

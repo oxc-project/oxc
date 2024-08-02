@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_class_assign
 ---
   ⚠ eslint(no-class-assign): Unexpected re-assignment of class A
    ╭─[no_class_assign.tsx:1:7]

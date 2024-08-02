@@ -1,16 +1,13 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("{{plugin_name}}({{kebab_rule_name}}):")]
-#[diagnostic(severity(warning), help(""))]
-struct {{pascal_rule_name}}Diagnostic(#[label] pub Span);
+use crate::{
+    context::LintContext,
+    fixer::{RuleFixer, RuleFix},
+    rule::Rule,
+    AstNode
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct {{pascal_rule_name}};
@@ -26,7 +23,12 @@ declare_oxc_lint!(
     /// ```javascript
     /// ```
     {{pascal_rule_name}},
-    correctness
+    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
+             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
+             
+    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
+             // keep at 'pending' if you think one could be added but don't know how.
+             // Options are 'fix', 'fix-dangerous', 'suggestion', and 'suggestion-dangerous'
 );
 
 impl Rule for {{pascal_rule_name}} {
@@ -38,6 +40,9 @@ impl Rule for {{pascal_rule_name}} {
 #[test]
 fn test() {
     use crate::tester::Tester;
+    {{#if has_filename}}
+    use std::path::PathBuf;
+    {{/if}}
 
     let pass = vec![
         {{pass_cases}}
@@ -47,5 +52,12 @@ fn test() {
         {{fail_cases}}
     ];
 
+    {{#if fix_cases}}
+    let fix = vec![
+        {{fix_cases}}
+    ];
+    Tester::new({{pascal_rule_name}}::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
+    {{else}}
     Tester::new({{pascal_rule_name}}::NAME, pass, fail).test_and_snapshot();
+    {{/if}}
 }

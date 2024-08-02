@@ -1,141 +1,163 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_prototype_methods
 ---
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.push`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = [].push.apply(bar, elements);
    ·             ───────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = [].slice.call(bar);
    ·             ────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = {}.toString.call(bar);
    ·             ───────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.hasOwnProperty`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = {}.hasOwnProperty.call(bar, "property");
    ·             ─────────────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.propertyIsEnumerable`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = {}.propertyIsEnumerable.call(bar, "property");
    ·             ───────────────────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.forEach`.
    ╭─[prefer_prototype_methods.tsx:1:1]
  1 │ [].forEach.call(foo, () => {})
    · ──────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.push`.
    ╭─[prefer_prototype_methods.tsx:1:14]
  1 │ const push = [].push.bind(foo)
    ·              ───────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = [][method].call(foo)
    ·             ──────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:45]
  1 │ const method = "realMethodName";const foo = [][method].call(foo)
    ·                                             ──────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
    ╭─[prefer_prototype_methods.tsx:1:29]
  1 │ const array = Reflect.apply([].slice, foo, [])
    ·                             ────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.bar`.
    ╭─[prefer_prototype_methods.tsx:1:15]
  1 │ Reflect.apply([].bar, baz, [])
    ·               ──────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = ({}).toString.call(bar);
    ·             ─────────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:14]
  1 │ const foo = ({}.toString).call(bar);
    ·              ───────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:14]
  1 │ const foo = ({}.toString.call)(bar);
    ·              ───────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.slice`.
    ╭─[prefer_prototype_methods.tsx:1:22]
  1 │ function foo(){return[].slice.call(bar);}
    ·                      ────────
    ╰────
+  help: Replace `[]` with ` Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Object.prototype.toString`.
    ╭─[prefer_prototype_methods.tsx:1:22]
  1 │ function foo(){return{}.toString.call(bar)}
    ·                      ───────────
    ╰────
+  help: Replace `{}` with ` Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Object.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
  1 │ Reflect.apply({}[Symbol()], baz, [])
    ·               ────────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Object.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
  1 │ Reflect.apply({}[Symbol("symbol description")], baz, [])
    ·               ────────────────────────────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
  1 │ Reflect.apply([][Symbol()], baz, [])
    ·               ────────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Object.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:15]
  1 │ Reflect.apply({}[Symbol("symbol description")], baz, [])
    ·               ────────────────────────────────
    ╰────
+  help: Replace `{}` with `Object.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using method from `Array.prototype`.
    ╭─[prefer_prototype_methods.tsx:1:1]
  1 │ [][Symbol.iterator].call(foo)
    · ───────────────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.at`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = [].at.call(bar)
    ·             ─────
    ╰────
+  help: Replace `[]` with `Array.prototype`.
 
   ⚠ eslint-plugin-unicorn(prefer-prototype-methods): Prefer using `Array.prototype.findLast`.
    ╭─[prefer_prototype_methods.tsx:1:13]
  1 │ const foo = [].findLast.call(bar)
    ·             ───────────
    ╰────
+  help: Replace `[]` with `Array.prototype`.

@@ -1,22 +1,15 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-caller): Disallow the use of arguments.caller or arguments.callee")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them"
-    )
-)]
-struct NoCallerDiagnostic(#[label] pub Span);
+fn no_caller_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow the use of arguments.caller or arguments.callee")
+        .with_help("'caller', 'callee', and 'arguments' properties may not be accessed on strict mode functions or the arguments objects for calls to them")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoCaller;
@@ -57,7 +50,7 @@ impl Rule for NoCaller {
             if (expr.property.name == "callee" || expr.property.name == "caller")
                 && expr.object.is_specific_id("arguments")
             {
-                ctx.diagnostic(NoCallerDiagnostic(expr.property.span));
+                ctx.diagnostic(no_caller_diagnostic(expr.property.span));
             }
         }
     }

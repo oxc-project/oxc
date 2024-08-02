@@ -2,23 +2,19 @@ use oxc_ast::{
     ast::{Argument, MemberExpression, RegExpFlags},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 
 use crate::{ast_util::extract_regex_flags, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum PreferStringReplaceAllDiagnostic {
-    #[error("eslint-plugin-unicorn(prefer-string-replace-all): This pattern can be replaced with `{1}`.")]
-    #[diagnostic(severity(warning))]
-    StringLiteral(#[label] Span, CompactStr),
-    #[error("eslint-plugin-unicorn(prefer-string-replace-all): Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.")]
-    #[diagnostic(severity(warning))]
-    UseReplaceAll(#[label] Span),
+fn string_literal(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("This pattern can be replaced with `{x1}`.")).with_label(span0)
+}
+
+fn use_replace_all(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `String#replaceAll()` over `String#replace()` when using a regex with the global flag.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -42,9 +38,13 @@ declare_oxc_lint!(
 
 impl Rule for PreferStringReplaceAll {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         let MemberExpression::StaticMemberExpression(static_member_expr) = member_expr else {
             return;
@@ -64,16 +64,11 @@ impl Rule for PreferStringReplaceAll {
         match method_name_str {
             "replaceAll" => {
                 if let Some(k) = get_pattern_replacement(pattern) {
-                    ctx.diagnostic(PreferStringReplaceAllDiagnostic::StringLiteral(
-                        static_member_expr.property.span,
-                        k,
-                    ));
+                    ctx.diagnostic(string_literal(static_member_expr.property.span, &k));
                 }
             }
             "replace" if is_reg_exp_with_global_flag(pattern) => {
-                ctx.diagnostic(PreferStringReplaceAllDiagnostic::UseReplaceAll(
-                    static_member_expr.property.span,
-                ));
+                ctx.diagnostic(use_replace_all(static_member_expr.property.span));
             }
             _ => {}
         }
@@ -99,7 +94,9 @@ fn is_reg_exp_with_global_flag<'a>(expr: &'a Argument<'a>) -> bool {
 }
 
 fn get_pattern_replacement<'a>(expr: &'a Argument<'a>) -> Option<CompactStr> {
-    let Argument::RegExpLiteral(reg_exp_literal) = expr else { return None };
+    let Argument::RegExpLiteral(reg_exp_literal) = expr else {
+        return None;
+    };
 
     if !reg_exp_literal.regex.flags.contains(RegExpFlags::G) {
         return None;

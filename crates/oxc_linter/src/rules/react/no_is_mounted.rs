@@ -1,17 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-is-mounted): Do not use isMounted")]
-#[diagnostic(severity(warning), help("isMounted is on its way to being officially deprecated. You can use a _isMounted property to track the mounted status yourself."))]
-struct NoIsMountedDiagnostic(#[label] pub Span);
+fn no_is_mounted_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use isMounted")
+        .with_help("isMounted is on its way to being officially deprecated. You can use a _isMounted property to track the mounted status yourself.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoIsMounted;
@@ -63,10 +61,14 @@ impl Rule for NoIsMounted {
                 ctx.nodes().kind(ancestor),
                 AstKind::ObjectProperty(_) | AstKind::MethodDefinition(_)
             ) {
-                ctx.diagnostic(NoIsMountedDiagnostic(call_expr.span));
+                ctx.diagnostic(no_is_mounted_diagnostic(call_expr.span));
                 break;
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

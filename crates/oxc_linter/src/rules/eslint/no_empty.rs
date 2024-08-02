@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-empty): Disallow empty block statements")]
-#[diagnostic(severity(warning), help("Add comment inside empty {0} statement"))]
-struct NoEmptyDiagnostic(&'static str, #[label("Empty {0} statement")] pub Span);
+fn no_empty_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow empty block statements")
+        .with_help(format!("Add comment inside empty {x0} statement"))
+        .with_label(span1.label(format!("Empty {x0} statement")))
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmpty {
@@ -50,20 +48,16 @@ impl Rule for NoEmpty {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::BlockStatement(block) if block.body.is_empty() => {
+                if self.allow_empty_catch
+                    && matches!(ctx.nodes().parent_kind(node.id()), Some(AstKind::CatchClause(_)))
+                {
+                    return;
+                }
+
                 if ctx.semantic().trivias().has_comments_between(block.span) {
                     return;
                 }
-                ctx.diagnostic(NoEmptyDiagnostic("block", block.span));
-            }
-            // The visitor does not visit the `BlockStatement` inside the `CatchClause`.
-            // See `Visit::visit_catch_clause`.
-            AstKind::CatchClause(catch_clause)
-                if !self.allow_empty_catch && catch_clause.body.body.is_empty() =>
-            {
-                if ctx.semantic().trivias().has_comments_between(catch_clause.body.span) {
-                    return;
-                }
-                ctx.diagnostic(NoEmptyDiagnostic("block", catch_clause.body.span));
+                ctx.diagnostic(no_empty_diagnostic("block", block.span));
             }
             // The visitor does not visit the `BlockStatement` inside the `FinallyClause`.
             // See `Visit::visit_finally_clause`.
@@ -71,10 +65,10 @@ impl Rule for NoEmpty {
                 if ctx.semantic().trivias().has_comments_between(finally_clause.span) {
                     return;
                 }
-                ctx.diagnostic(NoEmptyDiagnostic("block", finally_clause.span));
+                ctx.diagnostic(no_empty_diagnostic("block", finally_clause.span));
             }
             AstKind::SwitchStatement(switch) if switch.cases.is_empty() => {
-                ctx.diagnostic(NoEmptyDiagnostic("switch", switch.span));
+                ctx.diagnostic(no_empty_diagnostic("switch", switch.span));
             }
             _ => {}
         }

@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::WhitespaceRemover;
 use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -97,8 +97,8 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
 
 fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) -> String {
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, source_text, source_type).parse().program;
-    let program = allocator.alloc(program);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = allocator.alloc(ret.program);
     Minifier::new(options).build(&allocator, program);
-    Codegen::<true>::new("", source_text, CodegenOptions::default()).build(program).source_text
+    WhitespaceRemover::new().build(program).source_text
 }

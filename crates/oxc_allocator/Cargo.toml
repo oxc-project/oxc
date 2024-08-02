@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_allocator"
-version                = "0.12.5"
+version                = "0.23.0"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -10,6 +10,7 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/src"]
 
 [lints]
 workspace = true
@@ -18,7 +19,7 @@ workspace = true
 doctest = false
 
 [dependencies]
-bumpalo        = { workspace = true, features = ["collections", "allocator-api2"] }
+bumpalo        = { workspace = true, features = ["allocator-api2", "collections"] }
 allocator-api2 = { workspace = true }
 
 serde = { workspace = true, optional = true }

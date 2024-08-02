@@ -1,26 +1,26 @@
-#![allow(clippy::significant_drop_tightening)]
-use std::collections::HashMap;
-
-use dashmap::mapref::one::Ref;
 use oxc_ast::{
     ast::{BindingPatternKind, Expression, IdentifierReference, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use oxc_syntax::module_record::ImportImportName;
+use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-named-as-default-member): {1:?} also has a named export {2:?}")]
-#[diagnostic(severity(warning), help("Check if you meant to write `import {{{2:}}} from {3:?}`"))]
-struct NoNamedAsDefaultMemberDignostic(#[label] pub Span, String, String, String);
+fn no_named_as_default_member_dignostic(
+    span0: Span,
+    x1: &str,
+    x2: &str,
+    x3: &str,
+) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x1:?} also has a named export {x2:?}"))
+        .with_help(format!("Check if you meant to write `import {{{x2:}}} from {x3:?}`"))
+        .with_label(span0)
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
 #[derive(Debug, Default, Clone)]
@@ -43,7 +43,7 @@ declare_oxc_lint!(
     /// const bar = foo.bar // trying to access named export via default
     /// ```
     NoNamedAsDefaultMember,
-    nursery
+    suspicious
 );
 fn get_symbol_id_from_ident(
     ctx: &LintContext<'_>,
@@ -56,10 +56,9 @@ fn get_symbol_id_from_ident(
 
 impl Rule for NoNamedAsDefaultMember {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
 
-        let mut has_members_map: HashMap<SymbolId, (Ref<'_, CompactStr, _, _>, CompactStr)> =
-            HashMap::default();
+        let mut has_members_map = FxHashMap::default();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(_) = import_entry.import_name else {
                 continue;
@@ -72,7 +71,7 @@ impl Rule for NoNamedAsDefaultMember {
 
             if !remote_module_record_ref.exported_bindings.is_empty() {
                 has_members_map.insert(
-                    ctx.symbols().get_symbol_id_from_span(&import_entry.local_name.span()).unwrap(),
+                    ctx.symbols().get_symbol_id_from_span(import_entry.local_name.span()).unwrap(),
                     (remote_module_record_ref, import_entry.module_request.name().clone()),
                 );
             }
@@ -102,15 +101,15 @@ impl Rule for NoNamedAsDefaultMember {
                 return;
             };
             if let Some(module_name) = get_external_module_name_if_has_entry(ident, prop_str) {
-                ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
+                ctx.diagnostic(no_named_as_default_member_dignostic(
                     match member_expr {
                         MemberExpression::ComputedMemberExpression(it) => it.span,
                         MemberExpression::StaticMemberExpression(it) => it.span,
                         MemberExpression::PrivateFieldExpression(it) => it.span,
                     },
-                    ident.name.to_string(),
-                    prop_str.to_string(),
-                    module_name,
+                    &ident.name,
+                    prop_str,
+                    &module_name,
                 ));
             };
         };
@@ -133,11 +132,11 @@ impl Rule for NoNamedAsDefaultMember {
                         if let Some(module_name) =
                             get_external_module_name_if_has_entry(ident, &name)
                         {
-                            ctx.diagnostic(NoNamedAsDefaultMemberDignostic(
+                            ctx.diagnostic(no_named_as_default_member_dignostic(
                                 decl.span,
-                                ident.name.to_string(),
-                                name.to_string(),
-                                module_name,
+                                &ident.name,
+                                &name,
+                                &module_name,
                             ));
                         }
                     }

@@ -1,13 +1,9 @@
-use std::collections::HashMap;
-
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId};
 use oxc_span::Span;
+use rustc_hash::FxHashSet;
 
 use crate::{
     context::LintContext,
@@ -18,10 +14,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-conditional-expect): Unexpected conditional expect")]
-#[diagnostic(severity(warning), help("Avoid calling `expect` conditionally`"))]
-struct NoConditionalExpectDiagnostic(#[label] pub Span);
+fn no_conditional_expect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected conditional expect")
+        .with_help("Avoid calling `expect` conditionally`")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoConditionalExpect;
@@ -53,28 +50,34 @@ declare_oxc_lint!(
     //   await foo().catch(error => expect(error).toBeInstanceOf(error));
     // });
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-conditional-expect.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-conditional-expect": "error"
+    ///   }
+    /// }
+    /// ```
     NoConditionalExpect,
     correctness
 );
 
+// To flag we encountered a conditional block/catch block when traversing the parents.
+#[derive(Debug, Clone, Copy)]
+struct InConditional(bool);
+
 impl Rule for NoConditionalExpect {
     fn run_once(&self, ctx: &LintContext) {
-        let possible_jest_nodes = collect_possible_jest_call_node(ctx);
-        let id_nodes_mapping = possible_jest_nodes.iter().fold(HashMap::new(), |mut acc, cur| {
-            acc.entry(cur.node.id()).or_insert(cur);
-            acc
-        });
         for node in &collect_possible_jest_call_node(ctx) {
-            run(node, &id_nodes_mapping, ctx);
+            run(node, ctx);
         }
     }
 }
 
-fn run<'a>(
-    possible_jest_node: &PossibleJestNode<'a, '_>,
-    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
-    ctx: &LintContext<'a>,
-) {
+fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
     let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
         let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx)
@@ -82,31 +85,39 @@ fn run<'a>(
             return;
         };
 
-        let has_condition_or_catch = check_parents(node, id_nodes_mapping, ctx, false);
-        if has_condition_or_catch {
-            ctx.diagnostic(NoConditionalExpectDiagnostic(jest_fn_call.head.span));
+        // Record visited nodes for avoid infinite loop.
+        let mut visited = FxHashSet::default();
+
+        // When first visiting the node, we assume it's not in a conditional block.
+        let has_condition_or_catch = check_parents(node, &mut visited, InConditional(false), ctx);
+        if matches!(has_condition_or_catch, InConditional(true)) {
+            ctx.diagnostic(no_conditional_expect_diagnostic(jest_fn_call.head.span));
         }
     }
 }
 
 fn check_parents<'a>(
     node: &AstNode<'a>,
-    id_nodes_mapping: &HashMap<AstNodeId, &PossibleJestNode<'a, '_>>,
+    visited: &mut FxHashSet<AstNodeId>,
+    in_conditional: InConditional,
     ctx: &LintContext<'a>,
-    in_conditional: bool,
-) -> bool {
+) -> InConditional {
+    // if the node is already visited, we should return `false` to avoid infinite loop.
+    if !visited.insert(node.id()) {
+        return InConditional(false);
+    }
+
     let Some(parent_node) = ctx.nodes().parent_node(node.id()) else {
-        return false;
+        return InConditional(false);
     };
 
     match parent_node.kind() {
         AstKind::CallExpression(call_expr) => {
-            let Some(parent) = id_nodes_mapping.get(&parent_node.id()) else {
-                return check_parents(parent_node, id_nodes_mapping, ctx, in_conditional);
-            };
+            let jest_node = PossibleJestNode { node: parent_node, original: None };
+
             if is_type_of_jest_fn_call(
                 call_expr,
-                parent,
+                &jest_node,
                 ctx,
                 &[JestFnKind::General(JestGeneralFnKind::Test)],
             ) {
@@ -115,7 +126,7 @@ fn check_parents<'a>(
 
             if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 if member_expr.static_property_name() == Some("catch") {
-                    return check_parents(parent_node, id_nodes_mapping, ctx, true);
+                    return check_parents(parent_node, visited, InConditional(true), ctx);
                 }
             }
         }
@@ -125,36 +136,45 @@ fn check_parents<'a>(
         | AstKind::ConditionalExpression(_)
         | AstKind::AwaitExpression(_)
         | AstKind::LogicalExpression(_) => {
-            return check_parents(parent_node, id_nodes_mapping, ctx, true)
+            return check_parents(parent_node, visited, InConditional(true), ctx);
         }
         AstKind::Function(function) => {
             let Some(ident) = &function.id else {
-                return false;
+                return InConditional(false);
             };
             let symbol_table = ctx.semantic().symbols();
             let Some(symbol_id) = ident.symbol_id.get() else {
-                return false;
+                return InConditional(false);
             };
 
-            return symbol_table.get_resolved_references(symbol_id).any(|reference| {
+            // Consider cases like:
+            // ```javascript
+            // function foo() {
+            //   foo()
+            // }
+            // ````
+            // To avoid infinite loop, we need to check if the function is already visited when
+            // call `check_parents`.
+            let boolean = symbol_table.get_resolved_references(symbol_id).any(|reference| {
                 let Some(parent) = ctx.nodes().parent_node(reference.node_id()) else {
                     return false;
                 };
-                check_parents(parent, id_nodes_mapping, ctx, in_conditional)
+                matches!(check_parents(parent, visited, in_conditional, ctx), InConditional(true))
             });
+            return InConditional(boolean);
         }
-        AstKind::Program(_) => return false,
+        AstKind::Program(_) => return InConditional(false),
         _ => {}
     }
 
-    check_parents(parent_node, id_nodes_mapping, ctx, in_conditional)
+    check_parents(parent_node, visited, in_conditional, ctx)
 }
 
 #[test]
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         (
             "
                 it('foo', () => {
@@ -404,9 +424,25 @@ fn test() {
             ",
             None,
         ),
+        (
+            "function verifyVNodeTree(vnode) {
+                    if (vnode._nextDom) {
+                        expect.fail('vnode should not have _nextDom:' + vnode._nextDom);
+                    }
+
+                    if (vnode._children) {
+                        for (let child of vnode._children) {
+                            if (child) {
+                                verifyVNodeTree(child);
+                            }
+                        }
+                    }
+                }",
+            None,
+        ),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         (
             "
                 it('foo', () => {
@@ -837,7 +873,133 @@ fn test() {
             ",
             None,
         ),
+        (
+            "
+            it('works', async () => {
+                verifyVNodeTree(vnode);
+
+                function verifyVNodeTree(vnode) {
+                    if (vnode._nextDom) {
+                        expect.fail('vnode should not have _nextDom:' + vnode._nextDom);
+                    }
+
+                    if (vnode._children) {
+                        for (let child of vnode._children) {
+                            if (child) {
+                                    verifyVNodeTree(child);
+                            }
+                        }
+                    }
+                }
+            });
+            ",
+            None,
+        ),
     ];
 
-    Tester::new(NoConditionalExpect::NAME, pass, fail).with_jest_plugin(true).test_and_snapshot();
+    let pass_vitest = vec![
+        "
+            it('foo', () => {
+                process.env.FAIL && setNum(1);
+
+                expect(num).toBe(2);
+            });
+        ",
+        "
+            function getValue() {
+                let num = 2;
+
+                process.env.FAIL && setNum(1);
+
+                return num;
+            }
+
+            it('foo', () => {
+                expect(getValue()).toBe(2);
+            });
+        ",
+        "
+            function getValue() {
+                let num = 2;
+
+                process.env.FAIL || setNum(1);
+
+                return num;
+            }
+
+            it('foo', () => {
+                expect(getValue()).toBe(2);
+            });
+        ",
+        "
+            it('foo', () => {
+                const num = process.env.FAIL ? 1 : 2;
+
+                expect(num).toBe(2);
+            });
+        ",
+        "
+            function getValue() {
+                return process.env.FAIL ? 1 : 2
+            }
+
+            it('foo', () => {
+                expect(getValue()).toBe(2);
+            });
+        ",
+    ];
+
+    let fail_vitest = vec![
+        "
+            it('foo', () => {
+                something && expect(something).toHaveBeenCalled();
+            })
+        ",
+        "
+            it('foo', () => {
+                a || (b && expect(something).toHaveBeenCalled());
+            })
+        ",
+        "
+            it.each``('foo', () => {
+                something || expect(something).toHaveBeenCalled();
+            });
+        ",
+        "
+            it.each()('foo', () => {
+                something || expect(something).toHaveBeenCalled();
+            })
+        ",
+        "
+            function getValue() {
+                something || expect(something).toHaveBeenCalled();
+            }
+            it('foo', getValue);
+        ",
+        "
+            it('foo', () => {
+                something ? expect(something).toHaveBeenCalled() : noop();
+            })
+        ",
+        "
+            function getValue() {
+                something ? expect(something).toHaveBeenCalled() : noop();
+            }
+
+            it('foo', getValue);
+        ",
+        "
+            it('foo', () => {
+                something ? noop() : expect(something).toHaveBeenCalled();
+            })
+        ",
+    ];
+
+    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
+    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+
+    Tester::new(NoConditionalExpect::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .with_vitest_plugin(true)
+        .test_and_snapshot();
 }

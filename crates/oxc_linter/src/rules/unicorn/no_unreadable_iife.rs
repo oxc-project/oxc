@@ -2,22 +2,17 @@ use oxc_ast::{
     ast::{Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-unreadable-iife): IIFE with parenthesized arrow function body is considered unreadable.")]
-#[diagnostic(
-    severity(warning),
-    help("Rewrite the IIFE to avoid having a parenthesized arrow function body.")
-)]
-struct NoUnreadableIifeDiagnostic(#[label] pub Span);
+fn no_unreadable_iife_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("IIFE with parenthesized arrow function body is considered unreadable.")
+        .with_help("Rewrite the IIFE to avoid having a parenthesized arrow function body.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnreadableIife;
@@ -53,7 +48,9 @@ declare_oxc_lint!(
 
 impl Rule for NoUnreadableIife {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         let Expression::ArrowFunctionExpression(arrow_expr) =
             &call_expr.callee.without_parenthesized()
@@ -68,7 +65,7 @@ impl Rule for NoUnreadableIife {
             return;
         };
         if matches!(expr_stmt.expression, Expression::ParenthesizedExpression(_)) {
-            ctx.diagnostic(NoUnreadableIifeDiagnostic(expr_stmt.span));
+            ctx.diagnostic(no_unreadable_iife_diagnostic(expr_stmt.span));
         }
     }
 }

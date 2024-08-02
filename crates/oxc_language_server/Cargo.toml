@@ -11,13 +11,15 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/src"]
 
 [lints]
 workspace = true
 
 [[bin]]
-name = "oxc_language_server"
-test = false
+name    = "oxc_language_server"
+test    = false
+doctest = false
 
 [dependencies]
 oxc_allocator   = { workspace = true }

@@ -60,8 +60,7 @@ fn print_semicolon_after_export_declaration<'a>(
             match_expression!(ExportDefaultDeclarationKind) => Some(ss!(";")),
             ExportDefaultDeclarationKind::FunctionDeclaration(_)
             | ExportDefaultDeclarationKind::ClassDeclaration(_)
-            | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
-            | ExportDefaultDeclarationKind::TSEnumDeclaration(_) => None,
+            | ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => None,
         },
         ModuleDeclaration::ExportAllDeclaration(_)
         | ModuleDeclaration::ExportNamedDeclaration(_)

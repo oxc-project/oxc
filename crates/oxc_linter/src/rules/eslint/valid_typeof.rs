@@ -1,23 +1,27 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 use phf::{phf_set, Set};
 
-use crate::{context::LintContext, fixer::Fix, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum ValidTypeofDiagnostic {
-    #[error("eslint(valid-typeof): Typeof comparisons should be to string literals.")]
-    #[diagnostic(severity(warning))]
-    NotString(#[help] Option<&'static str>, #[label] Span),
-    #[error("eslint(valid-typeof): Invalid typeof comparison value.")]
-    #[diagnostic(severity(warning))]
-    InvalidValue(#[help] Option<&'static str>, #[label] Span),
+fn not_string(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
+    let mut d =
+        OxcDiagnostic::warn("Typeof comparisons should be to string literals.").with_label(span1);
+    if let Some(x) = x0 {
+        d = d.with_help(x);
+    }
+    d
+}
+
+fn invalid_value(x0: Option<&'static str>, span1: Span) -> OxcDiagnostic {
+    let mut d = OxcDiagnostic::warn("Invalid typeof comparison value.").with_label(span1);
+    if let Some(x) = x0 {
+        d = d.with_help(x);
+    }
+    d
 }
 
 #[derive(Debug, Clone, Default)]
@@ -46,6 +50,7 @@ declare_oxc_lint!(
     /// ```
     ValidTypeof,
     correctness,
+    conditional_fix
 );
 
 impl Rule for ValidTypeof {
@@ -75,7 +80,7 @@ impl Rule for ValidTypeof {
 
         if let Expression::StringLiteral(lit) = sibling {
             if !VALID_TYPES.contains(lit.value.as_str()) {
-                ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+                ctx.diagnostic(invalid_value(None, sibling.span()));
             }
             return;
         }
@@ -83,7 +88,7 @@ impl Rule for ValidTypeof {
         if let Expression::TemplateLiteral(template) = sibling {
             if template.expressions.is_empty() {
                 if template.quasi().is_some_and(|value| !VALID_TYPES.contains(value.as_str())) {
-                    ctx.diagnostic(ValidTypeofDiagnostic::InvalidValue(None, sibling.span()));
+                    ctx.diagnostic(invalid_value(None, sibling.span()));
                 }
                 return;
             }
@@ -93,17 +98,17 @@ impl Rule for ValidTypeof {
             if ident.name == "undefined" && ctx.semantic().is_reference_to_global_variable(ident) {
                 ctx.diagnostic_with_fix(
                     if self.require_string_literals {
-                        ValidTypeofDiagnostic::NotString(
+                        not_string(
                             Some("Use `\"undefined\"` instead of `undefined`."),
                             sibling.span(),
                         )
                     } else {
-                        ValidTypeofDiagnostic::InvalidValue(
+                        invalid_value(
                             Some("Use `\"undefined\"` instead of `undefined`."),
                             sibling.span(),
                         )
                     },
-                    || Fix::new("\"undefined\"", sibling.span()),
+                    |fixer| fixer.replace(sibling.span(), "\"undefined\""),
                 );
                 return;
             }
@@ -112,7 +117,7 @@ impl Rule for ValidTypeof {
         if self.require_string_literals
             && !matches!(sibling, Expression::UnaryExpression(unary) if unary.operator == UnaryOperator::Typeof)
         {
-            ctx.diagnostic(ValidTypeofDiagnostic::NotString(None, sibling.span()));
+            ctx.diagnostic(not_string(None, sibling.span()));
         }
     }
 

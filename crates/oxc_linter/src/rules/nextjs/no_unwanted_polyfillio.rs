@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXElementName},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
@@ -13,13 +10,13 @@ use phf::{phf_set, Set};
 
 use crate::{context::LintContext, rule::Rule, utils::get_next_script_import_local_name};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(no-unwanted-polyfillio): No duplicate polyfills from Polyfill.io are allowed. {0} already shipped with Next.js.")]
-#[diagnostic(
-    severity(warning),
-    help("See https://nextjs.org/docs/messages/no-unwanted-polyfillio")
-)]
-struct NoUnwantedPolyfillioDiagnostic(String, #[label] pub Span);
+fn no_unwanted_polyfillio_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!(
+        "No duplicate polyfills from Polyfill.io are allowed. {x0} already shipped with Next.js."
+    ))
+    .with_help("See https://nextjs.org/docs/messages/no-unwanted-polyfillio")
+    .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnwantedPolyfillio;
@@ -160,8 +157,8 @@ impl Rule for NoUnwantedPolyfillio {
                         .filter(|feature| NEXT_POLYFILLED_FEATURES.contains(feature))
                         .collect();
                     if !unwanted_features.is_empty() {
-                        ctx.diagnostic(NoUnwantedPolyfillioDiagnostic(
-                            format!(
+                        ctx.diagnostic(no_unwanted_polyfillio_diagnostic(
+                            &format!(
                                 "{} {}",
                                 unwanted_features.join(", "),
                                 if unwanted_features.len() > 1 { "are" } else { "is" }

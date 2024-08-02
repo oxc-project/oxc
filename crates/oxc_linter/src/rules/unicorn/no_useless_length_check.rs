@@ -1,36 +1,31 @@
-use itertools::concat;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 use std::fmt::Debug;
 
+use itertools::concat;
 use oxc_ast::{
     ast::{Expression, LogicalExpression},
     AstKind,
 };
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoUselessLengthCheckDiagnostic {
-    #[error("eslint-plugin-unicorn(no-useless-length-check)")]
-    #[diagnostic(
-        severity(warning),
-        help(
-            "The non-empty check is useless as `Array#some()` returns `false` for an empty array."
+fn some(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Found a useless array length check")
+        .with_help(
+            "The non-empty check is useless as `Array#some()` returns `false` for an empty array.",
         )
-    )]
-    Some(#[label] Span),
-    #[error("eslint-plugin-unicorn(no-useless-length-check)")]
-    #[diagnostic(
-        severity(warning),
-        help("The empty check is useless as `Array#every()` returns `true` for an empty array.")
-    )]
-    Every(#[label] Span),
+        .with_label(span0)
+}
+
+fn every(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Found a useless array length check")
+        .with_help(
+            "The empty check is useless as `Array#every()` returns `true` for an empty array.",
+        )
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -66,7 +61,7 @@ fn is_useless_check<'a>(
     left: &'a Expression<'a>,
     right: &'a Expression<'a>,
     operator: LogicalOperator,
-) -> Option<NoUselessLengthCheckDiagnostic> {
+) -> Option<OxcDiagnostic> {
     let every_condition = ConditionDTO {
         property_name: "every",
         binary_operators: vec![BinaryOperator::StrictEquality],
@@ -144,9 +139,9 @@ fn is_useless_check<'a>(
 
     if l && r {
         Some(if active_condition.property_name == "every" {
-            NoUselessLengthCheckDiagnostic::Every(binary_expression_span?)
+            every(binary_expression_span?)
         } else {
-            NoUselessLengthCheckDiagnostic::Some(binary_expression_span?)
+            some(binary_expression_span?)
         })
     } else {
         None

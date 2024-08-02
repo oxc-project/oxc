@@ -1,25 +1,24 @@
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+fn use_to_be_called_with(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
+        .with_help("Prefer toBeCalledWith(/* expected args */)")
+        .with_label(span0)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-enum PreferCalledWithDiagnostic {
-    #[error("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")]
-    #[diagnostic(severity(warning), help("Prefer toBeCalledWith(/* expected args */)"))]
-    UseToBeCalledWith(#[label] Span),
-    #[error("eslint-plugin-jest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")]
-    #[diagnostic(severity(warning), help("Prefer toHaveBeenCalledWith(/* expected args */)"))]
-    UseHaveBeenCalledWith(#[label] Span),
+fn use_have_been_called_with(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.")
+        .with_help("Prefer toHaveBeenCalledWith(/* expected args */)")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -78,13 +77,9 @@ impl PreferCalledWith {
         if let Some(matcher_property) = jest_fn_call.matcher() {
             if let Some(matcher_name) = matcher_property.name() {
                 if matcher_name == "toBeCalled" {
-                    ctx.diagnostic(PreferCalledWithDiagnostic::UseToBeCalledWith(
-                        matcher_property.span,
-                    ));
+                    ctx.diagnostic(use_to_be_called_with(matcher_property.span));
                 } else if matcher_name == "toHaveBeenCalled" {
-                    ctx.diagnostic(PreferCalledWithDiagnostic::UseHaveBeenCalledWith(
-                        matcher_property.span,
-                    ));
+                    ctx.diagnostic(use_have_been_called_with(matcher_property.span));
                 }
             }
         }

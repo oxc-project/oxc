@@ -1,8 +1,5 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -11,10 +8,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(require-array-join-separator): Enforce using the separator argument with Array#join()")]
-#[diagnostic(severity(warning), help("Missing the separator argument."))]
-struct RequireArrayJoinSeparatorDiagnostic(#[label] pub Span);
+fn require_array_join_separator_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce using the separator argument with Array#join()")
+        .with_help("Missing the separator argument.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireArrayJoinSeparator;
@@ -60,7 +58,7 @@ impl Rule for RequireArrayJoinSeparator {
             && !call_expr.optional
             && !matches!(member_expr, MemberExpression::ComputedMemberExpression(_))
         {
-            ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(Span::new(
+            ctx.diagnostic(require_array_join_separator_diagnostic(Span::new(
                 member_expr.span().end,
                 call_expr.span.end,
             )));
@@ -74,7 +72,7 @@ impl Rule for RequireArrayJoinSeparator {
                 && !call_expr.arguments.iter().any(oxc_ast::ast::Argument::is_spread)
                 && is_array_prototype_property(member_expr_obj, "join")
             {
-                ctx.diagnostic(RequireArrayJoinSeparatorDiagnostic(Span::new(
+                ctx.diagnostic(require_array_join_separator_diagnostic(Span::new(
                     member_expr.span().end,
                     call_expr.span.end,
                 )));

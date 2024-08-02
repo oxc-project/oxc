@@ -1,8 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -13,13 +10,13 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(heading-has-content): Headings must have content and the content must be accessible by a screen reader.")]
-#[diagnostic(
-    severity(warning),
-    help("Provide screen reader accessible content when using heading elements.")
-)]
-struct HeadingHasContentDiagnostic(#[label] pub Span);
+fn heading_has_content_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Headings must have content and the content must be accessible by a screen reader.",
+    )
+    .with_help("Provide screen reader accessible content when using heading elements.")
+    .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct HeadingHasContent(Box<HeadingHasContentConfig>);
@@ -116,7 +113,7 @@ impl Rule for HeadingHasContent {
             return;
         }
 
-        ctx.diagnostic(HeadingHasContentDiagnostic(jsx_el.span));
+        ctx.diagnostic(heading_has_content_diagnostic(jsx_el.span));
     }
 }
 

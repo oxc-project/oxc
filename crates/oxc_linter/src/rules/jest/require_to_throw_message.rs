@@ -1,8 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -12,10 +9,11 @@ use crate::{
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(require-to-throw-message): Require a message for {0:?}.")]
-#[diagnostic(severity(warning), help("Add an error message to {0:?}"))]
-struct RequireToThrowMessageDiagnostic(pub String, #[label] pub Span);
+fn require_to_throw_message_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Require a message for {x0:?}."))
+        .with_help(format!("Add an error message to {x0:?}"))
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct RequireToThrowMessage;
@@ -81,7 +79,7 @@ impl RequireToThrowMessage {
             && (matcher_name == "toThrow" || matcher_name == "toThrowError")
             && !has_not
         {
-            ctx.diagnostic(RequireToThrowMessageDiagnostic(matcher_name.to_string(), matcher.span));
+            ctx.diagnostic(require_to_throw_message_diagnostic(&matcher_name, matcher.span));
         }
     }
 }

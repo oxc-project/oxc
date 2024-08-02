@@ -1,0 +1,33 @@
+[package]
+name                   = "oxc_traverse"
+version                = "0.23.0"
+publish                = true
+authors.workspace      = true
+description.workspace  = true
+edition.workspace      = true
+homepage.workspace     = true
+keywords.workspace     = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+categories.workspace   = true
+include                = ["/src"]
+
+[lints]
+workspace = true
+
+[lib]
+test = false
+# Doctests must be enabled for this crate as they are used to run tests
+# which check the soundness of its code
+doctest = true
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast       = { workspace = true }
+oxc_semantic  = { workspace = true }
+oxc_span      = { workspace = true }
+oxc_syntax    = { workspace = true }
+
+compact_str = { workspace = true }
+memoffset   = { workspace = true }

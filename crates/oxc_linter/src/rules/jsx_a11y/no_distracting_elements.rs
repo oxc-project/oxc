@@ -1,19 +1,16 @@
 use oxc_ast::{ast::JSXElementName, AstKind};
-use oxc_diagnostics::thiserror::Error;
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
 
-use oxc_diagnostics::miette::{self, Diagnostic};
-
 use crate::{rule::Rule, utils::get_element_type, LintContext};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsx-a11y(no-distracting-elements): Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated."
-)]
-#[diagnostic(severity(warning), help("Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects."))]
-struct NoDistractingElementsDiagnostic(#[label] pub Span);
+fn no_distracting_elements_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use <marquee> or <blink> elements as they can create visual accessibility issues and are deprecated.")
+        .with_help("Replace the <marquee> or <blink> element with alternative, more accessible ways to achieve your desired visual effects.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDistractingElements;
@@ -53,8 +50,12 @@ declare_oxc_lint!(
 
 impl Rule for NoDistractingElements {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
-        let JSXElementName::Identifier(iden) = &jsx_el.name else { return };
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+            return;
+        };
+        let JSXElementName::Identifier(iden) = &jsx_el.name else {
+            return;
+        };
         let Some(element_type) = get_element_type(ctx, jsx_el) else {
             return;
         };
@@ -62,7 +63,7 @@ impl Rule for NoDistractingElements {
         let name = element_type.as_str();
 
         if let "marquee" | "blink" = name {
-            ctx.diagnostic(NoDistractingElementsDiagnostic(iden.span));
+            ctx.diagnostic(no_distracting_elements_diagnostic(iden.span));
         }
     }
 }

@@ -1,0 +1,99 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/namespaced-attribute.tsx
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function)",
+        "id": 2,
+        "node": "Function(Foo)",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(FunctionScopedVariable)",
+            "id": 5,
+            "name": "props",
+            "node": "FormalParameter",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Read)",
+                "id": 3,
+                "name": "props",
+                "node_id": 57
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(Import)",
+        "id": 0,
+        "name": "React",
+        "node": "ImportNamespaceSpecifier",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "x",
+        "node": "VariableDeclarator",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 2,
+        "name": "y",
+        "node": "VariableDeclarator",
+        "references": []
+      },
+      {
+        "flag": "SymbolFlags(Interface)",
+        "id": 3,
+        "name": "FooProps",
+        "node": "TSInterfaceDeclaration",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Type)",
+            "id": 2,
+            "name": "FooProps",
+            "node_id": 45
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | Function)",
+        "id": 4,
+        "name": "Foo",
+        "node": "Function(Foo)",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "Foo",
+            "node_id": 12
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 1,
+            "name": "Foo",
+            "node_id": 24
+          }
+        ]
+      }
+    ]
+  }
+]

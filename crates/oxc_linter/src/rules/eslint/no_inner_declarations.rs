@@ -1,19 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint(no-inner-declarations): Variable or `function` declarations are not allowed in nested blocks"
-)]
-#[diagnostic(severity(warning), help("Move {0} declaration to {1} root"))]
-struct NoInnerDeclarationsDiagnostic(&'static str, &'static str, #[label] pub Span);
+fn no_inner_declarations_diagnostic(x0: &str, x1: &str, span2: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Variable or `function` declarations are not allowed in nested blocks")
+        .with_help(format!("Move {x0} declaration to {x1} root"))
+        .with_label(span2)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoInnerDeclarations {
@@ -48,7 +44,7 @@ declare_oxc_lint!(
     /// }
     /// ```
     NoInnerDeclarations,
-    correctness
+    pedantic
 );
 
 impl Rule for NoInnerDeclarations {
@@ -123,7 +119,7 @@ impl Rule for NoInnerDeclarations {
             }
         }
 
-        ctx.diagnostic(NoInnerDeclarationsDiagnostic(decl_type, body, span));
+        ctx.diagnostic(no_inner_declarations_diagnostic(decl_type, body, span));
     }
 }
 

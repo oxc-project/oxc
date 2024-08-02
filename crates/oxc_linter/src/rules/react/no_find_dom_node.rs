@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-find-dom-node): Unexpected call to `findDOMNode`.")]
-#[diagnostic(severity(warning), help("Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives."))]
-struct NoFindDomNodeDiagnostic(#[label] pub Span);
+fn no_find_dom_node_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Unexpected call to `findDOMNode`.")
+        .with_help("Replace `findDOMNode` with one of the alternatives documented at https://react.dev/reference/react-dom/findDOMNode#alternatives.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoFindDomNode;
@@ -42,16 +40,20 @@ declare_oxc_lint!(
 
 impl Rule for NoFindDomNode {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
         if let Some(ident) = call_expr.callee.get_identifier_reference() {
             if ident.name == "findDOMNode" {
-                ctx.diagnostic(NoFindDomNodeDiagnostic(ident.span));
+                ctx.diagnostic(no_find_dom_node_diagnostic(ident.span));
             }
             return;
         }
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
         let member = member_expr.object();
         if !member.is_specific_id("React")
             && !member.is_specific_id("ReactDOM")
@@ -59,8 +61,14 @@ impl Rule for NoFindDomNode {
         {
             return;
         }
-        let Some((span, "findDOMNode")) = member_expr.static_property_info() else { return };
-        ctx.diagnostic(NoFindDomNodeDiagnostic(span));
+        let Some((span, "findDOMNode")) = member_expr.static_property_info() else {
+            return;
+        };
+        ctx.diagnostic(no_find_dom_node_diagnostic(span));
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 
@@ -76,7 +84,7 @@ fn test() {
               render: function() {
                 return <div>Hello</div>;
               }
-            });              
+            });
             ",
             None,
         ),
@@ -184,7 +192,7 @@ fn test() {
               render() {
                 return <div>Hello</div>;
               }
-            }            
+            }
             ",
             None,
         ),

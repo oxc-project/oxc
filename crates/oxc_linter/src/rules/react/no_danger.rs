@@ -2,13 +2,9 @@ use oxc_ast::{
     ast::{Argument, JSXAttributeItem, ObjectPropertyKind},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::GetSpan;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
@@ -17,10 +13,11 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react(no-danger): Do not use `dangerouslySetInnerHTML` prop")]
-#[diagnostic(severity(warning), help("`dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities."))]
-struct NoDangerDiagnostic(#[label] pub Span);
+fn no_danger_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Do not use `dangerouslySetInnerHTML` prop")
+        .with_help("`dangerouslySetInnerHTML` is a way to inject HTML into your React component. This is dangerous because it can easily lead to XSS vulnerabilities.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDanger;
@@ -48,7 +45,7 @@ impl Rule for NoDanger {
                 if let Some(JSXAttributeItem::Attribute(prop)) =
                     has_jsx_prop(&jsx_elem.opening_element, "dangerouslySetInnerHTML")
                 {
-                    ctx.diagnostic(NoDangerDiagnostic(prop.name.span()));
+                    ctx.diagnostic(no_danger_diagnostic(prop.name.span()));
                 }
             }
             AstKind::CallExpression(call_expr) => {
@@ -56,15 +53,19 @@ impl Rule for NoDanger {
                     return;
                 }
 
-                let Some(props) = call_expr.arguments.get(1) else { return };
+                let Some(props) = call_expr.arguments.get(1) else {
+                    return;
+                };
 
-                let Argument::ObjectExpression(obj_expr) = props else { return };
+                let Argument::ObjectExpression(obj_expr) = props else {
+                    return;
+                };
 
                 for prop in &obj_expr.properties {
                     if let ObjectPropertyKind::ObjectProperty(obj_prop) = prop {
                         if let Some(prop_name) = obj_prop.key.static_name() {
-                            if prop_name.as_str() == "dangerouslySetInnerHTML" {
-                                ctx.diagnostic(NoDangerDiagnostic(obj_prop.key.span()));
+                            if prop_name == "dangerouslySetInnerHTML" {
+                                ctx.diagnostic(no_danger_diagnostic(obj_prop.key.span()));
                             }
                         }
                     }
@@ -72,6 +73,10 @@ impl Rule for NoDanger {
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 
@@ -89,7 +94,10 @@ fn test() {
         ("<div dangerouslySetInnerHTML={{ __html: \"\" }}></div>;", None),
         ("<button dangerouslySetInnerHTML={{ __html: \"baz\" }}>Foo</button>;", None),
         ("React.createElement(\"div\", { dangerouslySetInnerHTML: { __html: \"\" } });", None),
-        ("React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");", None),
+        (
+            "React.createElement(\"button\", { dangerouslySetInnerHTML: { __html: \"baz\" } }, \"Foo\");",
+            None,
+        ),
     ];
 
     Tester::new(NoDanger::NAME, pass, fail).test_and_snapshot();

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: numeric_separators_style
 ---
   ⚠ eslint-plugin-unicorn(numeric-separators-style): Invalid group length in numeric value.
    ╭─[numeric_separators_style.tsx:1:13]

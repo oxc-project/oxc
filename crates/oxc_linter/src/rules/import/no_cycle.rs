@@ -1,11 +1,7 @@
 #![allow(clippy::cast_possible_truncation)]
-
 use std::{ffi::OsStr, path::Component, sync::Arc};
 
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, Span};
 use oxc_syntax::{
@@ -15,10 +11,11 @@ use oxc_syntax::{
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-cycle): Dependency cycle detected")]
-#[diagnostic(severity(warning), help("These paths form a cycle: \n{1}"))]
-struct NoCycleDiagnostic(#[label] Span, String);
+fn no_cycle_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Dependency cycle detected")
+        .with_help(format!("These paths form a cycle: \n{x1}"))
+        .with_label(span0)
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-cycle.md>
 #[derive(Debug, Clone)]
@@ -72,7 +69,7 @@ declare_oxc_lint!(
     /// import { b } from './dep-b.js' // reported: Dependency cycle detected.
     /// ```
     NoCycle,
-    nursery
+    restriction
 );
 
 impl Rule for NoCycle {
@@ -100,7 +97,7 @@ impl Rule for NoCycle {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
 
         let needle = &module_record.resolved_absolute_path;
         let cwd = std::env::current_dir().unwrap();
@@ -154,7 +151,7 @@ impl Rule for NoCycle {
                 })
                 .collect::<Vec<_>>()
                 .join("\n");
-            ctx.diagnostic(NoCycleDiagnostic(span, help));
+            ctx.diagnostic(no_cycle_diagnostic(span, &help));
         }
     }
 }

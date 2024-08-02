@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_deprecated_functions
 ---
   ⚠ eslint-plugin-jest(no-deprecated-functions): Disallow use of deprecated functions
    ╭─[no_deprecated_functions.tsx:1:1]

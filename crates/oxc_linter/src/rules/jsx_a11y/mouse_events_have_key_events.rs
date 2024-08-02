@@ -1,8 +1,5 @@
 use oxc_ast::{ast::JSXAttributeValue, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -14,15 +11,16 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum MouseEventsHaveKeyEventsDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(mouse-events-have-key-events): {1} must be accompanied by onFocus for accessibility.")]
-    #[diagnostic(severity(warning), help("Try to add onFocus."))]
-    MissOnFocus(#[label] Span, String),
+fn miss_on_focus(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x1} must be accompanied by onFocus for accessibility."))
+        .with_help("Try to add onFocus.")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-jsx-a11y(mouse-events-have-key-events): {1} must be accompanied by onBlur for accessibility.")]
-    #[diagnostic(severity(warning), help("Try to add onBlur."))]
-    MissOnBlur(#[label] Span, String),
+fn miss_on_blur(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x1} must be accompanied by onBlur for accessibility."))
+        .with_help("Try to add onBlur.")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -119,18 +117,12 @@ impl Rule for MouseEventsHaveKeyEvents {
                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
                         if let Some(expr) = container.expression.as_expression() {
                             if expr.is_undefined() {
-                                ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnFocus(
-                                    jsx_attr.span(),
-                                    String::from(handler),
-                                ));
+                                ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
                             }
                         }
                     }
                     None => {
-                        ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnFocus(
-                            jsx_attr.span(),
-                            String::from(handler),
-                        ));
+                        ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
                     }
                     _ => {}
                 }
@@ -148,17 +140,11 @@ impl Rule for MouseEventsHaveKeyEvents {
                 match has_jsx_prop(jsx_opening_el, "onBlur").and_then(get_prop_value) {
                     Some(JSXAttributeValue::ExpressionContainer(container)) => {
                         if container.expression.is_undefined() {
-                            ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnBlur(
-                                jsx_attr.span(),
-                                String::from(handler),
-                            ));
+                            ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
                         }
                     }
                     None => {
-                        ctx.diagnostic(MouseEventsHaveKeyEventsDiagnostic::MissOnBlur(
-                            jsx_attr.span(),
-                            String::from(handler),
-                        ));
+                        ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
                     }
                     _ => {}
                 }

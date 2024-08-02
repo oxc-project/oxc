@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: adjacent_overload_signatures
 ---
   ⚠ typescript-eslint(adjacent-overload-signatures): All "foo" signatures should be adjacent.
    ╭─[adjacent_overload_signatures.tsx:3:18]

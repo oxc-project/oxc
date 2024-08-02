@@ -1,8 +1,5 @@
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-dark-transparent.png" width="600">
-    <img alt="OXC Logo" src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/preview-white.png" width="600">
-  </picture>
+  <img alt="OXC Logo" src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/preview-universal.png" width="700">
 </p>
 
 <div align="center">
@@ -25,14 +22,17 @@ The Oxidation Compiler is creating a collection of high-performance tools for Ja
 
 Oxc is building a parser, linter, formatter, transpiler, minifier, resolver ... all written in Rust.
 
+See more at [oxc.rs](https://oxc.rs)!
+
 ## 🙋Who's using Oxc?
 
-- [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing.
-- [Rspack][rspack], [Rolldown][rolldown], and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- [Rolldown] uses the [oxc][docs-oxc-url] crate for parsing and transpiling.
+- [Rolldown][rolldown] and [Biome][biome] uses the [oxc_resolver][docs-resolver-url] crate for module resolution.
+- Projects and companies like [Preact](https://github.com/preactjs/preact/blob/4c20c23c16dd60f380ce9fe98afc93041a7e1562/oxlint.json), [Shopify](https://oxc.rs/blog/2023-12-12-announcing-oxlint.html#_50-100-times-faster-than-eslint), ByteDance and Shopee uses oxlint for linting.
 
 ## ⚡️ Linter Quick Start
 
-The linter is ready to catch mistakes for you. It comes with 91 rules turned on by default (out of 300 in total) and no configuration is required.
+The linter is ready to catch mistakes for you. It comes with 91 rules turned on by default (out of 340+ in total) and no configuration is required.
 
 To get started, run [oxlint][npm-oxlint] or via `npx`:
 
@@ -43,12 +43,12 @@ npx oxlint@latest
 To give you an idea of its capabilities, here is an example from the [vscode] repository, which finishes linting 4800+ files in 0.7 seconds.
 
 <p float="left" align="left">
-  <img src="https://raw.githubusercontent.com/Boshen/oxc-assets/main/linter-screenshot.png" width="60%">
+  <img src="https://cdn.jsdelivr.net/gh/oxc-project/oxc-assets/linter-screenshot.png" width="60%">
 </p>
 
 ## ⚡️ Performance
 
-- The parser aim to be the fastest Rust-based ready-for-production parser.
+- The parser aims to be the fastest Rust-based ready-for-production parser.
 - The linter is more than 50 times faster than [ESLint], and scales with the number of CPU cores.
 
 <p float="left" align="middle">
@@ -56,7 +56,7 @@ To give you an idea of its capabilities, here is an example from the [vscode] re
   <img src="https://raw.githubusercontent.com/Boshen/bench-javascript-linter/main/bar-graph.svg" width="49%">
 </p>
 
-## ⌨️ Programming Usage
+## ⌨️ Rust, Node.js and Wasm Usage
 
 ### Rust
 
@@ -161,12 +161,20 @@ this lets you run the linter without a Node.js installation in your CI.
 Module resolution plays a crucial role in JavaScript tooling, especially for tasks like multi-file analysis or bundling. However, it can often become a performance bottleneck.
 To address this, we developed [oxc_resolver][docs-resolver-url].
 
-The resolver is production-ready and is currently being used in [Rspack][rspack] and [Rolldown][rolldown]. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
+The resolver is production-ready and is currently being used in [Rolldown][rolldown]. Usage and examples can be found in its own [repository](https://github.com/oxc-project/oxc_resolver).
 
 ### 🔸 Transformer (Transpiler)
 
 A transformer is responsible for turning higher versions of ECMAScript to a lower version that can be used in older browsers.
 We are currently focusing on the architecture. See [Milestone 1](https://github.com/oxc-project/oxc/issues/2859) for details.
+
+### 🔸 Isolated Declarations
+
+[TypeScript Isolated Declarations Emit](https://devblogs.microsoft.com/typescript/announcing-typescript-5-5-beta/#isolated-declarations) without using the TypeScript compiler.
+
+Our [benchmark](https://github.com/oxc-project/bench-transformer) indications that our implementation is at least 20 times faster than the TypeScript compiler.
+
+The [npm package](https://www.npmjs.com/package/oxc-transform) or [crate](https://crates.io/crates/oxc_isolated_declarations) can be used for this task.
 
 ### 🔸 Minifier
 
@@ -206,9 +214,9 @@ If you are unable to contribute by code, you can still participate by:
 
 ## 📚 Learning Resources
 
-- My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc-project.github.io/docs/learn/parser_in_rust/intro.html)
-- My small article [Pursuit of Performance on Building a JavaScript Compiler](https://oxc-project.github.io/docs/learn/performance.html)
-- [And more](https://oxc-project.github.io/docs/learn/references.html)
+- My small tutorial on [how to write a JavaScript Parser in Rust](https://oxc.rs/docs/learn/parser_in_rust/intro.html)
+- My small article [Pursuit of Performance on Building a JavaScript Compiler](https://oxc.rs/docs/learn/performance.html)
+- [And more](https://oxc.rs/docs/learn/references.html)
 
 ## 🤝 Credits
 
@@ -218,6 +226,19 @@ This project was incubated with the assistance of these exceptional mentors and 
 - [Ruff][ruff] - [@charliermarsh](https://github.com/charliermarsh), [@MichaReiser](https://github.com/MichaReiser)
 - [quick-lint-js](https://quick-lint-js.com) - [@strager](https://github.com/strager)
 - [elm-review](https://package.elm-lang.org/packages/jfmengels/elm-review/latest) - [@jfmengels](https://github.com/jfmengels)
+
+Special thanks go to
+
+* [@domonji](https://github.com/domonji) for bootstrapping this project together, and also completing the TypeScript parser.
+* [@tongtong-lu](https://github.com/tongtong-lu) and [@guan-wy](https://github.com/guan-wy) for designing the [project logo](https://github.com/oxc-project/oxc-assets).
+
+## ❤ Who's [Sponsoring Oxc](https://github.com/sponsors/Boshen)?
+
+<p align="center">
+  <a href="https://github.com/sponsors/Boshen">
+    <img src="https://raw.githubusercontent.com/Boshen/sponsors/main/sponsors.svg" alt="My sponsors" />
+  </a>
+</p>
 
 ## 📖 License
 
@@ -242,7 +263,7 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [playground-badge]: https://img.shields.io/badge/Playground-blue?color=9BE4E0
 [playground-url]: https://oxc-project.github.io/oxc/playground
 [website-badge]: https://img.shields.io/badge/Website-blue
-[website-url]: https://oxc-project.github.io
+[website-url]: https://oxc.rs
 [crate-oxc-url]: https://crates.io/crates/oxc
 [crate-ast-url]: https://crates.io/crates/oxc_ast
 [crate-parser-url]: https://crates.io/crates/oxc_parser
@@ -275,5 +296,4 @@ Oxc ports or copies code from other open source projects, their licenses are lis
 [terser]: https://terser.org
 [vscode]: https://github.com/microsoft/vscode
 [@typescript-eslint]: https://typescript-eslint.io
-[rspack]: https://www.rspack.dev
 [rolldown]: https://rolldown.rs

@@ -1,17 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-code-point): Prefer `{1}` over `{2}`")]
-#[diagnostic(severity(warning), help("Unicode is better supported in `{1}` than `{2}`"))]
-struct PreferCodePointDiagnostic(#[label] pub Span, pub &'static str, pub &'static str);
+fn prefer_code_point_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `{x1}` over `{x2}`"))
+        .with_help(format!("Unicode is better supported in `{x1}` than `{x2}`"))
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferCodePoint;
@@ -39,14 +37,19 @@ declare_oxc_lint!(
     /// String.fromCodePoint(0x1f984);
     /// ```
     PreferCodePoint,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferCodePoint {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let AstKind::CallExpression(call_expr) = node.kind() else {
+            return;
+        };
 
-        let Some(memb_expr) = call_expr.callee.as_member_expression() else { return };
+        let Some(memb_expr) = call_expr.callee.as_member_expression() else {
+            return;
+        };
 
         if memb_expr.is_computed() || memb_expr.optional() || call_expr.optional {
             return;
@@ -58,7 +61,10 @@ impl Rule for PreferCodePoint {
             _ => return,
         };
 
-        ctx.diagnostic(PreferCodePointDiagnostic(span, replacement, current));
+        ctx.diagnostic_with_fix(
+            prefer_code_point_diagnostic(span, replacement, current),
+            |fixer| fixer.replace(span, replacement),
+        );
     }
 }
 
@@ -96,5 +102,15 @@ fn test() {
         r"(( (( String )).fromCharCode( ((code)), ) ))",
     ];
 
-    Tester::new(PreferCodePoint::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r"string.charCodeAt(index)", r"string.codePointAt(index)"),
+        (
+            r"(( (( String )).fromCharCode( ((code)), ) ))",
+            r"(( (( String )).fromCodePoint( ((code)), ) ))",
+        ),
+        (r#""🦄".charCodeAt(0)"#, r#""🦄".codePointAt(0)"#),
+        (r"String.fromCharCode(0x1f984);", r"String.fromCodePoint(0x1f984);"),
+    ];
+
+    Tester::new(PreferCodePoint::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

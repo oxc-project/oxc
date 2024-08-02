@@ -212,7 +212,7 @@ impl<'a> Prettier<'a> {
                                 && !e.decorators.is_empty()
                                 && e.span == h.span() =>
                         {
-                            return true
+                            return true;
                         }
                         _ => {}
                     }
@@ -401,7 +401,7 @@ impl<'a> Prettier<'a> {
             AstKind::NewExpression(new_expr) => return new_expr.callee.span() == span,
             AstKind::CallExpression(new_expr) => return new_expr.callee.span() == span,
             AstKind::Class(class) => {
-                return class.super_class.as_ref().is_some_and(|e| e.span() == span)
+                return class.super_class.as_ref().is_some_and(|e| e.span() == span);
             }
             AstKind::TSTypeAssertion(_)
             | AstKind::TaggedTemplateExpression(_)
@@ -413,10 +413,10 @@ impl<'a> Prettier<'a> {
             | AstKind::UpdateExpression(_) => return true,
             AstKind::MemberExpression(member_expr) => return member_expr.object().span() == span,
             AstKind::AssignmentExpression(assign_expr) => {
-                return assign_expr.left.span() == span && self.is_binary_cast_expression(span)
+                return assign_expr.left.span() == span && self.is_binary_cast_expression(span);
             }
             AstKind::AssignmentPattern(assign_pat) => {
-                return assign_pat.left.span() == span && self.is_binary_cast_expression(span)
+                return assign_pat.left.span() == span && self.is_binary_cast_expression(span);
             }
             AstKind::LogicalExpression(parent_logical_expr) => {
                 if let AstKind::LogicalExpression(logical_expr) = current_kind {
@@ -590,6 +590,9 @@ impl<'a> Prettier<'a> {
                 AssignmentTarget::TSTypeAssertion(e) => {
                     Self::starts_with_no_lookahead_token(&e.expression, span)
                 }
+                AssignmentTarget::TSInstantiationExpression(e) => {
+                    Self::starts_with_no_lookahead_token(&e.expression, span)
+                }
                 AssignmentTarget::ArrayAssignmentTarget(_)
                 | AssignmentTarget::ObjectAssignmentTarget(_) => false,
             },
@@ -634,6 +637,9 @@ impl<'a> Prettier<'a> {
                             Self::starts_with_no_lookahead_token(&e.expression, span)
                         }
                         SimpleAssignmentTarget::TSTypeAssertion(e) => {
+                            Self::starts_with_no_lookahead_token(&e.expression, span)
+                        }
+                        SimpleAssignmentTarget::TSInstantiationExpression(e) => {
                             Self::starts_with_no_lookahead_token(&e.expression, span)
                         }
                     }

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_lowercase_title
 ---
   ⚠ eslint-plugin-jest(prefer-lowercase-title): Enforce lowercase test names
    ╭─[prefer_lowercase_title.tsx:1:4]

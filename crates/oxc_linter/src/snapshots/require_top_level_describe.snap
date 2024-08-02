@@ -1,0 +1,131 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:1:1]
+ 1 │ beforeEach("my test", () => {})
+   · ───────────────────────────────
+   ╰────
+  help: All hooks must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:2:17]
+ 1 │ 
+ 2 │                 test("my test", () => {})
+   ·                 ─────────────────────────
+ 3 │                 describe("test suite", () => {});
+   ╰────
+  help: All test cases must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:2:17]
+ 1 │ 
+ 2 │                 test("my test", () => {})
+   ·                 ─────────────────────────
+ 3 │                 describe("test suite", () => {
+   ╰────
+  help: All test cases must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:3:17]
+ 2 │                 describe("test suite", () => {});
+ 3 │                 afterAll("my test", () => {})
+   ·                 ─────────────────────────────
+ 4 │             
+   ╰────
+  help: All hooks must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:5:17]
+ 4 │                 describe("test suite", () => {});
+ 5 │                 onceEverythingIsDone("my test", () => {})
+   ·                 ─────────────────────────────────────────
+ 6 │             
+   ╰────
+  help: All hooks must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:1:1]
+ 1 │ it.skip('test', () => {});
+   · ─────────────────────────
+   ╰────
+  help: All test cases must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:1:1]
+ 1 │ it.each([1, 2, 3])('%n', () => {});
+   · ──────────────────────────────────
+   ╰────
+  help: All test cases must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:1:1]
+ 1 │ it.skip.each([1, 2, 3])('%n', () => {});
+   · ───────────────────────────────────────
+   ╰────
+  help: All test cases must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:1:1]
+ 1 │ it.skip.each``('%n', () => {});
+   · ──────────────────────────────
+   ╰────
+  help: All test cases must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:1:1]
+ 1 │ it.each``('%n', () => {});
+   · ─────────────────────────
+   ╰────
+  help: All test cases must be wrapped in a describe block.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:4:17]
+ 3 │                 describe("two", () => {});
+ 4 │                 describe("three", () => {});
+   ·                 ───────────────────────────
+ 5 │             
+   ╰────
+  help: There should not be more than 2 describes at the top level.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+    ╭─[require_top_level_describe.tsx:11:17]
+ 10 │                     });
+ 11 │ ╭─▶                 describe('three', () => {
+ 12 │ │                       describe('one (nested)', () => {});
+ 13 │ │                       describe('two (nested)', () => {});
+ 14 │ │                       describe('three (nested)', () => {});
+ 15 │ ╰─▶                 });
+ 16 │                 
+    ╰────
+  help: There should not be more than 2 describes at the top level.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+    ╭─[require_top_level_describe.tsx:17:17]
+ 16 │                     });
+ 17 │ ╭─▶                 describe3('three', () => {
+ 18 │ │                       describe('one (nested)', () => {});
+ 19 │ │                       describe('two (nested)', () => {});
+ 20 │ │                       describe('three (nested)', () => {});
+ 21 │ ╰─▶                 });
+ 22 │                 
+    ╰────
+  help: There should not be more than 2 describes at the top level.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:3:17]
+ 2 │                 describe('one', () => {});
+ 3 │                 describe('two', () => {});
+   ·                 ─────────────────────────
+ 4 │                 describe('three', () => {});
+   ╰────
+  help: There should not be more than 1 describe at the top level.
+
+  ⚠ eslint-plugin-jest(require-top-level-describe): Require test cases and hooks to be inside a `describe` block
+   ╭─[require_top_level_describe.tsx:4:17]
+ 3 │                 describe('two', () => {});
+ 4 │                 describe('three', () => {});
+   ·                 ───────────────────────────
+ 5 │             
+   ╰────
+  help: There should not be more than 1 describe at the top level.

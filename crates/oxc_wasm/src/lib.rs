@@ -8,7 +8,7 @@ use std::{cell::RefCell, path::PathBuf, rc::Rc};
 use oxc::{
     allocator::Allocator,
     ast::{CommentKind, Trivias},
-    codegen::{Codegen, CodegenOptions},
+    codegen::{CodeGenerator, WhitespaceRemover},
     diagnostics::Error,
     minifier::{CompressOptions, Minifier, MinifierOptions},
     parser::Parser,
@@ -16,7 +16,8 @@ use oxc::{
     span::SourceType,
     transformer::{TransformOptions, Transformer},
 };
-use oxc_linter::{LintContext, Linter};
+use oxc_index::Idx;
+use oxc_linter::Linter;
 use oxc_prettier::{Prettier, PrettierOptions};
 use serde::Serialize;
 use tsify::Tsify;
@@ -155,7 +156,7 @@ impl Oxc {
         run_options: &OxcRunOptions,
         parser_options: &OxcParserOptions,
         _linter_options: &OxcLinterOptions,
-        codegen_options: &OxcCodegenOptions,
+        _codegen_options: &OxcCodegenOptions,
         minifier_options: &OxcMinifierOptions,
     ) -> Result<(), serde_wasm_bindgen::Error> {
         self.diagnostics = RefCell::default();
@@ -172,27 +173,30 @@ impl Oxc {
             .parse();
 
         self.comments = self.map_comments(&ret.trivias);
-        self.save_diagnostics(ret.errors);
+
+        self.save_diagnostics(ret.errors.into_iter().map(Error::from).collect::<Vec<_>>());
 
         self.ir = format!("{:#?}", ret.program.body).into();
 
         let program = allocator.alloc(ret.program);
 
         let semantic_ret = SemanticBuilder::new(source_text, source_type)
-            .with_trivias(ret.trivias)
+            .with_cfg(true)
+            .with_trivias(ret.trivias.clone())
             .with_check_syntax_error(true)
             .build(program);
 
         if run_options.syntax() {
-            self.save_diagnostics(semantic_ret.errors);
+            self.save_diagnostics(
+                semantic_ret.errors.into_iter().map(Error::from).collect::<Vec<_>>(),
+            );
         }
 
         let semantic = Rc::new(semantic_ret.semantic);
         // Only lint if there are not syntax errors
         if run_options.lint() && self.diagnostics.borrow().is_empty() {
-            let lint_ctx = LintContext::new(path.clone().into_boxed_path(), &semantic);
-            let linter_ret = Linter::default().run(lint_ctx);
-            let diagnostics = linter_ret.into_iter().map(|e| e.error).collect();
+            let linter_ret = Linter::default().run(&path, Rc::clone(&semantic));
+            let diagnostics = linter_ret.into_iter().map(|e| Error::from(e.error)).collect();
             self.save_diagnostics(diagnostics);
         }
 
@@ -201,10 +205,9 @@ impl Oxc {
         if run_options.prettier_format() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
             let printed =
-                Prettier::new(&allocator, source_text, &ret.trivias, PrettierOptions::default())
+                Prettier::new(&allocator, source_text, ret.trivias, PrettierOptions::default())
                     .build(&ret.program);
             self.prettier_formatted_text = printed;
         }
@@ -212,15 +215,18 @@ impl Oxc {
         if run_options.prettier_ir() {
             let ret = Parser::new(&allocator, source_text, source_type)
                 .allow_return_outside_function(parser_options.allow_return_outside_function)
-                .preserve_parens(false)
                 .parse();
-            let prettier_doc =
-                Prettier::new(&allocator, source_text, &ret.trivias, PrettierOptions::default())
-                    .doc(&ret.program)
-                    .to_string();
+            let prettier_doc = Prettier::new(
+                &allocator,
+                source_text,
+                ret.trivias.clone(),
+                PrettierOptions::default(),
+            )
+            .doc(&ret.program)
+            .to_string();
             self.prettier_ir_text = {
                 let ret = Parser::new(&allocator, &prettier_doc, SourceType::default()).parse();
-                Prettier::new(&allocator, &prettier_doc, &ret.trivias, PrettierOptions::default())
+                Prettier::new(&allocator, &prettier_doc, ret.trivias, PrettierOptions::default())
                     .build(&ret.program)
             };
         }
@@ -232,12 +238,13 @@ impl Oxc {
                 &path,
                 source_type,
                 source_text,
-                semantic.trivias(),
+                ret.trivias.clone(),
                 options,
             )
             .build(program);
-            if let Err(errs) = result {
-                self.save_diagnostics(errs);
+            if !result.errors.is_empty() {
+                let errors = result.errors.into_iter().map(Error::from).collect::<Vec<_>>();
+                self.save_diagnostics(errors);
             }
         }
 
@@ -256,10 +263,19 @@ impl Oxc {
         let program = allocator.alloc(program);
 
         if minifier_options.compress() || minifier_options.mangle() {
+            let compress_options = minifier_options.compress_options();
             let options = MinifierOptions {
                 mangle: minifier_options.mangle(),
                 compress: if minifier_options.compress() {
-                    CompressOptions::default()
+                    CompressOptions {
+                        booleans: compress_options.booleans(),
+                        drop_console: compress_options.drop_console(),
+                        drop_debugger: compress_options.drop_debugger(),
+                        evaluate: compress_options.evaluate(),
+                        join_vars: compress_options.join_vars(),
+                        loops: compress_options.loops(),
+                        typeofs: compress_options.typeofs(),
+                    }
                 } else {
                     CompressOptions::all_false()
                 },
@@ -267,14 +283,10 @@ impl Oxc {
             Minifier::new(options).build(&allocator, program);
         }
 
-        let codegen_options = CodegenOptions {
-            enable_typescript: codegen_options.enable_typescript,
-            ..CodegenOptions::default()
-        };
         self.codegen_text = if minifier_options.whitespace() {
-            Codegen::<true>::new("", source_text, codegen_options).build(program).source_text
+            WhitespaceRemover::new().build(program).source_text
         } else {
-            Codegen::<false>::new("", source_text, codegen_options).build(program).source_text
+            CodeGenerator::new().build(program).source_text
         };
 
         Ok(())
@@ -293,7 +305,8 @@ impl Oxc {
                 let flag = semantic.scopes().get_flags(*scope_id);
                 let next_scope_ids = semantic.scopes().get_child_ids(*scope_id);
 
-                scope_text.push_str(&format!("{space}Scope{:?} ({flag:?}) {{\n", *scope_id + 1));
+                scope_text
+                    .push_str(&format!("{space}Scope{:?} ({flag:?}) {{\n", scope_id.index() + 1));
                 let bindings = semantic.scopes().get_bindings(*scope_id);
                 let binding_space = " ".repeat((depth + 1) * 2);
                 if !bindings.is_empty() {
@@ -326,14 +339,14 @@ impl Oxc {
     fn map_comments(&self, trivias: &Trivias) -> Vec<Comment> {
         trivias
             .comments()
-            .map(|(kind, span)| Comment {
-                r#type: match kind {
+            .map(|comment| Comment {
+                r#type: match comment.kind {
                     CommentKind::SingleLine => CommentType::Line,
                     CommentKind::MultiLine => CommentType::Block,
                 },
-                value: span.source_text(&self.source_text).to_string(),
-                start: span.start,
-                end: span.end,
+                value: comment.span.source_text(&self.source_text).to_string(),
+                start: comment.span.start,
+                end: comment.span.end,
             })
             .collect()
     }

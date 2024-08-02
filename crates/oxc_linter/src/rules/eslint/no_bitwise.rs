@@ -1,21 +1,16 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-bitwise): Unexpected use of {0:?}")]
-#[diagnostic(
-    severity(warning),
-    help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`")
-)]
-struct NoBitwiseDiagnostic(&'static str, #[label] pub Span);
+fn no_bitwise_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected use of {x0:?}"))
+        .with_help("bitwise operators are not allowed, maybe you mistyped `&&` or `||`")
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoBitwise(Box<NoBitwiseConfig>);
@@ -84,7 +79,7 @@ impl Rule for NoBitwise {
                     && !allowed_operator(&self.allow, op)
                     && !is_int32_hint(self.int32_hint, node)
                 {
-                    ctx.diagnostic(NoBitwiseDiagnostic(op, bin_expr.span));
+                    ctx.diagnostic(no_bitwise_diagnostic(op, bin_expr.span));
                 }
             }
             AstKind::UnaryExpression(unary_expr) => {
@@ -94,7 +89,7 @@ impl Rule for NoBitwise {
                     && !allowed_operator(&self.allow, op)
                     && !is_int32_hint(self.int32_hint, node)
                 {
-                    ctx.diagnostic(NoBitwiseDiagnostic(op, unary_expr.span));
+                    ctx.diagnostic(no_bitwise_diagnostic(op, unary_expr.span));
                 }
             }
             AstKind::AssignmentExpression(assign_expr) => {
@@ -104,7 +99,7 @@ impl Rule for NoBitwise {
                     && !allowed_operator(&self.allow, op)
                     && !is_int32_hint(self.int32_hint, node)
                 {
-                    ctx.diagnostic(NoBitwiseDiagnostic(op, assign_expr.span));
+                    ctx.diagnostic(no_bitwise_diagnostic(op, assign_expr.span));
                 }
             }
             _ => {}

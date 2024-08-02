@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_object_as_default_parameter
 ---
   ⚠ eslint-plugin-unicorn(no-object-as-default-parameter): Do not use an object literal as default for parameter `foo`.
    ╭─[no_object_as_default_parameter.tsx:1:20]

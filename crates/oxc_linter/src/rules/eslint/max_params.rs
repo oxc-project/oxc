@@ -1,21 +1,18 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(max-params): {0:?}")]
-#[diagnostic(
-    severity(warning),
-    help("This rule enforces a maximum number of parameters allowed in function definitions.")
-)]
-struct MaxParamsDiagnostic(CompactStr, #[label] pub Span);
+fn max_params_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("{x0:?}"))
+        .with_help(
+            "This rule enforces a maximum number of parameters allowed in function definitions.",
+        )
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct MaxParams(Box<MaxParamsConfig>);
@@ -75,6 +72,7 @@ impl Rule for MaxParams {
             Self(Box::new(MaxParamsConfig { max }))
         }
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::Function(function) => {
@@ -91,18 +89,22 @@ impl Rule for MaxParams {
                             function.params.items.len(),
                             self.max
                         );
-                        let error = CompactStr::from(error_msg);
                         let span = function.params.span;
-                        ctx.diagnostic(MaxParamsDiagnostic(error, Span::new(span.start, span.end)));
+                        ctx.diagnostic(max_params_diagnostic(
+                            &error_msg,
+                            Span::new(span.start, span.end),
+                        ));
                     } else {
                         let error_msg = format!(
                             "Function has too many parameters ({}). Maximum allowed is {}.",
                             function.params.items.len(),
                             self.max
                         );
-                        let error = CompactStr::from(error_msg);
                         let span = function.params.span;
-                        ctx.diagnostic(MaxParamsDiagnostic(error, Span::new(span.start, span.end)));
+                        ctx.diagnostic(max_params_diagnostic(
+                            &error_msg,
+                            Span::new(span.start, span.end),
+                        ));
                     }
                 }
             }
@@ -113,9 +115,11 @@ impl Rule for MaxParams {
                         function.params.items.len(),
                         self.max
                     );
-                    let error = CompactStr::from(error_msg);
                     let span = function.params.span;
-                    ctx.diagnostic(MaxParamsDiagnostic(error, Span::new(span.start, span.end)));
+                    ctx.diagnostic(max_params_diagnostic(
+                        &error_msg,
+                        Span::new(span.start, span.end),
+                    ));
                 }
             }
             _ => {}

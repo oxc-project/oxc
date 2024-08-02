@@ -1,17 +1,14 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-add-event-listener): Prefer `addEventListener()` over their `on`-function counterparts.")]
-#[diagnostic(severity(warning))]
-struct PreferAddEventListenerDiagnostic(#[label] pub Span);
+fn prefer_add_event_listener_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `addEventListener()` over their `on`-function counterparts.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferAddEventListener;
@@ -41,7 +38,9 @@ declare_oxc_lint!(
 
 impl Rule for PreferAddEventListener {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::AssignmentExpression(assignment_expr) = node.kind() else { return };
+        let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
+            return;
+        };
 
         let Some(member_expr) = assignment_expr.left.as_member_expression() else {
             return;
@@ -51,7 +50,9 @@ impl Rule for PreferAddEventListener {
             return;
         }
 
-        let Some((span, name)) = member_expr.static_property_info() else { return };
+        let Some((span, name)) = member_expr.static_property_info() else {
+            return;
+        };
 
         if !name.starts_with("on") {
             return;
@@ -61,7 +62,7 @@ impl Rule for PreferAddEventListener {
             return;
         }
 
-        ctx.diagnostic(PreferAddEventListenerDiagnostic(span));
+        ctx.diagnostic(prefer_add_event_listener_diagnostic(span));
     }
 }
 

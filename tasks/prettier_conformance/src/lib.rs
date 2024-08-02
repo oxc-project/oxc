@@ -1,3 +1,4 @@
+#![allow(clippy::print_stdout, clippy::print_stderr)]
 mod ignore_list;
 mod spec;
 
@@ -7,13 +8,12 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use walkdir::WalkDir;
-
 use oxc_allocator::Allocator;
 use oxc_parser::Parser;
 use oxc_prettier::{Prettier, PrettierOptions};
 use oxc_span::SourceType;
 use oxc_tasks_common::project_root;
+use walkdir::WalkDir;
 
 use crate::{
     ignore_list::{JS_IGNORE_TESTS, TS_IGNORE_TESTS},
@@ -383,14 +383,15 @@ impl TestRunner {
         let allocator = Allocator::default();
         let source_type = SourceType::from_path(path).unwrap();
         let ret = Parser::new(&allocator, source_text, source_type).preserve_parens(false).parse();
-        Prettier::new(&allocator, source_text, &ret.trivias, prettier_options).build(&ret.program)
+        Prettier::new(&allocator, source_text, ret.trivias, prettier_options).build(&ret.program)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::{fixtures_root, TestRunner, SNAP_RELATIVE_PATH};
     use std::fs;
+
+    use crate::{fixtures_root, TestRunner, SNAP_RELATIVE_PATH};
 
     fn get_expect_in_arrays(input_name: &str) -> String {
         let base = fixtures_root().join("js/arrays");

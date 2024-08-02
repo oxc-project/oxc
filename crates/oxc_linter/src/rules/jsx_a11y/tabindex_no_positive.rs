@@ -1,24 +1,20 @@
 use oxc_ast::{ast::JSXAttributeItem, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{has_jsx_prop_lowercase, parse_jsx_value},
+    utils::{has_jsx_prop_ignore_case, parse_jsx_value},
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint-plugin-jsx-a11y(tabindex-no-positive): Avoid positive integer values for tabIndex."
-)]
-#[diagnostic(severity(warning), help("Change the tabIndex prop to a non-negative value"))]
-struct TabindexNoPositiveDiagnostic(#[label] pub Span);
+fn tabindex_no_positive_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Avoid positive integer values for tabIndex.")
+        .with_help("Change the tabIndex prop to a non-negative value")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct TabindexNoPositive;
@@ -45,8 +41,10 @@ declare_oxc_lint!(
 
 impl Rule for TabindexNoPositive {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
-        if let Some(tab_index_prop) = has_jsx_prop_lowercase(jsx_el, "tabIndex") {
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+            return;
+        };
+        if let Some(tab_index_prop) = has_jsx_prop_ignore_case(jsx_el, "tabIndex") {
             check_and_diagnose(tab_index_prop, ctx);
         }
     }
@@ -57,7 +55,7 @@ fn check_and_diagnose(attr: &JSXAttributeItem, ctx: &LintContext<'_>) {
         JSXAttributeItem::Attribute(attr) => attr.value.as_ref().map_or((), |value| {
             if let Ok(parsed_value) = parse_jsx_value(value) {
                 if parsed_value > 0.0 {
-                    ctx.diagnostic(TabindexNoPositiveDiagnostic(attr.span));
+                    ctx.diagnostic(tabindex_no_positive_diagnostic(attr.span));
                 }
             }
         }),

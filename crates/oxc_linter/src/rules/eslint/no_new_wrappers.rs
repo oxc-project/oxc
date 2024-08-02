@@ -1,22 +1,15 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects"
-)]
-#[diagnostic(
-    severity(warning),
-    help("do not use {0} as a constructor, consider removing the new operator.")
-)]
-struct NoNewWrappersDiagnostic(CompactStr, #[label] pub Span);
+fn no_new_wrappers_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow new operators with the String, Number, and Boolean objects")
+        .with_help(format!("do not use {x0} as a constructor, consider removing the new operator."))
+        .with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoNewWrappers;
@@ -42,12 +35,16 @@ declare_oxc_lint!(
 
 impl Rule for NoNewWrappers {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::NewExpression(expr) = node.kind() else { return };
-        let Expression::Identifier(ident) = &expr.callee else { return };
+        let AstKind::NewExpression(expr) = node.kind() else {
+            return;
+        };
+        let Expression::Identifier(ident) = &expr.callee else {
+            return;
+        };
         if (ident.name == "String" || ident.name == "Number" || ident.name == "Boolean")
             && ctx.semantic().is_reference_to_global_variable(ident)
         {
-            ctx.diagnostic(NoNewWrappersDiagnostic(ident.name.to_compact_str(), expr.span));
+            ctx.diagnostic(no_new_wrappers_diagnostic(ident.name.as_str(), expr.span));
         }
     }
 }

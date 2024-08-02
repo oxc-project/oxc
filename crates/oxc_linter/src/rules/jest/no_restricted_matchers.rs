@@ -1,3 +1,12 @@
+use std::path::Path;
+
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use phf::phf_set;
+use rustc_hash::FxHashMap;
+
 use crate::{
     context::LintContext,
     rule::Rule,
@@ -7,25 +16,16 @@ use crate::{
     },
 };
 
-use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use phf::phf_set;
-use rustc_hash::{FxHashMap, FxHasher};
-use std::{collections::HashMap, hash::BuildHasherDefault, path::Path};
+fn restricted_chain(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow specific matchers & modifiers")
+        .with_help(format!("Use of `{x0:?}` is disallowed`"))
+        .with_label(span1)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoRestrictedMatchersDiagnostic {
-    #[error("eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers")]
-    #[diagnostic(severity(warning), help("Use of `{0:?}` is disallowed`"))]
-    RestrictedChain(String, #[label] Span),
-    #[error("eslint-plugin-jest(no-restricted-matchers): Disallow specific matchers & modifiers")]
-    #[diagnostic(severity(warning), help("{0:?}"))]
-    RestrictedChainWithMessage(String, #[label] Span),
+fn restricted_chain_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow specific matchers & modifiers")
+        .with_help(format!("{x0:?}"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -128,15 +128,9 @@ impl NoRestrictedMatchers {
         for (restriction, message) in &self.restricted_matchers {
             if Self::check_restriction(chain_call.as_str(), restriction.as_str()) {
                 if message.is_empty() {
-                    ctx.diagnostic(NoRestrictedMatchersDiagnostic::RestrictedChain(
-                        chain_call.clone(),
-                        span,
-                    ));
+                    ctx.diagnostic(restricted_chain(&chain_call, span));
                 } else {
-                    ctx.diagnostic(NoRestrictedMatchersDiagnostic::RestrictedChainWithMessage(
-                        message.to_string(),
-                        span,
-                    ));
+                    ctx.diagnostic(restricted_chain_with_message(message, span));
                 }
             }
         }
@@ -157,7 +151,7 @@ impl NoRestrictedMatchers {
     #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_matchers(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<HashMap<String, String, BuildHasherDefault<FxHasher>>> {
+    ) -> Option<FxHashMap<String, String>> {
         Some(
             matchers
                 .iter()

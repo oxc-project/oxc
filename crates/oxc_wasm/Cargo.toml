@@ -8,6 +8,7 @@ keywords.workspace     = true
 license.workspace      = true
 rust-version.workspace = true
 categories.workspace   = true
+include                = ["/src"]
 
 [lints]
 workspace = true
@@ -18,8 +19,9 @@ test       = false
 doctest    = false
 
 [dependencies]
-oxc = { workspace = true, features = ["serialize", "semantic", "transformer", "minifier", "codegen"] }
+oxc = { workspace = true, features = ["codegen", "minifier", "semantic", "serialize", "transformer", "wasm"] }
 
+oxc_index    = { workspace = true }
 oxc_linter   = { workspace = true }
 oxc_prettier = { workspace = true }
 serde        = { workspace = true }

@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "no-loss-of-precision": "off",
+    "@typescript-eslint/no-loss-of-precision": "error",
+    "@typescript-eslint/no-namespace": "warn"
+  }
+}

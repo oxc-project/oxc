@@ -6,4 +6,4 @@ Please check out our [good first issues](https://github.com/oxc-project/oxc/cont
 
 We welcome and appreciate any form of contributions.
 
-You may checkout the complete contributing guide on the [website](https://oxc-project.github.io/docs/contribute/development.html).
+You may checkout the complete contributing guide on the [website](https://oxc.rs/docs/contribute/development.html).

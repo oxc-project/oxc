@@ -2,16 +2,13 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_expect_jest_fn_call, ParsedExpectFnCall,
@@ -19,10 +16,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-expect-resolves): Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")]
-#[diagnostic(severity(warning), help("Use `await expect(...).resolves` instead"))]
-struct ExpectResolves(#[label] pub Span);
+fn expect_resolves(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `await expect(...).resolves` over `expect(await ...)` syntax.")
+        .with_help("Use `await expect(...).resolves` instead")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferExpectResolves;
@@ -74,6 +72,7 @@ declare_oxc_lint!(
     /// ```
     PreferExpectResolves,
     style,
+    fix
 );
 
 impl Rule for PreferExpectResolves {
@@ -108,22 +107,22 @@ impl PreferExpectResolves {
             return;
         };
 
-        ctx.diagnostic_with_fix(ExpectResolves(await_expr.span), || {
-            let content = Self::build_code(&jest_expect_fn_call, call_expr, ident.span, ctx);
-            Fix::new(content, call_expr.span)
+        ctx.diagnostic_with_fix(expect_resolves(await_expr.span), |fixer| {
+            Self::fix(fixer, &jest_expect_fn_call, call_expr, ident.span)
         });
     }
 
-    fn build_code<'a>(
-        jest_expect_fn_call: &ParsedExpectFnCall,
+    fn fix<'c, 'a: 'c>(
+        fixer: RuleFixer<'c, 'a>,
+        jest_expect_fn_call: &ParsedExpectFnCall<'a>,
         call_expr: &CallExpression<'a>,
         ident_span: Span,
-        ctx: &LintContext<'a>,
-    ) -> String {
-        let mut formatter = ctx.codegen();
+    ) -> RuleFix<'a> {
+        let mut formatter = fixer.codegen();
         let first = call_expr.arguments.first().unwrap();
         let Argument::AwaitExpression(await_expr) = first else {
-            return formatter.into_source_text();
+            // return formatter.into_source_text();
+            return fixer.replace(call_expr.span, formatter);
         };
 
         let offset = match &await_expr.argument {
@@ -137,13 +136,13 @@ impl PreferExpectResolves {
             call_expr.span.end,
         );
 
-        formatter.print_str(b"await");
+        formatter.print_str("await");
         formatter.print_hard_space();
-        formatter.print_str(jest_expect_fn_call.local.as_bytes());
-        formatter.print(b'(');
-        formatter.print_str(arg_span.source_text(ctx.source_text()).as_bytes());
-        formatter.print_str(b".resolves");
-        formatter.into_source_text()
+        formatter.print_str(&jest_expect_fn_call.local);
+        formatter.print_char(b'(');
+        formatter.print_str(fixer.source_range(arg_span));
+        formatter.print_str(".resolves");
+        fixer.replace(call_expr.span, formatter)
     }
 }
 

@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_minifier"
-version                = "0.12.5"
+version                = "0.23.0"
 publish                = true
 authors.workspace      = true
 description.workspace  = true
@@ -11,29 +11,31 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 categories.workspace   = true
-include                = ["/src", "/examples"]
+include                = ["/examples", "/src"]
 
 [lints]
 workspace = true
 
 [lib]
+test    = false
 doctest = false
 
 [dependencies]
-oxc_allocator = { workspace = true }
-oxc_span      = { workspace = true }
-oxc_ast       = { workspace = true }
-oxc_semantic  = { workspace = true }
-oxc_syntax    = { workspace = true }
-oxc_index     = { workspace = true }
+oxc_allocator   = { workspace = true }
+oxc_span        = { workspace = true }
+oxc_ast         = { workspace = true }
+oxc_semantic    = { workspace = true }
+oxc_syntax      = { workspace = true }
+oxc_parser      = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_codegen     = { workspace = true }
+oxc_mangler     = { workspace = true }
 
 num-bigint = { workspace = true }
-itertools  = { workspace = true }
 num-traits = { workspace = true }
 
 [dev-dependencies]
-oxc_parser  = { workspace = true }
-oxc_codegen = { workspace = true }
+oxc_parser = { workspace = true }
 
 insta     = { workspace = true }
 walkdir   = { workspace = true }

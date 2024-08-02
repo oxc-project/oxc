@@ -1,25 +1,20 @@
 use oxc_ast::{ast::JSXElementName, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_string_literal_prop_value, has_jsx_prop_lowercase},
+    utils::{get_string_literal_prop_value, has_jsx_prop_ignore_case},
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(r#"eslint-plugin-next(google-font-preconnect): `rel="preconnect"` is missing from Google Font."#)]
-#[diagnostic(
-    severity(warning),
-    help("See: https://nextjs.org/docs/messages/google-font-preconnect")
-)]
-struct GoogleFontPreconnectDiagnostic(#[label] pub Span);
+fn google_font_preconnect_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(r#"`rel="preconnect"` is missing from Google Font."#)
+        .with_help("See: https://nextjs.org/docs/messages/google-font-preconnect")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct GoogleFontPreconnect;
@@ -40,7 +35,9 @@ declare_oxc_lint!(
 
 impl Rule for GoogleFontPreconnect {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else { return };
+        let AstKind::JSXOpeningElement(jsx_opening_element) = node.kind() else {
+            return;
+        };
 
         let JSXElementName::Identifier(jsx_opening_element_name) = &jsx_opening_element.name else {
             return;
@@ -50,19 +47,21 @@ impl Rule for GoogleFontPreconnect {
             return;
         }
 
-        let Some(href_prop) = has_jsx_prop_lowercase(jsx_opening_element, "href") else {
+        let Some(href_prop) = has_jsx_prop_ignore_case(jsx_opening_element, "href") else {
             return;
         };
-        let Some(href_prop_value) = get_string_literal_prop_value(href_prop) else { return };
+        let Some(href_prop_value) = get_string_literal_prop_value(href_prop) else {
+            return;
+        };
 
         let preconnect_missing =
-            has_jsx_prop_lowercase(jsx_opening_element, "rel").map_or(true, |rel_prop| {
+            has_jsx_prop_ignore_case(jsx_opening_element, "rel").map_or(true, |rel_prop| {
                 let rel_prop_value = get_string_literal_prop_value(rel_prop);
                 rel_prop_value != Some("preconnect")
             });
 
         if href_prop_value.starts_with("https://fonts.gstatic.com") && preconnect_missing {
-            ctx.diagnostic(GoogleFontPreconnectDiagnostic(jsx_opening_element_name.span));
+            ctx.diagnostic(google_font_preconnect_diagnostic(jsx_opening_element_name.span));
         }
     }
 }

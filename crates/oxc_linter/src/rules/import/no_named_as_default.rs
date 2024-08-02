@@ -1,17 +1,15 @@
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::module_record::ImportImportName;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-import(no-named-as-default): Module {2:?} has named export {1:?}")]
-#[diagnostic(severity(warning), help("Using default import as {1:?} can be confusing. Use another name for default import to avoid confusion."))]
-struct NoNamedAsDefaultDiagnostic(#[label] pub Span, String, String);
+fn no_named_as_default_diagnostic(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Module {x2:?} has named export {x1:?}"))
+        .with_help(format!("Using default import as {x1:?} can be confusing. Use another name for default import to avoid confusion."))
+        .with_label(span0)
+}
 
 /// <https://github.com/import-js/eslint-plugin-import/blob/main/docs/rules/no-named-as-default-member.md>
 #[derive(Debug, Default, Clone)]
@@ -39,12 +37,12 @@ declare_oxc_lint!(
     /// import bar from './foo.js';
     /// ```
     NoNamedAsDefault,
-    nursery
+    suspicious
 );
 
 impl Rule for NoNamedAsDefault {
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
         for import_entry in &module_record.import_entries {
             let ImportImportName::Default(import_span) = &import_entry.import_name else {
                 continue;
@@ -57,10 +55,10 @@ impl Rule for NoNamedAsDefault {
 
             let import_name = import_entry.local_name.name();
             if remote_module_record_ref.exported_bindings.contains_key(import_name) {
-                ctx.diagnostic(NoNamedAsDefaultDiagnostic(
+                ctx.diagnostic(no_named_as_default_diagnostic(
                     *import_span,
-                    import_name.to_string(),
-                    import_entry.module_request.name().to_string(),
+                    import_name,
+                    import_entry.module_request.name(),
                 ));
             }
         }

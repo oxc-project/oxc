@@ -2,25 +2,18 @@ use oxc_ast::{
     ast::{Expression, Statement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
 
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-dupe-else-if): duplicate conditions in if-else-if chains")]
-#[diagnostic(
-    severity(warning),
-    help(
-        "This branch can never execute. Its condition is a duplicate or covered by previous conditions in the if-else-if chain"
-    )
-)]
-struct NoDupeElseIfDiagnostic(#[label] pub Span, #[label] pub Span);
+fn no_dupe_else_if_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("duplicate conditions in if-else-if chains")
+        .with_help("This branch can never execute. Its condition is a duplicate or covered by previous conditions in the if-else-if chain")
+        .with_labels([span0, span1])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoDupeElseIf;
@@ -55,11 +48,15 @@ impl Rule for NoDupeElseIf {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         // if (a) {} else if (a) {}
         //                ^^ get this if statement
-        let AstKind::IfStatement(if_stmt) = node.kind() else { return };
+        let AstKind::IfStatement(if_stmt) = node.kind() else {
+            return;
+        };
         let Some(AstKind::IfStatement(parent_if_stmt)) = ctx.nodes().parent_kind(node.id()) else {
             return;
         };
-        let Some(Statement::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate else { return };
+        let Some(Statement::IfStatement(child_if_stmt)) = &parent_if_stmt.alternate else {
+            return;
+        };
         if child_if_stmt.span != if_stmt.span {
             return;
         }
@@ -79,7 +76,9 @@ impl Rule for NoDupeElseIf {
 
         let mut current_node = node;
         while let Some(parent_node) = ctx.nodes().parent_node(current_node.id()) {
-            let AstKind::IfStatement(stmt) = parent_node.kind() else { break };
+            let AstKind::IfStatement(stmt) = parent_node.kind() else {
+                break;
+            };
 
             if !stmt
                 .alternate
@@ -109,7 +108,7 @@ impl Rule for NoDupeElseIf {
                 .collect();
 
             if list_to_check.iter().any(Vec::is_empty) {
-                ctx.diagnostic(NoDupeElseIfDiagnostic(if_stmt.test.span(), stmt.test.span()));
+                ctx.diagnostic(no_dupe_else_if_diagnostic(if_stmt.test.span(), stmt.test.span()));
                 break;
             }
         }

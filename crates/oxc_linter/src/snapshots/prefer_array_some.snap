@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: prefer_array_some
 ---
   ⚠ eslint-plugin-unicorn(prefer-array-some): Prefer `.some(…)` over `.find(…)`or `.findLast(…)`.
    ╭─[prefer_array_some.tsx:1:9]

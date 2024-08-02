@@ -5,7 +5,11 @@ use std::{
 };
 
 use crate::{
-    miette::NamedSource, reporter::DiagnosticReporter, Error, MinifiedFileError, Severity,
+    reporter::{
+        CheckstyleReporter, DiagnosticReporter, GithubReporter, GraphicalReporter, JsonReporter,
+        UnixReporter,
+    },
+    Error, NamedSource, OxcDiagnostic, Severity,
 };
 
 pub type DiagnosticTuple = (PathBuf, Vec<Error>);
@@ -13,10 +17,13 @@ pub type DiagnosticSender = mpsc::Sender<Option<DiagnosticTuple>>;
 pub type DiagnosticReceiver = mpsc::Receiver<Option<DiagnosticTuple>>;
 
 pub struct DiagnosticService {
-    reporter: DiagnosticReporter,
+    reporter: Box<dyn DiagnosticReporter>,
 
     /// Disable reporting on warnings, only errors are reported
     quiet: bool,
+
+    /// Do not display any diagnostics
+    silent: bool,
 
     /// Specify a warning threshold,
     /// which can be used to force exit with an error status if there are too many warning-level rule violations in your project
@@ -36,8 +43,9 @@ impl Default for DiagnosticService {
     fn default() -> Self {
         let (sender, receiver) = mpsc::channel();
         Self {
-            reporter: DiagnosticReporter::new_graphical(),
+            reporter: Box::<GraphicalReporter>::default(),
             quiet: false,
+            silent: false,
             max_warnings: None,
             warnings_count: Cell::new(0),
             errors_count: Cell::new(0),
@@ -49,24 +57,30 @@ impl Default for DiagnosticService {
 
 impl DiagnosticService {
     pub fn set_json_reporter(&mut self) {
-        self.reporter = DiagnosticReporter::new_json();
+        self.reporter = Box::<JsonReporter>::default();
     }
 
     pub fn set_unix_reporter(&mut self) {
-        self.reporter = DiagnosticReporter::new_unix();
+        self.reporter = Box::<UnixReporter>::default();
     }
 
     pub fn set_checkstyle_reporter(&mut self) {
-        self.reporter = DiagnosticReporter::new_checkstyle();
+        self.reporter = Box::<CheckstyleReporter>::default();
     }
 
-    pub fn is_graphical_output(&self) -> bool {
-        matches!(self.reporter, DiagnosticReporter::Graphical { .. })
+    pub fn set_github_reporter(&mut self) {
+        self.reporter = Box::<GithubReporter>::default();
     }
 
     #[must_use]
     pub fn with_quiet(mut self, yes: bool) -> Self {
         self.quiet = yes;
+        self
+    }
+
+    #[must_use]
+    pub fn with_silent(mut self, yes: bool) -> Self {
+        self.silent = yes;
         self
     }
 
@@ -95,7 +109,7 @@ impl DiagnosticService {
     pub fn wrap_diagnostics(
         path: &Path,
         source_text: &str,
-        diagnostics: Vec<Error>,
+        diagnostics: Vec<OxcDiagnostic>,
     ) -> (PathBuf, Vec<Error>) {
         let source = Arc::new(NamedSource::new(path.to_string_lossy(), source_text.to_owned()));
         let diagnostics = diagnostics
@@ -114,7 +128,7 @@ impl DiagnosticService {
             for diagnostic in diagnostics {
                 let severity = diagnostic.severity();
                 let is_warning = severity == Some(Severity::Warning);
-                let is_error = severity.is_none() || severity == Some(Severity::Error);
+                let is_error = severity == Some(Severity::Error) || severity.is_none();
                 if is_warning || is_error {
                     if is_warning {
                         let warnings_count = self.warnings_count() + 1;
@@ -131,10 +145,17 @@ impl DiagnosticService {
                     }
                 }
 
+                if self.silent {
+                    continue;
+                }
+
                 if let Some(mut err_str) = self.reporter.render_error(diagnostic) {
                     // Skip large output and print only once
                     if err_str.lines().any(|line| line.len() >= 400) {
-                        let minified_diagnostic = Error::new(MinifiedFileError(path.clone()));
+                        let minified_diagnostic = Error::new(
+                            OxcDiagnostic::warn("File is too long to fit on the screen")
+                                .with_help(format!("{path:?} seems like a minified file")),
+                        );
                         err_str = format!("{minified_diagnostic:?}");
                         output = err_str;
                         break;

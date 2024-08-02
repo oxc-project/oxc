@@ -1,26 +1,9 @@
-use std::collections::HashSet;
-
-use oxc_allocator::{Allocator, Vec};
 use oxc_ast::ast::Decorator;
+use rustc_hash::FxHashSet;
 
+#[derive(Default)]
 pub struct ParserState<'a> {
-    allocator: &'a Allocator,
+    pub not_parenthesized_arrow: FxHashSet<u32>,
 
-    pub not_parenthesized_arrow: HashSet<u32>,
-
-    pub decorators: Vec<'a, Decorator<'a>>,
-}
-
-impl<'a> ParserState<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
-        Self {
-            allocator,
-            not_parenthesized_arrow: HashSet::new(),
-            decorators: Vec::new_in(allocator),
-        }
-    }
-
-    pub fn consume_decorators(&mut self) -> Vec<'a, Decorator<'a>> {
-        std::mem::replace(&mut self.decorators, Vec::new_in(self.allocator))
-    }
+    pub decorators: Vec<Decorator<'a>>,
 }

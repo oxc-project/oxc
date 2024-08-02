@@ -2,23 +2,21 @@ use oxc_ast::{
     ast::{match_member_expression, Expression, IdentifierReference, MemberExpression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, ScopeId};
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule};
 
 const GLOBAL_THIS: &str = "globalThis";
 const NON_CALLABLE_GLOBALS: [&str; 5] = ["Atomics", "Intl", "JSON", "Math", "Reflect"];
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-obj-calls): Disallow calling some global objects as functions")]
-#[diagnostic(severity(warning), help("{0} is not a function."))]
-struct NoObjCallsDiagnostic(CompactStr, #[label] pub Span);
+fn no_obj_calls_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow calling some global objects as functions")
+        .with_help(format!("{x0} is not a function."))
+        .with_label(span1)
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct NoObjCalls;
@@ -89,12 +87,15 @@ fn resolve_global_binding<'a, 'b: 'a>(
         let nodes = ctx.nodes();
         let symbols = ctx.symbols();
         scope.ancestors(scope_id).find_map(|id| scope.get_binding(id, &ident.name)).map_or_else(
+            // panic in debug builds, but fail gracefully in release builds
             || {
-                panic!(
+                debug_assert!(
+                    false,
                     "No binding id found for {}, but this IdentifierReference
                 is not a global",
                     &ident.name
                 );
+                None
             },
             |binding_id| {
                 let decl = nodes.get_node(symbols.get_declaration(binding_id));
@@ -106,12 +107,14 @@ fn resolve_global_binding<'a, 'b: 'a>(
                         }
                         match &parent_decl.init {
                             // handles "let a = JSON; let b = a; a();"
-                            Some(Expression::Identifier(parent_ident)) => {
-                                resolve_global_binding(parent_ident, decl_scope, ctx)
+                            Some(Expression::Identifier(parent_ident))
+                                if parent_ident.name != ident.name =>
+                            {
+                                return resolve_global_binding(parent_ident, decl_scope, ctx)
                             }
                             // handles "let a = globalThis.JSON; let b = a; a();"
                             Some(parent_expr) if parent_expr.is_member_expression() => {
-                                global_this_member(parent_expr.to_member_expression())
+                                return global_this_member(parent_expr.to_member_expression())
                             }
                             _ => None,
                         }
@@ -139,7 +142,7 @@ impl Rule for NoObjCalls {
                     resolve_global_binding(ident, node.scope_id(), ctx)
                 {
                     if is_global_obj(top_level_reference) {
-                        ctx.diagnostic(NoObjCallsDiagnostic(ident.name.to_compact_str(), span));
+                        ctx.diagnostic(no_obj_calls_diagnostic(ident.name.as_str(), span));
                     }
                 }
             }
@@ -148,7 +151,7 @@ impl Rule for NoObjCalls {
                 // handle new globalThis.Math(), globalThis.Math(), etc
                 if let Some(global_member) = global_this_member(callee.to_member_expression()) {
                     if is_global_obj(global_member) {
-                        ctx.diagnostic(NoObjCallsDiagnostic(global_member.into(), span));
+                        ctx.diagnostic(no_obj_calls_diagnostic(global_member, span));
                     }
                 }
             }
@@ -182,6 +185,13 @@ fn test() {
         // https://github.com/oxc-project/oxc/pull/508#issuecomment-1618850742
         ("{const Math = () => {}; {let obj = new Math();}}", None),
         ("{const {parse} = JSON;parse('{}')}", None),
+        // https://github.com/oxc-project/oxc/issues/4389
+        (
+            r"
+        export const getConfig = getConfig;
+        getConfig();",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -200,7 +210,7 @@ fn test() {
         ("let obj = Intl();", None),
         ("let newObj = new Reflect();", None),
         ("let obj = Reflect();", None),
-        ("function() { JSON.parse(Atomics()) }", None),
+        ("function d() { JSON.parse(Atomics()) }", None),
         // reference test cases
         ("let j = JSON; j();", None),
         ("let a = JSON; let b = a; let c = b; b();", None),

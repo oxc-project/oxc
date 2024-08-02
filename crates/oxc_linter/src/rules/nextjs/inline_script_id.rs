@@ -2,20 +2,20 @@ use oxc_ast::{
     ast::{Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind, PropertyKey},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-next(inline-script-id): `next/script` components with inline content must specify an `id` attribute.")]
-#[diagnostic(severity(warning), help("See https://nextjs.org/docs/messages/inline-script-id"))]
-struct InlineScriptIdDiagnostic(#[label] pub Span);
+fn inline_script_id_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "`next/script` components with inline content must specify an `id` attribute.",
+    )
+    .with_help("See https://nextjs.org/docs/messages/inline-script-id")
+    .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct InlineScriptId;
@@ -51,9 +51,13 @@ impl Rule for InlineScriptId {
         'references_loop: for reference in
             ctx.semantic().symbol_references(specifier.local.symbol_id.get().unwrap())
         {
-            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else { return };
+            let Some(node) = ctx.nodes().parent_node(reference.node_id()) else {
+                return;
+            };
 
-            let AstKind::JSXElementName(_) = node.kind() else { continue };
+            let AstKind::JSXElementName(_) = node.kind() else {
+                continue;
+            };
             let parent_node = ctx.nodes().parent_node(node.id()).unwrap();
             let AstKind::JSXOpeningElement(jsx_opening_element) = parent_node.kind() else {
                 continue;
@@ -98,7 +102,7 @@ impl Rule for InlineScriptId {
             if jsx_element.children.len() > 0
                 || prop_names_hash_set.contains("dangerouslySetInnerHTML")
             {
-                ctx.diagnostic(InlineScriptIdDiagnostic(jsx_opening_element.name.span()));
+                ctx.diagnostic(inline_script_id_diagnostic(jsx_opening_element.name.span()));
             }
         }
     }

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_sparse_arrays
 ---
   ⚠ eslint(no-sparse-arrays): Unexpected comma in middle of array
    ╭─[no_sparse_arrays.tsx:1:10]

@@ -422,6 +422,7 @@ macro_rules! __define_index_type_inner {
             }
 
             /// Construct from a usize without any checks.
+            #[allow(clippy::cast_possible_truncation)]
             #[inline(always)]
             $v const fn from_usize_unchecked(value: usize) -> Self {
                 Self { _raw: value as $raw }
@@ -434,6 +435,7 @@ macro_rules! __define_index_type_inner {
             }
 
             /// Construct this index type from a usize.
+            #[allow(clippy::cast_possible_truncation)]
             #[inline]
             $v fn from_usize(value: usize) -> Self {
                 Self::check_index(value as usize);
@@ -460,7 +462,7 @@ macro_rules! __define_index_type_inner {
                 }
             }
 
-            const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::min_value() as usize];
+            const _ENSURE_RAW_IS_UNSIGNED: [(); 0] = [(); <$raw>::MIN as usize];
         }
 
         impl core::fmt::Debug for $type {

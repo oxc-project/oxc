@@ -1,11 +1,13 @@
 {
   "name": "oxc-parser",
-  "version": "0.9.0",
+  "version": "0.23.0",
   "description": "Oxc Parser Node API",
-  "keywords": ["Parser"],
+  "keywords": [
+    "Parser"
+  ],
   "author": "Boshen and oxc contributors",
   "license": "MIT",
-  "homepage": "https://oxc-project.github.io",
+  "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",

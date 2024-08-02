@@ -1,0 +1,39 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:1:1]
+ 1 │ async function foo() {}
+   · ─────
+   ╰────
+  help: Async/await is not allowed
+
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:1:13]
+ 1 │ const foo = async () => {}
+   ·             ─────
+   ╰────
+  help: Async/await is not allowed
+
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:1:1]
+ 1 │ async () => {}
+   · ─────
+   ╰────
+  help: Async/await is not allowed
+
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:1:14]
+ 1 │ const test = async () => {};
+   ·              ─────
+   ╰────
+  help: Async/await is not allowed
+
+  ⚠ oxc(no-async-await): Unexpected async/await
+   ╭─[no_async_await.tsx:3:17]
+ 2 │             const test = {
+ 3 │                 async test() {}
+   ·                 ─────
+ 4 │             };
+   ╰────
+  help: Async/await is not allowed

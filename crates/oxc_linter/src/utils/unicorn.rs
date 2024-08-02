@@ -1,7 +1,4 @@
 mod boolean;
-use crate::LintContext;
-
-pub use self::boolean::*;
 use oxc_ast::{
     ast::{
         BindingPatternKind, Expression, FormalParameters, FunctionBody, LogicalExpression,
@@ -11,6 +8,9 @@ use oxc_ast::{
 };
 use oxc_semantic::AstNode;
 use oxc_syntax::operator::LogicalOperator;
+
+pub use self::boolean::*;
+use crate::LintContext;
 
 pub fn is_node_value_not_dom_node(expr: &Expression) -> bool {
     matches!(
@@ -171,21 +171,21 @@ pub fn is_same_reference(left: &Expression, right: &Expression, ctx: &LintContex
         | (Expression::NullLiteral(_), Expression::NullLiteral(_)) => return true,
 
         (Expression::Identifier(left_ident), Expression::Identifier(right_ident)) => {
-            return left_ident.name == right_ident.name
+            return left_ident.name == right_ident.name;
         }
 
         (Expression::StringLiteral(left_str), Expression::StringLiteral(right_str)) => {
-            return left_str.value == right_str.value
+            return left_str.value == right_str.value;
         }
         (Expression::NumericLiteral(left_num), Expression::NumericLiteral(right_num)) => {
-            return left_num.raw == right_num.raw
+            return left_num.raw == right_num.raw;
         }
         (Expression::RegExpLiteral(left_regexp), Expression::RegExpLiteral(right_regexp)) => {
             return left_regexp.regex.pattern == right_regexp.regex.pattern
-                && left_regexp.regex.flags == right_regexp.regex.flags
+                && left_regexp.regex.flags == right_regexp.regex.flags;
         }
         (Expression::BooleanLiteral(left_bool), Expression::BooleanLiteral(right_bool)) => {
-            return left_bool.value == right_bool.value
+            return left_bool.value == right_bool.value;
         }
 
         (

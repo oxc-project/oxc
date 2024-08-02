@@ -1,0 +1,213 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import a from 'foo.js';
+ 2 │             import A from 'bar.js';
+   ·             ───────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import b from 'foo.js';
+ 2 │             import a from 'bar.js';
+   ·             ───────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import {b, c} from 'foo.js';
+ 2 │             import {a, d} from 'bar.js';
+   ·             ────────────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import * as foo from 'foo.js';
+ 2 │             import * as bar from 'bar.js';
+   ·             ──────────────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Expected 'Multiple' syntax before 'Single' syntax.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import a from 'foo.js';
+ 2 │             import {b, c} from 'bar.js';
+   ·             ────────────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Expected 'All' syntax before 'Single' syntax.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import a from 'foo.js';
+ 2 │             import * as b from 'bar.js';
+   ·             ────────────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Expected 'None' syntax before 'Single' syntax.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import a from 'foo.js';
+ 2 │             import 'bar.js';
+   ·             ────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Expected 'All' syntax before 'Single' syntax.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import b from 'bar.js';
+ 2 │             import * as a from 'foo.js';
+   ·             ────────────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:12]
+ 1 │ import {b, a, d, c} from 'foo.js';
+   ·            ─
+   ╰────
+  help: Replace `b, a, d, c` with `a, b, c, d`.
+
+  ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:12]
+ 1 │ import {b, a, d, c} from 'foo.js';
+   ·            ─
+ 2 │             import {e, f, g, h} from 'bar.js';
+   ╰────
+  help: Replace `b, a, d, c` with `a, b, c, d`.
+
+  ⚠ eslint(sort-imports): Member 'B' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:12]
+ 1 │ import {a, B, c, D} from 'foo.js';
+   ·            ─
+   ╰────
+  help: Replace `a, B, c, D` with `B, D, a, c`.
+
+  ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:30]
+ 1 │ import {zzzzz, /* comment */ aaaaa} from 'foo.js';
+   ·                              ─────
+   ╰────
+
+  ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:30]
+ 1 │ import {zzzzz /* comment */, aaaaa} from 'foo.js';
+   ·                              ─────
+   ╰────
+
+  ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:30]
+ 1 │ import {/* comment */ zzzzz, aaaaa} from 'foo.js';
+   ·                              ─────
+   ╰────
+
+  ⚠ eslint(sort-imports): Member 'aaaaa' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:16]
+ 1 │ import {zzzzz, aaaaa /* comment */} from 'foo.js';
+   ·                ─────
+   ╰────
+
+  ⚠ eslint(sort-imports): Member 'qux' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:6:17]
+ 5 │                 zoo,
+ 6 │                 baz as qux,
+   ·                 ──────────
+ 7 │                 bar,
+   ╰────
+  help: Replace `boop,
+                        foo,
+                        zoo,
+                        baz as qux,
+                        bar,
+                        beep` with `bar,
+                        beep,
+                        boop,
+                        foo,
+                        baz as qux,
+                        zoo`.
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import b from 'b';
+ 2 │             import a from 'a';
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import b from 'b';
+ 2 │             import a from 'a';
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import b from 'b';
+ 2 │             import a from 'a';
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:19]
+ 1 │ import b from 'b';import a from 'a';
+   ·                   ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:1:34]
+ 1 │ import b from 'b'; /* comment */ import a from 'a';
+   ·                                  ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:13]
+ 1 │ import b from 'b'; // comment
+ 2 │             import a from 'a';
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:28]
+ 1 │ import b from 'b'; // comment 1
+ 2 │             /* comment 2 */import a from 'a';
+   ·                            ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:35]
+ 1 │ import { b } from 'b'; /* comment line 1
+ 2 │                 comment line 2 */ import { a } from 'a';
+   ·                                   ──────────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:23]
+ 1 │     import b
+ 2 │ ╭─▶             from 'b'; import a
+ 3 │ ╰─▶             from 'a';
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:2:32]
+ 1 │     import { b } from
+ 2 │ ╭─▶             'b'; /* comment */ import
+ 3 │ ╰─▶              { a } from 'a';
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:3:13]
+ 2 │                 'b';
+ 3 │ ╭─▶             import
+ 4 │ ╰─▶                 { a } from 'a';
+   ╰────
+
+  ⚠ eslint(sort-imports): Imports should be sorted alphabetically.
+   ╭─[sort_imports.tsx:4:13]
+ 3 │             import b from 'b';
+ 4 │             import a from 'a';
+   ·             ──────────────────
+   ╰────
+
+  ⚠ eslint(sort-imports): Member 'a' of the import declaration should be sorted alphabetically.
+   ╭─[sort_imports.tsx:3:25]
+ 2 │ 
+ 3 │             import { c, a } from 'c';
+   ·                         ─
+   ╰────
+  help: Replace `c, a` with `a, c`.

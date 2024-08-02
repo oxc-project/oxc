@@ -1,8 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -15,10 +12,9 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-hooks): Disallow setup and teardown hooks.")]
-#[diagnostic(severity(warning))]
-pub struct UnexpectedHookDiagonsitc(#[label] pub Span);
+fn unexpected_hook_diagonsitc(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow setup and teardown hooks.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoHooks(Box<NoHooksConfig>);
@@ -122,7 +118,7 @@ impl NoHooks {
 
         if let Expression::Identifier(ident) = &call_expr.callee {
             if !self.allow.contains(&ident.name.to_string()) {
-                ctx.diagnostic(UnexpectedHookDiagonsitc(call_expr.callee.span()));
+                ctx.diagnostic(unexpected_hook_diagonsitc(call_expr.callee.span()));
             }
         }
     }

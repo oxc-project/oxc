@@ -2,26 +2,28 @@ mod binder;
 mod builder;
 mod checker;
 mod class;
-mod control_flow;
+mod counter;
 mod diagnostics;
 mod jsdoc;
 mod label;
 mod module_record;
 mod node;
-pub mod pg;
 mod reference;
 mod scope;
 mod symbol;
+mod unresolved_stack;
 
-use std::{rc::Rc, sync::Arc};
+pub mod dot;
 
-pub use petgraph;
+use std::sync::Arc;
 
 pub use builder::{SemanticBuilder, SemanticBuilderReturn};
 use class::ClassTable;
 pub use jsdoc::{JSDoc, JSDocFinder, JSDocTag};
+pub use node::{AstNode, AstNodeId, AstNodes};
 use oxc_ast::{ast::IdentifierReference, AstKind, Trivias};
-use oxc_span::SourceType;
+use oxc_cfg::ControlFlowGraph;
+use oxc_span::{GetSpan, SourceType, Span};
 pub use oxc_syntax::{
     module_record::ModuleRecord,
     scope::{ScopeFlags, ScopeId},
@@ -30,13 +32,6 @@ pub use oxc_syntax::{
 use rustc_hash::FxHashSet;
 
 pub use crate::{
-    control_flow::{
-        print_basic_block, AssignmentValue, BasicBlockElement, BinaryAssignmentValue, BinaryOp,
-        CallType, CalleeWithArgumentsAssignmentValue, CollectionAssignmentValue, ControlFlowGraph,
-        EdgeType, ObjectPropertyAccessAssignmentValue, Register, UnaryExpressioneAssignmentValue,
-        UpdateAssignmentValue,
-    },
-    node::{AstNode, AstNodeId, AstNodes},
     reference::{Reference, ReferenceFlag, ReferenceId},
     scope::ScopeTree,
     symbol::SymbolTable,
@@ -55,7 +50,7 @@ pub struct Semantic<'a> {
 
     classes: ClassTable,
 
-    trivias: Rc<Trivias>,
+    trivias: Trivias,
 
     module_record: Arc<ModuleRecord>,
 
@@ -63,7 +58,7 @@ pub struct Semantic<'a> {
 
     unused_labels: FxHashSet<AstNodeId>,
 
-    cfg: ControlFlowGraph,
+    cfg: Option<ControlFlowGraph>,
 }
 
 impl<'a> Semantic<'a> {
@@ -103,8 +98,8 @@ impl<'a> Semantic<'a> {
         &self.jsdoc
     }
 
-    pub fn module_record(&self) -> &Arc<ModuleRecord> {
-        &self.module_record
+    pub fn module_record(&self) -> &ModuleRecord {
+        self.module_record.as_ref()
     }
 
     pub fn symbols(&self) -> &SymbolTable {
@@ -115,8 +110,8 @@ impl<'a> Semantic<'a> {
         &self.unused_labels
     }
 
-    pub fn cfg(&self) -> &ControlFlowGraph {
-        &self.cfg
+    pub fn cfg(&self) -> Option<&ControlFlowGraph> {
+        self.cfg.as_ref()
     }
 
     pub fn is_unresolved_reference(&self, node_id: AstNodeId) -> bool {
@@ -143,6 +138,20 @@ impl<'a> Semantic<'a> {
 
     pub fn is_reference_to_global_variable(&self, ident: &IdentifierReference) -> bool {
         self.scopes().root_unresolved_references().contains_key(ident.name.as_str())
+    }
+
+    pub fn reference_name(&self, reference: &Reference) -> &str {
+        let node = self.nodes.get_node(reference.node_id());
+        match node.kind() {
+            AstKind::IdentifierReference(id) => id.name.as_str(),
+            AstKind::JSXIdentifier(id) => id.name.as_str(),
+            _ => unreachable!(),
+        }
+    }
+
+    pub fn reference_span(&self, reference: &Reference) -> Span {
+        let node = self.nodes.get_node(reference.node_id());
+        node.kind().span()
     }
 }
 
@@ -179,10 +188,8 @@ mod tests {
         let allocator = Allocator::default();
         let semantic = get_semantic(&allocator, source, SourceType::default());
 
-        let top_level_a = semantic
-            .scopes()
-            .get_binding(semantic.scopes().root_scope_id(), &Atom::from("a"))
-            .unwrap();
+        let top_level_a =
+            semantic.scopes().get_binding(semantic.scopes().root_scope_id(), "a").unwrap();
 
         let decl = semantic.symbol_declaration(top_level_a);
         match decl.kind() {
@@ -282,7 +289,7 @@ mod tests {
             (SourceType::default(), "let a, b; b = a = 1", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b; b = (a = 1)", ReferenceFlag::read_write()),
             (SourceType::default(), "let a, b, c; b = c = a", ReferenceFlag::read()),
-            // sequences return last value in sequence
+            // sequences return last read_write in sequence
             (SourceType::default(), "let a, b; b = (0, a++)", ReferenceFlag::read_write()),
             // loops
             (
@@ -309,7 +316,7 @@ mod tests {
                 "let a, b; if (b == a) { true } else { false }",
                 ReferenceFlag::read(),
             ),
-            // identifiers not in last value are also considered a read (at
+            // identifiers not in last read_write are also considered a read (at
             // least, or now)
             (SourceType::default(), "let a, b; b = (a, 0)", ReferenceFlag::read()),
             (SourceType::default(), "let a, b; b = (--a, 0)", ReferenceFlag::read_write()),
@@ -333,6 +340,7 @@ mod tests {
                 "let a; let b; let c; a[c[b = c['a']] = 'c'] = 'b'",
                 ReferenceFlag::read(),
             ),
+            (SourceType::default(), "console.log;let a=0;a++", ReferenceFlag::write()),
             // typescript
             (typescript, "let a: number = 1; (a as any) = true", ReferenceFlag::write()),
             (typescript, "let a: number = 1; a = true as any", ReferenceFlag::write()),
@@ -350,7 +358,10 @@ mod tests {
             let a_refs: Vec<_> = semantic.symbol_references(a_id).collect();
             let num_refs = a_refs.len();
 
-            assert!(num_refs == 1, "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}");
+            assert!(
+                num_refs == 1,
+                "expected to find 1 reference to '{target_symbol_name}' but {num_refs} were found\n\nsource:\n{source}"
+            );
             let ref_type = a_refs[0];
             if flag.is_write() {
                 assert!(
@@ -358,7 +369,10 @@ mod tests {
                     "expected reference to '{target_symbol_name}' to be write\n\nsource:\n{source}"
                 );
             } else {
-                assert!(!ref_type.is_write(), "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}");
+                assert!(
+                    !ref_type.is_write(),
+                    "expected reference to '{target_symbol_name}' not to have been written to, but it is\n\nsource:\n{source}"
+                );
             }
             if flag.is_read() {
                 assert!(
@@ -366,7 +380,10 @@ mod tests {
                     "expected reference to '{target_symbol_name}' to be read\n\nsource:\n{source}"
                 );
             } else {
-                assert!(!ref_type.is_read(), "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}");
+                assert!(
+                    !ref_type.is_read(),
+                    "expected reference to '{target_symbol_name}' not to be read, but it is\n\nsource:\n{source}"
+                );
             }
         }
     }

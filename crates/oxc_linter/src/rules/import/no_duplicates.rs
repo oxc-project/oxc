@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_diagnostics::miette::{miette, LabeledSpan, Severity};
+use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_syntax::module_record::{ImportImportName, RequestedModule};
 
@@ -16,7 +16,7 @@ declare_oxc_lint!(
     ///
     /// Reports if a resolved path is imported more than once.
     NoDuplicates,
-    nursery
+    suspicious
 );
 
 impl Rule for NoDuplicates {
@@ -30,7 +30,7 @@ impl Rule for NoDuplicates {
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let module_record = ctx.semantic().module_record();
+        let module_record = ctx.module_record();
 
         let groups = module_record
             .requested_modules
@@ -42,7 +42,7 @@ impl Rule for NoDuplicates {
                 );
                 (resolved_absolute_path, requested_modules)
             })
-            .group_by(|r| r.0.clone());
+            .chunk_by(|r| r.0.clone());
 
         let check_duplicates = |requested_modules: Option<&Vec<&RequestedModule>>| {
             if let Some(requested_modules) = requested_modules {
@@ -51,11 +51,12 @@ impl Rule for NoDuplicates {
                         .iter()
                         .map(|requested_module| LabeledSpan::underline(requested_module.span()))
                         .collect::<Vec<_>>();
-                    ctx.diagnostic(miette!(
-                            severity = Severity::Warning,
-                            labels = labels,
-                            "eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places"
-                        ));
+                    ctx.diagnostic(
+                        OxcDiagnostic::warn(
+                            "Forbid repeated import of the same module in multiple places",
+                        )
+                        .with_labels(labels),
+                    );
                 }
             }
         };
@@ -98,8 +99,9 @@ impl Rule for NoDuplicates {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
     use serde_json::json;
+
+    use crate::tester::Tester;
 
     let pass = vec![
         (r#"import "./malformed.js""#, None),

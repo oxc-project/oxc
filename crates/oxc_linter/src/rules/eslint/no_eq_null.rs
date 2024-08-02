@@ -1,22 +1,18 @@
+use std::fmt::Debug;
+
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
-use std::fmt::Debug;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-eq-null): Use '===' to compare with null")]
-#[diagnostic(
-    severity(warning),
-    help("Disallow `null` comparisons without type-checking operators.")
-)]
-struct NoEqNullDiagnostic(#[label] pub Span);
+fn no_eq_null_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Use '===' to compare with null")
+        .with_help("Disallow `null` comparisons without type-checking operators.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEqNull;
@@ -53,7 +49,7 @@ impl Rule for NoEqNull {
                     & binary_expression.left.is_null()
                     & bad_operator
             {
-                ctx.diagnostic(NoEqNullDiagnostic(Span::new(
+                ctx.diagnostic(no_eq_null_diagnostic(Span::new(
                     binary_expression.span.start,
                     binary_expression.span.end,
                 )));

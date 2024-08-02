@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_void
 ---
   ⚠ eslint(no-void): Disallow `void` operators
    ╭─[no_void.tsx:1:1]

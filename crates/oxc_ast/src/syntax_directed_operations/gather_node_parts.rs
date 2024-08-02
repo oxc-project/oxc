@@ -1,5 +1,6 @@
-use crate::ast::*;
 use oxc_span::Atom;
+
+use crate::ast::*;
 
 // TODO: <https://github.com/babel/babel/blob/419644f27c5c59deb19e71aaabd417a3bc5483ca/packages/babel-traverse/src/scope/index.ts#L61>
 pub trait GatherNodeParts<'a> {

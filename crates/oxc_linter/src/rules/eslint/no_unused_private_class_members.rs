@@ -1,20 +1,16 @@
 use itertools::Itertools;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, AstNodeId, AstNodes};
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-unused-private-class-members): '{0}' is defined but never used.")]
-#[diagnostic(severity(warning))]
-struct NoUnusedPrivateClassMembersDiagnostic(CompactStr, #[label] pub Span);
+fn no_unused_private_class_members_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("'{x0}' is defined but never used.")).with_label(span1)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoUnusedPrivateClassMembers;
@@ -106,8 +102,8 @@ impl Rule for NoUnusedPrivateClassMembers {
                             && ident.element_ids.contains(&element_id)
                     })
                 {
-                    ctx.diagnostic(NoUnusedPrivateClassMembersDiagnostic(
-                        element.name.clone(),
+                    ctx.diagnostic(no_unused_private_class_members_diagnostic(
+                        &element.name,
                         element.span,
                     ));
                 }
@@ -133,10 +129,12 @@ fn is_read(current_node_id: AstNodeId, nodes: &AstNodes) -> bool {
                 AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_)
                 | AstKind::AssignmentTargetWithDefault(_)
-                | AstKind::AssignmentTarget(_),
+                | AstKind::AssignmentTarget(_)
+                | AstKind::ObjectAssignmentTarget(_)
+                | AstKind::ArrayAssignmentTarget(_),
             )
             | (AstKind::SimpleAssignmentTarget(_), AstKind::AssignmentExpression(_)) => {
-                return false
+                return false;
             }
             (AstKind::AssignmentTarget(_), AstKind::AssignmentExpression(_))
             | (_, AstKind::UpdateExpression(_)) => {

@@ -16,9 +16,7 @@ doctest = false
 console = { workspace = true }
 
 project-root = { workspace = true }
-serde        = { workspace = true, features = ["derive"] }
-serde_json   = { workspace = true }
 similar      = { workspace = true }
 
-ureq = { workspace = true, features = ["tls", "json"] }
+ureq = { workspace = true, features = ["json", "tls"] }
 url  = { workspace = true }

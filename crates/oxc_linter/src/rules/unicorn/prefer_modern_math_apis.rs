@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
@@ -14,23 +11,16 @@ use crate::{
     ast_util::is_method_call, context::LintContext, rule::Rule, utils::is_same_reference, AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum PreferModernMathApisDiagnostic {
-    #[error(
-        "eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.abs(x)` over alternatives"
-    )]
-    #[diagnostic(severity(warning))]
-    PreferMathAbs(#[label] Span),
+fn prefer_math_abs(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Math.abs(x)` over alternatives").with_label(span0)
+}
 
-    #[error(
-        "eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.hypot(…)` over alternatives"
-    )]
-    #[diagnostic(severity(warning))]
-    PreferMathHypot(#[label] Span),
+fn prefer_math_hypot(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Prefer `Math.hypot(…)` over alternatives").with_label(span0)
+}
 
-    #[error("eslint-plugin-unicorn(prefer-modern-math-apis): Prefer `Math.{1}(x)` over `{2}`")]
-    #[diagnostic(severity(warning))]
-    PreferMathLogN(#[label] Span, &'static str, String),
+fn prefer_math_log_n(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer `Math.{x1}(x)` over `{x2}`")).with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -98,7 +88,9 @@ impl Rule for PreferModernMathApis {
                     return;
                 };
 
-                let Some(arg) = call_expr.arguments[0].as_expression() else { return };
+                let Some(arg) = call_expr.arguments[0].as_expression() else {
+                    return;
+                };
 
                 let expressions = flat_plus_expression(arg);
                 if expressions.iter().any(|expr| !is_pow_2_expression(expr, ctx)) {
@@ -106,9 +98,9 @@ impl Rule for PreferModernMathApis {
                 }
 
                 if expressions.len() == 1 {
-                    ctx.diagnostic(PreferModernMathApisDiagnostic::PreferMathAbs(call_expr.span));
+                    ctx.diagnostic(prefer_math_abs(call_expr.span));
                 } else {
-                    ctx.diagnostic(PreferModernMathApisDiagnostic::PreferMathHypot(call_expr.span));
+                    ctx.diagnostic(prefer_math_hypot(call_expr.span));
                 }
             }
             _ => {}
@@ -158,10 +150,10 @@ fn check_prefer_log<'a>(expr: &BinaryExpression<'a>, ctx: &LintContext<'a>) {
                 return;
             };
 
-            ctx.diagnostic(PreferModernMathApisDiagnostic::PreferMathLogN(
+            ctx.diagnostic(prefer_math_log_n(
                 expr.span,
                 get_math_log_replacement(member_expr.static_property_name()),
-                clean_string(expr.span.source_text(ctx.source_text())),
+                &clean_string(expr.span.source_text(ctx.source_text())),
             ));
         }
         _ => {}
@@ -214,10 +206,10 @@ fn check_multiplication<'a, 'b>(
         return;
     };
 
-    ctx.diagnostic(PreferModernMathApisDiagnostic::PreferMathLogN(
+    ctx.diagnostic(prefer_math_log_n(
         expr_span,
         get_math_log_replacement(member_expr.static_property_name()),
-        clean_string(expr_span.source_text(ctx.source_text())),
+        &clean_string(expr_span.source_text(ctx.source_text())),
     ));
 }
 

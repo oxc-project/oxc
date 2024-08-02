@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: google_font_preconnect
 ---
   ⚠ eslint-plugin-next(google-font-preconnect): `rel="preconnect"` is missing from Google Font.
    ╭─[google_font_preconnect.tsx:4:15]

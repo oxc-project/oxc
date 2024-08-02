@@ -2,16 +2,13 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
+    fixer::{RuleFix, RuleFixer},
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
@@ -19,15 +16,13 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
-#[diagnostic(severity(warning))]
-struct EmptyTest(#[label] pub Span);
+fn empty_test(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span0)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(prefer-todo): Suggest using `test.todo`.")]
-#[diagnostic(severity(warning))]
-struct UnImplementedTestDiagnostic(#[label] pub Span);
+fn un_implemented_test_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Suggest using `test.todo`.").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferTodo;
@@ -52,6 +47,7 @@ declare_oxc_lint!(
     /// ```
     PreferTodo,
     style,
+    fix
 );
 
 impl Rule for PreferTodo {
@@ -81,14 +77,26 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
         }
 
         if counts == 1 && !filter_todo_case(call_expr) {
-            let (content, span) = get_fix_content(call_expr);
-            ctx.diagnostic_with_fix(UnImplementedTestDiagnostic(span), || Fix::new(content, span));
+            let span = call_expr
+                .callee
+                .as_member_expression()
+                .map_or(call_expr.callee.span(), GetSpan::span);
+            ctx.diagnostic_with_fix(un_implemented_test_diagnostic(span), |fixer| {
+                if let Expression::Identifier(ident) = &call_expr.callee {
+                    return fixer.replace(Span::empty(ident.span.end), ".todo");
+                }
+                if let Some(mem_expr) = call_expr.callee.as_member_expression() {
+                    if let Some((span, _)) = mem_expr.static_property_info() {
+                        return fixer.replace(span, "todo");
+                    }
+                }
+                fixer.delete_range(call_expr.span)
+            });
         }
 
         if counts > 1 && is_empty_function(call_expr) {
-            ctx.diagnostic_with_fix(EmptyTest(call_expr.span), || {
-                let (content, span) = build_code(call_expr, ctx);
-                Fix::new(content, span)
+            ctx.diagnostic_with_fix(empty_test(call_expr.span), |fixer| {
+                build_code(fixer, call_expr)
             });
         }
     }
@@ -128,38 +136,26 @@ fn is_empty_function(expr: &CallExpression) -> bool {
     }
 }
 
-fn get_fix_content<'a>(expr: &'a CallExpression<'a>) -> (&'a str, Span) {
-    if let Expression::Identifier(ident) = &expr.callee {
-        return (".todo", Span::new(ident.span.end, ident.span.end));
-    }
-    if let Some(mem_expr) = expr.callee.as_member_expression() {
-        if let Some((span, _)) = mem_expr.static_property_info() {
-            return ("todo", span);
-        }
-    }
-    ("", expr.span)
-}
-
-fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
-    let mut formatter = ctx.codegen();
+fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFix<'a> {
+    let mut formatter = fixer.codegen();
 
     match &expr.callee {
         Expression::Identifier(ident) => {
-            formatter.print_str(ident.name.as_bytes());
-            formatter.print_str(b".todo(");
+            formatter.print_str(ident.name.as_str());
+            formatter.print_str(".todo(");
         }
         Expression::ComputedMemberExpression(expr) => {
             if let Expression::Identifier(ident) = &expr.object {
-                formatter.print_str(ident.name.as_bytes());
-                formatter.print_str(b"[");
-                formatter.print_str(b"'todo'");
-                formatter.print_str(b"](");
+                formatter.print_str(ident.name.as_str());
+                formatter.print_str("[");
+                formatter.print_str("'todo'");
+                formatter.print_str("](");
             }
         }
         Expression::StaticMemberExpression(expr) => {
             if let Expression::Identifier(ident) = &expr.object {
-                formatter.print_str(ident.name.as_bytes());
-                formatter.print_str(b".todo(");
+                formatter.print_str(ident.name.as_str());
+                formatter.print_str(".todo(");
             }
         }
         _ => {}
@@ -167,20 +163,20 @@ fn build_code(expr: &CallExpression, ctx: &LintContext) -> (String, Span) {
 
     if let Argument::StringLiteral(ident) = &expr.arguments[0] {
         // Todo: this punctuation should read from the config
-        formatter.print(b'\'');
-        formatter.print_str(ident.value.as_bytes());
-        formatter.print(b'\'');
-        formatter.print(b')');
+        formatter.print_char(b'\'');
+        formatter.print_str(ident.value.as_str());
+        formatter.print_char(b'\'');
+        formatter.print_char(b')');
     } else if let Argument::TemplateLiteral(temp) = &expr.arguments[0] {
-        formatter.print(b'`');
+        formatter.print_char(b'`');
         for q in &temp.quasis {
-            formatter.print_str(q.value.raw.as_bytes());
+            formatter.print_str(q.value.raw.as_str());
         }
-        formatter.print(b'`');
-        formatter.print(b')');
+        formatter.print_char(b'`');
+        formatter.print_char(b')');
     }
 
-    (formatter.into_source_text(), expr.span)
+    fixer.replace(expr.span, formatter)
 }
 
 #[test]

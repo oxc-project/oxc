@@ -1,0 +1,62 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/call-expression/call-expression.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flag": "ScopeFlags(StrictMode | Function | Arrow)",
+        "id": 1,
+        "node": "ArrowFunctionExpression",
+        "symbols": []
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 0,
+        "name": "foo",
+        "node": "VariableDeclarator",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 1,
+            "name": "foo",
+            "node_id": 15
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 3,
+            "name": "foo",
+            "node_id": 21
+          }
+        ]
+      },
+      {
+        "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 1,
+        "name": "a",
+        "node": "VariableDeclarator",
+        "references": [
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 0,
+            "name": "a",
+            "node_id": 14
+          },
+          {
+            "flag": "ReferenceFlag(Read)",
+            "id": 2,
+            "name": "a",
+            "node_id": 20
+          }
+        ]
+      }
+    ]
+  }
+]

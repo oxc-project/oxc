@@ -31,13 +31,12 @@ use oxc_ast::{ast::*, AstKind};
 use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name;
 
+use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
 use crate::{
     array,
     doc::{Doc, DocBuilder, Group, Separator},
     format, group, hardline, indent, line, softline, space, ss, string, wrap, Prettier,
 };
-
-use self::{array::Array, object::ObjectLike, template_literal::TemplateLiteralPrinter};
 
 pub trait Format<'a> {
     #[must_use]
@@ -656,6 +655,7 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSAnyKeyword(v) => v.format(p),
             TSType::TSBigIntKeyword(v) => v.format(p),
             TSType::TSBooleanKeyword(v) => v.format(p),
+            TSType::TSIntrinsicKeyword(v) => v.format(p),
             TSType::TSNeverKeyword(v) => v.format(p),
             TSType::TSNullKeyword(v) => v.format(p),
             TSType::TSNumberKeyword(v) => v.format(p),
@@ -686,7 +686,9 @@ impl<'a> Format<'a> for TSType<'a> {
             TSType::TSTypeQuery(v) => v.format(p),
             TSType::TSTypeReference(v) => v.format(p),
             TSType::TSUnionType(v) => v.format(p),
+            TSType::TSParenthesizedType(v) => v.format(p),
             TSType::JSDocNullableType(v) => v.format(p),
+            TSType::JSDocNonNullableType(v) => v.format(p),
             TSType::JSDocUnknownType(v) => v.format(p),
         }
     }
@@ -707,6 +709,12 @@ impl<'a> Format<'a> for TSBigIntKeyword {
 impl<'a> Format<'a> for TSBooleanKeyword {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         Doc::Str("boolean")
+    }
+}
+
+impl<'a> Format<'a> for TSIntrinsicKeyword {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        Doc::Str("intrinsic")
     }
 }
 
@@ -836,7 +844,7 @@ impl<'a> Format<'a> for TSLiteralType<'a> {
             TSLiteral::BooleanLiteral(v) => v.format(p),
             TSLiteral::NullLiteral(v) => v.format(p),
             TSLiteral::NumericLiteral(v) => v.format(p),
-            TSLiteral::BigintLiteral(v) => v.format(p),
+            TSLiteral::BigIntLiteral(v) => v.format(p),
             TSLiteral::RegExpLiteral(v) => v.format(p),
             TSLiteral::StringLiteral(v) => v.format(p),
             TSLiteral::TemplateLiteral(v) => v.format(p),
@@ -913,6 +921,12 @@ impl<'a> Format<'a> for TSTypeReference<'a> {
     }
 }
 
+impl<'a> Format<'a> for TSParenthesizedType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        wrap!(p, self, TSParenthesizedType, { self.type_annotation.format(p) })
+    }
+}
+
 impl<'a> Format<'a> for TSUnionType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
@@ -920,6 +934,12 @@ impl<'a> Format<'a> for TSUnionType<'a> {
 }
 
 impl<'a> Format<'a> for JSDocNullableType<'a> {
+    fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
+        line!()
+    }
+}
+
+impl<'a> Format<'a> for JSDocNonNullableType<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         line!()
     }
@@ -1203,7 +1223,8 @@ impl<'a> Format<'a> for ExportSpecifier<'a> {
 impl<'a> Format<'a> for ModuleExportName<'a> {
     fn format(&self, p: &mut Prettier<'a>) -> Doc<'a> {
         match self {
-            Self::Identifier(ident) => ident.format(p),
+            Self::IdentifierName(ident) => ident.format(p),
+            Self::IdentifierReference(ident) => ident.format(p),
             Self::StringLiteral(literal) => literal.format(p),
         }
     }
@@ -1233,7 +1254,6 @@ impl<'a> Format<'a> for ExportDefaultDeclarationKind<'a> {
             Self::FunctionDeclaration(decl) => decl.format(p),
             Self::ClassDeclaration(decl) => decl.format(p),
             Self::TSInterfaceDeclaration(decl) => decl.format(p),
-            Self::TSEnumDeclaration(decl) => decl.format(p),
         }
     }
 }
@@ -1244,7 +1264,7 @@ impl<'a> Format<'a> for Expression<'a> {
             Self::BooleanLiteral(lit) => lit.format(p),
             Self::NullLiteral(lit) => lit.format(p),
             Self::NumericLiteral(lit) => lit.format(p),
-            Self::BigintLiteral(lit) => lit.format(p),
+            Self::BigIntLiteral(lit) => lit.format(p),
             Self::RegExpLiteral(lit) => lit.format(p),
             Self::StringLiteral(lit) => lit.format(p),
             Self::Identifier(ident) => ident.format(p),
@@ -1336,8 +1356,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
             // Remove unnecessary plus and zeroes from scientific notation.
             if let Some((head, tail)) = string.split_once('e') {
                 let negative = if tail.starts_with('-') { "-" } else { "" };
-                let trimmed =
-                    tail.trim_start_matches(|c| c == '+' || c == '-').trim_start_matches('0');
+                let trimmed = tail.trim_start_matches(['+', '-']).trim_start_matches('0');
                 if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
                     string = Cow::Owned(std::format!("{head}e{negative}{trimmed}"));
                 }
@@ -1345,11 +1364,7 @@ impl<'a> Format<'a> for NumericLiteral<'a> {
 
             // Remove unnecessary scientific notation (1e0).
             if let Some((head, tail)) = string.split_once('e') {
-                if tail
-                    .trim_start_matches(|c| c == '+' || c == '-')
-                    .trim_start_matches('0')
-                    .is_empty()
-                {
+                if tail.trim_start_matches(['+', '-']).trim_start_matches('0').is_empty() {
                     string = Cow::Owned(head.to_string());
                 }
             }
@@ -1809,6 +1824,7 @@ impl<'a> Format<'a> for SimpleAssignmentTarget<'a> {
             Self::TSSatisfiesExpression(expr) => expr.expression.format(p),
             Self::TSNonNullExpression(expr) => expr.expression.format(p),
             Self::TSTypeAssertion(expr) => expr.expression.format(p),
+            Self::TSInstantiationExpression(expr) => expr.expression.format(p),
         }
     }
 }

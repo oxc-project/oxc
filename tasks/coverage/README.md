@@ -1,13 +1,11 @@
 # Coverage
 
-The parser is tested against [test262], [babel] and TypeScript for conformance.
+Tools are tested against [test262], [babel] and [TypeScript] for conformance.
 
-Note: tests against regexp are disabled for now.
-
-Clone the test files beforehand:
+Clone the test repositories beforehand:
 
 ```bash
-git submodule update --init
+just submodules
 ```
 
 ## Development
@@ -24,8 +22,15 @@ cargo watch -x 'coverage js'
 
 # filter for a file path
 cargo watch -x 'coverage js --filter filter-file-path'
+
+# find crash scene by turning off rayon and print out the test cases in serial
+cargo coverage -- --debug
+
+# Run after submodules are updated
+UPDATE_SNAPSHOT=1 just c
 ```
 
 <!-- Links -->
 [test262]: https://github.com/tc39/test262
 [babel]: https://github.com/babel/babel
+[TypeScript]: https://github.com/microsoft/TypeScript

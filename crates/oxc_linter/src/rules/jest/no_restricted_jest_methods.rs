@@ -1,3 +1,9 @@
+use oxc_ast::AstKind;
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_macros::declare_oxc_lint;
+use oxc_span::Span;
+use rustc_hash::FxHashMap;
+
 use crate::{
     context::LintContext,
     rule::Rule,
@@ -7,24 +13,16 @@ use crate::{
     },
 };
 
-use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
-use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
-use rustc_hash::{FxHashMap, FxHasher};
-use std::{collections::HashMap, hash::BuildHasherDefault};
+fn restricted_jest_method(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow specific `jest.` methods")
+        .with_help(format!("Use of `{x0:?}` is disallowed"))
+        .with_label(span1)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoRestrictedJestMethodsDiagnostic {
-    #[error("eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods")]
-    #[diagnostic(severity(warning), help("Use of `{0:?}` is disallowed"))]
-    RestrictedJestMethod(String, #[label] Span),
-    #[error("eslint-plugin-jest(no-restricted-jest-methods): Disallow specific `jest.` methods")]
-    #[diagnostic(severity(warning), help("{0:?}"))]
-    RestrictedJestMethodWithMessage(String, #[label] Span),
+fn restricted_jest_method_with_message(x0: &str, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow specific `jest.` methods")
+        .with_help(format!("{x0:?}"))
+        .with_label(span1)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -126,23 +124,13 @@ impl NoRestrictedJestMethods {
         if self.contains(property_name) {
             self.get_message(property_name).map_or_else(
                 || {
-                    ctx.diagnostic(NoRestrictedJestMethodsDiagnostic::RestrictedJestMethod(
-                        property_name.to_string(),
-                        span,
-                    ));
+                    ctx.diagnostic(restricted_jest_method(property_name, span));
                 },
                 |message| {
                     if message.trim() == "" {
-                        ctx.diagnostic(NoRestrictedJestMethodsDiagnostic::RestrictedJestMethod(
-                            property_name.to_string(),
-                            span,
-                        ));
+                        ctx.diagnostic(restricted_jest_method(property_name, span));
                     } else {
-                        ctx.diagnostic(
-                            NoRestrictedJestMethodsDiagnostic::RestrictedJestMethodWithMessage(
-                                message, span,
-                            ),
-                        );
+                        ctx.diagnostic(restricted_jest_method_with_message(&message, span));
                     }
                 },
             );
@@ -152,7 +140,7 @@ impl NoRestrictedJestMethods {
     #[allow(clippy::unnecessary_wraps)]
     pub fn compile_restricted_jest_methods(
         matchers: &serde_json::Map<String, serde_json::Value>,
-    ) -> Option<HashMap<String, String, BuildHasherDefault<FxHasher>>> {
+    ) -> Option<FxHashMap<String, String>> {
         Some(
             matchers
                 .iter()

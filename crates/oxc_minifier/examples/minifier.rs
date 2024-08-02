@@ -1,17 +1,16 @@
+#![allow(clippy::print_stdout)]
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{CodeGenerator, WhitespaceRemover};
 use oxc_minifier::{Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
-
 use pico_args::Arguments;
 
 // Instruction:
 // create a `test.js`,
-// run `cargo run -p oxc_minifier --example minifier`
-// or `just watch "run -p oxc_minifier --example minifier"`
+// run `cargo run -p oxc_minifier --example minifier` or `just example minifier`
 
 fn main() -> std::io::Result<()> {
     let mut args = Arguments::from_env();
@@ -38,14 +37,14 @@ fn main() -> std::io::Result<()> {
 
 fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: bool) -> String {
     let allocator = Allocator::default();
-    let program = Parser::new(&allocator, source_text, source_type).parse().program;
-    let program = allocator.alloc(program);
+    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let program = allocator.alloc(ret.program);
     let options = MinifierOptions { mangle, ..MinifierOptions::default() };
-    Minifier::new(options).build(&allocator, program);
+    let ret = Minifier::new(options).build(&allocator, program);
     if whitespace {
-        Codegen::<true>::new("", source_text, CodegenOptions::default()).build(program)
+        CodeGenerator::new().with_mangler(ret.mangler).build(program)
     } else {
-        Codegen::<false>::new("", source_text, CodegenOptions::default()).build(program)
+        WhitespaceRemover::new().with_mangler(ret.mangler).build(program)
     }
     .source_text
 }

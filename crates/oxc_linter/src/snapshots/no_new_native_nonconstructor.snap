@@ -1,0 +1,26 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint(no-new-native-nonconstructor): `Symbol` cannot be called as a constructor.
+   ╭─[no_new_native_nonconstructor.tsx:1:11]
+ 1 │ var foo = new Symbol('foo');
+   ·           ───
+   ╰────
+
+  ⚠ eslint(no-new-native-nonconstructor): `Symbol` cannot be called as a constructor.
+   ╭─[no_new_native_nonconstructor.tsx:1:59]
+ 1 │ function bar() { return function Symbol() {}; } var baz = new Symbol('baz');
+   ·                                                           ───
+   ╰────
+
+  ⚠ eslint(no-new-native-nonconstructor): `BigInt` cannot be called as a constructor.
+   ╭─[no_new_native_nonconstructor.tsx:1:11]
+ 1 │ var foo = new BigInt(9007199254740991);
+   ·           ───
+   ╰────
+
+  ⚠ eslint(no-new-native-nonconstructor): `BigInt` cannot be called as a constructor.
+   ╭─[no_new_native_nonconstructor.tsx:1:59]
+ 1 │ function bar() { return function BigInt() {}; } var baz = new BigInt(9007199254740991);
+   ·                                                           ───
+   ╰────

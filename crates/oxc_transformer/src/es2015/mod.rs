@@ -1,12 +1,13 @@
 mod arrow_functions;
 mod options;
 
+use std::rc::Rc;
+
 pub use arrow_functions::{ArrowFunctions, ArrowFunctionsOptions};
 pub use options::ES2015Options;
-
 use oxc_allocator::Vec;
 use oxc_ast::ast::*;
-use std::rc::Rc;
+use oxc_traverse::TraverseCtx;
 
 use crate::context::Ctx;
 
@@ -20,26 +21,36 @@ pub struct ES2015<'a> {
 }
 
 impl<'a> ES2015<'a> {
-    pub fn new(options: ES2015Options, ctx: &Ctx<'a>) -> Self {
+    pub fn new(options: ES2015Options, ctx: Ctx<'a>) -> Self {
         Self {
             arrow_functions: ArrowFunctions::new(
                 options.arrow_function.clone().unwrap_or_default(),
-                ctx,
+                Rc::clone(&ctx),
             ),
-            ctx: Rc::clone(ctx),
+            ctx,
             options,
         }
     }
 
-    pub fn transform_statements_on_exit(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    pub fn enter_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+        if self.options.arrow_function.is_some() {
+            self.arrow_functions.transform_statements(stmts);
+        }
+    }
+
+    pub fn exit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         if self.options.arrow_function.is_some() {
             self.arrow_functions.transform_statements_on_exit(stmts);
         }
     }
 
-    pub fn transform_jsx_opening_element(&mut self, elem: &mut JSXOpeningElement<'a>) {
+    pub fn transform_jsx_element_name(
+        &mut self,
+        elem: &mut JSXElementName<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_jsx_opening_element(elem);
+            self.arrow_functions.transform_jsx_element_name(elem, ctx);
         }
     }
 
@@ -55,9 +66,13 @@ impl<'a> ES2015<'a> {
         }
     }
 
-    pub fn transform_expression_on_exit(&mut self, expr: &mut Expression<'a>) {
+    pub fn transform_expression_on_exit(
+        &mut self,
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
         if self.options.arrow_function.is_some() {
-            self.arrow_functions.transform_expression_on_exit(expr);
+            self.arrow_functions.transform_expression_on_exit(expr, ctx);
         }
     }
 

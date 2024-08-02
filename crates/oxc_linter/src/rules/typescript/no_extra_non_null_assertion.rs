@@ -1,17 +1,13 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("typescript-eslint(no-extra-non-null-assertion): extra non-null assertion")]
-#[diagnostic(severity(warning))]
-struct NoExtraNonNullAssertionDiagnostic(#[label] pub Span);
+fn no_extra_non_null_assertion_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("extra non-null assertion").with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExtraNonNullAssertion;
@@ -65,8 +61,12 @@ impl Rule for NoExtraNonNullAssertion {
 
         if let Some(expr) = expr {
             let end = expr.span.end - 1;
-            ctx.diagnostic(NoExtraNonNullAssertionDiagnostic(Span::new(end, end)));
+            ctx.diagnostic(no_extra_non_null_assertion_diagnostic(Span::new(end, end)));
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

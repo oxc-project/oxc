@@ -2,9 +2,9 @@
   "name": "oxc_benchmark",
   "version": "0.0.0",
   "devDependencies": {
-    "axios": "^1.6.8",
+    "axios": "^1.7.2",
     "express": "^4.19.2",
-    "tar": "^7.0.1"
+    "tar": "^7.2.0"
   },
-  "packageManager": "pnpm@9.0.6"
+  "packageManager": "pnpm@9.6.0"
 }

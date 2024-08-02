@@ -1,17 +1,13 @@
 use oxc_ast::{ast::MemberExpression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{CompactStr, Span};
+use oxc_span::Span;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-string-slice): Prefer String#slice() over String#{1}()")]
-#[diagnostic(severity(warning))]
-struct PreferStringSliceDiagnostic(#[label] pub Span, CompactStr);
+fn prefer_string_slice_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Prefer String#slice() over String#{x1}()")).with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStringSlice;
@@ -38,7 +34,9 @@ impl Rule for PreferStringSlice {
             return;
         };
 
-        let Some(member_expr) = call_expr.callee.get_member_expr() else { return };
+        let Some(member_expr) = call_expr.callee.get_member_expr() else {
+            return;
+        };
 
         let (span, name) = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
@@ -50,7 +48,7 @@ impl Rule for PreferStringSlice {
             _ => return,
         };
 
-        ctx.diagnostic(PreferStringSliceDiagnostic(span, name.to_compact_str()));
+        ctx.diagnostic(prefer_string_slice_diagnostic(span, name.as_str()));
     }
 }
 

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_duplicates
 ---
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:19]
@@ -370,6 +369,17 @@ expression: no_duplicates
     ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
+   ╭─[index.ts:1:19]
+ 1 │ import {A1,} from 'foo';
+   ·                   ─────
+ 2 │             import {B1,} from 'foo';
+   ·                               ─────
+ 3 │             import {C1,} from 'foo';
+   ·                               ─────
+ 4 │ 
+   ╰────
+
+  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
     ╭─[index.ts:7:20]
   6 │             A2,
   7 │             } from 'bar';
@@ -383,17 +393,6 @@ expression: no_duplicates
  13 │             } from 'bar';
     ·                    ─────
     ╰────
-
-  ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
-   ╭─[index.ts:1:19]
- 1 │ import {A1,} from 'foo';
-   ·                   ─────
- 2 │             import {B1,} from 'foo';
-   ·                               ─────
- 3 │             import {C1,} from 'foo';
-   ·                               ─────
- 4 │ 
-   ╰────
 
   ⚠ eslint-plugin-import(no-duplicates): Forbid repeated import of the same module in multiple places
    ╭─[index.ts:1:20]

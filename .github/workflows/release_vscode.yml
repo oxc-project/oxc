@@ -13,6 +13,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   check:
     name: Check version
@@ -76,13 +80,12 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           cache-dependency-path: ./editors/vscode/package.json
           cache: pnpm
 
       - name: Build JS
         working-directory: editors/vscode
-        shell: bash
         run: |
           pnpm install
           pnpm run compile
@@ -117,7 +120,6 @@ jobs:
 
       - name: Package Extension
         working-directory: editors/vscode
-        shell: bash
         run: |
           ls ./target/release
           pnpm exec vsce package -o "../../oxc_language_server-${{ matrix.code-target }}.vsix" --target ${{ matrix.code-target }}
@@ -152,7 +154,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version-file: .node-version
           cache-dependency-path: ./editors/vscode/package.json
           cache: pnpm
 

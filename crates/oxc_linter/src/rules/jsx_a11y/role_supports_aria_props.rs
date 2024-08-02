@@ -2,10 +2,7 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXOpeningElement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::{self, Error},
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use phf::phf_set;
@@ -16,7 +13,7 @@ use crate::{
     rule::Rule,
     utils::{
         get_element_type, get_jsx_attribute_name, get_string_literal_prop_value,
-        has_jsx_prop_lowercase,
+        has_jsx_prop_ignore_case,
     },
     AstNode,
 };
@@ -50,22 +47,23 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone)]
 pub struct RoleSupportsAriaProps;
 
-#[derive(Debug, Error, Diagnostic)]
-enum RoleSupportsAriaPropsDiagnostic {
-    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}.")]
-    #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
-    Default(#[label] Span, String, String),
+fn default(span0: Span, x1: &str, x2: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}."))
+        .with_help(format!("Try to remove invalid attribute {x1}."))
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-jsx-a11y(role-supports-aria-props): The attribute {1} is not supported by the role {2}. This role is implicit on the element {3}.")]
-    #[diagnostic(severity(warning), help("Try to remove invalid attribute {1}."))]
-    IsImplicit(#[label] Span, String, String, String),
+fn is_implicit_diagnostic(span0: Span, x1: &str, x2: &str, x3: &str) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("The attribute {x1} is not supported by the role {x2}. This role is implicit on the element {x3}."))
+        .with_help(format!("Try to remove invalid attribute {x1}."))
+        .with_label(span0)
 }
 
 impl Rule for RoleSupportsAriaProps {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::JSXOpeningElement(jsx_el) = node.kind() {
             if let Some(el_type) = get_element_type(ctx, jsx_el) {
-                let role = has_jsx_prop_lowercase(jsx_el, "role");
+                let role = has_jsx_prop_ignore_case(jsx_el, "role");
                 let role_value = role.map_or_else(
                     || get_implicit_role(jsx_el, el_type.as_str()),
                     |i| get_string_literal_prop_value(i),
@@ -81,18 +79,9 @@ impl Rule for RoleSupportsAriaProps {
                             let name = get_jsx_attribute_name(&attr.name).to_lowercase();
                             if invalid_props.contains(&&name.as_str()) {
                                 ctx.diagnostic(if is_implicit {
-                                    RoleSupportsAriaPropsDiagnostic::IsImplicit(
-                                        attr.span,
-                                        name,
-                                        role_value.to_string(),
-                                        el_type.clone(),
-                                    )
+                                    is_implicit_diagnostic(attr.span, &name, role_value, &el_type)
                                 } else {
-                                    RoleSupportsAriaPropsDiagnostic::Default(
-                                        attr.span,
-                                        name,
-                                        role_value.to_string(),
-                                    )
+                                    default(attr.span, &name, role_value)
                                 });
                             }
                         }
@@ -109,7 +98,7 @@ fn get_implicit_role<'a>(
     element_type: &str,
 ) -> Option<&'static str> {
     let implicit_role = match element_type {
-        "a" | "area" | "link" => match has_jsx_prop_lowercase(node, "href") {
+        "a" | "area" | "link" => match has_jsx_prop_ignore_case(node, "href") {
             Some(_) => "link",
             None => "",
         },
@@ -123,11 +112,11 @@ fn get_implicit_role<'a>(
         "form" => "form",
         "h1" | "h2" | "h3" | "h4" | "h5" | "h6" => "heading",
         "hr" => "separator",
-        "img" => has_jsx_prop_lowercase(node, "alt").map_or("img", |i| {
+        "img" => has_jsx_prop_ignore_case(node, "alt").map_or("img", |i| {
             get_string_literal_prop_value(i)
                 .map_or("img", |v| if v.is_empty() { "" } else { "img" })
         }),
-        "input" => has_jsx_prop_lowercase(node, "type").map_or("textbox", |input_type| {
+        "input" => has_jsx_prop_ignore_case(node, "type").map_or("textbox", |input_type| {
             match get_string_literal_prop_value(input_type) {
                 Some("button" | "image" | "reset" | "submit") => "button",
                 Some("checkbox") => "checkbox",
@@ -137,21 +126,18 @@ fn get_implicit_role<'a>(
             }
         }),
         "li" => "listitem",
-        "menu" => has_jsx_prop_lowercase(node, "type").map_or("", |v| {
+        "menu" => has_jsx_prop_ignore_case(node, "type").map_or("", |v| {
             get_string_literal_prop_value(v)
                 .map_or("", |v| if v == "toolbar" { "toolbar" } else { "" })
         }),
-        "menuitem" => {
-            has_jsx_prop_lowercase(node, "type").map_or(
-                "",
-                |v| match get_string_literal_prop_value(v) {
-                    Some("checkbox") => "menuitemcheckbox",
-                    Some("command") => "menuitem",
-                    Some("radio") => "menuitemradio",
-                    _ => "",
-                },
-            )
-        }
+        "menuitem" => has_jsx_prop_ignore_case(node, "type").map_or("", |v| {
+            match get_string_literal_prop_value(v) {
+                Some("checkbox") => "menuitemcheckbox",
+                Some("command") => "menuitem",
+                Some("radio") => "menuitemradio",
+                _ => "",
+            }
+        }),
         "meter" | "progress" => "progressbar",
         "nav" => "navigation",
         "ol" | "ul" => "list",

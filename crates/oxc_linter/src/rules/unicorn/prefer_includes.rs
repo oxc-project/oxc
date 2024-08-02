@@ -1,8 +1,5 @@
 use oxc_ast::{ast::Expression, AstKind};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
@@ -14,10 +11,12 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(prefer-includes): Prefer `includes()` over `indexOf()` when checking for existence or non-existence.")]
-#[diagnostic(severity(warning))]
-struct PreferIncludesDiagnostic(#[label] pub Span);
+fn prefer_includes_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(
+        "Prefer `includes()` over `indexOf()` when checking for existence or non-existence.",
+    )
+    .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferIncludes;
@@ -72,7 +71,7 @@ impl Rule for PreferIncludes {
                 return;
             }
 
-            ctx.diagnostic(PreferIncludesDiagnostic(
+            ctx.diagnostic(prefer_includes_diagnostic(
                 call_expr_method_callee_info(left_call_expr).unwrap().0,
             ));
         }
@@ -86,7 +85,7 @@ impl Rule for PreferIncludes {
             if num_lit.raw != "0" {
                 return;
             }
-            ctx.diagnostic(PreferIncludesDiagnostic(
+            ctx.diagnostic(prefer_includes_diagnostic(
                 call_expr_method_callee_info(left_call_expr).unwrap().0,
             ));
         }

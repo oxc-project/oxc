@@ -1,6 +1,6 @@
 [package]
 name                   = "oxc_sourcemap"
-version                = "0.12.5"
+version                = "0.23.0"
 authors.workspace      = true
 description.workspace  = true
 edition.workspace      = true
@@ -20,7 +20,13 @@ doctest = false
 
 [dependencies]
 rustc-hash  = { workspace = true }
-rayon       = { workspace = true }
 serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
-base64-simd = "0.8"
+base64-simd = { workspace = true }
+cfg-if      = { workspace = true }
+
+rayon = { workspace = true, optional = true }
+
+[features]
+default    = []
+concurrent = ["dep:rayon"]

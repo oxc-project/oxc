@@ -1,0 +1,29 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+  ⚠ eslint-plugin-jsdoc(require-returns-type): Missing JSDoc `@returns` type.
+   ╭─[require_returns_type.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @returns
+   ·                          ────────
+ 4 │                        */
+   ╰────
+  help: Add {type} to `@returns` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-returns-type): Missing JSDoc `@returns` type.
+   ╭─[require_returns_type.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @returns Foo.
+   ·                          ────────
+ 4 │                        */
+   ╰────
+  help: Add {type} to `@returns` tag.
+
+  ⚠ eslint-plugin-jsdoc(require-returns-type): Missing JSDoc `@returns` type.
+   ╭─[require_returns_type.tsx:3:17]
+ 2 │                       /**
+ 3 │                        * @return Foo.
+   ·                          ───────
+ 4 │                        */
+   ╰────
+  help: Add {type} to `@returns` tag.

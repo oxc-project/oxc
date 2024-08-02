@@ -1,25 +1,12 @@
-use oxc_ast::{
-    ast::{Expression, JSXAttributeValue, JSXElement},
-    AstKind,
-};
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_ast::{ast::Expression, AstKind};
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_semantic::SymbolId;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
-    rule::Rule,
-    utils::{get_prop_value, is_constructor_matching_name},
-    AstNode,
+    ast_util::is_method_call,
+    utils::{find_initialized_binding, is_constructor_matching_name, ReactPerfRule},
 };
-
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-react-perf(jsx-no-new-array-as-prop): JSX attribute values should not contain Arrays created in the same scope.")]
-#[diagnostic(severity(warning), help(r"simplify props or memoize props in the parent component (https://react.dev/reference/react/memo#my-component-rerenders-when-a-prop-is-an-object-or-array)."))]
-struct JsxNoNewArrayAsPropDiagnostic(#[label] pub Span);
 
 #[derive(Debug, Default, Clone)]
 pub struct JsxNoNewArrayAsProp;
@@ -43,30 +30,36 @@ declare_oxc_lint!(
     /// <Item list={this.props.list} />
     /// ```
     JsxNoNewArrayAsProp,
-    correctness
+    perf
 );
 
-impl Rule for JsxNoNewArrayAsProp {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::JSXElement(jsx_elem) = node.kind() {
-            check_jsx_element(jsx_elem, ctx);
-        }
-    }
-}
+impl ReactPerfRule for JsxNoNewArrayAsProp {
+    const MESSAGE: &'static str =
+        "JSX attribute values should not contain Arrays created in the same scope.";
 
-fn check_jsx_element<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintContext<'a>) {
-    for item in &jsx_elem.opening_element.attributes {
-        match get_prop_value(item) {
-            None => return,
-            Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                if let Some(expr) = container.expression.as_expression() {
-                    if let Some(span) = check_expression(expr) {
-                        ctx.diagnostic(JsxNoNewArrayAsPropDiagnostic(span));
-                    }
+    fn check_for_violation_on_expr(&self, expr: &Expression<'_>) -> Option<Span> {
+        check_expression(expr)
+    }
+
+    fn check_for_violation_on_ast_kind(
+        &self,
+        kind: &AstKind<'_>,
+        symbol_id: SymbolId,
+    ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
+        match kind {
+            AstKind::VariableDeclarator(decl) => {
+                if let Some(init_span) = decl.init.as_ref().and_then(check_expression) {
+                    return Some((decl.id.span(), Some(init_span)));
                 }
+                None
             }
-            _ => {}
-        };
+            AstKind::FormalParameter(param) => {
+                let (id, init) = find_initialized_binding(&param.pattern, symbol_id)?;
+                let init_span = check_expression(init)?;
+                Some((id.span(), Some(init_span)))
+            }
+            _ => None,
+        }
     }
 }
 
@@ -74,7 +67,15 @@ fn check_expression(expr: &Expression) -> Option<Span> {
     match expr.without_parenthesized() {
         Expression::ArrayExpression(expr) => Some(expr.span),
         Expression::CallExpression(expr) => {
-            if is_constructor_matching_name(&expr.callee, "Array") {
+            if is_constructor_matching_name(&expr.callee, "Array")
+                || is_method_call(
+                    expr.as_ref(),
+                    None,
+                    Some(&["concat", "map", "filter"]),
+                    Some(1),
+                    Some(1),
+                )
+            {
                 Some(expr.span)
             } else {
                 None
@@ -101,15 +102,31 @@ fn check_expression(expr: &Expression) -> Option<Span> {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![r"<Item list={this.props.list} />"];
-
-    let fail = vec![
+    let pass = vec![
+        r"<Item list={this.props.list} />",
         r"<Item list={[]} />",
         r"<Item list={new Array()} />",
         r"<Item list={Array()} />",
         r"<Item list={this.props.list || []} />",
         r"<Item list={this.props.list ? this.props.list : []} />",
         r"<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />",
+        r"const Foo = () => <Item list={this.props.list} />",
+        r"const x = []; const Foo = () => <Item list={x} />",
+        r"const DEFAULT_X = []; const Foo = ({ x = DEFAULT_X }) => <Item list={x} />",
+    ];
+
+    let fail = vec![
+        r"const Foo = () => (<Item list={[]} />)",
+        r"const Foo = () => (<Item list={new Array()} />)",
+        r"const Foo = () => (<Item list={Array()} />)",
+        r"const Foo = () => (<Item list={arr1.concat(arr2)} />)",
+        r"const Foo = () => (<Item list={arr1.filter(x => x > 0)} />)",
+        r"const Foo = () => (<Item list={arr1.map(x => x * x)} />)",
+        r"const Foo = () => (<Item list={this.props.list || []} />)",
+        r"const Foo = () => (<Item list={this.props.list ? this.props.list : []} />)",
+        r"const Foo = () => (<Item list={this.props.list || (this.props.arr ? this.props.arr : [])} />)",
+        r"const Foo = () => { let x = []; return <Item list={x} /> }",
+        r"const Foo = ({ x = [] }) => <Item list={x} />",
     ];
 
     Tester::new(JsxNoNewArrayAsProp::NAME, pass, fail)

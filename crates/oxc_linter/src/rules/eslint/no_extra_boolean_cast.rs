@@ -1,30 +1,23 @@
 use itertools::Itertools;
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{LogicalOperator, UnaryOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-extra-boolean-cast): Redundant double negation")]
-#[diagnostic(
-    severity(warning),
-    help("Remove the double negation as it will already be coerced to a boolean")
-)]
-struct NoExtraDoubleNegationCastDiagnostic(#[label] pub Span);
+fn no_extra_double_negation_cast_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Redundant double negation")
+        .with_help("Remove the double negation as it will already be coerced to a boolean")
+        .with_label(span0)
+}
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-extra-boolean-cast): Redundant Boolean call")]
-#[diagnostic(
-    severity(warning),
-    help("Remove the Boolean call as it will already be coerced to a boolean")
-)]
-struct NoExtraBooleanCastDiagnostic(#[label] pub Span);
+fn no_extra_boolean_cast_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Redundant Boolean call")
+        .with_help("Remove the Boolean call as it will already be coerced to a boolean")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoExtraBooleanCast {
@@ -71,13 +64,15 @@ impl Rule for NoExtraBooleanCast {
                 if expr.callee.is_specific_id("Boolean")
                     && is_flagged_ctx(node, ctx, self.enforce_for_logical_operands) =>
             {
-                ctx.diagnostic(NoExtraBooleanCastDiagnostic(expr.span));
+                ctx.diagnostic(no_extra_boolean_cast_diagnostic(expr.span));
             }
             AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::LogicalNot => {
-                let Some(parent) = get_real_parent(node, ctx) else { return };
+                let Some(parent) = get_real_parent(node, ctx) else {
+                    return;
+                };
                 if matches!(parent.kind(), AstKind::UnaryExpression(p) if p.operator == UnaryOperator::LogicalNot && is_flagged_ctx(parent, ctx, self.enforce_for_logical_operands))
                 {
-                    ctx.diagnostic(NoExtraDoubleNegationCastDiagnostic(parent.kind().span()));
+                    ctx.diagnostic(no_extra_double_negation_cast_diagnostic(parent.kind().span()));
                 }
             }
             _ => {}

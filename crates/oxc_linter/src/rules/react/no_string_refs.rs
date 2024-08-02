@@ -5,10 +5,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
@@ -19,15 +16,16 @@ use crate::{
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-enum NoStringRefsDiagnostic {
-    #[error("eslint-plugin-react(no-string-refs): Using this.refs is deprecated.")]
-    #[diagnostic(severity(warning), help("Using this.xxx instead of this.refs.xxx"))]
-    ThisRefsDeprecated(#[label] Span),
+fn this_refs_deprecated(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Using this.refs is deprecated.")
+        .with_help("Using this.xxx instead of this.refs.xxx")
+        .with_label(span0)
+}
 
-    #[error("eslint-plugin-react(no-string-refs): Using string literals in ref attributes is deprecated.")]
-    #[diagnostic(severity(warning), help("Using reference callback instead"))]
-    StringInRefDeprecated(#[label] Span),
+fn string_in_ref_deprecated(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Using string literals in ref attributes is deprecated.")
+        .with_help("Using reference callback instead")
+        .with_label(span0)
 }
 
 #[derive(Debug, Default, Clone)]
@@ -84,7 +82,9 @@ fn contains_string_literal(
 }
 
 fn is_literal_ref_attribute(attr: &JSXAttribute, no_template_literals: bool) -> bool {
-    let JSXAttributeName::Identifier(attr_ident) = &attr.name else { return false };
+    let JSXAttributeName::Identifier(attr_ident) = &attr.name else {
+        return false;
+    };
     if attr_ident.name == "ref" {
         if let Some(attr_value) = &attr.value {
             return match attr_value {
@@ -107,11 +107,12 @@ impl Rule for NoStringRefs {
 
         Self { no_template_literals }
     }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXAttributeItem(JSXAttributeItem::Attribute(attr)) => {
                 if is_literal_ref_attribute(attr, self.no_template_literals) {
-                    ctx.diagnostic(NoStringRefsDiagnostic::StringInRefDeprecated(attr.span));
+                    ctx.diagnostic(string_in_ref_deprecated(attr.span));
                 }
             }
             AstKind::MemberExpression(member_expr) => {
@@ -120,11 +121,15 @@ impl Rule for NoStringRefs {
                     && (get_parent_es5_component(node, ctx).is_some()
                         || get_parent_es6_component(ctx).is_some())
                 {
-                    ctx.diagnostic(NoStringRefsDiagnostic::ThisRefsDeprecated(member_expr.span()));
+                    ctx.diagnostic(this_refs_deprecated(member_expr.span()));
                 }
             }
             _ => {}
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_jsx()
     }
 }
 

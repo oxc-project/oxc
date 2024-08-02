@@ -1,6 +1,7 @@
 name: Release Oxlint
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
@@ -16,7 +17,6 @@ jobs:
     name: Check version
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.version.outputs.version }}
       version_changed: ${{ steps.version.outputs.changed }}
     steps:
       - uses: taiki-e/checkout-action@v1
@@ -37,9 +37,6 @@ jobs:
   build:
     needs: check
     if: needs.check.outputs.version_changed == 'true'
-    env:
-      version: ${{ needs.check.outputs.version }}
-      OXC_VERSION: ${{ needs.check.outputs.version }}
     strategy:
       matrix:
         include:
@@ -77,6 +74,9 @@ jobs:
 
     name: Package ${{ matrix.code-target }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: taiki-e/checkout-action@v1
 
@@ -91,25 +91,41 @@ jobs:
       - name: Add Rust Target
         run: rustup target add ${{ matrix.target }}
 
-      - name: Build with cross
-        run: cross build -p oxc_cli --bin oxlint --release --target=${{ matrix.target }} --features allocator
-
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
-        if: runner.os == 'Windows'
+      - name: Build
         shell: bash
         run: |
-          BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint.exe $BIN_NAME.exe
-          7z a $BIN_NAME.zip $BIN_NAME.exe
+          # Need to support 16kb-aligned pages for aarch64 systems,
+          # Asahi Linux & Raspberry Pi OS use a 16k page size.
+          # https://github.com/oxc-project/oxc/issues/3783
+          case ${{ matrix.target }} in
+            aarch64-*) export JEMALLOC_SYS_WITH_LG_PAGE=16 ;;
+          esac;
+          cross build --release --target=${{ matrix.target }} --bin oxlint --features allocator
+          cross build -p oxc_language_server --bin oxc_language_server --release --target=${{ matrix.target }}
 
-      # The binary is zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
-      - name: Archive Binary
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
+        if: runner.os == 'Windows'
+        run: |
+          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint.exe $OXLINT_BIN_NAME.exe
+          7z a $OXLINT_BIN_NAME.zip $OXLINT_BIN_NAME.exe
+
+          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_language_server.exe $OXLS_BIN_NAME.exe
+          7z a $OXLS_BIN_NAME.zip $OXLS_BIN_NAME.exe
+
+      # The binaries are zipped to fix permission loss https://github.com/actions/upload-artifact#permission-loss
+      - name: Archive Binaries
         if: runner.os != 'Windows'
         run: |
-          BIN_NAME=oxlint-${{ matrix.code-target }}
-          mv target/${{ matrix.target }}/release/oxlint $BIN_NAME
-          tar czf $BIN_NAME.tar.gz $BIN_NAME
+          OXLINT_BIN_NAME=oxlint-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxlint $OXLINT_BIN_NAME
+          tar czf $OXLINT_BIN_NAME.tar.gz $OXLINT_BIN_NAME
+
+          OXLS_BIN_NAME=oxc_language_server-${{ matrix.code-target }}
+          mv target/${{ matrix.target }}/release/oxc_language_server $OXLS_BIN_NAME
+          tar czf $OXLS_BIN_NAME.tar.gz $OXLS_BIN_NAME
 
       - name: Upload Binary
         uses: actions/upload-artifact@v4
@@ -127,17 +143,31 @@ jobs:
     permissions:
       contents: write # for softprops/action-gh-release@v1
       id-token: write # for `npm publish --provenance`
+    outputs:
+      version: ${{ steps.run.outputs.VERSION }}
     steps:
-      - uses: taiki-e/checkout-action@v1
-
-      - name: Install Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
         with:
-          node-version: 20
-          registry-url: 'https://registry.npmjs.org'
+          fetch-depth: 0 # for changelog
 
-      - name: Download Artifacts
-        uses: actions/download-artifact@v4
+      - uses: Boshen/setup-rust@main
+        with:
+          restore-cache: false
+          tools: cargo-release-oxc
+
+      - name: Run
+        id: run
+        run: |
+          mkdir -p target
+          cargo release-oxc changelog --release oxlint
+          echo "VERSION=$(cat ./target/OXC_VERSION)" >> $GITHUB_OUTPUT
+          {
+            echo 'CHANGELOG<<EOF'
+            cat ./target/OXC_CHANGELOG
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v4
         with:
           merge-multiple: true
 
@@ -149,6 +179,11 @@ jobs:
       - name: Untar
         run: ls *.gz | xargs -i tar xf {}
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Generate npm packages
         run: |
           node npm/oxlint/scripts/generate-packages.mjs
@@ -158,7 +193,6 @@ jobs:
       - name: Publish npm packages as latest
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        shell: bash
         # NOTE: The trailing slash on $package/ changes it to publishing the directory
         run: |
           for package in npm/oxlint*
@@ -170,15 +204,16 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          name: oxlint v${{ needs.check.outputs.version }}
-          tag_name: oxlint_v${{ needs.check.outputs.version }}
+          body: ${{ steps.run.outputs.CHANGELOG }}
           draft: true
           files: oxlint-*
+          name: oxlint v${{ steps.run.outputs.VERSION }}
+          tag_name: oxlint_v${{ steps.run.outputs.VERSION }}
           fail_on_unmatched_files: true
+          target_commitish: ${{ github.sha }}
 
-      - name: wait 3 minutes for smoke test
-        shell: bash
-        run: sleep 180s
+      - name: wait 1 minute for smoke test
+        run: sleep 60s
 
   smoke:
     needs: publish
@@ -195,8 +230,21 @@ jobs:
     container: ${{ matrix.container }}
     steps:
       - name: Test
-        shell: sh
         run: |
           touch test.js
           ldd --version || true
           npx oxlint@${{ needs.check.outputs.version }} ./test.js
+
+  eslint-plugin-oxlint:
+    needs: publish
+    name: Update eslint-plugin-oxlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: taiki-e/checkout-action@v1
+      - uses: benc-uk/workflow-dispatch@v1
+        with:
+          repo: oxc-project/eslint-plugin-oxlint
+          workflow: bump_oxlint.yml
+          token: ${{ secrets.PAT }}
+          ref: main
+          inputs: '{ "version": "${{ needs.publish.outputs.version }}" }'

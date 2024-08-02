@@ -1,22 +1,19 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
-    fixer::Fix,
     rule::Rule,
     utils::{collect_possible_jest_call_node, parse_expect_jest_fn_call, PossibleJestNode},
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(no-alias-methods): Unexpected alias {0:?}")]
-#[diagnostic(severity(warning), help("Replace {0:?} with its canonical name of {1:?}"))]
-struct NoAliasMethodsDiagnostic(pub &'static str, pub &'static str, #[label] pub Span);
+fn no_alias_methods_diagnostic(x1: &str, x2: &str, span3: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn(format!("Unexpected alias {x1:?}"))
+        .with_help(format!("Replace {x1:?} with its canonical name of {x2:?}"))
+        .with_label(span3)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAliasMethods;
@@ -45,8 +42,20 @@ declare_oxc_lint!(
     /// expect(a).nthReturnedWith();
     /// expect(a).toThrowError();
     /// ```
+    ///
+    /// This rule is compatible with [eslint-plugin-vitest](https://github.com/veritem/eslint-plugin-vitest/blob/main/docs/rules/no-alias-methods.md),
+    /// to use it, add the following configuration to your `.eslintrc.json`:
+    ///
+    /// ```json
+    /// {
+    ///   "rules": {
+    ///      "vitest/no-alias-methods": "error"
+    ///   }
+    /// }
+    /// ```
     NoAliasMethods,
-    style
+    style,
+    fix
 );
 
 impl Rule for NoAliasMethods {
@@ -72,18 +81,18 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
             if let Some(method_name) = BadAliasMethodName::from_str(alias.as_ref()) {
                 let (name, canonical_name) = method_name.name_with_canonical();
 
-                let mut start = matcher.span.start;
-                let mut end = matcher.span.end;
+                let mut span = matcher.span;
                 // expect(a).not['toThrowError']()
                 // matcher is the node of `toThrowError`, we only what to replace the content in the quotes.
                 if matcher.element.is_string_literal() {
-                    start += 1;
-                    end -= 1;
+                    span.start += 1;
+                    span.end -= 1;
                 }
 
                 ctx.diagnostic_with_fix(
-                    NoAliasMethodsDiagnostic(name, canonical_name, matcher.span),
-                    || Fix::new(canonical_name, Span::new(start, end)),
+                    no_alias_methods_diagnostic(name, canonical_name, matcher.span),
+                    // || Fix::new(canonical_name, Span::new(start, end)),
+                    |fixer| fixer.replace(span, canonical_name),
                 );
             }
         }
@@ -121,6 +130,7 @@ impl BadAliasMethodName {
             _ => None,
         }
     }
+
     fn name_with_canonical(&self) -> (&'static str, &'static str) {
         match self {
             Self::ToBeCalled => ("toBeCalled", "toHaveBeenCalled"),
@@ -142,7 +152,7 @@ impl BadAliasMethodName {
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec![
+    let mut pass = vec![
         ("expect(a).toHaveBeenCalled()", None),
         ("expect(a).toHaveBeenCalledTimes()", None),
         ("expect(a).toHaveBeenCalledWith()", None),
@@ -158,7 +168,7 @@ fn test() {
         ("expect(a);", None),
     ];
 
-    let fail = vec![
+    let mut fail = vec![
         ("expect(a).toBeCalled()", None),
         ("expect(a).toBeCalledTimes()", None),
         ("expect(a).toBeCalledWith()", None),
@@ -176,14 +186,47 @@ fn test() {
         ("expect(a).not['toThrowError']()", None),
     ];
 
-    let fix = vec![
+    let mut fix = vec![
         ("expect(a).toBeCalled()", "expect(a).toHaveBeenCalled()", None),
         ("expect(a).not['toThrowError']()", "expect(a).not['toThrow']()", None),
         ("expect(a).not[`toThrowError`]()", "expect(a).not[`toThrow`]()", None),
     ];
 
+    let pass_vitest = vec![
+        "expect(a).toHaveBeenCalled()",
+        "expect(a).toHaveBeenCalledTimes()",
+        "expect(a).toHaveBeenCalledWith()",
+        "expect(a).toHaveBeenLastCalledWith()",
+        "expect(a).toHaveBeenNthCalledWith()",
+        "expect(a).toHaveReturned()",
+        "expect(a).toHaveReturnedTimes()",
+        "expect(a).toHaveReturnedWith()",
+        "expect(a).toHaveLastReturnedWith()",
+        "expect(a).toHaveNthReturnedWith()",
+        "expect(a).toThrow()",
+        "expect(a).rejects;",
+        "expect(a);",
+    ];
+
+    let fail_vitest = vec![
+        "expect(a).toBeCalled()",
+        "expect(a).toBeCalledTimes()",
+        r#"expect(a).not["toThrowError"]()"#,
+    ];
+
+    let fix_vitest = vec![
+        ("expect(a).toBeCalled()", "expect(a).toHaveBeenCalled()", None),
+        ("expect(a).toBeCalledTimes()", "expect(a).toHaveBeenCalledTimes()", None),
+        ("expect(a).not['toThrowError']()", "expect(a).not['toThrow']()", None),
+    ];
+
+    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
+    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+    fix.extend(fix_vitest);
+
     Tester::new(NoAliasMethods::NAME, pass, fail)
         .with_jest_plugin(true)
+        .with_vitest_plugin(true)
         .expect_fix(fix)
         .test_and_snapshot();
 }

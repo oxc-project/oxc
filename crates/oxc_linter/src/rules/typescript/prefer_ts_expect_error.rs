@@ -1,23 +1,15 @@
 use oxc_ast::CommentKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::fixer::Fix;
 use crate::{context::LintContext, rule::Rule};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error(
-    "typescript-eslint(prefer-ts-expect-error): Enforce using `@ts-expect-error` over `@ts-ignore`"
-)]
-#[diagnostic(
-    severity(warning),
-    help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
-)]
-struct PreferTsExpectErrorDiagnostic(#[label] pub Span);
+fn prefer_ts_expect_error_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Enforce using `@ts-expect-error` over `@ts-ignore`")
+        .with_help("Use \"@ts-expect-error\" to ensure an error is actually being suppressed.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferTsExpectError;
@@ -46,38 +38,43 @@ declare_oxc_lint!(
     /// const multiLine: number = 'value';
     /// ```
     PreferTsExpectError,
-    pedantic
+    pedantic,
+    fix
 );
 
 impl Rule for PreferTsExpectError {
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.semantic().trivias().comments();
 
-        for (kind, span) in comments {
-            let raw = span.source_text(ctx.semantic().source_text());
+        for comment in comments {
+            let raw = comment.span.source_text(ctx.semantic().source_text());
 
-            if !is_valid_ts_ignore_present(kind, raw) {
+            if !is_valid_ts_ignore_present(comment.kind, raw) {
                 continue;
             }
 
-            if kind.is_single_line() {
-                let comment_span = Span::new(span.start - 2, span.end);
-                ctx.diagnostic_with_fix(PreferTsExpectErrorDiagnostic(comment_span), || {
-                    Fix::new(
-                        format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
+            if comment.kind.is_single_line() {
+                let comment_span = Span::new(comment.span.start - 2, comment.span.end);
+                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
+                    fixer.replace(
                         comment_span,
+                        format!("//{}", raw.replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             } else {
-                let comment_span = Span::new(span.start - 2, span.end + 2);
-                ctx.diagnostic_with_fix(PreferTsExpectErrorDiagnostic(comment_span), || {
-                    Fix::new(
-                        format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
+                let comment_span = Span::new(comment.span.start - 2, comment.span.end + 2);
+                ctx.diagnostic_with_fix(prefer_ts_expect_error_diagnostic(comment_span), |fixer| {
+                    fixer.replace(
                         comment_span,
+                        format!("/*{}*/", raw.replace("@ts-ignore", "@ts-expect-error")),
                     )
                 });
             }
         }
+    }
+
+    fn should_run(&self, ctx: &LintContext) -> bool {
+        ctx.source_type().is_typescript()
     }
 }
 

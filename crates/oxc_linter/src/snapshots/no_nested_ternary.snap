@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_nested_ternary
 ---
   ⚠ eslint-plugin-unicorn(no-nested-ternary): Unexpected deeply nested ternary expression.
    ╭─[no_nested_ternary.tsx:1:47]

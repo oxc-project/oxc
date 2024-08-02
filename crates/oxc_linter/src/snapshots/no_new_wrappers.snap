@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_new_wrappers
 ---
   ⚠ eslint(no-new-wrappers): Disallow new operators with the String, Number, and Boolean objects
    ╭─[no_new_wrappers.tsx:1:9]

@@ -1,20 +1,15 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 
 use crate::{ast_util::calculate_hash, context::LintContext, rule::Rule, AstNode};
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint(no-self-compare): Disallow comparisons where both sides are exactly the same")]
-#[diagnostic(
-    severity(warning),
-    help("If you are testing for NaN, you can use Number.isNaN function.")
-)]
-struct NoSelfCompareDiagnostic(#[label] pub Span, #[label] pub Span);
+fn no_self_compare_diagnostic(span0: Span, span1: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow comparisons where both sides are exactly the same")
+        .with_help("If you are testing for NaN, you can use Number.isNaN function.")
+        .with_labels([span0, span1])
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSelfCompare;
@@ -43,7 +38,9 @@ declare_oxc_lint!(
 
 impl Rule for NoSelfCompare {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(binary_expr) = node.kind() else { return };
+        let AstKind::BinaryExpression(binary_expr) = node.kind() else {
+            return;
+        };
         if !binary_expr.operator.is_compare() && !binary_expr.operator.is_equality() {
             return;
         }
@@ -51,7 +48,7 @@ impl Rule for NoSelfCompare {
         let right = calculate_hash(&binary_expr.right);
 
         if left == right {
-            ctx.diagnostic(NoSelfCompareDiagnostic(
+            ctx.diagnostic(no_self_compare_diagnostic(
                 binary_expr.left.span(),
                 binary_expr.right.span(),
             ));

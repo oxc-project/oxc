@@ -1,11 +1,11 @@
 {
   "name": "oxlint",
-  "version": "0.3.1",
+  "version": "0.6.1",
   "description": "Linter for the JavaScript Oxidation Compiler",
   "keywords": [],
   "author": "Boshen and oxc contributors",
   "license": "MIT",
-  "homepage": "https://oxc-project.github.io",
+  "homepage": "https://oxc.rs",
   "bugs": "https://github.com/oxc-project/oxc/issues",
   "repository": {
     "type": "git",
@@ -21,6 +21,8 @@
   },
   "files": [
     "bin/oxlint",
+    "bin/oxc_language_server",
+    "configuration_schema.json",
     "README.md"
   ]
 }

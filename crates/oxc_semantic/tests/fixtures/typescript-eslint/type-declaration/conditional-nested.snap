@@ -1,0 +1,96 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaration/conditional-nested.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flag": "ScopeFlags(StrictMode)",
+                "id": 3,
+                "node": "TSConditionalType",
+                "symbols": [
+                  {
+                    "flag": "SymbolFlags(TypeParameter)",
+                    "id": 3,
+                    "name": "U",
+                    "node": "TSTypeParameter",
+                    "references": [
+                      {
+                        "flag": "ReferenceFlag(Type)",
+                        "id": 5,
+                        "name": "U",
+                        "node_id": 33
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "flag": "ScopeFlags(StrictMode)",
+            "id": 2,
+            "node": "TSConditionalType",
+            "symbols": [
+              {
+                "flag": "SymbolFlags(TypeParameter)",
+                "id": 2,
+                "name": "U",
+                "node": "TSTypeParameter",
+                "references": [
+                  {
+                    "flag": "ReferenceFlag(Type)",
+                    "id": 2,
+                    "name": "U",
+                    "node_id": 19
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "flag": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": [
+          {
+            "flag": "SymbolFlags(TypeParameter)",
+            "id": 1,
+            "name": "T",
+            "node": "TSTypeParameter",
+            "references": [
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 0,
+                "name": "T",
+                "node_id": 9
+              },
+              {
+                "flag": "ReferenceFlag(Type)",
+                "id": 3,
+                "name": "T",
+                "node_id": 23
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "flag": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flag": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "Test",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

@@ -1,6 +1,5 @@
 ---
 source: crates/oxc_linter/src/tester.rs
-expression: no_dupe_else_if
 ---
   ⚠ eslint(no-dupe-else-if): duplicate conditions in if-else-if chains
    ╭─[no_dupe_else_if.tsx:1:5]

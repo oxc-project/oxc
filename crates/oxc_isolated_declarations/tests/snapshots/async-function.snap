@@ -1,0 +1,46 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/async-function.ts
+---
+==================== .D.TS ====================
+
+declare function asyncFunctionGood(): Promise<number>;
+declare const asyncFunctionGoo2: () => Promise<number>;
+declare class AsyncClassGood {
+	method(): number;
+}
+declare function asyncFunction();
+declare const asyncFunction2: unknown;
+declare class AsyncClassBad {
+	method();
+}
+
+
+==================== Errors ====================
+
+  x TS9007: Function must have an explicit return type annotation with
+  | --isolatedDeclarations.
+    ,-[16:16]
+ 15 | // Incorrect
+ 16 | async function asyncFunction() {
+    :                ^^^^^^^^^^^^^
+ 17 |   return 42;
+    `----
+
+  x TS9007: Function must have an explicit return type annotation with
+  | --isolatedDeclarations.
+    ,-[20:30]
+ 19 | 
+ 20 | const asyncFunction2 = async () => {
+    :                              ^^^^^^^
+ 21 |   return "Hello, World!";
+    `----
+
+  x TS9008: Method must have an explicit return type annotation with
+  | --isolatedDeclarations.
+    ,-[25:9]
+ 24 | class AsyncClassBad {
+ 25 |   async method() {
+    :         ^^^^^^
+ 26 |     return 42;
+    `----

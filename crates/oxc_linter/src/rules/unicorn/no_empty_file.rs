@@ -1,8 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
@@ -10,10 +7,11 @@ use crate::{
     context::LintContext, partial_loader::LINT_PARTIAL_LOADER_EXT, rule::Rule, utils::is_empty_stmt,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-unicorn(no-empty-file): Empty files are not allowed.")]
-#[diagnostic(severity(warning), help("Delete this file or add some code to it."))]
-struct NoEmptyFileDiagnostic(#[label] pub Span);
+fn no_empty_file_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Empty files are not allowed.")
+        .with_help("Delete this file or add some code to it.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoEmptyFile;
@@ -47,7 +45,9 @@ impl Rule for NoEmptyFile {
         {
             return;
         }
-        let Some(root) = ctx.nodes().root_node() else { return };
+        let Some(root) = ctx.nodes().root_node() else {
+            return;
+        };
         let AstKind::Program(program) = root.kind() else { unreachable!() };
 
         if program.body.iter().any(|node| !is_empty_stmt(node)) {
@@ -58,16 +58,22 @@ impl Rule for NoEmptyFile {
             return;
         }
 
-        ctx.diagnostic(NoEmptyFileDiagnostic(Span::new(0, 0)));
+        let mut span = program.span;
+        // only show diagnostic for the first 100 characters to avoid huge diagnostic messages with
+        // empty programs containing a bunch of comments.
+        // NOTE: if the enable/disable directives come after the first 100 characters they won't be
+        // respected by this diagnostic.
+        span.end = std::cmp::min(span.end, 100);
+        ctx.diagnostic(no_empty_file_diagnostic(span));
     }
 }
 
 fn has_triple_slash_directive(ctx: &LintContext<'_>) -> bool {
-    for (kind, span) in ctx.semantic().trivias().comments() {
-        if !kind.is_single_line() {
+    for comment in ctx.semantic().trivias().comments() {
+        if !comment.kind.is_single_line() {
             continue;
         }
-        let text = span.source_text(ctx.source_text());
+        let text = comment.span.source_text(ctx.source_text());
         if text.starts_with("///") {
             return true;
         }
@@ -104,6 +110,7 @@ fn test() {
         r"[]",
         r"(() => {})()",
         "(() => {})();",
+        "/* eslint-disable no-empty-file */",
     ];
 
     let fail = vec![

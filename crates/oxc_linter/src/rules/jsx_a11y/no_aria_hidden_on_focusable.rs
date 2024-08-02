@@ -2,24 +2,22 @@ use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXOpeningElement},
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_lowercase, parse_jsx_value},
+    utils::{get_element_type, has_jsx_prop_ignore_case, parse_jsx_value},
     AstNode,
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jsx-a11y(no-aria-hidden-on-focusable): `aria-hidden` must not be true on focusable elements.")]
-#[diagnostic(severity(warning), help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable."))]
-struct NoAriaHiddenOnFocusableDiagnostic(#[label] pub Span);
+fn no_aria_hidden_on_focusable_diagnostic(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("`aria-hidden` must not be true on focusable elements.")
+        .with_help("Remove `aria-hidden=\"true\"` from focusable elements or modify the element to be not focusable.")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct NoAriaHiddenOnFocusable;
@@ -45,11 +43,13 @@ declare_oxc_lint!(
 
 impl Rule for NoAriaHiddenOnFocusable {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else { return };
-        if let Some(aria_hidden_prop) = has_jsx_prop_lowercase(jsx_el, "aria-hidden") {
+        let AstKind::JSXOpeningElement(jsx_el) = node.kind() else {
+            return;
+        };
+        if let Some(aria_hidden_prop) = has_jsx_prop_ignore_case(jsx_el, "aria-hidden") {
             if is_aria_hidden_true(aria_hidden_prop) && is_focusable(ctx, jsx_el) {
                 if let JSXAttributeItem::Attribute(boxed_attr) = aria_hidden_prop {
-                    ctx.diagnostic(NoAriaHiddenOnFocusableDiagnostic(boxed_attr.span));
+                    ctx.diagnostic(no_aria_hidden_on_focusable_diagnostic(boxed_attr.span));
                 }
             }
         }
@@ -89,16 +89,16 @@ fn is_focusable(ctx: &LintContext, element: &JSXOpeningElement) -> bool {
         return false;
     };
 
-    if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_lowercase(element, "tabIndex") {
+    if let Some(JSXAttributeItem::Attribute(attr)) = has_jsx_prop_ignore_case(element, "tabIndex") {
         if let Some(attr_value) = &attr.value {
             return parse_jsx_value(attr_value).map_or(false, |num| num >= 0.0);
         }
     }
 
     match tag_name.as_str() {
-        "a" | "area" => has_jsx_prop_lowercase(element, "href").is_some(),
+        "a" | "area" => has_jsx_prop_ignore_case(element, "href").is_some(),
         "button" | "input" | "select" | "textarea" => {
-            has_jsx_prop_lowercase(element, "disabled").is_none()
+            has_jsx_prop_ignore_case(element, "disabled").is_none()
         }
         _ => false,
     }

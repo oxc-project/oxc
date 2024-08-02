@@ -2,13 +2,12 @@ use std::borrow::Cow;
 
 use num_bigint::BigInt;
 use num_traits::{One, Zero};
-use oxc_semantic::ReferenceFlag;
-use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
-
 use oxc_ast::ast::{
     match_expression, ArrayExpressionElement, BinaryExpression, Expression, NumericLiteral,
     ObjectProperty, ObjectPropertyKind, PropertyKey, SpreadElement, UnaryExpression,
 };
+use oxc_semantic::ReferenceFlag;
+use oxc_syntax::operator::{AssignmentOperator, LogicalOperator, UnaryOperator};
 
 /// Code ported from [closure-compiler](https://github.com/google/closure-compiler/blob/f3ce5ed8b630428e311fe9aa2e20d36560d975e2/src/com/google/javascript/jscomp/NodeUtil.java#LL836C6-L836C6)
 /// Returns true if this is a literal value. We define a literal value as any node that evaluates
@@ -110,7 +109,7 @@ impl<'a, 'b> CheckForStateChange<'a, 'b> for Expression<'a> {
             Self::NumericLiteral(_)
             | Self::BooleanLiteral(_)
             | Self::StringLiteral(_)
-            | Self::BigintLiteral(_)
+            | Self::BigIntLiteral(_)
             | Self::NullLiteral(_)
             | Self::RegExpLiteral(_)
             | Self::MetaProperty(_)
@@ -265,6 +264,7 @@ impl NumberValue {
 
 impl std::ops::Add<Self> for NumberValue {
     type Output = Self;
+
     fn add(self, other: Self) -> Self {
         match self {
             Self::Number(num) => match other {
@@ -288,6 +288,7 @@ impl std::ops::Add<Self> for NumberValue {
 
 impl TryFrom<NumberValue> for f64 {
     type Error = ();
+
     fn try_from(value: NumberValue) -> Result<Self, Self::Error> {
         match value {
             NumberValue::Number(num) => Ok(num),
@@ -394,7 +395,7 @@ pub fn get_bigint_value(expr: &Expression) -> Option<BigInt> {
                 None
             }
         }
-        Expression::BigintLiteral(_bigint_literal) => {
+        Expression::BigIntLiteral(_bigint_literal) => {
             // TODO: evaluate the bigint value
             None
         }
@@ -472,7 +473,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
         Expression::NullLiteral(_) => Some(false),
         Expression::BooleanLiteral(boolean_literal) => Some(boolean_literal.value),
         Expression::NumericLiteral(number_literal) => Some(number_literal.value != 0.0),
-        Expression::BigintLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
+        Expression::BigIntLiteral(big_int_literal) => Some(!big_int_literal.is_zero()),
         Expression::StringLiteral(string_literal) => Some(!string_literal.value.is_empty()),
         Expression::TemplateLiteral(template_literal) => {
             // only for ``
@@ -484,7 +485,8 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                 .map(|cooked| !cooked.is_empty())
         }
         Expression::Identifier(ident) => {
-            if expr.is_undefined() || ident.name == "NaN" {
+            /* `undefined` can be a shadowed variable expr.is_undefined() || */
+            if ident.name == "NaN" {
                 Some(false)
             } else if ident.name == "Infinity" {
                 Some(true)
@@ -587,7 +589,7 @@ pub fn get_string_value<'a>(expr: &'a Expression) -> Option<Cow<'a, str>> {
         Expression::NumericLiteral(number_literal) => {
             Some(Cow::Owned(number_literal.value.to_string()))
         }
-        Expression::BigintLiteral(big_int_literal) => {
+        Expression::BigIntLiteral(big_int_literal) => {
             Some(Cow::Owned(big_int_literal.raw.to_string()))
         }
         Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),

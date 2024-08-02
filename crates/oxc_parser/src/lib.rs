@@ -63,7 +63,7 @@
 
 mod context;
 mod cursor;
-mod list;
+mod modifiers;
 mod state;
 
 mod js;
@@ -79,14 +79,16 @@ mod lexer;
 #[doc(hidden)]
 pub mod lexer;
 
-pub use crate::lexer::Kind; // re-export for codegen
-
 use context::{Context, StatementContext};
 use oxc_allocator::Allocator;
-use oxc_ast::{ast::Program, AstBuilder, Trivias};
-use oxc_diagnostics::{Error, Result};
+use oxc_ast::{
+    ast::{Expression, Program},
+    AstBuilder, Trivias,
+};
+use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::{ModuleKind, SourceType, Span};
 
+pub use crate::lexer::Kind; // re-export for codegen
 use crate::{
     lexer::{Lexer, Token},
     state::ParserState,
@@ -113,7 +115,7 @@ pub const MAX_LEN: usize = if std::mem::size_of::<usize>() >= 8 {
 /// When `errors.len() > 0`, then program may or may not be empty due to error recovery.
 pub struct ParserReturn<'a> {
     pub program: Program<'a>,
-    pub errors: Vec<Error>,
+    pub errors: Vec<OxcDiagnostic>,
     pub trivias: Trivias,
     pub panicked: bool,
 }
@@ -228,6 +230,23 @@ mod parser_parse {
             );
             parser.parse()
         }
+
+        /// Parse `Expression`
+        ///
+        /// # Errors
+        ///
+        /// * Syntax Error
+        pub fn parse_expression(self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+            let unique = UniquePromise::new();
+            let parser = ParserImpl::new(
+                self.allocator,
+                self.source_text,
+                self.source_type,
+                self.options,
+                unique,
+            );
+            parser.parse_expression()
+        }
     }
 }
 use parser_parse::UniquePromise;
@@ -245,7 +264,7 @@ struct ParserImpl<'a> {
 
     /// All syntax errors from parser and lexer
     /// Note: favor adding to `Diagnostics` instead of raising Err
-    errors: Vec<Error>,
+    errors: Vec<OxcDiagnostic>,
 
     /// The current parsing token
     token: Token,
@@ -287,24 +306,11 @@ impl<'a> ParserImpl<'a> {
             errors: vec![],
             token: Token::default(),
             prev_token_end: 0,
-            state: ParserState::new(allocator),
+            state: ParserState::default(),
             ctx: Self::default_context(source_type, options),
             ast: AstBuilder::new(allocator),
             preserve_parens: options.preserve_parens,
         }
-    }
-
-    /// Backdoor to create a `ParserImpl` without holding a `UniquePromise`, for unit tests.
-    /// This function must NOT be exposed in public API as it breaks safety invariants.
-    #[cfg(test)]
-    fn new_for_tests(
-        allocator: &'a Allocator,
-        source_text: &'a str,
-        source_type: SourceType,
-        options: ParserOptions,
-    ) -> Self {
-        let unique = UniquePromise::new_for_tests();
-        Self::new(allocator, source_text, source_type, options, unique)
     }
 
     /// Main entry point
@@ -322,9 +328,9 @@ impl<'a> ParserImpl<'a> {
                 let program = self.ast.program(
                     Span::default(),
                     self.source_type,
-                    self.ast.new_vec(),
                     None,
-                    self.ast.new_vec(),
+                    self.ast.vec(),
+                    self.ast.vec(),
                 );
                 (program, true)
             }
@@ -332,6 +338,17 @@ impl<'a> ParserImpl<'a> {
         let errors = self.lexer.errors.into_iter().chain(self.errors).collect();
         let trivias = self.lexer.trivia_builder.build();
         ParserReturn { program, errors, trivias, panicked }
+    }
+
+    pub fn parse_expression(mut self) -> std::result::Result<Expression<'a>, Vec<OxcDiagnostic>> {
+        // initialize cur_token and prev_token by moving onto the first token
+        self.bump_any();
+        let expr = self.parse_expr().map_err(|diagnostic| vec![diagnostic])?;
+        let errors = self.lexer.errors.into_iter().chain(self.errors).collect::<Vec<_>>();
+        if !errors.is_empty() {
+            return Err(errors);
+        }
+        Ok(expr)
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -344,7 +361,7 @@ impl<'a> ParserImpl<'a> {
             self.parse_directives_and_statements(/* is_top_level */ true)?;
 
         let span = Span::new(0, self.source_text.len() as u32);
-        Ok(self.ast.program(span, self.source_type, directives, hashbang, statements))
+        Ok(self.ast.program(span, self.source_type, hashbang, directives, statements))
     }
 
     fn default_context(source_type: SourceType, options: ParserOptions) -> Context {
@@ -361,21 +378,21 @@ impl<'a> ParserImpl<'a> {
 
     /// Check for Flow declaration if the file cannot be parsed.
     /// The declaration must be [on the first line before any code](https://flow.org/en/docs/usage/#toc-prepare-your-code-for-flow)
-    fn flow_error(&self) -> Option<Error> {
+    fn flow_error(&self) -> Option<OxcDiagnostic> {
         if self.source_type.is_javascript()
             && (self.source_text.starts_with("// @flow")
                 || self.source_text.starts_with("/* @flow */"))
         {
-            return Some(diagnostics::Flow(Span::new(0, 8)).into());
+            return Some(diagnostics::flow(Span::new(0, 8)));
         }
         None
     }
 
     /// Check if source length exceeds MAX_LEN, if the file cannot be parsed.
     /// Original parsing error is not real - `Lexer::new` substituted "\0" as the source text.
-    fn overlong_error(&self) -> Option<Error> {
+    fn overlong_error(&self) -> Option<OxcDiagnostic> {
         if self.source_text.len() > MAX_LEN {
-            return Some(diagnostics::OverlongSource.into());
+            return Some(diagnostics::overlong_source());
         }
         None
     }
@@ -383,7 +400,7 @@ impl<'a> ParserImpl<'a> {
     /// Return error info at current token
     /// # Panics
     ///   * The lexer did not push a diagnostic when `Kind::Undetermined` is returned
-    fn unexpected(&mut self) -> Error {
+    fn unexpected(&mut self) -> OxcDiagnostic {
         // The lexer should have reported a more meaningful diagnostic
         // when it is a undetermined kind.
         if self.cur_kind() == Kind::Undetermined {
@@ -391,12 +408,16 @@ impl<'a> ParserImpl<'a> {
                 return error;
             }
         }
-        diagnostics::UnexpectedToken(self.cur_token().span()).into()
+        diagnostics::unexpected_token(self.cur_token().span())
     }
 
     /// Push a Syntax Error
-    fn error<T: Into<Error>>(&mut self, error: T) {
-        self.errors.push(error.into());
+    fn error(&mut self, error: OxcDiagnostic) {
+        self.errors.push(error);
+    }
+
+    fn errors_count(&self) -> usize {
+        self.errors.len() + self.lexer.errors.len()
     }
 
     fn ts_enabled(&self) -> bool {
@@ -406,19 +427,29 @@ impl<'a> ParserImpl<'a> {
 
 #[cfg(test)]
 mod test {
-    use oxc_ast::CommentKind;
     use std::path::Path;
+
+    use oxc_ast::{ast::Expression, CommentKind};
 
     use super::*;
 
     #[test]
-    fn smoke_test() {
+    fn parse_program_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
         let source = "";
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.program.is_empty());
         assert!(ret.errors.is_empty());
+    }
+
+    #[test]
+    fn parse_expression_smoke_test() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        let source = "a";
+        let expr = Parser::new(&allocator, source, source_type).parse_expression().unwrap();
+        assert!(matches!(expr, Expression::Identifier(_)));
     }
 
     #[test]
@@ -452,7 +483,7 @@ mod test {
         let sources = [
             ("import x from 'foo'; 'use strict';", 2),
             ("export {x} from 'foo'; 'use strict';", 2),
-            ("@decorator 'use strict';", 1),
+            (";'use strict';", 2),
         ];
         for (source, body_length) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
@@ -468,13 +499,16 @@ mod test {
         let sources = [
             ("// line comment", CommentKind::SingleLine),
             ("/* line comment */", CommentKind::MultiLine),
-            ("type Foo = ( /* Require properties which are not generated automatically. */ 'bar')", CommentKind::MultiLine),
+            (
+                "type Foo = ( /* Require properties which are not generated automatically. */ 'bar')",
+                CommentKind::MultiLine,
+            ),
         ];
         for (source, kind) in sources {
             let ret = Parser::new(&allocator, source, source_type).parse();
             let comments = ret.trivias.comments().collect::<Vec<_>>();
             assert_eq!(comments.len(), 1, "{source}");
-            assert_eq!(comments.first().unwrap().0, kind, "{source}");
+            assert_eq!(comments.first().unwrap().kind, kind, "{source}");
         }
     }
 
