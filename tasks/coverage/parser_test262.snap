@@ -81,7 +81,7 @@ Expect to Parse: "annexB/built-ins/RegExp/named-groups/non-unicode-malformed.js"
   × Character class range out of order
 Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/duplicate-named-capturing-groups-syntax.js"
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "annexB/built-ins/RegExp/prototype/compile/pattern-string-invalid.js"
 
   × Numbers out of order in braced quantifier
@@ -1225,25 +1225,25 @@ Expect to Parse: "built-ins/RegExp/match-indices/indices-array-unicode-match.js"
   × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/match-indices/indices-array-unicode-property-names.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/match-indices/indices-array-unmatched.js"
 
   × Character class range out of order
@@ -1307,12 +1307,12 @@ Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-exec.js"
   × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-group-property-enumeration-order.js"
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-match-indices.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-match.js"
 
   × Too many capturing groups
@@ -1348,54 +1348,54 @@ Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-match.js"
   × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-matchall.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-replace.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-replaceall.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-search.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-split.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-test.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/groups-object-undefined.js"
 
   × Character class range out of order
@@ -1581,21 +1581,21 @@ Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-property-names-valid
   × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-property-names.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/named-groups/non-unicode-references.js"
 
   × Too many capturing groups
@@ -8837,25 +8837,25 @@ Expect to Parse: "built-ins/RegExp/property-escapes/generated/XID_Start.js"
   × Character class range out of order
 Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/prototype/Symbol.match/builtin-coerce-lastindex.js"
 
   × Unterminated capturing group name
@@ -9164,14 +9164,14 @@ Expect to Parse: "built-ins/RegExp/prototype/exec/S15.10.6.2_A5_T1.js"
   × Invalid braced quantifier
 Expect to Parse: "built-ins/RegExp/prototype/exec/duplicate-named-groups-properties.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/prototype/exec/duplicate-named-indices-groups-properties.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/RegExp/prototype/exec/failure-g-lastindex-reset.js"
 
   × Unterminated capturing group name
@@ -9754,340 +9754,340 @@ Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifier
   × Too many capturing groups
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-difference-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-difference-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-difference-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-difference-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-difference-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-difference-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-difference-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-difference-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-difference-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-difference-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-difference-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-difference-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-intersection-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-intersection-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-intersection-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-intersection-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-intersection-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-intersection-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-union-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-union-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-union-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-union-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-union-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-escape-union-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-intersection-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-intersection-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-intersection-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-intersection-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-intersection-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-intersection-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-union-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-union-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-union-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-union-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-union-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-class-union-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-difference-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-difference-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-difference-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-difference-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-difference-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-difference-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-intersection-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-intersection-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-intersection-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-intersection-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-intersection-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-intersection-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-difference-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-difference-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-difference-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-difference-character.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-difference-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-difference-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-intersection-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-intersection-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-intersection-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-intersection-character.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-intersection-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-intersection-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-union-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-union-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-union-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-union-character.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-union-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-property-escape-union-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-union-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-union-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-union-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-union-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-union-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/character-union-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-difference-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-difference-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-difference-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-difference-character.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-difference-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-difference-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-intersection-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-intersection-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-intersection-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-intersection-character.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-intersection-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-intersection-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-union-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-union-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-union-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-union-character.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-union-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/property-of-strings-escape-union-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/rgi-emoji-13.1.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/rgi-emoji-14.0.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/rgi-emoji-15.0.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/rgi-emoji-15.1.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-difference-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-difference-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-difference-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-difference-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-difference-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-difference-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-intersection-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-intersection-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-intersection-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-intersection-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-intersection-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-intersection-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-union-character-class-escape.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-union-character-class.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-union-character-property-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-union-character.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-union-property-of-strings-escape.js"
 
-  × TODO: ClassSetExpression
+  × Character set class range out of order
 Expect to Parse: "built-ins/RegExp/unicodeSets/generated/string-literal-union-string-literal.js"
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 Expect to Parse: "built-ins/RegExp/unicode_character_class_backspace_escape.js"
 
   × Character class range out of order
@@ -10266,14 +10266,14 @@ Expect to Parse: "built-ins/String/prototype/match/S15.5.4.10_A2_T9.js"
   × Invalid braced quantifier
 Expect to Parse: "built-ins/String/prototype/match/duplicate-named-groups-properties.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/String/prototype/match/duplicate-named-indices-groups-properties.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "built-ins/String/prototype/matchAll/flags-nonglobal-throws.js"
 
   × Unterminated capturing group
@@ -10597,20 +10597,20 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups-r
   × Too many capturing groups
 Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups-search.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.js"
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:18:4]
@@ -10701,43 +10701,43 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated unicode property escape
 
   × Unterminated unicode property escape
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated unicode property escape
 
   × Unterminated unicode property escape
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated unicode property escape
 
   × Unterminated unicode property escape
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated unicode property escape
 
   × Unterminated unicode property escape
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated unicode property escape
 
   × Unterminated unicode property escape
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated unicode property escape
 
   × Unterminated unicode property escape
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated unicode property escape
 
   × Unterminated unicode property escape
 
@@ -10991,63 +10991,63 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
 
   × Character class range out of order
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
     ╭─[built-ins/RegExp/prototype/unicodeSets/uv-flags.js:17:1]
@@ -30384,13 +30384,13 @@ Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.j
 
   × Character class range out of order
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
-  × Character class range out of order
+  × Duplicated group name
 
   × Character class range out of order
 

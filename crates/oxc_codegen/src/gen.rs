@@ -8,11 +8,14 @@ use oxc_syntax::{
     identifier::{LS, PS},
     keyword::is_reserved_keyword_or_global_object,
     number::NumberBase,
-    operator::{BinaryOperator, UnaryOperator},
+    operator::{BinaryOperator, LogicalOperator, UnaryOperator},
     precedence::{GetPrecedence, Precedence},
 };
 
-use crate::{Codegen, Context, Operator};
+use crate::{
+    binary_expr_visitor::{BinaryExpressionVisitor, Binaryish, BinaryishOperator},
+    Codegen, Context, Operator,
+};
 
 pub trait Gen<const MINIFY: bool> {
     fn gen(&self, _p: &mut Codegen<{ MINIFY }>, _ctx: Context) {}
@@ -627,11 +630,12 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for VariableDeclarator<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for Function<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        p.add_source_mapping(self.span.start);
         let n = p.code_len();
-        p.gen_comment(self.span.start);
         let wrap = self.is_expression() && (p.start_of_stmt == n || p.start_of_default_export == n);
+        p.gen_comment(self.span.start);
         p.wrap(wrap, |p| {
+            p.print_space_before_identifier();
+            p.add_source_mapping(self.span.start);
             if self.declare {
                 p.print_str("declare ");
             }
@@ -1101,6 +1105,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ParenthesizedExpression<'a> {
 impl<'a, const MINIFY: bool> Gen<MINIFY> for IdentifierReference<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         let name = p.get_identifier_reference_name(self);
+        p.print_space_before_identifier();
         p.add_source_mapping_for_name(self.span, name);
         p.print_str(name);
     }
@@ -1131,6 +1136,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for LabelIdentifier<'a> {
 impl<const MINIFY: bool> Gen<MINIFY> for BooleanLiteral {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         p.add_source_mapping(self.span.start);
+        p.print_space_before_identifier();
         p.print_str(self.as_str());
     }
 }
@@ -1729,37 +1735,27 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for UnaryExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for BinaryExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        let mut ctx = ctx;
-        let wrap = precedence >= self.precedence()
-            || (self.operator == BinaryOperator::In && ctx.intersects(Context::FORBID_IN));
-        if wrap {
-            ctx &= Context::FORBID_IN.not();
-        }
-        p.wrap(wrap, |p| {
-            let left_precedence = if self.operator.precedence().is_right_associative() {
-                // "**" can't contain certain unary expressions
-                if matches!(self.left.without_parenthesized(), Expression::UnaryExpression(_)) {
-                    Precedence::Call
-                } else {
-                    self.precedence()
-                }
-            } else {
-                self.operator.lower_precedence()
-            };
-            self.left.gen_expr(p, left_precedence, ctx);
-            if self.operator.is_keyword() {
-                p.print_space_before_identifier();
-            } else {
-                p.print_soft_space();
-            }
-            self.operator.gen(p, ctx);
-            let right_precedence = if self.operator.precedence().is_left_associative() {
-                self.precedence()
-            } else {
-                self.operator.lower_precedence()
-            };
-            self.right.gen_expr(p, right_precedence, ctx & Context::FORBID_IN);
-        });
+        let v = BinaryExpressionVisitor {
+            // SAFETY:
+            // The pointer is stored on the heap and all will be consumed in the binary expression visitor.
+            e: Binaryish::Binary(unsafe {
+                std::mem::transmute::<&BinaryExpression<'_>, &BinaryExpression<'_>>(self)
+            }),
+            precedence,
+            ctx,
+            left_precedence: Precedence::Lowest,
+            left_ctx: Context::empty(),
+            operator: BinaryishOperator::Binary(self.operator),
+            wrap: false,
+            right_precedence: Precedence::Lowest,
+        };
+        BinaryExpressionVisitor::gen_expr(v, p);
+    }
+}
+
+impl<const MINIFY: bool> Gen<MINIFY> for LogicalOperator {
+    fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
+        p.print_str(self.as_str());
     }
 }
 
@@ -1767,13 +1763,12 @@ impl<const MINIFY: bool> Gen<MINIFY> for BinaryOperator {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, _ctx: Context) {
         let operator = self.as_str();
         if self.is_keyword() {
+            p.print_space_before_identifier();
             p.print_str(operator);
-            p.print_hard_space();
         } else {
             let op: Operator = (*self).into();
             p.print_space_before_operator(op);
             p.print_str(operator);
-            p.print_soft_space();
             p.prev_op = Some(op);
             p.prev_op_end = p.code().len();
         }
@@ -1790,18 +1785,21 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for PrivateInExpression<'a> {
 
 impl<'a, const MINIFY: bool> GenExpr<MINIFY> for LogicalExpression<'a> {
     fn gen_expr(&self, p: &mut Codegen<{ MINIFY }>, precedence: Precedence, ctx: Context) {
-        // Logical expressions and coalesce expressions cannot be mixed (Syntax Error).
-        let mixed = matches!(
-            (precedence, self.precedence()),
-            (Precedence::NullishCoalescing, Precedence::LogicalAnd | Precedence::LogicalOr)
-        );
-        p.wrap(mixed || (precedence >= self.precedence()), |p| {
-            self.left.gen_expr(p, self.precedence(), ctx);
-            p.print_soft_space();
-            p.print_str(self.operator.as_str());
-            p.print_soft_space();
-            self.right.gen_expr(p, self.precedence(), ctx);
-        });
+        let v = BinaryExpressionVisitor {
+            // SAFETY:
+            // The pointer is stored on the heap and all will be consumed in the binary expression visitor.
+            e: Binaryish::Logical(unsafe {
+                std::mem::transmute::<&LogicalExpression<'_>, &LogicalExpression<'_>>(self)
+            }),
+            precedence,
+            ctx,
+            left_precedence: Precedence::Lowest,
+            left_ctx: Context::empty(),
+            operator: BinaryishOperator::Logical(self.operator),
+            wrap: false,
+            right_precedence: Precedence::Lowest,
+        };
+        BinaryExpressionVisitor::gen_expr(v, p);
     }
 }
 

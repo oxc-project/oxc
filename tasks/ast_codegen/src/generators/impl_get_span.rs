@@ -1,23 +1,23 @@
-use std::collections::HashMap;
-
 use itertools::Itertools;
-use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Attribute, Variant};
+use syn::Variant;
 
 use crate::{
+    output,
     schema::{REnum, RStruct, RType},
     CodegenCtx, Generator, GeneratorOutput,
 };
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct ImplGetSpanGenerator;
+define_generator! {
+    pub struct ImplGetSpanGenerator;
+}
 
 impl Generator for ImplGetSpanGenerator {
     fn name(&self) -> &'static str {
-        "ImplGetSpanGenerator"
+        stringify!(ImplGetSpanGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
@@ -37,7 +37,7 @@ impl Generator for ImplGetSpanGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "span",
+            output(crate::AST_CRATE, "span.rs"),
             quote! {
                 #header
                 insert!("#![allow(clippy::match_same_arms)]");

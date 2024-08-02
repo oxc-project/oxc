@@ -3,7 +3,6 @@ use oxc_span::{Atom as SpanAtom, Span};
 
 // NOTE: Should keep all `enum` size <= 16
 
-/// The root.
 #[derive(Debug)]
 pub struct RegExpLiteral<'a> {
     pub span: Span,
@@ -11,7 +10,6 @@ pub struct RegExpLiteral<'a> {
     pub flags: Flags,
 }
 
-/// The flags.
 #[derive(Debug)]
 pub struct Flags {
     pub span: Span,
@@ -25,7 +23,6 @@ pub struct Flags {
     pub unicode_sets: bool,
 }
 
-/// The pattern.
 #[derive(Debug)]
 pub struct Pattern<'a> {
     pub span: Span,
@@ -115,7 +112,6 @@ pub enum CharacterKind {
     SingleEscape,
     Symbol,
     UnicodeEscape,
-    UnicodeCodePointEscape, // TODO: Should distinguish from `UnicodeEscape`?
 }
 
 #[derive(Debug)]
@@ -157,7 +153,9 @@ pub struct CharacterClass<'a> {
 #[derive(Debug)]
 pub enum CharacterClassContentsKind {
     Union,
+    /// `UnicodeSetsMode` only
     Intersection,
+    /// `UnicodeSetsMode` only
     Subtraction,
 }
 #[derive(Debug)]
@@ -166,12 +164,26 @@ pub enum CharacterClassContents<'a> {
     CharacterClassEscape(CharacterClassEscape),
     UnicodePropertyEscape(Box<'a, UnicodePropertyEscape<'a>>),
     Character(Character),
+    /// `UnicodeSetsMode` only
+    NestedCharacterClass(Box<'a, CharacterClass<'a>>),
+    /// `UnicodeSetsMode` only
+    ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
 }
 #[derive(Debug)]
 pub struct CharacterClassRange {
     pub span: Span,
     pub min: Character,
     pub max: Character,
+}
+#[derive(Debug)]
+pub struct ClassStringDisjunction<'a> {
+    pub span: Span,
+    pub body: Vec<'a, ClassString<'a>>,
+}
+#[derive(Debug)]
+pub struct ClassString<'a> {
+    pub span: Span,
+    pub body: Vec<'a, Character>,
 }
 
 #[derive(Debug)]
@@ -190,7 +202,6 @@ pub struct IgnoreGroup<'a> {
 }
 #[derive(Debug)]
 pub struct ModifierFlags {
-    pub span: Span,
     pub ignore_case: bool,
     pub sticky: bool,
     pub multiline: bool,

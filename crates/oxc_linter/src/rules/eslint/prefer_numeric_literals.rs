@@ -8,9 +8,12 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use phf::{phf_map, Map};
+use phf::{phf_map, phf_ordered_set, Map};
 
-use crate::{ast_util::get_symbol_id_of_variable, context::LintContext, rule::Rule, AstNode};
+use crate::{
+    ast_util::get_symbol_id_of_variable, context::LintContext, fixer::RuleFixer, rule::Rule,
+    AstNode,
+};
 
 fn prefer_numeric_literals_diagnostic(span0: Span, x0: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Use {x0} literals instead of parseInt().")).with_label(span0)
@@ -19,10 +22,10 @@ fn prefer_numeric_literals_diagnostic(span0: Span, x0: &str) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferNumericLiterals;
 
-const RADIX_MAP: Map<&'static str, &'static str> = phf_map! {
-    "2" => "binary",
-    "8" => "octal",
-    "16" => "hexadecimal",
+const RADIX_MAP: Map<&'static str, phf::OrderedSet<&'static str>> = phf_map! {
+    "2" => phf_ordered_set!{"binary", "0b"},
+    "8" => phf_ordered_set!{"octal", "0o"},
+    "16" => phf_ordered_set!{"hexadecimal", "0x"},
 };
 
 declare_oxc_lint!(
@@ -50,6 +53,7 @@ declare_oxc_lint!(
     /// ```
     PreferNumericLiterals,
     style,
+    conditional_fix
 );
 
 impl Rule for PreferNumericLiterals {
@@ -126,9 +130,86 @@ fn check_arguments<'a>(call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         return;
     };
 
-    if let Some(name) = RADIX_MAP.get(numeric_lit.raw) {
-        ctx.diagnostic(prefer_numeric_literals_diagnostic(call_expr.span, name));
+    if let Some(name_prefix_set) = RADIX_MAP.get(numeric_lit.raw) {
+        let name = name_prefix_set.index(0).unwrap();
+        let prefix = name_prefix_set.index(1).unwrap();
+
+        match is_fixable(call_expr, numeric_lit.raw) {
+            Ok(argument) => {
+                ctx.diagnostic_with_fix(
+                    prefer_numeric_literals_diagnostic(call_expr.span, name),
+                    |fixer| {
+                        fixer.replace(
+                            call_expr.span,
+                            generate_fix(fixer, ctx, call_expr, &argument, prefix),
+                        )
+                    },
+                );
+            }
+            Err(_) => ctx.diagnostic(prefer_numeric_literals_diagnostic(call_expr.span, name)),
+        }
     }
+}
+
+fn is_fixable(
+    call_expr: &CallExpression,
+    radix: &str,
+) -> Result<String, Box<dyn std::error::Error>> {
+    let Some(string_argument) = get_string_argument(call_expr) else {
+        return Err("".into());
+    };
+
+    if string_argument.is_empty() {
+        return Err("".into());
+    }
+
+    let radix_num = radix.parse::<u32>()?;
+    i64::from_str_radix(&string_argument, radix_num)?;
+
+    Ok(string_argument)
+}
+
+fn get_string_argument(call_expr: &CallExpression) -> Option<String> {
+    if let Argument::StringLiteral(ident) = &call_expr.arguments[0] {
+        return Some(ident.value.to_string());
+    } else if let Argument::TemplateLiteral(temp) = &call_expr.arguments[0] {
+        if temp.quasis.is_empty() {
+            return None;
+        }
+        return Some(temp.quasis[0].value.raw.to_string());
+    }
+
+    None
+}
+
+fn generate_fix<'a>(
+    fixer: RuleFixer<'_, 'a>,
+    ctx: &LintContext<'a>,
+    call_expr: &CallExpression<'a>,
+    argument: &str,
+    prefix: &str,
+) -> String {
+    let mut formatter = fixer.codegen();
+    let span = call_expr.span;
+
+    if span.start > 1 {
+        let start = ctx.source_text().as_bytes()[span.start as usize - 1];
+        if start.is_ascii_alphabetic() || !start.is_ascii() {
+            formatter.print_str(" ");
+        }
+    }
+
+    formatter.print_str(prefix);
+    formatter.print_str(argument);
+
+    if (span.end as usize) < ctx.source_text().len() {
+        let end = ctx.source_text().as_bytes()[span.end as usize];
+        if end.is_ascii_alphabetic() || !end.is_ascii() {
+            formatter.print_str(" ");
+        }
+    }
+
+    formatter.into_source_text()
 }
 
 #[test]
@@ -239,53 +320,53 @@ fn test() {
         "#,
     ];
 
-    //  let fix = vec![
-    //      (r#"parseInt("111110111", 2) === 503;"#, "0b111110111 === 503;", None),
-    //      (r#"parseInt("767", 8) === 503;"#, "0o767 === 503;", None),
-    //      (r#"parseInt("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
-    //      (r#"Number.parseInt("111110111", 2) === 503;"#, "0b111110111 === 503;", None),
-    //      (r#"Number.parseInt("767", 8) === 503;"#, "0o767 === 503;", None),
-    //      (r#"Number.parseInt("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
-    //      ("parseInt(`111110111`, 2) === 503;", "0b111110111 === 503;", None),
-    //      ("parseInt(`767`, 8) === 503;", "0o767 === 503;", None),
-    //      ("parseInt(`1F7`, 16) === 255;", "0x1F7 === 255;", None),
-    //      ("parseInt('11', 2)", "0b11", None),
-    //      ("Number.parseInt('67', 8)", "0o67", None),
-    //      ("5+parseInt('A', 16)", "5+0xA", None),
-    //      ("function *f(){ yield(Number).parseInt('11', 2) }", "function *f(){ yield 0b11 }", None),
-    //      ("function *f(){ yield(Number.parseInt)('67', 8) }", "function *f(){ yield 0o67 }", None),
-    //      ("function *f(){ yield(parseInt)('A', 16) }", "function *f(){ yield 0xA }", None),
-    //      ("function *f(){ yield Number.parseInt('11', 2) }", "function *f(){ yield 0b11 }", None),
-    //      (
-    //          "function *f(){ yield/**/Number.parseInt('67', 8) }",
-    //          "function *f(){ yield/**/0o67 }",
-    //          None,
-    //      ),
-    //      ("function *f(){ yield(parseInt('A', 16)) }", "function *f(){ yield(0xA) }", None),
-    //      ("parseInt('11', 2)+5", "0b11+5", None),
-    //      ("Number.parseInt('17', 8)+5", "0o17+5", None),
-    //      ("parseInt('A', 16)+5", "0xA+5", None),
-    //      ("parseInt('11', 2)in foo", "0b11 in foo", None),
-    //      ("Number.parseInt('17', 8)in foo", "0o17 in foo", None),
-    //      ("parseInt('A', 16)in foo", "0xA in foo", None),
-    //      ("parseInt('11', 2) in foo", "0b11 in foo", None),
-    //      ("Number.parseInt('17', 8)/**/in foo", "0o17/**/in foo", None),
-    //      ("(parseInt('A', 16))in foo", "(0xA)in foo", None),
-    //      ("/* comment */Number.parseInt('11', 2);", "/* comment */0b11;", None),
-    //      ("Number.parseInt('11', 2)/* comment */;", "0b11/* comment */;", None),
-    //      (
-    //          "parseInt('11', 2)//comment
-    // ;",
-    //          "0b11//comment
-    // ;",
-    //          None,
-    //      ),
-    //      (r#"parseInt?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
-    //      (r#"Number?.parseInt("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
-    //      (r#"Number?.parseInt?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
-    //      (r#"(Number?.parseInt)("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
-    //      (r#"(Number?.parseInt)?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
-    //  ];
-    // Tester::new(PreferNumericLiterals::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
-    Tester::new(PreferNumericLiterals::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        (r#"parseInt("111110111", 2) === 503;"#, "0b111110111 === 503;", None),
+        (r#"parseInt("767", 8) === 503;"#, "0o767 === 503;", None),
+        (r#"parseInt("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+        (r#"Number.parseInt("111110111", 2) === 503;"#, "0b111110111 === 503;", None),
+        (r#"Number.parseInt("767", 8) === 503;"#, "0o767 === 503;", None),
+        (r#"Number.parseInt("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+        ("parseInt(`111110111`, 2) === 503;", "0b111110111 === 503;", None),
+        ("parseInt(`767`, 8) === 503;", "0o767 === 503;", None),
+        ("parseInt(`1F7`, 16) === 255;", "0x1F7 === 255;", None),
+        ("parseInt('11', 2)", "0b11", None),
+        ("Number.parseInt('67', 8)", "0o67", None),
+        ("5+parseInt('A', 16)", "5+0xA", None),
+        ("function *f(){ yield(Number).parseInt('11', 2) }", "function *f(){ yield 0b11 }", None),
+        ("function *f(){ yield(Number.parseInt)('67', 8) }", "function *f(){ yield 0o67 }", None),
+        ("function *f(){ yield(parseInt)('A', 16) }", "function *f(){ yield 0xA }", None),
+        ("function *f(){ yield Number.parseInt('11', 2) }", "function *f(){ yield 0b11 }", None),
+        (
+            "function *f(){ yield/**/Number.parseInt('67', 8) }",
+            "function *f(){ yield/**/0o67 }",
+            None,
+        ),
+        ("function *f(){ yield(parseInt('A', 16)) }", "function *f(){ yield(0xA) }", None),
+        ("parseInt('11', 2)+5", "0b11+5", None),
+        ("Number.parseInt('17', 8)+5", "0o17+5", None),
+        ("parseInt('A', 16)+5", "0xA+5", None),
+        ("parseInt('11', 2)in foo", "0b11 in foo", None),
+        ("Number.parseInt('17', 8)in foo", "0o17 in foo", None),
+        ("parseInt('A', 16)in foo", "0xA in foo", None),
+        ("parseInt('11', 2) in foo", "0b11 in foo", None),
+        ("Number.parseInt('17', 8)/**/in foo", "0o17/**/in foo", None),
+        ("(parseInt('A', 16))in foo", "(0xA)in foo", None),
+        ("/* comment */Number.parseInt('11', 2);", "/* comment */0b11;", None),
+        ("Number.parseInt('11', 2)/* comment */;", "0b11/* comment */;", None),
+        (
+            "parseInt('11', 2)//comment
+    ;",
+            "0b11//comment
+    ;",
+            None,
+        ),
+        (r#"parseInt?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+        (r#"Number?.parseInt("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+        (r#"Number?.parseInt?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+        (r#"(Number?.parseInt)("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+        (r#"(Number?.parseInt)?.("1F7", 16) === 255;"#, "0x1F7 === 255;", None),
+    ];
+
+    Tester::new(PreferNumericLiterals::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }

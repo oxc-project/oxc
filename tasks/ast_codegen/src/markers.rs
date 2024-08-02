@@ -1,4 +1,4 @@
-use proc_macro2::{Delimiter, TokenStream, TokenTree};
+use proc_macro2::TokenStream;
 use syn::{
     ext::IdentExt,
     parenthesized,
@@ -6,8 +6,7 @@ use syn::{
     parse2,
     punctuated::Punctuated,
     spanned::Spanned,
-    token::{self, Brace, Bracket, Paren},
-    Attribute, Expr, Ident, MacroDelimiter, Meta, MetaList, MetaNameValue, Token,
+    token, Attribute, Expr, Ident, Meta, MetaNameValue, Token,
 };
 
 use crate::util::NormalizeError;

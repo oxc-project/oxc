@@ -1,12 +1,15 @@
 use itertools::Itertools;
 use proc_macro2::{Group, TokenStream, TokenTree};
-use quote::{quote, ToTokens};
+use quote::ToTokens;
 use syn::{GenericArgument, Ident, PathArguments, Type, TypePath};
 
 use crate::{CodegenCtx, TypeRef};
 
 pub trait NormalizeError<T> {
     fn normalize(self) -> crate::Result<T>;
+    fn normalize_with<E>(self, err: E) -> crate::Result<T>
+    where
+        E: ToString;
 }
 
 impl<T, E> NormalizeError<T> for Result<T, E>
@@ -15,6 +18,26 @@ where
 {
     fn normalize(self) -> crate::Result<T> {
         self.map_err(|e| e.to_string())
+    }
+
+    fn normalize_with<U>(self, err: U) -> crate::Result<T>
+    where
+        U: ToString,
+    {
+        self.map_err(|_| err.to_string())
+    }
+}
+
+impl<T> NormalizeError<T> for Option<T> {
+    fn normalize(self) -> crate::Result<T> {
+        self.normalize_with(String::default())
+    }
+
+    fn normalize_with<E>(self, err: E) -> crate::Result<T>
+    where
+        E: ToString,
+    {
+        self.map_or_else(|| Err(err.to_string()), |r| Ok(r))
     }
 }
 
@@ -80,6 +103,8 @@ impl<'a> TypeIdentResult<'a> {
     }
 }
 
+// TODO: remove me
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub enum TypeWrapper {
     None,
@@ -234,9 +259,13 @@ impl TokenStreamExt for TokenStream {
     }
 }
 
-pub fn write_all_to<S: AsRef<str>>(data: &[u8], path: S) -> std::io::Result<()> {
+pub fn write_all_to<S: AsRef<std::path::Path>>(data: &[u8], path: S) -> std::io::Result<()> {
     use std::{fs, io::Write};
-    let mut file = fs::File::create(path.as_ref())?;
+    let path = path.as_ref();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let mut file = fs::File::create(path)?;
     file.write_all(data)?;
     Ok(())
 }

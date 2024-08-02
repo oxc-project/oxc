@@ -28,6 +28,6 @@ pub fn test_minify(source_text: &str, expected: &str) {
     let result = WhitespaceRemover::new().build(&ret.program).source_text;
     assert_eq!(
         result, expected,
-        "\nfor minify source `{source_text}\nexpect `{expected}\ngot    {result:?}"
+        "\nfor minify source {source_text}\nexpect {expected}\ngot    {result:?}"
     );
 }

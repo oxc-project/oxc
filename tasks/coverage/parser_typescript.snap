@@ -10294,7 +10294,7 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
 
   × Could not parse the entire pattern
 
-  × TODO: ClassSetExpression
+  × Unterminated character class
 
   × Invalid escape
 
@@ -10454,83 +10454,83 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  4 │     // Pattern modifiers
    ╰────
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Invalid class escape
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Invalid class escape
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Invalid class escape
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Invalid class escape
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Invalid class escape
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Invalid class escape
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × Group specifier is empty
+  × Duplicated group name
 
-  × Invalid class escape
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
-  × TODO: ClassSetExpression
+  × Duplicated group name
 
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[compiler/regularExpressionScanning.ts:3:2]

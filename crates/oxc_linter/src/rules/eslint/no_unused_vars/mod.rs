@@ -136,7 +136,7 @@ declare_oxc_lint!(
     /// var global_var = 42;
     /// ```
     NoUnusedVars,
-    correctness
+    nursery
 );
 
 impl Deref for NoUnusedVars {

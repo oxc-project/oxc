@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.0] - 2024-08-01
+
+### Bug Fixes
+
+- d5c4b19 parser: Fix enum member parsing (#4543) (DonIsaac)
+
+### Refactor
+
+- 96602bf transformer/typescript: Determine whether to remove `ExportSpeicifer` by `ReferenceFlags` (#4513) (Dunqing)
+
 ## [0.22.1] - 2024-07-27
 
 ### Bug Fixes

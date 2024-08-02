@@ -1,7 +1,6 @@
 use oxc_allocator::{Allocator, Box, Vec};
 use oxc_diagnostics::{OxcDiagnostic, Result};
 use oxc_span::Atom as SpanAtom;
-use rustc_hash::FxHashSet;
 
 use crate::{
     ast,
@@ -34,16 +33,26 @@ impl<'a> PatternParser<'a> {
 
     pub fn parse(&mut self) -> Result<ast::Pattern<'a>> {
         // Pre parse whole pattern to collect:
-        // - 1. the number of (named|unnamed) capturing groups
+        // - the number of (named|unnamed) capturing groups
         //   - For `\1` in `\1()` to be handled as indexed reference
-        // - 2. names of named capturing groups
-        //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error with `NamedCaptureGroups`
+        // - names of named capturing groups
+        //   - For `\k<a>`, `\k<a>(?<b>)` to be handled as early error in `+NamedCaptureGroups`
+        //
+        // NOTE: It means that this perform 2 loops for every cases.
+        // - Pros: Code is simple enough and easy to understand
+        // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
+        // We may revisit this if we need performance rather than simplicity.
         self.state.parse_capturing_groups(self.source_text);
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.
         if 2 ^ 32 < self.state.num_of_capturing_groups {
             return Err(OxcDiagnostic::error("Too many capturing groups"));
+        }
+        // [SS:EE] Pattern :: Disjunction
+        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
+        if self.state.num_of_named_capturing_groups as usize != self.state.found_group_names.len() {
+            return Err(OxcDiagnostic::error("Duplicated group name"));
         }
 
         let result = self.parse_disjunction()?;
@@ -69,23 +78,6 @@ impl<'a> PatternParser<'a> {
 
             if !self.reader.eat('|') {
                 break;
-            }
-        }
-
-        for alternative in &body {
-            // Duplicated group names can be used across alternatives, but not within the same
-            let mut found_group_names = FxHashSet::default();
-
-            for term in &alternative.body {
-                if let ast::Term::CapturingGroup(capturing_group) = term {
-                    if let Some(name) = &capturing_group.name {
-                        //  [SS:EE] Pattern :: Disjunction
-                        // It is a Syntax Error if Pattern contains two or more GroupSpecifiers for which the CapturingGroupName of GroupSpecifier is the same.
-                        if !found_group_names.insert(name.as_str()) {
-                            return Err(OxcDiagnostic::error("Duplicated group name"));
-                        }
-                    }
-                }
             }
         }
 
@@ -285,7 +277,7 @@ impl<'a> PatternParser<'a> {
     //   .
     //   \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
     //   CharacterClass[?UnicodeMode, ?UnicodeSetsMode]
-    //   ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     //   (?: Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     // ```
     fn parse_atom(&mut self) -> Result<Option<ast::Term<'a>>> {
@@ -329,7 +321,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
-        // ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
             return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
@@ -347,7 +339,7 @@ impl<'a> PatternParser<'a> {
     //   \ AtomEscape[~UnicodeMode, ?NamedCaptureGroups]
     //   \ [lookahead = c]
     //   CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
-    //   ( GroupSpecifier[~UnicodeMode]opt Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+    //   ( GroupSpecifier[~UnicodeMode][opt] Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     //   (?: Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
     //   InvalidBracedQuantifier
     //   ExtendedPatternCharacter
@@ -393,7 +385,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(ast::Term::IgnoreGroup(Box::new_in(ignore_group, self.allocator))));
         }
 
-        // ( GroupSpecifier[~UnicodeMode]opt Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
+        // ( GroupSpecifier[~UnicodeMode][opt] Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         // ( Disjunction[~UnicodeMode, ~UnicodeSetsMode, ?NamedCaptureGroups] )
         if let Some(capturing_group) = self.parse_capturing_group()? {
             return Ok(Some(ast::Term::CapturingGroup(Box::new_in(
@@ -549,9 +541,9 @@ impl<'a> PatternParser<'a> {
         }
 
         let negative = if self.reader.eat('p') {
-            true
-        } else if self.reader.eat('P') {
             false
+        } else if self.reader.eat('P') {
+            true
         } else {
             return Ok(None);
         };
@@ -562,6 +554,9 @@ impl<'a> PatternParser<'a> {
             {
                 // [SS:EE] CharacterClassEscape :: P{ UnicodePropertyValueExpression }
                 // It is a Syntax Error if MayContainStrings of the UnicodePropertyValueExpression is true.
+                // MayContainStrings is true
+                // - if the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
                 if negative && is_strings_related {
                     return Err(OxcDiagnostic::error("Invalid property name"));
                 }
@@ -692,6 +687,10 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if MayContainStrings of the ClassContents is true.
             if negative
                 && body.iter().any(|item| match item {
+                    // MayContainStrings is true
+                    // - if ClassContents contains UnicodePropertyValueExpression
+                    //   - and the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                    //     - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
                     ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
                         unicode_property_escape.strings
                     }
@@ -732,7 +731,7 @@ impl<'a> PatternParser<'a> {
 
         // [+UnicodeSetsMode] ClassSetExpression
         if self.state.unicode_sets_mode {
-            return Err(OxcDiagnostic::error("TODO: ClassSetExpression"));
+            return self.parse_class_set_expression();
         }
         // [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
         self.parse_nonempty_class_ranges()
@@ -969,7 +968,409 @@ impl<'a> PatternParser<'a> {
     }
 
     // ```
-    // ( GroupSpecifier[?UnicodeMode]opt Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
+    // ClassSetExpression ::
+    //   ClassUnion
+    //   ClassIntersection
+    //   ClassSubtraction
+    // ```
+    fn parse_class_set_expression(
+        &mut self,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        // ClassUnion :: ClassSetRange ClassUnion[opt]
+        if let Some(class_set_range) = self.parse_class_set_range()? {
+            return self.parse_class_set_union(class_set_range);
+        }
+
+        if let Some(class_set_operand) = self.parse_class_set_operand()? {
+            // ClassIntersection
+            if self.reader.peek().filter(|&cp| cp == '&' as u32).is_some()
+                && self.reader.peek2().filter(|&cp| cp == '&' as u32).is_some()
+            {
+                return self.parse_class_set_intersection(class_set_operand);
+            }
+            // ClassSubtraction
+            if self.reader.peek().filter(|&cp| cp == '-' as u32).is_some()
+                && self.reader.peek2().filter(|&cp| cp == '-' as u32).is_some()
+            {
+                return self.parse_class_set_subtraction(class_set_operand);
+            }
+
+            // ClassUnion :: ClassSetOperand ClassUnion[opt]
+            return self.parse_class_set_union(class_set_operand);
+        }
+
+        Err(OxcDiagnostic::error("Invalid character in character class"))
+    }
+
+    // ```
+    // ClassUnion ::
+    //   ClassSetRange ClassUnion[opt]
+    //   ClassSetOperand ClassUnion[opt]
+    // ```
+    fn parse_class_set_union(
+        &mut self,
+        class_set_range_or_class_set_operand: ast::CharacterClassContents<'a>,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        let mut body = Vec::new_in(self.allocator);
+        body.push(class_set_range_or_class_set_operand);
+
+        loop {
+            if let Some(class_set_range) = self.parse_class_set_range()? {
+                body.push(class_set_range);
+                continue;
+            }
+            if let Some(class_set_operand) = self.parse_class_set_operand()? {
+                body.push(class_set_operand);
+                continue;
+            }
+
+            break;
+        }
+
+        Ok((ast::CharacterClassContentsKind::Union, body))
+    }
+
+    // ```
+    // ClassIntersection ::
+    //   ClassSetOperand && [lookahead ≠ &] ClassSetOperand
+    //   ClassIntersection && [lookahead ≠ &] ClassSetOperand
+    // ```
+    fn parse_class_set_intersection(
+        &mut self,
+        class_set_operand: ast::CharacterClassContents<'a>,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        let mut body = Vec::new_in(self.allocator);
+        body.push(class_set_operand);
+
+        loop {
+            if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+                break;
+            }
+
+            if self.reader.eat2('&', '&') {
+                if self.reader.eat('&') {
+                    return Err(OxcDiagnostic::error("Unexpected &"));
+                }
+
+                if let Some(class_set_operand) = self.parse_class_set_operand()? {
+                    body.push(class_set_operand);
+                    continue;
+                }
+            }
+
+            return Err(OxcDiagnostic::error("Invalid character in character class"));
+        }
+
+        Ok((ast::CharacterClassContentsKind::Intersection, body))
+    }
+
+    // ```
+    // ClassSubtraction ::
+    //   ClassSetOperand -- ClassSetOperand
+    //   ClassSubtraction -- ClassSetOperand
+    // ```
+    fn parse_class_set_subtraction(
+        &mut self,
+        class_set_operand: ast::CharacterClassContents<'a>,
+    ) -> Result<(ast::CharacterClassContentsKind, Vec<'a, ast::CharacterClassContents<'a>>)> {
+        let mut body = Vec::new_in(self.allocator);
+        body.push(class_set_operand);
+
+        loop {
+            if self.reader.peek().filter(|&cp| cp == ']' as u32).is_some() {
+                break;
+            }
+
+            if self.reader.eat2('-', '-') {
+                if let Some(class_set_operand) = self.parse_class_set_operand()? {
+                    body.push(class_set_operand);
+                    continue;
+                }
+            }
+
+            return Err(OxcDiagnostic::error("Invalid character in character class"));
+        }
+
+        Ok((ast::CharacterClassContentsKind::Subtraction, body))
+    }
+
+    // ```
+    // ClassSetRange ::
+    //   ClassSetCharacter - ClassSetCharacter
+    // ```
+    fn parse_class_set_range(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        let checkpoint = self.reader.checkpoint();
+        if let Some(class_set_character) = self.parse_class_set_character()? {
+            if self.reader.eat('-') {
+                if let Some(class_set_character_to) = self.parse_class_set_character()? {
+                    // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
+                    // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
+                    if class_set_character_to.value < class_set_character.value {
+                        return Err(OxcDiagnostic::error("Character set class range out of order"));
+                    }
+
+                    return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
+                        Box::new_in(
+                            ast::CharacterClassRange {
+                                span: class_set_character.span.merge(&class_set_character_to.span),
+                                min: class_set_character,
+                                max: class_set_character_to,
+                            },
+                            self.allocator,
+                        ),
+                    )));
+                }
+            }
+        }
+        self.reader.rewind(checkpoint);
+
+        Ok(None)
+    }
+
+    // ```
+    // ClassSetOperand ::
+    //   NestedClass
+    //   ClassStringDisjunction
+    //   ClassSetCharacter
+    //
+    // ClassStringDisjunction ::
+    //   \q{ ClassStringDisjunctionContents }
+    // ```
+    fn parse_class_set_operand(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        if let Some(nested_class) = self.parse_nested_class()? {
+            return Ok(Some(nested_class));
+        }
+
+        // ClassStringDisjunction
+        let span_start = self.reader.span_position();
+        if self.reader.eat3('\\', 'q', '{') {
+            let class_string_disjunction_contents =
+                self.parse_class_string_disjunction_contents()?;
+
+            if self.reader.eat('}') {
+                return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(Box::new_in(
+                    ast::ClassStringDisjunction {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        body: class_string_disjunction_contents,
+                    },
+                    self.allocator,
+                ))));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated class string disjunction"));
+        }
+
+        if let Some(class_set_character) = self.parse_class_set_character()? {
+            return Ok(Some(ast::CharacterClassContents::Character(class_set_character)));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // NestedClass ::
+    //   [ [lookahead ≠ ^] ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
+    //   [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
+    //   \ CharacterClassEscape[+UnicodeMode]
+    // ```
+    fn parse_nested_class(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        let span_start = self.reader.span_position();
+        if self.reader.eat('[') {
+            let negative = self.reader.eat('^');
+            // NOTE: This can be recursive as the name suggests!
+            // e.g. `/[a[b[c[d[e]f]g]h]i]j]/v`
+            let (kind, body) = self.parse_class_contents()?;
+
+            // [SS:EE] NestedClass :: [^ ClassContents ]
+            // It is a Syntax Error if MayContainStrings of the ClassContents is true.
+            if negative {
+                let may_contain_strings = |item: &ast::CharacterClassContents| match item {
+                    // MayContainStrings is true
+                    // - if ClassContents contains UnicodePropertyValueExpression
+                    //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                    //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
+                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
+                        unicode_property_escape.strings
+                    }
+                    // MayContainStrings is true
+                    // - if ClassStringDisjunction is [empty]
+                    // - || if ClassStringDisjunction contains ClassString
+                    //   - && ClassString is [empty]
+                    //   - || ClassString contains 2 more ClassSetCharacters
+                    ast::CharacterClassContents::ClassStringDisjunction(
+                        class_string_disjunction,
+                    ) => {
+                        class_string_disjunction.body.is_empty()
+                            || class_string_disjunction
+                                .body
+                                .iter()
+                                .any(|class_string| class_string.body.len() != 1)
+                    }
+                    _ => false,
+                };
+
+                if match kind {
+                    // MayContainStrings is true
+                    // - if ClassContents is ClassUnion
+                    //   - && ClassUnion has ClassOperands
+                    //     - && at least 1 ClassOperand has MayContainStrings: true
+                    ast::CharacterClassContentsKind::Union => {
+                        body.iter().any(|item| may_contain_strings(item))
+                    }
+                    // MayContainStrings is true
+                    // - if ClassContents is ClassIntersection
+                    //   - && ClassIntersection has ClassOperands
+                    //     - && all ClassOperands have MayContainStrings: true
+                    ast::CharacterClassContentsKind::Intersection => {
+                        body.iter().all(|item| may_contain_strings(item))
+                    }
+                    // MayContainStrings is true
+                    // - if ClassContents is ClassSubtraction
+                    //   - && ClassSubtraction has ClassOperands
+                    //     - && the first ClassOperand has MayContainStrings: true
+                    ast::CharacterClassContentsKind::Subtraction => {
+                        body.iter().next().map_or(false, |item| may_contain_strings(item))
+                    }
+                } {
+                    return Err(OxcDiagnostic::error("Invalid character class"));
+                }
+            }
+
+            if self.reader.eat(']') {
+                return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
+                    ast::CharacterClass {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        negative,
+                        kind,
+                        body,
+                    },
+                    self.allocator,
+                ))));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated character class"));
+        }
+
+        let span_start = self.reader.span_position();
+        let checkpoint = self.reader.checkpoint();
+        if self.reader.eat('\\') {
+            if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
+                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
+                    character_class_escape,
+                )));
+            }
+            if let Some(unicode_property_escape) =
+                self.parse_character_class_escape_unicode(span_start)?
+            {
+                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
+                    unicode_property_escape,
+                    self.allocator,
+                ))));
+            }
+
+            self.reader.rewind(checkpoint);
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ClassStringDisjunctionContents ::
+    //   ClassString
+    //   ClassString | ClassStringDisjunctionContents
+    // ```
+    fn parse_class_string_disjunction_contents(&mut self) -> Result<Vec<'a, ast::ClassString<'a>>> {
+        let mut body = Vec::new_in(self.allocator);
+
+        loop {
+            let class_string = self.parse_class_string()?;
+            body.push(class_string);
+
+            if !self.reader.eat('|') {
+                break;
+            }
+        }
+
+        Ok(body)
+    }
+
+    // ```
+    // ClassString ::
+    //   [empty]
+    //   NonEmptyClassString
+    //
+    // NonEmptyClassString ::
+    //   ClassSetCharacter NonEmptyClassString[opt]
+    // ```
+    fn parse_class_string(&mut self) -> Result<ast::ClassString<'a>> {
+        let span_start = self.reader.span_position();
+
+        let mut body = Vec::new_in(self.allocator);
+        while let Some(class_set_character) = self.parse_class_set_character()? {
+            body.push(class_set_character);
+        }
+
+        Ok(ast::ClassString {
+            span: self.span_factory.create(span_start, self.reader.span_position()),
+            body,
+        })
+    }
+
+    // ```
+    // ClassSetCharacter ::
+    //   [lookahead ∉ ClassSetReservedDoublePunctuator] SourceCharacter but not ClassSetSyntaxCharacter
+    //   \ CharacterEscape[+UnicodeMode]
+    //   \ ClassSetReservedPunctuator
+    //   \b
+    // ```
+    fn parse_class_set_character(&mut self) -> Result<Option<ast::Character>> {
+        let span_start = self.reader.span_position();
+
+        if let (Some(cp1), Some(cp2)) = (self.reader.peek(), self.reader.peek2()) {
+            if !unicode::is_class_set_reserved_double_punctuator(cp1, cp2)
+                && !unicode::is_class_set_syntax_character(cp1)
+            {
+                self.reader.advance();
+
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::CharacterKind::Symbol,
+                    value: cp1,
+                }));
+            }
+        }
+
+        let checkpoint = self.reader.checkpoint();
+        if self.reader.eat('\\') {
+            if let Some(character_escape) = self.parse_character_escape(span_start)? {
+                return Ok(Some(character_escape));
+            }
+            if let Some(cp) =
+                self.reader.peek().filter(|&cp| unicode::is_class_set_reserved_punctuator(cp))
+            {
+                self.reader.advance();
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::CharacterKind::Identifier,
+                    value: cp,
+                }));
+            }
+            if self.reader.eat('b') {
+                return Ok(Some(ast::Character {
+                    span: self.span_factory.create(span_start, self.reader.span_position()),
+                    kind: ast::CharacterKind::Symbol,
+                    value: 'b' as u32,
+                }));
+            }
+
+            self.reader.rewind(checkpoint);
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // ( GroupSpecifier[?UnicodeMode][opt] Disjunction[?UnicodeMode, ?UnicodeSetsMode, ?NamedCaptureGroups] )
     //
     // GroupSpecifier[UnicodeMode] ::
     //   ? GroupName[?UnicodeMode]
@@ -1101,7 +1502,7 @@ impl<'a> PatternParser<'a> {
 
     // ```
     // DecimalEscape ::
-    //   NonZeroDigit DecimalDigits[~Sep]opt [lookahead ∉ DecimalDigit]
+    //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
     fn consume_decimal_escape(&mut self) -> Option<u32> {
         if let Some(index) = self.consume_decimal_digits() {
