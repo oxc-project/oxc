@@ -33,8 +33,12 @@ fn main() {
         (r"/[a&&&]/v", ParserOptions::default()), // Error
         (r"/[a---]/v", ParserOptions::default()), // Error
         (r"/[^a--b--c]/v", ParserOptions::default()),
+        (r"/[a[b[c[d[e[f[g[h[i[j[k[l]]]]]]]]]]]]/v", ParserOptions::default()),
+        (r"/[\q{abc|d|e|}]/v", ParserOptions::default()),
+        (r"/\p{Basic_Emoji}/v", ParserOptions::default()),
+        (r"/[[^\q{}]]/v", ParserOptions::default()), // Error
     ] {
-        println!("Test: {pat} + {options:?}");
+        println!("Test: {pat}");
         let parser = Parser::new(&allocator, pat, options);
         let ret = parser.parse();
 

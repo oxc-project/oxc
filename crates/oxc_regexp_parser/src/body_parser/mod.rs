@@ -40,17 +40,14 @@ mod test {
             ("a.b..", ParserOptions::default()),
             (r"\d\D\s\S\w\W", ParserOptions::default()),
             (
-                r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
+                r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{Basic_Emoji}",
                 ParserOptions::default(),
             ),
             (
                 r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
                 ParserOptions::default().with_unicode_flags(true, false),
             ),
-            (
-                r"\p{Emoji_Presentation}\P{Script_Extensions=Latin}\p{Sc}|\p{P}",
-                ParserOptions::default().with_unicode_flags(true, true),
-            ),
+            (r"\p{Basic_Emoji}", ParserOptions::default().with_unicode_flags(true, true)),
             (r"\n\cM\0\x41\u1f60\.\/", ParserOptions::default()),
             (r"\u", ParserOptions::default()),
             (r"\u{", ParserOptions::default()),
@@ -123,7 +120,6 @@ mod test {
             ("a{1", ParserOptions::default().with_unicode_flags(true, false)),
             ("a{1,", ParserOptions::default().with_unicode_flags(true, false)),
             ("a{,", ParserOptions::default().with_unicode_flags(true, false)),
-            ("a{2,1}", ParserOptions::default()),
             ("(?=a", ParserOptions::default()),
             ("(?<!a", ParserOptions::default()),
             (r"\xa", ParserOptions::default()),
@@ -138,8 +134,6 @@ mod test {
             (r"\k<a", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\1", ParserOptions::default().with_unicode_flags(true, false)),
             (r"\k<a>", ParserOptions::default().with_unicode_flags(true, false)),
-            (r"(?<b>)\k<a>", ParserOptions::default()),
-            (r"(?<n>..)(?<n>..)", ParserOptions::default()),
             ("a(?:", ParserOptions::default()),
             ("(a", ParserOptions::default()),
             ("(?<a>", ParserOptions::default()),
@@ -159,6 +153,78 @@ mod test {
             assert!(
                 PatternParser::new(&allocator, source_text, *options).parse().is_err(),
                 "{source_text} should fail to parse with {options:?}!"
+            );
+        }
+    }
+
+    #[test]
+    fn should_fail_early_errors() {
+        let allocator = Allocator::default();
+
+        for (source_text, options, is_err) in &[
+            (r"(?<n>..)(?<n>..)", ParserOptions::default(), true),
+            (r"a{2,1}", ParserOptions::default(), true),
+            (r"(?<a>)\k<n>", ParserOptions::default(), true),
+            (r"()\2", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"[a-\d]", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"[\d-z]", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"[\d-\d]", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"[z-a]", ParserOptions::default(), true),
+            (r"\u{110000}", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"(?<\uD800\uDBFF>)", ParserOptions::default(), true),
+            (r"\u{0}\u{110000}", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"(?<a\uD800\uDBFF>)", ParserOptions::default(), true),
+            (r"\p{Foo=Bar}", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"\p{Foo}", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"\p{Basic_Emoji}", ParserOptions::default().with_unicode_flags(true, false), true),
+            (r"\P{Basic_Emoji}", ParserOptions::default().with_unicode_flags(true, true), true),
+            (r"[^\p{Basic_Emoji}]", ParserOptions::default().with_unicode_flags(true, true), true),
+            (
+                r"[[^\p{Basic_Emoji}]]",
+                ParserOptions::default().with_unicode_flags(true, true),
+                true,
+            ),
+            (r"[[^\q{}]]", ParserOptions::default().with_unicode_flags(true, true), true),
+            (r"[[^\q{ng}]]", ParserOptions::default().with_unicode_flags(true, true), true),
+            (r"[[^\q{a|}]]", ParserOptions::default().with_unicode_flags(true, true), true),
+            (r"[[^\q{ng}\q{o|k}]]", ParserOptions::default().with_unicode_flags(true, true), true),
+            (
+                r"[[^\q{o|k}\q{ng}\q{o|k}]]",
+                ParserOptions::default().with_unicode_flags(true, true),
+                true,
+            ),
+            (
+                r"[[^\q{o|k}\q{o|k}\q{ng}]]",
+                ParserOptions::default().with_unicode_flags(true, true),
+                true,
+            ),
+            (r"[[^\q{}&&\q{ng}]]", ParserOptions::default().with_unicode_flags(true, true), true),
+            (
+                r"[[^\q{ng}&&\q{o|k}]]",
+                ParserOptions::default().with_unicode_flags(true, true),
+                false,
+            ),
+            (
+                r"[[^\q{ng}&&\q{o|k}&&\q{ng}]]",
+                ParserOptions::default().with_unicode_flags(true, true),
+                false,
+            ),
+            (
+                r"[[^\q{ng}--\q{o|k}]]",
+                ParserOptions::default().with_unicode_flags(true, true),
+                true,
+            ),
+            (
+                r"[[^\q{o|k}--\q{ng}]]",
+                ParserOptions::default().with_unicode_flags(true, true),
+                false,
+            ),
+            (r"[[z-a]]", ParserOptions::default().with_unicode_flags(true, true), true),
+        ] {
+            assert_eq!(
+                PatternParser::new(&allocator, source_text, *options).parse().is_err(),
+                *is_err,
+                "{source_text} should early error with {options:?}!"
             );
         }
     }

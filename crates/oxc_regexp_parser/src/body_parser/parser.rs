@@ -554,6 +554,9 @@ impl<'a> PatternParser<'a> {
             {
                 // [SS:EE] CharacterClassEscape :: P{ UnicodePropertyValueExpression }
                 // It is a Syntax Error if MayContainStrings of the UnicodePropertyValueExpression is true.
+                // MayContainStrings is true
+                // - if the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
                 if negative && is_strings_related {
                     return Err(OxcDiagnostic::error("Invalid property name"));
                 }
@@ -684,6 +687,10 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if MayContainStrings of the ClassContents is true.
             if negative
                 && body.iter().any(|item| match item {
+                    // MayContainStrings is true
+                    // - if ClassContents contains UnicodePropertyValueExpression
+                    //   - and the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                    //     - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
                     ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
                         unicode_property_escape.strings
                     }
@@ -1126,42 +1133,12 @@ impl<'a> PatternParser<'a> {
     //   ClassStringDisjunction
     //   ClassSetCharacter
     //
-    // NestedClass ::
-    //   [ [lookahead ≠ ^] ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
-    //   [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
-    //   \ CharacterClassEscape[+UnicodeMode]
-    //
     // ClassStringDisjunction ::
     //   \q{ ClassStringDisjunctionContents }
     // ```
     fn parse_class_set_operand(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
-        // NestedClass :: CharacterClass
-        // NOTE: This can be recursive! e.g. `/[a[b[c[d[e]f]g]h]i]j]/v`
-        if let Some(character_class) = self.parse_character_class()? {
-            return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
-                character_class,
-                self.allocator,
-            ))));
-        }
-        // NestedClass :: \ CharacterClassEscape
-        let span_start = self.reader.span_position();
-        let checkpoint = self.reader.checkpoint();
-        if self.reader.eat('\\') {
-            if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
-                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
-                    character_class_escape,
-                )));
-            }
-            if let Some(unicode_property_escape) =
-                self.parse_character_class_escape_unicode(span_start)?
-            {
-                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
-                    unicode_property_escape,
-                    self.allocator,
-                ))));
-            }
-
-            self.reader.rewind(checkpoint);
+        if let Some(nested_class) = self.parse_nested_class()? {
+            return Ok(Some(nested_class));
         }
 
         // ClassStringDisjunction
@@ -1183,9 +1160,115 @@ impl<'a> PatternParser<'a> {
             return Err(OxcDiagnostic::error("Unterminated class string disjunction"));
         }
 
-        // ClassSetCharacter
         if let Some(class_set_character) = self.parse_class_set_character()? {
             return Ok(Some(ast::CharacterClassContents::Character(class_set_character)));
+        }
+
+        Ok(None)
+    }
+
+    // ```
+    // NestedClass ::
+    //   [ [lookahead ≠ ^] ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
+    //   [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
+    //   \ CharacterClassEscape[+UnicodeMode]
+    // ```
+    fn parse_nested_class(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+        let span_start = self.reader.span_position();
+        if self.reader.eat('[') {
+            let negative = self.reader.eat('^');
+            // NOTE: This can be recursive as the name suggests!
+            // e.g. `/[a[b[c[d[e]f]g]h]i]j]/v`
+            let (kind, body) = self.parse_class_contents()?;
+
+            // [SS:EE] NestedClass :: [^ ClassContents ]
+            // It is a Syntax Error if MayContainStrings of the ClassContents is true.
+            if negative {
+                let may_contain_strings = |item: &ast::CharacterClassContents| match item {
+                    // MayContainStrings is true
+                    // - if ClassContents contains UnicodePropertyValueExpression
+                    //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                    //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
+                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
+                        unicode_property_escape.strings
+                    }
+                    // MayContainStrings is true
+                    // - if ClassStringDisjunction is [empty]
+                    // - || if ClassStringDisjunction contains ClassString
+                    //   - && ClassString is [empty]
+                    //   - || ClassString contains 2 more ClassSetCharacters
+                    ast::CharacterClassContents::ClassStringDisjunction(
+                        class_string_disjunction,
+                    ) => {
+                        class_string_disjunction.body.is_empty()
+                            || class_string_disjunction
+                                .body
+                                .iter()
+                                .any(|class_string| class_string.body.len() != 1)
+                    }
+                    _ => false,
+                };
+
+                if match kind {
+                    // MayContainStrings is true
+                    // - if ClassContents is ClassUnion
+                    //   - && ClassUnion has ClassOperands
+                    //     - && at least 1 ClassOperand has MayContainStrings: true
+                    ast::CharacterClassContentsKind::Union => {
+                        body.iter().any(|item| may_contain_strings(item))
+                    }
+                    // MayContainStrings is true
+                    // - if ClassContents is ClassIntersection
+                    //   - && ClassIntersection has ClassOperands
+                    //     - && all ClassOperands have MayContainStrings: true
+                    ast::CharacterClassContentsKind::Intersection => {
+                        body.iter().all(|item| may_contain_strings(item))
+                    }
+                    // MayContainStrings is true
+                    // - if ClassContents is ClassSubtraction
+                    //   - && ClassSubtraction has ClassOperands
+                    //     - && the first ClassOperand has MayContainStrings: true
+                    ast::CharacterClassContentsKind::Subtraction => {
+                        body.iter().next().map_or(false, |item| may_contain_strings(item))
+                    }
+                } {
+                    return Err(OxcDiagnostic::error("Invalid character class"));
+                }
+            }
+
+            if self.reader.eat(']') {
+                return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
+                    ast::CharacterClass {
+                        span: self.span_factory.create(span_start, self.reader.span_position()),
+                        negative,
+                        kind,
+                        body,
+                    },
+                    self.allocator,
+                ))));
+            }
+
+            return Err(OxcDiagnostic::error("Unterminated character class"));
+        }
+
+        let span_start = self.reader.span_position();
+        let checkpoint = self.reader.checkpoint();
+        if self.reader.eat('\\') {
+            if let Some(character_class_escape) = self.parse_character_class_escape(span_start) {
+                return Ok(Some(ast::CharacterClassContents::CharacterClassEscape(
+                    character_class_escape,
+                )));
+            }
+            if let Some(unicode_property_escape) =
+                self.parse_character_class_escape_unicode(span_start)?
+            {
+                return Ok(Some(ast::CharacterClassContents::UnicodePropertyEscape(Box::new_in(
+                    unicode_property_escape,
+                    self.allocator,
+                ))));
+            }
+
+            self.reader.rewind(checkpoint);
         }
 
         Ok(None)
