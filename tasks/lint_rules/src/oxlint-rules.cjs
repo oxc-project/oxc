@@ -2,6 +2,15 @@ const { resolve } = require("node:path");
 const { readFile } = require("node:fs/promises");
 const { pluginTypeScriptRulesNames } = require("./eslint-rules.cjs");
 
+/** 
+ * Map OXC rules implementation
+ * @type {Map<string, string[]>} 
+ * */
+const MAP_SPECIFIC_RULES = new Map([
+  // no-new-native-nonconstructor has already the testcase for eslint/no-new-symbol
+  ['eslint/no-new-native-nonconstructor', ['eslint/no-new-symbol']]
+]);
+
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(
     resolve("crates/oxc_linter/src/rules.rs"),
@@ -35,6 +44,8 @@ const readAllImplementedRuleNames = async () => {
       // Ignore no reference rules
       if (prefixedName.startsWith("oxc/")) continue;
 
+      rules.add(prefixedName);
+
       // some tyescript rules are extensions of eslint core rules
       if (prefixedName.startsWith("eslint/")) {
         const ruleName = prefixedName.replace('eslint/', '');
@@ -42,11 +53,14 @@ const readAllImplementedRuleNames = async () => {
         // there is an alias, so we add it with this in mind.
         if (pluginTypeScriptRulesNames.includes(ruleName)) {
           rules.add(`typescript/${ruleName}`);
-          continue;
         }
       }
+    }
 
-      rules.add(prefixedName);
+    for (const [name, alias] of MAP_SPECIFIC_RULES) {
+      if (rules.has(name)) {
+        alias.forEach(aliasName => rules.add(aliasName));
+      }
     }
   }
 

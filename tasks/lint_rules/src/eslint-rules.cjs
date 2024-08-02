@@ -56,19 +56,24 @@ const {
 } = require("eslint-plugin-react-perf");
 // https://github.com/vercel/next.js/blob/canary/packages/eslint-plugin-next/src/index.ts
 const { rules: pluginNextAllRules } = require("@next/eslint-plugin-next");
+// https://github.com/eslint-community/eslint-plugin-promise/blob/main/index.js
+const {
+  rules: pluginPromiseRules,
+  configs: pluginPromiseConfigs
+} = require("eslint-plugin-promise");
+// https://github.com/veritem/eslint-plugin-vitest/blob/main/src/index.ts
+const {
+  rules: pluginVitestRules,
+  configs: pluginVitestConfigs
+} = require("eslint-plugin-vitest");
+// https://github.com/lukastaegert/eslint-plugin-tree-shaking/blob/master/src/index.ts
+const {
+  rules: pluginTreeShakingRules,
+} = require("eslint-plugin-tree-shaking");
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginTypeScriptRules = (linter) => {
-  // We want to list all rules but not support type-checked rules
-  const pluginTypeScriptDisableTypeCheckedRules = new Map(
-    Object.entries(pluginTypeScriptConfigs["disable-type-checked"].rules),
-  );
   for (const [name, rule] of Object.entries(pluginTypeScriptAllRules)) {
-    if (
-      pluginTypeScriptDisableTypeCheckedRules.has(`@typescript-eslint/${name}`)
-    )
-      continue;
-
     const prefixedName = `typescript/${name}`;
 
     // Presented but type is `string | false`
@@ -217,6 +222,44 @@ const loadPluginNextRules = (linter) => {
   }
 };
 
+/** @param {import("eslint").Linter} linter */
+const loadPluginPromiseRules = (linter) => {
+  const pluginPromiseReccommendedRules = new Map(
+    Object.entries(pluginPromiseConfigs.recommended.rules),
+  );
+  for (const [name, rule] of Object.entries(pluginPromiseRules)) {
+    const prefixedName = `promise/${name}`;
+
+    rule.meta.docs.recommended =
+      pluginPromiseReccommendedRules.has(prefixedName);
+
+    linter.defineRule(prefixedName, rule);
+  }
+}
+
+/** @param {import("eslint").Linter} linter */
+const loadPluginVitestRules = (linter) => {
+  const pluginVitestReccommendedRules = new Map(
+    Object.entries(pluginVitestConfigs.recommended.rules)
+  );
+  for (const [name, rule] of Object.entries(pluginVitestRules)) {
+    const prefixedName = `vitest/${name}`;
+
+    rule.meta.docs.recommended = pluginVitestReccommendedRules.has(prefixedName);
+
+    linter.defineRule(prefixedName, rule);
+  }
+}
+/** @param {import("eslint").Linter} linter */
+const loadPluginTreeShakingRules = (linter) => {
+  for (const [name, rule] of Object.entries(pluginTreeShakingRules)) {
+    const prefixedName = `tree-shaking/${name}`;
+
+
+    linter.defineRule(prefixedName, rule);
+  }
+}
+
 /**
  * @typedef {{
  *   npm: string[];
@@ -242,6 +285,9 @@ exports.ALL_TARGET_PLUGINS = new Map([
   ],
   ["react-perf", { npm: ["eslint-plugin-react-perf"], issueNo: 2041 }],
   ["nextjs", { npm: ["@next/eslint-plugin-next"], issueNo: 1929 }],
+  ["promise", { npm: ["eslint-plugin-promise"], issueNo: 9999 }], // TODO!
+  ["vitest", { npm: ["eslint-plugin-vitest"], issueNo: 9999 }], // TODO!
+  ["tree-shaking", { npm: ["eslint-plugin-tree-shaking"], issueNo: 9999 }], // TODO!
 ]);
 
 // All rules(including deprecated, recommended) are loaded initially.
@@ -262,6 +308,9 @@ exports.loadTargetPluginRules = (linter) => {
   loadPluginReactRules(linter);
   loadPluginReactPerfRules(linter);
   loadPluginNextRules(linter);
+  loadPluginPromiseRules(linter);
+  loadPluginVitestRules(linter);
+  loadPluginTreeShakingRules(linter);
 };
 
 // some typescript rules are some extension of the basic eslint rules
