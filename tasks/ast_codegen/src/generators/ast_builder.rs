@@ -20,7 +20,11 @@ use crate::{
     CodegenCtx, Generator, GeneratorOutput, TypeRef,
 };
 
-pub struct AstBuilderGenerator;
+use super::define_generator;
+
+define_generator! {
+    pub struct AstBuilderGenerator;
+}
 
 impl Generator for AstBuilderGenerator {
     fn name(&self) -> &'static str {

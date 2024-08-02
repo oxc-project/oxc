@@ -9,9 +9,11 @@ use crate::{
     CodegenCtx, Generator, GeneratorOutput,
 };
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct ImplGetSpanGenerator;
+define_generator! {
+    pub struct ImplGetSpanGenerator;
+}
 
 impl Generator for ImplGetSpanGenerator {
     fn name(&self) -> &'static str {

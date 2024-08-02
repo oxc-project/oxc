@@ -7,9 +7,11 @@ use crate::{
     GeneratorOutput, TypeRef,
 };
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct AstKindGenerator;
+define_generator! {
+    pub struct AstKindGenerator;
+}
 
 pub const BLACK_LIST: [&str; 61] = [
     "Expression",

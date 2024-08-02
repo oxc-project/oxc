@@ -17,10 +17,15 @@ use crate::{
     CodegenCtx, Generator, GeneratorOutput, TypeRef,
 };
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct VisitGenerator;
-pub struct VisitMutGenerator;
+define_generator! {
+    pub struct VisitGenerator;
+}
+
+define_generator! {
+    pub struct VisitMutGenerator;
+}
 
 impl Generator for VisitGenerator {
     fn name(&self) -> &'static str {
