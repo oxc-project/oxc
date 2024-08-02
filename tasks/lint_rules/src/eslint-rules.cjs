@@ -224,14 +224,14 @@ const loadPluginNextRules = (linter) => {
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginPromiseRules = (linter) => {
-  const pluginPromiseReccommendedRules = new Map(
+  const pluginPromiseRecommendedRules = new Map(
     Object.entries(pluginPromiseConfigs.recommended.rules),
   );
   for (const [name, rule] of Object.entries(pluginPromiseRules)) {
     const prefixedName = `promise/${name}`;
 
     rule.meta.docs.recommended =
-      pluginPromiseReccommendedRules.has(prefixedName);
+      pluginPromiseRecommendedRules.has(prefixedName);
 
     linter.defineRule(prefixedName, rule);
   }
@@ -239,13 +239,13 @@ const loadPluginPromiseRules = (linter) => {
 
 /** @param {import("eslint").Linter} linter */
 const loadPluginVitestRules = (linter) => {
-  const pluginVitestReccommendedRules = new Map(
+  const pluginVitestRecommendedRules = new Map(
     Object.entries(pluginVitestConfigs.recommended.rules)
   );
   for (const [name, rule] of Object.entries(pluginVitestRules)) {
     const prefixedName = `vitest/${name}`;
 
-    rule.meta.docs.recommended = pluginVitestReccommendedRules.has(prefixedName);
+    rule.meta.docs.recommended = pluginVitestRecommendedRules.has(prefixedName);
 
     linter.defineRule(prefixedName, rule);
   }
