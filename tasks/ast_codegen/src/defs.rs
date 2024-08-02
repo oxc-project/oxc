@@ -11,38 +11,38 @@ pub enum TypeDef {
 
 #[derive(Debug, Serialize)]
 pub struct StructDef {
-    name: TypeName,
-    fields: Vec<FieldDef>,
-    has_lifetime: bool,
+    pub name: TypeName,
+    pub fields: Vec<FieldDef>,
+    pub has_lifetime: bool,
 }
 
 #[derive(Debug, Serialize)]
 pub struct EnumDef {
-    name: TypeName,
-    variants: Vec<EnumVariantDef>,
+    pub name: TypeName,
+    pub variants: Vec<EnumVariantDef>,
     /// For `@inherits` inherited enum variants
-    inherits: Vec<EnumInheritDef>,
-    has_lifetime: bool,
+    pub inherits: Vec<EnumInheritDef>,
+    pub has_lifetime: bool,
 }
 
 #[derive(Debug, Serialize)]
 pub struct EnumVariantDef {
-    name: TypeName,
-    fields: Vec<FieldDef>,
-    discriminant: Option<u8>,
+    pub name: TypeName,
+    pub fields: Vec<FieldDef>,
+    pub discriminant: Option<u8>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct EnumInheritDef {
-    super_name: String,
-    variants: Vec<EnumVariantDef>,
+    pub super_name: String,
+    pub variants: Vec<EnumVariantDef>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct FieldDef {
     /// `None` if unnamed
-    name: Option<String>,
-    r#type: TypeName,
+    pub name: Option<String>,
+    pub r#type: TypeName,
 }
 
 impl From<&RType> for Option<TypeDef> {

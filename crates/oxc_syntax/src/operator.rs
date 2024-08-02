@@ -293,6 +293,14 @@ impl LogicalOperator {
             Self::Coalesce => "??",
         }
     }
+
+    pub fn lower_precedence(&self) -> Precedence {
+        match self {
+            Self::Or => Precedence::NullishCoalescing,
+            Self::And => Precedence::LogicalOr,
+            Self::Coalesce => Precedence::Conditional,
+        }
+    }
 }
 
 impl GetPrecedence for LogicalOperator {
