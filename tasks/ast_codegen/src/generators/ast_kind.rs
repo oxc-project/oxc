@@ -133,7 +133,7 @@ pub fn process_types(ty: &TypeRef) -> Vec<(Ident, Type)> {
 
 impl Generator for AstKindGenerator {
     fn name(&self) -> &'static str {
-        "AstKindGenerator"
+        stringify!(AstKindGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {

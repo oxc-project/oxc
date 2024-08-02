@@ -17,7 +17,7 @@ pub struct ImplGetSpanGenerator;
 
 impl Generator for ImplGetSpanGenerator {
     fn name(&self) -> &'static str {
-        "ImplGetSpanGenerator"
+        stringify!(ImplGetSpanGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
