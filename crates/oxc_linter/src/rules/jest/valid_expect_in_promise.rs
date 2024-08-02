@@ -6,10 +6,7 @@ use oxc_ast::{
     },
     AstKind,
 };
-use oxc_diagnostics::{
-    miette::{self, Diagnostic},
-    thiserror::Error,
-};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::{Atom, Span};
@@ -23,13 +20,11 @@ use crate::{
     },
 };
 
-#[derive(Debug, Error, Diagnostic)]
-#[error("eslint-plugin-jest(require-hook): Require promises that have expectations in their chain to be valid.")]
-#[diagnostic(
-    severity(warning),
-    help("This promise should either be returned or awaited to ensure the expects in its chain are called")
-)]
-struct ExpectInFloatingPromise(#[label] pub Span);
+fn expect_in_floating_promise(span0: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Require promises that have expectations in their chain to be valid")
+        .with_help("This promise should either be returned or awaited to ensure the expects in its chain are called")
+        .with_label(span0)
+}
 
 #[derive(Debug, Default, Clone)]
 pub struct ValidExpectInPromise;
@@ -160,7 +155,7 @@ impl Rule for ValidExpectInPromise {
         };
 
         if should_report {
-            ctx.diagnostic(ExpectInFloatingPromise(call_expr.span));
+            ctx.diagnostic(expect_in_floating_promise(call_expr.span));
         }
     }
 }
