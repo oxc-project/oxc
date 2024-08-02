@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use proc_macro2::{Group, TokenStream, TokenTree};
-use quote::{quote, ToTokens};
+use quote::ToTokens;
 use syn::{GenericArgument, Ident, PathArguments, Type, TypePath};
 
 use crate::{CodegenCtx, TypeRef};
@@ -80,6 +80,8 @@ impl<'a> TypeIdentResult<'a> {
     }
 }
 
+// TODO: remove me
+#[allow(dead_code)]
 #[derive(Debug, PartialEq)]
 pub enum TypeWrapper {
     None,

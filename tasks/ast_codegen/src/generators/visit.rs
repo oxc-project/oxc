@@ -1,33 +1,20 @@
-use std::{
-    borrow::Cow,
-    collections::{HashMap, HashSet},
-    iter::Cloned,
-};
+use std::{borrow::Cow, collections::HashMap};
 
 use convert_case::{Case, Casing};
 use itertools::Itertools;
-use proc_macro2::{TokenStream, TokenTree};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
-use syn::{
-    parenthesized,
-    parse::{Parse, ParseStream},
-    parse2, parse_quote,
-    punctuated::Punctuated,
-    spanned::Spanned,
-    token::Paren,
-    Arm, Attribute, Expr, Field, GenericArgument, Ident, Meta, MetaNameValue, Path, PathArguments,
-    Token, Type, Variant,
-};
+use syn::{parse_quote, Ident};
 
 use crate::{
     generators::{ast_kind::BLACK_LIST as KIND_BLACK_LIST, insert},
     markers::{
-        get_scope_attr, get_scope_markers, get_visit_markers, ScopeMarkers, VisitArg, VisitArgs,
-        VisitMarkers,
+        get_scope_attr, get_scope_markers, get_visit_markers, ScopeMarkers, VisitArg, VisitMarkers,
     },
+    output,
     schema::{Inherit, REnum, RStruct, RType},
-    util::{StrExt, TokenStreamExt, TypeExt, TypeIdentResult, TypeWrapper},
-    CodegenCtx, Generator, GeneratorOutput, Result, TypeRef,
+    util::{StrExt, TokenStreamExt, TypeExt, TypeWrapper},
+    CodegenCtx, Generator, GeneratorOutput, TypeRef,
 };
 
 use super::generated_header;
@@ -41,7 +28,10 @@ impl Generator for VisitGenerator {
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit", generate_visit::<false>(ctx)))
+        GeneratorOutput::Stream((
+            output(crate::AST_CRATE, "visit.rs"),
+            generate_visit::<false>(ctx),
+        ))
     }
 }
 
@@ -51,7 +41,10 @@ impl Generator for VisitMutGenerator {
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
-        GeneratorOutput::Stream(("visit_mut", generate_visit::<true>(ctx)))
+        GeneratorOutput::Stream((
+            output(crate::AST_CRATE, "visit_mut.rs"),
+            generate_visit::<true>(ctx),
+        ))
     }
 }
 

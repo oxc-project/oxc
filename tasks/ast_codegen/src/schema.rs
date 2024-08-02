@@ -6,7 +6,7 @@ use syn::{
     parse_quote,
     punctuated::Punctuated,
     Attribute, Generics, Ident, Item, ItemConst, ItemEnum, ItemMacro, ItemStruct, ItemUse, Meta,
-    MetaList, Path, Token, Type, Variant, Visibility,
+    Path, Token, Type, Variant, Visibility,
 };
 
 use crate::{util::NormalizeError, TypeName};
@@ -196,6 +196,8 @@ const LOAD_ERROR: &str = "should be loaded by now!";
 #[derive(Debug)]
 pub struct Module {
     pub path: PathBuf,
+    // TODO: remove me
+    #[allow(dead_code)]
     #[allow(clippy::struct_field_names)]
     pub module: TypeName,
     pub shebang: Option<String>,

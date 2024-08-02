@@ -4,16 +4,17 @@ use std::{borrow::Cow, collections::HashMap};
 use convert_case::{Case, Casing};
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use proc_macro2::{TokenStream, TokenTree};
+use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{
-    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Expr, Field,
-    FnArg, GenericArgument, GenericParam, Ident, ImplItemFn, Lit, Meta, MetaNameValue, PatLit,
-    PatType, PathArguments, PredicateType, Token, Type, TypePath, Variant, WhereClause,
+    parse_quote, punctuated::Punctuated, AngleBracketedGenericArguments, Attribute, Expr,
+    GenericArgument, Ident, Lit, Meta, MetaNameValue, PathArguments, Token, Type, TypePath,
+    Variant,
 };
 
 use crate::{
     generators::generated_header,
+    output,
     schema::{Inherit, REnum, RStruct, RType},
     util::{TypeAnalyzeResult, TypeExt, TypeIdentResult, TypeWrapper},
     CodegenCtx, Generator, GeneratorOutput, TypeRef,
@@ -38,7 +39,7 @@ impl Generator for AstBuilderGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "ast_builder",
+            output(crate::AST_CRATE, "ast_builder.rs"),
             quote! {
                 #header
                 insert!("#![allow(clippy::default_trait_access, clippy::too_many_arguments, clippy::fn_params_excessive_bools)]");
@@ -318,6 +319,8 @@ fn generate_struct_builder_fn(ty: &RStruct, ctx: &CodegenCtx) -> TokenStream {
     }
 }
 
+// TODO: remove me
+#[allow(dead_code)]
 #[derive(Debug)]
 struct Param {
     is_default: bool,
@@ -425,6 +428,8 @@ impl<'p> DocComment<'p> {
     /// Add a description section made up of multiple lines.
     ///
     /// Each line will be turned into its own paragraph.
+    // TODO: remove me
+    #[allow(dead_code)]
     pub fn with_description_lines<L, S>(mut self, description: L) -> Self
     where
         S: Into<Cow<'static, str>>,
@@ -523,6 +528,9 @@ fn get_doc_comment(attrs: &[Attribute]) -> Option<String> {
         _ => None,
     })
 }
+
+// TODO: remove me
+#[allow(dead_code)]
 fn get_enum_params(enum_: &REnum, ctx: &CodegenCtx) -> Vec<Param> {
     let as_type = enum_.as_type();
     let inner_type = match &as_type {
