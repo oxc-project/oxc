@@ -1,3 +1,5 @@
+use oxc_ast::ast::VariableDeclaration;
+
 use super::options::ReactRefreshOptions;
 use std::rc::Rc;
 
@@ -20,4 +22,9 @@ impl<'a> ReactRefresh<'a> {
     pub fn new(options: ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
         Self { options, ctx }
     }
+}
+
+// Transform
+impl<'a> ReactRefresh<'a> {
+    fn transform_variable_declaration(&mut self, declaration: VariableDeclaration<'a>) {}
 }

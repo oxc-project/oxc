@@ -191,10 +191,31 @@ impl ReactOptions {
     }
 }
 
-#[derive(Debug, Default, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReactRefreshOptions {
+    #[serde(default = "default_refresh_reg")]
     refresh_reg: String,
+    #[serde(default = "default_refresh_sig")]
     refresh_sig: String,
+    #[serde(default)]
     emit_full_signatures: bool,
+}
+
+impl Default for ReactRefreshOptions {
+    fn default() -> Self {
+        Self {
+            refresh_reg: default_refresh_reg(),
+            refresh_sig: default_refresh_sig(),
+            emit_full_signatures: false,
+        }
+    }
+}
+
+fn default_refresh_reg() -> String {
+    String::from("$RefreshReg$")
+}
+
+fn default_refresh_sig() -> String {
+    String::from("$RefreshSig$")
 }
