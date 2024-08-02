@@ -1096,6 +1096,12 @@ impl<'a> PatternParser<'a> {
         if let Some(class_set_character) = self.parse_class_set_character()? {
             if self.reader.eat('-') {
                 if let Some(class_set_character_to) = self.parse_class_set_character()? {
+                    // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
+                    // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
+                    if class_set_character_to.value < class_set_character.value {
+                        return Err(OxcDiagnostic::error("Character set class range out of order"));
+                    }
+
                     return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
                         Box::new_in(
                             ast::CharacterClassRange {
@@ -1137,7 +1143,6 @@ impl<'a> PatternParser<'a> {
                 self.allocator,
             ))));
         }
-
         // NestedClass :: \ CharacterClassEscape
         let span_start = self.reader.span_position();
         let checkpoint = self.reader.checkpoint();
