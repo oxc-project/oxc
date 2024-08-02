@@ -1,3 +1,6 @@
+[env]
+WORKSPACE_DIR = { value = "", relative = true }
+
 [alias]
 # Do not append `--` or it will break IDEs
 ck        = "check --workspace --all-features --all-targets --locked"

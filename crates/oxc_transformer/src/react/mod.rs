@@ -16,7 +16,7 @@ use refresh::ReactRefresh;
 pub use self::{
     display_name::ReactDisplayName,
     jsx::ReactJsx,
-    options::{ReactJsxRuntime, ReactOptions},
+    options::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
 };
 use crate::context::Ctx;
 
@@ -69,6 +69,11 @@ impl<'a> React<'a> {
 
 // Transforms
 impl<'a> React<'a> {
+    pub fn transform_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.refresh_plugin {
+            self.refresh.transform_program(program, ctx);
+        }
+    }
     pub fn transform_program_on_exit(
         &mut self,
         program: &mut Program<'a>,

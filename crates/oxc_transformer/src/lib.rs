@@ -37,7 +37,7 @@ pub use crate::{
     env::EnvOptions,
     es2015::{ArrowFunctionsOptions, ES2015Options},
     options::{BabelOptions, TransformOptions},
-    react::{ReactJsxRuntime, ReactOptions},
+    react::{ReactJsxRuntime, ReactOptions, ReactRefreshOptions},
     typescript::TypeScriptOptions,
 };
 use crate::{
@@ -111,6 +111,7 @@ impl<'a> Transformer<'a> {
 impl<'a> Traverse<'a> for Transformer<'a> {
     fn enter_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
         self.x0_typescript.transform_program(program, ctx);
+        self.x1_react.transform_program(program, ctx);
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
