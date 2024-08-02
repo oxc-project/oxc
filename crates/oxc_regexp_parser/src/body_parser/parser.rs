@@ -541,9 +541,9 @@ impl<'a> PatternParser<'a> {
         }
 
         let negative = if self.reader.eat('p') {
-            true
-        } else if self.reader.eat('P') {
             false
+        } else if self.reader.eat('P') {
+            true
         } else {
             return Ok(None);
         };
