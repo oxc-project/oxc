@@ -100,12 +100,11 @@ impl GeneratorOutput {
 struct CodegenCtx {
     ty_table: TypeTable,
     ident_table: IdentTable,
-    schema: Vec<Schema>,
+    schema: Schema,
 }
 
 struct CodegenResult {
-    /// One schema per definition file
-    schema: Vec<Schema>,
+    schema: Schema,
     outputs: Vec<(/* generator name */ &'static str, /* output */ GeneratorOutput)>,
 }
 
@@ -126,9 +125,10 @@ impl CodegenCtx {
             }
         }
 
-        let mut me = Self { ty_table, ident_table, schema: Vec::default() }.link(linker)?;
-        let schema = mods.into_iter().map(Module::build).collect::<Result<Vec<_>>>()?;
-        _ = std::mem::replace(&mut me.schema, schema);
+        let mut me = Self { ty_table, ident_table, schema: Schema::default() }.link(linker)?;
+        for m in mods {
+            m.build_in(&mut me.schema)?;
+        }
         Ok(me)
     }
 

@@ -13,15 +13,9 @@ use crate::{util::NormalizeError, TypeName};
 
 use super::{parse_file, Itertools, PathBuf, Rc, Read, RefCell, Result, TypeDef, TypeRef};
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, Default, serde::Serialize)]
 pub struct Schema {
-    source: PathBuf,
-    definitions: Definitions,
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct Definitions {
-    types: Vec<TypeDef>,
+    definitions: Vec<TypeDef>,
 }
 
 #[derive(Debug, Clone)]
@@ -265,16 +259,13 @@ impl Module {
         Ok(self)
     }
 
-    pub fn build(self) -> Result<Schema> {
+    pub fn build_in(self, schema: &mut Schema) -> Result<()> {
         if !self.loaded {
             return Err(String::from(LOAD_ERROR));
         }
 
-        let definitions = Definitions {
-            // We filter map to get rid of stuff we don't need in our schema.
-            types: self.items.into_iter().filter_map(|it| (&*it.borrow()).into()).collect(),
-        };
-        Ok(Schema { source: self.path, definitions })
+        schema.definitions.extend(self.items.into_iter().filter_map(|it| (&*it.borrow()).into()));
+        Ok(())
     }
 }
 
