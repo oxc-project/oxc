@@ -1130,6 +1130,7 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_class_set_operand(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
         // NestedClass :: CharacterClass
+        // NOTE: This can be recursive! e.g. `/[a[b[c[d[e]f]g]h]i]j]/v`
         if let Some(character_class) = self.parse_character_class()? {
             return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
                 character_class,
@@ -1161,9 +1162,8 @@ impl<'a> PatternParser<'a> {
         // ClassStringDisjunction
         let span_start = self.reader.span_position();
         if self.reader.eat3('\\', 'q', '{') {
-            // TODO
-            // let class_string_disjunction_contents = self.parse_class_string_disjunction_contents()?;
-            let class_string_disjunction_contents = Vec::new_in(self.allocator);
+            let class_string_disjunction_contents =
+                self.parse_class_string_disjunction_contents()?;
 
             if self.reader.eat('}') {
                 return Ok(Some(ast::CharacterClassContents::ClassStringDisjunction(Box::new_in(
@@ -1186,8 +1186,47 @@ impl<'a> PatternParser<'a> {
         Ok(None)
     }
 
-    // TODO
-    // fn parse_class_string_disjunction_contents(&mut self) {}
+    // ```
+    // ClassStringDisjunctionContents ::
+    //   ClassString
+    //   ClassString | ClassStringDisjunctionContents
+    // ```
+    fn parse_class_string_disjunction_contents(&mut self) -> Result<Vec<'a, ast::ClassString<'a>>> {
+        let mut body = Vec::new_in(self.allocator);
+
+        loop {
+            let class_string = self.parse_class_string()?;
+            body.push(class_string);
+
+            if !self.reader.eat('|') {
+                break;
+            }
+        }
+
+        Ok(body)
+    }
+
+    // ```
+    // ClassString ::
+    //   [empty]
+    //   NonEmptyClassString
+    //
+    // NonEmptyClassString ::
+    //   ClassSetCharacter NonEmptyClassString[opt]
+    // ```
+    fn parse_class_string(&mut self) -> Result<ast::ClassString<'a>> {
+        let span_start = self.reader.span_position();
+
+        let mut body = Vec::new_in(self.allocator);
+        while let Some(class_set_character) = self.parse_class_set_character()? {
+            body.push(class_set_character);
+        }
+
+        Ok(ast::ClassString {
+            span: self.span_factory.create(span_start, self.reader.span_position()),
+            body,
+        })
+    }
 
     // ```
     // ClassSetCharacter ::
