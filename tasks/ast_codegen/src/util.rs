@@ -7,6 +7,9 @@ use crate::{CodegenCtx, TypeRef};
 
 pub trait NormalizeError<T> {
     fn normalize(self) -> crate::Result<T>;
+    fn normalize_with<E>(self, err: E) -> crate::Result<T>
+    where
+        E: ToString;
 }
 
 impl<T, E> NormalizeError<T> for Result<T, E>
@@ -15,6 +18,26 @@ where
 {
     fn normalize(self) -> crate::Result<T> {
         self.map_err(|e| e.to_string())
+    }
+
+    fn normalize_with<U>(self, err: U) -> crate::Result<T>
+    where
+        U: ToString,
+    {
+        self.map_err(|_| err.to_string())
+    }
+}
+
+impl<T> NormalizeError<T> for Option<T> {
+    fn normalize(self) -> crate::Result<T> {
+        self.normalize_with(String::default())
+    }
+
+    fn normalize_with<E>(self, err: E) -> crate::Result<T>
+    where
+        E: ToString,
+    {
+        self.map_or_else(|| Err(err.to_string()), |r| Ok(r))
     }
 }
 
