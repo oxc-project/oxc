@@ -1355,6 +1355,11 @@ dependencies = [
 [[package]]
 name = "oxc_ast_macros"
 version = "0.23.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "oxc_benchmark"

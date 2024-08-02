@@ -20,7 +20,7 @@
 ///
 /// ```
 /// inherit_variants! {
-///     #[repr(C, u8)]
+///     #[ast]
 ///     enum Statement<'a> {
 ///         pub enum Statement<'a> {
 ///             BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
@@ -35,7 +35,7 @@
 /// expands to:
 ///
 /// ```
-/// #[repr(C, u8)]
+/// #[ast]
 /// enum Statement<'a> {
 ///     pub enum Statement<'a> {
 ///         BlockStatement(Box<'a, BlockStatement<'a>>) = 0,
