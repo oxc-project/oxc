@@ -203,7 +203,7 @@ fn get_static_property_name<'a>(parent_node: Option<&'a AstNode<'a>>) -> Option<
 
 /**
  * Gets the name and kind of the given function node.
- * @see https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762
+ * @see <https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762>
  */
 fn get_function_name_with_kind(func: &Function, parent_node: Option<&AstNode>) -> String {
     let mut tokens: Vec<String> = vec![];
@@ -251,26 +251,20 @@ fn get_function_name_with_kind(func: &Function, parent_node: Option<&AstNode>) -
                 MethodDefinitionKind::Method => tokens.push("method".to_owned()),
             },
             AstKind::PropertyDefinition(_) => tokens.push("method".to_owned()),
-            _ => {
-                tokens.push("function".to_owned());
-            }
+            _ => tokens.push("function".to_owned()),
         }
 
         match kind {
-            AstKind::MethodDefinition(method_definition) => {
-                if !method_definition.computed && method_definition.key.is_private_identifier() {
-                    let name = method_definition.key.name();
-
-                    if let Some(name) = name {
-                        tokens.push(name.to_string());
-                    }
+            AstKind::MethodDefinition(method_definition)
+                if !method_definition.computed && method_definition.key.is_private_identifier() =>
+            {
+                if let Some(name) = method_definition.key.name() {
+                    tokens.push(name.to_string());
                 }
             }
             AstKind::PropertyDefinition(definition) => {
                 if !definition.computed && definition.key.is_private_identifier() {
-                    let name = definition.key.name();
-
-                    if let Some(name) = name {
+                    if let Some(name) = definition.key.name() {
                         tokens.push(name.to_string());
                     }
                 } else if let Some(static_name) = get_static_property_name(parent_node) {
@@ -299,24 +293,24 @@ fn is_invalid_function(
 ) -> bool {
     let func_name = get_function_name(func);
 
-    if
-    // never
-    (*config == FuncNamesConfig::Never
-        && func_name.is_some()
-        && func.r#type != FunctionType::FunctionDeclaration)
-        // as needed
-    || (*config == FuncNamesConfig::AsNeeded
-        && func_name.is_none()
-        && !has_inferred_name(func, parent_node))
-        // always
-    || (*config == FuncNamesConfig::Always
-        && func_name.is_none()
-        && !is_object_or_class_method(parent_node))
-    {
-        return true;
+    match *config {
+        FuncNamesConfig::Never
+            if func_name.is_some() && func.r#type != FunctionType::FunctionDeclaration =>
+        {
+            true
+        }
+        FuncNamesConfig::AsNeeded
+            if func_name.is_none() && !has_inferred_name(func, parent_node) =>
+        {
+            true
+        }
+        FuncNamesConfig::Always
+            if func_name.is_none() && !is_object_or_class_method(parent_node) =>
+        {
+            true
+        }
+        _ => false,
     }
-
-    false
 }
 
 impl Rule for FuncNames {
