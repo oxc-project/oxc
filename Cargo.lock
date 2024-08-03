@@ -1356,8 +1356,10 @@ dependencies = [
 name = "oxc_ast_macros"
 version = "0.23.0"
 dependencies = [
+ "lazy_static",
  "proc-macro2",
  "quote",
+ "rustc-hash",
  "syn",
 ]
 
