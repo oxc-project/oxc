@@ -132,6 +132,7 @@ pub enum TypeWrapper {
 pub struct TypeAnalyzeResult {
     pub type_ref: Option<TypeRef>,
     pub wrapper: TypeWrapper,
+    pub typ: Type,
 }
 
 impl TypeExt for Type {
@@ -225,11 +226,15 @@ impl TypeExt for Type {
         }
         let type_ident = self.get_ident();
         let Some((type_ident, wrapper)) = analyze(&type_ident) else {
-            return TypeAnalyzeResult { type_ref: None, wrapper: TypeWrapper::Ref };
+            return TypeAnalyzeResult {
+                type_ref: None,
+                wrapper: TypeWrapper::Ref,
+                typ: self.clone(),
+            };
         };
 
         let type_ref = ctx.find(&type_ident.to_string());
-        TypeAnalyzeResult { type_ref, wrapper }
+        TypeAnalyzeResult { type_ref, wrapper, typ: self.clone() }
     }
 }
 

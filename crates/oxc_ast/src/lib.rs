@@ -37,6 +37,8 @@ pub mod syntax_directed_operations;
 mod trivia;
 
 mod generated {
+    #[cfg(test)]
+    pub mod assert_layouts;
     pub mod ast_builder;
     pub mod ast_kind;
     pub mod span;

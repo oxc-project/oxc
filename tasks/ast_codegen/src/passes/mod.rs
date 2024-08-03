@@ -1,4 +1,5 @@
 mod build_schema;
+mod calc_layout;
 mod linker;
 
 use std::collections::VecDeque;
@@ -8,6 +9,7 @@ use itertools::Itertools;
 use crate::{schema::RType, CodegenCtx, Result};
 
 pub use build_schema::BuildSchema;
+pub use calc_layout::CalcLayout;
 pub use linker::Linker;
 
 pub trait Pass {
