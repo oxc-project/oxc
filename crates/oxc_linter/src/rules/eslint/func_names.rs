@@ -1,8 +1,8 @@
 use oxc_ast::ast::{
-    AssignmentTarget, BindingPatternKind, Expression, Function, FunctionType, PropertyKind,
+    AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
+    FunctionType, PropertyKind,
 };
 use oxc_ast::AstKind;
-
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{Atom, Span};
@@ -146,11 +146,27 @@ fn has_inferred_name(function: &Function, parent_node: Option<&AstNode>) -> bool
 
             false
         }
+        AstKind::ObjectAssignmentTarget(target) => {
+            for property in &target.properties {
+                if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) =
+                    property
+                {
+                    if let Expression::FunctionExpression(function_expression) =
+                        identifier.init.as_ref().unwrap()
+                    {
+                        return get_function_identifier(function_expression)
+                            == get_function_identifier(function);
+                    }
+                }
+            }
+
+            false
+        }
         _ => false,
     }
 }
 
-fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&Span> {
+fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     if let Some(id) = &func.id {
         return Some(&id.span);
     }
@@ -166,10 +182,37 @@ fn get_function_name<'a>(func: &'a Function<'a>) -> Option<&Atom<'a>> {
     None
 }
 
+fn is_invalid_function(
+    func: &Function,
+    config: &FuncNamesConfig,
+    parent_node: Option<&AstNode>,
+) -> bool {
+    let func_name = get_function_name(func);
+
+    if
+    // never
+    (*config == FuncNamesConfig::Never
+        && func_name.is_some()
+        && func.r#type != FunctionType::FunctionDeclaration)
+        // as needed
+    || (*config == FuncNamesConfig::AsNeeded
+        && func_name.is_none()
+        && !has_inferred_name(func, parent_node))
+        // always
+    || (*config == FuncNamesConfig::Always
+        && func_name.is_none()
+        && !is_object_or_class_method(parent_node))
+    {
+        return true;
+    }
+
+    false
+}
+
 impl Rule for FuncNames {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj1 = value.get(0);
-        let obj2: Option<&serde_json::Value> = value.get(1);
+        let obj2 = value.get(1);
 
         let default_config =
             obj1.and_then(serde_json::Value::as_str).map(FuncNamesConfig::from).unwrap_or_default();
@@ -184,18 +227,56 @@ impl Rule for FuncNames {
                 .unwrap_or(default_config),
         };
     }
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        if let AstKind::Function(func) = node.kind() {
-            let parent_node = ctx.nodes().parent_node(node.id());
+    fn run_once(&self, ctx: &LintContext<'_>) {
+        let mut invalid_funcs: Vec<&Function> = vec![];
 
+        for node in ctx.nodes().iter() {
+            match node.kind() {
+                // check function if it invalid, do not report it because maybe later the function is calling itself
+                AstKind::Function(func) => {
+                    let parent_node = ctx.nodes().parent_node(node.id());
+                    let config =
+                        if func.generator { &self.generators_config } else { &self.default_config };
+
+                    if is_invalid_function(func, config, parent_node) {
+                        invalid_funcs.push(func);
+                    }
+                }
+
+                // check if the calling function is inside of its own body
+                // when yes remove it from invalid_funcs because recursion are always named
+                AstKind::CallExpression(expression) => {
+                    if let Expression::Identifier(idendifier) = &expression.callee {
+                        let ast_span = ctx.nodes().iter_parents(node.id()).skip(1).find_map(|p| {
+                            match p.kind() {
+                                AstKind::Function(func) => {
+                                    let func_name = get_function_name(func);
+
+                                    func_name?;
+
+                                    if *func_name.unwrap() == idendifier.name {
+                                        return Some(func.span);
+                                    }
+
+                                    None
+                                }
+                                _ => None,
+                            }
+                        });
+
+                        if let Some(span) = ast_span {
+                            invalid_funcs.retain(|func| func.span != span);
+                        }
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        for func in &invalid_funcs {
             let func_name = get_function_name(func);
-            let config =
-                if func.generator { &self.generators_config } else { &self.default_config };
 
-            if *config == FuncNamesConfig::Never
-                && func_name.is_some()
-                && func.r#type != FunctionType::FunctionDeclaration
-            {
+            if func_name.is_some() {
                 ctx.diagnostic(
                     OxcDiagnostic::warn(format!("Unexpected named {:?}.", func_name.unwrap()))
                         .with_label(Span::new(
@@ -203,14 +284,7 @@ impl Rule for FuncNames {
                             func.body.as_ref().unwrap().span.start,
                         )),
                 );
-            } else if (*config == FuncNamesConfig::AsNeeded
-                && func_name.is_none()
-                && !has_inferred_name(func, parent_node))
-                // always
-                || (*config == FuncNamesConfig::Always
-                    && func_name.is_none()
-                    && !is_object_or_class_method(parent_node))
-            {
+            } else {
                 ctx.diagnostic(OxcDiagnostic::warn("Unexpected unnamed.").with_label(Span::new(
                     func.span.start,
                     func.body.as_ref().unwrap().span.start,
@@ -243,7 +317,7 @@ fn test() {
         ("var foo = function(){};", Some(serde_json::json!(["as-needed"]))),
         ("({foo: function(){}});", Some(serde_json::json!(["as-needed"]))),
         ("(foo = function(){});", Some(serde_json::json!(["as-needed"]))),
-        // ("({foo = function(){}} = {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 }, -- ToDo: expecting AstKind::AssignmentPattern, but getting AstKind::ObjectAssignmentTarget
+        ("({foo = function(){}} = {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
         ("({key: foo = function(){}} = {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
         ("[foo = function(){}] = [];", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
         ("function fn(foo = function(){}) {}", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
