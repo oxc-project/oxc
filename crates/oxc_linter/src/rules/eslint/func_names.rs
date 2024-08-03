@@ -1,6 +1,6 @@
 use oxc_ast::ast::{
     AssignmentTarget, AssignmentTargetProperty, BindingPatternKind, Expression, Function,
-    FunctionType, PropertyKind,
+    FunctionType, MethodDefinitionKind, PropertyKey, PropertyKind,
 };
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
@@ -168,6 +168,9 @@ fn has_inferred_name(function: &Function, parent_node: Option<&AstNode>) -> bool
     }
 }
 
+/**
+ * Gets the identifier for the function
+ */
 fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     if let Some(id) = &func.id {
         return Some(&id.span);
@@ -176,12 +179,150 @@ fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
     None
 }
 
+/**
+ * Gets the identifier name of the function
+ */
 fn get_function_name<'a>(func: &'a Function<'a>) -> Option<&Atom<'a>> {
     if let Some(id) = &func.id {
         return Some(&id.name);
     }
 
     None
+}
+
+fn get_property_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<String> {
+    match key {
+        PropertyKey::NullLiteral(_) => Some("null".to_string()),
+        PropertyKey::RegExpLiteral(regex) => {
+            Some(format!("/{}/{}", regex.regex.pattern, regex.regex.flags))
+        }
+        PropertyKey::BigIntLiteral(bigint) => Some(bigint.raw.to_string()),
+        PropertyKey::TemplateLiteral(template) => {
+            if template.expressions.len() == 0 && template.quasis.len() == 1 {
+                if let Some(cooked) = &template.quasis[0].value.cooked {
+                    return Some(cooked.to_string());
+                }
+            }
+
+            None
+        }
+        _ => None,
+    }
+}
+
+fn get_static_property_name<'a>(parent_node: Option<&'a AstNode<'a>>) -> Option<String> {
+    parent_node?;
+
+    let result_key = match parent_node.unwrap().kind() {
+        AstKind::PropertyDefinition(definition) => Some((&definition.key, definition.computed)),
+        AstKind::MethodDefinition(method_definition) => {
+            Some((&method_definition.key, method_definition.computed))
+        }
+        AstKind::ObjectProperty(property) => Some((&property.key, property.computed)),
+        _ => None,
+    };
+
+    result_key?;
+
+    let prop = result_key.unwrap().0;
+
+    if prop.is_identifier() && !result_key.unwrap().1 {
+        prop.name()?;
+
+        let prop_name = prop.name().unwrap().to_string();
+        return Some(prop_name);
+    }
+
+    get_property_key_name(prop)
+}
+
+/**
+ * Gets the name and kind of the given function node.
+ * @see https://github.com/eslint/eslint/blob/48117b27e98639ffe7e78a230bfad9a93039fb7f/lib/rules/utils/ast-utils.js#L1762
+ */
+fn get_function_name_with_kind(func: &Function, parent_node: Option<&AstNode>) -> String {
+    let mut tokens: Vec<String> = vec![];
+
+    if parent_node.is_some() {
+        match parent_node.unwrap().kind() {
+            AstKind::MethodDefinition(definition) => {
+                if definition.r#static {
+                    tokens.push("static".to_owned());
+                }
+
+                if !definition.computed && definition.key.is_private_identifier() {
+                    tokens.push("private".to_owned());
+                }
+            }
+            AstKind::PropertyDefinition(definition) => {
+                if definition.r#static {
+                    tokens.push("static".to_owned());
+                }
+
+                if !definition.computed && definition.key.is_private_identifier() {
+                    tokens.push("private".to_owned());
+                }
+            }
+            _ => {}
+        }
+    }
+
+    if func.r#async {
+        tokens.push("async".to_owned());
+    }
+
+    if func.generator {
+        tokens.push("generator".to_owned());
+    }
+
+    if parent_node.is_some() {
+        match parent_node.unwrap().kind() {
+            AstKind::MethodDefinition(method_definition) => match method_definition.kind {
+                MethodDefinitionKind::Constructor => tokens.push("constructor".to_owned()),
+                MethodDefinitionKind::Get => tokens.push("getter".to_owned()),
+                MethodDefinitionKind::Set => tokens.push("setter".to_owned()),
+                MethodDefinitionKind::Method => tokens.push("method".to_owned()),
+            },
+            AstKind::PropertyDefinition(_) => tokens.push("method".to_owned()),
+            _ => {
+                tokens.push("function".to_owned());
+            }
+        }
+
+        match parent_node.unwrap().kind() {
+            AstKind::MethodDefinition(method_definition) => {
+                if !method_definition.computed && method_definition.key.is_private_identifier() {
+                    let name = method_definition.key.name();
+
+                    if let Some(name) = name {
+                        tokens.push(name.to_string());
+                    }
+                }
+            }
+            AstKind::PropertyDefinition(definition) => {
+                if !definition.computed && definition.key.is_private_identifier() {
+                    let name = definition.key.name();
+
+                    if let Some(name) = name {
+                        tokens.push(name.to_string());
+                    }
+                } else if let Some(static_name) = get_static_property_name(parent_node) {
+                    tokens.push(static_name);
+                } else if let Some(name) = get_function_name(func) {
+                    tokens.push(name.to_string());
+                }
+            }
+            _ => {
+                if let Some(static_name) = get_static_property_name(parent_node) {
+                    tokens.push(static_name);
+                } else if let Some(name) = get_function_name(func) {
+                    tokens.push(name.to_string());
+                }
+            }
+        }
+    }
+
+    tokens.join(" ")
 }
 
 fn is_invalid_function(
@@ -230,7 +371,7 @@ impl Rule for FuncNames {
         };
     }
     fn run_once(&self, ctx: &LintContext<'_>) {
-        let mut invalid_funcs: Vec<&Function> = vec![];
+        let mut invalid_funcs: Vec<(&Function, Option<&AstNode>)> = vec![];
 
         for node in ctx.nodes().iter() {
             match node.kind() {
@@ -241,7 +382,7 @@ impl Rule for FuncNames {
                         if func.generator { &self.generators_config } else { &self.default_config };
 
                     if is_invalid_function(func, config, parent_node) {
-                        invalid_funcs.push(func);
+                        invalid_funcs.push((func, parent_node));
                     }
                 }
 
@@ -267,7 +408,7 @@ impl Rule for FuncNames {
                         });
 
                         if let Some(span) = ast_span {
-                            invalid_funcs.retain(|func| func.span != span);
+                            invalid_funcs.retain(|(func, _)| func.span != span);
                         }
                     }
                 }
@@ -275,17 +416,18 @@ impl Rule for FuncNames {
             }
         }
 
-        for func in &invalid_funcs {
+        for (func, parent_node) in &invalid_funcs {
             let func_name = get_function_name(func);
+            let func_name_complete = get_function_name_with_kind(func, *parent_node);
 
             if func_name.is_some() {
                 ctx.diagnostic(
-                    OxcDiagnostic::warn(format!("Unexpected named {:?}.", func_name.unwrap()))
+                    OxcDiagnostic::warn(format!("Unexpected named {func_name_complete}."))
                         .with_label(Span::new(func.span.start, func.params.span.start)),
                 );
             } else {
                 ctx.diagnostic(
-                    OxcDiagnostic::warn("Unexpected unnamed.")
+                    OxcDiagnostic::warn(format!("Unexpected unnamed {func_name_complete}."))
                         .with_label(Span::new(func.span.start, func.params.span.start)),
                 );
             }
