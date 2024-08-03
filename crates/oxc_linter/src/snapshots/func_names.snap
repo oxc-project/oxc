@@ -4,305 +4,305 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:21]
  1 │ Foo.prototype.bar = function() {};
-   ·                     ───────────
+   ·                     ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function(){}())
-   ·  ──────────
+   ·  ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:3]
  1 │ f(function(){})
-   ·   ──────────
+   ·   ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:18]
  1 │ var a = new Date(function() {});
-   ·                  ───────────
+   ·                  ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:12]
  1 │ var test = function(d, e, f) {};
-   ·            ──────────────────
+   ·            ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:5]
  1 │ new function() {}
-   ·     ───────────
+   ·     ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:21]
  1 │ Foo.prototype.bar = function() {};
-   ·                     ───────────
+   ·                     ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function(){}())
-   ·  ──────────
+   ·  ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:3]
  1 │ f(function(){})
-   ·   ──────────
+   ·   ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:18]
  1 │ var a = new Date(function() {});
-   ·                  ───────────
+   ·                  ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:5]
  1 │ new function() {}
-   ·     ───────────
+   ·     ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:13]
  1 │ var {foo} = function(){};
-   ·             ──────────
+   ·             ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:18]
  1 │ ({ a: obj.prop = function(){} } = foo);
-   ·                  ──────────
+   ·                  ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:13]
  1 │ [obj.prop = function(){}] = foo;
-   ·             ──────────
+   ·             ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:16]
  1 │ var { a: [b] = function(){} } = foo;
-   ·                ──────────
+   ·                ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:22]
  1 │ function foo({ a } = function(){}) {};
-   ·                      ──────────
+   ·                      ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "foo".
    ╭─[func_names.tsx:1:9]
  1 │ var x = function foo() {};
-   ·         ───────────────
+   ·         ────────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "foo".
    ╭─[func_names.tsx:1:21]
  1 │ Foo.prototype.bar = function foo() {};
-   ·                     ───────────────
+   ·                     ────────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "foo".
    ╭─[func_names.tsx:1:8]
  1 │ ({foo: function foo() {}})
-   ·        ───────────────
+   ·        ────────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:16]
  1 │ export default function() {}
-   ·                ───────────
+   ·                ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:16]
  1 │ export default function() {}
-   ·                ───────────
+   ·                ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:17]
  1 │ export default (function(){});
-   ·                 ──────────
+   ·                 ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:11]
  1 │ var foo = function*() {};
-   ·           ────────────
+   ·           ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:11]
  1 │ var foo = function*() {};
-   ·           ────────────
+   ·           ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:11]
  1 │ var foo = function*() {};
-   ·           ────────────
+   ·           ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:11]
  1 │ var foo = function*() {};
-   ·           ────────────
+   ·           ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *() {});
-   ·               ─────────────
+   ·               ──────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:2]
  1 │ (function*() {}())
-   ·  ────────────
+   ·  ─────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "baz".
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
-   ·               ────────────────
+   ·               ─────────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "baz".
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
-   ·               ────────────────
+   ·               ─────────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "baz".
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
-   ·               ────────────────
+   ·               ─────────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "baz".
    ╭─[func_names.tsx:1:15]
  1 │ var foo = bar(function *baz() {});
-   ·               ────────────────
+   ·               ─────────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:17]
  1 │ class C { foo = function() {} }
-   ·                 ───────────
+   ·                 ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:19]
  1 │ class C { [foo] = function() {} }
-   ·                   ───────────
+   ·                   ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:18]
  1 │ class C { #foo = function() {} }
-   ·                  ───────────
+   ·                  ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected unnamed.
    ╭─[func_names.tsx:1:21]
  1 │ class C { foo = bar(function() {}) }
-   ·                     ───────────
+   ·                     ────────
    ╰────
 
   ⚠ eslint(func-names): Unexpected named "bar".
    ╭─[func_names.tsx:1:17]
  1 │ class C { foo = function bar() {} }
-   ·                 ───────────────
+   ·                 ────────────
    ╰────
