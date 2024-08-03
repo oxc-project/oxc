@@ -64,7 +64,7 @@ pub struct NumericLiteral<'a> {
 
 /// BigInt literal
 #[ast(visit)]
-#[derive(Debug, Hash)]
+#[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct BigIntLiteral<'a> {
