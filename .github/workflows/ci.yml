@@ -114,7 +114,6 @@ jobs:
 
   test-wasm32-unknown-unknown:
     name: Check wasm32-unknown-unknown
-    if: ${{ github.ref_name == 'main' }}
     runs-on: ubuntu-latest
     steps:
       - uses: taiki-e/checkout-action@v1

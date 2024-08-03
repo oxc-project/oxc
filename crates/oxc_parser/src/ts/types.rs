@@ -762,11 +762,7 @@ impl<'a> ParserImpl<'a> {
         let mut left = TSTypeName::IdentifierReference(self.ast.alloc(ident));
         while self.eat(Kind::Dot) {
             let right = self.parse_identifier_name()?;
-            left = TSTypeName::QualifiedName(self.ast.alloc(TSQualifiedName {
-                span: self.end_span(span),
-                left,
-                right,
-            }));
+            left = self.ast.ts_type_name_qualified_name(self.end_span(span), left, right);
         }
         Ok(left)
     }
@@ -883,24 +879,22 @@ impl<'a> ParserImpl<'a> {
             return Ok(if dotdotdot {
                 TSTupleElement::TSRestType(self.ast.alloc(TSRestType {
                     span,
-                    type_annotation: TSType::TSNamedTupleMember(self.ast.alloc(
-                        TSNamedTupleMember {
-                            span: self.end_span(member_span),
-                            element_type,
-                            label,
-                            // TODO: A tuple member cannot be both optional and rest. (TS5085)
-                            // See typescript suite <conformance/types/tuple/restTupleElements1.ts>
-                            optional,
-                        },
-                    )),
+                    type_annotation: self.ast.ts_type_named_tuple_member(
+                        self.end_span(member_span),
+                        element_type,
+                        label,
+                        // TODO: A tuple member cannot be both optional and rest. (TS5085)
+                        // See typescript suite <conformance/types/tuple/restTupleElements1.ts>
+                        optional,
+                    ),
                 }))
             } else {
-                TSTupleElement::TSNamedTupleMember(self.ast.alloc(TSNamedTupleMember {
+                TSTupleElement::from(self.ast.ts_type_named_tuple_member(
                     span,
                     element_type,
                     label,
                     optional,
-                }))
+                ))
             });
         }
         self.parse_tuple_element_type()
@@ -933,10 +927,7 @@ impl<'a> ParserImpl<'a> {
         let ty = self.parse_ts_type()?;
         if let TSType::JSDocNullableType(ty) = ty {
             if ty.span.start == ty.type_annotation.span().start {
-                Ok(TSTupleElement::TSOptionalType(self.ast.alloc(TSOptionalType {
-                    span: ty.span,
-                    type_annotation: ty.unbox().type_annotation,
-                })))
+                Ok(self.ast.ts_tuple_element_optional_type(ty.span, ty.unbox().type_annotation))
             } else {
                 Ok(TSTupleElement::JSDocNullableType(ty))
             }
@@ -1023,7 +1014,7 @@ impl<'a> ParserImpl<'a> {
         )?;
         self.expect(Kind::RCurly)?;
         self.expect(Kind::RCurly)?;
-        Ok(TSImportAttributes { span, elements })
+        Ok(self.ast.ts_import_attributes(span, elements))
     }
 
     fn parse_ts_import_attribute(&mut self) -> Result<TSImportAttribute<'a>> {
@@ -1035,7 +1026,7 @@ impl<'a> ParserImpl<'a> {
 
         self.expect(Kind::Colon)?;
         let value = self.parse_expr()?;
-        Ok(TSImportAttribute { span: self.end_span(span), name, value })
+        Ok(self.ast.ts_import_attribute(self.end_span(span), name, value))
     }
 
     fn try_parse_constraint_of_infer_type(&mut self) -> Result<Option<TSType<'a>>> {
@@ -1316,11 +1307,7 @@ impl<'a> ParserImpl<'a> {
             return Err(self.unexpected());
         }
 
-        Ok(TSIndexSignatureName {
-            span: self.end_span(span),
-            name,
-            type_annotation: type_annotation.unwrap(),
-        })
+        Ok(self.ast.ts_index_signature_name(self.end_span(span), name, type_annotation.unwrap()))
     }
 
     pub(crate) fn parse_class_element_modifiers(
