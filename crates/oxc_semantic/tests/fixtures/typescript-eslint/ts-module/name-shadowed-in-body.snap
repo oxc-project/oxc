@@ -9,13 +9,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/name-
         "children": [],
         "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
         "id": 1,
-        "node": "TSModuleDeclaration",
+        "node": "TSModuleDeclaration(Foo)",
         "symbols": [
           {
             "flag": "SymbolFlags(BlockScopedVariable | ConstVariable | Export)",
             "id": 1,
             "name": "Foo",
-            "node": "VariableDeclarator",
+            "node": "VariableDeclarator(Foo)",
             "references": []
           }
         ]
@@ -29,7 +29,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/name-
         "flag": "SymbolFlags(NameSpaceModule | ValueModule)",
         "id": 0,
         "name": "Foo",
-        "node": "TSModuleDeclaration",
+        "node": "TSModuleDeclaration(Foo)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
@@ -43,7 +43,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/name-
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 2,
         "name": "usage",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(usage)",
         "references": []
       }
     ]

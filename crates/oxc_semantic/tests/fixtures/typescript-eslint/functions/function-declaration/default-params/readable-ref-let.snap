@@ -15,7 +15,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "b",
-            "node": "FormalParameter",
+            "node": "FormalParameter(b)",
             "references": []
           }
         ]
@@ -29,7 +29,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         "flag": "SymbolFlags(BlockScopedVariable)",
         "id": 0,
         "name": "a",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(a)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",

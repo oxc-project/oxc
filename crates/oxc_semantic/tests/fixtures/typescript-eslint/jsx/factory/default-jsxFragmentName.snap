@@ -20,7 +20,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/factory/def
         "flag": "SymbolFlags(Import)",
         "id": 1,
         "name": "Fragment",
-        "node": "ImportSpecifier",
+        "node": "ImportSpecifier(Fragment)",
         "references": []
       }
     ]

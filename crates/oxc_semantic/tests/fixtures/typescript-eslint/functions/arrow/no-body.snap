@@ -15,7 +15,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/arrow
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 0,
             "name": "a",
-            "node": "FormalParameter",
+            "node": "FormalParameter(a)",
             "references": [
               {
                 "flag": "ReferenceFlag(Read)",

@@ -15,7 +15,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
             "flag": "SymbolFlags(TypeParameter)",
             "id": 1,
             "name": "U",
-            "node": "TSTypeParameter",
+            "node": "TSTypeParameter(U)",
             "references": []
           }
         ]
