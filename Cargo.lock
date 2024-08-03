@@ -1753,6 +1753,7 @@ dependencies = [
  "compact_str",
  "miette",
  "oxc_allocator",
+ "schemars",
  "serde",
  "tsify",
  "wasm-bindgen",

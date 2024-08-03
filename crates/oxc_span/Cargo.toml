@@ -28,7 +28,9 @@ compact_str = { workspace = true }
 tsify        = { workspace = true, optional = true }
 wasm-bindgen = { workspace = true, optional = true }
 serde        = { workspace = true, features = ["derive"], optional = true }
+schemars     = { workspace = true, optional = true }
 
 [features]
 default   = []
 serialize = ["compact_str/serde", "dep:serde", "dep:tsify", "dep:wasm-bindgen"]
+schemars  = ["dep:schemars"]

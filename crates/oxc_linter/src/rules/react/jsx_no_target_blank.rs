@@ -9,7 +9,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -150,14 +150,16 @@ impl Rule for JsxNoTargetBlank {
                                         .react
                                         .get_link_component_attrs(tag_name)
                                         .map_or(false, |link_attribute| {
-                                            link_attribute.contains(&attribute_name.to_string())
+                                            link_attribute
+                                                .contains(&CompactStr::new(attribute_name))
                                         })
                                     || ctx
                                         .settings()
                                         .react
                                         .get_form_component_attrs(tag_name)
                                         .map_or(false, |form_attribute| {
-                                            form_attribute.contains(&attribute_name.to_string())
+                                            form_attribute
+                                                .contains(&CompactStr::new(attribute_name))
                                         })
                                 {
                                     if let Some(val) = attribute.value.as_ref() {

@@ -1,4 +1,4 @@
-use std::collections::{hash_map::HashMap, hash_set::HashSet};
+use std::{borrow::Cow, collections::hash_map::HashMap};
 
 use itertools::Itertools;
 use once_cell::sync::Lazy;
@@ -11,6 +11,7 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use phf::{phf_map, phf_set, Map, Set};
 use regex::Regex;
+use rustc_hash::FxHashSet;
 use serde::Deserialize;
 
 use crate::{context::LintContext, rule::Rule, utils::get_jsx_attribute_name, AstNode};
@@ -48,7 +49,7 @@ pub struct NoUnknownProperty(Box<NoUnknownPropertyConfig>);
 #[serde(rename_all = "camelCase")]
 pub struct NoUnknownPropertyConfig {
     #[serde(default)]
-    ignore: HashSet<String>,
+    ignore: FxHashSet<Cow<'static, str>>,
     #[serde(default)]
     require_data_lowercase: bool,
 }
@@ -72,6 +73,7 @@ declare_oxc_lint!(
     NoUnknownProperty,
     restriction
 );
+
 const ATTRIBUTE_TAGS_MAP: Map<&'static str, Set<&'static str>> = phf_map! {
     "abbr" => phf_set! {"th", "td"},
     "charset" => phf_set! {"meta"},
@@ -491,16 +493,16 @@ impl Rule for NoUnknownProperty {
                 if self.0.ignore.contains(&(actual_name)) {
                     return;
                 };
-                if is_valid_data_attr(actual_name.as_str()) {
-                    if self.0.require_data_lowercase && has_uppercase(actual_name.as_str()) {
+                if is_valid_data_attr(&actual_name) {
+                    if self.0.require_data_lowercase && has_uppercase(&actual_name) {
                         ctx.diagnostic(data_lowercase_required(span, &actual_name.to_lowercase()));
                     }
                     return;
                 };
-                if ARIA_PROPERTIES.contains(actual_name.as_str()) || !is_valid_html_tag {
+                if ARIA_PROPERTIES.contains(&actual_name) || !is_valid_html_tag {
                     return;
                 };
-                let name = normalize_attribute_case(actual_name.as_str());
+                let name = normalize_attribute_case(&actual_name);
                 if let Some(tags) = ATTRIBUTE_TAGS_MAP.get(name) {
                     if !tags.contains(el_type) {
                         ctx.diagnostic(invalid_prop_on_tag(

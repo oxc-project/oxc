@@ -65,7 +65,7 @@ impl Rule for RoleSupportsAriaProps {
             if let Some(el_type) = get_element_type(ctx, jsx_el) {
                 let role = has_jsx_prop_ignore_case(jsx_el, "role");
                 let role_value = role.map_or_else(
-                    || get_implicit_role(jsx_el, el_type.as_str()),
+                    || get_implicit_role(jsx_el, &el_type),
                     |i| get_string_literal_prop_value(i),
                 );
                 let is_implicit = role_value.is_some() && role.is_none();
