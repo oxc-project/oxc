@@ -157,7 +157,7 @@ fn get_property_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<String> {
     if matches!(key, PropertyKey::NullLiteral(_)) {
         return Some("null".to_string());
     }
-    
+
     match key {
         PropertyKey::RegExpLiteral(regex) => {
             Some(format!("/{}/{}", regex.regex.pattern, regex.regex.flags))
