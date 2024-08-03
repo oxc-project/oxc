@@ -281,16 +281,13 @@ impl Rule for FuncNames {
             if func_name.is_some() {
                 ctx.diagnostic(
                     OxcDiagnostic::warn(format!("Unexpected named {:?}.", func_name.unwrap()))
-                        .with_label(Span::new(
-                            func.span.start,
-                            func.id.clone().unwrap().span.end
-                        )),
+                        .with_label(Span::new(func.span.start, func.id.clone().unwrap().span.end)),
                 );
             } else {
-                ctx.diagnostic(OxcDiagnostic::warn("Unexpected unnamed.").with_label(Span::new(
-                    func.span.start,
-                    func.params.span.start
-                )));
+                ctx.diagnostic(
+                    OxcDiagnostic::warn("Unexpected unnamed.")
+                        .with_label(Span::new(func.span.start, func.params.span.start)),
+                );
             }
         }
     }
