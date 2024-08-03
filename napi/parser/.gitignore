@@ -1,7 +1,5 @@
 /node_modules/
 *.node
 
-deserialize.js
-schema.json
 sizes.json
 *.diff
