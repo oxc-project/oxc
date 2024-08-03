@@ -37,20 +37,22 @@ impl FuncNamesConfig {
 declare_oxc_lint!(
     /// ### What it does
     ///
+    /// Require or disallow named function expressions
     ///
     /// ### Why is this bad?
     ///
+    /// If you leave off the function name then when the function throws an exception you are likely
+    /// to get something similar to anonymous function in the stack trace. If you provide the optional
+    /// name for a function expression then you will get the name of the function expression in the stack trace.
     ///
-    /// ### Example
+    /// /// ### Example
+    ///
     /// ```javascript
+    /// Foo.prototype.bar = function bar() {};
     /// ```
     FuncNames,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-
-    pending  // TODO: describe fix capabilities. Remove if no fix can be done,
-             // keep at 'pending' if you think one could be added but don't know how.
-             // Options are 'fix', 'fix-dangerous', 'suggestion', and 'suggestion-dangerous'
+    style,
+    pending
 );
 /**
  * Determines whether the current FunctionExpression node is a get, set, or
@@ -246,7 +248,7 @@ impl Rule for FuncNames {
                 // check if the calling function is inside of its own body
                 // when yes remove it from invalid_funcs because recursion are always named
                 AstKind::CallExpression(expression) => {
-                    if let Expression::Identifier(idendifier) = &expression.callee {
+                    if let Expression::Identifier(identifier) = &expression.callee {
                         let ast_span = ctx.nodes().iter_parents(node.id()).skip(1).find_map(|p| {
                             match p.kind() {
                                 AstKind::Function(func) => {
@@ -254,7 +256,7 @@ impl Rule for FuncNames {
 
                                     func_name?;
 
-                                    if *func_name.unwrap() == idendifier.name {
+                                    if *func_name.unwrap() == identifier.name {
                                         return Some(func.span);
                                     }
 
