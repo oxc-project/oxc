@@ -82,7 +82,7 @@ fn assert_type(ty: &Type, def: &TypeDef) -> (TokenStream, TokenStream) {
                 assert_size_align(ty, def.size_32, def.align_32),
                 ty,
                 &def.fields,
-                def.offsets_64.as_deref(),
+                def.offsets_32.as_deref(),
             ),
         ),
         TypeDef::Enum(def) => (
