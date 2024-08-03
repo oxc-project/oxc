@@ -63,16 +63,19 @@ fn is_object_or_class_method(parent_node: Option<&AstNode>) -> bool {
         return false;
     }
 
-    match parent_node.unwrap().kind() {
-        AstKind::MethodDefinition(_) => true,
-        AstKind::ObjectProperty(property) => {
-            property.method
-                || property.kind == PropertyKind::Get
-                || property.kind == PropertyKind::Set
-        }
+    let unwrapped_kind = parent_node.unwrap().kind();
 
-        _ => false,
+    if matches!(unwrapped_kind, AstKind::MethodDefinition(_)) {
+        return true;
     }
+
+    if let AstKind::ObjectProperty(property) = unwrapped_kind {
+        return property.method
+            || property.kind == PropertyKind::Get
+            || property.kind == PropertyKind::Set;
+    }
+
+    false
 }
 /**
  * Determines whether the current FunctionExpression node has a name that would be
@@ -83,82 +86,50 @@ fn has_inferred_name(function: &Function, parent_node: Option<&AstNode>) -> bool
         return true;
     }
 
-    if parent_node.is_none() {
-        return false;
-    }
-
+    // unwrap is safe because of is_object_or_class_method
     match parent_node.unwrap().kind() {
         AstKind::VariableDeclarator(declarator) => {
-            if let BindingPatternKind::BindingIdentifier(_) = declarator.id.kind {
-                if let Expression::FunctionExpression(function_expression) =
-                    declarator.init.as_ref().unwrap()
-                {
-                    return get_function_identifier(function_expression)
-                        == get_function_identifier(function);
-                }
-            }
-
-            false
+            matches!(declarator.id.kind, BindingPatternKind::BindingIdentifier(_))
+                && matches!(declarator.init.as_ref().unwrap(), Expression::FunctionExpression(function_expression)
+                        if get_function_identifier(function_expression) == get_function_identifier(function)
+                )
         }
         AstKind::ObjectProperty(property) => {
-            if let Expression::FunctionExpression(function_expression) = &property.value {
-                return get_function_identifier(function_expression)
-                    == get_function_identifier(function);
-            }
-
-            false
+            matches!(&property.value, Expression::FunctionExpression(function_expression)
+                if get_function_identifier(function_expression) == get_function_identifier(function)
+            )
         }
         AstKind::PropertyDefinition(definition) => {
-            if let Expression::FunctionExpression(function_expression) =
-                definition.value.as_ref().unwrap()
-            {
-                return get_function_identifier(function_expression)
-                    == get_function_identifier(function);
-            }
-
-            false
+            matches!(&definition.value.as_ref().unwrap(), Expression::FunctionExpression(function_expression)
+                if get_function_identifier(function_expression) == get_function_identifier(function)
+            )
         }
         AstKind::AssignmentExpression(expression) => {
-            if let AssignmentTarget::AssignmentTargetIdentifier(_) = expression.left {
-                if let Expression::FunctionExpression(function_expression) = &expression.right {
-                    return get_function_identifier(function_expression)
-                        == get_function_identifier(function);
-                }
-            }
-
-            false
+            matches!(expression.left, AssignmentTarget::AssignmentTargetIdentifier(_))
+                && matches!(&expression.right, Expression::FunctionExpression(function_expression)
+                        if get_function_identifier(function_expression) == get_function_identifier(function)
+                )
         }
         AstKind::AssignmentTargetWithDefault(target) => {
-            if let AssignmentTarget::AssignmentTargetIdentifier(_) = target.binding {
-                if let Expression::FunctionExpression(function_expression) = &target.init {
-                    return get_function_identifier(function_expression)
-                        == get_function_identifier(function);
-                }
-            }
-
-            false
+            matches!(target.binding, AssignmentTarget::AssignmentTargetIdentifier(_))
+                && matches!(&target.init, Expression::FunctionExpression(function_expression)
+                    if get_function_identifier(function_expression) == get_function_identifier(function)
+                )
         }
         AstKind::AssignmentPattern(pattern) => {
-            if let BindingPatternKind::BindingIdentifier(_) = pattern.left.kind {
-                if let Expression::FunctionExpression(function_expression) = &pattern.right {
-                    return get_function_identifier(function_expression)
-                        == get_function_identifier(function);
-                }
-            }
-
-            false
+            matches!(pattern.left.kind, BindingPatternKind::BindingIdentifier(_))
+                && matches!(&pattern.right, Expression::FunctionExpression(function_expression)
+                    if get_function_identifier(function_expression) == get_function_identifier(function)
+                )
         }
         AstKind::ObjectAssignmentTarget(target) => {
             for property in &target.properties {
-                if let AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier) =
-                    property
-                {
-                    if let Expression::FunctionExpression(function_expression) =
-                        identifier.init.as_ref().unwrap()
-                    {
-                        return get_function_identifier(function_expression)
-                            == get_function_identifier(function);
-                    }
+                if matches!(property, AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(identifier)
+                    if matches!(identifier.init.as_ref().unwrap(), Expression::FunctionExpression(function_expression)
+                        if get_function_identifier(function_expression) == get_function_identifier(function)
+                    )
+                ) {
+                    return true;
                 }
             }
 
@@ -172,27 +143,22 @@ fn has_inferred_name(function: &Function, parent_node: Option<&AstNode>) -> bool
  * Gets the identifier for the function
  */
 fn get_function_identifier<'a>(func: &'a Function<'a>) -> Option<&'a Span> {
-    if let Some(id) = &func.id {
-        return Some(&id.span);
-    }
-
-    None
+    func.id.as_ref().map(|id| &id.span)
 }
 
 /**
  * Gets the identifier name of the function
  */
 fn get_function_name<'a>(func: &'a Function<'a>) -> Option<&Atom<'a>> {
-    if let Some(id) = &func.id {
-        return Some(&id.name);
-    }
-
-    None
+    func.id.as_ref().map(|id| &id.name)
 }
 
 fn get_property_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<String> {
+    if matches!(key, PropertyKey::NullLiteral(_)) {
+        return Some("null".to_string());
+    }
+    
     match key {
-        PropertyKey::NullLiteral(_) => Some("null".to_string()),
         PropertyKey::RegExpLiteral(regex) => {
             Some(format!("/{}/{}", regex.regex.pattern, regex.regex.flags))
         }
@@ -229,8 +195,7 @@ fn get_static_property_name<'a>(parent_node: Option<&'a AstNode<'a>>) -> Option<
     if prop.is_identifier() && !result_key.unwrap().1 {
         prop.name()?;
 
-        let prop_name = prop.name().unwrap().to_string();
-        return Some(prop_name);
+        return Some(prop.name().unwrap().to_string());
     }
 
     get_property_key_name(prop)
@@ -276,7 +241,9 @@ fn get_function_name_with_kind(func: &Function, parent_node: Option<&AstNode>) -
     }
 
     if parent_node.is_some() {
-        match parent_node.unwrap().kind() {
+        let kind = parent_node.unwrap().kind();
+
+        match kind {
             AstKind::MethodDefinition(method_definition) => match method_definition.kind {
                 MethodDefinitionKind::Constructor => tokens.push("constructor".to_owned()),
                 MethodDefinitionKind::Get => tokens.push("getter".to_owned()),
@@ -289,7 +256,7 @@ fn get_function_name_with_kind(func: &Function, parent_node: Option<&AstNode>) -
             }
         }
 
-        match parent_node.unwrap().kind() {
+        match kind {
             AstKind::MethodDefinition(method_definition) => {
                 if !method_definition.computed && method_definition.key.is_private_identifier() {
                     let name = method_definition.key.name();
