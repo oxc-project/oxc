@@ -2157,6 +2157,7 @@ pub mod walk {
         it: &TSImportAttributes<'a>,
     ) {
         // NOTE: AstKind doesn't exists!
+        visitor.visit_identifier_name(&it.attributes_keyword);
         visitor.visit_ts_import_attribute_list(&it.elements);
     }
 

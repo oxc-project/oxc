@@ -3286,10 +3286,18 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportType<'a> {
 
 impl<'a, const MINIFY: bool> Gen<MINIFY> for TSImportAttributes<'a> {
     fn gen(&self, p: &mut Codegen<{ MINIFY }>, ctx: Context) {
-        // { with: { ... } }
-        p.print_str("{ with: { ");
+        p.print_char(b'{');
+        p.print_soft_space();
+        self.attributes_keyword.gen(p, ctx);
+        p.print_str(":");
+        p.print_soft_space();
+        p.print_char(b'{');
+        p.print_soft_space();
         p.print_list(&self.elements, ctx);
-        p.print_str(" }}");
+        p.print_soft_space();
+        p.print_char(b'}');
+        p.print_soft_space();
+        p.print_char(b'}');
     }
 }
 

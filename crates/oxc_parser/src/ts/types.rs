@@ -1001,9 +1001,14 @@ impl<'a> ParserImpl<'a> {
 
     fn parse_ts_import_attributes(&mut self) -> Result<TSImportAttributes<'a>> {
         let span = self.start_span();
-        // { with:
         self.expect(Kind::LCurly)?;
-        self.expect(Kind::With)?;
+        let attributes_keyword = match self.cur_kind() {
+            Kind::Assert if !self.cur_token().is_on_new_line => self.parse_identifier_name()?,
+            Kind::With => self.parse_identifier_name()?,
+            _ => {
+                return Err(self.unexpected());
+            }
+        };
         self.expect(Kind::Colon)?;
         self.expect(Kind::LCurly)?;
         let elements = self.parse_delimited_list(
@@ -1014,7 +1019,7 @@ impl<'a> ParserImpl<'a> {
         )?;
         self.expect(Kind::RCurly)?;
         self.expect(Kind::RCurly)?;
-        Ok(self.ast.ts_import_attributes(span, elements))
+        Ok(self.ast.ts_import_attributes(self.end_span(span), attributes_keyword, elements))
     }
 
     fn parse_ts_import_attribute(&mut self) -> Result<TSImportAttribute<'a>> {
