@@ -1192,6 +1192,9 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
             let bytes = result.as_str();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
+        } else if self.value == f64::INFINITY {
+            p.print_str("Infinity");
+            need_space_before_dot("Infinity", p);
         } else {
             p.print_str(self.raw);
             need_space_before_dot(self.raw, p);
@@ -1661,7 +1664,7 @@ impl<'a, const MINIFY: bool> GenExpr<MINIFY> for ArrowFunctionExpression<'a> {
             p.print_str("=>");
             p.print_soft_space();
             if self.expression {
-                if let Statement::ExpressionStatement(stmt) = &self.body.statements[0] {
+                if let Some(Statement::ExpressionStatement(stmt)) = &self.body.statements.first() {
                     p.start_of_arrow_expr = p.code_len();
                     stmt.expression.gen_expr(p, Precedence::Comma, ctx.and_forbid_in(true));
                 }

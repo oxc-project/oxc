@@ -2,4 +2,10 @@ commit: a1587416
 
 minifier_test262 Summary:
 AST Parsed     : 46406/46406 (100.00%)
-Positive Passed: 46406/46406 (100.00%)
+Positive Passed: 46400/46406 (99.99%)
+Expect to Parse: "language/expressions/logical-and/S11.11.1_A3_T4.js"
+Expect to Parse: "language/expressions/logical-not/S9.2_A1_T2.js"
+Expect to Parse: "language/statements/if/S12.5_A1.1_T1.js"
+Expect to Parse: "language/statements/if/S12.5_A1.1_T2.js"
+Expect to Parse: "staging/explicit-resource-management/disposable-stack-adopt-and-defer.js"
+Expect to Parse: "staging/explicit-resource-management/exception-handling.js"

@@ -2,35 +2,47 @@
 //!
 //! <https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java>
 
-mod tri;
-mod ty;
-mod util;
-
 use std::{cmp::Ordering, mem};
 
-use oxc_ast::{ast::*, AstBuilder};
-use oxc_span::{GetSpan, Span};
+use num_bigint::BigInt;
+
+use oxc_ast::{ast::*, visit::walk_mut, AstBuilder, Visit, VisitMut};
+use oxc_span::{GetSpan, Span, SPAN};
 use oxc_syntax::{
     number::NumberBase,
     operator::{BinaryOperator, LogicalOperator, UnaryOperator},
 };
 
-use crate::compressor::ast_util::{
-    get_boolean_value, get_number_value, get_side_free_bigint_value, get_side_free_number_value,
-    get_side_free_string_value, get_string_value, is_exact_int64, IsLiteralValue,
-    MayHaveSideEffects, NumberValue,
+use crate::{
+    ast_util::{
+        get_boolean_value, get_number_value, get_side_free_bigint_value,
+        get_side_free_number_value, get_side_free_string_value, get_string_value, is_exact_int64,
+        MayHaveSideEffects, NumberValue,
+    },
+    keep_var::KeepVar,
+    tri::Tri,
+    ty::Ty,
 };
 
-use tri::Tri;
-use ty::Ty;
-use util::bigint_less_than_number;
-
-pub struct Folder<'a> {
+pub struct FoldConstants<'a> {
     ast: AstBuilder<'a>,
     evaluate: bool,
 }
 
-impl<'a> Folder<'a> {
+impl<'a> VisitMut<'a> for FoldConstants<'a> {
+    fn visit_statement(&mut self, stmt: &mut Statement<'a>) {
+        walk_mut::walk_statement(self, stmt);
+        self.fold_condition(stmt);
+    }
+
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        walk_mut::walk_expression(self, expr);
+        self.fold_expression(expr);
+        self.fold_conditional_expression(expr);
+    }
+}
+
+impl<'a> FoldConstants<'a> {
     pub fn new(ast: AstBuilder<'a>) -> Self {
         Self { ast, evaluate: false }
     }
@@ -38,6 +50,61 @@ impl<'a> Folder<'a> {
     pub fn with_evaluate(mut self, yes: bool) -> Self {
         self.evaluate = yes;
         self
+    }
+
+    pub fn build(&mut self, program: &mut Program<'a>) {
+        self.visit_program(program);
+    }
+
+    fn fold_expression_and_get_boolean_value(&mut self, expr: &mut Expression<'a>) -> Option<bool> {
+        self.fold_expression(expr);
+        get_boolean_value(expr)
+    }
+
+    fn fold_if_statement(&mut self, stmt: &mut Statement<'a>) {
+        let Statement::IfStatement(if_stmt) = stmt else { return };
+
+        // Descend and remove `else` blocks first.
+        if let Some(alternate) = &mut if_stmt.alternate {
+            self.fold_if_statement(alternate);
+            if matches!(alternate, Statement::EmptyStatement(_)) {
+                if_stmt.alternate = None;
+            }
+        }
+
+        match self.fold_expression_and_get_boolean_value(&mut if_stmt.test) {
+            Some(true) => {
+                *stmt = self.ast.move_statement(&mut if_stmt.consequent);
+            }
+            Some(false) => {
+                *stmt = if let Some(alternate) = &mut if_stmt.alternate {
+                    self.ast.move_statement(alternate)
+                } else {
+                    // Keep hoisted `vars` from the consequent block.
+                    let mut keep_var = KeepVar::new(self.ast);
+                    keep_var.visit_statement(&if_stmt.consequent);
+                    keep_var
+                        .get_variable_declaration_statement()
+                        .unwrap_or_else(|| self.ast.statement_empty(SPAN))
+                };
+            }
+            None => {}
+        }
+    }
+
+    fn fold_conditional_expression(&mut self, expr: &mut Expression<'a>) {
+        let Expression::ConditionalExpression(conditional_expr) = expr else {
+            return;
+        };
+        match self.fold_expression_and_get_boolean_value(&mut conditional_expr.test) {
+            Some(true) => {
+                *expr = self.ast.move_expression(&mut conditional_expr.consequent);
+            }
+            Some(false) => {
+                *expr = self.ast.move_expression(&mut conditional_expr.alternate);
+            }
+            _ => {}
+        }
     }
 
     pub fn fold_expression<'b>(&mut self, expr: &'b mut Expression<'a>) {
@@ -73,21 +140,6 @@ impl<'a> Folder<'a> {
                 BinaryOperator::Addition if self.evaluate => {
                     self.try_fold_addition(binary_expr.span, &binary_expr.left, &binary_expr.right)
                 }
-                _ => None,
-            },
-            Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
-                UnaryOperator::Typeof => {
-                    self.try_fold_typeof(unary_expr.span, &unary_expr.argument)
-                }
-                UnaryOperator::UnaryPlus
-                | UnaryOperator::UnaryNegation
-                | UnaryOperator::LogicalNot
-                | UnaryOperator::BitwiseNot
-                    if !unary_expr.may_have_side_effects() =>
-                {
-                    self.try_fold_unary_operator(unary_expr)
-                }
-                UnaryOperator::Void => self.try_reduce_void(unary_expr),
                 _ => None,
             },
             Expression::LogicalExpression(logic_expr) => {
@@ -171,19 +223,21 @@ impl<'a> Folder<'a> {
         match op {
             BinaryOperator::Equality => self.try_abstract_equality_comparison(left, right),
             BinaryOperator::Inequality => self.try_abstract_equality_comparison(left, right).not(),
-            BinaryOperator::StrictEquality => self.try_strict_equality_comparison(left, right),
+            BinaryOperator::StrictEquality => Self::try_strict_equality_comparison(left, right),
             BinaryOperator::StrictInequality => {
-                self.try_strict_equality_comparison(left, right).not()
+                Self::try_strict_equality_comparison(left, right).not()
             }
-            BinaryOperator::LessThan => self.try_abstract_relational_comparison(left, right, false),
+            BinaryOperator::LessThan => {
+                Self::try_abstract_relational_comparison(left, right, false)
+            }
             BinaryOperator::GreaterThan => {
-                self.try_abstract_relational_comparison(right, left, false)
+                Self::try_abstract_relational_comparison(right, left, false)
             }
             BinaryOperator::LessEqualThan => {
-                self.try_abstract_relational_comparison(right, left, true).not()
+                Self::try_abstract_relational_comparison(right, left, true).not()
             }
             BinaryOperator::GreaterEqualThan => {
-                self.try_abstract_relational_comparison(left, right, true).not()
+                Self::try_abstract_relational_comparison(left, right, true).not()
             }
             _ => Tri::Unknown,
         }
@@ -199,7 +253,7 @@ impl<'a> Folder<'a> {
         let right = Ty::from(right_expr);
         if left != Ty::Undetermined && right != Ty::Undetermined {
             if left == right {
-                return self.try_strict_equality_comparison(left_expr, right_expr);
+                return Self::try_strict_equality_comparison(left_expr, right_expr);
             }
             if matches!((left, right), (Ty::Null, Ty::Void) | (Ty::Void, Ty::Null)) {
                 return Tri::True;
@@ -263,7 +317,6 @@ impl<'a> Folder<'a> {
 
     /// <https://tc39.es/ecma262/#sec-abstract-relational-comparison>
     fn try_abstract_relational_comparison<'b>(
-        &self,
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
         will_negative: bool,
@@ -322,10 +375,10 @@ impl<'a> Folder<'a> {
             },
             // Finally, try comparisons between BigInt and Number.
             (Some(l_big), _, _, Some(r_num)) => {
-                return bigint_less_than_number(&l_big, &r_num, Tri::False, will_negative);
+                return Self::bigint_less_than_number(&l_big, &r_num, Tri::False, will_negative);
             }
             (_, Some(r_big), Some(l_num), _) => {
-                return bigint_less_than_number(&r_big, &l_num, Tri::True, will_negative);
+                return Self::bigint_less_than_number(&r_big, &l_num, Tri::True, will_negative);
             }
             _ => {}
         }
@@ -333,9 +386,46 @@ impl<'a> Folder<'a> {
         Tri::Unknown
     }
 
+    /// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1250)
+    #[allow(clippy::cast_possible_truncation)]
+    pub fn bigint_less_than_number(
+        bigint_value: &BigInt,
+        number_value: &NumberValue,
+        invert: Tri,
+        will_negative: bool,
+    ) -> Tri {
+        // if invert is false, then the number is on the right in tryAbstractRelationalComparison
+        // if it's true, then the number is on the left
+        match number_value {
+            NumberValue::NaN => Tri::for_boolean(will_negative),
+            NumberValue::PositiveInfinity => Tri::True.xor(invert),
+            NumberValue::NegativeInfinity => Tri::False.xor(invert),
+            NumberValue::Number(num) => {
+                if let Some(Ordering::Equal | Ordering::Greater) =
+                    num.abs().partial_cmp(&2_f64.powi(53))
+                {
+                    Tri::Unknown
+                } else {
+                    let number_as_bigint = BigInt::from(*num as i64);
+
+                    match bigint_value.cmp(&number_as_bigint) {
+                        Ordering::Less => Tri::True.xor(invert),
+                        Ordering::Greater => Tri::False.xor(invert),
+                        Ordering::Equal => {
+                            if is_exact_int64(*num) {
+                                Tri::False
+                            } else {
+                                Tri::for_boolean(num.is_sign_positive()).xor(invert)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// <https://tc39.es/ecma262/#sec-strict-equality-comparison>
     fn try_strict_equality_comparison<'b>(
-        &self,
         left_expr: &'b Expression<'a>,
         right_expr: &'b Expression<'a>,
     ) -> Tri {
@@ -404,217 +494,6 @@ impl<'a> Folder<'a> {
             return Tri::False;
         }
         Tri::Unknown
-    }
-
-    /// Folds 'typeof(foo)' if foo is a literal, e.g.
-    /// typeof("bar") --> "string"
-    /// typeof(6) --> "number"
-    fn try_fold_typeof<'b>(
-        &mut self,
-        span: Span,
-        argument: &'b Expression<'a>,
-    ) -> Option<Expression<'a>> {
-        if argument.is_literal_value(true) {
-            let type_name = match argument {
-                Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_) => {
-                    Some("function")
-                }
-                Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => Some("string"),
-                Expression::NumericLiteral(_) => Some("number"),
-                Expression::BooleanLiteral(_) => Some("boolean"),
-                Expression::NullLiteral(_)
-                | Expression::ObjectExpression(_)
-                | Expression::ArrayExpression(_) => Some("object"),
-                Expression::Identifier(_) if argument.is_undefined() => Some("undefined"),
-                Expression::UnaryExpression(unary_expr) => {
-                    match unary_expr.operator {
-                        UnaryOperator::Void => Some("undefined"),
-                        // `unary_expr.argument` is literal value, so it's safe to fold
-                        UnaryOperator::LogicalNot => Some("boolean"),
-                        _ => None,
-                    }
-                }
-                _ => None,
-            };
-
-            if let Some(type_name) = type_name {
-                return Some(self.ast.expression_string_literal(span, type_name));
-            }
-        }
-
-        None
-    }
-
-    fn try_fold_unary_operator(
-        &mut self,
-        unary_expr: &UnaryExpression<'a>,
-    ) -> Option<Expression<'a>> {
-        if let Some(boolean) = get_boolean_value(&unary_expr.argument) {
-            match unary_expr.operator {
-                // !100 -> false
-                // !100n -> false
-                // after this, it will be compressed to !1 or !0 in `compress_boolean`
-                UnaryOperator::LogicalNot => match &unary_expr.argument {
-                    Expression::NumericLiteral(number_literal) => {
-                        let value = number_literal.value;
-                        // Don't fold !0 and !1 back to false.
-                        if value == 0_f64 || (value - 1_f64).abs() < f64::EPSILON {
-                            return None;
-                        }
-                        return Some(
-                            self.ast.expression_boolean_literal(unary_expr.span, !boolean),
-                        );
-                    }
-                    Expression::BigIntLiteral(_) => {
-                        return Some(
-                            self.ast.expression_boolean_literal(unary_expr.span, !boolean),
-                        );
-                    }
-                    _ => {}
-                },
-                // +1 -> 1
-                // NaN -> NaN
-                // +Infinity -> Infinity
-                UnaryOperator::UnaryPlus => match &unary_expr.argument {
-                    Expression::NumericLiteral(number_literal) => {
-                        return Some(self.ast.expression_numeric_literal(
-                            unary_expr.span,
-                            number_literal.value,
-                            number_literal.raw,
-                            number_literal.base,
-                        ));
-                    }
-                    Expression::Identifier(ident) => {
-                        if matches!(ident.name.as_str(), "NaN" | "Infinity") {
-                            return self.try_detach_unary_op(unary_expr);
-                        }
-                    }
-                    _ => {
-                        // +true -> 1
-                        // +false -> 0
-                        // +null -> 0
-                        if let Some(NumberValue::Number(value)) =
-                            get_number_value(&unary_expr.argument)
-                        {
-                            return Some(self.ast.expression_numeric_literal(
-                                unary_expr.span,
-                                value,
-                                value.to_string(),
-                                if value.fract() == 0.0 {
-                                    NumberBase::Decimal
-                                } else {
-                                    NumberBase::Float
-                                },
-                            ));
-                        }
-                    }
-                },
-                // -4 -> -4, fold UnaryExpression -4 to NumericLiteral -4
-                // -NaN -> NaN
-                UnaryOperator::UnaryNegation => match &unary_expr.argument {
-                    Expression::NumericLiteral(number_literal) => {
-                        let value = -number_literal.value;
-                        return Some(self.ast.expression_numeric_literal(
-                            unary_expr.span,
-                            value,
-                            value.to_string(),
-                            number_literal.base,
-                        ));
-                    }
-                    Expression::BigIntLiteral(_big_int_literal) => {
-                        // let value = big_int_literal.value.clone().neg();
-                        // let literal =
-                        // self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
-                        // return Some(self.ast.literal_bigint_expression(literal));
-                        return None;
-                    }
-                    Expression::Identifier(ident) => {
-                        if ident.name == "NaN" {
-                            return self.try_detach_unary_op(unary_expr);
-                        }
-                    }
-                    _ => {}
-                },
-                // ~10 -> -11
-                // ~NaN -> -1
-                UnaryOperator::BitwiseNot => match &unary_expr.argument {
-                    Expression::NumericLiteral(number_literal) => {
-                        if number_literal.value.fract() == 0.0 {
-                            let int_value =
-                                NumericLiteral::ecmascript_to_int32(number_literal.value);
-                            return Some(self.ast.expression_numeric_literal(
-                                unary_expr.span,
-                                f64::from(!int_value),
-                                number_literal.raw,
-                                NumberBase::Decimal, // since it be converted to i32, it should always be decimal.
-                            ));
-                        }
-                    }
-                    Expression::BigIntLiteral(_big_int_literal) => {
-                        // let value = big_int_literal.value.clone().not();
-                        // let leteral =
-                        // self.ast.bigint_literal(unary_expr.span, value, big_int_literal.base);
-                        // return Some(self.ast.literal_bigint_expression(leteral));
-                        return None;
-                    }
-                    Expression::Identifier(ident) => {
-                        if ident.name == "NaN" {
-                            let value = -1_f64;
-                            return Some(self.ast.expression_numeric_literal(
-                                unary_expr.span,
-                                value,
-                                "-1",
-                                NumberBase::Decimal,
-                            ));
-                        }
-                    }
-                    _ => {}
-                },
-                _ => {}
-            }
-        }
-
-        None
-    }
-
-    // +NaN -> NaN
-    // !Infinity -> Infinity
-    fn try_detach_unary_op(&mut self, unary_expr: &UnaryExpression<'a>) -> Option<Expression<'a>> {
-        if let Expression::Identifier(ident) = &unary_expr.argument {
-            if matches!(ident.name.as_str(), "NaN" | "Infinity") {
-                let ident = IdentifierReference {
-                    span: unary_expr.span,
-                    name: ident.name.clone(),
-                    reference_id: ident.reference_id.clone(),
-                    reference_flag: ident.reference_flag,
-                };
-                return Some(self.ast.expression_from_identifier_reference(ident));
-            }
-        }
-
-        None
-    }
-
-    /// port from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L195)
-    /// void 0 -> void 0
-    /// void 1 -> void 0
-    /// void x -> void 0
-    fn try_reduce_void(&mut self, unary_expr: &UnaryExpression<'a>) -> Option<Expression<'a>> {
-        let can_replace = match &unary_expr.argument {
-            Expression::NumericLiteral(number_literal) => number_literal.value != 0_f64,
-            _ => !unary_expr.may_have_side_effects(),
-        };
-
-        if can_replace {
-            let argument = self.ast.expression_numeric_literal(
-                unary_expr.argument.span(),
-                0_f64,
-                "0",
-                NumberBase::Decimal,
-            );
-            return Some(self.ast.expression_unary(unary_expr.span, UnaryOperator::Void, argument));
-        }
-        None
     }
 
     /// ported from [closure-compiler](https://github.com/google/closure-compiler/blob/a4c880032fba961f7a6c06ef99daa3641810bfdd/src/com/google/javascript/jscomp/PeepholeFoldConstants.java#L1114-L1162)
@@ -750,6 +629,9 @@ impl<'a> Folder<'a> {
                     }
                 }
             }
+            Statement::IfStatement(_) => {
+                self.fold_if_statement(stmt);
+            }
             _ => {}
         };
     }
@@ -761,7 +643,7 @@ impl<'a> Folder<'a> {
         let folded_expr = match expr {
             Expression::UnaryExpression(unary_expr) => match unary_expr.operator {
                 UnaryOperator::LogicalNot => {
-                    let should_fold = self.try_minimize_not(&mut unary_expr.argument);
+                    let should_fold = Self::try_minimize_not(&mut unary_expr.argument);
 
                     if should_fold {
                         Some(self.move_out_expression(&mut unary_expr.argument))
@@ -783,7 +665,7 @@ impl<'a> Folder<'a> {
     }
 
     /// ported from [closure compiler](https://github.com/google/closure-compiler/blob/master/src/com/google/javascript/jscomp/PeepholeMinimizeConditions.java#L401-L435)
-    fn try_minimize_not(&mut self, expr: &mut Expression<'a>) -> bool {
+    fn try_minimize_not(expr: &mut Expression<'a>) -> bool {
         let span = &mut expr.span();
 
         match expr {

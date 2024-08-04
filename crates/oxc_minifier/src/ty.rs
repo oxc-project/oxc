@@ -1,3 +1,4 @@
+#[allow(clippy::wildcard_imports)]
 use oxc_ast::ast::*;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
