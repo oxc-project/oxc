@@ -405,10 +405,9 @@ impl Rule for FuncNames {
                 AstKind::CallExpression(expression) => {
                     if let Expression::Identifier(identifier) = &expression.callee {
                         // check at first if the callee calls an invalid function
-                        if invalid_funcs
+                        if !invalid_funcs
                             .iter()
-                            .find(|(func, _)| get_function_name(func) == Some(&identifier.name))
-                            .is_none()
+                            .any(|(func, _)| get_function_name(func) == Some(&identifier.name))
                         {
                             continue;
                         }
