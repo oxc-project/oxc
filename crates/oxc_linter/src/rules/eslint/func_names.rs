@@ -404,6 +404,16 @@ impl Rule for FuncNames {
                 // when yes remove it from invalid_funcs because recursion are always named
                 AstKind::CallExpression(expression) => {
                     if let Expression::Identifier(identifier) = &expression.callee {
+                        // check at first if the callee calls an invalid function
+                        if invalid_funcs
+                            .iter()
+                            .find(|(func, _)| get_function_name(func) == Some(&identifier.name))
+                            .is_none()
+                        {
+                            continue;
+                        }
+
+                        // a function which is calling itself inside is always valid
                         let ast_span = ctx.nodes().iter_parents(node.id()).skip(1).find_map(|p| {
                             match p.kind() {
                                 AstKind::Function(func) => {
@@ -421,6 +431,7 @@ impl Rule for FuncNames {
                             }
                         });
 
+                        // we found a recursive function, remove it from the invalid list
                         if let Some(span) = ast_span {
                             invalid_funcs.retain(|(func, _)| func.span != span);
                         }
