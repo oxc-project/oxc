@@ -228,7 +228,7 @@ fn test() {
         "var foo = RegExp(' [  ] [  ] ');",
         r"var foo = new RegExp(' \[   ');",
         r"var foo = new RegExp(' \[   \] ');",
-        r"var foo = /[\q{    }]/v;",
+        "var foo = /[\\q{    }]/v;",
         "var foo = new RegExp('[  ');",
         "new RegExp('[[abc]  ]', flags + 'v')",
     ];
