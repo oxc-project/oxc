@@ -55,11 +55,9 @@ impl ConcatSourceMapBuilder {
         }
 
         // Extend `names`.
-        self.names.reserve(sourcemap.names.len());
         self.names.extend(sourcemap.get_names().map(Into::into));
 
         // Extend `tokens`.
-        self.tokens.reserve(sourcemap.tokens.len());
         let tokens = sourcemap.get_tokens().map(|token| {
             Token::new(
                 token.get_dst_line() + line_offset,
