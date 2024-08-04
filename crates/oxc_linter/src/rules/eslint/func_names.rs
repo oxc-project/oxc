@@ -23,13 +23,21 @@ enum FuncNamesConfig {
     Never,
 }
 
-impl FuncNamesConfig {
-    pub fn from(raw: &str) -> Self {
-        match raw {
-            "always" => FuncNamesConfig::Always,
-            "as-needed" => FuncNamesConfig::AsNeeded,
-            "never" => FuncNamesConfig::Never,
-            _ => FuncNamesConfig::default(),
+impl TryFrom<&serde_json::Value> for FuncNamesConfig {
+    type Error = OxcDiagnostic;
+
+    fn try_from(raw: &serde_json::Value) -> Result<Self, Self::Error> {
+        if !raw.is_string() {
+            return Err(OxcDiagnostic::error(format!("Expecting string, got {raw}")));
+        }
+
+        match raw.as_str().unwrap() {
+            "always" => Ok(FuncNamesConfig::Always),
+            "as-needed" => Ok(FuncNamesConfig::AsNeeded),
+            "never" => Ok(FuncNamesConfig::Never),
+            v => {
+                Err(OxcDiagnostic::error(format!("Expecting always, as-needed or never, got {v}")))
+            }
         }
     }
 }
@@ -41,14 +49,57 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// If you leave off the function name then when the function throws an exception you are likely
-    /// to get something similar to anonymous function in the stack trace. If you provide the optional
-    /// name for a function expression then you will get the name of the function expression in the stack trace.
+    /// Leaving the name off a function will cause <anonymous> to appear
+    /// in stack traces of errorsthrown in it or any function called within it.
+    /// This makes it more difficult to find where an error is thrown.
+    /// If you provide the optional name for a function expression
+    /// then you will get the name of the function expression in the stack trace.
     ///
     /// /// ### Example
     ///
+    /// Example of **incorrect** code for this rule:
+    ///
     /// ```javascript
+    /// /*eslint func-names: "error" */
+    ///
+    /// // default is "always" and there is an anonymous function
+    /// Foo.prototype.bar = function() {};
+    ///
+    /// /*eslint func-names: ["error", "always"] */
+    ///
+    /// // there is an anonymous function
+    /// Foo.prototype.bar = function() {};
+    ///
+    /// /*eslint func-names: ["error", "as-needed"] */
+    ///
+    /// // there is an anonymous function
+    /// // where the name isn’t assigned automatically per the ECMAScript specs
+    /// Foo.prototype.bar = function() {};
+    ///
+    /// /*eslint func-names: ["error", "never"] */
+    ///
+    /// // there is a named function
     /// Foo.prototype.bar = function bar() {};
+    /// ```
+    ///
+    /// Example of **correct* code for this rule:
+    ///
+    /// ```javascript
+    /// /*eslint func-names: "error" */
+    ///
+    /// Foo.prototype.bar = function bar() {};
+    ///
+    /// /*eslint func-names: ["error", "always"] */
+    ///
+    /// Foo.prototype.bar = function bar() {};
+    ///
+    /// /*eslint func-names: ["error", "as-needed"] */
+    ///
+    /// var foo = function(){};
+    ///
+    /// /*eslint func-names: ["error", "never"] */
+    ///
+    /// Foo.prototype.bar = function() {};
     /// ```
     FuncNames,
     style,
@@ -315,21 +366,21 @@ fn is_invalid_function(
 
 impl Rule for FuncNames {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj1 = value.get(0);
-        let obj2 = value.get(1);
-
-        let default_config =
-            obj1.and_then(serde_json::Value::as_str).map(FuncNamesConfig::from).unwrap_or_default();
-
-        return Self {
-            default_config: default_config.clone(),
-
-            generators_config: obj2
-                .and_then(|v| v.get("generators"))
-                .and_then(serde_json::Value::as_str)
-                .map(FuncNamesConfig::from)
-                .unwrap_or(default_config),
+        let Some(default_value) = value.get(0) else {
+            return Self {
+                default_config: FuncNamesConfig::default(),
+                generators_config: FuncNamesConfig::default(),
+            };
         };
+
+        let default_config = FuncNamesConfig::try_from(default_value).unwrap();
+
+        let generators_value =
+            value.get(1).and_then(|v| v.get("generators")).unwrap_or(default_value);
+
+        let generators_config = FuncNamesConfig::try_from(generators_value).unwrap();
+
+        Self { default_config, generators_config }
     }
     fn run_once(&self, ctx: &LintContext<'_>) {
         let mut invalid_funcs: Vec<(&Function, Option<&AstNode>)> = vec![];
@@ -525,7 +576,6 @@ fn test() {
         ("var a = new Date(function() {});", Some(serde_json::json!(["as-needed"]))),
         ("new function() {}", Some(serde_json::json!(["as-needed"]))),
         ("var {foo} = function(){};", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
-        // ("({key: foo = function(){}} = {});", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
         ("({ a: obj.prop = function(){} } = foo);", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
         ("[obj.prop = function(){}] = foo;", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
         ("var { a: [b] = function(){} } = foo;", Some(serde_json::json!(["as-needed"]))), // { "ecmaVersion": 6 },
