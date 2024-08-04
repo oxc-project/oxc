@@ -22,10 +22,12 @@ test    = false
 doctest = false
 
 [dependencies]
+oxc_ast          = { workspace = true }
 oxc_span         = { workspace = true }
 oxc_allocator    = { workspace = true }
 oxc_parser       = { workspace = true }
 oxc_codegen      = { workspace = true }
+oxc_semantic     = { workspace = true }
 oxc_transformer  = { workspace = true }
 oxc_tasks_common = { workspace = true }
 oxc_diagnostics  = { workspace = true }

@@ -1,9 +1,8 @@
 commit: 12619ffe
 
-Passed: 474/927
+Passed: 350/927
 
 # All Passed:
-* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
@@ -445,16 +444,56 @@ Passed: 474/927
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (130/151)
+# babel-plugin-transform-typescript (90/151)
+* catch-clause/param-type/input.ts
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
+* enum/boolean-value/input.ts
+* enum/const/input.ts
+* enum/constant-folding/input.ts
+* enum/enum-merging-inner-references/input.ts
+* enum/enum-merging-inner-references-shadow/input.ts
+* enum/export/input.ts
+* enum/inferred/input.ts
+* enum/inner-references/input.ts
 * enum/mix-references/input.ts
+* enum/non-foldable-constant/input.ts
+* enum/non-scoped/input.ts
+* enum/outer-references/input.ts
+* enum/scoped/input.ts
+* enum/string-value/input.ts
+* enum/string-value-template/input.ts
+* enum/string-values-computed/input.ts
 * enum/ts5.0-const-foldable/input.ts
 * exports/declared-types/input.ts
+* exports/export-const-enums/input.ts
+* exports/export-import=/input.ts
 * exports/interface/input.ts
+* imports/elide-type-referenced-in-imports-equal-no/input.ts
+* imports/enum-id/input.ts
+* imports/enum-value/input.ts
+* imports/import=-module/input.ts
 * imports/only-remove-type-imports/input.ts
 * imports/type-only-export-specifier-2/input.ts
 * imports/type-only-import-specifier-4/input.ts
+* namespace/alias/input.ts
+* namespace/clobber-class/input.ts
+* namespace/clobber-enum/input.ts
+* namespace/clobber-export/input.ts
+* namespace/contentious-names/input.ts
+* namespace/declare/input.ts
+* namespace/declare-global-nested-namespace/input.ts
+* namespace/empty-removed/input.ts
+* namespace/export/input.ts
+* namespace/module-nested/input.ts
+* namespace/module-nested-export/input.ts
+* namespace/multiple/input.ts
+* namespace/mutable-fail/input.ts
+* namespace/nested/input.ts
+* namespace/nested-namespace/input.ts
+* namespace/nested-shorthand/input.ts
+* namespace/same-name/input.ts
+* namespace/undeclared/input.ts
 * optimize-const-enums/custom-values/input.ts
 * optimize-const-enums/custom-values-exported/input.ts
 * optimize-const-enums/declare/input.ts
@@ -468,9 +507,95 @@ Passed: 474/927
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-plugin-transform-react-jsx (141/142)
-* react-automatic/does-not-add-source-self-automatic/input.mjs
+# babel-preset-react (6/9)
+* preset-options/development-runtime-automatic/input.js
+* preset-options/empty-options/input.js
+* preset-options/runtime-automatic/input.js
 
-# babel-plugin-transform-react-jsx-development (9/10)
+# babel-plugin-transform-react-jsx (68/142)
+* autoImport/after-polyfills/input.mjs
+* autoImport/after-polyfills-2/input.mjs
+* autoImport/after-polyfills-script-not-supported/input.js
+* autoImport/auto-import-react-source-type-module/input.js
+* autoImport/auto-import-react-source-type-script/input.js
+* autoImport/complicated-scope-module/input.js
+* autoImport/complicated-scope-script/input.js
+* autoImport/import-source/input.js
+* autoImport/import-source-pragma/input.js
+* autoImport/react-defined/input.js
+* pure/false-default-pragma-automatic-runtime/input.js
+* pure/false-pragma-comment-automatic-runtime/input.js
+* pure/false-pragma-option-automatic-runtime/input.js
+* pure/true-default-pragma-automatic-runtime/input.js
+* pure/true-pragma-comment-automatic-runtime/input.js
+* pure/true-pragma-option-automatic-runtime/input.js
+* pure/unset-default-pragma-automatic-runtime/input.js
+* pure/unset-pragma-comment-automatic-runtime/input.js
+* pure/unset-pragma-option-automatic-runtime/input.js
+* react-automatic/adds-appropriate-newlines-when-using-spread-attribute/input.js
+* react-automatic/arrow-functions/input.js
+* react-automatic/assignment/input.js
+* react-automatic/concatenates-adjacent-string-literals/input.js
+* react-automatic/does-not-add-source-self-automatic/input.mjs
+* react-automatic/dont-coerce-expression-containers/input.js
+* react-automatic/duplicate-props/input.js
+* react-automatic/flattens-spread/input.js
+* react-automatic/handle-fragments/input.js
+* react-automatic/handle-fragments-with-key/input.js
+* react-automatic/handle-fragments-with-no-children/input.js
+* react-automatic/handle-nonstatic-children/input.js
+* react-automatic/handle-spread-with-proto/input.js
+* react-automatic/handle-static-children/input.js
+* react-automatic/jsx-with-retainlines-option/input.js
+* react-automatic/jsx-without-retainlines-option/input.js
+* react-automatic/key-undefined-works/input.js
+* react-automatic/pragma-works-with-no-space-at-the-end/input.js
+* react-automatic/should-allow-constructor-as-prop/input.js
+* react-automatic/should-allow-deeper-js-namespacing/input.js
+* react-automatic/should-allow-elements-as-attributes/input.js
+* react-automatic/should-allow-js-namespacing/input.js
+* react-automatic/should-allow-nested-fragments/input.js
+* react-automatic/should-avoid-wrapping-in-extra-parens-if-not-needed/input.js
+* react-automatic/should-convert-simple-tags/input.js
+* react-automatic/should-convert-simple-text/input.js
+* react-automatic/should-disallow-spread-children/input.js
+* react-automatic/should-disallow-valueless-key/input.js
+* react-automatic/should-disallow-xml-namespacing/input.js
+* react-automatic/should-escape-xhtml-jsxattribute/input.js
+* react-automatic/should-escape-xhtml-jsxtext/input.js
+* react-automatic/should-handle-attributed-elements/input.js
+* react-automatic/should-handle-has-own-property-correctly/input.js
+* react-automatic/should-have-correct-comma-in-nested-children/input.js
+* react-automatic/should-insert-commas-after-expressions-before-whitespace/input.js
+* react-automatic/should-not-add-quotes-to-identifier-names/input.js
+* react-automatic/should-not-mangle-expressioncontainer-attribute-values/input.js
+* react-automatic/should-not-strip-nbsp-even-coupled-with-other-whitespace/input.js
+* react-automatic/should-not-strip-tags-with-a-single-child-of-nbsp/input.js
+* react-automatic/should-properly-handle-comments-between-props/input.js
+* react-automatic/should-properly-handle-keys/input.js
+* react-automatic/should-properly-handle-null-prop-spread/input.js
+* react-automatic/should-quote-jsx-attributes/input.js
+* react-automatic/should-support-xml-namespaces-if-flag/input.js
+* react-automatic/should-throw-error-namespaces-if-not-flag/input.js
+* react-automatic/should-transform-known-hyphenated-tags/input.js
+* react-automatic/should-use-createElement-when-key-comes-after-spread/input.js
+* react-automatic/should-use-jsx-when-key-comes-before-spread/input.js
+* react-automatic/should-warn-when-pragma-or-pragmaFrag-is-set/input.js
+* react-automatic/this-tag-name/input.js
+* react-automatic/weird-symbols/input.js
+* react-automatic/wraps-props-in-react-spread-for-last-spread-attributes/input.js
+* react-automatic/wraps-props-in-react-spread-for-middle-spread-attributes/input.js
+* runtime/defaults-to-automatic/input.js
+* runtime/runtime-automatic/input.js
+
+# babel-plugin-transform-react-jsx-development (1/10)
+* cross-platform/auto-import-dev/input.js
+* cross-platform/disallow-__self-as-jsx-attribute/input.js
+* cross-platform/disallow-__source-as-jsx-attribute/input.js
+* cross-platform/fragments/input.js
+* cross-platform/handle-fragments-with-key/input.js
+* cross-platform/handle-nonstatic-children/input.js
+* cross-platform/handle-static-children/input.js
+* cross-platform/within-derived-classes-constructor/input.js
 * cross-platform/within-ts-module-block/input.ts
 
