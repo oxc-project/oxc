@@ -74,7 +74,7 @@ oxc_minifier              = { workspace = true, optional = true }
 oxc_parser                = { workspace = true, features = ["benchmarking"], optional = true }
 oxc_prettier              = { workspace = true, optional = true }
 oxc_semantic              = { workspace = true, optional = true }
-oxc_span                  = { workspace = true, optional = true, features = ["serialize", "schemars"] }
+oxc_span                  = { workspace = true, optional = true, features = ["schemars", "serialize"] }
 oxc_tasks_common          = { workspace = true, optional = true }
 oxc_transformer           = { workspace = true, optional = true }
 oxc_codegen               = { workspace = true, optional = true }
