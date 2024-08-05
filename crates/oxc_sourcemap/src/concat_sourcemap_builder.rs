@@ -49,7 +49,10 @@ impl ConcatSourceMapBuilder {
         self.sources.extend(sourcemap.get_sources().map(Into::into));
 
         if let Some(source_contents) = &sourcemap.source_contents {
-            self.source_contents.extend(source_contents.iter().map(AsRef::as_ref).map(Into::into));
+            // Clone `Arc` instead of generating a new `Arc` and copying string data because
+            // source texts are generally long strings. Cost of copying a large string is higher
+            // than cloning an `Arc`.
+            self.source_contents.extend(source_contents.iter().map(Arc::clone));
         } else {
             self.source_contents.extend((0..sourcemap.sources.len()).map(|_| Arc::default()));
         }
