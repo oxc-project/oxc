@@ -61,6 +61,11 @@ impl FrameworkFlags {
     pub const fn is_vitest(self) -> bool {
         self.contains(Self::Vitest)
     }
+
+    #[inline]
+    pub const fn is_jest(self) -> bool {
+        self.contains(Self::Jest)
+    }
 }
 
 /// <https://jestjs.io/docs/configuration#testmatch-arraystring>

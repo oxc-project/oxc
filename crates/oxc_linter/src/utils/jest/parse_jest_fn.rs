@@ -102,7 +102,14 @@ pub fn parse_jest_fn_call<'a>(
         let mut call_chains = Vec::from([Cow::Borrowed(name)]);
         call_chains.extend(members.iter().filter_map(KnownMemberExpressionProperty::name));
 
-        if !is_valid_jest_call(&call_chains) && !is_valid_vitest_call(&call_chains) {
+        dbg!(ctx.frameworks().is_jest());
+        dbg!(ctx.frameworks().is_vitest());
+
+        if ctx.frameworks().is_jest() && !is_valid_jest_call(&call_chains) {
+            return None;
+        }
+
+        if ctx.frameworks().is_vitest() && !is_valid_vitest_call(&call_chains) {
             return None;
         }
 

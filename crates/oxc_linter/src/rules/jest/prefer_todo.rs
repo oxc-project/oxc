@@ -182,19 +182,32 @@ fn build_code<'a>(fixer: RuleFixer<'_, 'a>, expr: &CallExpression<'a>) -> RuleFi
 #[test]
 fn tests() {
     use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    let jest_path = "/prefer-todo.test.ts";
 
     let pass = vec![
-        ("test()", None),
-        ("test.concurrent()", None),
-        ("test.todo('i need to write this test correct');", None),
-        ("test(obj)", None),
-        ("test.concurrent(obj)", None),
-        ("fit('foo')", None),
-        ("fit.concurrent('foo')", None),
-        ("xit('foo')", None),
-        ("test('foo', 1)", None),
-        ("test('stub', () => expect(1).toBe(1));", None),
-        ("test.concurrent('stub', () => expect(1).toBe(1));", None),
+        ("test()", None, None, Some(PathBuf::from(jest_path))),
+        ("test.concurrent()", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "test.todo('i need to write this test correct');",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        ("test(obj)", None, None, Some(PathBuf::from(jest_path))),
+        ("test.concurrent(obj)", None, None, Some(PathBuf::from(jest_path))),
+        ("fit('foo')", None, None, Some(PathBuf::from(jest_path))),
+        ("fit.concurrent('foo')", None, None, Some(PathBuf::from(jest_path))),
+        ("xit('foo')", None, None, Some(PathBuf::from(jest_path))),
+        ("test('foo', 1)", None, None, Some(PathBuf::from(jest_path))),
+        ("test('stub', () => expect(1).toBe(1));", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "test.concurrent('stub', () => expect(1).toBe(1));",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
         (
             "
                 supportsDone && params.length < test.length
@@ -202,19 +215,41 @@ fn tests() {
                     : () => test(...params);
             ",
             None,
+            None,
+            Some(PathBuf::from(jest_path)),
         ),
     ];
 
     let fail = vec![
-        ("test('i need to write this test');", None),
-        ("test('i need to write this test',);", None),
-        ("test(`i need to write this test`);", None),
-        ("it('foo', function () {})", None),
-        ("it('foo', () => {})", None),
-        ("test.skip('i need to write this test', () => {});", None),
-        ("test.skip('i need to write this test', function() {});", None),
-        ("test[`skip`]('i need to write this test', function() {});", None),
-        ("test[`skip`]('i need to write this test', function() {});", None),
+        ("test('i need to write this test');", None, None, Some(PathBuf::from(jest_path))),
+        ("test('i need to write this test',);", None, None, Some(PathBuf::from(jest_path))),
+        ("test(`i need to write this test`);", None, None, Some(PathBuf::from(jest_path))),
+        ("it('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it('foo', () => {})", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "test.skip('i need to write this test', () => {});",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        (
+            "test.skip('i need to write this test', function() {});",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        (
+            "test[`skip`]('i need to write this test', function() {});",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        (
+            "test[`skip`]('i need to write this test', function() {});",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
     ];
 
     let fix = vec![

@@ -153,73 +153,129 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 #[test]
 fn test() {
     use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    let jest_path = "/no-disabled-tests.test.ts";
 
     let mut pass = vec![
-        ("describe('foo', function () {})", None),
-        ("it('foo', function () {})", None),
-        ("describe.only('foo', function () {})", None),
-        ("it.only('foo', function () {})", None),
-        ("it.each('foo', () => {})", None),
-        ("it.concurrent('foo', function () {})", None),
-        ("test('foo', function () {})", None),
-        ("test.only('foo', function () {})", None),
-        ("test.concurrent('foo', function () {})", None),
-        ("describe[`${'skip'}`]('foo', function () {})", None),
-        ("it.todo('fill this later')", None),
-        ("var appliedSkip = describe.skip; appliedSkip.apply(describe)", None),
-        ("var calledSkip = it.skip; calledSkip.call(it)", None),
-        ("({ f: function () {} }).f()", None),
-        ("(a || b).f()", None),
-        ("itHappensToStartWithIt()", None),
-        ("testSomething()", None),
-        ("xitSomethingElse()", None),
-        ("xitiViewMap()", None),
+        ("describe('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("describe.only('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it.only('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it.each('foo', () => {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it.concurrent('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("test('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("test.only('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("test.concurrent('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "describe[`${'skip'}`]('foo', function () {})",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        ("it.todo('fill this later')", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "var appliedSkip = describe.skip; appliedSkip.apply(describe)",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        (
+            "var calledSkip = it.skip; calledSkip.call(it)",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        ("({ f: function () {} }).f()", None, None, Some(PathBuf::from(jest_path))),
+        ("(a || b).f()", None, None, Some(PathBuf::from(jest_path))),
+        ("itHappensToStartWithIt()", None, None, Some(PathBuf::from(jest_path))),
+        ("testSomething()", None, None, Some(PathBuf::from(jest_path))),
+        ("xitSomethingElse()", None, None, Some(PathBuf::from(jest_path))),
+        ("xitiViewMap()", None, None, Some(PathBuf::from(jest_path))),
         (
             "import { pending } from 'actions'; test('foo', () => { expect(pending()).toEqual({}) })",
             None,
+            None,
+            Some(PathBuf::from(jest_path)),
         ),
         (
             "const { pending } = require('actions'); test('foo', () => { expect(pending()).toEqual({}) })",
             None,
+            None,
+            Some(PathBuf::from(jest_path)),
         ),
         (
             "test('foo', () => { const pending = getPending(); expect(pending()).toEqual({}) })",
             None,
+            None,
+            Some(PathBuf::from(jest_path)),
         ),
         (
             "test('foo', () => { expect(pending()).toEqual({}) }); function pending() { return {} }",
             None,
+            None,
+            Some(PathBuf::from(jest_path)),
         ),
-        ("import { test } from './test-utils'; test('something');", None),
+        (
+            "import { test } from './test-utils'; test('something');",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
     ];
 
     let mut fail = vec![
-        ("describe.skip('foo', function () {})", None),
-        ("describe.skip.each([1, 2, 3])('%s', (a, b) => {});", None),
-        ("xdescribe.each([1, 2, 3])('%s', (a, b) => {});", None),
-        ("describe[`skip`]('foo', function () {})", None),
-        ("describe['skip']('foo', function () {})", None),
-        ("it.skip('foo', function () {})", None),
-        ("it['skip']('foo', function () {})", None),
-        ("test.skip('foo', function () {})", None),
-        ("it.skip.each``('foo', function () {})", None),
-        ("test.skip.each``('foo', function () {})", None),
-        ("it.skip.each([])('foo', function () {})", None),
-        ("test.skip.each([])('foo', function () {})", None),
-        ("test['skip']('foo', function () {})", None),
-        ("xdescribe('foo', function () {})", None),
-        ("xit('foo', function () {})", None),
-        ("xtest('foo', function () {})", None),
-        ("xit.each``('foo', function () {})", None),
-        ("xtest.each``('foo', function () {})", None),
-        ("xit.each([])('foo', function () {})", None),
-        ("xtest.each([])('foo', function () {})", None),
-        ("it('has title but no callback')", None),
-        ("test('has title but no callback')", None),
-        ("it('contains a call to pending', function () { pending() })", None),
-        ("pending()", None),
-        ("describe('contains a call to pending', function () { pending() })", None),
-        ("import { test } from '@jest/globals';test('something');", None),
+        ("describe.skip('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "describe.skip.each([1, 2, 3])('%s', (a, b) => {});",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        (
+            "xdescribe.each([1, 2, 3])('%s', (a, b) => {});",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        ("describe[`skip`]('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("describe['skip']('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it.skip('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it['skip']('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("test.skip('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it.skip.each``('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("test.skip.each``('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it.skip.each([])('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("test.skip.each([])('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("test['skip']('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("xdescribe('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("xit('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("xtest('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("xit.each``('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("xtest.each``('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("xit.each([])('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("xtest.each([])('foo', function () {})", None, None, Some(PathBuf::from(jest_path))),
+        ("it('has title but no callback')", None, None, Some(PathBuf::from(jest_path))),
+        ("test('has title but no callback')", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "it('contains a call to pending', function () { pending() })",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        ("pending()", None, None, Some(PathBuf::from(jest_path))),
+        (
+            "describe('contains a call to pending', function () { pending() })",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
+        (
+            "import { test } from '@jest/globals';test('something');",
+            None,
+            None,
+            Some(PathBuf::from(jest_path)),
+        ),
     ];
 
     let pass_vitest = vec![
@@ -250,7 +306,7 @@ fn test() {
         "#,
         "
             import { test } from './test-utils';
-	    test('something');
+	        test('something');
         ",
     ];
 
@@ -262,16 +318,22 @@ fn test() {
         r#"xit.each([])("foo", function () {})"#,
         r#"it("has title but no callback")"#,
         r#"test("has title but no callback")"#,
-        r#"it("contains a call to pending", function () { pending() })"#,
-        "pending();",
+        r#"
+            import { it } from 'vitest';
+            it("contains a call to pending", function () { pending() })
+        "#,
+        "
+            import { it } from 'vitest';
+            pending();
+        ",
         r#"
             import { describe } from 'vitest';
             describe.skip("foo", function () {})
         "#,
     ];
 
-    pass.extend(pass_vitest.into_iter().map(|x| (x, None)));
-    fail.extend(fail_vitest.into_iter().map(|x| (x, None)));
+    pass.extend(pass_vitest.into_iter().map(|x| (x, None, None, None)));
+    fail.extend(fail_vitest.into_iter().map(|x| (x, None, None, None)));
 
     Tester::new(NoDisabledTests::NAME, pass, fail)
         .with_jest_plugin(true)
