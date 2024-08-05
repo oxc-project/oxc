@@ -1,8 +1,9 @@
 commit: 12619ffe
 
-Passed: 418/927
+Passed: 434/927
 
 # All Passed:
+* babel-preset-react
 * babel-plugin-transform-react-display-name
 * babel-plugin-transform-react-jsx-self
 * babel-plugin-transform-react-jsx-source
@@ -507,27 +508,9 @@ Passed: 418/927
 * optimize-const-enums/merged-exported/input.ts
 * regression/15768/input.ts
 
-# babel-preset-react (6/9)
-* preset-options/development-runtime-automatic/input.js
-* preset-options/empty-options/input.js
-* preset-options/runtime-automatic/input.js
-
-# babel-plugin-transform-react-jsx (133/142)
-* autoImport/after-polyfills-script-not-supported/input.js
-* autoImport/auto-import-react-source-type-script/input.js
-* autoImport/complicated-scope-script/input.js
-* pure/false-default-pragma-automatic-runtime/input.js
-* pure/true-default-pragma-automatic-runtime/input.js
-* pure/unset-default-pragma-automatic-runtime/input.js
+# babel-plugin-transform-react-jsx (141/142)
 * react-automatic/does-not-add-source-self-automatic/input.mjs
-* runtime/defaults-to-automatic/input.js
-* runtime/runtime-automatic/input.js
 
-# babel-plugin-transform-react-jsx-development (4/10)
-* cross-platform/fragments/input.js
-* cross-platform/handle-fragments-with-key/input.js
-* cross-platform/handle-nonstatic-children/input.js
-* cross-platform/handle-static-children/input.js
-* cross-platform/within-derived-classes-constructor/input.js
+# babel-plugin-transform-react-jsx-development (9/10)
 * cross-platform/within-ts-module-block/input.ts
 

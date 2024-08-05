@@ -114,7 +114,7 @@ impl<'a> Traverse<'a> for Transformer<'a> {
     }
 
     fn exit_program(&mut self, program: &mut Program<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.x1_react.transform_program_on_exit(program);
+        self.x1_react.transform_program_on_exit(program, ctx);
         self.x0_typescript.transform_program_on_exit(program, ctx);
     }
 
