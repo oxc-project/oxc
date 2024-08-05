@@ -1,8 +1,10 @@
+use std::cell::Cell;
+
 use oxc_ast::{
     ast::{
-        Declaration, ExportDefaultDeclarationKind, Expression, Function, IdentifierReference,
-        Program, Statement, TSTypeAnnotation, TSTypeParameterInstantiation, VariableDeclaration,
-        VariableDeclarationKind,
+        BindingIdentifier, Declaration, ExportDefaultDeclarationKind, Expression, Function,
+        IdentifierReference, Program, Statement, TSTypeAnnotation, TSTypeParameterInstantiation,
+        VariableDeclaration, VariableDeclarationKind,
     },
     match_expression,
 };
@@ -148,6 +150,27 @@ impl<'a> ReactRefresh<'a> {
 
         true
     }
+
+    /// _c = id.name;
+    fn create_assignment_expression(
+        &mut self,
+        id: &BindingIdentifier<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Statement<'a> {
+        let reference = self.create_registration(id.name.clone(), ctx);
+        let left = ctx.ast.assignment_target_simple(
+            ctx.ast.simple_assignment_target_from_identifier_reference(reference),
+        );
+        let right = ctx.create_bound_reference_id(
+            SPAN,
+            id.name.clone(),
+            id.symbol_id.get().unwrap(),
+            ReferenceFlag::Read,
+        );
+        let right = ctx.ast.expression_from_identifier_reference(right);
+        let expr = ctx.ast.expression_assignment(SPAN, AssignmentOperator::Assign, left, right);
+        ctx.ast.statement_expression(SPAN, expr)
+    }
 }
 
 // Transform
@@ -177,13 +200,18 @@ impl<'a> ReactRefresh<'a> {
         let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
         let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
         for (symbol_id, persistent_id) in self.registrations.drain(..) {
-            let name = ctx.symbols().get_name(symbol_id);
+            let name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+            let binding_identifier = BindingIdentifier {
+                name: name.clone(),
+                symbol_id: Cell::new(Some(symbol_id)),
+                span: SPAN,
+            };
 
             variable_declarator_items.push(ctx.ast.variable_declarator(
                 SPAN,
                 VariableDeclarationKind::Var,
                 ctx.ast.binding_pattern(
-                    ctx.ast.binding_pattern_kind_binding_identifier(SPAN, name),
+                    ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier),
                     None::<TSTypeAnnotation<'a>>,
                     false,
                 ),
@@ -191,10 +219,17 @@ impl<'a> ReactRefresh<'a> {
                 false,
             ));
 
-            let callee = ctx.ast.expression_identifier_reference(SPAN, self.refresh_reg.clone());
+            let refresh_reg_ident = ctx.create_reference_id(
+                SPAN,
+                self.refresh_reg.clone(),
+                Some(symbol_id),
+                ReferenceFlag::Read,
+            );
+            let callee = ctx.ast.expression_from_identifier_reference(refresh_reg_ident);
             let mut arguments = ctx.ast.vec_with_capacity(2);
+            let ident = ctx.create_reference_id(SPAN, name, Some(symbol_id), ReferenceFlag::Read);
             arguments.push(
-                ctx.ast.argument_expression(ctx.ast.expression_identifier_reference(SPAN, name)),
+                ctx.ast.argument_expression(ctx.ast.expression_from_identifier_reference(ident)),
             );
             arguments.push(ctx.ast.argument_expression(
                 ctx.ast.expression_string_literal(SPAN, self.ctx.ast.atom(&persistent_id)),
@@ -268,18 +303,11 @@ impl<'a> ReactRefresh<'a> {
                     }
                     ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                         if let Some(id) = &func.id {
-                            let reference = self.create_registration(id.name.clone(), ctx);
-                            let expr = ctx.ast.expression_assignment(
-                                SPAN,
-                                AssignmentOperator::Assign,
-                                ctx.ast.assignment_target_simple(
-                                    ctx.ast.simple_assignment_target_from_identifier_reference(
-                                        reference,
-                                    ),
-                                ),
-                                ctx.ast.expression_identifier_reference(SPAN, id.name.clone()),
-                            );
-                            return Some(ctx.ast.statement_expression(SPAN, expr));
+                            if !is_componentish_name(&id.name) {
+                                return None;
+                            }
+
+                            return Some(self.create_assignment_expression(id, ctx));
                         }
                         None
                     }
@@ -303,17 +331,7 @@ impl<'a> ReactRefresh<'a> {
             return None;
         }
 
-        let inferred_name = id.name.clone();
-        let reference = self.create_registration(inferred_name.clone(), ctx);
-        let expr = ctx.ast.expression_assignment(
-            SPAN,
-            AssignmentOperator::Assign,
-            ctx.ast.assignment_target_simple(
-                ctx.ast.simple_assignment_target_from_identifier_reference(reference),
-            ),
-            ctx.ast.expression_identifier_reference(SPAN, inferred_name),
-        );
-        Some(ctx.ast.statement_expression(SPAN, expr))
+        Some(self.create_assignment_expression(id, ctx))
     }
 
     pub fn transform_variable_declaration(
@@ -327,9 +345,9 @@ impl<'a> ReactRefresh<'a> {
 
         let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
         let init = declarator.init.as_mut()?;
-        let inferred_name = declarator.id.get_identifier()?;
+        let id = declarator.id.get_binding_identifier()?;
 
-        if !is_componentish_name(&inferred_name) {
+        if !is_componentish_name(&id.name) {
             return None;
         }
 
@@ -357,7 +375,7 @@ impl<'a> ReactRefresh<'a> {
 
                 // Maybe a HOC.
                 // Try to determine if this is some form of import.
-                let found_inside = self.replace_inner_components(&inferred_name, init, true, ctx);
+                let found_inside = self.replace_inner_components(&id.name, init, true, ctx);
                 if !found_inside {
                     return None;
                 }
@@ -369,16 +387,7 @@ impl<'a> ReactRefresh<'a> {
             }
         }
 
-        let reference = self.create_registration(inferred_name.clone(), ctx);
-        let expr = ctx.ast.expression_assignment(
-            SPAN,
-            AssignmentOperator::Assign,
-            ctx.ast.assignment_target_simple(
-                ctx.ast.simple_assignment_target_from_identifier_reference(reference),
-            ),
-            ctx.ast.expression_identifier_reference(SPAN, inferred_name),
-        );
-        Some(ctx.ast.statement_expression(SPAN, expr))
+        Some(self.create_assignment_expression(&id, ctx))
     }
 }
 
