@@ -51,8 +51,8 @@ declare_oxc_lint!(
     ///
     /// ### Why is this bad?
     ///
-    /// Leaving the name off a function will cause <anonymous> to appear
-    /// in stack traces of errorsthrown in it or any function called within it.
+    /// Leaving the name off a function will cause `<anonymous>` to appear
+    /// in stack traces of errors thrown in it or any function called within it.
     /// This makes it more difficult to find where an error is thrown.
     /// If you provide the optional name for a function expression
     /// then you will get the name of the function expression in the stack trace.
