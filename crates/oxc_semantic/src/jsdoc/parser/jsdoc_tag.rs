@@ -130,8 +130,15 @@ impl<'a> JSDocTag<'a> {
         let (type_part, name_comment_content, span_start) =
             match utils::find_type_range(self.body_raw) {
                 Some((t_start, t_end)) => {
-                    // +1 for whitespace
-                    let c_start = self.body_raw.len().min(t_end + 1);
+                    let c_start = {
+                        let mut c_start = t_end;
+                        // +1 if whitespace
+                        if self.body_raw.as_bytes()[c_start] == b' ' {
+                            c_start += 1;
+                        }
+                        c_start
+                    };
+
                     (
                         Some(JSDocTagTypePart::new(
                             &self.body_raw[t_start..t_end],
@@ -454,6 +461,7 @@ c7 */",
                 Some(("n14", "[n14]")),
                 ("- opt", " - opt "),
             ),
+            ("/** @param {t15}a */", Some(("t15", "{t15}")), Some(("a", "a")), ("", " ")),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);
