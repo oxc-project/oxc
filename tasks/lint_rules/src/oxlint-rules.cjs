@@ -113,11 +113,13 @@ exports.updateNotSupportedStatus = (ruleEntries) => {
  *
  * @param {RuleEntries} ruleEntries
  */
-exports.syncTypeScriptPluginStatusWithEslintPluginStatus = (ruleEntries) => {
+exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = (
+  ruleEntries,
+) => {
   for (const [name, rule] of ruleEntries) {
     if (!name.startsWith("typescript/")) continue;
 
-    // I don't know if the same name
+    // This assumes that if the same name found, it implements the same rule.
     const eslintRule = ruleEntries.get(name.replace("typescript/", "eslint/"));
     if (!eslintRule) continue;
 

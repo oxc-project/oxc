@@ -8,7 +8,8 @@ const {
   createRuleEntries,
   updateNotSupportedStatus,
   updateImplementedStatus,
-  syncTypeScriptPluginStatusWithEslintPluginStatus,
+  overrideTypeScriptPluginStatusWithEslintPluginStatus:
+    syncTypeScriptPluginStatusWithEslintPluginStatus,
 } = require("./oxlint-rules.cjs");
 const { renderMarkdown } = require("./markdown-renderer.cjs");
 const { updateGitHubIssue } = require("./result-reporter.cjs");
