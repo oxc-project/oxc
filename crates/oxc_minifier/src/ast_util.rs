@@ -485,8 +485,7 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                 .map(|cooked| !cooked.is_empty())
         }
         Expression::Identifier(ident) => {
-            /* `undefined` can be a shadowed variable expr.is_undefined() || */
-            if ident.name == "NaN" {
+            if expr.is_undefined() || ident.name == "NaN" {
                 Some(false)
             } else if ident.name == "Infinity" {
                 Some(true)

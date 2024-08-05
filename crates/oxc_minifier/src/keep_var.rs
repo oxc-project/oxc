@@ -9,9 +9,9 @@ pub struct KeepVar<'a> {
 }
 
 impl<'a> Visit<'a> for KeepVar<'a> {
-    fn visit_variable_declarator(&mut self, decl: &VariableDeclarator<'a>) {
+    fn visit_variable_declaration(&mut self, decl: &VariableDeclaration<'a>) {
         if decl.kind.is_var() {
-            decl.id.bound_names(&mut |ident| {
+            decl.bound_names(&mut |ident| {
                 self.vars.push((ident.name.clone(), ident.span));
             });
         }

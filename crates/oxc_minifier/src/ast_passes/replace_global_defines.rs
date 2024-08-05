@@ -19,7 +19,12 @@ pub struct ReplaceGlobalDefinesConfig(Arc<ReplaceGlobalDefinesConfigImpl>);
 #[derive(Debug)]
 struct ReplaceGlobalDefinesConfigImpl {
     identifier_defines: Vec<(/* key */ String, /* value */ String)>,
-    // TODO: dot defines
+    dot_defines: Vec<(/* member expression parts */ Vec<String>, /* value */ String)>,
+}
+
+enum IdentifierType {
+    Identifier,
+    DotDefines(Vec<String>),
 }
 
 impl ReplaceGlobalDefinesConfig {
@@ -30,21 +35,45 @@ impl ReplaceGlobalDefinesConfig {
     pub fn new<S: AsRef<str>>(defines: &[(S, S)]) -> Result<Self, Vec<OxcDiagnostic>> {
         let allocator = Allocator::default();
         let mut identifier_defines = vec![];
+        let mut dot_defines = vec![];
         for (key, value) in defines {
             let key = key.as_ref();
+
             let value = value.as_ref();
-            Self::check_key(key)?;
             Self::check_value(&allocator, value)?;
-            identifier_defines.push((key.to_string(), value.to_string()));
+
+            match Self::check_key(key)? {
+                IdentifierType::Identifier => {
+                    identifier_defines.push((key.to_string(), value.to_string()));
+                }
+                IdentifierType::DotDefines(parts) => {
+                    dot_defines.push((parts, value.to_string()));
+                }
+            }
         }
-        Ok(Self(Arc::new(ReplaceGlobalDefinesConfigImpl { identifier_defines })))
+
+        Ok(Self(Arc::new(ReplaceGlobalDefinesConfigImpl { identifier_defines, dot_defines })))
     }
 
-    fn check_key(key: &str) -> Result<(), Vec<OxcDiagnostic>> {
-        if !is_identifier_name(key) {
-            return Err(vec![OxcDiagnostic::error(format!("`{key}` is not an identifier."))]);
+    fn check_key(key: &str) -> Result<IdentifierType, Vec<OxcDiagnostic>> {
+        let parts: Vec<&str> = key.split('.').collect();
+
+        assert!(!parts.is_empty());
+
+        if parts.len() == 1 {
+            if !is_identifier_name(parts[0]) {
+                return Err(vec![OxcDiagnostic::error(format!("`{key}` is not an identifier."))]);
+            }
+            return Ok(IdentifierType::Identifier);
         }
-        Ok(())
+
+        for part in &parts {
+            if !is_identifier_name(part) {
+                return Err(vec![OxcDiagnostic::error(format!("`{key}` is not an identifier."))]);
+            }
+        }
+
+        Ok(IdentifierType::DotDefines(parts.iter().map(ToString::to_string).collect()))
     }
 
     fn check_value(allocator: &Allocator, source_text: &str) -> Result<(), Vec<OxcDiagnostic>> {
@@ -59,6 +88,7 @@ impl ReplaceGlobalDefinesConfig {
 ///
 /// * <https://esbuild.github.io/api/#define>
 /// * <https://github.com/terser/terser?tab=readme-ov-file#conditional-compilation>
+/// * <https://github.com/evanw/esbuild/blob/9c13ae1f06dfa909eb4a53882e3b7e4216a503fe/internal/config/globals.go#L852-L1014>
 pub struct ReplaceGlobalDefines<'a> {
     ast: AstBuilder<'a>,
     config: ReplaceGlobalDefinesConfig,
@@ -84,8 +114,8 @@ impl<'a> ReplaceGlobalDefines<'a> {
     }
 
     fn replace_identifier_defines(&self, expr: &mut Expression<'a>) {
-        for (key, value) in &self.config.0.identifier_defines {
-            if let Expression::Identifier(ident) = expr {
+        if let Expression::Identifier(ident) = expr {
+            for (key, value) in &self.config.0.identifier_defines {
                 if ident.name.as_str() == key {
                     let value = self.parse_value(value);
                     *expr = value;
@@ -94,11 +124,54 @@ impl<'a> ReplaceGlobalDefines<'a> {
             }
         }
     }
+
+    fn replace_dot_defines(&self, expr: &mut Expression<'a>) {
+        if let Expression::StaticMemberExpression(member) = expr {
+            'outer: for (parts, value) in &self.config.0.dot_defines {
+                assert!(parts.len() > 1);
+
+                let mut current_part_member_expression = Some(&*member);
+                let mut cur_part_name = &member.property.name;
+
+                for (i, part) in parts.iter().enumerate().rev() {
+                    if cur_part_name.as_str() != part {
+                        continue 'outer;
+                    }
+
+                    if i == 0 {
+                        break;
+                    }
+
+                    current_part_member_expression =
+                        if let Some(member) = current_part_member_expression {
+                            match &member.object.without_parenthesized() {
+                                Expression::StaticMemberExpression(member) => {
+                                    cur_part_name = &member.property.name;
+                                    Some(member)
+                                }
+                                Expression::Identifier(ident) => {
+                                    cur_part_name = &ident.name;
+                                    None
+                                }
+                                _ => None,
+                            }
+                        } else {
+                            continue 'outer;
+                        };
+                }
+
+                let value = self.parse_value(value);
+                *expr = value;
+                break;
+            }
+        }
+    }
 }
 
 impl<'a> VisitMut<'a> for ReplaceGlobalDefines<'a> {
     fn visit_expression(&mut self, expr: &mut Expression<'a>) {
         self.replace_identifier_defines(expr);
+        self.replace_dot_defines(expr);
         walk_mut::walk_expression(self, expr);
     }
 }
