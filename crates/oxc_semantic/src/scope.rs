@@ -116,27 +116,18 @@ impl ScopeTree {
         &mut self.flags[scope_id]
     }
 
-    pub fn get_new_scope_flags(&self, flags: ScopeFlags, parent_scope_id: ScopeId) -> ScopeFlags {
-        let mut strict_mode = self.root_flags().is_strict_mode();
-        let parent_scope_flags = self.get_flags(parent_scope_id);
-
-        // Inherit strict mode for functions
+    pub fn get_new_scope_flags(
+        &self,
+        mut flags: ScopeFlags,
+        parent_scope_id: ScopeId,
+    ) -> ScopeFlags {
         // https://tc39.es/ecma262/#sec-strict-mode-code
-        if !strict_mode
-            && (parent_scope_flags.is_function() || parent_scope_flags.is_ts_module_block())
-            && parent_scope_flags.is_strict_mode()
-        {
-            strict_mode = true;
-        }
+        let parent_scope_flags = self.get_flags(parent_scope_id);
+        flags |= parent_scope_flags & ScopeFlags::StrictMode;
 
         // inherit flags for non-function scopes
-        let mut flags = flags;
         if !flags.contains(ScopeFlags::Function) {
             flags |= parent_scope_flags & ScopeFlags::Modifiers;
-        };
-
-        if strict_mode {
-            flags |= ScopeFlags::StrictMode;
         }
 
         flags

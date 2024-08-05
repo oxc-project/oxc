@@ -510,10 +510,9 @@ impl<'a> SemanticBuilder<'a> {
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
     // NB: Not called for `Program`
-    fn enter_scope(&mut self, flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
+    fn enter_scope(&mut self, mut flags: ScopeFlags, scope_id: &Cell<Option<ScopeId>>) {
         let parent_scope_id = self.current_scope_id;
 
-        let mut flags = flags;
         if !flags.is_strict_mode() && self.current_node_flags.has_class() {
             // NOTE A class definition is always strict mode code.
             flags |= ScopeFlags::StrictMode;
