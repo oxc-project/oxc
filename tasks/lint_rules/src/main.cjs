@@ -8,6 +8,7 @@ const {
   createRuleEntries,
   updateNotSupportedStatus,
   updateImplementedStatus,
+  syncTypeScriptPluginStatusWithEslintPluginStatus,
 } = require("./oxlint-rules.cjs");
 const { renderMarkdown } = require("./markdown-renderer.cjs");
 const { updateGitHubIssue } = require("./result-reporter.cjs");
@@ -59,6 +60,7 @@ Plugins: ${Array.from(ALL_TARGET_PLUGINS.keys()).join(", ")}
   const ruleEntries = createRuleEntries(linter.getRules());
   await updateImplementedStatus(ruleEntries);
   updateNotSupportedStatus(ruleEntries);
+  syncTypeScriptPluginStatusWithEslintPluginStatus(ruleEntries);
 
   //
   // Render list and update if necessary

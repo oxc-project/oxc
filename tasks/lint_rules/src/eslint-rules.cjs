@@ -263,7 +263,3 @@ exports.loadTargetPluginRules = (linter) => {
   loadPluginReactPerfRules(linter);
   loadPluginNextRules(linter);
 };
-
-// some typescript rules are some extension of the basic eslint rules
-// we need them later to map them for both
-exports.pluginTypeScriptRulesNames = Object.keys(pluginTypeScriptAllRules);
