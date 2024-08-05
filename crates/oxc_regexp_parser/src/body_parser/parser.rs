@@ -19,7 +19,9 @@ pub struct PatternParser<'a> {
 
 impl<'a> PatternParser<'a> {
     pub fn new(allocator: &'a Allocator, source_text: &'a str, options: ParserOptions) -> Self {
-        // For `new RegExp("")` or `new RegExp()` (= empty)
+        // `RegExp` can not be empty.
+        // - Literal `//` means just a single line comment
+        // - For `new RegExp("")` or `new RegExp()` (= empty), use a placeholder
         let source_text = if source_text.is_empty() { "(?:)" } else { source_text };
 
         Self {
@@ -41,7 +43,7 @@ impl<'a> PatternParser<'a> {
         // NOTE: It means that this perform 2 loops for every cases.
         // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
-        // We may revisit this if we need performance rather than simplicity.
+        // We may re-consider this if we need more performance rather than simplicity.
         self.state.parse_capturing_groups(self.source_text);
 
         // [SS:EE] Pattern :: Disjunction
@@ -55,13 +57,16 @@ impl<'a> PatternParser<'a> {
             return Err(OxcDiagnostic::error("Duplicated group name"));
         }
 
-        let result = self.parse_disjunction()?;
+        let disjunction = self.parse_disjunction()?;
 
         if self.reader.peek().is_some() {
             return Err(OxcDiagnostic::error("Could not parse the entire pattern"));
         }
 
-        Ok(ast::Pattern { span: self.span_factory.create(0, self.source_text.len()), body: result })
+        Ok(ast::Pattern {
+            span: self.span_factory.create(0, self.source_text.len()),
+            body: disjunction,
+        })
     }
 
     // ```
