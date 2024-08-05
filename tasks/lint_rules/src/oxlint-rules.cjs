@@ -57,7 +57,8 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "eslint/no-dupe-args", // superseded by strict mode
   "eslint/no-octal", // superseded by strict mode
   "eslint/no-with", // superseded by strict mode
-  "import/no-unresolved" // Will always contain false positives due to module resolution complexity
+  "eslint/no-new-symbol", // Deprecated as of ESLint v9, but for a while disable manually
+  "import/no-unresolved", // Will always contain false positives due to module resolution complexity
 ]);
 
 /**
