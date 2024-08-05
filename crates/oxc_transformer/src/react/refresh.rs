@@ -1,15 +1,13 @@
-use std::borrow::Cow;
-
 use oxc_ast::{
     ast::{
-        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
-        IdentifierReference, Program, Statement, TSTypeAnnotation, TSTypeParameterInstantiation,
-        VariableDeclaration, VariableDeclarationKind,
+        ExportDefaultDeclarationKind, Expression, Function, IdentifierReference, Program,
+        Statement, TSTypeAnnotation, TSTypeParameterInstantiation, VariableDeclaration,
+        VariableDeclarationKind,
     },
     match_expression,
 };
 use oxc_semantic::{ReferenceFlag, SymbolFlags, SymbolId};
-use oxc_span::{Atom, CompactStr, GetSpan, SPAN};
+use oxc_span::{Atom, GetSpan, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::TraverseCtx;
 
@@ -29,12 +27,12 @@ pub struct ReactRefresh<'a> {
     refresh_reg: Atom<'a>,
     refresh_sig: Atom<'a>,
     emit_full_signatures: bool,
-    registrations: std::vec::Vec<(SymbolId, CompactStr)>,
+    registrations: std::vec::Vec<(SymbolId, Atom<'a>)>,
     ctx: Ctx<'a>,
 }
 
 impl<'a> ReactRefresh<'a> {
-    pub fn new(options: ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
+    pub fn new(options: &ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
         Self {
             refresh_reg: ctx.ast.atom(&options.refresh_reg),
             refresh_sig: ctx.ast.atom(&options.refresh_sig),
@@ -46,7 +44,7 @@ impl<'a> ReactRefresh<'a> {
 
     fn create_registration(
         &mut self,
-        persistent_id: CompactStr,
+        persistent_id: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> IdentifierReference<'a> {
         let symbol_id = ctx.generate_uid_in_root_scope("c", SymbolFlags::FunctionScopedVariable);
@@ -58,7 +56,7 @@ impl<'a> ReactRefresh<'a> {
     /// Similar to the `findInnerComponents` function in `react-refresh/babel`.
     fn replace_inner_components(
         &mut self,
-        inferred_name: Cow<CompactStr>,
+        inferred_name: &str,
         expr: &mut Expression<'a>,
         is_variable_declarator: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -109,11 +107,12 @@ impl<'a> ReactRefresh<'a> {
                     };
 
                     let found_inside = self.replace_inner_components(
-                        Cow::Owned(CompactStr::from(format!(
+                        format!(
                             "{}${}",
-                            inferred_name.clone(),
+                            inferred_name,
                             callee_span.source_text(self.ctx.source_text)
-                        ))),
+                        )
+                        .as_str(),
                         argument_expr,
                         /* is_variable_declarator */ false,
                         ctx,
@@ -137,7 +136,7 @@ impl<'a> ReactRefresh<'a> {
             }
         }
 
-        let ident = self.create_registration(inferred_name.into_owned(), ctx);
+        let ident = self.create_registration(ctx.ast.atom(inferred_name), ctx);
         *expr = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
@@ -248,18 +247,13 @@ impl<'a> ReactRefresh<'a> {
                         // so they're worth handling despite possible false positives.
                         // More importantly, it handles the named case:
                         // export default memo(function Named() {})
-                        self.replace_inner_components(
-                            Cow::Owned(CompactStr::from("%default%")),
-                            expression,
-                            false,
-                            ctx,
-                        );
+                        self.replace_inner_components("%default%", expression, false, ctx);
 
                         None
                     }
                     ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                         if let Some(id) = &func.id {
-                            let reference = self.create_registration(id.name.to_compact_str(), ctx);
+                            let reference = self.create_registration(id.name.clone(), ctx);
                             let expr = ctx.ast.expression_assignment(
                                 SPAN,
                                 AssignmentOperator::Assign,
@@ -291,7 +285,7 @@ impl<'a> ReactRefresh<'a> {
         };
 
         let inferred_name = id.name.clone();
-        let reference = self.create_registration(inferred_name.to_compact_str(), ctx);
+        let reference = self.create_registration(inferred_name.clone(), ctx);
         let expr = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,
@@ -320,8 +314,6 @@ impl<'a> ReactRefresh<'a> {
             return None;
         }
 
-        let compact_inferred_name = inferred_name.to_compact_str();
-
         match init {
             // Likely component definitions.
             Expression::ArrowFunctionExpression(_)
@@ -346,7 +338,7 @@ impl<'a> ReactRefresh<'a> {
 
                 // Maybe a HOC.
                 // Try to determine if this is some form of import.
-                let found_inside = self.replace_inner_components(Cow::Borrowed(&compact_inferred_name), init, true, ctx);
+                let found_inside = self.replace_inner_components(&inferred_name, init, true, ctx);
                 if !found_inside {
                     return None;
                 }
@@ -358,7 +350,7 @@ impl<'a> ReactRefresh<'a> {
             }
         }
 
-        let reference = self.create_registration(compact_inferred_name, ctx);
+        let reference = self.create_registration(inferred_name.clone(), ctx);
         let expr = ctx.ast.expression_assignment(
             SPAN,
             AssignmentOperator::Assign,

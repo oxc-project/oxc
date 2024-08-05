@@ -55,14 +55,14 @@ impl<'a> React<'a> {
         } = options;
         let refresh = options.refresh.clone();
         Self {
-            refresh: ReactRefresh::new(refresh.clone().unwrap_or_default(), Rc::clone(&ctx)),
             jsx: ReactJsx::new(options, Rc::clone(&ctx)),
-            display_name: ReactDisplayName::new(ctx),
+            display_name: ReactDisplayName::new(Rc::clone(&ctx)),
             jsx_plugin,
             display_name_plugin,
             jsx_self_plugin,
             jsx_source_plugin,
             refresh_plugin: refresh.is_some(),
+            refresh: ReactRefresh::new(&refresh.unwrap_or_default(), ctx),
         }
     }
 }
