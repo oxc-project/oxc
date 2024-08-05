@@ -26,7 +26,6 @@ impl<'a> Compressor<'a> {
         self.fold_constants(program);
         self.remove_dead_code(program);
         // TODO: StatementFusion
-        // TODO: PeepholeMinimizeConditions
         self.substitute_alternate_syntax(program);
         self.collapse(program);
     }

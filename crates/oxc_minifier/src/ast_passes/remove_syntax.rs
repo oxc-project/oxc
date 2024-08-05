@@ -27,6 +27,7 @@ impl<'a> VisitMut<'a> for RemoveSyntax<'a> {
         self.strip_parenthesized_expression(expr);
         self.compress_console(expr);
         walk_mut::walk_expression(self, expr);
+        self.recover_arrow_expression_after_drop_console(expr);
     }
 }
 
@@ -64,6 +65,16 @@ impl<'a> RemoveSyntax<'a> {
     fn compress_console(&mut self, expr: &mut Expression<'a>) {
         if self.options.drop_console && Self::is_console(expr) {
             *expr = self.ast.void_0();
+        }
+    }
+
+    fn recover_arrow_expression_after_drop_console(&self, expr: &mut Expression<'a>) {
+        if self.options.drop_console {
+            if let Expression::ArrowFunctionExpression(arrow_expr) = expr {
+                if arrow_expr.expression && arrow_expr.body.is_empty() {
+                    arrow_expr.expression = false;
+                }
+            }
         }
     }
 

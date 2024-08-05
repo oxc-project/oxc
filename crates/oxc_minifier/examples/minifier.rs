@@ -3,7 +3,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, WhitespaceRemover};
-use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -39,7 +39,7 @@ fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: 
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    let options = MinifierOptions { mangle, ..MinifierOptions::default() };
+    let options = MinifierOptions { mangle, compress: CompressOptions::all_true() };
     let ret = Minifier::new(options).build(&allocator, program);
     if whitespace {
         CodeGenerator::new().with_mangler(ret.mangler).build(program)
