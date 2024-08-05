@@ -29,7 +29,11 @@ pub(crate) fn test_with_options(source_text: &str, expected: &str, options: Comp
     );
 }
 
-fn run(source_text: &str, source_type: SourceType, options: Option<CompressOptions>) -> String {
+pub(crate) fn run(
+    source_text: &str,
+    source_type: SourceType,
+    options: Option<CompressOptions>,
+) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
