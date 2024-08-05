@@ -3,7 +3,7 @@
 //! [AST Spec](https://github.com/typescript-eslint/typescript-eslint/tree/main/packages/ast-spec)
 //! [Archived TypeScript spec](https://github.com/microsoft/TypeScript/blob/3c99d50da5a579d9fa92d02664b1b66d4ff55944/doc/spec-ARCHIVED.md)
 
-use std::{cell::Cell, hash::Hash};
+use std::{cell::Cell, fmt, hash::Hash};
 
 use oxc_allocator::Vec;
 use oxc_span::{Atom, Span};
@@ -100,6 +100,21 @@ impl<'a> TSTypeName<'a> {
     }
 }
 
+impl<'a> fmt::Display for TSTypeName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            TSTypeName::IdentifierReference(ident) => ident.fmt(f),
+            TSTypeName::QualifiedName(qualified) => qualified.fmt(f),
+        }
+    }
+}
+
+impl<'a> fmt::Display for TSQualifiedName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}.{}", self.left, self.right)
+    }
+}
+
 impl<'a> TSType<'a> {
     /// Remove nested parentheses from this type.
     pub fn without_parenthesized(&self) -> &Self {
@@ -150,6 +165,15 @@ impl<'a> TSModuleDeclarationName<'a> {
         match self {
             Self::Identifier(ident) => ident.name.clone(),
             Self::StringLiteral(lit) => lit.value.clone(),
+        }
+    }
+}
+
+impl<'a> fmt::Display for TSModuleDeclarationName<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Identifier(id) => id.fmt(f),
+            Self::StringLiteral(lit) => lit.fmt(f),
         }
     }
 }

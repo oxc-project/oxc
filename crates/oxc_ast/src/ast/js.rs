@@ -27,6 +27,7 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+/// Represents the root of a JavaScript abstract syntax tree (AST), containing metadata about the source, directives, top-level statements, and scope information.
 #[ast(visit)]
 #[scope(
     flags(ScopeFlags::Top),
@@ -46,61 +47,99 @@ pub struct Program<'a> {
 }
 
 inherit_variants! {
-/// Expression
+/// Represents a type for AST nodes corresponding to JavaScript's expressions.
 ///
 /// Inherits variants from [`MemberExpression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum Expression<'a> {
+    /// See [`BooleanLiteral`] for AST node details.
     BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+    /// See [`NullLiteral`] for AST node details.
     NullLiteral(Box<'a, NullLiteral>) = 1,
+    /// See [`NumericLiteral`] for AST node details.
     NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+    /// See [`BigIntLiteral`] for AST node details.
     BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    /// See [`RegExpLiteral`] for AST node details.
     RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+    /// See [`StringLiteral`] for AST node details.
     StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+    /// See [`TemplateLiteral`] for AST node details.
     TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
 
+    /// See [`IdentifierReference`] for AST node details.
     Identifier(Box<'a, IdentifierReference<'a>>) = 7,
 
+    /// See [`MetaProperty`] for AST node details.
     MetaProperty(Box<'a, MetaProperty<'a>>) = 8,
+    /// See [`Super`] for AST node details.
     Super(Box<'a, Super>) = 9,
 
+    /// See [`ArrayExpression`] for AST node details.
     ArrayExpression(Box<'a, ArrayExpression<'a>>) = 10,
+    /// See [`ArrowFunctionExpression`] for AST node details.
     ArrowFunctionExpression(Box<'a, ArrowFunctionExpression<'a>>) = 11,
+    /// See [`AssignmentExpression`] for AST node details.
     AssignmentExpression(Box<'a, AssignmentExpression<'a>>) = 12,
+    /// See [`AwaitExpression`] for AST node details.
     AwaitExpression(Box<'a, AwaitExpression<'a>>) = 13,
+    /// See [`BinaryExpression`] for AST node details.
     BinaryExpression(Box<'a, BinaryExpression<'a>>) = 14,
+    /// See [`CallExpression`] for AST node details.
     CallExpression(Box<'a, CallExpression<'a>>) = 15,
+    /// See [`ChainExpression`] for AST node details.
     ChainExpression(Box<'a, ChainExpression<'a>>) = 16,
+    /// See [`Class`] for AST node details.
     ClassExpression(Box<'a, Class<'a>>) = 17,
+    /// See [`ConditionalExpression`] for AST node details.
     ConditionalExpression(Box<'a, ConditionalExpression<'a>>) = 18,
+    /// See [`Function`] for AST node details.
     #[visit(args(flags = ScopeFlags::Function))]
     FunctionExpression(Box<'a, Function<'a>>) = 19,
+    /// See [`ImportExpression`] for AST node details.
     ImportExpression(Box<'a, ImportExpression<'a>>) = 20,
+    /// See [`LogicalExpression`] for AST node details.
     LogicalExpression(Box<'a, LogicalExpression<'a>>) = 21,
+    /// See [`NewExpression`] for AST node details.
     NewExpression(Box<'a, NewExpression<'a>>) = 22,
+    /// See [`ObjectExpression`] for AST node details.
     ObjectExpression(Box<'a, ObjectExpression<'a>>) = 23,
+    /// See [`ParenthesizedExpression`] for AST node details.
     ParenthesizedExpression(Box<'a, ParenthesizedExpression<'a>>) = 24,
+    /// See [`SequenceExpression`] for AST node details.
     SequenceExpression(Box<'a, SequenceExpression<'a>>) = 25,
+    /// See [`TaggedTemplateExpression`] for AST node details.
     TaggedTemplateExpression(Box<'a, TaggedTemplateExpression<'a>>) = 26,
+    /// See [`ThisExpression`] for AST node details.
     ThisExpression(Box<'a, ThisExpression>) = 27,
+    /// See [`UnaryExpression`] for AST node details.
     UnaryExpression(Box<'a, UnaryExpression<'a>>) = 28,
+    /// See [`UpdateExpression`] for AST node details.
     UpdateExpression(Box<'a, UpdateExpression<'a>>) = 29,
+    /// See [`YieldExpression`] for AST node details.
     YieldExpression(Box<'a, YieldExpression<'a>>) = 30,
+    /// See [`PrivateInExpression`] for AST node details.
     PrivateInExpression(Box<'a, PrivateInExpression<'a>>) = 31,
 
+    /// See [`JSXElement`] for AST node details.
     JSXElement(Box<'a, JSXElement<'a>>) = 32,
+    /// See [`JSXFragment`] for AST node details.
     JSXFragment(Box<'a, JSXFragment<'a>>) = 33,
 
+    /// See [`TSAsExpression`] for AST node details.
     TSAsExpression(Box<'a, TSAsExpression<'a>>) = 34,
+    /// See [`TSSatisfiesExpression`] for AST node details.
     TSSatisfiesExpression(Box<'a, TSSatisfiesExpression<'a>>) = 35,
+    /// See [`TSTypeAssertion`] for AST node details.
     TSTypeAssertion(Box<'a, TSTypeAssertion<'a>>) = 36,
+    /// See [`TSNonNullExpression`] for AST node details.
     TSNonNullExpression(Box<'a, TSNonNullExpression<'a>>) = 37,
+    /// See [`TSInstantiationExpression`] for AST node details.
     TSInstantiationExpression(Box<'a, TSInstantiationExpression<'a>>) = 38,
 
     // `MemberExpression` variants added here by `inherit_variants!` macro
@@ -159,9 +198,9 @@ macro_rules! match_expression {
 }
 pub use match_expression;
 
-/// Identifier Name
+/// `foo` in `let foo = 1;`
 ///
-/// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
+/// Fundamental syntactic structure used for naming variables, functions, and properties. It must start with a Unicode letter (including $ and _) and can be followed by Unicode letters, digits, $, or _.
 #[ast(visit)]
 #[derive(Debug, Clone, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -172,7 +211,9 @@ pub struct IdentifierName<'a> {
     pub name: Atom<'a>,
 }
 
-/// Identifier Reference
+/// `x` inside `func` in `const x = 0; function func() { console.log(x); }`
+///
+/// Represents an identifier reference, which is a reference to a variable, function, class, or object.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -199,7 +240,9 @@ pub struct IdentifierReference<'a> {
     pub reference_flag: ReferenceFlag,
 }
 
-/// Binding Identifier
+/// `x` in `const x = 0;`
+///
+/// Represents a binding identifier, which is an identifier that is used to declare a variable, function, class, or object.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -221,7 +264,9 @@ pub struct BindingIdentifier<'a> {
     pub symbol_id: Cell<Option<SymbolId>>,
 }
 
-/// Label Identifier
+/// `loop` in `loop: while (true) { break loop; }`
+///
+/// Represents a label identifier, which is an identifier that is used to label a statement.
 ///
 /// See: [13.1 Identifiers](https://tc39.es/ecma262/#sec-identifiers)
 #[ast(visit)]
@@ -234,9 +279,9 @@ pub struct LabelIdentifier<'a> {
     pub name: Atom<'a>,
 }
 
-/// This Expression
+/// `this` in `return this.prop;`
 ///
-/// Corresponds to the `this` keyword.
+/// Represents a `this` expression, which is a reference to the current object.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -246,7 +291,9 @@ pub struct ThisExpression {
     pub span: Span,
 }
 
-/// <https://tc39.es/ecma262/#prod-ArrayLiteral>
+/// `[1, 2, ...[3, 4], null]` in `const array = [1, 2, ...[3, 4], null];`
+///
+/// Represents an array literal, which can include elements, spread elements, or null values.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -263,27 +310,30 @@ pub struct ArrayExpression<'a> {
 }
 
 inherit_variants! {
-/// Array Expression Element
+/// Represents a element in an array literal.
 ///
 /// Inherits variants from [`Expression`]. See [`ast` module docs] for explanation of inheritance.
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[serde(untagged)]
 pub enum ArrayExpressionElement<'a> {
+    /// `...[3, 4]` in `const array = [1, 2, ...[3, 4], null];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
+    /// `<empty>` in `const array = [1, , 2];`
+    ///
     /// Array hole for sparse arrays
     /// <https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Trailing_commas#arrays>
     Elision(Elision) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
-    // TODO: support for attributes syntax here so we can use `#[visit(as(ExpressionArrayElement))]`
     @inherit Expression
 }
 }
 
+/// empty slot in `const array = [1, , 2];`
+///
 /// Array Expression Elision Element
 /// Serialized as `null` in JSON AST. See `serialize.rs`.
 #[ast(visit)]
@@ -292,13 +342,9 @@ pub struct Elision {
     pub span: Span,
 }
 
-/// Object Expression
+/// `{ a: 1 }` in `const obj = { a: 1 };`
 ///
-/// ## Example
-/// ```ts
-/// const x = { foo: 'foo' }
-/// //        ^^^^^^^^^^^^^^
-/// ```
+/// Represents an object literal, which can include properties, spread properties, or computed properties and trailing comma.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -312,30 +358,21 @@ pub struct ObjectExpression<'a> {
     pub trailing_comma: Option<Span>,
 }
 
+/// Represents a property in an object literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ObjectPropertyKind<'a> {
-    /// Object Property
-    ///
-    /// ## Example
-    /// ```ts
-    /// const foo = 'foo'
-    /// const x = { foo, bar: 'bar' }
-    /// //          ^^^  ^^^^^^^^^^      
+    /// `a: 1` in `const obj = { a: 1 };`
     ObjectProperty(Box<'a, ObjectProperty<'a>>),
-    /// Object Spread Property
-    ///
-    /// ## Example
-    /// ```ts
-    /// const obj = { foo: 'foo' }
-    /// const obj2 = { ...obj, bar: 'bar' }
-    /// //             ^^^^^^
-    /// ```
+    /// `...{ a: 1 }` in `const obj = { ...{ a: 1 } };`
     SpreadProperty(Box<'a, SpreadElement<'a>>),
 }
 
+/// `a: 1` in `const obj = { a: 1 };`
+///
+/// Represents a property in an object literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -359,31 +396,36 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum PropertyKey<'a> {
+    /// `a` in `const obj = { a: 1 }; obj.a;`
     StaticIdentifier(Box<'a, IdentifierName<'a>>) = 64,
+    /// `#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
     PrivateIdentifier(Box<'a, PrivateIdentifier<'a>>) = 65,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
 }
 
+/// Represents the kind of property in an object literal or class.
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum PropertyKind {
+    /// `a: 1` in `const obj = { a: 1 };`
     Init,
+    /// `get a() { return 1; }` in `const obj = { get a() { return 1; } };`
     Get,
+    /// `set a(value) { this._a = value; }` in `const obj = { set a(value) { this._a = value; } };`
     Set,
 }
 
-/// Template Literal
+/// `` `Hello, ${name}` `` in `` const foo = `Hello, ${name}` ``
 ///
-/// This is interpreted by interleaving the expression elements in between the quasi elements.
+/// Represents a template literal, which can include quasi elements and expression elements.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -395,6 +437,9 @@ pub struct TemplateLiteral<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
+/// `` foo`Hello, ${name}` `` in `` const foo = foo`Hello, ${name}` ``
+///
+/// Represents a tagged template expression, which can include a tag and a quasi.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -407,6 +452,9 @@ pub struct TaggedTemplateExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
+/// `Hello, ` in `` `Hello, ${name}` ``
+///
+/// Represents a quasi element in a template literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -418,7 +466,7 @@ pub struct TemplateElement<'a> {
     pub value: TemplateElementValue<'a>,
 }
 
-/// See [template-strings-cooked-vs-raw](https://exploringjs.com/impatient-js/ch_template-literals.html#template-strings-cooked-vs-raw)
+/// See [template-strings-cooked-vs-raw](https://exploringjs.com/js/book/ch_template-literals.html#template-strings-cooked-vs-raw)
 #[ast]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -434,18 +482,19 @@ pub struct TemplateElementValue<'a> {
     pub cooked: Option<Atom<'a>>,
 }
 
+/// Represents a member access expression, which can include computed member access, static member access, or private field access.
+///
 /// <https://tc39.es/ecma262/#prod-MemberExpression>
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum MemberExpression<'a> {
-    /// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
+    /// `ar[0]` in `const ar = [1, 2]; ar[0];`
     ComputedMemberExpression(Box<'a, ComputedMemberExpression<'a>>) = 48,
-    /// `MemberExpression[?Yield, ?Await] . IdentifierName`
+    /// `console.log` in `console.log('Hello, World!');`
     StaticMemberExpression(Box<'a, StaticMemberExpression<'a>>) = 49,
-    /// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+    /// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
     PrivateFieldExpression(Box<'a, PrivateFieldExpression<'a>>) = 50,
 }
 
@@ -460,7 +509,9 @@ macro_rules! match_member_expression {
 }
 pub use match_member_expression;
 
-/// `MemberExpression[?Yield, ?Await] [ Expression[+In, ?Yield, ?Await] ]`
+/// `ar[0]` in `const ar = [1, 2]; ar[0];`
+///
+/// Represents a computed member access expression, which can include an object and an expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -473,7 +524,9 @@ pub struct ComputedMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// `MemberExpression[?Yield, ?Await] . IdentifierName`
+/// `console.log` in `console.log('Hello, World!');`
+///
+/// Represents a static member access expression, which can include an object and a property.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -486,15 +539,9 @@ pub struct StaticMemberExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// `MemberExpression[?Yield, ?Await] . PrivateIdentifier`
+/// `c.#a` in `class C { #a = 1; }; const c = new C(); c.#a;`
 ///
-/// ## Example
-/// ```ts
-/// //    _______ object
-/// const foo.bar?.#baz
-/// //           ↑ ^^^^ field
-/// //           optional
-/// ```
+/// Represents a private field access expression, which can include an object and a private identifier.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -507,7 +554,9 @@ pub struct PrivateFieldExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// Call Expression
+/// `foo()` in `function foo() { return 1; }; foo();`
+///
+/// Represents a call expression, which can include a callee and arguments.
 ///
 /// ## Examples
 /// ```ts
@@ -534,12 +583,14 @@ pub struct CallExpression<'a> {
     pub optional: bool, // for optional chaining
 }
 
-/// New Expression
+/// `new C()` in `class C {}; new C();`
+///
+/// Represents a new expression, which can include a callee and arguments.
 ///
 /// ## Example
 /// ```ts
 /// //           callee         arguments
-/// //              ↓↓↓         ↓↓↓↓         
+/// //              ↓↓↓         ↓↓↓↓
 /// const foo = new Foo<number>(1, 2)
 /// //                 ↑↑↑↑↑↑↑↑
 /// //                 type_parameters
@@ -556,7 +607,9 @@ pub struct NewExpression<'a> {
     pub type_parameters: Option<Box<'a, TSTypeParameterInstantiation<'a>>>,
 }
 
-/// Meta Property `new.target` | `import.meta`
+/// `import.meta` in `console.log(import.meta);`
+///
+/// Represents a meta property. The following syntaxes are supported. `import.meta`, `new.target`.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -568,17 +621,9 @@ pub struct MetaProperty<'a> {
     pub property: IdentifierName<'a>,
 }
 
-/// Spread Element
+/// `...[1, 2]` in `const arr = [...[1, 2]];`
 ///
-/// An array or object spread. Could be used in unpacking or a declaration.
-///
-/// ## Example
-/// ```ts
-/// const [first, ...rest] = arr
-/// //            ^^^^^^^
-/// const obj = { foo: 'foo', ...obj2 }
-/// //                        ^^^^^^^
-/// ```
+/// Represents a spread element, which can include an argument.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -597,18 +642,20 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum Argument<'a> {
+    /// `...[1, 2]` in `const arr = [...[1, 2]];`
     SpreadElement(Box<'a, SpreadElement<'a>>) = 64,
     // `Expression` variants added here by `inherit_variants!` macro
     @inherit Expression
 }
 }
 
-/// Update Expression
+/// `++i` in `let i = 0; ++i;`
+///
+/// Represents an update expression, which can include an operator and an argument. The following syntaxes are supported. `++a`, `a++`, `--a`, `a--`
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -621,7 +668,9 @@ pub struct UpdateExpression<'a> {
     pub argument: SimpleAssignmentTarget<'a>,
 }
 
-/// Unary Expression
+/// `typeof` in `typeof a === "string"`
+///
+/// Represents a unary expression, which can include an operator and an argument. The following syntaxes are supported. `+a`, `-a`, `~a`, `!a`, `delete a`, `void a`, `typeof a`
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -633,7 +682,9 @@ pub struct UnaryExpression<'a> {
     pub argument: Expression<'a>,
 }
 
-/// Binary Expression
+/// `1 + 1` in `const two = 1 + 1;`
+///
+/// Represents a binary expression, which can include a left expression, an operator, and a right expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -646,7 +697,9 @@ pub struct BinaryExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Private Identifier in Shift Expression
+/// `#brand in obj` in `class Foo { #brand; static isFoo(obj) { return #brand in obj; } }`
+///
+/// Represents a private in expression, which can include a private identifier, an operator, and a expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -659,7 +712,9 @@ pub struct PrivateInExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Binary Logical Operators
+/// `||` in `const foo = bar || 2;`
+///
+/// Represents a logical expression, which can include a left expression, an operator, and a right expression. The following syntaxes are supported. `||`, `&&` and `??`
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -672,7 +727,9 @@ pub struct LogicalExpression<'a> {
     pub right: Expression<'a>,
 }
 
-/// Conditional Expression
+/// `bar ? 1 : 2` in `const foo = bar ? 1 : 2;`
+///
+/// Represents a conditional expression, which can include a test, a consequent, and an alternate.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -685,7 +742,9 @@ pub struct ConditionalExpression<'a> {
     pub alternate: Expression<'a>,
 }
 
-/// Assignment Expression
+/// `foo = 1` in `let foo; foo = 1;`
+///
+/// Represents an assignment expression, which can include an operator, a target, and a expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -706,7 +765,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -725,7 +783,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -780,7 +837,6 @@ macro_rules! match_simple_assignment_target {
 pub use match_simple_assignment_target;
 
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -798,7 +854,9 @@ macro_rules! match_assignment_target_pattern {
 }
 pub use match_assignment_target_pattern;
 
-// See serializer in serialize.rs
+/// `[a, b]` in `[a, b] = arr;`
+///
+/// Represents an array assignment target, which can include elements and a rest element.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
@@ -814,7 +872,9 @@ pub struct ArrayAssignmentTarget<'a> {
     pub trailing_comma: Option<Span>,
 }
 
-// See serializer in serialize.rs
+/// `{ foo }` in `({ foo } = obj);`
+///
+/// Represents an object assignment target, which can include properties and a rest element.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
@@ -828,6 +888,9 @@ pub struct ObjectAssignmentTarget<'a> {
     pub rest: Option<AssignmentTargetRest<'a>>,
 }
 
+/// `rest` in `[foo, ...rest] = arr;`
+///
+/// Represents a rest element in an array assignment target, which can include a target.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
@@ -846,7 +909,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -877,7 +939,9 @@ pub enum AssignmentTargetProperty<'a> {
     AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>),
 }
 
-/// Assignment Property - Identifier Reference
+/// `foo` in `({ foo } = obj);`
+///
+/// Represents an assignment target property identifier, which can include a binding and an init expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -889,7 +953,9 @@ pub struct AssignmentTargetPropertyIdentifier<'a> {
     pub init: Option<Expression<'a>>,
 }
 
-/// Assignment Property - Property Name
+/// `foo: bar` in `({ foo: bar } = obj);`
+///
+/// Represents an assignment target property property, which can include a name and a binding.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -901,7 +967,9 @@ pub struct AssignmentTargetPropertyProperty<'a> {
     pub binding: AssignmentTargetMaybeDefault<'a>,
 }
 
-/// Sequence Expression
+/// `a++, b++` in `let a = 1, b = 2; let result = (a++, b++);`
+///
+/// Represents a sequence expression, which can include expressions.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -912,6 +980,9 @@ pub struct SequenceExpression<'a> {
     pub expressions: Vec<'a, Expression<'a>>,
 }
 
+/// `super` in `class C extends B { constructor() { super(); } }`
+///
+/// Represents a super expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -921,7 +992,9 @@ pub struct Super {
     pub span: Span,
 }
 
-/// Await Expression
+/// `await` in `await foo();`
+///
+/// Represents an await expression, which can include an argument.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -932,6 +1005,9 @@ pub struct AwaitExpression<'a> {
     pub argument: Expression<'a>,
 }
 
+/// `foo?.bar` in `foo?.bar;`
+///
+/// Represents a chain expression, which can include an expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -949,7 +1025,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -960,7 +1035,9 @@ pub enum ChainElement<'a> {
 }
 }
 
-/// Parenthesized Expression
+/// `(a + b)` in `const res = (a + b) / c;`
+///
+/// Represents a parenthesized expression, which can include an expression.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -979,7 +1056,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -1010,7 +1086,9 @@ pub enum Statement<'a> {
 }
 }
 
-/// Directive Prologue
+/// `"use strict";` in `"use strict";`
+///
+/// Represents a directive statement, which can include a string literal.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1024,7 +1102,9 @@ pub struct Directive<'a> {
     pub directive: Atom<'a>,
 }
 
-/// Hashbang
+/// `#! /usr/bin/env node` in `#! /usr/bin/env node`
+///
+/// Represents a hashbang directive, which can include a value.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1035,7 +1115,9 @@ pub struct Hashbang<'a> {
     pub value: Atom<'a>,
 }
 
-/// Block Statement
+/// `{ let foo = 1; }` in `if(true) { let foo = 1; }`
+///
+/// Represents a block statement, which can include a body.
 #[ast(visit)]
 #[scope]
 #[derive(Debug)]
@@ -1050,7 +1132,6 @@ pub struct BlockStatement<'a> {
 
 /// Declarations and the Variable Statement
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -1085,7 +1166,9 @@ macro_rules! match_declaration {
 }
 pub use match_declaration;
 
-/// Variable Declaration
+/// `let a;` in `let a; a = 1;`
+///
+/// Represents a variable declaration, which can include a kind, declarations, and modifiers.
 #[ast(visit)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
@@ -1217,7 +1300,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -1251,7 +1333,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -1706,7 +1787,7 @@ pub struct Class<'a> {
     /// ```ts
     /// interface Bar {}
     /// class Foo implements Bar {}
-    /// //                   ^^^   
+    /// //                   ^^^
     /// ```
     pub implements: Option<Vec<'a, TSClassImplements<'a>>>,
     pub body: Box<'a, ClassBody<'a>>,
@@ -2000,7 +2081,6 @@ pub struct StaticBlock<'a> {
 /// export as namespace d;    // TSNamespaceExportDeclaration
 /// ```
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -2303,7 +2383,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]

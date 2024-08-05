@@ -15,14 +15,14 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 1,
             "name": "a",
-            "node": "FormalParameter",
+            "node": "FormalParameter(a)",
             "references": []
           },
           {
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "b",
-            "node": "FormalParameter",
+            "node": "FormalParameter(b)",
             "references": []
           }
         ]

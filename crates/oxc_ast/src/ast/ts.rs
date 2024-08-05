@@ -108,7 +108,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -191,7 +190,6 @@ pub enum TSLiteral<'a> {
 /// This is the root-level type for TypeScript types, kind of like [`Expression`] is for
 /// expressions.
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
@@ -483,7 +481,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
@@ -642,7 +639,6 @@ pub struct TSTypeReference<'a> {
 ///     IdentifierReference
 ///     NamespaceName . IdentifierReference
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -1035,7 +1031,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
@@ -1067,6 +1062,7 @@ pub struct TSImportType<'a> {
 pub struct TSImportAttributes<'a> {
     #[serde(flatten)]
     pub span: Span,
+    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
     pub elements: Vec<'a, TSImportAttribute<'a>>,
 }
 
@@ -1208,7 +1204,6 @@ inherit_variants! {
 ///
 /// [`ast` module docs]: `super`
 #[ast(visit)]
-#[repr(C, u8)]
 #[derive(Debug, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
@@ -1257,7 +1252,7 @@ pub struct TSNonNullExpression<'a> {
 ///         @LogParam x: number // parameter decorator
 ///     ) {
 ///       // ...
-///     }  
+///     }
 /// }
 /// ```
 ///

@@ -130,8 +130,9 @@ impl<'a> JSDocTag<'a> {
         let (type_part, name_comment_content, span_start) =
             match utils::find_type_range(self.body_raw) {
                 Some((t_start, t_end)) => {
-                    // +1 for whitespace
-                    let c_start = self.body_raw.len().min(t_end + 1);
+                    // There may be, or may not be whitespace
+                    // e.g. `@kind {type}name_comment`
+                    let c_start = t_end;
                     (
                         Some(JSDocTagTypePart::new(
                             &self.body_raw[t_start..t_end],
@@ -432,7 +433,7 @@ c7 */",
                 Some(("n7", "n7")),
                 ("c7", "\n\nc7 "),
             ),
-            ("/** @k8 {t8} */", Some(("t8", "{t8}")), None, ("", "")),
+            ("/** @k8 {t8} */", Some(("t8", "{t8}")), None, ("", " ")),
             ("/** @k9 n9 */", None, Some(("n9", "n9")), ("", " ")),
             ("/** @property n[].n10 */", None, Some(("n[].n10", "n[].n10")), ("", " ")),
             ("/** @property n.n11 */", None, Some(("n.n11", "n.n11")), ("", " ")),
@@ -454,6 +455,8 @@ c7 */",
                 Some(("n14", "[n14]")),
                 ("- opt", " - opt "),
             ),
+            ("/** @param {t15}a */", Some(("t15", "{t15}")), Some(("a", "a")), ("", " ")),
+            ("/** @type{t16}n16*/", Some(("t16", "{t16}")), Some(("n16", "n16")), ("", "")),
         ] {
             let allocator = Allocator::default();
             let semantic = build_semantic(&allocator, source_text);
@@ -463,15 +466,18 @@ c7 */",
                 jsdocs.next().unwrap().tags().first().unwrap().type_name_comment();
             assert_eq!(
                 type_part.map(|t| (t.parsed(), t.span.source_text(source_text))),
-                parsed_type_part
+                parsed_type_part,
+                "type_part failed to assert in {source_text}"
             );
             assert_eq!(
                 type_name_part.map(|n| (n.parsed(), n.span.source_text(source_text))),
-                parsed_type_name_part
+                parsed_type_name_part,
+                "type_name_part failed to assert in {source_text}"
             );
             assert_eq!(
                 (comment_part.parsed().as_str(), comment_part.span.source_text(source_text)),
-                parsed_comment_part
+                parsed_comment_part,
+                "comment_part failed to assert in {source_text}"
             );
         }
     }

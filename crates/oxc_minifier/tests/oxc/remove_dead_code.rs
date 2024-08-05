@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_minifier::RemoveDeadCode;
+use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -10,7 +10,7 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     if remove_dead_code {
-        RemoveDeadCode::new(&allocator).build(program);
+        Compressor::new(&allocator, CompressOptions::dead_code_elimintation()).build(program);
     }
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true })

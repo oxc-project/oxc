@@ -1,23 +1,22 @@
-use std::collections::HashMap;
-
-use itertools::Itertools;
-use lazy_static::lazy_static;
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{parse_quote, Attribute, Variant};
+use syn::Variant;
 
 use crate::{
+    output,
     schema::{REnum, RStruct, RType},
     CodegenCtx, Generator, GeneratorOutput,
 };
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct ImplGetSpanGenerator;
+define_generator! {
+    pub struct ImplGetSpanGenerator;
+}
 
 impl Generator for ImplGetSpanGenerator {
     fn name(&self) -> &'static str {
-        "ImplGetSpanGenerator"
+        stringify!(ImplGetSpanGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
@@ -37,14 +36,14 @@ impl Generator for ImplGetSpanGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "span",
+            output(crate::AST_CRATE, "span.rs"),
             quote! {
                 #header
                 insert!("#![allow(clippy::match_same_arms)]");
                 endl!();
 
                 use crate::ast::*;
-                use oxc_span::{GetSpan, Span};
+                use oxc_span::{GetSpan, GetSpanMut, Span};
 
                 #(#impls)*
             },
@@ -55,11 +54,13 @@ impl Generator for ImplGetSpanGenerator {
 fn impl_enum(it @ REnum { item, .. }: &REnum) -> TokenStream {
     let typ = it.as_type();
     let generics = &item.generics;
-    let matches: Vec<TokenStream> = item
+    let (matches, matches_mut): (Vec<TokenStream>, Vec<TokenStream>) = item
         .variants
         .iter()
-        .map(|Variant { ident, .. }| quote!(Self :: #ident(it) => it.span()))
-        .collect_vec();
+        .map(|Variant { ident, .. }| {
+            (quote!(Self :: #ident(it) => it.span()), quote!(Self :: #ident(it) => it.span_mut()))
+        })
+        .unzip();
 
     quote! {
         endl!();
@@ -67,6 +68,15 @@ fn impl_enum(it @ REnum { item, .. }: &REnum) -> TokenStream {
             fn span(&self) -> Span {
                 match self {
                     #(#matches),*
+                }
+            }
+        }
+        endl!();
+
+        impl #generics GetSpanMut for #typ {
+            fn span_mut(&mut self) -> &mut Span {
+                match self {
+                    #(#matches_mut),*
                 }
             }
         }
@@ -78,18 +88,26 @@ fn impl_struct(it @ RStruct { item, .. }: &RStruct) -> TokenStream {
     let generics = &item.generics;
     let inner_span_hint =
         item.fields.iter().find(|it| it.attrs.iter().any(|a| a.path().is_ident("span")));
-    let span = if let Some(span_field) = inner_span_hint {
+    let (span, span_mut) = if let Some(span_field) = inner_span_hint {
         let ident = span_field.ident.as_ref().unwrap();
-        quote!(#ident.span())
+        (quote!(self.#ident.span()), quote!(self.#ident.span_mut()))
     } else {
-        quote!(span)
+        (quote!(self.span), quote!(&mut self.span))
     };
     quote! {
         endl!();
         impl #generics GetSpan for #typ {
             #[inline]
             fn span(&self) -> Span {
-                self.#span
+                #span
+            }
+        }
+        endl!();
+
+        impl #generics GetSpanMut for #typ {
+            #[inline]
+            fn span_mut(&mut self) -> &mut Span {
+                #span_mut
             }
         }
     }

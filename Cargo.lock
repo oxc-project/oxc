@@ -542,9 +542,9 @@ checksum = "0ce7134b9999ecaf8bcd65542e436736ef32ddca1b3e06094cb6ec5755203b80"
 
 [[package]]
 name = "flate2"
-version = "1.0.30"
+version = "1.0.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f54427cfd1c7829e2a139fcefea601bf088ebca651d2bf53ebc600eac295dae"
+checksum = "7f211bbe8e69bbd0cfdea405084f128ae8b4aaa6b0b522fc8f2b009084797920"
 dependencies = [
  "crc32fast",
  "miniz_oxide",
@@ -811,9 +811,9 @@ dependencies = [
 
 [[package]]
 name = "indexmap"
-version = "2.2.6"
+version = "2.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "168fb715dda47215e360912c096649d23d58bf392ac62f73919e831745e40f26"
+checksum = "de3fc2e30ba82dd1b3911c8de1ffc143c74a914a14e99514d7637e3099df5ea0"
 dependencies = [
  "equivalent",
  "hashbrown",
@@ -1355,6 +1355,11 @@ dependencies = [
 [[package]]
 name = "oxc_ast_macros"
 version = "0.23.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "oxc_benchmark"
@@ -1362,6 +1367,7 @@ version = "0.0.0"
 dependencies = [
  "criterion2",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_codegen",
  "oxc_isolated_declarations",
  "oxc_linter",
@@ -1508,7 +1514,7 @@ dependencies = [
 
 [[package]]
 name = "oxc_linter"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "bitflags 2.6.0",
  "convert_case",
@@ -1748,6 +1754,7 @@ dependencies = [
  "compact_str",
  "miette",
  "oxc_allocator",
+ "schemars",
  "serde",
  "tsify",
  "wasm-bindgen",
@@ -1788,9 +1795,11 @@ version = "0.0.0"
 dependencies = [
  "indexmap",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_parser",
+ "oxc_semantic",
  "oxc_span",
  "oxc_tasks_common",
  "oxc_transformer",
@@ -1865,7 +1874,7 @@ dependencies = [
 
 [[package]]
 name = "oxlint"
-version = "0.6.1"
+version = "0.7.0"
 dependencies = [
  "bpaf",
  "glob",
@@ -2144,9 +2153,9 @@ dependencies = [
 
 [[package]]
 name = "regex"
-version = "1.10.5"
+version = "1.10.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b91213439dad192326a0d7c6ee3955910425f441d7038e0d6933b0aec5c4517f"
+checksum = "4219d74c6b67a3654a9fbebc4b419e22126d13d2f3c4a07ee0cb61ff79a79619"
 dependencies = [
  "aho-corasick",
  "memchr",
@@ -2426,9 +2435,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.121"
+version = "1.0.122"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4ab380d7d9f22ef3f21ad3e6c1ebe8e4fc7a2000ccba2e4d71fc96f15b2cb609"
+checksum = "784b6203951c57ff748476b126ccb5e8e2959a5c19e5c617ab1956be3dbc68da"
 dependencies = [
  "indexmap",
  "itoa",
@@ -2566,12 +2575,13 @@ dependencies = [
 
 [[package]]
 name = "tempfile"
-version = "3.10.1"
+version = "3.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "85b77fafb263dd9d05cbeac119526425676db3784113aa9295c88498cbf8bff1"
+checksum = "b8fcd239983515c23a32fb82099f97d0b11b8c72f654ed659363a95c3dad7a53"
 dependencies = [
  "cfg-if",
  "fastrand",
+ "once_cell",
  "rustix",
  "windows-sys 0.52.0",
 ]

@@ -131,7 +131,9 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
 
     let mut rv = String::with_capacity(capacity);
 
-    for (idx, token) in tokens[start as usize..end as usize].iter().enumerate() {
+    let mut prev_token = if start == 0 { None } else { Some(&tokens[start as usize - 1]) };
+
+    for token in &tokens[start as usize..end as usize] {
         // Max length of a single VLQ encoding is 7 bytes. Max number of calls to `encode_vlq_diff` is 5.
         // Also need 1 byte for each line number difference, or 1 byte if no line num difference.
         // Reserve this amount of capacity in `rv` early, so can skip bounds checks in code below.
@@ -141,15 +143,14 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
         const MAX_TOTAL_VLQ_BYTES: usize = 5 * MAX_VLQ_BYTES;
 
         let num_line_breaks = token.get_dst_line() - prev_dst_line;
-        let index = start as usize + idx;
         if num_line_breaks != 0 {
             rv.reserve(MAX_TOTAL_VLQ_BYTES + num_line_breaks as usize);
             // SAFETY: We have reserved sufficient capacity for `num_line_breaks` bytes
             unsafe { push_bytes_unchecked(&mut rv, b';', num_line_breaks) };
             prev_dst_col = 0;
             prev_dst_line += num_line_breaks;
-        } else if index > 0 {
-            if Some(token) == tokens.get(index - 1) {
+        } else if let Some(prev_token) = prev_token {
+            if prev_token == token {
                 continue;
             }
             rv.reserve(MAX_TOTAL_VLQ_BYTES + 1);
@@ -176,6 +177,8 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
                 }
             }
         }
+
+        prev_token = Some(token);
     }
 
     rv
@@ -217,25 +220,33 @@ static B64_CHARS: Aligned64 = Aligned64([
 unsafe fn encode_vlq(out: &mut String, num: i64) {
     let mut num = if num < 0 { ((-num) << 1) + 1 } else { num << 1 };
 
+    // Breaking out of loop early when have reached last char (rather than conditionally adding
+    // 32 for last char within the loop) removes 3 instructions from the loop.
+    // https://godbolt.org/z/Es4Pavh9j
+    // This translates to a 16% speed-up for VLQ encoding.
+    let mut digit;
     loop {
-        let mut digit = num & 0b11111;
+        digit = num & 0b11111;
         num >>= 5;
-        if num > 0 {
-            digit |= 1 << 5;
-        }
-
-        let b = B64_CHARS.0[digit as usize];
-        // SAFETY:
-        // * This loop can execute a maximum of 7 times, caller promises there are at least
-        //   7 bytes spare capacity in `out` at start, and we only push 1 byte on each turn,
-        //   so guaranteed there is at least 1 byte capacity in `out` here.
-        // * All values in `B64_CHARS` lookup table are ASCII bytes.
-        push_byte_unchecked(out, b);
-
         if num == 0 {
             break;
         }
+
+        let b = B64_CHARS.0[digit as usize + 32];
+        // SAFETY:
+        // * This loop can execute a maximum of 7 times, and on last turn will exit before getting here.
+        //   Caller promises there are at least 7 bytes spare capacity in `out` at start. We only
+        //   push 1 byte on each turn, so guaranteed there is at least 1 byte capacity in `out` here.
+        // * All values in `B64_CHARS` lookup table are ASCII bytes.
+        push_byte_unchecked(out, b);
     }
+
+    let b = B64_CHARS.0[digit as usize];
+    // SAFETY:
+    // * The loop above pushes max 6 bytes. Caller promises there are at least 7 bytes spare capacity
+    //   in `out` at start. So guaranteed there is at least 1 byte capacity in `out` here.
+    // * All values in `B64_CHARS` lookup table are ASCII bytes.
+    push_byte_unchecked(out, b);
 }
 
 /// Push a byte to `out` without bounds checking.

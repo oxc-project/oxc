@@ -275,6 +275,7 @@ impl Oxc {
                         join_vars: compress_options.join_vars(),
                         loops: compress_options.loops(),
                         typeofs: compress_options.typeofs(),
+                        ..CompressOptions::default()
                     }
                 } else {
                     CompressOptions::all_false()

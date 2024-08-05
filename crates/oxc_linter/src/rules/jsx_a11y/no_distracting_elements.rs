@@ -60,9 +60,7 @@ impl Rule for NoDistractingElements {
             return;
         };
 
-        let name = element_type.as_str();
-
-        if let "marquee" | "blink" = name {
+        if let "marquee" | "blink" = element_type.as_ref() {
             ctx.diagnostic(no_distracting_elements_diagnostic(iden.span));
         }
     }

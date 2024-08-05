@@ -1,33 +1,31 @@
-// TODO: remove me please!
-#![allow(dead_code, unused_imports)]
+const AST_CRATE: &str = "crates/oxc_ast";
+#[allow(dead_code)]
+const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
+
 mod defs;
 mod fmt;
 mod generators;
-mod linker;
+mod layout;
 mod markers;
+mod passes;
 mod schema;
 mod util;
 
-use std::{
-    borrow::Cow,
-    cell::RefCell,
-    collections::HashMap,
-    fs,
-    io::{Read, Write},
-    path::PathBuf,
-    rc::Rc,
-};
+use std::{cell::RefCell, collections::HashMap, io::Read, path::PathBuf, rc::Rc};
 
 use bpaf::{Bpaf, Parser};
 use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
+use passes::{BuildSchema, CalcLayout, Linker, Pass};
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
-use generators::{AstBuilderGenerator, AstKindGenerator, VisitGenerator, VisitMutGenerator};
-use linker::{linker, Linker};
-use schema::{Inherit, Module, REnum, RStruct, RType, Schema};
+use generators::{
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, VisitGenerator,
+    VisitMutGenerator,
+};
+use schema::{Module, REnum, RStruct, RType, Schema};
 use util::{write_all_to, NormalizeError};
 
 use crate::generators::ImplGetSpanGenerator;
@@ -42,23 +40,24 @@ type TypeRef = Rc<RefCell<RType>>;
 #[derive(Default)]
 struct AstCodegen {
     files: Vec<PathBuf>,
-    generators: Vec<Box<dyn Generator>>,
+    runners: Vec<Box<dyn Runner>>,
 }
 
-trait Generator {
-    fn name(&self) -> &'static str;
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput;
-}
+type GeneratedStream = (/* output path */ PathBuf, TokenStream);
+type DataStream = (/* output path */ PathBuf, Vec<u8>);
 
-type GeneratedStream = (&'static str, TokenStream);
-
+// TODO: remove me
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 enum GeneratorOutput {
     None,
-    Info(String),
+    Info(Vec<u8>),
+    Data(DataStream),
     Stream(GeneratedStream),
 }
 
+// TODO: remove me
+#[allow(dead_code)]
 impl GeneratorOutput {
     pub fn is_none(&self) -> bool {
         matches!(self, Self::None)
@@ -68,8 +67,16 @@ impl GeneratorOutput {
         assert!(self.is_none());
     }
 
-    pub fn to_info(&self) -> &String {
+    pub fn to_info(&self) -> &[u8] {
         if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn to_data(&self) -> &DataStream {
+        if let Self::Data(it) = self {
             it
         } else {
             panic!();
@@ -84,8 +91,16 @@ impl GeneratorOutput {
         }
     }
 
-    pub fn into_info(self) -> String {
+    pub fn into_info(self) -> Vec<u8> {
         if let Self::Info(it) = self {
+            it
+        } else {
+            panic!();
+        }
+    }
+
+    pub fn into_data(self) -> DataStream {
+        if let Self::Data(it) = self {
             it
         } else {
             panic!();
@@ -102,14 +117,14 @@ impl GeneratorOutput {
 }
 
 struct CodegenCtx {
-    modules: Vec<Module>,
     ty_table: TypeTable,
     ident_table: IdentTable,
+    schema: RefCell<Schema>,
+    mods: RefCell<Vec<Module>>,
 }
 
 struct CodegenResult {
-    /// One schema per definition file
-    schema: Vec<Schema>,
+    schema: Schema,
     outputs: Vec<(/* generator name */ &'static str, /* output */ GeneratorOutput)>,
 }
 
@@ -129,7 +144,13 @@ impl CodegenCtx {
                 ident_table.insert(ident, type_id);
             }
         }
-        Self { modules: mods, ty_table, ident_table }
+
+        Self {
+            ty_table,
+            ident_table,
+            schema: RefCell::new(Schema::default()),
+            mods: RefCell::new(mods),
+        }
     }
 
     fn find(&self, key: &TypeName) -> Option<TypeRef> {
@@ -139,6 +160,11 @@ impl CodegenCtx {
     fn type_id<'b>(&'b self, key: &'b TypeName) -> Option<&'b TypeId> {
         self.ident_table.get(key)
     }
+}
+
+trait Runner {
+    fn name(&self) -> &'static str;
+    fn run(&mut self, ctx: &CodegenCtx) -> Result<GeneratorOutput>;
 }
 
 impl AstCodegen {
@@ -152,11 +178,20 @@ impl AstCodegen {
     }
 
     #[must_use]
-    fn with<G>(mut self, generator: G) -> Self
+    fn pass<P>(mut self, pass: P) -> Self
     where
-        G: Generator + 'static,
+        P: Pass + Runner + 'static,
     {
-        self.generators.push(Box::new(generator));
+        self.runners.push(Box::new(pass));
+        self
+    }
+
+    #[must_use]
+    fn gen<G>(mut self, generator: G) -> Self
+    where
+        G: Generator + Runner + 'static,
+    {
+        self.runners.push(Box::new(generator));
         self
     }
 
@@ -172,43 +207,38 @@ impl AstCodegen {
             .collect::<Result<Result<Vec<_>>>>()??;
 
         let ctx = CodegenCtx::new(modules);
-        ctx.link(linker)?;
 
         let outputs = self
-            .generators
+            .runners
             .into_iter()
-            .map(|mut gen| (gen.name(), gen.generate(&ctx)))
-            .collect_vec();
+            .map(|mut runner| runner.run(&ctx).map(|res| (runner.name(), res)))
+            .collect::<Result<Vec<_>>>()?;
 
-        let schema = ctx.modules.into_iter().map(Module::build).collect::<Result<Vec<_>>>()?;
-        Ok(CodegenResult { schema, outputs })
+        Ok(CodegenResult { outputs, schema: ctx.schema.into_inner() })
     }
 }
 
-const AST_ROOT_DIR: &str = "crates/oxc_ast";
-
 fn files() -> impl std::iter::Iterator<Item = String> {
     fn path(path: &str) -> String {
-        format!("{AST_ROOT_DIR}/src/ast/{path}.rs")
+        format!("{AST_CRATE}/src/ast/{path}.rs")
     }
 
     vec![path("literal"), path("js"), path("ts"), path("jsx")].into_iter()
 }
 
-fn output_dir() -> std::io::Result<String> {
-    let dir = format!("{AST_ROOT_DIR}/src/generated");
-    fs::create_dir_all(&dir)?;
-    Ok(dir)
-}
-
 fn write_generated_streams(
     streams: impl IntoIterator<Item = GeneratedStream>,
 ) -> std::io::Result<()> {
-    let output_dir = output_dir()?;
-    for (name, stream) in streams {
+    for (path, stream) in streams {
         let content = pprint(&stream);
-        let path = format!("{output_dir}/{name}.rs");
-        write_all_to(content.as_bytes(), path)?;
+        write_all_to(content.as_bytes(), path.into_os_string().to_str().unwrap())?;
+    }
+    Ok(())
+}
+
+fn write_data_streams(streams: impl IntoIterator<Item = DataStream>) -> std::io::Result<()> {
+    for (path, content) in streams {
+        write_all_to(&content, path.into_os_string().to_str().unwrap())?;
     }
     Ok(())
 }
@@ -231,18 +261,26 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
     let CodegenResult { outputs, schema } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
-        .with(AstKindGenerator)
-        .with(AstBuilderGenerator)
-        .with(ImplGetSpanGenerator)
-        .with(VisitGenerator)
-        .with(VisitMutGenerator)
+        .pass(Linker)
+        .pass(CalcLayout)
+        .pass(BuildSchema)
+        .gen(AssertLayouts)
+        .gen(AstKindGenerator)
+        .gen(AstBuilderGenerator)
+        .gen(ImplGetSpanGenerator)
+        .gen(VisitGenerator)
+        .gen(VisitMutGenerator)
         .generate()?;
 
-    let (streams, _): (Vec<_>, Vec<_>) =
+    let (streams, outputs): (Vec<_>, Vec<_>) =
         outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Stream(_)));
+
+    let (binaries, _): (Vec<_>, Vec<_>) =
+        outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Data(_)));
 
     if !cli_options.dry_run {
         write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?;
+        write_data_streams(binaries.into_iter().map(|it| it.1.into_data()))?;
     }
 
     if !cli_options.no_fmt {
@@ -256,4 +294,8 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+fn output(krate: &str, path: &str) -> PathBuf {
+    std::path::PathBuf::from_iter(vec![krate, "src", "generated", path])
 }

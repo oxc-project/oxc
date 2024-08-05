@@ -1,9 +1,8 @@
 use std::fmt::Write;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, CodegenOptions};
+use oxc_codegen::CodeGenerator;
 use oxc_mangler::ManglerBuilder;
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 

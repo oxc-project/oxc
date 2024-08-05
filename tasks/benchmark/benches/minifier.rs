@@ -1,6 +1,7 @@
 use oxc_allocator::Allocator;
+use oxc_ast::AstBuilder;
 use oxc_benchmark::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use oxc_minifier::{Minifier, MinifierOptions, RemoveParens};
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions, RemoveSyntax};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use oxc_tasks_common::TestFiles;
@@ -39,7 +40,10 @@ fn bench_passes(criterion: &mut Criterion) {
                 let allocator = Allocator::default();
                 let program = Parser::new(&allocator, source_text, source_type).parse().program;
                 let program = allocator.alloc(program);
-                b.iter(|| RemoveParens::new(&allocator).build(program));
+                b.iter(|| {
+                    RemoveSyntax::new(AstBuilder::new(&allocator), CompressOptions::all_true())
+                        .build(program);
+                });
             },
         );
     }

@@ -42,7 +42,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "k",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(k)",
         "references": [
           {
             "flag": "ReferenceFlag(Read | TSTypeQuery)",

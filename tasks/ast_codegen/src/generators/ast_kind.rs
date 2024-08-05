@@ -3,13 +3,15 @@ use quote::quote;
 use syn::{parse_quote, Arm, Ident, Type, Variant};
 
 use crate::{
-    markers::get_visit_markers, schema::RType, util::TypeExt, CodegenCtx, Generator,
+    markers::get_visit_markers, output, schema::RType, util::TypeExt, CodegenCtx, Generator,
     GeneratorOutput, TypeRef,
 };
 
-use super::generated_header;
+use super::{define_generator, generated_header};
 
-pub struct AstKindGenerator;
+define_generator! {
+    pub struct AstKindGenerator;
+}
 
 pub const BLACK_LIST: [&str; 61] = [
     "Expression",
@@ -133,7 +135,7 @@ pub fn process_types(ty: &TypeRef) -> Vec<(Ident, Type)> {
 
 impl Generator for AstKindGenerator {
     fn name(&self) -> &'static str {
-        "AstKindGenerator"
+        stringify!(AstKindGenerator)
     }
 
     fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
@@ -163,7 +165,7 @@ impl Generator for AstKindGenerator {
         let header = generated_header!();
 
         GeneratorOutput::Stream((
-            "ast_kind",
+            output(crate::AST_CRATE, "ast_kind.rs"),
             quote! {
                 #header
 

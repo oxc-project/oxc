@@ -90,12 +90,11 @@ Negative Passed: 14/14 (100.00%)
    ·     ─────────
    ╰────
 
-  × Expected `with` but found `string`
+  × Unexpected token
     ╭─[fail/oxc-2394.ts:20:22]
  19 │ export type LocalInterface =
  20 │     & import("pkg", {"resolution-mode": "require"}).RequireInterface
-    ·                      ────────┬────────
-    ·                              ╰── `with` expected
+    ·                      ─────────────────
  21 │     & import("pkg", {"resolution-mode": "import"}).ImportInterface;
     ╰────
 

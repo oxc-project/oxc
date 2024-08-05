@@ -218,7 +218,7 @@ impl<'a> AutomaticModuleBindings<'a> {
         source: Atom<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> BoundIdentifier<'a> {
-        let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::FunctionScopedVariable);
+        let symbol_id = ctx.generate_uid_in_root_scope(name, SymbolFlags::Import);
         let local = ctx.ast.atom(&ctx.symbols().names[symbol_id]);
 
         let import = NamedImport::new(Atom::from(name), Some(local.clone()), symbol_id);

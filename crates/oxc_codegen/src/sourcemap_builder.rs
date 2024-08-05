@@ -16,9 +16,9 @@ const PS_THIRD: u8 = 0xA9;
 /// Code is adapted from [esbuild](https://github.com/evanw/esbuild/blob/cc74e6042a9f573bf58e1e3f165ebda70af4ad3b/internal/js_printer/js_printer.go#L4806-L4808)
 #[derive(Debug)]
 pub struct LineOffsetTable {
-    columns: Option<Vec<usize>>,
-    byte_offset_to_first: usize,
-    byte_offset_to_start_of_line: usize,
+    columns: Option<Vec<u32>>,
+    byte_offset_to_first: u32,
+    byte_offset_to_start_of_line: u32,
 }
 
 #[allow(clippy::struct_field_names)]
@@ -97,16 +97,17 @@ impl SourcemapBuilder {
     fn search_original_line_and_column(&mut self, position: u32) -> (u32, u32) {
         let result = self
             .line_offset_tables
-            .partition_point(|table| table.byte_offset_to_start_of_line <= position as usize);
+            .partition_point(|table| table.byte_offset_to_start_of_line <= position)
+            as u32;
         let original_line = if result > 0 { result - 1 } else { 0 };
-        let line = &self.line_offset_tables[original_line];
-        let mut original_column = (position as usize) - line.byte_offset_to_start_of_line;
+        let line = &self.line_offset_tables[original_line as usize];
+        let mut original_column = position - line.byte_offset_to_start_of_line;
         if original_column >= line.byte_offset_to_first {
             if let Some(cols) = &line.columns {
-                original_column = cols[original_column - line.byte_offset_to_first];
+                original_column = cols[(original_column - line.byte_offset_to_first) as usize];
             }
         }
-        (original_line as u32, original_column as u32)
+        (original_line, original_column)
     }
 
     #[allow(clippy::cast_possible_truncation)]
@@ -184,12 +185,14 @@ impl SourcemapBuilder {
                 columns: None,
                 // `usize::MAX` so `original_column >= line.byte_offset_to_first` check in
                 // `search_original_line_and_column` fails if line is all ASCII
-                byte_offset_to_first: usize::MAX,
+                byte_offset_to_first: u32::MAX,
                 byte_offset_to_start_of_line: line_byte_offset,
             });
 
-            let remaining = &content.as_bytes()[line_byte_offset..];
-            for (mut byte_offset_from_line_start, b) in remaining.iter().enumerate() {
+            let remaining = &content.as_bytes()[line_byte_offset as usize..];
+            for (byte_offset_from_line_start, b) in remaining.iter().enumerate() {
+                #[allow(clippy::cast_possible_truncation)]
+                let mut byte_offset_from_line_start = byte_offset_from_line_start as u32;
                 match b {
                     b'\n' => {
                         byte_offset_from_line_start += 1;
@@ -197,7 +200,7 @@ impl SourcemapBuilder {
                     b'\r' => {
                         byte_offset_from_line_start += 1;
                         // Handle Windows-specific "\r\n" newlines
-                        if remaining.get(byte_offset_from_line_start) == Some(&b'\n') {
+                        if remaining.get(byte_offset_from_line_start as usize) == Some(&b'\n') {
                             byte_offset_from_line_start += 1;
                         }
                     }
@@ -217,8 +220,10 @@ impl SourcemapBuilder {
                         // Unicode char.
                         let mut column = byte_offset_from_line_start;
                         line_byte_offset += byte_offset_from_line_start;
-                        let remaining = &content[line_byte_offset..];
-                        for (mut chunk_byte_offset, ch) in remaining.char_indices() {
+                        let remaining = &content[line_byte_offset as usize..];
+                        for (chunk_byte_offset, ch) in remaining.char_indices() {
+                            #[allow(clippy::cast_possible_truncation)]
+                            let mut chunk_byte_offset = chunk_byte_offset as u32;
                             for _ in 0..ch.len_utf8() {
                                 columns.push(column);
                             }
@@ -227,7 +232,9 @@ impl SourcemapBuilder {
                                 '\r' => {
                                     // Handle Windows-specific "\r\n" newlines
                                     chunk_byte_offset += 1;
-                                    if remaining.as_bytes().get(chunk_byte_offset) == Some(&b'\n') {
+                                    if remaining.as_bytes().get(chunk_byte_offset as usize)
+                                        == Some(&b'\n')
+                                    {
                                         chunk_byte_offset += 1;
                                         columns.push(column + 1);
                                     }
@@ -238,9 +245,10 @@ impl SourcemapBuilder {
                                 LS | PS => {
                                     chunk_byte_offset += 3;
                                 }
+                                #[allow(clippy::cast_possible_truncation)]
                                 _ => {
                                     // Mozilla's "source-map" library counts columns using UTF-16 code units
-                                    column += ch.len_utf16();
+                                    column += ch.len_utf16() as u32;
                                     continue;
                                 }
                             }

@@ -1,8 +1,8 @@
 commit: d8086f14
 
 parser_typescript Summary:
-AST Parsed     : 6444/6456 (99.81%)
-Positive Passed: 6421/6456 (99.46%)
+AST Parsed     : 6446/6456 (99.85%)
+Positive Passed: 6423/6456 (99.49%)
 Negative Passed: 1167/5653 (20.64%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
@@ -4817,16 +4817,6 @@ Expect to Parse: "conformance/jsdoc/overloadTag3.ts"
    · ──────
  5 │     /**
    ╰────
-Expect to Parse: "conformance/moduleResolution/resolutionModeImportType1.ts"
-
-  × Expected `with` but found `assert`
-   ╭─[conformance/moduleResolution/resolutionModeImportType1.ts:2:38]
- 1 │ type Default = typeof import("foo").x;
- 2 │ type Import = typeof import("foo", { assert: { "resolution-mode": "import" } }).x;
-   ·                                      ───┬──
-   ·                                         ╰── `with` expected
- 3 │ type Require = typeof import("foo", { assert: { "resolution-mode": "require" } }).x;
-   ╰────
 Expect to Parse: "conformance/moduleResolution/untypedModuleImport.ts"
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4845,16 +4835,6 @@ Expect to Parse: "conformance/moduleResolution/untypedModuleImport_vsAmbient.ts"
    ·     ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: "conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts"
-
-  × Expected `with` but found `assert`
-   ╭─[conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts:2:23]
- 1 │ export type LocalInterface =
- 2 │     & import("pkg", { assert: {"resolution-mode": "require"} }).RequireInterface
-   ·                       ───┬──
-   ·                          ╰── `with` expected
- 3 │     & import("pkg", { assert: {"resolution-mode": "import"} }).ImportInterface;
-   ╰────
 Expect to Parse: "conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts"
 
   × Cannot use export statement outside a module
