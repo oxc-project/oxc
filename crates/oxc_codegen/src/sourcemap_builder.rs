@@ -16,7 +16,7 @@ const PS_THIRD: u8 = 0xA9;
 /// Code is adapted from [esbuild](https://github.com/evanw/esbuild/blob/cc74e6042a9f573bf58e1e3f165ebda70af4ad3b/internal/js_printer/js_printer.go#L4806-L4808)
 #[derive(Debug)]
 pub struct LineOffsetTable {
-    columns: Option<Vec<u32>>,
+    columns: Option<Box<[u32]>>,
     byte_offset_to_first: u32,
     byte_offset_to_start_of_line: u32,
 }
@@ -212,8 +212,7 @@ impl SourcemapBuilder {
                         // Create `columns` Vec, and set `byte_offset_to_first`.
                         let table = tables.iter_mut().last().unwrap();
                         table.byte_offset_to_first = byte_offset_from_line_start;
-                        table.columns = Some(vec![]);
-                        let columns = table.columns.as_mut().unwrap();
+                        let mut columns = vec![];
 
                         // Loop through rest of line char-by-char.
                         // `chunk_byte_offset` in this loop is byte offset from start of this 1st
@@ -256,6 +255,10 @@ impl SourcemapBuilder {
                             // Line break found.
                             // `chunk_byte_offset` is now the offset of *end* of the line break.
                             line_byte_offset += chunk_byte_offset;
+
+                            // Record array of columns
+                            table.columns = Some(columns.into_boxed_slice());
+
                             // Revert back to outer loop for next line
                             continue 'lines;
                         }
@@ -263,6 +266,10 @@ impl SourcemapBuilder {
                         // EOF.
                         // One last column entry for EOF position.
                         columns.push(column);
+
+                        // Record array of columns
+                        table.columns = Some(columns.into_boxed_slice());
+
                         break 'lines;
                     }
                 };
