@@ -195,11 +195,11 @@ impl ReactOptions {
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 pub struct ReactRefreshOptions {
     #[serde(default = "default_refresh_reg")]
-    refresh_reg: String,
+    pub refresh_reg: String,
     #[serde(default = "default_refresh_sig")]
-    refresh_sig: String,
+    pub refresh_sig: String,
     #[serde(default)]
-    emit_full_signatures: bool,
+    pub emit_full_signatures: bool,
 }
 
 impl Default for ReactRefreshOptions {

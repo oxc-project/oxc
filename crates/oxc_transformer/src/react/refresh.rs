@@ -2,8 +2,9 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     ast::{
-        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        Program, Statement, VariableDeclaration,
+        ExportDefaultDeclaration, ExportDefaultDeclarationKind, Expression, Function,
+        IdentifierReference, Program, Statement, TSTypeAnnotation, TSTypeParameterInstantiation,
+        VariableDeclaration, VariableDeclarationKind,
     },
     match_expression,
 };
@@ -25,14 +26,22 @@ use crate::context::Ctx;
 /// * <https://github.com/facebook/react/issues/16604#issuecomment-528663101>
 /// * <https://github.com/facebook/react/blob/main/packages/react-refresh/src/ReactFreshBabelPlugin.js>
 pub struct ReactRefresh<'a> {
-    options: ReactRefreshOptions,
-    ctx: Ctx<'a>,
+    refresh_reg: Atom<'a>,
+    refresh_sig: Atom<'a>,
+    emit_full_signatures: bool,
     registrations: std::vec::Vec<(SymbolId, CompactStr)>,
+    ctx: Ctx<'a>,
 }
 
 impl<'a> ReactRefresh<'a> {
     pub fn new(options: ReactRefreshOptions, ctx: Ctx<'a>) -> Self {
-        Self { options, ctx, registrations: std::vec::Vec::default() }
+        Self {
+            refresh_reg: ctx.ast.atom(&options.refresh_reg),
+            refresh_sig: ctx.ast.atom(&options.refresh_sig),
+            emit_full_signatures: options.emit_full_signatures,
+            ctx,
+            registrations: std::vec::Vec::default(),
+        }
     }
 
     fn create_registration(
@@ -156,15 +165,71 @@ impl<'a> ReactRefresh<'a> {
         // TODO *=
         program.body.extend(new_statements);
     }
+
+    pub fn transform_program_on_exit(
+        &mut self,
+        program: &mut Program<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.registrations.is_empty() {
+            return;
+        }
+
+        let mut variable_declarator_items = ctx.ast.vec_with_capacity(self.registrations.len());
+        let mut new_statements = ctx.ast.vec_with_capacity(self.registrations.len() + 1);
+        for (symbol_id, persistent_id) in self.registrations.drain(..) {
+            let name = ctx.symbols().get_name(symbol_id);
+
+            variable_declarator_items.push(ctx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Var,
+                ctx.ast.binding_pattern(
+                    ctx.ast.binding_pattern_kind_binding_identifier(SPAN, name),
+                    None::<TSTypeAnnotation<'a>>,
+                    false,
+                ),
+                None,
+                false,
+            ));
+
+            let callee = ctx.ast.expression_identifier_reference(SPAN, self.refresh_reg.clone());
+            let mut arguments = ctx.ast.vec_with_capacity(2);
+            arguments.push(
+                ctx.ast.argument_expression(ctx.ast.expression_identifier_reference(SPAN, name)),
+            );
+            arguments.push(ctx.ast.argument_expression(
+                ctx.ast.expression_string_literal(SPAN, self.ctx.ast.atom(&persistent_id)),
+            ));
+            new_statements.push(ctx.ast.statement_expression(
+                SPAN,
+                ctx.ast.expression_call(
+                    SPAN,
+                    arguments,
+                    callee,
+                    Option::<TSTypeParameterInstantiation>::None,
+                    false,
+                ),
+            ));
+        }
+        program.body.push(Statement::from(ctx.ast.declaration_variable(
+            SPAN,
+            VariableDeclarationKind::Var,
+            variable_declarator_items,
+            false,
+        )));
+        program.body.extend(new_statements);
+    }
+
     fn transform_statement(
         &mut self,
         statement: &mut Statement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Statement<'a>> {
         match statement {
-            Statement::VariableDeclaration(stmt_decl) => {
-                self.transform_variable_declaration(stmt_decl, ctx)
+            Statement::VariableDeclaration(variable) => {
+                self.transform_variable_declaration(variable, ctx)
             }
+            Statement::FunctionDeclaration(func) => self.transform_function_declaration(func, ctx),
             Statement::ExportDefaultDeclaration(ref mut stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
@@ -215,6 +280,29 @@ impl<'a> ReactRefresh<'a> {
             _ => None,
         }
     }
+
+    fn transform_function_declaration(
+        &mut self,
+        func: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        let Some(id) = &func.id else {
+            return None;
+        };
+
+        let inferred_name = id.name.clone();
+        let reference = self.create_registration(inferred_name.to_compact_str(), ctx);
+        let expr = ctx.ast.expression_assignment(
+            SPAN,
+            AssignmentOperator::Assign,
+            ctx.ast.assignment_target_simple(
+                ctx.ast.simple_assignment_target_from_identifier_reference(reference),
+            ),
+            ctx.ast.expression_identifier_reference(SPAN, inferred_name),
+        );
+        Some(ctx.ast.statement_expression(SPAN, expr))
+    }
+
     pub fn transform_variable_declaration(
         &mut self,
         decl: &mut VariableDeclaration<'a>,

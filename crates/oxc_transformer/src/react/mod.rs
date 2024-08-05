@@ -79,6 +79,9 @@ impl<'a> React<'a> {
         program: &mut Program<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
+        if self.refresh_plugin {
+            self.refresh.transform_program_on_exit(program, ctx);
+        }
         if self.jsx_plugin {
             self.jsx.transform_program_on_exit(program, ctx);
         }
