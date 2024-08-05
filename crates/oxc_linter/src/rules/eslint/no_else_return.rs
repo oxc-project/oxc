@@ -44,15 +44,13 @@ fn is_safe_from_name_collisions(
             let bindings = scopes.get_bindings(block_scope_id);
             let parent_bindings = scopes.get_bindings(parent_scope_id);
 
-            if bindings
-                .iter()
-                .any(|(name, symbol_id)| {
-                    let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name) else {
-                        return false;
-                    };
-                    parent_name == name && symbol_id != parent_symbol_id
-                })
-            {
+            if bindings.iter().any(|(name, symbol_id)| {
+                let Some((parent_name, parent_symbol_id)) = parent_bindings.get_key_value(name)
+                else {
+                    return false;
+                };
+                parent_name == name && symbol_id != parent_symbol_id
+            }) {
                 return false;
             }
 
@@ -102,14 +100,11 @@ fn no_else_return_diagnostic_fix(
 
     ctx.diagnostic_with_fix(no_else_return_diagnostic(else_stmt), |fixer| {
         fixer.replace(Span::new(prev_span.end, span.end), fix_else_code)
-    })
+    });
 }
 
 fn check_for_return(node: &Statement) -> bool {
-    match node {
-        Statement::ReturnStatement(_) => true,
-        _ => false,
-    }
+    matches!(node, Statement::ReturnStatement(_))
 }
 
 fn naive_has_return(node: &Statement) -> bool {
@@ -131,7 +126,7 @@ fn check_for_return_or_if(node: &Statement) -> bool {
             let Some(alternate) = &if_stmt.alternate else {
                 return false;
             };
-            naive_has_return(&alternate) && naive_has_return(&if_stmt.consequent)
+            naive_has_return(alternate) && naive_has_return(&if_stmt.consequent)
         }
         _ => false,
     }
@@ -186,14 +181,14 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
 }
 
 fn is_in_statement_list_parents(node: &AstNode) -> bool {
-    match node.kind() {
-        AstKind::Program(_) => true,
-        AstKind::BlockStatement(_) => true,
-        AstKind::StaticBlock(_) => true,
-        AstKind::SwitchCase(_) => true,
-        AstKind::FunctionBody(_) => true,
-        _ => false,
-    }
+    matches!(
+        node.kind(),
+        AstKind::Program(_)
+            | AstKind::BlockStatement(_)
+            | AstKind::StaticBlock(_)
+            | AstKind::SwitchCase(_)
+            | AstKind::FunctionBody(_)
+    )
 }
 
 impl Rule for NoElseReturn {
