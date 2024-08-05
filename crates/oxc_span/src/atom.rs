@@ -191,6 +191,7 @@ impl<'a> fmt::Display for Atom<'a> {
 /// Currently implemented as just a wrapper around [`compact_str::CompactString`],
 /// but will be reduced in size with a custom implementation later.
 #[derive(Clone, Eq)]
+#[cfg_attr(feature = "serialize", derive(serde::Deserialize))]
 pub struct CompactStr(CompactString);
 
 impl CompactStr {
@@ -386,6 +387,25 @@ impl Serialize for CompactStr {
         S: Serializer,
     {
         serializer.serialize_str(self.as_str())
+    }
+}
+
+#[cfg(feature = "schemars")]
+impl schemars::JsonSchema for CompactStr {
+    fn is_referenceable() -> bool {
+        false
+    }
+
+    fn schema_name() -> std::string::String {
+        "String".to_string()
+    }
+
+    fn schema_id() -> Cow<'static, str> {
+        Cow::Borrowed("String")
+    }
+
+    fn json_schema(gen: &mut schemars::gen::SchemaGenerator) -> schemars::schema::Schema {
+        <&str>::json_schema(gen)
     }
 }
 

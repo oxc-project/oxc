@@ -21,7 +21,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/type-inl
         "flag": "SymbolFlags(TypeImport)",
         "id": 0,
         "name": "T",
-        "node": "ImportSpecifier",
+        "node": "ImportSpecifier(T)",
         "references": [
           {
             "flag": "ReferenceFlag(Type)",
@@ -42,7 +42,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/import/type-inl
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 2,
         "name": "unresolved",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved)",
         "references": []
       }
     ]

@@ -9,13 +9,13 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/impor
         "children": [],
         "flag": "ScopeFlags(StrictMode | TsModuleBlock)",
         "id": 1,
-        "node": "TSModuleDeclaration",
+        "node": "TSModuleDeclaration(foo)",
         "symbols": [
           {
             "flag": "SymbolFlags(Import)",
             "id": 1,
             "name": "bar",
-            "node": "ImportSpecifier",
+            "node": "ImportSpecifier(bar)",
             "references": []
           }
         ]
@@ -29,7 +29,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/impor
         "flag": "SymbolFlags(NameSpaceModule | Ambient)",
         "id": 0,
         "name": "foo",
-        "node": "TSModuleDeclaration",
+        "node": "TSModuleDeclaration(foo)",
         "references": []
       }
     ]

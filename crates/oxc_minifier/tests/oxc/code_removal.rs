@@ -1,4 +1,4 @@
-use crate::{test, test_with_options, CompressOptions, MinifierOptions};
+use crate::{test, test_with_options, CompressOptions};
 
 #[test]
 fn undefined_assignment() {
@@ -20,10 +20,7 @@ fn undefined_return() {
 
 #[test]
 fn console_removal() {
-    let options = MinifierOptions {
-        mangle: false,
-        compress: CompressOptions { drop_console: true, ..CompressOptions::default() },
-    };
+    let options = CompressOptions { drop_console: true, ..CompressOptions::default() };
     test_with_options("console.log('hi')", "", options);
     test_with_options("let x = console.error('oops')", "let x", options);
     test_with_options(
@@ -34,6 +31,6 @@ fn console_removal() {
 
     // console isn't removed when drop_console is `false`. This is also the
     // default value.
-    let options = MinifierOptions { mangle: false, ..MinifierOptions::default() };
+    let options = CompressOptions::default();
     test_with_options("console.log('hi')", "console.log('hi')", options);
 }

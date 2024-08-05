@@ -133,7 +133,7 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
 
     let mut prev_token = if start == 0 { None } else { Some(&tokens[start as usize - 1]) };
 
-    for (idx, token) in tokens[start as usize..end as usize].iter().enumerate() {
+    for token in &tokens[start as usize..end as usize] {
         // Max length of a single VLQ encoding is 7 bytes. Max number of calls to `encode_vlq_diff` is 5.
         // Also need 1 byte for each line number difference, or 1 byte if no line num difference.
         // Reserve this amount of capacity in `rv` early, so can skip bounds checks in code below.
@@ -143,15 +143,14 @@ fn serialize_mappings(tokens: &[Token], token_chunk: &TokenChunk) -> String {
         const MAX_TOTAL_VLQ_BYTES: usize = 5 * MAX_VLQ_BYTES;
 
         let num_line_breaks = token.get_dst_line() - prev_dst_line;
-        let index = start as usize + idx;
         if num_line_breaks != 0 {
             rv.reserve(MAX_TOTAL_VLQ_BYTES + num_line_breaks as usize);
             // SAFETY: We have reserved sufficient capacity for `num_line_breaks` bytes
             unsafe { push_bytes_unchecked(&mut rv, b';', num_line_breaks) };
             prev_dst_col = 0;
             prev_dst_line += num_line_breaks;
-        } else if index > 0 {
-            if prev_token == Some(token) {
+        } else if let Some(prev_token) = prev_token {
+            if prev_token == token {
                 continue;
             }
             rv.reserve(MAX_TOTAL_VLQ_BYTES + 1);

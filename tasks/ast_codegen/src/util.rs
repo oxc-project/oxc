@@ -61,6 +61,8 @@ pub trait StrExt: AsRef<str> {
 
 #[derive(Debug)]
 pub enum TypeIdentResult<'a> {
+    /// We bailed on detecting wrapper
+    Complex(Box<TypeIdentResult<'a>>),
     Ident(&'a Ident),
     Vec(Box<TypeIdentResult<'a>>),
     Box(Box<TypeIdentResult<'a>>),
@@ -81,6 +83,10 @@ impl<'a> TypeIdentResult<'a> {
         Self::Option(Box::new(inner))
     }
 
+    fn complex(inner: Self) -> Self {
+        Self::Complex(Box::new(inner))
+    }
+
     fn reference(inner: Self) -> Self {
         Self::Reference(Box::new(inner))
     }
@@ -88,9 +94,11 @@ impl<'a> TypeIdentResult<'a> {
     pub fn inner_ident(&self) -> &'a Ident {
         match self {
             Self::Ident(it) => it,
-            Self::Vec(it) | Self::Box(it) | Self::Option(it) | Self::Reference(it) => {
-                it.inner_ident()
-            }
+            Self::Complex(it)
+            | Self::Vec(it)
+            | Self::Box(it)
+            | Self::Option(it)
+            | Self::Reference(it) => it.inner_ident(),
         }
     }
 
@@ -116,12 +124,15 @@ pub enum TypeWrapper {
     OptBox,
     OptVec,
     Ref,
+    /// We bailed on detecting the type wrapper
+    Complex,
 }
 
 #[derive(Debug)]
 pub struct TypeAnalyzeResult {
     pub type_ref: Option<TypeRef>,
     pub wrapper: TypeWrapper,
+    pub typ: Type,
 }
 
 impl TypeExt for Type {
@@ -151,7 +162,7 @@ impl TypeExt for Type {
                                     if seg1.ident == "Option" {
                                         TypeIdentResult::option(inner)
                                     } else {
-                                        inner
+                                        TypeIdentResult::complex(inner)
                                     }
                                 }
                                 Some(GenericArgument::Lifetime(_)) => {
@@ -176,6 +187,11 @@ impl TypeExt for Type {
             let mut wrapper = TypeWrapper::None;
             let ident = match res {
                 TypeIdentResult::Ident(inner) => inner,
+                TypeIdentResult::Complex(inner) => {
+                    wrapper = TypeWrapper::Complex;
+                    let (inner, _) = analyze(inner)?;
+                    inner
+                }
                 TypeIdentResult::Box(inner) => {
                     wrapper = TypeWrapper::Box;
                     let (inner, inner_kind) = analyze(inner)?;
@@ -210,11 +226,15 @@ impl TypeExt for Type {
         }
         let type_ident = self.get_ident();
         let Some((type_ident, wrapper)) = analyze(&type_ident) else {
-            return TypeAnalyzeResult { type_ref: None, wrapper: TypeWrapper::Ref };
+            return TypeAnalyzeResult {
+                type_ref: None,
+                wrapper: TypeWrapper::Ref,
+                typ: self.clone(),
+            };
         };
 
         let type_ref = ctx.find(&type_ident.to_string());
-        TypeAnalyzeResult { type_ref, wrapper }
+        TypeAnalyzeResult { type_ref, wrapper, typ: self.clone() }
     }
 }
 

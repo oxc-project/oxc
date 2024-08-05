@@ -17,7 +17,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 1,
                 "name": "a",
-                "node": "FormalParameter",
+                "node": "FormalParameter(a)",
                 "references": [
                   {
                     "flag": "ReferenceFlag(Read)",
@@ -37,35 +37,35 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "b",
-                "node": "FormalParameter",
+                "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 3,
                 "name": "c",
-                "node": "FormalParameter",
+                "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 4,
                 "name": "d",
-                "node": "FormalParameter",
+                "node": "FormalParameter(d)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 5,
                 "name": "e",
-                "node": "FormalParameter",
+                "node": "FormalParameter(e)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 6,
                 "name": "f",
-                "node": "FormalParameter",
+                "node": "FormalParameter(f)",
                 "references": []
               }
             ]
@@ -85,21 +85,21 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/expressio
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "A",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(A)",
         "references": []
       },
       {
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 7,
         "name": "unresolved1",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved1)",
         "references": []
       },
       {
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 8,
         "name": "unresolved2",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved2)",
         "references": []
       }
     ]

@@ -17,9 +17,10 @@ fn enum_repr(enum_: &syn::ItemEnum) -> TokenStream2 {
 /// It is also a lightweight macro; All of its computation is cached and
 /// it only applies the following changes without any complex operation:
 ///
+/// * Prepend `#[repr(C)]` to structs
 /// * Prepend `#[repr(C, u8)]` to fieldful enums e.g. `enum E { X: u32, Y: u8 }`
 /// * Prepend `#[repr(u8)]` to unit (fieldless) enums e.g. `enum E { X, Y, Z, }`
-/// * Prepend `#[derive(oxc_ast_macros::Ast)]`
+/// * Prepend `#[derive(oxc_ast_macros::Ast)]` to all structs and enums
 ///
 #[proc_macro_attribute]
 #[allow(clippy::missing_panics_doc)]
@@ -28,8 +29,7 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 
     let repr = match input {
         syn::Item::Enum(ref enum_) => enum_repr(enum_),
-        // In future, we'll add `#[repr(C)]` to structs, but at present this is disabled
-        syn::Item::Struct(_) => TokenStream2::default(),
+        syn::Item::Struct(_) => quote!(#[repr(C)]),
 
         _ => {
             unreachable!()

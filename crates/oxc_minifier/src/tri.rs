@@ -16,10 +16,10 @@ impl Tri {
     }
 
     pub fn xor(self, other: Self) -> Self {
-        self.for_int(-self.value() * other.value())
+        Self::for_int(-self.value() * other.value())
     }
 
-    pub fn for_int(self, int: i8) -> Self {
+    pub fn for_int(int: i8) -> Self {
         match int {
             -1 => Self::False,
             1 => Self::True,

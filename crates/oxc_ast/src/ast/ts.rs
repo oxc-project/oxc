@@ -1062,6 +1062,7 @@ pub struct TSImportType<'a> {
 pub struct TSImportAttributes<'a> {
     #[serde(flatten)]
     pub span: Span,
+    pub attributes_keyword: IdentifierName<'a>, // `with` or `assert`
     pub elements: Vec<'a, TSImportAttribute<'a>>,
 }
 
@@ -1251,7 +1252,7 @@ pub struct TSNonNullExpression<'a> {
 ///         @LogParam x: number // parameter decorator
 ///     ) {
 ///       // ...
-///     }  
+///     }
 /// }
 /// ```
 ///

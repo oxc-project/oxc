@@ -11832,14 +11832,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - attributes_keyword
     /// - elements
     #[inline]
     pub fn ts_import_attributes(
         self,
         span: Span,
+        attributes_keyword: IdentifierName<'a>,
         elements: Vec<'a, TSImportAttribute<'a>>,
     ) -> TSImportAttributes<'a> {
-        TSImportAttributes { span, elements }
+        TSImportAttributes { span, attributes_keyword, elements }
     }
 
     /// Builds a [`TSImportAttributes`] and stores it in the memory arena.
@@ -11848,14 +11850,16 @@ impl<'a> AstBuilder<'a> {
     ///
     /// ## Parameters
     /// - span: The [`Span`] covering this node
+    /// - attributes_keyword
     /// - elements
     #[inline]
     pub fn alloc_ts_import_attributes(
         self,
         span: Span,
+        attributes_keyword: IdentifierName<'a>,
         elements: Vec<'a, TSImportAttribute<'a>>,
     ) -> Box<'a, TSImportAttributes<'a>> {
-        Box::new_in(self.ts_import_attributes(span, elements), self.allocator)
+        Box::new_in(self.ts_import_attributes(span, attributes_keyword, elements), self.allocator)
     }
 
     /// Builds a [`TSImportAttribute`]

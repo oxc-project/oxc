@@ -75,7 +75,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/class/declarati
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 3,
         "name": "v",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(v)",
         "references": []
       }
     ]

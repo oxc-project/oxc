@@ -4,6 +4,7 @@ use std::{cell::Cell, rc::Rc};
 
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast::*;
+use oxc_semantic::SymbolFlags;
 use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::{
     operator::AssignmentOperator, reference::ReferenceFlag, scope::ScopeFlags, symbol::SymbolId,
@@ -496,6 +497,15 @@ impl<'a> TypeScriptAnnotations<'a> {
 
     pub fn has_value_reference(&self, name: &str, ctx: &TraverseCtx<'a>) -> bool {
         if let Some(symbol_id) = ctx.scopes().get_root_binding(name) {
+            // `import T from 'mod'; const T = 1;` The T has a value redeclaration
+            // `import T from 'mod'; type T = number;` The T has a type redeclaration
+            // If the symbol is still a value symbol after SymbolFlags::Import is removed, then it's a value redeclaration.
+            // That means the import is shadowed, and we can safely remove the import.
+            let has_value_redeclaration =
+                (ctx.symbols().get_flag(symbol_id) - SymbolFlags::Import).is_value();
+            if has_value_redeclaration {
+                return false;
+            }
             if ctx
                 .symbols()
                 .get_resolved_references(symbol_id)

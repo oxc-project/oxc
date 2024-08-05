@@ -84,7 +84,7 @@ fn is_aria_hidden_true(attr: &JSXAttributeItem) -> bool {
 /// # Returns
 ///
 /// `true` if the element is focusable, `false` otherwise.
-fn is_focusable(ctx: &LintContext, element: &JSXOpeningElement) -> bool {
+fn is_focusable<'a>(ctx: &LintContext<'a>, element: &JSXOpeningElement<'a>) -> bool {
     let Some(tag_name) = get_element_type(ctx, element) else {
         return false;
     };
@@ -95,7 +95,7 @@ fn is_focusable(ctx: &LintContext, element: &JSXOpeningElement) -> bool {
         }
     }
 
-    match tag_name.as_str() {
+    match tag_name.as_ref() {
         "a" | "area" => has_jsx_prop_ignore_case(element, "href").is_some(),
         "button" | "input" | "select" | "textarea" => {
             has_jsx_prop_ignore_case(element, "disabled").is_none()

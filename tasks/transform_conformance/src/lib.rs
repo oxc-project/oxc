@@ -13,6 +13,7 @@ use oxc_tasks_common::{normalize_path, project_root, Snapshot};
 use test_case::TestCaseKind;
 use walkdir::WalkDir;
 
+mod semantic;
 mod test_case;
 
 #[test]

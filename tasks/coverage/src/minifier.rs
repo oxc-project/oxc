@@ -1,8 +1,8 @@
 use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
-use oxc_codegen::WhitespaceRemover;
-use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
+use oxc_codegen::CodeGenerator;
+use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -82,12 +82,8 @@ impl Case for MinifierBabelCase {
 }
 // Test minification by minifying twice because it is a idempotent
 fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
-    let options = MinifierOptions {
-        compress: CompressOptions { evaluate: false, ..CompressOptions::default() },
-        ..MinifierOptions::default()
-    };
-    let source_text1 = minify(source_text, source_type, options);
-    let source_text2 = minify(&source_text1, source_type, options);
+    let source_text1 = minify(source_text, source_type);
+    let source_text2 = minify(&source_text1, source_type);
     if source_text1 == source_text2 {
         TestResult::Passed
     } else {
@@ -95,10 +91,10 @@ fn get_result(source_text: &str, source_type: SourceType) -> TestResult {
     }
 }
 
-fn minify(source_text: &str, source_type: SourceType, options: MinifierOptions) -> String {
+fn minify(source_text: &str, source_type: SourceType) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    Minifier::new(options).build(&allocator, program);
-    WhitespaceRemover::new().build(program).source_text
+    Compressor::new(&allocator, CompressOptions::all_true()).build(program);
+    CodeGenerator::new().build(program).source_text
 }

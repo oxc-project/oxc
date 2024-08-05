@@ -15,7 +15,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 2,
             "name": "a",
-            "node": "FormalParameter",
+            "node": "FormalParameter(a)",
             "references": [
               {
                 "flag": "ReferenceFlag(Read)",
@@ -35,42 +35,42 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 3,
             "name": "b",
-            "node": "FormalParameter",
+            "node": "FormalParameter(<destructure>)",
             "references": []
           },
           {
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 4,
             "name": "c",
-            "node": "FormalParameter",
+            "node": "FormalParameter(<destructure>)",
             "references": []
           },
           {
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 5,
             "name": "d",
-            "node": "FormalParameter",
+            "node": "FormalParameter(d)",
             "references": []
           },
           {
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 6,
             "name": "e",
-            "node": "FormalParameter",
+            "node": "FormalParameter(e)",
             "references": []
           },
           {
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 7,
             "name": "f",
-            "node": "FormalParameter",
+            "node": "FormalParameter(f)",
             "references": []
           },
           {
             "flag": "SymbolFlags(FunctionScopedVariable)",
             "id": 8,
             "name": "g",
-            "node": "FormalParameter",
+            "node": "FormalParameter(g)",
             "references": []
           }
         ]
@@ -84,7 +84,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "outer",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(outer)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
@@ -105,7 +105,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/functions/funct
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 9,
         "name": "unresolved",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(unresolved)",
         "references": []
       }
     ]

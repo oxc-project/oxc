@@ -13,7 +13,9 @@ use oxc_transformer::{BabelOptions, TransformOptions, Transformer};
 
 use crate::{
     constants::{PLUGINS_NOT_SUPPORTED_YET, SKIP_TESTS},
-    fixture_root, packages_root, TestRunnerEnv,
+    fixture_root, packages_root,
+    semantic::SemanticTester,
+    TestRunnerEnv,
 };
 
 #[derive(Debug)]
@@ -252,6 +254,7 @@ impl TestCase for ConformanceTestCase {
 
         let mut transformed_code = String::new();
         let mut actual_errors = String::new();
+        let mut semantic_errors = Vec::default();
 
         let transform_options = match self.transform_options() {
             Ok(transform_options) => {
@@ -267,6 +270,9 @@ impl TestCase for ConformanceTestCase {
                         transform_options.clone(),
                     );
                     let ret = transformer.build(&mut program);
+
+                    semantic_errors = SemanticTester::new(ret.scopes, ret.symbols).test(&program);
+
                     if ret.errors.is_empty() {
                         transformed_code = CodeGenerator::new().build(&program).source_text;
                     } else {
@@ -313,8 +319,10 @@ impl TestCase for ConformanceTestCase {
             },
         );
 
-        let passed =
-            transformed_code == output || (!output.is_empty() && actual_errors.contains(&output));
+        let passed = semantic_errors.is_empty()
+            && (transformed_code == output
+                || (!output.is_empty() && actual_errors.contains(&output)));
+
         if filtered {
             println!("Options:");
             println!("{transform_options:#?}\n");
@@ -341,6 +349,11 @@ impl TestCase for ConformanceTestCase {
                     print_diff_in_terminal(&output, &transformed_code);
                 }
             }
+
+            if !semantic_errors.is_empty() {
+                println!("\nSemantic Errors:\n\n{}\n", semantic_errors.join("\n"));
+            }
+
             println!("Passed: {passed}");
         }
         passed
