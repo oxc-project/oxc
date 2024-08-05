@@ -1,6 +1,5 @@
 const { resolve } = require("node:path");
 const { readFile } = require("node:fs/promises");
-const { pluginTypeScriptRulesNames } = require("./eslint-rules.cjs");
 
 const readAllImplementedRuleNames = async () => {
   const rulesFile = await readFile(
@@ -35,17 +34,6 @@ const readAllImplementedRuleNames = async () => {
       // Ignore no reference rules
       if (prefixedName.startsWith("oxc/")) continue;
 
-      // some tyescript rules are extensions of eslint core rules
-      if (prefixedName.startsWith("eslint/")) {
-        const ruleName = prefixedName.replace('eslint/', '');
-
-        // there is an alias, so we add it with this in mind.
-        if (pluginTypeScriptRulesNames.includes(ruleName)) {
-          rules.add(`typescript/${ruleName}`);
-          continue;
-        }
-      }
-
       rules.add(prefixedName);
     }
   }
@@ -57,7 +45,8 @@ const NOT_SUPPORTED_RULE_NAMES = new Set([
   "eslint/no-dupe-args", // superseded by strict mode
   "eslint/no-octal", // superseded by strict mode
   "eslint/no-with", // superseded by strict mode
-  "import/no-unresolved" // Will always contain false positives due to module resolution complexity
+  "eslint/no-new-symbol", // Deprecated as of ESLint v9, but for a while disable manually
+  "import/no-unresolved", // Will always contain false positives due to module resolution complexity
 ]);
 
 /**
@@ -113,5 +102,28 @@ exports.updateNotSupportedStatus = (ruleEntries) => {
   for (const name of NOT_SUPPORTED_RULE_NAMES) {
     const rule = ruleEntries.get(name);
     if (rule) rule.isNotSupported = true;
+  }
+};
+
+/**
+ * Some typescript-eslint rules are re-implemented version of eslint rules.
+ * e.g. no-array-constructor, max-params, etc...
+ * Since oxlint supports these rules under eslint/* and it also supports TS,
+ * we should override these to make implementation status up-to-date.
+ *
+ * @param {RuleEntries} ruleEntries
+ */
+exports.overrideTypeScriptPluginStatusWithEslintPluginStatus = (
+  ruleEntries,
+) => {
+  for (const [name, rule] of ruleEntries) {
+    if (!name.startsWith("typescript/")) continue;
+
+    // This assumes that if the same name found, it implements the same rule.
+    const eslintRule = ruleEntries.get(name.replace("typescript/", "eslint/"));
+    if (!eslintRule) continue;
+
+    rule.isImplemented = eslintRule.isImplemented;
+    rule.isNotSupported = eslintRule.isNotSupported;
   }
 };
