@@ -28,7 +28,7 @@ impl TryFrom<&serde_json::Value> for FuncNamesConfig {
 
     fn try_from(raw: &serde_json::Value) -> Result<Self, Self::Error> {
         if !raw.is_string() {
-            return Err(OxcDiagnostic::error(format!(
+            return Err(OxcDiagnostic::warn(format!(
                 "Expecting string for eslint/func-names configuration, got {raw}"
             )));
         }
@@ -37,7 +37,7 @@ impl TryFrom<&serde_json::Value> for FuncNamesConfig {
             "always" => Ok(FuncNamesConfig::Always),
             "as-needed" => Ok(FuncNamesConfig::AsNeeded),
             "never" => Ok(FuncNamesConfig::Never),
-            v => Err(OxcDiagnostic::error(format!(
+            v => Err(OxcDiagnostic::warn(format!(
                 "Expecting always, as-needed or never for eslint/func-names configuration, got {v}"
             ))),
         }
