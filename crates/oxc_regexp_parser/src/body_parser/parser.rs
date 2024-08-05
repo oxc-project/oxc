@@ -28,8 +28,8 @@ impl<'a> PatternParser<'a> {
             allocator,
             source_text,
             span_factory: SpanFactory::new(options.span_offset),
-            reader: Reader::new(source_text, options.unicode_flag || options.unicode_sets_flag),
-            state: State::new(options.unicode_flag, options.unicode_sets_flag),
+            reader: Reader::new(source_text, options.unicode_mode),
+            state: State::new(options.unicode_mode, options.unicode_sets_mode),
         }
     }
 
