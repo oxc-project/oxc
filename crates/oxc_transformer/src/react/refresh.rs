@@ -1,7 +1,7 @@
 use oxc_ast::{
     ast::{
-        ExportDefaultDeclarationKind, Expression, Function, IdentifierReference, Program,
-        Statement, TSTypeAnnotation, TSTypeParameterInstantiation, VariableDeclaration,
+        Declaration, ExportDefaultDeclarationKind, Expression, Function, IdentifierReference,
+        Program, Statement, TSTypeAnnotation, TSTypeParameterInstantiation, VariableDeclaration,
         VariableDeclarationKind,
     },
     match_expression,
@@ -229,6 +229,21 @@ impl<'a> ReactRefresh<'a> {
                 self.transform_variable_declaration(variable, ctx)
             }
             Statement::FunctionDeclaration(func) => self.transform_function_declaration(func, ctx),
+            Statement::ExportNamedDeclaration(export_decl) => {
+                if let Some(declaration) = &mut export_decl.declaration {
+                    match declaration {
+                        Declaration::FunctionDeclaration(func) => {
+                            self.transform_function_declaration(func, ctx)
+                        }
+                        Declaration::VariableDeclaration(variable) => {
+                            self.transform_variable_declaration(variable, ctx)
+                        }
+                        _ => None,
+                    }
+                } else {
+                    None
+                }
+            }
             Statement::ExportDefaultDeclaration(ref mut stmt_decl) => {
                 match &mut stmt_decl.declaration {
                     declaration @ match_expression!(ExportDefaultDeclarationKind) => {
@@ -283,6 +298,10 @@ impl<'a> ReactRefresh<'a> {
         let Some(id) = &func.id else {
             return None;
         };
+
+        if !is_componentish_name(&id.name) {
+            return None;
+        }
 
         let inferred_name = id.name.clone();
         let reference = self.create_registration(inferred_name.clone(), ctx);
@@ -363,6 +382,6 @@ impl<'a> ReactRefresh<'a> {
     }
 }
 
-fn is_componentish_name(name: &Atom) -> bool {
+fn is_componentish_name(name: &str) -> bool {
     name.chars().next().unwrap().is_ascii_uppercase()
 }
