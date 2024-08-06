@@ -91,7 +91,10 @@ mod test {
                 r"[[[[[[[[[[[[[[[[[[[[[[[[a]]]]]]]]]]]]]]]]]]]]]]]]",
                 ParserOptions::default().with_unicode_sets_mode(),
             ),
-            (r"[\q{}\q{a}\q{bc}\q{d|e|f}\q{|||}]", ParserOptions::default().with_unicode_sets_mode()),
+            (
+                r"[\q{}\q{a}\q{bc}\q{d|e|f}\q{|||}]",
+                ParserOptions::default().with_unicode_sets_mode(),
+            ),
             (r"(?<foo>A)\k<foo>", ParserOptions::default()),
             (r"(?<!a>)\k<a>", ParserOptions::default()),
             (r"\k", ParserOptions::default()),
