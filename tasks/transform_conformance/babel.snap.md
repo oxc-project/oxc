@@ -1,6 +1,6 @@
 commit: 12619ffe
 
-Passed: 434/927
+Passed: 435/927
 
 # All Passed:
 * babel-preset-react
@@ -445,8 +445,7 @@ Passed: 434/927
 * opts/optimizeConstEnums/input.ts
 * opts/rewriteImportExtensions/input.ts
 
-# babel-plugin-transform-typescript (90/151)
-* catch-clause/param-type/input.ts
+# babel-plugin-transform-typescript (91/151)
 * class/accessor-allowDeclareFields-false/input.ts
 * class/accessor-allowDeclareFields-true/input.ts
 * enum/boolean-value/input.ts

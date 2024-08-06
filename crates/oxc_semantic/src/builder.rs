@@ -675,6 +675,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if self.scope.get_flags(parent_scope_id).is_catch_clause() {
             let parent_bindings =
                 self.scope.get_bindings_mut(parent_scope_id).drain(..).collect::<Bindings>();
+            parent_bindings.values().for_each(|symbol_id| {
+                self.symbols.set_scope_id(*symbol_id, self.current_scope_id);
+            });
             *self.scope.get_bindings_mut(self.current_scope_id) = parent_bindings;
         }
 
