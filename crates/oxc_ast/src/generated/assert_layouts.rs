@@ -1140,6 +1140,10 @@ const _: () = {
     assert!(align_of::<UnaryOperator>() == 1usize);
     assert!(size_of::<UpdateOperator>() == 1usize);
     assert!(align_of::<UpdateOperator>() == 1usize);
+    assert!(size_of::<Span>() == 8usize);
+    assert!(align_of::<Span>() == 4usize);
+    assert!(offset_of!(Span, start) == 0usize);
+    assert!(offset_of!(Span, end) == 4usize);
     assert!(size_of::<SourceType>() == 4usize);
     assert!(align_of::<SourceType>() == 1usize);
     assert!(size_of::<Language>() == 1usize);
@@ -2283,6 +2287,10 @@ const _: () = {
     assert!(align_of::<UnaryOperator>() == 1usize);
     assert!(size_of::<UpdateOperator>() == 1usize);
     assert!(align_of::<UpdateOperator>() == 1usize);
+    assert!(size_of::<Span>() == 8usize);
+    assert!(align_of::<Span>() == 4usize);
+    assert!(offset_of!(Span, start) == 0usize);
+    assert!(offset_of!(Span, end) == 4usize);
     assert!(size_of::<SourceType>() == 4usize);
     assert!(align_of::<SourceType>() == 1usize);
     assert!(size_of::<Language>() == 1usize);

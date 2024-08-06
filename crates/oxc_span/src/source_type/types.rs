@@ -1,3 +1,6 @@
+// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
+#![allow(non_snake_case)]
+
 use oxc_ast_macros::ast;
 #[cfg(feature = "serialize")]
 use ::{serde::Serialize, tsify::Tsify};

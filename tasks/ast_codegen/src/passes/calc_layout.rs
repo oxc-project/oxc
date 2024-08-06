@@ -346,7 +346,6 @@ lazy_static! {
         },
         // well known types
         // TODO: generate const assertions for these in the ast crate
-        Span: { _ => Layout::known(8, 4, 0), },
         Atom: {
             64 => Layout::wide_ptr_64(),
             32 => Layout::wide_ptr_32(),

@@ -1,10 +1,6 @@
-// Silence erroneous warnings from Rust Analyser for `#[derive(Tsify)]`
-#![allow(non_snake_case)]
-
-mod types;
-
 use std::path::Path;
 
+mod types;
 pub use types::*;
 
 #[derive(Debug)]

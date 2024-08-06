@@ -264,6 +264,7 @@ fn files() -> impl std::iter::Iterator<Item = String> {
         ast("jsx"),
         syntax("number"),
         syntax("operator"),
+        span("span/types"),
         span("source_type/types"),
     ]
     .into_iter()
