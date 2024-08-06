@@ -67,7 +67,7 @@ use oxc_semantic::{ScopeTree, SymbolTable};
 pub mod ancestor;
 pub use ancestor::Ancestor;
 mod context;
-pub use context::{FinderRet, TraverseAncestry, TraverseCtx, TraverseScoping};
+pub use context::{TraverseAncestry, TraverseCtx, TraverseScoping};
 #[allow(clippy::module_inception)]
 mod traverse;
 pub use traverse::Traverse;

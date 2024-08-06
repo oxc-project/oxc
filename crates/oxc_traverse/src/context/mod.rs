@@ -25,7 +25,7 @@ pub use scoping::TraverseScoping;
 /// Provides ability to:
 /// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`ancestors`].
 /// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`scopes_mut`], [`symbols_mut`],
-///   [`find_scope`], [`find_scope_by_flags`].
+///   [`ancestor_scopes`].
 /// * Create AST nodes via AST builder [`ast`].
 /// * Allocate into arena via [`alloc`].
 ///
@@ -100,21 +100,13 @@ pub use scoping::TraverseScoping;
 /// [`symbols`]: `TraverseCtx::symbols`
 /// [`scopes_mut`]: `TraverseCtx::scopes_mut`
 /// [`symbols_mut`]: `TraverseCtx::symbols_mut`
-/// [`find_scope`]: `TraverseCtx::find_scope`
-/// [`find_scope_by_flags`]: `TraverseCtx::find_scope_by_flags`
+/// [`ancestor_scopes`]: `TraverseCtx::ancestor_scopes`
 /// [`ast`]: `TraverseCtx::ast`
 /// [`alloc`]: `TraverseCtx::alloc`
 pub struct TraverseCtx<'a> {
     pub ancestry: TraverseAncestry<'a>,
     pub scoping: TraverseScoping,
     pub ast: AstBuilder<'a>,
-}
-
-/// Return value of closure when using [`TraverseCtx::find_scope`].
-pub enum FinderRet<T> {
-    Found(T),
-    Stop,
-    Continue,
 }
 
 // Public methods
@@ -223,38 +215,11 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.symbols_mut()
     }
 
-    /// Walk up trail of scopes to find a scope.
+    /// Get iterator over scopes, starting with current scope and working up.
     ///
-    /// `finder` is called with `ScopeId`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    ///
-    /// This is a shortcut for `ctx.scoping.find_scope`.
-    pub fn find_scope<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeId) -> FinderRet<O>,
-    {
-        self.scoping.find_scope(finder)
-    }
-
-    /// Walk up trail of scopes to find a scope by checking `ScopeFlags`.
-    ///
-    /// `finder` is called with `ScopeFlags`.
-    ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    ///
-    /// This is a shortcut for `ctx.scoping.find_scope_by_flags`.
-    pub fn find_scope_by_flags<F, O>(&self, finder: F) -> Option<O>
-    where
-        F: Fn(ScopeFlags) -> FinderRet<O>,
-    {
-        self.scoping.find_scope_by_flags(finder)
+    /// This is a shortcut for `ctx.scoping.parent_scopes`.
+    pub fn ancestor_scopes(&self) -> impl Iterator<Item = ScopeId> + '_ {
+        self.scoping.ancestor_scopes()
     }
 
     /// Create new scope as child of provided scope.
