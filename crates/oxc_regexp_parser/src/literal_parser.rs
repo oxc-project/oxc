@@ -34,6 +34,7 @@ impl<'a> Parser<'a> {
         let flags = FlagsParser::new(
             self.allocator,
             &self.source_text[flag_start_offset..],
+            #[allow(clippy::cast_possible_truncation)]
             self.options.with_span_offset(self.options.span_offset + flag_start_offset as u32),
         )
         .parse()?;
@@ -48,6 +49,7 @@ impl<'a> Parser<'a> {
         let pattern = PatternParser::new(
             self.allocator,
             &self.source_text[body_start_offset..body_end_offset],
+            #[allow(clippy::cast_possible_truncation)]
             pattern_options.with_span_offset(self.options.span_offset + body_start_offset as u32),
         )
         .parse()?;
