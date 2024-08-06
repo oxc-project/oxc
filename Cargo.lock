@@ -1817,10 +1817,12 @@ dependencies = [
  "napi-build",
  "napi-derive",
  "oxc_allocator",
+ "oxc_ast",
  "oxc_codegen",
  "oxc_diagnostics",
  "oxc_isolated_declarations",
  "oxc_parser",
+ "oxc_sourcemap",
  "oxc_span",
  "oxc_transformer",
 ]
