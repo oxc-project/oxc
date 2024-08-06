@@ -81,12 +81,12 @@ impl Rule for ForDirection {
                         };
                         ctx.diagnostic_with_dangerous_fix(
                             for_direction_diagnostic(test.span, update_span),
-                            |fix| {
+                            |fixer| {
                                 // ++ -- += -= are both 2 in length
                                 let start = update_span.start + 1;
                                 let end = update_span.start + 3;
                                 let span: Span = Span::new(start, end);
-                                fix.replace(span, new_operator_str)
+                                fixer.replace(span, new_operator_str)
                             },
                         );
                     }
