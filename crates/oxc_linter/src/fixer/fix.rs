@@ -82,6 +82,22 @@ impl FixKind {
     pub fn can_apply(self, rule_fix: Self) -> bool {
         self.contains(rule_fix)
     }
+    pub(crate) fn emoji(self) -> &'static str {
+        if self.is_dangerous() {
+            return "⚠️";
+        } else if self.is_empty() {
+            return "";
+        }
+        match self {
+            Self::Fix => "🛠️",
+            Self::Suggestion => "💡",
+            Self::Dangerous => "⚠️",
+            _ => {
+                debug_assert!(false, "Please add an emoji for FixKind: {:?}", self);
+                ""
+            }
+        }
+    }
 }
 
 // TODO: rename

@@ -105,9 +105,13 @@ impl RuleTableSection {
         writeln!(s, "{}", category.description()).unwrap();
 
         let x = "";
-        writeln!(s, "| {:<rule_width$} | {:<plugin_width$} | Default |", "Rule name", "Source")
-            .unwrap();
-        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} |").unwrap();
+        writeln!(
+            s,
+            "| {:<rule_width$} | {:<plugin_width$} | Default | Fixable? |",
+            "Rule name", "Source"
+        )
+        .unwrap();
+        writeln!(s, "| {x:-<rule_width$} | {x:-<plugin_width$} | {x:-<7} | {x:-8} |").unwrap();
 
         for row in rows {
             let rule_name = row.name;
@@ -119,7 +123,9 @@ impl RuleTableSection {
             } else {
                 Cow::Borrowed(rule_name)
             };
-            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} |").unwrap();
+            let (fix_emoji, fix_emoji_width) =
+                row.autofix.emoji().map_or(("", 8), |emoji| (emoji, 7));
+            writeln!(s, "| {rendered_name:<rule_width$} | {plugin_name:<plugin_width$} | {default:<default_width$} | {fix_emoji:<fix_emoji_width$} |").unwrap();
         }
 
         s

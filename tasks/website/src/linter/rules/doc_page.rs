@@ -29,7 +29,7 @@ pub fn render_rule_docs_page(rule: &RuleTableRow) -> Result<String, fmt::Error> 
             })?;
         }
 
-        if let Some(emoji) = fix_emoji(*autofix) {
+        if let Some(emoji) = autofix.emoji() {
             p.span(r#"class="fix""#, |p| {
                 p.writeln(format!("{} {}", emoji, autofix.description()))
             })?;
@@ -46,12 +46,4 @@ pub fn render_rule_docs_page(rule: &RuleTableRow) -> Result<String, fmt::Error> 
     // TODO: link to rule source
 
     Ok(page.into())
-}
-
-fn fix_emoji(fix: RuleFixMeta) -> Option<&'static str> {
-    match fix {
-        RuleFixMeta::None => None,
-        RuleFixMeta::FixPending => Some("🚧"),
-        RuleFixMeta::Conditional(_) | RuleFixMeta::Fixable(_) => Some("🛠️"),
-    }
 }

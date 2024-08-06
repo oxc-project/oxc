@@ -187,6 +187,13 @@ impl RuleFixMeta {
             }
         }
     }
+    pub fn emoji(self) -> Option<&'static str> {
+        match self {
+            Self::None => None,
+            Self::Conditional(kind) | Self::Fixable(kind) => Some(kind.emoji()),
+            Self::FixPending => Some("🚧"),
+        }
+    }
 }
 
 impl From<RuleFixMeta> for FixKind {
