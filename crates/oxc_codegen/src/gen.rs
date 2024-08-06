@@ -1192,7 +1192,7 @@ impl<'a, const MINIFY: bool> Gen<MINIFY> for NumericLiteral<'a> {
             let bytes = result.as_str();
             p.print_str(bytes);
             need_space_before_dot(bytes, p);
-        } else if self.value == f64::INFINITY {
+        } else if self.value == f64::INFINITY && self.raw.is_empty() {
             p.print_str("Infinity");
             need_space_before_dot("Infinity", p);
         } else {

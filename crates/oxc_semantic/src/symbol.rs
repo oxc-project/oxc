@@ -118,6 +118,11 @@ impl SymbolTable {
     }
 
     #[inline]
+    pub fn set_scope_id(&mut self, symbol_id: SymbolId, scope_id: ScopeId) {
+        self.scope_ids[symbol_id] = scope_id;
+    }
+
+    #[inline]
     pub fn get_scope_id(&self, symbol_id: SymbolId) -> ScopeId {
         self.scope_ids[symbol_id]
     }

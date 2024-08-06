@@ -198,6 +198,10 @@ debug = false
 # Compile macros with some optimizations to make consuming crates build faster
 oxc_macros.opt-level     = 1
 oxc_ast_macros.opt-level = 1
+# Compile insta and its dependencies in release mode for faster snapshot tests
+# See: https://insta.rs/docs/quickstart/#optional-faster-runs
+insta.opt-level          = 3
+similar.opt-level        = 3
 
 [profile.release.package.oxc_wasm]
 opt-level = 'z'

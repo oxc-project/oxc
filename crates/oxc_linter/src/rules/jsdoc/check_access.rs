@@ -64,7 +64,7 @@ impl Rule for CheckAccess {
         let resolved_access_tag_name = settings.resolve_tag_name("access");
 
         let mut access_related_tag_names = FxHashSet::default();
-        access_related_tag_names.insert(resolved_access_tag_name.to_string());
+        access_related_tag_names.insert(resolved_access_tag_name);
         for level in &ACCESS_LEVELS {
             access_related_tag_names.insert(settings.resolve_tag_name(level));
         }
