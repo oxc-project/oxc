@@ -60,7 +60,9 @@ impl<'a> PatternParser<'a> {
         let disjunction = self.parse_disjunction()?;
 
         if self.reader.peek().is_some() {
-            return Err(OxcDiagnostic::error("Could not parse the entire pattern"));
+            let span_start = self.reader.span_position();
+            return Err(OxcDiagnostic::error("Could not parse the entire pattern")
+                .with_label(self.span_factory.create(span_start, span_start)));
         }
 
         Ok(ast::Pattern {
@@ -147,7 +149,10 @@ impl<'a> PatternParser<'a> {
                 }
                 (Some(atom), None) => Ok(Some(atom)),
                 (None, Some(_)) => {
-                    Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `Atom`"))
+                    Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `Atom`")
+                        .with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ))
                 }
                 (None, None) => Ok(None),
             };
@@ -201,7 +206,8 @@ impl<'a> PatternParser<'a> {
             }
             (Some(extended_atom), None) => Ok(Some(extended_atom)),
             (None, Some(_)) => {
-                Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `ExtendedAtom`"))
+                Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `ExtendedAtom`")
+                    .with_label(self.span_factory.create(span_start, self.reader.span_position())))
             }
             (None, None) => Ok(None),
         }
@@ -262,7 +268,9 @@ impl<'a> PatternParser<'a> {
             let disjunction = self.parse_disjunction()?;
 
             if !self.reader.eat(')') {
-                return Err(OxcDiagnostic::error("Unterminated lookaround assertion"));
+                return Err(OxcDiagnostic::error("Unterminated lookaround assertion").with_label(
+                    self.span_factory.create(span_start, self.reader.span_position()),
+                ));
             }
 
             return Ok(Some(ast::Term::LookAroundAssertion(Box::new_in(
@@ -376,7 +384,8 @@ impl<'a> PatternParser<'a> {
                 })));
             }
 
-            return Err(OxcDiagnostic::error("Invalid escape"));
+            return Err(OxcDiagnostic::error("Invalid escape")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         // CharacterClass[~UnicodeMode, ~UnicodeSetsMode]
@@ -402,11 +411,13 @@ impl<'a> PatternParser<'a> {
         }
 
         // InvalidBracedQuantifier
+        let span_start = self.reader.span_position();
         if self.consume_quantifier()?.is_some() {
             // [SS:EE] ExtendedAtom :: InvalidBracedQuantifier
             // It is a Syntax Error if any source text is matched by this production.
             // (Annex B)
-            return Err(OxcDiagnostic::error("Invalid braced quantifier"));
+            return Err(OxcDiagnostic::error("Invalid braced quantifier")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         // ExtendedPatternCharacter
@@ -439,7 +450,9 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: DecimalEscape
                 // It is a Syntax Error if the CapturingGroupNumber of DecimalEscape is strictly greater than CountLeftCapturingParensWithin(the Pattern containing AtomEscape).
                 if self.state.num_of_capturing_groups < index {
-                    return Err(OxcDiagnostic::error("Invalid indexed reference"));
+                    return Err(OxcDiagnostic::error("Invalid indexed reference").with_label(
+                        self.span_factory.create(span_start, self.reader.span_position()),
+                    ));
                 }
 
                 return Ok(Some(ast::Term::IndexedReference(ast::IndexedReference {
@@ -482,7 +495,9 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] AtomEscape :: k GroupName
                 // It is a Syntax Error if GroupSpecifiersThatMatch(GroupName) is empty.
                 if !self.state.found_group_names.contains(name.as_str()) {
-                    return Err(OxcDiagnostic::error("Group specifier is empty"));
+                    return Err(OxcDiagnostic::error("Group specifier is empty").with_label(
+                        self.span_factory.create(span_start, self.reader.span_position()),
+                    ));
                 }
 
                 return Ok(Some(ast::Term::NamedReference(Box::new_in(
@@ -494,10 +509,12 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            return Err(OxcDiagnostic::error("Invalid named reference"));
+            return Err(OxcDiagnostic::error("Invalid named reference")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
-        Err(OxcDiagnostic::error("Invalid atom escape"))
+        Err(OxcDiagnostic::error("Invalid atom escape")
+            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
     }
 
     // ```
@@ -559,18 +576,21 @@ impl<'a> PatternParser<'a> {
             if let Some((name, value, is_strings_related)) =
                 self.consume_unicode_property_value_expression()?
             {
-                // [SS:EE] CharacterClassEscape :: P{ UnicodePropertyValueExpression }
-                // It is a Syntax Error if MayContainStrings of the UnicodePropertyValueExpression is true.
-                // MayContainStrings is true
-                // - if the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
-                //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
-                if negative && is_strings_related {
-                    return Err(OxcDiagnostic::error(
-                        "Invalid property name(negative + property of strings)",
-                    ));
-                }
-
                 if self.reader.eat('}') {
+                    // [SS:EE] CharacterClassEscape :: P{ UnicodePropertyValueExpression }
+                    // It is a Syntax Error if MayContainStrings of the UnicodePropertyValueExpression is true.
+                    // MayContainStrings is true
+                    // - if the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                    //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
+                    if negative && is_strings_related {
+                        return Err(OxcDiagnostic::error(
+                            "Invalid property name(negative + property of strings)",
+                        )
+                        .with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
+                    }
+
                     return Ok(Some(ast::UnicodePropertyEscape {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
                         negative,
@@ -582,7 +602,8 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        Err(OxcDiagnostic::error("Unterminated unicode property escape"))
+        Err(OxcDiagnostic::error("Unterminated unicode property escape")
+            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
     }
 
     // ```
@@ -646,7 +667,8 @@ impl<'a> PatternParser<'a> {
                 }));
             }
 
-            return Err(OxcDiagnostic::error("Invalid hexadecimal escape"));
+            return Err(OxcDiagnostic::error("Invalid hexadecimal escape")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         // e.g. \u{1f600}
@@ -693,24 +715,26 @@ impl<'a> PatternParser<'a> {
             let negative = self.reader.eat('^');
             let (kind, body) = self.parse_class_contents()?;
 
-            // [SS:EE] CharacterClass :: [^ ClassContents ]
-            // It is a Syntax Error if MayContainStrings of the ClassContents is true.
-            if negative
-                && body.iter().any(|item| match item {
-                    // MayContainStrings is true
-                    // - if ClassContents contains UnicodePropertyValueExpression
-                    //   - and the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
-                    //     - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
-                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
-                        unicode_property_escape.strings
-                    }
-                    _ => false,
-                })
-            {
-                return Err(OxcDiagnostic::error("Invalid character class"));
-            }
-
             if self.reader.eat(']') {
+                // [SS:EE] CharacterClass :: [^ ClassContents ]
+                // It is a Syntax Error if MayContainStrings of the ClassContents is true.
+                if negative
+                    && body.iter().any(|item| match item {
+                        // MayContainStrings is true
+                        // - if ClassContents contains UnicodePropertyValueExpression
+                        //   - and the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                        //     - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
+                        ast::CharacterClassContents::UnicodePropertyEscape(
+                            unicode_property_escape,
+                        ) => unicode_property_escape.strings,
+                        _ => false,
+                    })
+                {
+                    return Err(OxcDiagnostic::error("Invalid character class").with_label(
+                        self.span_factory.create(span_start, self.reader.span_position()),
+                    ));
+                }
+
                 return Ok(Some(ast::CharacterClass {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
                     negative,
@@ -719,7 +743,8 @@ impl<'a> PatternParser<'a> {
                 }));
             }
 
-            return Err(OxcDiagnostic::error("Unterminated character class"));
+            return Err(OxcDiagnostic::error("Unterminated character class")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         Ok(None)
@@ -765,6 +790,8 @@ impl<'a> PatternParser<'a> {
         let mut body = Vec::new_in(self.allocator);
 
         loop {
+            let range_span_start = self.reader.span_position();
+
             let Some(class_atom) = self.parse_class_atom()? else {
                 break;
             };
@@ -802,7 +829,10 @@ impl<'a> PatternParser<'a> {
                 // [SS:EE] NonemptyClassRangesNoDash :: ClassAtomNoDash - ClassAtom ClassContents
                 // It is a Syntax Error if IsCharacterClass of the first ClassAtom is false, IsCharacterClass of the second ClassAtom is false, and the CharacterValue of the first ClassAtom is strictly greater than the CharacterValue of the second ClassAtom.
                 if to.value < from.value {
-                    return Err(OxcDiagnostic::error("Character class range out of order"));
+                    return Err(OxcDiagnostic::error("Character class range out of order")
+                        .with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
                 }
 
                 body.push(ast::CharacterClassContents::CharacterClassRange(Box::new_in(
@@ -823,7 +853,9 @@ impl<'a> PatternParser<'a> {
             // It is a Syntax Error if IsCharacterClass of the first ClassAtom is true or IsCharacterClass of the second ClassAtom is true and this production has a [UnicodeMode] parameter.
             // (Annex B)
             if self.state.unicode_mode {
-                return Err(OxcDiagnostic::error("Invalid character class range"));
+                return Err(OxcDiagnostic::error("Invalid character class range").with_label(
+                    self.span_factory.create(range_span_start, self.reader.span_position()),
+                ));
             }
 
             body.push(class_atom);
@@ -831,9 +863,9 @@ impl<'a> PatternParser<'a> {
             body.push(class_atom_to);
         }
 
-        if body.is_empty() {
-            return Err(OxcDiagnostic::error("Empty class ranges"));
-        }
+        // [empty] is already covered by the caller, but for sure
+        debug_assert!(!body.is_empty());
+
         Ok((ast::CharacterClassContentsKind::Union, body))
     }
 
@@ -893,7 +925,8 @@ impl<'a> PatternParser<'a> {
                 return Ok(Some(class_escape));
             }
 
-            return Err(OxcDiagnostic::error("Invalid class atom"));
+            return Err(OxcDiagnostic::error("Invalid class atom")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         Ok(None)
@@ -1012,7 +1045,7 @@ impl<'a> PatternParser<'a> {
             return self.parse_class_set_union(class_set_operand);
         }
 
-        Err(OxcDiagnostic::error("Invalid character class set expression"))
+        unreachable!("Expected nonempty class set expression")
     }
 
     // ```
@@ -1061,8 +1094,14 @@ impl<'a> PatternParser<'a> {
             }
 
             if self.reader.eat2('&', '&') {
+                let span_start = self.reader.span_position();
                 if self.reader.eat('&') {
-                    return Err(OxcDiagnostic::error("Unexpected &"));
+                    return Err(OxcDiagnostic::error(
+                        "Unexpected `&` inside of class interseciton",
+                    )
+                    .with_label(
+                        self.span_factory.create(span_start, self.reader.span_position()),
+                    ));
                 }
 
                 if let Some(class_set_operand) = self.parse_class_set_operand()? {
@@ -1071,9 +1110,11 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
+            let span_start = self.reader.span_position();
             return Err(OxcDiagnostic::error(
                 "Invalid character in character class set interseciton",
-            ));
+            )
+            .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         Ok((ast::CharacterClassContentsKind::Intersection, body))
@@ -1103,9 +1144,11 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
+            let span_start = self.reader.span_position();
             return Err(OxcDiagnostic::error(
                 "Invalid character in character class set subtraction",
-            ));
+            )
+            .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         Ok((ast::CharacterClassContentsKind::Subtraction, body))
@@ -1124,7 +1167,10 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
                     // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
                     if class_set_character_to.value < class_set_character.value {
-                        return Err(OxcDiagnostic::error("Character set class range out of order"));
+                        return Err(OxcDiagnostic::error("Character set class range out of order")
+                            .with_label(
+                                class_set_character.span.merge(&class_set_character_to.span),
+                            ));
                     }
 
                     return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
@@ -1174,7 +1220,8 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            return Err(OxcDiagnostic::error("Unterminated class string disjunction"));
+            return Err(OxcDiagnostic::error("Unterminated class string disjunction")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         if let Some(class_set_character) = self.parse_class_set_character()? {
@@ -1201,62 +1248,64 @@ impl<'a> PatternParser<'a> {
             // e.g. `/[a[b[c[d[e]f]g]h]i]j]/v`
             let (kind, body) = self.parse_class_contents()?;
 
-            // [SS:EE] NestedClass :: [^ ClassContents ]
-            // It is a Syntax Error if MayContainStrings of the ClassContents is true.
-            if negative {
-                let may_contain_strings = |item: &ast::CharacterClassContents| match item {
-                    // MayContainStrings is true
-                    // - if ClassContents contains UnicodePropertyValueExpression
-                    //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
-                    //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
-                    ast::CharacterClassContents::UnicodePropertyEscape(unicode_property_escape) => {
-                        unicode_property_escape.strings
-                    }
-                    // MayContainStrings is true
-                    // - if ClassStringDisjunction is [empty]
-                    // - || if ClassStringDisjunction contains ClassString
-                    //   - && ClassString is [empty]
-                    //   - || ClassString contains 2 more ClassSetCharacters
-                    ast::CharacterClassContents::ClassStringDisjunction(
-                        class_string_disjunction,
-                    ) => {
-                        class_string_disjunction.body.is_empty()
-                            || class_string_disjunction
-                                .body
-                                .iter()
-                                .any(|class_string| class_string.body.len() != 1)
-                    }
-                    _ => false,
-                };
-
-                if match kind {
-                    // MayContainStrings is true
-                    // - if ClassContents is ClassUnion
-                    //   - && ClassUnion has ClassOperands
-                    //     - && at least 1 ClassOperand has MayContainStrings: true
-                    ast::CharacterClassContentsKind::Union => {
-                        body.iter().any(|item| may_contain_strings(item))
-                    }
-                    // MayContainStrings is true
-                    // - if ClassContents is ClassIntersection
-                    //   - && ClassIntersection has ClassOperands
-                    //     - && all ClassOperands have MayContainStrings: true
-                    ast::CharacterClassContentsKind::Intersection => {
-                        body.iter().all(|item| may_contain_strings(item))
-                    }
-                    // MayContainStrings is true
-                    // - if ClassContents is ClassSubtraction
-                    //   - && ClassSubtraction has ClassOperands
-                    //     - && the first ClassOperand has MayContainStrings: true
-                    ast::CharacterClassContentsKind::Subtraction => {
-                        body.iter().next().map_or(false, |item| may_contain_strings(item))
-                    }
-                } {
-                    return Err(OxcDiagnostic::error("Invalid character class"));
-                }
-            }
-
             if self.reader.eat(']') {
+                // [SS:EE] NestedClass :: [^ ClassContents ]
+                // It is a Syntax Error if MayContainStrings of the ClassContents is true.
+                if negative {
+                    let may_contain_strings = |item: &ast::CharacterClassContents| match item {
+                        // MayContainStrings is true
+                        // - if ClassContents contains UnicodePropertyValueExpression
+                        //   - && UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
+                        //     - && it is binary property of strings(can be true only with `UnicodeSetsMode`)
+                        ast::CharacterClassContents::UnicodePropertyEscape(
+                            unicode_property_escape,
+                        ) => unicode_property_escape.strings,
+                        // MayContainStrings is true
+                        // - if ClassStringDisjunction is [empty]
+                        // - || if ClassStringDisjunction contains ClassString
+                        //   - && ClassString is [empty]
+                        //   - || ClassString contains 2 more ClassSetCharacters
+                        ast::CharacterClassContents::ClassStringDisjunction(
+                            class_string_disjunction,
+                        ) => {
+                            class_string_disjunction.body.is_empty()
+                                || class_string_disjunction
+                                    .body
+                                    .iter()
+                                    .any(|class_string| class_string.body.len() != 1)
+                        }
+                        _ => false,
+                    };
+
+                    if match kind {
+                        // MayContainStrings is true
+                        // - if ClassContents is ClassUnion
+                        //   - && ClassUnion has ClassOperands
+                        //     - && at least 1 ClassOperand has MayContainStrings: true
+                        ast::CharacterClassContentsKind::Union => {
+                            body.iter().any(|item| may_contain_strings(item))
+                        }
+                        // MayContainStrings is true
+                        // - if ClassContents is ClassIntersection
+                        //   - && ClassIntersection has ClassOperands
+                        //     - && all ClassOperands have MayContainStrings: true
+                        ast::CharacterClassContentsKind::Intersection => {
+                            body.iter().all(|item| may_contain_strings(item))
+                        }
+                        // MayContainStrings is true
+                        // - if ClassContents is ClassSubtraction
+                        //   - && ClassSubtraction has ClassOperands
+                        //     - && the first ClassOperand has MayContainStrings: true
+                        ast::CharacterClassContentsKind::Subtraction => {
+                            body.iter().next().map_or(false, |item| may_contain_strings(item))
+                        }
+                    } {
+                        return Err(OxcDiagnostic::error("Invalid character class").with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
+                    }
+                }
+
                 return Ok(Some(ast::CharacterClassContents::NestedCharacterClass(Box::new_in(
                     ast::CharacterClass {
                         span: self.span_factory.create(span_start, self.reader.span_position()),
@@ -1268,7 +1317,8 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            return Err(OxcDiagnostic::error("Unterminated nested class"));
+            return Err(OxcDiagnostic::error("Unterminated nested class")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         // \ CharacterClassEscape[+UnicodeMode]
@@ -1407,7 +1457,10 @@ impl<'a> PatternParser<'a> {
             // GroupSpecifier is optional, but if it exists, `?` is also required
             if self.reader.eat('?') {
                 let Some(name) = self.consume_group_name()? else {
-                    return Err(OxcDiagnostic::error("Unterminated capturing group name"));
+                    return Err(OxcDiagnostic::error("Capturing group name is missing")
+                        .with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
                 };
                 group_name = Some(name);
             }
@@ -1421,7 +1474,8 @@ impl<'a> PatternParser<'a> {
                 }));
             }
 
-            return Err(OxcDiagnostic::error("Unterminated capturing group"));
+            return Err(OxcDiagnostic::error("Unterminated capturing group")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         Ok(None)
@@ -1437,7 +1491,9 @@ impl<'a> PatternParser<'a> {
             let disjunction = self.parse_disjunction()?;
 
             if !self.reader.eat(')') {
-                return Err(OxcDiagnostic::error("Unterminated ignore group"));
+                return Err(OxcDiagnostic::error("Unterminated ignore group").with_label(
+                    self.span_factory.create(span_start, self.reader.span_position()),
+                ));
             }
 
             return Ok(Some(ast::IgnoreGroup {
@@ -1482,6 +1538,7 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(((0, Some(1)), is_greedy(&mut self.reader))));
         }
 
+        let span_start = self.reader.span_position();
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('{') {
             if let Some(min) = self.consume_decimal_digits() {
@@ -1501,6 +1558,10 @@ impl<'a> PatternParser<'a> {
                                 // It is a Syntax Error if the MV of the first DecimalDigits is strictly greater than the MV of the second DecimalDigits.
                                 return Err(OxcDiagnostic::error(
                                     "Numbers out of order in braced quantifier",
+                                )
+                                .with_label(
+                                    self.span_factory
+                                        .create(span_start, self.reader.span_position()),
                                 ));
                             }
 
@@ -1569,13 +1630,17 @@ impl<'a> PatternParser<'a> {
         // UnicodePropertyName=UnicodePropertyValue
         if let Some(name) = self.consume_unicode_property_name() {
             if self.reader.eat('=') {
+                let span_start = self.reader.span_position();
                 if let Some(value) = self.consume_unicode_property_value() {
                     // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
                     // It is a Syntax Error if the source text matched by UnicodePropertyName is not a Unicode property name or property alias listed in the “Property name and aliases” column of Table 65.
                     // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
                     // It is a Syntax Error if the source text matched by UnicodePropertyValue is not a property value or property value alias for the Unicode property or property alias given by the source text matched by UnicodePropertyName listed in PropertyValueAliases.txt.
                     if !unicode_property::is_valid_unicode_property(&name, &value) {
-                        return Err(OxcDiagnostic::error("Invalid unicode property name"));
+                        return Err(OxcDiagnostic::error("Invalid unicode property name")
+                            .with_label(
+                                self.span_factory.create(span_start, self.reader.span_position()),
+                            ));
                     }
 
                     return Ok(Some((name, Some(value), false)));
@@ -1584,6 +1649,7 @@ impl<'a> PatternParser<'a> {
         }
         self.reader.rewind(checkpoint);
 
+        let span_start = self.reader.span_position();
         // LoneUnicodePropertyNameOrValue
         if let Some(name_or_value) = self.consume_unicode_property_value() {
             // [SS:EE] UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
@@ -1600,13 +1666,17 @@ impl<'a> PatternParser<'a> {
                 if !self.state.unicode_sets_mode {
                     return Err(OxcDiagnostic::error(
                         "`UnicodeSetsMode` is required for binary property of strings",
+                    )
+                    .with_label(
+                        self.span_factory.create(span_start, self.reader.span_position()),
                     ));
                 }
 
                 return Ok(Some((name_or_value, None, true)));
             }
 
-            return Err(OxcDiagnostic::error("Invalid unicode property name or value"));
+            return Err(OxcDiagnostic::error("Invalid unicode property name or value")
+                .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
 
         Ok(None)
@@ -1647,6 +1717,8 @@ impl<'a> PatternParser<'a> {
     //   < RegExpIdentifierName[?UnicodeMode] >
     // ```
     fn consume_group_name(&mut self) -> Result<Option<SpanAtom<'a>>> {
+        let span_start = self.reader.span_position();
+
         if !self.reader.eat('<') {
             return Ok(None);
         }
@@ -1657,7 +1729,8 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        Err(OxcDiagnostic::error("Unterminated capturing group name"))
+        Err(OxcDiagnostic::error("Unterminated capturing group name")
+            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
     }
 
     // ```
@@ -1691,12 +1764,16 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(cp));
         }
 
+        let span_start = self.reader.span_position();
         if self.reader.eat('\\') {
             if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierStart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierStartChar lexical grammar production.
                 if !unicode::is_identifier_start_char(cp) {
-                    return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
+                    return Err(OxcDiagnostic::error("Invalid unicode escape sequence")
+                        .with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
                 }
 
                 return Ok(Some(cp));
@@ -1704,6 +1781,8 @@ impl<'a> PatternParser<'a> {
         }
 
         if !self.state.unicode_mode {
+            let span_start = self.reader.span_position();
+
             if let Some(lead_surrogate) =
                 self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
             {
@@ -1717,7 +1796,9 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] RegExpIdentifierStart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierStart is not matched by the UnicodeIDStart lexical grammar production.
                     if !unicode::is_unicode_id_start(cp) {
-                        return Err(OxcDiagnostic::error("Invalid surrogate pair"));
+                        return Err(OxcDiagnostic::error("Invalid surrogate pair").with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
                     }
 
                     return Ok(Some(cp));
@@ -1742,12 +1823,16 @@ impl<'a> PatternParser<'a> {
             }
         }
 
+        let span_start = self.reader.span_position();
         if self.reader.eat('\\') {
             if let Some(cp) = self.consume_reg_exp_unicode_escape_sequence(true)? {
                 // [SS:EE] RegExpIdentifierPart :: \ RegExpUnicodeEscapeSequence
                 // It is a Syntax Error if the CharacterValue of RegExpUnicodeEscapeSequence is not the numeric value of some code point matched by the IdentifierPartChar lexical grammar production.
                 if !unicode::is_identifier_part_char(cp) {
-                    return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
+                    return Err(OxcDiagnostic::error("Invalid unicode escape sequence")
+                        .with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
                 }
 
                 return Ok(Some(cp));
@@ -1755,6 +1840,8 @@ impl<'a> PatternParser<'a> {
         }
 
         if !self.state.unicode_mode {
+            let span_start = self.reader.span_position();
+
             if let Some(lead_surrogate) =
                 self.reader.peek().filter(|&cp| unicode::is_lead_surrogate(cp))
             {
@@ -1768,7 +1855,9 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] RegExpIdentifierPart :: UnicodeLeadSurrogate UnicodeTrailSurrogate
                     // It is a Syntax Error if the RegExpIdentifierCodePoint of RegExpIdentifierPart is not matched by the UnicodeIDContinue lexical grammar production.
                     if !unicode::is_unicode_id_continue(cp) {
-                        return Err(OxcDiagnostic::error("Invalid surrogate pair"));
+                        return Err(OxcDiagnostic::error("Invalid surrogate pair").with_label(
+                            self.span_factory.create(span_start, self.reader.span_position()),
+                        ));
                     }
 
                     return Ok(Some(cp));
@@ -1792,7 +1881,9 @@ impl<'a> PatternParser<'a> {
         &mut self,
         unicode_mode: bool,
     ) -> Result<Option<u32>> {
+        let span_start = self.reader.span_position();
         let checkpoint = self.reader.checkpoint();
+
         if self.reader.eat('u') {
             if unicode_mode {
                 let checkpoint = self.reader.checkpoint();
@@ -1854,7 +1945,9 @@ impl<'a> PatternParser<'a> {
             }
 
             if self.state.unicode_mode {
-                return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
+                return Err(OxcDiagnostic::error("Invalid unicode escape sequence").with_label(
+                    self.span_factory.create(span_start, self.reader.span_position()),
+                ));
             }
             self.reader.rewind(checkpoint);
         }
