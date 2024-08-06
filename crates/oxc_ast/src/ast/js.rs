@@ -365,9 +365,9 @@ pub struct ObjectExpression<'a> {
 #[serde(untagged)]
 pub enum ObjectPropertyKind<'a> {
     /// `a: 1` in `const obj = { a: 1 };`
-    ObjectProperty(Box<'a, ObjectProperty<'a>>),
+    ObjectProperty(Box<'a, ObjectProperty<'a>>) = 0,
     /// `...{ a: 1 }` in `const obj = { ...{ a: 1 } };`
-    SpreadProperty(Box<'a, SpreadElement<'a>>),
+    SpreadProperty(Box<'a, SpreadElement<'a>>) = 1,
 }
 
 /// `a: 1` in `const obj = { a: 1 };`
@@ -416,11 +416,11 @@ pub enum PropertyKey<'a> {
 #[serde(rename_all = "camelCase")]
 pub enum PropertyKind {
     /// `a: 1` in `const obj = { a: 1 };`
-    Init,
+    Init = 0,
     /// `get a() { return 1; }` in `const obj = { get a() { return 1; } };`
-    Get,
+    Get = 1,
     /// `set a(value) { this._a = value; }` in `const obj = { set a(value) { this._a = value; } };`
-    Set,
+    Set = 2,
 }
 
 /// `` `Hello, ${name}` `` in `` const foo = `Hello, ${name}` ``
@@ -935,8 +935,8 @@ pub struct AssignmentTargetWithDefault<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum AssignmentTargetProperty<'a> {
-    AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>),
-    AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>),
+    AssignmentTargetPropertyIdentifier(Box<'a, AssignmentTargetPropertyIdentifier<'a>>) = 0,
+    AssignmentTargetPropertyProperty(Box<'a, AssignmentTargetPropertyProperty<'a>>) = 1,
 }
 
 /// `foo` in `({ foo } = obj);`
@@ -1186,9 +1186,9 @@ pub struct VariableDeclaration<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum VariableDeclarationKind {
-    Var,
-    Const,
-    Let,
+    Var = 0,
+    Const = 1,
+    Let = 2,
 }
 
 #[ast(visit)]
@@ -1522,16 +1522,16 @@ pub struct BindingPattern<'a> {
 #[serde(untagged)]
 pub enum BindingPatternKind<'a> {
     /// `const a = 1`
-    BindingIdentifier(Box<'a, BindingIdentifier<'a>>),
+    BindingIdentifier(Box<'a, BindingIdentifier<'a>>) = 0,
     /// `const {a} = 1`
-    ObjectPattern(Box<'a, ObjectPattern<'a>>),
+    ObjectPattern(Box<'a, ObjectPattern<'a>>) = 1,
     /// `const [a] = 1`
-    ArrayPattern(Box<'a, ArrayPattern<'a>>),
+    ArrayPattern(Box<'a, ArrayPattern<'a>>) = 2,
     /// A defaulted binding pattern, i.e.:
     /// `const {a = 1} = 1`
     /// the assignment pattern is `a = 1`
     /// it has an inner left that has a BindingIdentifier
-    AssignmentPattern(Box<'a, AssignmentPattern<'a>>),
+    AssignmentPattern(Box<'a, AssignmentPattern<'a>>) = 3,
 }
 
 #[ast(visit)]
@@ -1641,11 +1641,11 @@ pub struct Function<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FunctionType {
-    FunctionDeclaration,
-    FunctionExpression,
-    TSDeclareFunction,
+    FunctionDeclaration = 0,
+    FunctionExpression = 1,
+    TSDeclareFunction = 2,
     /// <https://github.com/typescript-eslint/typescript-eslint/pull/1289>
-    TSEmptyBodyFunctionExpression,
+    TSEmptyBodyFunctionExpression = 3,
 }
 
 /// <https://tc39.es/ecma262/#prod-FormalParameters>
@@ -1683,13 +1683,13 @@ pub struct FormalParameter<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum FormalParameterKind {
     /// <https://tc39.es/ecma262/#prod-FormalParameters>
-    FormalParameter,
+    FormalParameter = 0,
     /// <https://tc39.es/ecma262/#prod-UniqueFormalParameters>
-    UniqueFormalParameters,
+    UniqueFormalParameters = 1,
     /// <https://tc39.es/ecma262/#prod-ArrowFormalParameters>
-    ArrowFormalParameters,
+    ArrowFormalParameters = 2,
     /// Part of TypeScript type signatures
-    Signature,
+    Signature = 3,
 }
 
 /// <https://tc39.es/ecma262/#prod-FunctionBody>
@@ -1819,13 +1819,13 @@ pub enum ClassType {
     /// ```ts
     /// class Foo { }
     /// ```
-    ClassDeclaration,
+    ClassDeclaration = 0,
     /// Class expression
     ///
     /// ```ts
     /// const Foo = class {}
     /// ```
-    ClassExpression,
+    ClassExpression = 1,
 }
 
 #[ast(visit)]
@@ -1861,13 +1861,13 @@ pub struct ClassBody<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ClassElement<'a> {
-    StaticBlock(Box<'a, StaticBlock<'a>>),
+    StaticBlock(Box<'a, StaticBlock<'a>>) = 0,
     /// Class Methods
     ///
     /// Includes static and non-static methods, constructors, getters, and setters.
-    MethodDefinition(Box<'a, MethodDefinition<'a>>),
-    PropertyDefinition(Box<'a, PropertyDefinition<'a>>),
-    AccessorProperty(Box<'a, AccessorProperty<'a>>),
+    MethodDefinition(Box<'a, MethodDefinition<'a>>) = 1,
+    PropertyDefinition(Box<'a, PropertyDefinition<'a>>) = 2,
+    AccessorProperty(Box<'a, AccessorProperty<'a>>) = 3,
     /// Index Signature
     ///
     /// ## Example
@@ -1876,7 +1876,7 @@ pub enum ClassElement<'a> {
     ///   [keys: string]: string
     /// }
     /// ```
-    TSIndexSignature(Box<'a, TSIndexSignature<'a>>),
+    TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 4,
 }
 
 #[ast(visit)]
@@ -1911,8 +1911,8 @@ pub struct MethodDefinition<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum MethodDefinitionType {
-    MethodDefinition,
-    TSAbstractMethodDefinition,
+    MethodDefinition = 0,
+    TSAbstractMethodDefinition = 1,
 }
 
 #[ast(visit)]
@@ -2000,8 +2000,8 @@ pub struct PropertyDefinition<'a> {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum PropertyDefinitionType {
-    PropertyDefinition,
-    TSAbstractPropertyDefinition,
+    PropertyDefinition = 0,
+    TSAbstractPropertyDefinition = 1,
 }
 
 #[ast]
@@ -2010,13 +2010,13 @@ pub enum PropertyDefinitionType {
 #[serde(rename_all = "camelCase")]
 pub enum MethodDefinitionKind {
     /// Class constructor
-    Constructor,
+    Constructor = 0,
     /// Static or instance method
-    Method,
+    Method = 1,
     /// Getter method
-    Get,
+    Get = 2,
     /// Setter method
-    Set,
+    Set = 3,
 }
 
 /// An identifier for a private class member.
@@ -2120,8 +2120,8 @@ pub use match_module_declaration;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum AccessorPropertyType {
-    AccessorProperty,
-    TSAbstractAccessorProperty,
+    AccessorProperty = 0,
+    TSAbstractAccessorProperty = 1,
 }
 
 /// Class Accessor Property
@@ -2185,11 +2185,11 @@ pub struct ImportDeclaration<'a> {
 pub enum ImportDeclarationSpecifier<'a> {
     /// import {imported} from "source"
     /// import {imported as local} from "source"
-    ImportSpecifier(Box<'a, ImportSpecifier<'a>>),
+    ImportSpecifier(Box<'a, ImportSpecifier<'a>>) = 0,
     /// import local from "source"
-    ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>),
+    ImportDefaultSpecifier(Box<'a, ImportDefaultSpecifier<'a>>) = 1,
     /// import * as local from "source"
-    ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>),
+    ImportNamespaceSpecifier(Box<'a, ImportNamespaceSpecifier<'a>>) = 2,
 }
 
 // import {imported} from "source"
@@ -2278,8 +2278,8 @@ pub struct ImportAttribute<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ImportAttributeKey<'a> {
-    Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    Identifier(IdentifierName<'a>) = 0,
+    StringLiteral(StringLiteral<'a>) = 1,
 }
 
 /// Named Export Declaration
@@ -2410,8 +2410,8 @@ pub enum ExportDefaultDeclarationKind<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum ModuleExportName<'a> {
-    IdentifierName(IdentifierName<'a>),
+    IdentifierName(IdentifierName<'a>) = 0,
     /// For `local` in `ExportSpecifier`: `foo` in `export { foo }`
-    IdentifierReference(IdentifierReference<'a>),
-    StringLiteral(StringLiteral<'a>),
+    IdentifierReference(IdentifierReference<'a>) = 1,
+    StringLiteral(StringLiteral<'a>) = 2,
 }

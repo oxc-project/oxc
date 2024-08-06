@@ -175,14 +175,14 @@ pub struct TSLiteralType<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSLiteral<'a> {
-    BooleanLiteral(Box<'a, BooleanLiteral>),
-    NullLiteral(Box<'a, NullLiteral>),
-    NumericLiteral(Box<'a, NumericLiteral<'a>>),
-    BigIntLiteral(Box<'a, BigIntLiteral<'a>>),
-    RegExpLiteral(Box<'a, RegExpLiteral<'a>>),
-    StringLiteral(Box<'a, StringLiteral<'a>>),
-    TemplateLiteral(Box<'a, TemplateLiteral<'a>>),
-    UnaryExpression(Box<'a, UnaryExpression<'a>>),
+    BooleanLiteral(Box<'a, BooleanLiteral>) = 0,
+    NullLiteral(Box<'a, NullLiteral>) = 1,
+    NumericLiteral(Box<'a, NumericLiteral<'a>>) = 2,
+    BigIntLiteral(Box<'a, BigIntLiteral<'a>>) = 3,
+    RegExpLiteral(Box<'a, RegExpLiteral<'a>>) = 4,
+    StringLiteral(Box<'a, StringLiteral<'a>>) = 5,
+    TemplateLiteral(Box<'a, TemplateLiteral<'a>>) = 6,
+    UnaryExpression(Box<'a, UnaryExpression<'a>>) = 7,
 }
 
 /// TypeScript Type
@@ -373,9 +373,9 @@ pub struct TSTypeOperator<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSTypeOperatorOperator {
-    Keyof,
-    Unique,
-    Readonly,
+    Keyof = 0,
+    Unique = 1,
+    Readonly = 2,
 }
 
 /// TypeScript Array Type
@@ -723,9 +723,9 @@ pub struct TSTypeAliasDeclaration<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSAccessibility {
-    Private,
-    Protected,
-    Public,
+    Private = 0,
+    Protected = 1,
+    Public = 2,
 }
 
 #[ast(visit)]
@@ -789,11 +789,11 @@ pub struct TSPropertySignature<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSSignature<'a> {
-    TSIndexSignature(Box<'a, TSIndexSignature<'a>>),
-    TSPropertySignature(Box<'a, TSPropertySignature<'a>>),
-    TSCallSignatureDeclaration(Box<'a, TSCallSignatureDeclaration<'a>>),
-    TSConstructSignatureDeclaration(Box<'a, TSConstructSignatureDeclaration<'a>>),
-    TSMethodSignature(Box<'a, TSMethodSignature<'a>>),
+    TSIndexSignature(Box<'a, TSIndexSignature<'a>>) = 0,
+    TSPropertySignature(Box<'a, TSPropertySignature<'a>>) = 1,
+    TSCallSignatureDeclaration(Box<'a, TSCallSignatureDeclaration<'a>>) = 2,
+    TSConstructSignatureDeclaration(Box<'a, TSConstructSignatureDeclaration<'a>>) = 3,
+    TSMethodSignature(Box<'a, TSMethodSignature<'a>>) = 4,
 }
 
 /// An index signature within a class, type alias, etc.
@@ -837,9 +837,9 @@ pub struct TSCallSignatureDeclaration<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMethodSignatureKind {
-    Method,
-    Get,
-    Set,
+    Method = 0,
+    Get = 1,
+    Set = 2,
 }
 
 #[ast(visit)]
@@ -914,8 +914,8 @@ pub struct TSTypePredicate<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged, rename_all = "camelCase")]
 pub enum TSTypePredicateName<'a> {
-    Identifier(Box<'a, IdentifierName<'a>>),
-    This(TSThisType),
+    Identifier(Box<'a, IdentifierName<'a>>) = 0,
+    This(TSThisType) = 1,
 }
 
 #[ast(visit)]
@@ -951,9 +951,9 @@ pub struct TSModuleDeclaration<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSModuleDeclarationKind {
-    Global,
-    Module,
-    Namespace,
+    Global = 0,
+    Module = 1,
+    Namespace = 2,
 }
 
 impl TSModuleDeclarationKind {
@@ -967,8 +967,8 @@ impl TSModuleDeclarationKind {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationName<'a> {
-    Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    Identifier(IdentifierName<'a>) = 0,
+    StringLiteral(StringLiteral<'a>) = 1,
 }
 
 #[ast(visit)]
@@ -976,8 +976,8 @@ pub enum TSModuleDeclarationName<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSModuleDeclarationBody<'a> {
-    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>),
-    TSModuleBlock(Box<'a, TSModuleBlock<'a>>),
+    TSModuleDeclaration(Box<'a, TSModuleDeclaration<'a>>) = 0,
+    TSModuleBlock(Box<'a, TSModuleBlock<'a>>) = 1,
 }
 
 // See serializer in serialize.rs
@@ -1082,8 +1082,8 @@ pub struct TSImportAttribute<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum TSImportAttributeName<'a> {
-    Identifier(IdentifierName<'a>),
-    StringLiteral(StringLiteral<'a>),
+    Identifier(IdentifierName<'a>) = 0,
+    StringLiteral(StringLiteral<'a>) = 1,
 }
 
 #[ast(visit)]
@@ -1133,12 +1133,12 @@ pub struct TSMappedType<'a> {
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(rename_all = "camelCase")]
 pub enum TSMappedTypeModifierOperator {
-    True,
+    True = 0,
     #[serde(rename = "+")]
-    Plus,
+    Plus = 1,
     #[serde(rename = "-")]
-    Minus,
-    None,
+    Minus = 2,
+    None = 3,
 }
 
 #[ast(visit)]
@@ -1312,9 +1312,9 @@ pub struct TSInstantiationExpression<'a> {
 #[serde(rename_all = "camelCase")]
 pub enum ImportOrExportKind {
     /// `import { foo } from './foo'`;
-    Value,
+    Value = 0,
     /// `import type { foo } from './foo'`;
-    Type,
+    Type = 1,
 }
 
 // [`JSDoc`](https://github.com/microsoft/TypeScript/blob/54a554d8af2657630307cbfa8a3e4f3946e36507/src/compiler/types.ts#L393)

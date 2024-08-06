@@ -95,3 +95,9 @@ impl<'a> JSXAttribute<'a> {
         self.is_identifier("key")
     }
 }
+
+impl<'a> JSXChild<'a> {
+    pub const fn is_expression_container(&self) -> bool {
+        matches!(self, Self::ExpressionContainer(_))
+    }
+}
