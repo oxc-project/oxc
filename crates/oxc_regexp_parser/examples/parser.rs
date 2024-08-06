@@ -36,7 +36,8 @@ fn main() {
         r"/[a[b[c[d[e[f[g[h[i[j[k[l]]]]]]]]]]]]/v",
         r"/[\q{abc|d|e|}]/v",
         r"/\p{Basic_Emoji}/v",
-        r"/[[^\q{}]]/v", // Error
+        r"/[[^\q{}]]/v",   // Error
+        r"/(?<a>)(?<a>)/", // Error
     ] {
         println!("Parse: {source_text}");
         let parser = Parser::new(&allocator, source_text, ParserOptions::default());
@@ -49,7 +50,7 @@ fn main() {
                 println!("✨ {}", flags.span.source_text(source_text));
                 println!("{flags:?}");
             }
-            Err(err) => println!("💥 {}", err.message),
+            Err(err) => println!("💥 {err}"),
         }
         println!();
     }
