@@ -1,15 +1,17 @@
+use std::ops::Deref;
+
 use oxc_ast::{
     ast::{JSXAttributeItem, JSXAttributeValue, JSXElementName, JSXExpression},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{get_element_type, has_jsx_prop_ignore_case},
+    utils::{get_element_type, has_jsx_prop_ignore_case, Set},
     AstNode,
 };
 
@@ -34,9 +36,17 @@ fn cant_be_anchor(span0: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct AnchorIsValid(Box<AnchorIsValidConfig>);
 
+impl Deref for AnchorIsValid {
+    type Target = AnchorIsValidConfig;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 #[derive(Debug, Default, Clone)]
-struct AnchorIsValidConfig {
-    valid_hrefs: Vec<String>,
+pub struct AnchorIsValidConfig {
+    valid_hrefs: Set<CompactStr>,
 }
 
 declare_oxc_lint!(
@@ -117,10 +127,13 @@ declare_oxc_lint!(
 
 impl Rule for AnchorIsValid {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let valid_hrefs =
-            value.get("validHrefs").and_then(|v| v.as_array()).map_or_else(Vec::new, |array| {
-                array.iter().filter_map(|v| v.as_str().map(String::from)).collect::<Vec<String>>()
-            });
+        let valid_hrefs = value
+            // { "validHrefs": ["foo"] }
+            .get("validHrefs")
+            // [{ "validHrefs": ["foo"] }]
+            .or_else(|| value.get(0).and_then(|obj| obj.get("validHrefs")))
+            .and_then(|v| Set::try_from(v).ok())
+            .unwrap_or_default();
         Self(Box::new(AnchorIsValidConfig { valid_hrefs }))
     }
 
@@ -140,7 +153,7 @@ impl Rule for AnchorIsValid {
                     match herf_attr {
                         JSXAttributeItem::Attribute(attr) => match &attr.value {
                             Some(value) => {
-                                let is_empty = check_value_is_empty(value, &self.0.valid_hrefs);
+                                let is_empty = self.check_value_is_empty(value);
                                 if is_empty {
                                     if has_jsx_prop_ignore_case(&jsx_el.opening_element, "onclick")
                                         .is_some()
@@ -179,29 +192,31 @@ impl Rule for AnchorIsValid {
     }
 }
 
-fn check_value_is_empty(value: &JSXAttributeValue, valid_hrefs: &[String]) -> bool {
-    match value {
-        JSXAttributeValue::Element(_) => false,
-        JSXAttributeValue::StringLiteral(str_lit) => {
-            let href_value = str_lit.value.to_string(); // Assuming Atom implements ToString
-            href_value.is_empty()
-                || href_value == "#"
-                || href_value == "javascript:void(0)"
-                || !valid_hrefs.contains(&href_value)
-        }
-        JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
-            JSXExpression::Identifier(ident) => ident.name == "undefined",
-            JSXExpression::NullLiteral(_) => true,
-            JSXExpression::StringLiteral(str_lit) => {
-                let href_value = str_lit.value.to_string();
+impl AnchorIsValid {
+    fn check_value_is_empty(&self, value: &JSXAttributeValue) -> bool {
+        match value {
+            JSXAttributeValue::Element(_) => false,
+            JSXAttributeValue::StringLiteral(str_lit) => {
+                let href_value = &str_lit.value;
                 href_value.is_empty()
                     || href_value == "#"
                     || href_value == "javascript:void(0)"
-                    || !valid_hrefs.contains(&href_value)
+                    || !self.valid_hrefs.contains_str(href_value)
             }
-            _ => false,
-        },
-        JSXAttributeValue::Fragment(_) => true,
+            JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
+                JSXExpression::Identifier(ident) => ident.name == "undefined",
+                JSXExpression::NullLiteral(_) => true,
+                JSXExpression::StringLiteral(str_lit) => {
+                    let href_value = &str_lit.value;
+                    href_value.is_empty()
+                        || href_value == "#"
+                        || href_value == "javascript:void(0)"
+                        || !self.valid_hrefs.contains_str(href_value)
+                }
+                _ => false,
+            },
+            JSXAttributeValue::Fragment(_) => true,
+        }
     }
 }
 

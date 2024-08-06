@@ -1,9 +1,9 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::Set, AstNode};
 
 fn no_console_diagnostic(span0: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected console statement.").with_label(span0)
@@ -21,7 +21,7 @@ pub struct NoConsoleConfig {
     /// console.log('foo'); // will error
     /// console.info('bar'); // will not error
     /// ```
-    pub allow: Vec<String>,
+    pub allow: Set<CompactStr>,
 }
 
 impl std::ops::Deref for NoConsole {
@@ -56,13 +56,7 @@ impl Rule for NoConsole {
             allow: value
                 .get(0)
                 .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
-                })
+                .and_then(|v| v.try_into().ok())
                 .unwrap_or_default(),
         }))
     }
@@ -73,10 +67,7 @@ impl Rule for NoConsole {
                 if let Expression::Identifier(ident) = mem.object() {
                     if ctx.semantic().is_reference_to_global_variable(ident)
                         && ident.name == "console"
-                        && !self
-                            .allow
-                            .iter()
-                            .any(|s| mem.static_property_name().is_some_and(|f| f == s))
+                        && !mem.static_property_name().is_some_and(|f| self.allow.contains_str(f))
                     {
                         if let Some(mem) = mem.static_property_info() {
                             ctx.diagnostic(no_console_diagnostic(mem.0));

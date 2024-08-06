@@ -73,10 +73,7 @@
           ],
           "properties": {
             "attributes": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
+              "$ref": "#/definitions/Set_of_String"
             },
             "name": {
               "type": "string"
@@ -231,18 +228,26 @@
       "type": "object",
       "properties": {
         "formComponents": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CustomComponent"
-          }
+          "$ref": "#/definitions/Set_of_CustomComponent"
         },
         "linkComponents": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CustomComponent"
-          }
+          "$ref": "#/definitions/Set_of_CustomComponent"
         }
       }
+    },
+    "Set_of_CustomComponent": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CustomComponent"
+      },
+      "uniqueItems": true
+    },
+    "Set_of_String": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
     },
     "TagNamePreference": {
       "anyOf": [

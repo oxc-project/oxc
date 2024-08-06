@@ -4,6 +4,8 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
+use crate::utils::Set;
+
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/main/docs/settings.md>
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct JSDocPluginSettings {
@@ -152,7 +154,7 @@ impl JSDocPluginSettings {
 
     /// Only for `check-tag-names` rule
     /// Return all user replacement tag names
-    pub fn list_user_defined_tag_names(&self) -> Vec<&str> {
+    pub fn list_user_defined_tag_names(&self) -> Set<&str> {
         self.tag_name_preference
             .iter()
             .filter_map(|(_, pref)| match pref {
@@ -203,6 +205,8 @@ enum TagNamePreference {
 mod test {
     use serde::Deserialize;
     use std::borrow::Cow;
+
+    use crate::set;
 
     use super::JSDocPluginSettings;
 
@@ -279,9 +283,8 @@ mod test {
             }
         }))
         .unwrap();
-        let mut preferred = settings.list_user_defined_tag_names();
-        preferred.sort_unstable();
-        assert_eq!(preferred, vec!["bar", "noop", "overridedefault"]);
+        let preferred = settings.list_user_defined_tag_names();
+        assert_eq!(preferred, set!["bar", "noop", "overridedefault"]);
     }
 
     #[test]

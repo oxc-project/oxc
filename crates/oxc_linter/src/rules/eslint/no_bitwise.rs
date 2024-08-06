@@ -1,10 +1,10 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{context::LintContext, rule::Rule, AstNode};
+use crate::{context::LintContext, rule::Rule, utils::Set, AstNode};
 
 fn no_bitwise_diagnostic(x0: &str, span1: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Unexpected use of {x0:?}"))
@@ -17,7 +17,7 @@ pub struct NoBitwise(Box<NoBitwiseConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoBitwiseConfig {
-    allow: Vec<String>,
+    allow: Set<CompactStr>,
     int32_hint: bool,
 }
 
@@ -55,13 +55,7 @@ impl Rule for NoBitwise {
         Self(Box::new(NoBitwiseConfig {
             allow: obj
                 .and_then(|v| v.get("allow"))
-                .and_then(serde_json::Value::as_array)
-                .map(|v| {
-                    v.iter()
-                        .filter_map(serde_json::Value::as_str)
-                        .map(ToString::to_string)
-                        .collect()
-                })
+                .and_then(|v| Set::try_from(v).ok())
                 .unwrap_or_default(),
             int32_hint: obj
                 .and_then(|v| v.get("int32Hint"))
@@ -75,30 +69,21 @@ impl Rule for NoBitwise {
             AstKind::BinaryExpression(bin_expr) => {
                 let op = bin_expr.operator.as_str();
 
-                if bin_expr.operator.is_bitwise()
-                    && !allowed_operator(&self.allow, op)
-                    && !is_int32_hint(self.int32_hint, node)
-                {
+                if bin_expr.operator.is_bitwise() && !self.is_allowed(op, node) {
                     ctx.diagnostic(no_bitwise_diagnostic(op, bin_expr.span));
                 }
             }
             AstKind::UnaryExpression(unary_expr) => {
                 let op = unary_expr.operator.as_str();
 
-                if unary_expr.operator.is_bitwise()
-                    && !allowed_operator(&self.allow, op)
-                    && !is_int32_hint(self.int32_hint, node)
-                {
+                if unary_expr.operator.is_bitwise() && !self.is_allowed(op, node) {
                     ctx.diagnostic(no_bitwise_diagnostic(op, unary_expr.span));
                 }
             }
             AstKind::AssignmentExpression(assign_expr) => {
                 let op = assign_expr.operator.as_str();
 
-                if assign_expr.operator.is_bitwise()
-                    && !allowed_operator(&self.allow, op)
-                    && !is_int32_hint(self.int32_hint, node)
-                {
+                if assign_expr.operator.is_bitwise() && !self.is_allowed(op, node) {
                     ctx.diagnostic(no_bitwise_diagnostic(op, assign_expr.span));
                 }
             }
@@ -107,20 +92,27 @@ impl Rule for NoBitwise {
     }
 }
 
-fn allowed_operator(allow: &[String], operator: &str) -> bool {
-    allow.iter().any(|s| s == operator)
-}
-
-fn is_int32_hint(int32_hint: bool, node: &AstNode) -> bool {
-    if !int32_hint {
-        return false;
+impl NoBitwise {
+    pub(self) fn is_allowed(&self, operator: &str, node: &AstNode) -> bool {
+        self.is_allowed_operator(operator) || self.is_int32_hint(node)
     }
 
-    match node.kind() {
-        AstKind::BinaryExpression(bin_expr) => {
-            bin_expr.operator == BinaryOperator::BitwiseOR && bin_expr.right.is_number_0()
+    #[inline]
+    fn is_allowed_operator(&self, operator: &str) -> bool {
+        self.allow.contains_str(operator)
+    }
+
+    fn is_int32_hint(&self, node: &AstNode) -> bool {
+        if !self.int32_hint {
+            return false;
         }
-        _ => false,
+
+        match node.kind() {
+            AstKind::BinaryExpression(bin_expr) => {
+                bin_expr.operator == BinaryOperator::BitwiseOR && bin_expr.right.is_number_0()
+            }
+            _ => false,
+        }
     }
 }
 

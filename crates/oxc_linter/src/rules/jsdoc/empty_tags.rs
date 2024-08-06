@@ -1,10 +1,14 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use phf::phf_set;
 use serde::Deserialize;
 
-use crate::{context::LintContext, rule::Rule, utils::should_ignore_as_private};
+use crate::{
+    context::LintContext,
+    rule::Rule,
+    utils::{should_ignore_as_private, Set},
+};
 
 fn empty_tags_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn("Expects the void tags to be empty of any content.")
@@ -80,7 +84,7 @@ const EMPTY_TAGS: phf::Set<&'static str> = phf_set! {
 #[derive(Debug, Default, Clone, Deserialize)]
 struct EmptyTagsConfig {
     #[serde(default)]
-    tags: Vec<String>,
+    tags: Set<CompactStr>,
 }
 
 impl Rule for EmptyTags {
@@ -99,7 +103,7 @@ impl Rule for EmptyTags {
             if EMPTY_TAGS.contains(tag_name) {
                 return true;
             }
-            if !self.0.tags.is_empty() && self.0.tags.contains(&tag_name.to_string()) {
+            if !self.0.tags.is_empty() && self.0.tags.contains_str(tag_name) {
                 return true;
             }
             false

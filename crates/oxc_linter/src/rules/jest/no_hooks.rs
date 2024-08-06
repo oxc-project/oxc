@@ -1,14 +1,14 @@
 use oxc_ast::{ast::Expression, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, is_type_of_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        PossibleJestNode, Set,
     },
 };
 
@@ -21,7 +21,7 @@ pub struct NoHooks(Box<NoHooksConfig>);
 
 #[derive(Debug, Default, Clone)]
 pub struct NoHooksConfig {
-    allow: Vec<String>,
+    allow: Set<CompactStr>,
 }
 
 impl std::ops::Deref for NoHooks {
@@ -85,10 +85,7 @@ impl Rule for NoHooks {
         let allow = value
             .get(0)
             .and_then(|config| config.get("allow"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .and_then(|v| Set::try_from(v).ok())
             .unwrap_or_default();
 
         Self(Box::new(NoHooksConfig { allow }))
@@ -117,7 +114,7 @@ impl NoHooks {
         }
 
         if let Expression::Identifier(ident) = &call_expr.callee {
-            if !self.allow.contains(&ident.name.to_string()) {
+            if !self.allow.contains_str(ident.name.as_str()) {
                 ctx.diagnostic(unexpected_hook_diagonsitc(call_expr.callee.span()));
             }
         }

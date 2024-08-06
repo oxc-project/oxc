@@ -1,14 +1,14 @@
 use oxc_ast::{ast::Argument, AstKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        ParsedJestFnCallNew, PossibleJestNode,
+        ParsedJestFnCallNew, PossibleJestNode, Set,
     },
 };
 
@@ -20,8 +20,8 @@ fn unexpected_lowercase(x0: &str, span1: Span) -> OxcDiagnostic {
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferLowercaseTitleConfig {
-    allowed_prefixes: Vec<String>,
-    ignore: Vec<String>,
+    allowed_prefixes: Set<CompactStr>,
+    ignore: Set<CompactStr>,
     ignore_top_level_describe: bool,
 }
 
@@ -134,25 +134,21 @@ declare_oxc_lint!(
 
 impl Rule for PreferLowercaseTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let obj = value.get(0);
-        let ignore_top_level_describe = obj
-            .and_then(|config| config.get("ignoreTopLevelDescribe"))
+        let Some(config) = value.get(0) else {
+            return Self::default();
+        };
+
+        let ignore_top_level_describe = config
+            .get("ignoreTopLevelDescribe")
             .and_then(serde_json::Value::as_bool)
             .unwrap_or(false);
-        let ignore = obj
-            .and_then(|config| config.get("ignore"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
-            .unwrap_or_default();
-        let allowed_prefixes = obj
-            .and_then(|config| config.get("allowedPrefixes"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
-            .unwrap_or_default();
+
+        let ignore = config.get("ignore").and_then(|v| Set::try_from(v).ok()).unwrap_or_default();
+
+        let allowed_prefixes =
+            config.get("allowedPrefixes").and_then(|v| Set::try_from(v).ok()).unwrap_or_default();
+
+        let ignore = Self::populate_ignores(ignore);
 
         Self(Box::new(PreferLowercaseTitleConfig {
             allowed_prefixes,
@@ -180,36 +176,41 @@ impl PreferLowercaseTitle {
             return;
         };
 
-        let scopes = ctx.scopes();
-        let ignores = Self::populate_ignores(&self.ignore);
-
-        if ignores.contains(&jest_fn_call.name.as_ref()) {
+        if self.ignore.contains_str(&jest_fn_call.name) {
             return;
         }
 
-        if matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
-            if self.ignore_top_level_describe && scopes.get_flags(node.scope_id()).is_top() {
-                return;
+        match jest_fn_call.kind {
+            JestFnKind::General(JestGeneralFnKind::Describe) => {
+                if self.ignore_top_level_describe && node.scope_id() == ctx.scopes().root_scope_id()
+                {
+                    return;
+                }
             }
-        } else if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Test)) {
-            return;
+            JestFnKind::General(JestGeneralFnKind::Test) => {}
+            _ => return,
         }
 
         let Some(arg) = call_expr.arguments.first() else {
             return;
         };
 
-        if let Argument::StringLiteral(string_expr) = arg {
-            self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
-        } else if let Argument::TemplateLiteral(template_expr) = arg {
-            let Some(template_string) = template_expr.quasi() else {
-                return;
-            };
-            self.lint_string(ctx, template_string.as_str(), template_expr.span);
+        match arg {
+            Argument::StringLiteral(string_expr) => {
+                self.lint_string(ctx, string_expr.value.as_str(), string_expr.span);
+            }
+            Argument::TemplateLiteral(template_expr) => {
+                let Some(template_string) = template_expr.quasi() else {
+                    return;
+                };
+                self.lint_string(ctx, template_string.as_str(), template_expr.span);
+            }
+            _ => {}
         }
     }
 
-    fn populate_ignores(ignore: &[String]) -> Vec<&str> {
+    #[allow(clippy::needless_pass_by_value)]
+    fn populate_ignores(ignore: Set<CompactStr>) -> Set<CompactStr> {
         let mut ignores: Vec<&str> = vec![];
         let test_case_name = ["fit", "it", "xit", "test", "xtest"];
         let describe_alias = ["describe", "fdescribe", "xdescribe"];
@@ -228,12 +229,17 @@ impl PreferLowercaseTitle {
             ignores.extend(test_case_name.iter().filter(|alias| alias.ends_with(it_name)));
         }
 
-        ignores
+        ignores.into_iter().map(CompactStr::from).collect()
+    }
+
+    #[inline]
+    fn is_allowed_literal(&self, literal: &str) -> bool {
+        literal.is_empty()
+            || self.allowed_prefixes.iter().any(|name| literal.starts_with(name.as_str()))
     }
 
     fn lint_string<'a>(&self, ctx: &LintContext<'a>, literal: &'a str, span: Span) {
-        if literal.is_empty() || self.allowed_prefixes.iter().any(|name| literal.starts_with(name))
-        {
+        if self.is_allowed_literal(literal) {
             return;
         }
 
@@ -250,6 +256,15 @@ impl PreferLowercaseTitle {
             fixer.replace(Span::sized(span.start + 1, 1), lower.to_string())
         });
     }
+}
+
+#[test]
+fn debug() {
+    let pass = vec![];
+    let fail = vec![("describe(\"Foo\", function () {})", None)];
+    crate::tester::Tester::new(PreferLowercaseTitle::NAME, pass, fail)
+        .with_jest_plugin(true)
+        .test();
 }
 
 #[test]

@@ -1,13 +1,13 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use phf::phf_set;
 use serde::Deserialize;
 
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{should_ignore_as_internal, should_ignore_as_private},
+    utils::{should_ignore_as_internal, should_ignore_as_private, Set},
 };
 
 fn check_tag_names_diagnostic(span0: Span, x1: &str) -> OxcDiagnostic {
@@ -46,7 +46,7 @@ declare_oxc_lint!(
 #[derive(Debug, Default, Clone, Deserialize)]
 struct CheckTagnamesConfig {
     #[serde(default, rename = "definedTags")]
-    defined_tags: Vec<String>,
+    defined_tags: Set<CompactStr>,
     #[serde(default, rename = "jsxTags")]
     jsx_tags: bool,
     #[serde(default)]
@@ -224,7 +224,7 @@ impl Rule for CheckTagNames {
 
                 // If user explicitly allowed, skip
                 if user_defined_tags.contains(&tag_name)
-                    || config.defined_tags.contains(&tag_name.to_string())
+                    || config.defined_tags.contains_str(tag_name)
                 {
                     continue;
                 }

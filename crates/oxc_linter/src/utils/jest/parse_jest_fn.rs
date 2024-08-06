@@ -306,6 +306,7 @@ fn resolve_first_ident<'a>(expr: &'a Expression<'a>) -> Option<&'a IdentifierRef
     }
 }
 
+#[derive(Debug)]
 pub enum ParsedJestFnCall<'a> {
     GeneralJestFnCall(ParsedGeneralJestFnCall<'a>),
     ExpectFnCall(ParsedExpectFnCall<'a>),
@@ -320,6 +321,7 @@ impl<'a> ParsedJestFnCall<'a> {
     }
 }
 
+#[derive(Debug)]
 pub struct ParsedGeneralJestFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,
@@ -328,6 +330,7 @@ pub struct ParsedGeneralJestFnCall<'a> {
     pub local: Cow<'a, str>,
 }
 
+#[derive(Debug)]
 pub struct ParsedExpectFnCall<'a> {
     pub kind: JestFnKind,
     pub members: Vec<KnownMemberExpressionProperty<'a>>,

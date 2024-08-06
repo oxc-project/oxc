@@ -6,13 +6,15 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 
 use crate::{
     context::LintContext,
     rule::Rule,
+    set,
     utils::{
         collect_possible_jest_call_node, parse_expect_jest_fn_call, ExpectError, PossibleJestNode,
+        Set,
     },
     AstNode,
 };
@@ -30,7 +32,7 @@ pub struct ValidExpect(Box<ValidExpectConfig>);
 
 #[derive(Debug, Clone)]
 pub struct ValidExpectConfig {
-    async_matchers: Vec<String>,
+    async_matchers: Set<CompactStr>,
     min_args: usize,
     max_args: usize,
     always_await: bool,
@@ -47,7 +49,7 @@ impl std::ops::Deref for ValidExpect {
 impl Default for ValidExpectConfig {
     fn default() -> Self {
         Self {
-            async_matchers: vec![String::from("toResolve"), String::from("toReject")],
+            async_matchers: set!["toResolve".into(), "toReject".into()],
             min_args: 1,
             max_args: 1,
             always_await: false,
@@ -86,31 +88,32 @@ declare_oxc_lint!(
 
 impl Rule for ValidExpect {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let default_async_matchers = vec![String::from("toResolve"), String::from("toReject")];
-        let config = value.get(0);
+        let Some(config) = value.get(0) else {
+            return Self::default();
+        };
+
+        let ValidExpectConfig { async_matchers, min_args, max_args, always_await } =
+            ValidExpectConfig::default();
 
         let async_matchers = config
-            .and_then(|config| config.get("asyncMatchers"))
-            .and_then(serde_json::Value::as_array)
-            .map_or(default_async_matchers, |v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(String::from).collect()
-            });
+            .get("asyncMatchers")
+            .and_then(|v| Set::try_from(v).ok())
+            .unwrap_or(async_matchers);
+
         let min_args = config
-            .and_then(|config| config.get("minArgs"))
+            .get("minArgs")
             .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .map_or(1, |v| usize::try_from(v).unwrap_or(1));
+            .map_or(min_args, |v| usize::try_from(v).unwrap_or(1));
 
         let max_args = config
-            .and_then(|config| config.get("maxArgs"))
+            .get("maxArgs")
             .and_then(serde_json::Value::as_number)
             .and_then(serde_json::Number::as_u64)
-            .map_or(1, |v| usize::try_from(v).unwrap_or(1));
+            .map_or(max_args, |v| usize::try_from(v).unwrap_or(1));
 
-        let always_await = config
-            .and_then(|config| config.get("alwaysAwait"))
-            .and_then(serde_json::Value::as_bool)
-            .unwrap_or(false);
+        let always_await =
+            config.get("alwaysAwait").and_then(serde_json::Value::as_bool).unwrap_or(always_await);
 
         Self(Box::new(ValidExpectConfig { async_matchers, min_args, max_args, always_await }))
     }
@@ -191,11 +194,10 @@ impl ValidExpect {
             return;
         };
 
-        let should_be_awaited =
-            jest_fn_call.modifiers().iter().any(|modifier| modifier.is_name_unequal("not"))
-                || self.async_matchers.contains(&matcher_name.to_string());
+        let should_be_awaited = self.async_matchers.contains_str(&matcher_name)
+            || jest_fn_call.modifiers().iter().any(|modifier| modifier.is_name_unequal("not"));
 
-        if ctx.nodes().parent_node(parent.id()).is_none() || !should_be_awaited {
+        if !should_be_awaited || ctx.nodes().parent_id(parent.id()).is_none() {
             return;
         }
 

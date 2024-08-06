@@ -1,20 +1,25 @@
+use std::borrow::Cow;
+
+use itertools::Itertools as _;
 use oxc_ast::{
     ast::{CallExpression, Expression, Statement},
     AstKind,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 use rustc_hash::FxHashSet;
+use serde_json::Value;
 
 use crate::{
     ast_util::get_declaration_of_variable,
     context::LintContext,
     rule::Rule,
+    set,
     utils::{
         collect_possible_jest_call_node, get_node_name, is_type_of_jest_fn_call, JestFnKind,
-        JestGeneralFnKind, PossibleJestNode,
+        JestGeneralFnKind, PossibleJestNode, Set,
     },
 };
 
@@ -29,8 +34,8 @@ pub struct ExpectExpect(Box<ExpectExpectConfig>);
 
 #[derive(Debug, Clone)]
 pub struct ExpectExpectConfig {
-    assert_function_names: Vec<String>,
-    additional_test_block_functions: Vec<String>,
+    assert_function_names: Set<CompactStr>,
+    additional_test_block_functions: Set<CompactStr>,
 }
 
 impl std::ops::Deref for ExpectExpect {
@@ -44,8 +49,8 @@ impl std::ops::Deref for ExpectExpect {
 impl Default for ExpectExpectConfig {
     fn default() -> Self {
         Self {
-            assert_function_names: vec![String::from("expect")],
-            additional_test_block_functions: vec![],
+            assert_function_names: set!["expect".into()],
+            additional_test_block_functions: set![],
         }
     }
 }
@@ -84,22 +89,19 @@ declare_oxc_lint!(
 
 impl Rule for ExpectExpect {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let default_assert_function_names = vec![String::from("expect")];
+        let default_assert_function_names = set!["expect".into()];
         let config = value.get(0);
 
         let assert_function_names = config
             .and_then(|config| config.get("assertFunctionNames"))
-            .and_then(serde_json::Value::as_array)
+            .and_then(Value::as_array)
             .map_or(default_assert_function_names, |v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(convert_pattern).collect()
+                v.iter().filter_map(Value::as_str).map(convert_pattern).collect()
             });
 
         let additional_test_block_functions = config
             .and_then(|config| config.get("additionalTestBlockFunctions"))
-            .and_then(serde_json::Value::as_array)
-            .map(|v| {
-                v.iter().filter_map(serde_json::Value::as_str).map(ToString::to_string).collect()
-            })
+            .and_then(|v| Set::try_from(v).ok())
             .unwrap_or_default();
 
         Self(Box::new(ExpectExpectConfig {
@@ -128,7 +130,7 @@ fn run<'a>(
             possible_jest_node,
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Test)],
-        ) || rule.additional_test_block_functions.contains(&name)
+        ) || rule.additional_test_block_functions.contains_str(&name)
         {
             if let Some(member_expr) = call_expr.callee.as_member_expression() {
                 let Some(property_name) = member_expr.static_property_name() else {
@@ -157,7 +159,7 @@ fn run<'a>(
 
 fn check_arguments<'a>(
     call_expr: &'a CallExpression<'a>,
-    assert_function_names: &[String],
+    assert_function_names: &Set<CompactStr>,
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -173,7 +175,7 @@ fn check_arguments<'a>(
 
 fn check_assert_function_used<'a>(
     expr: &'a Expression<'a>,
-    assert_function_names: &[String],
+    assert_function_names: &Set<CompactStr>,
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -244,7 +246,7 @@ fn check_assert_function_used<'a>(
 
 fn check_statements<'a>(
     statements: &'a oxc_allocator::Vec<Statement<'a>>,
-    assert_function_names: &[String],
+    assert_function_names: &Set<CompactStr>,
     visited: &mut FxHashSet<Span>,
     ctx: &LintContext<'a>,
 ) -> bool {
@@ -262,23 +264,29 @@ fn check_statements<'a>(
 }
 
 /// Checks if node names returned by getNodeName matches any of the given star patterns
-fn matches_assert_function_name(name: &str, patterns: &[String]) -> bool {
+/// FIXME: Do not re-compile Regex on each call
+fn matches_assert_function_name(name: &str, patterns: &Set<CompactStr>) -> bool {
     patterns.iter().any(|pattern| Regex::new(pattern).unwrap().is_match(name))
 }
 
-fn convert_pattern(pattern: &str) -> String {
+fn convert_pattern(pattern: &str) -> CompactStr {
     // Pre-process pattern, e.g.
     // request.*.expect -> request.[a-z\\d]*.expect
     // request.**.expect -> request.[a-z\\d\\.]*.expect
     // request.**.expect* -> request.[a-z\\d\\.]*.expect[a-z\\d]*
     let pattern = pattern
         .split('.')
-        .map(|p| if p == "**" { String::from("[a-z\\d\\.]*") } else { p.replace('*', "[a-z\\d]*") })
-        .collect::<Vec<_>>()
+        .map(|p| {
+            if p == "**" {
+                Cow::Borrowed("[a-z\\d\\.]*")
+            } else {
+                Cow::Owned(p.replace('*', "[a-z\\d]*"))
+            }
+        })
         .join("\\.");
 
     // 'a.b.c' -> /^a\.b\.c(\.|$)/iu
-    format!("(?ui)^{pattern}(\\.|$)")
+    CompactStr::from(format!("(?ui)^{pattern}(\\.|$)"))
 }
 
 #[test]

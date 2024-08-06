@@ -6,7 +6,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::{CompactStr, GetSpan, Span};
 use regex::Regex;
 
 use crate::{
@@ -14,7 +14,7 @@ use crate::{
     rule::Rule,
     utils::{
         collect_possible_jest_call_node, parse_general_jest_fn_call, JestFnKind, JestGeneralFnKind,
-        PossibleJestNode,
+        PossibleJestNode, Set,
     },
 };
 
@@ -28,7 +28,7 @@ pub struct ValidTitle(Box<ValidTitleConfig>);
 #[derive(Debug, Default, Clone)]
 pub struct ValidTitleConfig {
     ignore_type_of_describe_name: bool,
-    disallowed_words: Vec<String>,
+    disallowed_words: Set<CompactStr>,
     ignore_space: bool,
     must_not_match_patterns: HashMap<MatchKind, CompiledMatcherAndMessage>,
     must_match_patterns: HashMap<MatchKind, CompiledMatcherAndMessage>,
@@ -70,31 +70,22 @@ declare_oxc_lint!(
 
 impl Rule for ValidTitle {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let config = value.get(0);
+        let Some(config) = value.get(0) else {
+            return Self::default();
+        };
+
         let get_as_bool = |name: &str| -> bool {
-            config
-                .and_then(|v| v.get(name))
-                .and_then(serde_json::Value::as_bool)
-                .unwrap_or_default()
+            config.get(name).and_then(serde_json::Value::as_bool).unwrap_or_default()
         };
 
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
         let ignore_space = get_as_bool("ignoreSpaces");
-        let disallowed_words = config
-            .and_then(|v| v.get("disallowedWords"))
-            .and_then(|v| v.as_array())
-            .map(|v| {
-                v.iter().filter_map(|v| v.as_str().map(std::string::ToString::to_string)).collect()
-            })
-            .unwrap_or_default();
-        let must_not_match_patterns = config
-            .and_then(|v| v.get("mustNotMatch"))
-            .and_then(compile_matcher_patterns)
-            .unwrap_or_default();
-        let must_match_patterns = config
-            .and_then(|v| v.get("mustMatch"))
-            .and_then(compile_matcher_patterns)
-            .unwrap_or_default();
+        let disallowed_words =
+            config.get("disallowedWords").and_then(|v| Set::try_from(v).ok()).unwrap_or_default();
+        let must_not_match_patterns =
+            config.get("mustNotMatch").and_then(compile_matcher_patterns).unwrap_or_default();
+        let must_match_patterns =
+            config.get("mustMatch").and_then(compile_matcher_patterns).unwrap_or_default();
         Self(Box::new(ValidTitleConfig {
             ignore_type_of_describe_name,
             disallowed_words,
