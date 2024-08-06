@@ -23,7 +23,7 @@ pub use scoping::TraverseScoping;
 /// Passed to all AST visitor functions.
 ///
 /// Provides ability to:
-/// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`find_ancestor`].
+/// * Query parent/ancestor of current node via [`parent`], [`ancestor`], [`ancestors`].
 /// * Get scopes tree and symbols table via [`scopes`], [`symbols`], [`scopes_mut`], [`symbols_mut`],
 ///   [`find_scope`], [`find_scope_by_flags`].
 /// * Create AST nodes via AST builder [`ast`].
@@ -95,7 +95,7 @@ pub use scoping::TraverseScoping;
 ///
 /// [`parent`]: `TraverseCtx::parent`
 /// [`ancestor`]: `TraverseCtx::ancestor`
-/// [`find_ancestor`]: `TraverseCtx::find_ancestor`
+/// [`ancestors`]: `TraverseCtx::ancestors`
 /// [`scopes`]: `TraverseCtx::scopes`
 /// [`symbols`]: `TraverseCtx::symbols`
 /// [`scopes_mut`]: `TraverseCtx::scopes_mut`
@@ -110,7 +110,7 @@ pub struct TraverseCtx<'a> {
     pub ast: AstBuilder<'a>,
 }
 
-/// Return value of closure when using [`TraverseCtx::find_ancestor`] or [`TraverseCtx::find_scope`].
+/// Return value of closure when using [`TraverseCtx::find_scope`].
 pub enum FinderRet<T> {
     Found(T),
     Stop,
@@ -157,41 +157,12 @@ impl<'a> TraverseCtx<'a> {
         self.ancestry.ancestor(level)
     }
 
-    /// Walk up trail of ancestors to find a node.
+    /// Get iterator over ancestors, starting with closest ancestor.
     ///
-    /// `finder` should return:
-    /// * `FinderRet::Found(value)` to stop walking and return `Some(value)`.
-    /// * `FinderRet::Stop` to stop walking and return `None`.
-    /// * `FinderRet::Continue` to continue walking up.
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use oxc_ast::ast::ThisExpression;
-    /// use oxc_traverse::{Ancestor, FinderRet, Traverse, TraverseCtx};
-    ///
-    /// struct MyTraverse;
-    /// impl<'a> Traverse<'a> for MyTraverse {
-    ///     fn enter_this_expression(&mut self, this_expr: &mut ThisExpression, ctx: &mut TraverseCtx<'a>) {
-    ///         // Get name of function where `this` is bound.
-    ///         // NB: This example doesn't handle `this` in class fields or static blocks.
-    ///         let fn_id = ctx.find_ancestor(|ancestor| {
-    ///             match ancestor {
-    ///                 Ancestor::FunctionBody(func) => FinderRet::Found(func.id()),
-    ///                 Ancestor::FunctionParams(func) => FinderRet::Found(func.id()),
-    ///                 _ => FinderRet::Continue
-    ///             }
-    ///         });
-    ///     }
-    /// }
-    /// ```
-    ///
-    /// Shortcut for `self.ancestry.find_ancestor`.
-    pub fn find_ancestor<'c, F, O>(&'c self, finder: F) -> Option<O>
-    where
-        F: Fn(&'c Ancestor<'a>) -> FinderRet<O>,
-    {
-        self.ancestry.find_ancestor(finder)
+    /// Shortcut for `ctx.ancestry.ancestors`.
+    #[inline]
+    pub fn ancestors<'b>(&'b self) -> impl Iterator<Item = &'b Ancestor<'a>> {
+        self.ancestry.ancestors()
     }
 
     /// Get depth in the AST.

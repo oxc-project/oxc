@@ -54,11 +54,12 @@ impl<'a> ReactJsxSelf<'a> {
     }
 
     fn has_no_super_class(ctx: &TraverseCtx<'a>) -> bool {
-        ctx.find_ancestor(|ancestor| match ancestor {
-            Ancestor::ClassBody(class) => FinderRet::Found(class.super_class().is_none()),
-            _ => FinderRet::Continue,
-        })
-        .unwrap_or(true)
+        for ancestor in ctx.ancestors() {
+            if let Ancestor::ClassBody(class) = ancestor {
+                return class.super_class().is_none();
+            }
+        }
+        true
     }
 
     pub fn can_add_self_attribute(&self, ctx: &TraverseCtx<'a>) -> bool {
