@@ -20,8 +20,9 @@ workspace = true
 doctest = false
 
 [dependencies]
-oxc_index = { workspace = true }
-oxc_span  = { workspace = true }
+oxc_index      = { workspace = true }
+oxc_span       = { workspace = true }
+oxc_ast_macros = { workspace = true }
 
 unicode-id-start = { workspace = true }
 bitflags         = { workspace = true }

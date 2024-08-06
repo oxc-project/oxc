@@ -4,6 +4,7 @@
 use std::mem::{align_of, offset_of, size_of};
 
 use crate::ast::*;
+use oxc_syntax::{number::*, operator::*};
 
 #[cfg(target_pointer_width = "64")]
 const _: () = {
@@ -1124,6 +1125,20 @@ const _: () = {
     assert!(align_of::<JSXText>() == 8usize);
     assert!(offset_of!(JSXText, span) == 0usize);
     assert!(offset_of!(JSXText, value) == 8usize);
+    assert!(size_of::<NumberBase>() == 1usize);
+    assert!(align_of::<NumberBase>() == 1usize);
+    assert!(size_of::<BigintBase>() == 1usize);
+    assert!(align_of::<BigintBase>() == 1usize);
+    assert!(size_of::<AssignmentOperator>() == 1usize);
+    assert!(align_of::<AssignmentOperator>() == 1usize);
+    assert!(size_of::<BinaryOperator>() == 1usize);
+    assert!(align_of::<BinaryOperator>() == 1usize);
+    assert!(size_of::<LogicalOperator>() == 1usize);
+    assert!(align_of::<LogicalOperator>() == 1usize);
+    assert!(size_of::<UnaryOperator>() == 1usize);
+    assert!(align_of::<UnaryOperator>() == 1usize);
+    assert!(size_of::<UpdateOperator>() == 1usize);
+    assert!(align_of::<UpdateOperator>() == 1usize);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -2245,6 +2260,20 @@ const _: () = {
     assert!(align_of::<JSXText>() == 4usize);
     assert!(offset_of!(JSXText, span) == 0usize);
     assert!(offset_of!(JSXText, value) == 8usize);
+    assert!(size_of::<NumberBase>() == 1usize);
+    assert!(align_of::<NumberBase>() == 1usize);
+    assert!(size_of::<BigintBase>() == 1usize);
+    assert!(align_of::<BigintBase>() == 1usize);
+    assert!(size_of::<AssignmentOperator>() == 1usize);
+    assert!(align_of::<AssignmentOperator>() == 1usize);
+    assert!(size_of::<BinaryOperator>() == 1usize);
+    assert!(align_of::<BinaryOperator>() == 1usize);
+    assert!(size_of::<LogicalOperator>() == 1usize);
+    assert!(align_of::<LogicalOperator>() == 1usize);
+    assert!(size_of::<UnaryOperator>() == 1usize);
+    assert!(align_of::<UnaryOperator>() == 1usize);
+    assert!(size_of::<UpdateOperator>() == 1usize);
+    assert!(align_of::<UpdateOperator>() == 1usize);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

@@ -42,6 +42,8 @@ impl Generator for AssertLayouts {
                 endl!();
 
                 use crate::ast::*;
+                use oxc_syntax::{number::*, operator::*};
+
 
                 endl!();
 

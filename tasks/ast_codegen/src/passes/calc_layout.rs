@@ -351,22 +351,19 @@ lazy_static! {
             64 => Layout::wide_ptr_64(),
             32 => Layout::wide_ptr_32(),
         },
+        // External Bumpalo type
         Vec: {
             64 => Layout::known(32, 8, 1),
             32 => Layout::known(16, 4, 1),
         },
+        // Unsupported: we don't analyze `Cell` types
         Cell<Option<ScopeId>>: { _ => Layout::known(4, 4, 0), },
         Cell<Option<SymbolId>>: { _ => Layout::known(4, 4, 0), },
         Cell<Option<ReferenceId>>: { _ => Layout::known(4, 4, 0), },
-        ReferenceFlag: { _ => Layout::known(1, 1, 0), },
-        AssignmentOperator: { _ => Layout::known(1, 1, 1), },
-        LogicalOperator: { _ => Layout::known(1, 1, 1), },
-        UnaryOperator: { _ => Layout::known(1, 1, 1), },
-        BinaryOperator: { _ => Layout::known(1, 1, 1), },
-        UpdateOperator: { _ => Layout::known(1, 1, 1), },
         SourceType: { _ => Layout::known(4, 1, 1), },
+        // Unsupported: this is a `bitflags` generated type, we don't expand macros
+        ReferenceFlag: { _ => Layout::known(1, 1, 0), },
+        // Unsupported: this is a `bitflags` generated type, we don't expand macros
         RegExpFlags: { _ => Layout::known(1, 1, 0), },
-        BigintBase: { _ => Layout::known(1, 1, 1), },
-        NumberBase: { _ => Layout::known(1, 1, 1), },
     };
 }

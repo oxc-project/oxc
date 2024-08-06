@@ -1,4 +1,6 @@
-#[repr(u8)]
+use oxc_ast_macros::ast;
+
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NumberBase {
     Float = 0,
@@ -14,7 +16,7 @@ impl NumberBase {
     }
 }
 
-#[repr(u8)]
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BigintBase {
     Decimal = 0,

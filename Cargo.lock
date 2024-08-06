@@ -1768,6 +1768,7 @@ dependencies = [
  "bitflags 2.6.0",
  "dashmap 6.0.1",
  "nonmax",
+ "oxc_ast_macros",
  "oxc_index",
  "oxc_span",
  "phf",

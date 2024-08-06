@@ -6,9 +6,11 @@ use serde::Serialize;
 #[cfg(feature = "serialize")]
 use tsify::Tsify;
 
+use oxc_ast_macros::ast;
+
 use crate::precedence::{GetPrecedence, Precedence};
 
-#[repr(u8)]
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum AssignmentOperator {
@@ -87,7 +89,7 @@ impl AssignmentOperator {
     }
 }
 
-#[repr(u8)]
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum BinaryOperator {
@@ -275,7 +277,7 @@ impl GetPrecedence for BinaryOperator {
     }
 }
 
-#[repr(u8)]
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
@@ -316,7 +318,7 @@ impl GetPrecedence for LogicalOperator {
     }
 }
 
-#[repr(u8)]
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
@@ -370,7 +372,7 @@ impl UnaryOperator {
     }
 }
 
-#[repr(u8)]
+#[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]

@@ -276,7 +276,10 @@ jobs:
         with:
           filters: |
             src:
-              - 'crates/oxc_ast/src/ast/**'
+              - 'crates/oxc_ast/src/ast/*' # single star is intentional
+              - 'crates/oxc_ast/src/generated/**' # to potentially cause CI error if generated files are edited manually
+              - 'crates/oxc_syntax/src/number.rs'
+              - 'crates/oxc_syntax/src/operator.rs'
               - 'tasks/ast_codegen/src/**'
 
       - uses: Boshen/setup-rust@main

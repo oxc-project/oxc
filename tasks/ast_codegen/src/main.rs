@@ -1,4 +1,5 @@
 const AST_CRATE: &str = "crates/oxc_ast";
+const AST_SYNTAX: &str = "crates/oxc_syntax";
 #[allow(dead_code)]
 const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
 
@@ -218,9 +219,8 @@ impl AstCodegen {
             .map(rust_ast::Module::from)
             .map(rust_ast::Module::load)
             .map_ok(rust_ast::Module::expand)
-            .flatten()
-            .map_ok(rust_ast::Module::analyze)
-            .collect::<Result<Result<Vec<_>>>>()??;
+            .map_ok(|it| it.map(rust_ast::Module::analyze))
+            .collect::<Result<Result<Result<Vec<_>>>>>()???;
 
         // early passes
         let ctx = {
@@ -244,11 +244,16 @@ impl AstCodegen {
 }
 
 fn files() -> impl std::iter::Iterator<Item = String> {
-    fn path(path: &str) -> String {
+    fn ast(path: &str) -> String {
         format!("{AST_CRATE}/src/ast/{path}.rs")
     }
 
-    vec![path("literal"), path("js"), path("ts"), path("jsx")].into_iter()
+    fn syntax(path: &str) -> String {
+        format!("{AST_SYNTAX}/src/{path}.rs")
+    }
+
+    vec![ast("literal"), ast("js"), ast("ts"), ast("jsx"), syntax("number"), syntax("operator")]
+        .into_iter()
 }
 
 fn write_generated_streams(
