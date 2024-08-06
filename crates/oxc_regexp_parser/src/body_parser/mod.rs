@@ -150,6 +150,7 @@ mod test {
             ("a(?:", ParserOptions::default()),
             ("(a", ParserOptions::default()),
             ("(?<a>", ParserOptions::default()),
+            ("(?)", ParserOptions::default()),
             ("(?=a){1}", ParserOptions::default().with_unicode_mode()),
             ("(?!a){1}", ParserOptions::default().with_unicode_mode()),
             (r"[\d-\D]", ParserOptions::default().with_unicode_mode()),

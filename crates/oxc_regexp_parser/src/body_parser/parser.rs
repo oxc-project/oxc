@@ -146,7 +146,9 @@ impl<'a> PatternParser<'a> {
                     ))))
                 }
                 (Some(atom), None) => Ok(Some(atom)),
-                (None, Some(_)) => Err(OxcDiagnostic::error("Lone `Quantifier`, expected `Atom`")),
+                (None, Some(_)) => {
+                    Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `Atom`"))
+                }
                 (None, None) => Ok(None),
             };
         }
@@ -199,7 +201,7 @@ impl<'a> PatternParser<'a> {
             }
             (Some(extended_atom), None) => Ok(Some(extended_atom)),
             (None, Some(_)) => {
-                Err(OxcDiagnostic::error("Lone `Quantifier`, expected `ExtendedAtom`"))
+                Err(OxcDiagnostic::error("Lone `Quantifier` found, expected with `ExtendedAtom`"))
             }
             (None, None) => Ok(None),
         }
@@ -563,7 +565,9 @@ impl<'a> PatternParser<'a> {
                 // - if the UnicodePropertyValueExpression is LoneUnicodePropertyNameOrValue
                 //   - and it is binary property of strings(can be true only with `UnicodeSetsMode`)
                 if negative && is_strings_related {
-                    return Err(OxcDiagnostic::error("Invalid property name"));
+                    return Err(OxcDiagnostic::error(
+                        "Invalid property name(negative + property of strings)",
+                    ));
                 }
 
                 if self.reader.eat('}') {
@@ -609,6 +613,7 @@ impl<'a> PatternParser<'a> {
         if self.reader.eat('c') {
             if let Some(cp) = self.reader.peek().and_then(unicode::map_c_ascii_letter) {
                 self.reader.advance();
+
                 return Ok(Some(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
                     kind: ast::CharacterKind::ControlLetter,
@@ -641,7 +646,7 @@ impl<'a> PatternParser<'a> {
                 }));
             }
 
-            return Err(OxcDiagnostic::error("Invalid escape"));
+            return Err(OxcDiagnostic::error("Invalid hexadecimal escape"));
         }
 
         // e.g. \u{1f600}
@@ -738,6 +743,7 @@ impl<'a> PatternParser<'a> {
         if self.state.unicode_sets_mode {
             return self.parse_class_set_expression();
         }
+
         // [~UnicodeSetsMode] NonemptyClassRanges[?UnicodeMode]
         self.parse_nonempty_class_ranges()
     }
@@ -838,6 +844,7 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_class_atom(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
         let span_start = self.reader.span_position();
+
         if self.reader.eat('-') {
             return Ok(Some(ast::CharacterClassContents::Character(ast::Character {
                 span: self.span_factory.create(span_start, self.reader.span_position()),
@@ -886,7 +893,7 @@ impl<'a> PatternParser<'a> {
                 return Ok(Some(class_escape));
             }
 
-            return Err(OxcDiagnostic::error("Invalid class escape"));
+            return Err(OxcDiagnostic::error("Invalid class atom"));
         }
 
         Ok(None)
@@ -930,6 +937,7 @@ impl<'a> PatternParser<'a> {
         // [~UnicodeMode] c ClassControlLetter
         if !self.state.unicode_mode {
             let checkpoint = self.reader.checkpoint();
+
             if self.reader.eat('c') {
                 if let Some(cp) = self
                     .reader
@@ -1004,7 +1012,7 @@ impl<'a> PatternParser<'a> {
             return self.parse_class_set_union(class_set_operand);
         }
 
-        Err(OxcDiagnostic::error("Invalid character in character class"))
+        Err(OxcDiagnostic::error("Invalid character class set expression"))
     }
 
     // ```
@@ -1063,7 +1071,9 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
-            return Err(OxcDiagnostic::error("Invalid character in character class"));
+            return Err(OxcDiagnostic::error(
+                "Invalid character in character class set interseciton",
+            ));
         }
 
         Ok((ast::CharacterClassContentsKind::Intersection, body))
@@ -1093,7 +1103,9 @@ impl<'a> PatternParser<'a> {
                 }
             }
 
-            return Err(OxcDiagnostic::error("Invalid character in character class"));
+            return Err(OxcDiagnostic::error(
+                "Invalid character in character class set subtraction",
+            ));
         }
 
         Ok((ast::CharacterClassContentsKind::Subtraction, body))
@@ -1105,6 +1117,7 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_class_set_range(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
         let checkpoint = self.reader.checkpoint();
+
         if let Some(class_set_character) = self.parse_class_set_character()? {
             if self.reader.eat('-') {
                 if let Some(class_set_character_to) = self.parse_class_set_character()? {
@@ -1146,7 +1159,6 @@ impl<'a> PatternParser<'a> {
             return Ok(Some(nested_class));
         }
 
-        // ClassStringDisjunction
         let span_start = self.reader.span_position();
         if self.reader.eat3('\\', 'q', '{') {
             let class_string_disjunction_contents =
@@ -1180,6 +1192,9 @@ impl<'a> PatternParser<'a> {
     // ```
     fn parse_nested_class(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
         let span_start = self.reader.span_position();
+
+        // [ [lookahead ≠ ^] ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
+        // [^ ClassContents[+UnicodeMode, +UnicodeSetsMode] ]
         if self.reader.eat('[') {
             let negative = self.reader.eat('^');
             // NOTE: This can be recursive as the name suggests!
@@ -1253,9 +1268,10 @@ impl<'a> PatternParser<'a> {
                 ))));
             }
 
-            return Err(OxcDiagnostic::error("Unterminated character class"));
+            return Err(OxcDiagnostic::error("Unterminated nested class"));
         }
 
+        // \ CharacterClassEscape[+UnicodeMode]
         let span_start = self.reader.span_position();
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('\\') {
@@ -1350,6 +1366,7 @@ impl<'a> PatternParser<'a> {
             if let Some(character_escape) = self.parse_character_escape(span_start)? {
                 return Ok(Some(character_escape));
             }
+
             if let Some(cp) =
                 self.reader.peek().filter(|&cp| unicode::is_class_set_reserved_punctuator(cp))
             {
@@ -1360,6 +1377,7 @@ impl<'a> PatternParser<'a> {
                     value: cp,
                 }));
             }
+
             if self.reader.eat('b') {
                 return Ok(Some(ast::Character {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
@@ -1384,28 +1402,21 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.span_position();
 
         if self.reader.eat('(') {
-            // GroupSpecifier is optional
+            let mut group_name = None;
+
+            // GroupSpecifier is optional, but if it exists, `?` is also required
             if self.reader.eat('?') {
-                if let Some(name) = self.consume_group_name()? {
-                    let disjunction = self.parse_disjunction()?;
-
-                    if self.reader.eat(')') {
-                        return Ok(Some(ast::CapturingGroup {
-                            span: self.span_factory.create(span_start, self.reader.span_position()),
-                            name: Some(name),
-                            body: disjunction,
-                        }));
-                    }
-                }
-
-                return Err(OxcDiagnostic::error("Unterminated capturing group name"));
+                let Some(name) = self.consume_group_name()? else {
+                    return Err(OxcDiagnostic::error("Unterminated capturing group name"));
+                };
+                group_name = Some(name);
             }
 
             let disjunction = self.parse_disjunction()?;
             if self.reader.eat(')') {
                 return Ok(Some(ast::CapturingGroup {
                     span: self.span_factory.create(span_start, self.reader.span_position()),
-                    name: None,
+                    name: group_name,
                     body: disjunction,
                 }));
             }
@@ -1526,7 +1537,7 @@ impl<'a> PatternParser<'a> {
     //   DecimalDigits[?Sep] DecimalDigit
     //   [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
     // ```
-    // ([Sep] is disabled for `QuantifierPrefix` and `DecimalEscape` skip it)
+    // ([Sep] is disabled for `QuantifierPrefix` and `DecimalEscape`, skip it)
     fn consume_decimal_digits(&mut self) -> Option<u32> {
         let checkpoint = self.reader.checkpoint();
 
@@ -1549,7 +1560,7 @@ impl<'a> PatternParser<'a> {
     //   UnicodePropertyName = UnicodePropertyValue
     //   LoneUnicodePropertyNameOrValue
     // ```
-    /// Returns: `(name, value, is_strings_related_unicode_property)`
+    /// Returns: `(name, Option<value>, is_strings_related_unicode_property)`
     fn consume_unicode_property_value_expression(
         &mut self,
     ) -> Result<Option<(SpanAtom<'a>, Option<SpanAtom<'a>>, bool)>> {
@@ -1564,7 +1575,7 @@ impl<'a> PatternParser<'a> {
                     // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
                     // It is a Syntax Error if the source text matched by UnicodePropertyValue is not a property value or property value alias for the Unicode property or property alias given by the source text matched by UnicodePropertyName listed in PropertyValueAliases.txt.
                     if !unicode_property::is_valid_unicode_property(&name, &value) {
-                        return Err(OxcDiagnostic::error("Invalid property name"));
+                        return Err(OxcDiagnostic::error("Invalid unicode property name"));
                     }
 
                     return Ok(Some((name, Some(value), false)));
@@ -1588,14 +1599,14 @@ impl<'a> PatternParser<'a> {
             if unicode_property::is_valid_lone_unicode_property_of_strings(&name_or_value) {
                 if !self.state.unicode_sets_mode {
                     return Err(OxcDiagnostic::error(
-                        "UnicodeSetsMode is required for binary property of strings",
+                        "`UnicodeSetsMode` is required for binary property of strings",
                     ));
                 }
 
                 return Ok(Some((name_or_value, None, true)));
             }
 
-            return Err(OxcDiagnostic::error("Invalid property name"));
+            return Err(OxcDiagnostic::error("Invalid unicode property name or value"));
         }
 
         Ok(None)
@@ -1646,7 +1657,7 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        Err(OxcDiagnostic::error("Invalid capture group name"))
+        Err(OxcDiagnostic::error("Unterminated capturing group name"))
     }
 
     // ```
@@ -1660,8 +1671,9 @@ impl<'a> PatternParser<'a> {
         if self.consume_reg_exp_idenfigier_start()?.is_some() {
             while self.consume_reg_exp_idenfigier_part()?.is_some() {}
 
-            let span_end = self.reader.span_position();
-            return Ok(Some(SpanAtom::from(&self.source_text[span_start..span_end])));
+            return Ok(Some(SpanAtom::from(
+                &self.source_text[span_start..self.reader.span_position()],
+            )));
         }
 
         Ok(None)
@@ -1781,75 +1793,72 @@ impl<'a> PatternParser<'a> {
         unicode_mode: bool,
     ) -> Result<Option<u32>> {
         let checkpoint = self.reader.checkpoint();
+        if self.reader.eat('u') {
+            if unicode_mode {
+                let checkpoint = self.reader.checkpoint();
 
-        if !self.reader.eat('u') {
-            return Ok(None);
-        }
-
-        if unicode_mode {
-            let checkpoint = self.reader.checkpoint();
-
-            // HexLeadSurrogate + HexTrailSurrogate
-            if let Some(lead_surrogate) =
-                self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
-            {
-                if self.reader.eat2('\\', 'u') {
-                    if let Some(trail_surrogate) = self
-                        .consume_fixed_hex_digits(4)
-                        .filter(|&cp| unicode::is_trail_surrogate(cp))
-                    {
-                        return Ok(Some(unicode::combine_surrogate_pair(
-                            lead_surrogate,
-                            trail_surrogate,
-                        )));
-                    }
-                }
-            }
-            self.reader.rewind(checkpoint);
-
-            // HexLeadSurrogate
-            if let Some(lead_surrogate) =
-                self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
-            {
-                return Ok(Some(lead_surrogate));
-            }
-            self.reader.rewind(checkpoint);
-
-            // HexTrailSurrogate
-            if let Some(trail_surrogate) =
-                self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_trail_surrogate(cp))
-            {
-                return Ok(Some(trail_surrogate));
-            }
-            self.reader.rewind(checkpoint);
-        }
-
-        // HexNonSurrogate and Hex4Digits are the same
-        if let Some(hex_digits) = self.consume_fixed_hex_digits(4) {
-            return Ok(Some(hex_digits));
-        }
-
-        // {CodePoint}
-        if unicode_mode {
-            let checkpoint = self.reader.checkpoint();
-
-            if self.reader.eat('{') {
-                if let Some(hex_digits) =
-                    self.consume_hex_digits().filter(|&cp| unicode::is_valid_unicode(cp))
+                // HexLeadSurrogate + HexTrailSurrogate
+                if let Some(lead_surrogate) =
+                    self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
                 {
-                    if self.reader.eat('}') {
-                        return Ok(Some(hex_digits));
+                    if self.reader.eat2('\\', 'u') {
+                        if let Some(trail_surrogate) = self
+                            .consume_fixed_hex_digits(4)
+                            .filter(|&cp| unicode::is_trail_surrogate(cp))
+                        {
+                            return Ok(Some(unicode::combine_surrogate_pair(
+                                lead_surrogate,
+                                trail_surrogate,
+                            )));
+                        }
                     }
                 }
+                self.reader.rewind(checkpoint);
+
+                // HexLeadSurrogate
+                if let Some(lead_surrogate) =
+                    self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_lead_surrogate(cp))
+                {
+                    return Ok(Some(lead_surrogate));
+                }
+                self.reader.rewind(checkpoint);
+
+                // HexTrailSurrogate
+                if let Some(trail_surrogate) =
+                    self.consume_fixed_hex_digits(4).filter(|&cp| unicode::is_trail_surrogate(cp))
+                {
+                    return Ok(Some(trail_surrogate));
+                }
+                self.reader.rewind(checkpoint);
+            }
+
+            // HexNonSurrogate and Hex4Digits are the same
+            if let Some(hex_digits) = self.consume_fixed_hex_digits(4) {
+                return Ok(Some(hex_digits));
+            }
+
+            // {CodePoint}
+            if unicode_mode {
+                let checkpoint = self.reader.checkpoint();
+
+                if self.reader.eat('{') {
+                    if let Some(hex_digits) =
+                        self.consume_hex_digits().filter(|&cp| unicode::is_valid_unicode(cp))
+                    {
+                        if self.reader.eat('}') {
+                            return Ok(Some(hex_digits));
+                        }
+                    }
+                }
+                self.reader.rewind(checkpoint);
+            }
+
+            if self.state.unicode_mode {
+                return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
             }
             self.reader.rewind(checkpoint);
         }
 
-        if self.state.unicode_mode {
-            return Err(OxcDiagnostic::error("Invalid unicode escape sequence"));
-        }
-
-        self.reader.rewind(checkpoint);
         Ok(None)
     }
 
