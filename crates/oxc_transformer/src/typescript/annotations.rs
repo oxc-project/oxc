@@ -445,8 +445,35 @@ impl<'a> TypeScriptAnnotations<'a> {
         stmt: &mut ForStatement<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let scope_id = stmt.scope_id.get().unwrap_or(ctx.current_scope_id());
-        Self::replace_with_empty_block_if_ts(&mut stmt.body, scope_id, ctx);
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
+    }
+
+    pub fn transform_for_in_statement(
+        &mut self,
+        stmt: &mut ForInStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
+    }
+
+    pub fn transform_for_of_statement(
+        &mut self,
+        stmt: &mut ForOfStatement<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        Self::replace_for_statement_body_with_empty_block_if_ts(
+            &mut stmt.body,
+            &stmt.scope_id,
+            ctx,
+        );
     }
 
     pub fn transform_while_statement(
@@ -463,6 +490,15 @@ impl<'a> TypeScriptAnnotations<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         Self::replace_with_empty_block_if_ts(&mut stmt.body, ctx.current_scope_id(), ctx);
+    }
+
+    fn replace_for_statement_body_with_empty_block_if_ts(
+        body: &mut Statement<'a>,
+        scope_id: &Cell<Option<ScopeId>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let scope_id = scope_id.get().unwrap_or(ctx.current_scope_id());
+        Self::replace_with_empty_block_if_ts(body, scope_id, ctx);
     }
 
     fn replace_with_empty_block_if_ts(
