@@ -381,6 +381,8 @@ impl<'a> ReactRefresh<'a> {
                 }
 
                 // See if this identifier is used in JSX. Then it's a component.
+                // TODO:
+                // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
             }
             _ => {
                 return None;
