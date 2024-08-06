@@ -65,10 +65,9 @@ name    = "parser_napi"
 harness = false
 bench   = false
 
-[dependencies]
 # All `oxc_*` dependencies optional as on CI we build each benchmark separately
 # with only the crates it needs, to speed up the builds
-oxc_ast                   = { workspace = true, optional = true }
+[dependencies]
 oxc_allocator             = { workspace = true, optional = true }
 oxc_linter                = { workspace = true, optional = true }
 oxc_minifier              = { workspace = true, optional = true }
@@ -114,7 +113,6 @@ transformer = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_span", "dep:oxc_t
 semantic = ["dep:oxc_allocator", "dep:oxc_parser", "dep:oxc_semantic", "dep:oxc_span", "dep:oxc_tasks_common"]
 minifier = [
   "dep:oxc_allocator",
-  "dep:oxc_ast",
   "dep:oxc_minifier",
   "dep:oxc_parser",
   "dep:oxc_span",
