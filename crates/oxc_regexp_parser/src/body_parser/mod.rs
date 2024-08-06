@@ -50,6 +50,8 @@ mod test {
             ),
             (r"\p{Basic_Emoji}", ParserOptions::default().with_unicode_sets_mode()),
             (r"\n\cM\0\x41\u1f60\.\/", ParserOptions::default()),
+            (r"\0", ParserOptions::default()),
+            (r"\0", ParserOptions::default().with_unicode_mode()),
             (r"\u", ParserOptions::default()),
             (r"\u{", ParserOptions::default()),
             (r"\u{}", ParserOptions::default()),

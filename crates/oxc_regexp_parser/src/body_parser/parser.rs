@@ -646,7 +646,7 @@ impl<'a> PatternParser<'a> {
 
         // e.g. \0
         if self.reader.peek().filter(|&cp| cp == '0' as u32).is_some()
-            && self.reader.peek2().filter(|&cp| !unicode::is_decimal_digit(cp)).is_some()
+            && self.reader.peek2().filter(|&cp| unicode::is_decimal_digit(cp)).is_none()
         {
             self.reader.advance();
 
@@ -1584,11 +1584,15 @@ impl<'a> PatternParser<'a> {
     //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
     fn consume_decimal_escape(&mut self) -> Option<u32> {
+        let checkpoint = self.reader.checkpoint();
+
         if let Some(index) = self.consume_decimal_digits() {
             // \0 is CharacterEscape, not DecimalEscape
             if index != 0 {
                 return Some(index);
             }
+
+            self.reader.rewind(checkpoint);
         }
 
         None
