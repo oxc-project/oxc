@@ -484,15 +484,12 @@ pub fn get_boolean_value(expr: &Expression) -> Option<bool> {
                 .and_then(|quasi| quasi.value.cooked.as_ref())
                 .map(|cooked| !cooked.is_empty())
         }
-        Expression::Identifier(ident) => {
-            if expr.is_undefined() || ident.name == "NaN" {
-                Some(false)
-            } else if ident.name == "Infinity" {
-                Some(true)
-            } else {
-                None
-            }
-        }
+        Expression::Identifier(ident) => match ident.name.as_str() {
+            "NaN" => Some(false),
+            "Infinity" => Some(true),
+            // "undefined" if ident.reference_id.get().is_none() => Some(false),
+            _ => None,
+        },
         Expression::AssignmentExpression(assign_expr) => {
             match assign_expr.operator {
                 AssignmentOperator::LogicalAnd | AssignmentOperator::LogicalOr => None,

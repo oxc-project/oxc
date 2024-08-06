@@ -92,7 +92,7 @@ impl CompressOptions {
         }
     }
 
-    pub fn dead_code_elimintation() -> Self {
+    pub fn dead_code_elimination() -> Self {
         Self {
             remove_syntax: true,
             fold_constants: true,

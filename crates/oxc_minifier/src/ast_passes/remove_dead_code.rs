@@ -15,7 +15,7 @@ pub struct RemoveDeadCode<'a> {
 impl<'a> VisitMut<'a> for RemoveDeadCode<'a> {
     fn visit_statements(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
-        self.dead_code_elimintation(stmts);
+        self.dead_code_elimination(stmts);
         walk_mut::walk_statements(self, stmts);
     }
 
@@ -34,7 +34,7 @@ impl<'a> RemoveDeadCode<'a> {
     }
 
     /// Removes dead code thats comes after `return` statements after inlining `if` statements
-    fn dead_code_elimintation(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
+    fn dead_code_elimination(&mut self, stmts: &mut Vec<'a, Statement<'a>>) {
         // Remove code after `return` and `throw` statements
         let mut index = None;
         'outer: for (i, stmt) in stmts.iter().enumerate() {
@@ -58,7 +58,7 @@ impl<'a> RemoveDeadCode<'a> {
 
         let mut keep_var = KeepVar::new(self.ast);
 
-        for stmt in stmts.iter().skip(index) {
+        for stmt in stmts.iter().skip(index + 1) {
             keep_var.visit_statement(stmt);
         }
 
