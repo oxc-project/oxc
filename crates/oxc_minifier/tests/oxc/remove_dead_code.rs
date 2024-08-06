@@ -70,10 +70,11 @@ fn dce_if_statement() {
     test("if ('development' === 'production') { foo } else { bar }", "{ bar }");
 
     // Shadowed `undefined` as a variable should not be erased.
-    // test(
-    // "function foo(undefined) { if (!undefined) { } }",
-    // "function foo(undefined) { if (!undefined) { } }",
-    // );
+    // This is a rollup test.
+    test(
+        "function foo(undefined) { if (!undefined) { } }",
+        "function foo(undefined) { if (!undefined) { } }",
+    );
 
     test("if (true) { foo; } if (true) { foo; }", "{ foo; } { foo; }");
 
