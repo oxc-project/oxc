@@ -75,17 +75,12 @@ impl<'a> ReactRefresh<'a> {
                 return true;
             }
             Expression::FunctionExpression(_) => {}
-            Expression::ArrowFunctionExpression(arrow_expr) => {
+            Expression::ArrowFunctionExpression(arrow) => {
                 // () => () => {}
-                let is_arrow_function = arrow_expr.expression
-                    && {
-                        arrow_expr.body.statements.first()
-                .is_some_and(|stmt| {
-                    matches!(stmt, Statement::ExpressionStatement(expr) if matches!(expr.expression, Expression::ArrowFunctionExpression(_)))
-                })
-                    };
-
-                if is_arrow_function {
+                if arrow
+                    .get_expression()
+                    .is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_)))
+                {
                     return false;
                 }
             }
@@ -353,8 +348,13 @@ impl<'a> ReactRefresh<'a> {
 
         match init {
             // Likely component definitions.
-            Expression::ArrowFunctionExpression(_)
-            | Expression::FunctionExpression(_)
+            Expression::ArrowFunctionExpression(arrow) => {
+                // () => () => {}
+                if arrow.get_expression().is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))) {
+                    return None;
+                }
+            }
+            Expression::FunctionExpression(_)
             // Maybe something like styled.div`...`
             | Expression::TaggedTemplateExpression(_) => {
                 // Special case when a variable would get an inferred name:
@@ -368,7 +368,7 @@ impl<'a> ReactRefresh<'a> {
             }
             Expression::CallExpression(call_expr) => {
                 if matches!(call_expr.callee, Expression::ImportExpression(_))
-                    || call_expr.is_symbol_or_symbol_for_call()
+                    || call_expr.is_require_call()
                 {
                     return None;
                 }
@@ -387,7 +387,7 @@ impl<'a> ReactRefresh<'a> {
             }
         }
 
-        Some(self.create_assignment_expression(&id, ctx))
+        Some(self.create_assignment_expression(id, ctx))
     }
 }
 
