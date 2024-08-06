@@ -1,12 +1,11 @@
-mod calc_layout;
-mod linker;
-
 use std::collections::VecDeque;
 
 use itertools::Itertools;
 
 use crate::{rust_ast::AstType, EarlyCtx, Result};
 
+mod calc_layout;
+mod linker;
 pub use calc_layout::CalcLayout;
 pub use linker::Linker;
 

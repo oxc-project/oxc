@@ -1,11 +1,12 @@
 use serde::Serialize;
 
-use super::{with_either, TypeName};
 use crate::{
     markers::{ScopeAttr, ScopeMarkers, VisitMarkers},
     util::{ToIdent, TypeAnalysis, TypeWrapper},
     TypeId,
 };
+
+use super::{with_either, TypeName};
 
 #[derive(Debug, Serialize)]
 pub enum TypeDef {

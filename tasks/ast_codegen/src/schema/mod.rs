@@ -1,18 +1,18 @@
+use quote::ToTokens;
+use serde::Serialize;
+
+use crate::{
+    layout::KnownLayout,
+    markers::{get_scope_attr, get_scope_markers, get_visit_markers},
+    rust_ast as rust,
+    util::{unexpanded_macro_err, TypeExt},
+    DefTable, Result,
+};
+
 mod defs;
 mod get_generics;
 mod get_ident;
 mod to_type;
-
-use crate::rust_ast as rust;
-use crate::{
-    layout::KnownLayout,
-    markers::{get_scope_attr, get_scope_markers, get_visit_markers},
-    util::{unexpanded_macro_err, TypeExt},
-    DefTable, Result,
-};
-use quote::ToTokens;
-use serde::Serialize;
-
 pub use defs::*;
 pub use get_generics::GetGenerics;
 pub use get_ident::GetIdent;

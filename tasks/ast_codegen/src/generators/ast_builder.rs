@@ -8,12 +8,12 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote, ToTokens};
 use syn::{parse_quote, Ident, Type};
 
-use crate::schema::{
-    EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
-};
 use crate::{
     generators::generated_header,
     output,
+    schema::{
+        EnumDef, FieldDef, GetIdent, InheritDef, StructDef, ToType, TypeDef, TypeName, VariantDef,
+    },
     util::{TypeAnalysis, TypeWrapper},
     Generator, GeneratorOutput, LateCtx,
 };

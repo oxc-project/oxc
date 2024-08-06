@@ -1,3 +1,10 @@
+use std::{cell::RefCell, collections::HashMap, io::Read, path::PathBuf, rc::Rc};
+
+use bpaf::{Bpaf, Parser};
+use itertools::Itertools;
+use proc_macro2::TokenStream;
+use syn::parse_file;
+
 mod fmt;
 mod generators;
 mod layout;
@@ -7,19 +14,12 @@ mod rust_ast;
 mod schema;
 mod util;
 
-use std::{cell::RefCell, collections::HashMap, io::Read, path::PathBuf, rc::Rc};
-
-use bpaf::{Bpaf, Parser};
 use fmt::{cargo_fmt, pprint};
-use itertools::Itertools;
-use passes::{CalcLayout, Linker, Pass};
-use proc_macro2::TokenStream;
-use syn::parse_file;
-
 use generators::{
     AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, VisitGenerator,
     VisitMutGenerator,
 };
+use passes::{CalcLayout, Linker, Pass};
 use rust_ast::AstRef;
 use schema::{lower_ast_types, Schema, TypeDef};
 use util::{write_all_to, NormalizeError};
