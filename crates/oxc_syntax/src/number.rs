@@ -1,10 +1,11 @@
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum NumberBase {
-    Float,
-    Decimal,
-    Binary,
-    Octal,
-    Hex,
+    Float = 0,
+    Decimal = 1,
+    Binary = 2,
+    Octal = 3,
+    Hex = 4,
 }
 
 impl NumberBase {
@@ -13,12 +14,13 @@ impl NumberBase {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BigintBase {
-    Decimal,
-    Binary,
-    Octal,
-    Hex,
+    Decimal = 0,
+    Binary = 1,
+    Octal = 2,
+    Hex = 3,
 }
 
 impl BigintBase {

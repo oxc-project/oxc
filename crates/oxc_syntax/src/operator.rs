@@ -8,41 +8,42 @@ use tsify::Tsify;
 
 use crate::precedence::{GetPrecedence, Precedence};
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum AssignmentOperator {
     #[cfg_attr(feature = "serialize", serde(rename = "="))]
-    Assign,
+    Assign = 0,
     #[cfg_attr(feature = "serialize", serde(rename = "+="))]
-    Addition,
+    Addition = 1,
     #[cfg_attr(feature = "serialize", serde(rename = "-="))]
-    Subtraction,
+    Subtraction = 2,
     #[cfg_attr(feature = "serialize", serde(rename = "*="))]
-    Multiplication,
+    Multiplication = 3,
     #[cfg_attr(feature = "serialize", serde(rename = "/="))]
-    Division,
+    Division = 4,
     #[cfg_attr(feature = "serialize", serde(rename = "%="))]
-    Remainder,
+    Remainder = 5,
     #[cfg_attr(feature = "serialize", serde(rename = "<<="))]
-    ShiftLeft,
+    ShiftLeft = 6,
     #[cfg_attr(feature = "serialize", serde(rename = ">>="))]
-    ShiftRight,
+    ShiftRight = 7,
     #[cfg_attr(feature = "serialize", serde(rename = ">>>="))]
-    ShiftRightZeroFill,
+    ShiftRightZeroFill = 8,
     #[cfg_attr(feature = "serialize", serde(rename = "|="))]
-    BitwiseOR,
+    BitwiseOR = 9,
     #[cfg_attr(feature = "serialize", serde(rename = "^="))]
-    BitwiseXOR,
+    BitwiseXOR = 10,
     #[cfg_attr(feature = "serialize", serde(rename = "&="))]
-    BitwiseAnd,
+    BitwiseAnd = 11,
     #[cfg_attr(feature = "serialize", serde(rename = "&&="))]
-    LogicalAnd,
+    LogicalAnd = 12,
     #[cfg_attr(feature = "serialize", serde(rename = "||="))]
-    LogicalOr,
+    LogicalOr = 13,
     #[cfg_attr(feature = "serialize", serde(rename = "??="))]
-    LogicalNullish,
+    LogicalNullish = 14,
     #[cfg_attr(feature = "serialize", serde(rename = "**="))]
-    Exponential,
+    Exponential = 15,
 }
 
 impl AssignmentOperator {
@@ -86,53 +87,54 @@ impl AssignmentOperator {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 pub enum BinaryOperator {
     #[cfg_attr(feature = "serialize", serde(rename = "=="))]
-    Equality,
+    Equality = 0,
     #[cfg_attr(feature = "serialize", serde(rename = "!="))]
-    Inequality,
+    Inequality = 1,
     #[cfg_attr(feature = "serialize", serde(rename = "==="))]
-    StrictEquality,
+    StrictEquality = 2,
     #[cfg_attr(feature = "serialize", serde(rename = "!=="))]
-    StrictInequality,
+    StrictInequality = 3,
     #[cfg_attr(feature = "serialize", serde(rename = "<"))]
-    LessThan,
+    LessThan = 4,
     #[cfg_attr(feature = "serialize", serde(rename = "<="))]
-    LessEqualThan,
+    LessEqualThan = 5,
     #[cfg_attr(feature = "serialize", serde(rename = ">"))]
-    GreaterThan,
+    GreaterThan = 6,
     #[cfg_attr(feature = "serialize", serde(rename = ">="))]
-    GreaterEqualThan,
+    GreaterEqualThan = 7,
     #[cfg_attr(feature = "serialize", serde(rename = "<<"))]
-    ShiftLeft,
+    ShiftLeft = 8,
     #[cfg_attr(feature = "serialize", serde(rename = ">>"))]
-    ShiftRight,
+    ShiftRight = 9,
     #[cfg_attr(feature = "serialize", serde(rename = ">>>"))]
-    ShiftRightZeroFill,
+    ShiftRightZeroFill = 10,
     #[cfg_attr(feature = "serialize", serde(rename = "+"))]
-    Addition,
+    Addition = 11,
     #[cfg_attr(feature = "serialize", serde(rename = "-"))]
-    Subtraction,
+    Subtraction = 12,
     #[cfg_attr(feature = "serialize", serde(rename = "*"))]
-    Multiplication,
+    Multiplication = 13,
     #[cfg_attr(feature = "serialize", serde(rename = "/"))]
-    Division,
+    Division = 14,
     #[cfg_attr(feature = "serialize", serde(rename = "%"))]
-    Remainder,
+    Remainder = 15,
     #[cfg_attr(feature = "serialize", serde(rename = "|"))]
-    BitwiseOR,
+    BitwiseOR = 16,
     #[cfg_attr(feature = "serialize", serde(rename = "^"))]
-    BitwiseXOR,
+    BitwiseXOR = 17,
     #[cfg_attr(feature = "serialize", serde(rename = "&"))]
-    BitwiseAnd,
+    BitwiseAnd = 18,
     #[cfg_attr(feature = "serialize", serde(rename = "in"))]
-    In,
+    In = 19,
     #[cfg_attr(feature = "serialize", serde(rename = "instanceof"))]
-    Instanceof,
+    Instanceof = 20,
     #[cfg_attr(feature = "serialize", serde(rename = "**"))]
-    Exponential,
+    Exponential = 21,
 }
 
 impl BinaryOperator {
@@ -273,16 +275,17 @@ impl GetPrecedence for BinaryOperator {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum LogicalOperator {
     #[cfg_attr(feature = "serialize", serde(rename = "||"))]
-    Or,
+    Or = 0,
     #[cfg_attr(feature = "serialize", serde(rename = "&&"))]
-    And,
+    And = 1,
     #[cfg_attr(feature = "serialize", serde(rename = "??"))]
-    Coalesce,
+    Coalesce = 2,
 }
 
 impl LogicalOperator {
@@ -313,24 +316,25 @@ impl GetPrecedence for LogicalOperator {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum UnaryOperator {
     #[cfg_attr(feature = "serialize", serde(rename = "-"))]
-    UnaryNegation,
+    UnaryNegation = 0,
     #[cfg_attr(feature = "serialize", serde(rename = "+"))]
-    UnaryPlus,
+    UnaryPlus = 1,
     #[cfg_attr(feature = "serialize", serde(rename = "!"))]
-    LogicalNot,
+    LogicalNot = 2,
     #[cfg_attr(feature = "serialize", serde(rename = "~"))]
-    BitwiseNot,
+    BitwiseNot = 3,
     #[cfg_attr(feature = "serialize", serde(rename = "typeof"))]
-    Typeof,
+    Typeof = 4,
     #[cfg_attr(feature = "serialize", serde(rename = "void"))]
-    Void,
+    Void = 5,
     #[cfg_attr(feature = "serialize", serde(rename = "delete"))]
-    Delete,
+    Delete = 6,
 }
 
 impl UnaryOperator {
@@ -366,14 +370,15 @@ impl UnaryOperator {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize))]
 #[cfg_attr(feature = "serialize", derive(Tsify))]
 pub enum UpdateOperator {
     #[cfg_attr(feature = "serialize", serde(rename = "++"))]
-    Increment,
+    Increment = 0,
     #[cfg_attr(feature = "serialize", serde(rename = "--"))]
-    Decrement,
+    Decrement = 1,
 }
 
 impl UpdateOperator {
