@@ -31,6 +31,11 @@ declare_oxc_lint!(
     suspicious,
 );
 
+fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Disallow `else` blocks after `return` statements in `if` statements")
+        .with_label(else_stmt.span())
+}
+
 fn is_safe_from_name_collisions(
     ctx: &LintContext,
     stmt: &Statement,
@@ -69,15 +74,6 @@ fn replace_block(s: &str) -> String {
     }
 }
 
-fn get_else_code_space_token(s: &str, else_code: &str) -> String {
-    s.replacen("else ", "", 1).replace(else_code, "")
-}
-
-fn no_else_return_diagnostic(else_stmt: &Statement) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Disallow `else` blocks after `return` statements in `if` statements")
-        .with_label(else_stmt.span())
-}
-
 fn no_else_return_diagnostic_fix(
     ctx: &LintContext,
     else_stmt_prev: &Statement,
@@ -94,17 +90,15 @@ fn no_else_return_diagnostic_fix(
     let span = else_stmt.span();
 
     let else_code = ctx.source_range(span);
-    let else_code_prev_token =
-        get_else_code_space_token(ctx.source_range(Span::new(prev_span.end, span.end)), else_code);
+    let else_code_prev_token = ctx
+        .source_range(Span::new(prev_span.end, span.end))
+        .replacen("else ", "", 1)
+        .replace(else_code, "");
     let fix_else_code = else_code_prev_token + &replace_block(else_code);
 
     ctx.diagnostic_with_fix(no_else_return_diagnostic(else_stmt), |fixer| {
         fixer.replace(Span::new(prev_span.end, span.end), fix_else_code)
     });
-}
-
-fn check_for_return(node: &Statement) -> bool {
-    matches!(node, Statement::ReturnStatement(_))
 }
 
 fn naive_has_return(node: &Statement) -> bool {
@@ -113,9 +107,9 @@ fn naive_has_return(node: &Statement) -> bool {
             let Some(last_child) = block.body.last() else {
                 return false;
             };
-            check_for_return(last_child)
+            matches!(last_child, Statement::ReturnStatement(_))
         }
-        node => check_for_return(node),
+        node => matches!(node, Statement::ReturnStatement(_)),
     }
 }
 
@@ -180,17 +174,6 @@ fn check_if_without_else(ctx: &LintContext, node: &AstNode) {
     no_else_return_diagnostic_fix(ctx, last_alternate_prev, last_alternate, node);
 }
 
-fn is_in_statement_list_parents(node: &AstNode) -> bool {
-    matches!(
-        node.kind(),
-        AstKind::Program(_)
-            | AstKind::BlockStatement(_)
-            | AstKind::StaticBlock(_)
-            | AstKind::SwitchCase(_)
-            | AstKind::FunctionBody(_)
-    )
-}
-
 impl Rule for NoElseReturn {
     fn from_configuration(value: serde_json::Value) -> Self {
         let Some(value) = value.get(0) else { return Self { allow_else_if: true } };
@@ -211,7 +194,14 @@ impl Rule for NoElseReturn {
             return;
         };
 
-        if !is_in_statement_list_parents(parent_node) {
+        if !matches!(
+            parent_node.kind(),
+            AstKind::Program(_)
+                | AstKind::BlockStatement(_)
+                | AstKind::StaticBlock(_)
+                | AstKind::SwitchCase(_)
+                | AstKind::FunctionBody(_)
+        ) {
             return;
         }
         if self.allow_else_if {
