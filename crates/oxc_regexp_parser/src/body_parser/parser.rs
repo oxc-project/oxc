@@ -44,7 +44,7 @@ impl<'a> PatternParser<'a> {
         // - Pros: Code is simple enough and easy to understand
         // - Cons: 1st pass is completely useless if the pattern does not contain any capturing groups
         // We may re-consider this if we need more performance rather than simplicity.
-        self.state.parse_capturing_groups(self.source_text);
+        self.state.initialize_with_parsing(self.source_text);
 
         // [SS:EE] Pattern :: Disjunction
         // It is a Syntax Error if CountLeftCapturingParensWithin(Pattern) ≥ 2**32 - 1.

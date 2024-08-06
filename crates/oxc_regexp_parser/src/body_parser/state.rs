@@ -2,7 +2,7 @@ use rustc_hash::FxHashSet;
 
 use super::reader::Reader;
 
-/// Currently all of properties are read only.
+/// Currently all of properties are read only from outside of this module.
 #[derive(Debug)]
 pub struct State<'a> {
     // Mode flags
@@ -16,33 +16,27 @@ pub struct State<'a> {
 }
 
 impl<'a> State<'a> {
-    pub fn new(unicode_flag: bool, unicode_sets_flag: bool) -> Self {
-        let unicode_mode = unicode_flag || unicode_sets_flag;
-        let unicode_sets_mode = unicode_sets_flag;
-        // In Annex B, this is `false` by default.
-        // It is `true`
-        // - if `u` or `v` flag is set
-        // - or if `GroupName` is found in pattern
-        let named_capture_groups = unicode_flag || unicode_sets_flag;
-
+    pub fn new(unicode_mode: bool, unicode_sets_mode: bool) -> Self {
         Self {
             unicode_mode,
             unicode_sets_mode,
-            named_capture_groups,
+            named_capture_groups: false,
             num_of_capturing_groups: 0,
             num_of_named_capturing_groups: 0,
             found_group_names: FxHashSet::default(),
         }
     }
 
-    pub fn parse_capturing_groups(&mut self, source_text: &'a str) {
+    pub fn initialize_with_parsing(&mut self, source_text: &'a str) {
         let (num_of_left_parens, num_of_named_capturing_groups, named_capturing_groups) =
             parse_capturing_groups(source_text);
 
-        // Enable `NamedCaptureGroups` if capturing group found
-        if 0 < num_of_named_capturing_groups {
-            self.named_capture_groups = true;
-        }
+        // In Annex B, this is `false` by default.
+        // It is `true`
+        // - if `u` or `v` flag is set
+        // - or if `GroupName` is found in pattern
+        self.named_capture_groups =
+            self.unicode_mode || self.unicode_sets_mode || 0 < num_of_named_capturing_groups;
 
         self.num_of_capturing_groups = num_of_left_parens;
         self.num_of_named_capturing_groups = num_of_named_capturing_groups;
@@ -104,7 +98,7 @@ fn parse_capturing_groups(source_text: &str) -> (u32, u32, FxHashSet<&str>) {
 
                 if reader.eat('>') {
                     let group_name = &source_text[span_start..span_end];
-                    // May be duplicated
+                    // May be duplicated, but it's OK
                     named_capturing_groups.insert(group_name);
                     num_of_named_capturing_groups += 1;
                     continue;
