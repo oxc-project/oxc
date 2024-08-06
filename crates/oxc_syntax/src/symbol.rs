@@ -11,7 +11,9 @@ pub struct SymbolId(NonMaxU32);
 impl Idx for SymbolId {
     #[allow(clippy::cast_possible_truncation)]
     fn from_usize(idx: usize) -> Self {
-        Self(NonMaxU32::new(idx as u32).unwrap())
+        assert!(idx < u32::MAX as usize);
+        // SAFETY: We just checked `idx` is valid for `NonMaxU32`
+        Self(unsafe { NonMaxU32::new_unchecked(idx as u32) })
     }
 
     fn index(self) -> usize {
