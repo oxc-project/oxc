@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- 5327acd transformer/react: The `require` IdentifierReference does not have a `reference_id` (#4658) (Dunqing)
+- 3987665 transformer/typescript: Incorrect enum-related `symbol_id`/`reference_id` (#4660) (Dunqing)
+- 4efd54b transformer/typescript: Incorrect `SymbolFlags` for jsx imports (#4549) (Dunqing)
+
 ## [0.23.0] - 2024-08-01
 
 ### Bug Fixes
