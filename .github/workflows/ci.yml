@@ -281,6 +281,7 @@ jobs:
               - 'crates/oxc_syntax/src/number.rs'
               - 'crates/oxc_syntax/src/operator.rs'
               - 'crates/oxc_span/src/source_type/types.rs'
+              - 'crates/oxc_span/src/span/types.rs'
               - 'tasks/ast_codegen/src/**'
 
       - uses: Boshen/setup-rust@main
