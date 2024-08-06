@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// for (var = 10; i >= 0; i++) {}
     /// ```
     ForDirection,
-    correctness
+    correctness,
+    dangerous_fix
 );
 
 impl Rule for ForDirection {
@@ -66,7 +67,28 @@ impl Rule for ForDirection {
                     let update_direction = get_update_direction(update, counter);
                     if update_direction == wrong_direction {
                         let update_span = get_update_span(update);
-                        ctx.diagnostic(for_direction_diagnostic(test.span, update_span));
+                        let new_operator_str = match update {
+                            Expression::UpdateExpression(update) => match update.operator {
+                                UpdateOperator::Increment => "--",
+                                UpdateOperator::Decrement => "++",
+                            },
+                            Expression::AssignmentExpression(update) => match update.operator {
+                                AssignmentOperator::Addition => "-=",
+                                AssignmentOperator::Subtraction => "+=",
+                                _ => return,
+                            },
+                            _ => return,
+                        };
+                        ctx.diagnostic_with_dangerous_fix(
+                            for_direction_diagnostic(test.span, update_span),
+                            |fix| {
+                                // ++ -- += -= are both 2 in length
+                                let start = update_span.start + 1;
+                                let end = update_span.start + 3;
+                                let span: Span = Span::new(start, end);
+                                fix.replace(span, new_operator_str)
+                            },
+                        );
                     }
                 }
             }
@@ -224,5 +246,14 @@ fn test() {
         ("for(var i = 0; 10 > i; i-=1){}", None),
     ];
 
-    Tester::new(ForDirection::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("for(var i = 0; i < 10; i--){}", "for(var i = 0; i < 10; i++){}", None),
+        ("for(var i = 10; i > 0; i++){}", "for(var i = 10; i > 0; i--){}", None),
+        ("for(var i = 0; i < 10; i-=1){}", "for(var i = 0; i < 10; i+=1){}", None),
+        ("for(var i = 10; i > 0; i+=1){}", "for(var i = 10; i > 0; i-=1){}", None),
+        ("for(var i = 0; i < 10; i+=-1){}", "for(var i = 0; i < 10; i-=-1){}", None),
+        ("for(var i = 10; i > 0; i-=-1){}", "for(var i = 10; i > 0; i+=-1){}", None),
+    ];
+
+    Tester::new(ForDirection::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
