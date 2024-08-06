@@ -3,6 +3,7 @@ use rustc_hash::FxHashSet;
 use super::reader::Reader;
 
 /// Currently all of properties are read only from outside of this module.
+/// Even inside of this module, it is not changed after initialized.
 #[derive(Debug)]
 pub struct State<'a> {
     // Mode flags
