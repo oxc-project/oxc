@@ -359,8 +359,8 @@ impl<'a> PatternParser<'a> {
             })));
         }
 
-        // \ AtomEscape[~UnicodeMode, ?NamedCaptureGroups]
         if self.reader.eat('\\') {
+            // \ AtomEscape[~UnicodeMode, ?NamedCaptureGroups]
             if let Some(atom_escape) = self.parse_atom_escape(span_start)? {
                 return Ok(Some(atom_escape));
             }
@@ -619,8 +619,8 @@ impl<'a> PatternParser<'a> {
         }
 
         // e.g. \0
-        if self.reader.peek().map_or(false, |cp| cp == '0' as u32)
-            && self.reader.peek2().map_or(true, |cp| !unicode::is_decimal_digit(cp))
+        if self.reader.peek().filter(|&cp| cp == '0' as u32).is_some()
+            && self.reader.peek2().filter(|&cp| !unicode::is_decimal_digit(cp)).is_some()
         {
             self.reader.advance();
 
