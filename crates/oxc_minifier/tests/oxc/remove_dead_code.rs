@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_codegen::{CodeGenerator, CodegenOptions};
-use oxc_minifier::RemoveDeadCode;
+use oxc_minifier::{CompressOptions, Compressor};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 
@@ -10,7 +10,7 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     if remove_dead_code {
-        RemoveDeadCode::new(&allocator).build(program);
+        Compressor::new(&allocator, CompressOptions::dead_code_elimination()).build(program);
     }
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true })
@@ -18,9 +18,15 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
         .source_text
 }
 
-pub(crate) fn test(source_text: &str, expected: &str) {
+fn test(source_text: &str, expected: &str) {
     let minified = print(source_text, true);
     let expected = print(expected, false);
+    assert_eq!(minified, expected, "for source {source_text}");
+}
+
+fn test_same(source_text: &str) {
+    let minified = print(source_text, true);
+    let expected = print(source_text, false);
     assert_eq!(minified, expected, "for source {source_text}");
 }
 
@@ -70,6 +76,7 @@ fn dce_if_statement() {
     test("if ('development' === 'production') { foo } else { bar }", "{ bar }");
 
     // Shadowed `undefined` as a variable should not be erased.
+    // This is a rollup test.
     test(
         "function foo(undefined) { if (!undefined) { } }",
         "function foo(undefined) { if (!undefined) { } }",
@@ -116,6 +123,24 @@ fn dce_logical_expression() {
 
     test("const foo = false && bar()", "const foo = false");
     test("const foo = true && bar()", "const foo = bar()");
+}
+
+#[test]
+fn dce_var_hoisting() {
+    test_same(
+        "function f() {
+          return () => {
+            var x;
+          }
+        }",
+    );
+    test_same(
+        "function f() {
+          return function g() {
+            var x;
+          }
+        }",
+    );
 }
 
 // https://github.com/terser/terser/blob/master/test/compress/dead-code.js

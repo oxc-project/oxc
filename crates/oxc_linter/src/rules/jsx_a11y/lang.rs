@@ -94,8 +94,7 @@ fn is_valid_lang_prop(item: &JSXAttributeItem) -> bool {
             !container.expression.is_expression() || !container.expression.is_undefined()
         }
         Some(JSXAttributeValue::StringLiteral(str)) => {
-            let language_tag = LanguageTag::parse(str.value.as_str()).unwrap();
-            language_tag.is_valid()
+            LanguageTag::parse(str.value.as_str()).as_ref().is_ok_and(LanguageTag::is_valid)
         }
         _ => true,
     }
@@ -135,6 +134,7 @@ fn test() {
 
     let fail = vec![
         ("<html lang='foo' />", None, None, None),
+        ("<html lang='n'></html>", None, None, None),
         ("<html lang='zz-LL' />", None, None, None),
         ("<html lang={undefined} />", None, None, None),
         ("<Foo lang={undefined} />", None, Some(settings()), None),

@@ -2,8 +2,8 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_codegen::{CodeGenerator, WhitespaceRemover};
-use oxc_minifier::{Minifier, MinifierOptions};
+use oxc_codegen::CodeGenerator;
+use oxc_minifier::{CompressOptions, Minifier, MinifierOptions};
 use oxc_parser::Parser;
 use oxc_span::SourceType;
 use pico_args::Arguments;
@@ -17,34 +17,28 @@ fn main() -> std::io::Result<()> {
 
     let name = args.subcommand().ok().flatten().unwrap_or_else(|| String::from("test.js"));
     let mangle = args.contains("--mangle");
-    let whitespace = args.contains("--whitespace");
     let twice = args.contains("--twice");
 
     let path = Path::new(&name);
     let source_text = std::fs::read_to_string(path)?;
     let source_type = SourceType::from_path(path).unwrap();
 
-    let printed = minify(&source_text, source_type, mangle, whitespace);
+    let printed = minify(&source_text, source_type, mangle);
     println!("{printed}");
 
     if twice {
-        let printed = minify(&printed, source_type, mangle, whitespace);
+        let printed = minify(&printed, source_type, mangle);
         println!("{printed}");
     }
 
     Ok(())
 }
 
-fn minify(source_text: &str, source_type: SourceType, mangle: bool, whitespace: bool) -> String {
+fn minify(source_text: &str, source_type: SourceType, mangle: bool) -> String {
     let allocator = Allocator::default();
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
-    let options = MinifierOptions { mangle, ..MinifierOptions::default() };
+    let options = MinifierOptions { mangle, compress: CompressOptions::all_true() };
     let ret = Minifier::new(options).build(&allocator, program);
-    if whitespace {
-        CodeGenerator::new().with_mangler(ret.mangler).build(program)
-    } else {
-        WhitespaceRemover::new().with_mangler(ret.mangler).build(program)
-    }
-    .source_text
+    CodeGenerator::new().with_mangler(ret.mangler).build(program).source_text
 }

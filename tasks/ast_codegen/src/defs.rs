@@ -1,5 +1,5 @@
 use super::{REnum, RStruct, RType};
-use crate::{schema::Inherit, util::TypeExt, TypeName};
+use crate::{layout::KnownLayout, schema::Inherit, util::TypeExt, TypeName};
 use quote::ToTokens;
 use serde::Serialize;
 
@@ -9,11 +9,26 @@ pub enum TypeDef {
     Enum(EnumDef),
 }
 
+impl TypeDef {
+    pub fn name(&self) -> &String {
+        match self {
+            Self::Struct(it) => &it.name,
+            Self::Enum(it) => &it.name,
+        }
+    }
+}
+
 #[derive(Debug, Serialize)]
 pub struct StructDef {
     pub name: TypeName,
     pub fields: Vec<FieldDef>,
     pub has_lifetime: bool,
+    pub size_64: usize,
+    pub align_64: usize,
+    pub offsets_64: Option<Vec<usize>>,
+    pub size_32: usize,
+    pub align_32: usize,
+    pub offsets_32: Option<Vec<usize>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -23,6 +38,12 @@ pub struct EnumDef {
     /// For `@inherits` inherited enum variants
     pub inherits: Vec<EnumInheritDef>,
     pub has_lifetime: bool,
+    pub size_64: usize,
+    pub align_64: usize,
+    pub offsets_64: Option<Vec<usize>>,
+    pub size_32: usize,
+    pub align_32: usize,
+    pub offsets_32: Option<Vec<usize>>,
 }
 
 #[derive(Debug, Serialize)]
@@ -57,21 +78,55 @@ impl From<&RType> for Option<TypeDef> {
 
 impl From<&REnum> for EnumDef {
     fn from(it @ REnum { item, meta }: &REnum) -> Self {
+        let (size_64, align_64, offsets_64) = meta
+            .layout_64
+            .clone()
+            .layout()
+            .map_or_else(|| panic!("Uncalculated layout on {}!", item.ident), KnownLayout::unpack);
+        let (size_32, align_32, offsets_32) = meta
+            .layout_32
+            .clone()
+            .layout()
+            .map_or_else(|| panic!("Uncalculated layout on {}!", item.ident), KnownLayout::unpack);
         Self {
             name: it.ident().to_string(),
             variants: item.variants.iter().map(Into::into).collect(),
-            has_lifetime: item.generics.lifetimes().count() > 0,
             inherits: meta.inherits.iter().map(Into::into).collect(),
+            has_lifetime: item.generics.lifetimes().count() > 0,
+
+            size_64,
+            align_64,
+            offsets_64,
+            size_32,
+            align_32,
+            offsets_32,
         }
     }
 }
 
 impl From<&RStruct> for StructDef {
-    fn from(it @ RStruct { item, .. }: &RStruct) -> Self {
+    fn from(it @ RStruct { item, meta }: &RStruct) -> Self {
+        let (size_64, align_64, offsets_64) = meta
+            .layout_64
+            .clone()
+            .layout()
+            .map_or_else(|| panic!("Uncalculated layout on {}!", item.ident), KnownLayout::unpack);
+        let (size_32, align_32, offsets_32) = meta
+            .layout_32
+            .clone()
+            .layout()
+            .map_or_else(|| panic!("Uncalculated layout on {}!", item.ident), KnownLayout::unpack);
         Self {
             name: it.ident().to_string(),
             fields: item.fields.iter().map(Into::into).collect(),
             has_lifetime: item.generics.lifetimes().count() > 0,
+
+            size_64,
+            align_64,
+            offsets_64,
+            size_32,
+            align_32,
+            offsets_32,
         }
     }
 }

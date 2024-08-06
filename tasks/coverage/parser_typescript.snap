@@ -1,9 +1,9 @@
 commit: d8086f14
 
 parser_typescript Summary:
-AST Parsed     : 6444/6456 (99.81%)
-Positive Passed: 6416/6456 (99.38%)
-Negative Passed: 1183/5653 (20.93%)
+AST Parsed     : 6446/6456 (99.85%)
+Positive Passed: 6423/6456 (99.49%)
+Negative Passed: 1167/5653 (20.64%)
 Expect Syntax Error: "compiler/ClassDeclaration10.ts"
 Expect Syntax Error: "compiler/ClassDeclaration11.ts"
 Expect Syntax Error: "compiler/ClassDeclaration13.ts"
@@ -361,6 +361,7 @@ Expect Syntax Error: "compiler/collisionExportsRequireAndInternalModuleAlias.ts"
 Expect Syntax Error: "compiler/collisionExportsRequireAndModule.ts"
 Expect Syntax Error: "compiler/collisionExportsRequireAndVar.ts"
 Expect Syntax Error: "compiler/commaOperator1.ts"
+Expect Syntax Error: "compiler/commaOperatorLeftSideUnused.ts"
 Expect Syntax Error: "compiler/commentOnImportStatement1.ts"
 Expect Syntax Error: "compiler/commentOnImportStatement2.ts"
 Expect Syntax Error: "compiler/commentOnImportStatement3.ts"
@@ -593,6 +594,8 @@ Expect Syntax Error: "compiler/divergentAccessorsTypes6.ts"
 Expect Syntax Error: "compiler/divergentAccessorsTypes8.ts"
 Expect Syntax Error: "compiler/divergentAccessorsVisibility1.ts"
 Expect Syntax Error: "compiler/doNotElaborateAssignabilityToTypeParameters.ts"
+Expect Syntax Error: "compiler/doYouNeedToChangeYourTargetLibraryES2015.ts"
+Expect Syntax Error: "compiler/doYouNeedToChangeYourTargetLibraryES2016Plus.ts"
 Expect Syntax Error: "compiler/doubleUnderStringLiteralAssignability.ts"
 Expect Syntax Error: "compiler/doubleUnderscoreExportStarConflict.ts"
 Expect Syntax Error: "compiler/downlevelLetConst12.ts"
@@ -1784,6 +1787,10 @@ Expect Syntax Error: "compiler/reexportMissingDefault4.ts"
 Expect Syntax Error: "compiler/reexportMissingDefault6.ts"
 Expect Syntax Error: "compiler/reexportMissingDefault7.ts"
 Expect Syntax Error: "compiler/reexportedMissingAlias.ts"
+Expect Syntax Error: "compiler/regExpWithOpenBracketInCharClass.ts"
+Expect Syntax Error: "compiler/regularExpressionAnnexB.ts"
+Expect Syntax Error: "compiler/regularExpressionGroupNameSuggestions.ts"
+Expect Syntax Error: "compiler/regularExpressionUnicodePropertyValueExpressionSuggestions.ts"
 Expect Syntax Error: "compiler/relationComplexityError.ts"
 Expect Syntax Error: "compiler/relationalOperatorComparable.ts"
 Expect Syntax Error: "compiler/relativeNamesInClassicResolution.ts"
@@ -2903,14 +2910,19 @@ Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEsca
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions04.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions05.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions06.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions07.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions08.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions09.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions10.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions11.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions12.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions13.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions14.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions15.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions16.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions17.ts"
 Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions18.ts"
+Expect Syntax Error: "conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInRegularExpressions19.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression10_es6.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression11_es6.ts"
 Expect Syntax Error: "conformance/es6/yieldExpressions/YieldExpression1_es6.ts"
@@ -3264,6 +3276,7 @@ Expect Syntax Error: "conformance/externalModules/verbatimModuleSyntaxInternalIm
 Expect Syntax Error: "conformance/externalModules/verbatimModuleSyntaxNoElisionCJS.ts"
 Expect Syntax Error: "conformance/externalModules/verbatimModuleSyntaxNoElisionESM.ts"
 Expect Syntax Error: "conformance/externalModules/verbatimModuleSyntaxRestrictionsCJS.ts"
+Expect Syntax Error: "conformance/fixSignatureCaching.ts"
 Expect Syntax Error: "conformance/functions/functionImplementationErrors.ts"
 Expect Syntax Error: "conformance/functions/functionImplementations.ts"
 Expect Syntax Error: "conformance/functions/functionNameConflicts.ts"
@@ -3819,7 +3832,9 @@ Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser50961
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509693.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser509698.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser536727.ts"
+Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parser579071.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegressionTests/parserTernaryAndCommaOperators1.ts"
+Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parseRegularExpressionMixedWithComments.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression2.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression3.ts"
 Expect Syntax Error: "conformance/parser/ecmascript5/RegularExpressions/parserRegularExpression4.ts"
@@ -4052,6 +4067,7 @@ Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclaration
 Expect Syntax Error: "conformance/statements/VariableStatements/usingDeclarations/usingDeclarationsWithImportHelpers.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/invalidSwitchBreakStatement.ts"
 Expect Syntax Error: "conformance/statements/breakStatements/switchBreakStatements.ts"
+Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatements.ts"
 Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatementsArrayErrors.ts"
 Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatementsDestructuring.ts"
 Expect Syntax Error: "conformance/statements/for-inStatements/for-inStatementsDestructuring2.ts"
@@ -4474,9 +4490,6 @@ Expect Syntax Error: "conformance/typings/typingsSuggestion1.ts"
 Expect Syntax Error: "conformance/typings/typingsSuggestion2.ts"
 Expect Syntax Error: "conformance/typings/typingsSuggestionBun1.ts"
 Expect Syntax Error: "conformance/typings/typingsSuggestionBun2.ts"
-Expect to Parse: "compiler/APISample_jsdoc.ts"
-
-  × Too many capturing groups
 Expect to Parse: "compiler/arrayFromAsync.ts"
 
   × Expected `(` but found `await`
@@ -4494,20 +4507,6 @@ Expect to Parse: "compiler/bom-utf16be.ts"
  1 │ ￾瘀愀爀 砀㴀㄀　㬀ഀ਀
    · ─
    ╰────
-Expect to Parse: "compiler/castExpressionParentheses.ts"
-
-  × Too many capturing groups
-Expect to Parse: "compiler/controlFlowPropertyDeclarations.ts"
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
 Expect to Parse: "compiler/elidedEmbeddedStatementsReplacedWithSemicolon.ts"
 
   × 'with' statements are not allowed
@@ -4818,16 +4817,6 @@ Expect to Parse: "conformance/jsdoc/overloadTag3.ts"
    · ──────
  5 │     /**
    ╰────
-Expect to Parse: "conformance/moduleResolution/resolutionModeImportType1.ts"
-
-  × Expected `with` but found `assert`
-   ╭─[conformance/moduleResolution/resolutionModeImportType1.ts:2:38]
- 1 │ type Default = typeof import("foo").x;
- 2 │ type Import = typeof import("foo", { assert: { "resolution-mode": "import" } }).x;
-   ·                                      ───┬──
-   ·                                         ╰── `with` expected
- 3 │ type Require = typeof import("foo", { assert: { "resolution-mode": "require" } }).x;
-   ╰────
 Expect to Parse: "conformance/moduleResolution/untypedModuleImport.ts"
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -4846,16 +4835,6 @@ Expect to Parse: "conformance/moduleResolution/untypedModuleImport_vsAmbient.ts"
    ·     ▲
    ╰────
   help: Try insert a semicolon here
-Expect to Parse: "conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts"
-
-  × Expected `with` but found `assert`
-   ╭─[conformance/node/nodeModulesImportTypeModeDeclarationEmit1.ts:2:23]
- 1 │ export type LocalInterface =
- 2 │     & import("pkg", { assert: {"resolution-mode": "require"} }).RequireInterface
-   ·                       ───┬──
-   ·                          ╰── `with` expected
- 3 │     & import("pkg", { assert: {"resolution-mode": "import"} }).ImportInterface;
-   ╰────
 Expect to Parse: "conformance/salsa/annotatedThisPropertyInitializerDoesntNarrow.ts"
 
   × Cannot use export statement outside a module
@@ -4886,20 +4865,6 @@ Expect to Parse: "conformance/salsa/typeFromPropertyAssignmentWithExport.ts"
    · ──────
  4 │ 
    ╰────
-Expect to Parse: "conformance/statements/ifDoWhileStatements/ifDoWhileStatements.ts"
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subtypesOfTypeParameterWithConstraints2.ts"
-
-  × Too many capturing groups
-
-  × Too many capturing groups
 
   × A parameter property is only allowed in a constructor implementation.
    ╭─[compiler/ArrowFunctionExpression1.ts:1:10]
@@ -6313,8 +6278,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  47 │     }
     ╰────
 
-  × Too many capturing groups
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/commonMissingSemicolons.ts:2:6]
  1 │ async function myAsyncFunction1() {}
@@ -6886,20 +6849,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ·                            ╰── `=>` expected
  12 │ 
     ╰────
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
 
   × Unexpected token
    ╭─[compiler/dontShowCompilerGeneratedMembers.ts:3:6]
@@ -10292,80 +10241,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  22 │ 
     ╰────
 
-  × Could not parse the entire pattern
-
-  × Unterminated character class
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Invalid class escape
-
-  × Group specifier is empty
-
   × Unexpected flag a in regular expression literal
    ╭─[compiler/regularExpressionScanning.ts:3:12]
  2 │     // Flags
@@ -10454,84 +10329,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  4 │     // Pattern modifiers
    ╰────
 
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
-  × Duplicated group name
-
   × The 'u' and 'v' regular expression flags cannot be enabled at the same time
    ╭─[compiler/regularExpressionScanning.ts:3:2]
  2 │     // Flags
@@ -10539,10 +10336,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·     ─────────────────────
  4 │     // Pattern modifiers
    ╰────
-
-  × Invalid property name
-
-  × Unterminated capturing group name
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[compiler/regularExpressionWithNonBMPFlags.ts:7:63]
@@ -15619,16 +15412,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  2 │     // Once this is supported, yield *must* be parenthesized.
    ╰────
 
-  × Invalid unicode escape sequence
-
-  × Invalid unicode escape sequence
-
-  × Invalid unicode escape sequence
-
-  × Invalid unicode escape sequence
-
-  × Invalid unicode escape sequence
-
   × Invalid escape sequence
    ╭─[conformance/es6/unicodeExtendedEscapes/unicodeExtendedEscapesInStrings07.ts:3:10]
  2 │ //  1. Assert: 0 ≤ cp ≤ 0x10FFFF.
@@ -18076,14 +17859,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·                ╰── `,` expected
    ╰────
 
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
   × A rest parameter must be last in a parameter list
     ╭─[conformance/functions/functionOverloadErrorsSyntax.ts:9:25]
   8 │ //Function overload signature with rest param followed by non-optional parameter
@@ -20036,30 +19811,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
  2 │ }
    ╰────
 
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
-  × Too many capturing groups
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
       ╭─[conformance/parser/ecmascript5/RealWorld/parserharness.ts:1430:16]
  1429 │         // Regex for parsing options in the format "@Alpha: Value of any sort"
@@ -20149,8 +19900,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·         ──
    ╰────
 
-  × Unterminated capturing group
-
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[conformance/parser/ecmascript5/RegressionTests/parser585151.ts:2:6]
  1 │ class Foo2 {
@@ -20196,18 +19945,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
    ·              ▲
    ╰────
   help: Try insert a semicolon here
-
-  × Invalid braced quantifier
-
-  × Invalid braced quantifier
-
-  × Invalid braced quantifier
-
-  × Invalid braced quantifier
-
-  × Invalid braced quantifier
-
-  × Invalid braced quantifier
 
   × Unexpected flag a in regular expression literal
    ╭─[conformance/parser/ecmascript5/RegularExpressions/parserRegularExpressionDivideAmbiguity3.ts:1:17]
@@ -22065,8 +21802,6 @@ Expect to Parse: "conformance/types/typeRelationships/subtypesAndSuperTypes/subt
     ·              ────
  38 │ }
     ╰────
-
-  × Too many capturing groups
 
   × Unexpected token
    ╭─[conformance/statements/for-ofStatements/ES5For-of12.ts:1:6]

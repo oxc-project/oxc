@@ -6,7 +6,7 @@ use crate::{
     span::SpanFactory,
 };
 
-// LiteralParser
+/// LiteralParser
 pub struct Parser<'a> {
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -26,10 +26,11 @@ impl<'a> Parser<'a> {
 
     pub fn parse(self) -> Result<ast::RegExpLiteral<'a>> {
         // Precheck if the source text is a valid regular expression literal
+        // If valid, parse the pattern and flags with returned span offsets
         let (body_start_offset, body_end_offset, flag_start_offset) =
             parse_reg_exp_literal(self.source_text)?;
 
-        // If valid, parse flags first
+        // Parse flags first to know if unicode mode is enabled or not
         let flags = FlagsParser::new(
             self.allocator,
             &self.source_text[flag_start_offset..],
@@ -39,13 +40,17 @@ impl<'a> Parser<'a> {
         .parse()?;
 
         // Then parse the pattern with the flags
+        let pattern_options = match (flags.unicode, flags.unicode_sets) {
+            (true, false) => self.options.with_unicode_mode(),
+            (_, true) => self.options.with_unicode_sets_mode(),
+            _ => self.options,
+        };
+
         let pattern = PatternParser::new(
             self.allocator,
             &self.source_text[body_start_offset..body_end_offset],
             #[allow(clippy::cast_possible_truncation)]
-            self.options
-                .with_span_offset(self.options.span_offset + body_start_offset as u32)
-                .with_unicode_flags(flags.unicode, flags.unicode_sets),
+            pattern_options.with_span_offset(self.options.span_offset + body_start_offset as u32),
         )
         .parse()?;
 
@@ -61,7 +66,6 @@ impl<'a> Parser<'a> {
 /// ```
 /// / RegularExpressionBody / RegularExpressionFlags
 /// ```
-/// <https://tc39.es/ecma262/#sec-literals-regular-expression-literals>
 /// Returns `(body_start_offset, body_end_offset, flag_start_offset)`.
 fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
     let mut offset = 0;
@@ -95,7 +99,6 @@ fn parse_reg_exp_literal(source_text: &str) -> Result<(usize, usize, usize)> {
                     in_character_class = false;
                 } else if ch == '/' && !in_character_class
                     // `*` is not allowed as `RegularExpressionFirstChar`
-                    // https://tc39.es/ecma262/#prod-RegularExpressionBody
                     || offset == body_start && ch == '*'
                 {
                     break;

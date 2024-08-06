@@ -187,6 +187,7 @@ fn transform_rule_and_plugin_name<'a>(
 mod test {
     use std::env;
 
+    use oxc_span::CompactStr;
     use rustc_hash::FxHashSet;
     use serde::Deserialize;
 
@@ -235,7 +236,10 @@ mod test {
 
         let OxlintConfig { rules, settings, env, globals } = config.unwrap();
         assert!(!rules.is_empty());
-        assert_eq!(settings.jsx_a11y.polymorphic_prop_name, Some("role".to_string()));
+        assert_eq!(
+            settings.jsx_a11y.polymorphic_prop_name.as_ref().map(CompactStr::as_str),
+            Some("role")
+        );
         assert_eq!(env.iter().count(), 1);
         assert!(globals.is_enabled("foo"));
     }

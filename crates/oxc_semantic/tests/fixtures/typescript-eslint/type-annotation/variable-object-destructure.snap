@@ -35,7 +35,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-annotation
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "x",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(<destructure>)",
         "references": []
       }
     ]

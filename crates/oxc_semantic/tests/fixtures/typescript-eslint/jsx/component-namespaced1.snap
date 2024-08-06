@@ -21,7 +21,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/component-n
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 0,
         "name": "X",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(X)",
         "references": [
           {
             "flag": "ReferenceFlag(Read)",
@@ -35,7 +35,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/jsx/component-n
         "flag": "SymbolFlags(BlockScopedVariable | ConstVariable)",
         "id": 1,
         "name": "Foo",
-        "node": "VariableDeclarator",
+        "node": "VariableDeclarator(Foo)",
         "references": []
       }
     ]

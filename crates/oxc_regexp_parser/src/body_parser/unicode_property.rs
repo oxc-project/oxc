@@ -1,6 +1,6 @@
 use phf::{phf_set, Set};
 
-// https://tc39.es/ecma262/multipage/text-processing.html#table-nonbinary-unicode-properties
+// https://tc39.es/ecma262/2024/multipage/text-processing.html#table-nonbinary-unicode-properties
 pub fn is_valid_unicode_property(name: &str, value: &str) -> bool {
     if matches!(name, "General_Category" | "gc") {
         return GC_PROPERTY_VALUES.contains(value);
@@ -17,7 +17,7 @@ pub fn is_valid_unicode_property(name: &str, value: &str) -> bool {
 pub fn is_valid_lone_unicode_property(name_or_value: &str) -> bool {
     BINARY_UNICODE_PROPERTIES.contains(name_or_value)
 }
-/// This should be used with `unicode_sets_mode`
+/// This should be used with `UnicodeSetsMode`
 pub fn is_valid_lone_unicode_property_of_strings(name_or_value: &str) -> bool {
     BINARY_UNICODE_PROPERTIES_OF_STRINGS.contains(name_or_value)
 }
@@ -236,7 +236,7 @@ static SCX_PROPERTY_VALUES: Set<&'static str> = phf_set! {
 };
 
 // Table 66: Binary Unicode property aliases
-// https://tc39.es/ecma262/multipage/text-processing.html#table-binary-unicode-properties
+// https://tc39.es/ecma262/2024/multipage/text-processing.html#table-binary-unicode-properties
 static BINARY_UNICODE_PROPERTIES: Set<&'static str> = phf_set! {
 "ASCII",
 "ASCII_Hex_Digit",
@@ -339,7 +339,7 @@ static BINARY_UNICODE_PROPERTIES: Set<&'static str> = phf_set! {
 };
 
 // Table 67: Binary Unicode properties of strings
-// https://tc39.es/ecma262/multipage/text-processing.html#table-binary-unicode-properties-of-strings
+// https://tc39.es/ecma262/2024/multipage/text-processing.html#table-binary-unicode-properties-of-strings
 static BINARY_UNICODE_PROPERTIES_OF_STRINGS: Set<&'static str> = phf_set! {
 "Basic_Emoji",
 "Emoji_Keycap_Sequence",

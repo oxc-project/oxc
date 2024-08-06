@@ -5,6 +5,8 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{CompactStr, GetSpan, Span};
+use rustc_hash::FxHashSet;
+use serde_json::Value;
 
 use crate::{context::LintContext, rule::Rule, AstNode};
 
@@ -28,7 +30,7 @@ pub struct NoThisAlias(Box<NoThisAliasConfig>);
 #[derive(Debug, Clone)]
 pub struct NoThisAliasConfig {
     allow_destructuring: bool,
-    allow_names: Vec<CompactStr>,
+    allow_names: FxHashSet<CompactStr>,
 }
 
 impl std::ops::Deref for NoThisAlias {
@@ -41,7 +43,12 @@ impl std::ops::Deref for NoThisAlias {
 
 impl Default for NoThisAliasConfig {
     fn default() -> Self {
-        Self { allow_destructuring: true, allow_names: vec![] }
+        Self { allow_destructuring: true, allow_names: FxHashSet::default() }
+    }
+}
+impl NoThisAlias {
+    fn is_allowed(&self, name: &str) -> bool {
+        self.allow_names.contains(name)
     }
 }
 
@@ -66,21 +73,20 @@ declare_oxc_lint!(
 impl Rule for NoThisAlias {
     fn from_configuration(value: serde_json::Value) -> Self {
         let obj = value.get(0);
-        let allowed_names = value
+        let allowed_names: FxHashSet<CompactStr> = value
             .get(0)
             .and_then(|v| v.get("allow_names"))
-            .and_then(serde_json::Value::as_array)
+            .and_then(Value::as_array)
             .unwrap_or(&vec![])
             .iter()
-            .map(serde_json::Value::as_str)
-            .filter(std::option::Option::is_some)
-            .map(|x| CompactStr::from(x.unwrap()))
-            .collect::<Vec<CompactStr>>();
+            .filter_map(Value::as_str)
+            .map(CompactStr::from)
+            .collect();
 
         Self(Box::new(NoThisAliasConfig {
             allow_destructuring: obj
                 .and_then(|v| v.get("allow_destructuring"))
-                .and_then(serde_json::Value::as_bool)
+                .and_then(Value::as_bool)
                 .unwrap_or_default(),
             allow_names: allowed_names,
         }))
@@ -102,7 +108,7 @@ impl Rule for NoThisAlias {
                 }
 
                 if let BindingPatternKind::BindingIdentifier(identifier) = &decl.id.kind {
-                    if !self.allow_names.iter().any(|s| s.as_str() == identifier.name.as_str()) {
+                    if !self.is_allowed(&identifier.name) {
                         ctx.diagnostic(no_this_alias_diagnostic(identifier.span));
                     }
 
@@ -123,19 +129,20 @@ impl Rule for NoThisAlias {
                         ctx.diagnostic(no_this_destructure_diagnostic(left.span()));
                     }
                     AssignmentTarget::AssignmentTargetIdentifier(id) => {
-                        if !self.allow_names.iter().any(|s| s.as_str() == id.name.as_str()) {
+                        if !self.is_allowed(&id.name) {
                             ctx.diagnostic(no_this_alias_diagnostic(id.span));
                         }
                     }
                     left @ match_simple_assignment_target!(AssignmentTarget) => {
                         let pat = left.to_simple_assignment_target();
-                        if let Some(expr) = pat.get_expression() {
-                            if let Some(id) = expr.get_identifier_reference() {
-                                if !self.allow_names.iter().any(|s| s.as_str() == id.name.as_str())
-                                {
-                                    ctx.diagnostic(no_this_alias_diagnostic(id.span));
-                                }
-                            }
+                        let Some(expr) = pat.get_expression() else {
+                            return;
+                        };
+                        let Some(id) = expr.get_identifier_reference() else {
+                            return;
+                        };
+                        if !self.is_allowed(&id.name) {
+                            ctx.diagnostic(no_this_alias_diagnostic(id.span));
                         }
                     }
                 }
@@ -143,11 +150,13 @@ impl Rule for NoThisAlias {
             _ => {}
         }
     }
+
     fn should_run(&self, ctx: &LintContext) -> bool {
         ctx.source_type().is_typescript()
     }
 }
 
+#[inline]
 fn rhs_is_this_reference(rhs_expression: &Expression) -> bool {
     matches!(rhs_expression, Expression::ThisExpression(_))
 }

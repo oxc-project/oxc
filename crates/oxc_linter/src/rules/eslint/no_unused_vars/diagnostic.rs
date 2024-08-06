@@ -44,7 +44,7 @@ pub fn declared(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
     let pronoun = pronoun_for_symbol(symbol.flags());
     let name = symbol.name();
 
-    OxcDiagnostic::error(format!("{pronoun} '{name}' is {verb} but never used."))
+    OxcDiagnostic::warn(format!("{pronoun} '{name}' is {verb} but never used."))
         .with_label(symbol.span().label(format!("'{name}' is declared here")))
         .with_help(help)
 }
@@ -54,7 +54,7 @@ pub fn assign(symbol: &Symbol<'_, '_>, assign_span: Span) -> OxcDiagnostic {
     let pronoun = pronoun_for_symbol(symbol.flags());
     let name = symbol.name();
 
-    OxcDiagnostic::error(format!("{pronoun} '{name}' is assigned a value but never used."))
+    OxcDiagnostic::warn(format!("{pronoun} '{name}' is assigned a value but never used."))
         .with_labels([
             symbol.span().label(format!("'{name}' is declared here")),
             assign_span.label("it was last assigned here"),
@@ -66,7 +66,7 @@ pub fn assign(symbol: &Symbol<'_, '_>, assign_span: Span) -> OxcDiagnostic {
 pub fn param(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
     let name = symbol.name();
 
-    OxcDiagnostic::error(format!("Parameter '{name}' is declared but never used."))
+    OxcDiagnostic::warn(format!("Parameter '{name}' is declared but never used."))
         .with_label(symbol.span().label(format!("'{name}' is declared here")))
         .with_help("Consider removing this parameter.")
 }
@@ -76,7 +76,7 @@ pub fn imported(symbol: &Symbol<'_, '_>) -> OxcDiagnostic {
     let pronoun = pronoun_for_symbol(symbol.flags());
     let name = symbol.name();
 
-    OxcDiagnostic::error(format!("{pronoun} '{name}' is imported but never used."))
+    OxcDiagnostic::warn(format!("{pronoun} '{name}' is imported but never used."))
         .with_label(symbol.span().label(format!("'{name}' is imported here")))
         .with_help("Consider removing this import.")
 }

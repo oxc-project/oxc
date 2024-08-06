@@ -24,28 +24,28 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/decorators/para
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 2,
                 "name": "a",
-                "node": "FormalParameter",
+                "node": "FormalParameter(a)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 3,
                 "name": "b",
-                "node": "FormalParameter",
+                "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 4,
                 "name": "c",
-                "node": "FormalParameter",
+                "node": "FormalParameter(<destructure>)",
                 "references": []
               },
               {
                 "flag": "SymbolFlags(FunctionScopedVariable)",
                 "id": 5,
                 "name": "d",
-                "node": "FormalParameter",
+                "node": "FormalParameter(d)",
                 "references": []
               }
             ]

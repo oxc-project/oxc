@@ -101,7 +101,7 @@ impl Rule for CheckPropertyNames {
                     .map(|span| {
                         LabeledSpan::at(
                             (span.start as usize)..(span.end as usize),
-                            "Duplicated property".to_string(),
+                            "Duplicated property",
                         )
                     })
                     .collect::<Vec<_>>();

@@ -1,8 +1,11 @@
 const AST_CRATE: &str = "crates/oxc_ast";
+#[allow(dead_code)]
+const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
 
 mod defs;
 mod fmt;
 mod generators;
+mod layout;
 mod markers;
 mod passes;
 mod schema;
@@ -13,13 +16,14 @@ use std::{cell::RefCell, collections::HashMap, io::Read, path::PathBuf, rc::Rc};
 use bpaf::{Bpaf, Parser};
 use fmt::{cargo_fmt, pprint};
 use itertools::Itertools;
-use passes::{BuildSchema, Linker, Pass};
+use passes::{BuildSchema, CalcLayout, Linker, Pass};
 use proc_macro2::TokenStream;
 use syn::parse_file;
 
 use defs::TypeDef;
 use generators::{
-    AstBuilderGenerator, AstKindGenerator, Generator, VisitGenerator, VisitMutGenerator,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, Generator, VisitGenerator,
+    VisitMutGenerator,
 };
 use schema::{Module, REnum, RStruct, RType, Schema};
 use util::{write_all_to, NormalizeError};
@@ -258,7 +262,9 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let CodegenResult { outputs, schema } = files()
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .pass(Linker)
+        .pass(CalcLayout)
         .pass(BuildSchema)
+        .gen(AssertLayouts)
         .gen(AstKindGenerator)
         .gen(AstBuilderGenerator)
         .gen(ImplGetSpanGenerator)

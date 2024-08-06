@@ -64,7 +64,7 @@ impl<'a> ParserImpl<'a> {
             self.error(diagnostics::invalid_assignment(span));
         }
 
-        Ok(TSEnumMember { span, id, initializer })
+        Ok(self.ast.ts_enum_member(span, id, initializer))
     }
 
     fn parse_ts_enum_member_name(&mut self) -> Result<TSEnumMemberName<'a>> {
@@ -475,7 +475,7 @@ impl<'a> ParserImpl<'a> {
         self.eat_decorators()?;
         let this = {
             let (span, name) = self.parse_identifier_kind(Kind::This);
-            IdentifierName { span, name }
+            self.ast.identifier_name(span, name)
         };
         let type_annotation = self.parse_ts_type_annotation()?;
         Ok(self.ast.ts_this_parameter(self.end_span(span), this, type_annotation))

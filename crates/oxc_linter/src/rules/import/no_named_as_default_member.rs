@@ -86,7 +86,7 @@ impl Rule for NoNamedAsDefaultMember {
                     .and_then(|symbol_id| has_members_map.get(&symbol_id))
                     .and_then(|it| {
                         if it.0.exported_bindings.contains_key(entry_name) {
-                            Some(it.1.to_string())
+                            Some(&it.1)
                         } else {
                             None
                         }
@@ -109,7 +109,7 @@ impl Rule for NoNamedAsDefaultMember {
                     },
                     &ident.name,
                     prop_str,
-                    &module_name,
+                    module_name,
                 ));
             };
         };
@@ -136,7 +136,7 @@ impl Rule for NoNamedAsDefaultMember {
                                 decl.span,
                                 &ident.name,
                                 &name,
-                                &module_name,
+                                module_name,
                             ));
                         }
                     }

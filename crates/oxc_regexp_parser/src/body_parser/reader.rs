@@ -66,24 +66,18 @@ impl<'a> Reader<'a> {
     pub fn peek2(&self) -> Option<u32> {
         self.peek_nth(1)
     }
-    pub fn peek3(&self) -> Option<u32> {
-        self.peek_nth(2)
-    }
-    pub fn peek4(&self) -> Option<u32> {
-        self.peek_nth(3)
-    }
 
-    // NOTE: Consider `peek(ch: char): bool` style API?
+    // NOTE: Consider `peek_char(): Option<char>` style API?
 
     pub fn eat(&mut self, ch: char) -> bool {
-        if self.peek() == Some(ch as u32) {
+        if self.peek_nth(0) == Some(ch as u32) {
             self.advance();
             return true;
         }
         false
     }
     pub fn eat2(&mut self, ch: char, ch2: char) -> bool {
-        if self.peek() == Some(ch as u32) && self.peek2() == Some(ch2 as u32) {
+        if self.peek_nth(0) == Some(ch as u32) && self.peek_nth(1) == Some(ch2 as u32) {
             self.advance();
             self.advance();
             return true;
@@ -91,9 +85,9 @@ impl<'a> Reader<'a> {
         false
     }
     pub fn eat3(&mut self, ch: char, ch2: char, ch3: char) -> bool {
-        if self.peek() == Some(ch as u32)
-            && self.peek2() == Some(ch2 as u32)
-            && self.peek3() == Some(ch3 as u32)
+        if self.peek_nth(0) == Some(ch as u32)
+            && self.peek_nth(1) == Some(ch2 as u32)
+            && self.peek_nth(2) == Some(ch3 as u32)
         {
             self.advance();
             self.advance();
@@ -103,10 +97,10 @@ impl<'a> Reader<'a> {
         false
     }
     pub fn eat4(&mut self, ch: char, ch2: char, ch3: char, ch4: char) -> bool {
-        if self.peek() == Some(ch as u32)
-            && self.peek2() == Some(ch2 as u32)
-            && self.peek3() == Some(ch3 as u32)
-            && self.peek4() == Some(ch4 as u32)
+        if self.peek_nth(0) == Some(ch as u32)
+            && self.peek_nth(1) == Some(ch2 as u32)
+            && self.peek_nth(2) == Some(ch3 as u32)
+            && self.peek_nth(3) == Some(ch4 as u32)
         {
             self.advance();
             self.advance();
@@ -136,7 +130,6 @@ mod test {
             assert_eq!(reader.index, 1);
             assert_eq!(reader.peek(), Some('R' as u32));
             assert_eq!(reader.peek2(), Some('e' as u32));
-            assert_eq!(reader.peek3(), Some('g' as u32));
 
             assert!(reader.eat('R'));
             assert!(!reader.eat('R'));
@@ -180,7 +173,6 @@ mod test {
         assert!(unicode_reader.eat('あ'));
         assert_eq!(unicode_reader.peek(), Some('っ' as u32));
         assert_eq!(unicode_reader.peek2(), Some('ち' as u32));
-        assert_eq!(unicode_reader.peek3(), None);
 
         unicode_reader.rewind(checkpoint);
         assert!(unicode_reader.eat('は'));
@@ -204,7 +196,6 @@ mod test {
 
         assert_eq!(legacy_reader.peek(), Some('あ' as u32));
         assert_eq!(legacy_reader.peek2(), Some('っ' as u32));
-        assert_eq!(legacy_reader.peek3(), Some('ち' as u32));
         assert!(legacy_reader.eat3('あ', 'っ', 'ち'));
 
         legacy_reader.rewind(checkpoint);

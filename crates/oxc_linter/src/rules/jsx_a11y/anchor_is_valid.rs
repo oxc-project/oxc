@@ -41,7 +41,7 @@ struct AnchorIsValidConfig {
 
 declare_oxc_lint!(
     /// ### What it does
-    /// The HTML <a> element, with a valid href attribute, is formally defined as representing a **hyperlink**.
+    /// The HTML `<a>` element, with a valid href attribute, is formally defined as representing a **hyperlink**.
     /// That is, a link between one HTML document and another, or between one location inside an HTML document and another location inside the same document.
     ///
     /// While before it was possible to attach logic to an anchor element, with the advent of JSX libraries,

@@ -293,6 +293,13 @@ impl<'a> IdentifierName<'a> {
     }
 }
 
+impl<'a> fmt::Display for IdentifierName<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        self.name.fmt(f)
+    }
+}
+
 impl<'a> Hash for IdentifierReference<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
@@ -319,6 +326,12 @@ impl<'a> IdentifierReference<'a> {
     }
 }
 
+impl<'a> fmt::Display for IdentifierReference<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
+    }
+}
+
 impl<'a> Hash for BindingIdentifier<'a> {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
         self.name.hash(state);
@@ -328,6 +341,13 @@ impl<'a> Hash for BindingIdentifier<'a> {
 impl<'a> BindingIdentifier<'a> {
     pub fn new(span: Span, name: Atom<'a>) -> Self {
         Self { span, name, symbol_id: Cell::default() }
+    }
+}
+
+impl<'a> fmt::Display for BindingIdentifier<'a> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.name.fmt(f)
     }
 }
 

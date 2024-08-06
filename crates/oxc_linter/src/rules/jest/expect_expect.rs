@@ -19,7 +19,7 @@ use crate::{
 };
 
 fn expect_expect_diagnostic(span0: Span) -> OxcDiagnostic {
-    OxcDiagnostic::warn("Test has no assertions".to_string())
+    OxcDiagnostic::warn("Test has no assertions")
         .with_help("Add assertion(s) in this Test")
         .with_label(span0)
 }
