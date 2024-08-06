@@ -3,6 +3,8 @@ use oxc_span::{Atom as SpanAtom, Span};
 
 // NOTE: Should keep all `enum` size <= 16
 
+// TODO: `Disjunction` may be redundant, `Vec<Alternative>` may be enough.
+
 #[derive(Debug)]
 pub struct RegExpLiteral<'a> {
     pub span: Span,
@@ -23,24 +25,28 @@ pub struct Flags {
     pub unicode_sets: bool,
 }
 
+/// The root of the `PatternParser` result.
 #[derive(Debug)]
 pub struct Pattern<'a> {
     pub span: Span,
     pub body: Disjunction<'a>,
 }
 
+/// Pile of [`Alternative`]s separated by `|`.
 #[derive(Debug)]
 pub struct Disjunction<'a> {
     pub span: Span,
     pub body: Vec<'a, Alternative<'a>>,
 }
 
+/// Single unit of `|` separated alternatives.
 #[derive(Debug)]
 pub struct Alternative<'a> {
     pub span: Span,
     pub body: Vec<'a, Term<'a>>,
 }
 
+/// Single unit of [`Alternative`], containing various kinds.
 #[derive(Debug)]
 pub enum Term<'a> {
     // Assertion, QuantifiableAssertion
@@ -60,6 +66,8 @@ pub enum Term<'a> {
     NamedReference(Box<'a, NamedReference<'a>>),
 }
 
+/// Simple form of assertion.
+/// e.g. `^`, `$`, `\b`, `\B`
 #[derive(Debug)]
 pub struct BoundaryAssertion {
     pub span: Span,
@@ -73,6 +81,8 @@ pub enum BoundaryAssertionKind {
     NegativeBoundary,
 }
 
+/// Lookaround assertion.
+/// e.g. `(?=...)`, `(?!...)`, `(?<=...)`, `(?<!...)`
 #[derive(Debug)]
 pub struct LookAroundAssertion<'a> {
     pub span: Span,
@@ -87,19 +97,24 @@ pub enum LookAroundAssertionKind {
     NegativeLookbehind,
 }
 
+/// Quantifier holding a [`Term`] and its repetition count.
+/// e.g. `a*`, `b+`, `c?`, `d{3}`, `e{4,}`, `f{5,6}`
 #[derive(Debug)]
 pub struct Quantifier<'a> {
     pub span: Span,
     pub min: u32,
+    /// `None` means no upper bound.
     pub max: Option<u32>,
     pub greedy: bool,
     pub body: Term<'a>,
 }
 
+/// Single character.
 #[derive(Debug, Copy, Clone)]
 pub struct Character {
     pub span: Span,
     pub kind: CharacterKind,
+    /// Unicode code point or UTF-16 code unit.
     pub value: u32,
 }
 #[derive(Debug, Copy, Clone)]
@@ -114,11 +129,8 @@ pub enum CharacterKind {
     UnicodeEscape,
 }
 
-#[derive(Debug)]
-pub struct Dot {
-    pub span: Span,
-}
-
+/// Character class.
+/// e.g. `\d`, `\D`, `\s`, `\S`, `\w`, `\W`
 #[derive(Debug)]
 pub struct CharacterClassEscape {
     pub span: Span,
@@ -134,15 +146,26 @@ pub enum CharacterClassEscapeKind {
     NegativeW,
 }
 
+/// Unicode property.
+/// e.g. `\p{ASCII}`, `\P{ASCII}`, `\p{sc=Hiragana}`, `\P{sc=Hiragana}`
 #[derive(Debug)]
 pub struct UnicodePropertyEscape<'a> {
     pub span: Span,
     pub negative: bool,
+    /// `true` if `UnicodeSetsMode` and `name` matched unicode property of strings.
     pub strings: bool,
     pub name: SpanAtom<'a>,
     pub value: Option<SpanAtom<'a>>,
 }
 
+/// The `.`.
+#[derive(Debug)]
+pub struct Dot {
+    pub span: Span,
+}
+
+/// Character class wrapped by `[]`.
+/// e.g. `[a-z]`, `[^A-Z]`, `[abc]`, `[a&&b&&c]`, `[[a-z]--x--y]`
 #[derive(Debug)]
 pub struct CharacterClass<'a> {
     pub span: Span,
@@ -153,9 +176,9 @@ pub struct CharacterClass<'a> {
 #[derive(Debug)]
 pub enum CharacterClassContentsKind {
     Union,
-    /// `UnicodeSetsMode` only
+    /// `UnicodeSetsMode` only.
     Intersection,
-    /// `UnicodeSetsMode` only
+    /// `UnicodeSetsMode` only.
     Subtraction,
 }
 #[derive(Debug)]
@@ -169,23 +192,29 @@ pub enum CharacterClassContents<'a> {
     /// `UnicodeSetsMode` only
     ClassStringDisjunction(Box<'a, ClassStringDisjunction<'a>>),
 }
+/// `-` separated range of characters.
+/// e.g. `a-z`, `A-Z`, `0-9`
 #[derive(Debug)]
 pub struct CharacterClassRange {
     pub span: Span,
     pub min: Character,
     pub max: Character,
 }
+/// `|` separated string of characters wrapped by `\q{}`.
 #[derive(Debug)]
 pub struct ClassStringDisjunction<'a> {
     pub span: Span,
     pub body: Vec<'a, ClassString<'a>>,
 }
+/// Single unit of [`ClassStringDisjunction`].
 #[derive(Debug)]
 pub struct ClassString<'a> {
     pub span: Span,
     pub body: Vec<'a, Character>,
 }
 
+/// Named or unnamed capturing group.
+/// e.g. `(...)`, `(?<name>...)`
 #[derive(Debug)]
 pub struct CapturingGroup<'a> {
     pub span: Span,
@@ -193,6 +222,8 @@ pub struct CapturingGroup<'a> {
     pub body: Disjunction<'a>,
 }
 
+/// Pseudo-group for ignoring.
+/// e.g. `(?:...)`
 #[derive(Debug)]
 pub struct IgnoreGroup<'a> {
     pub span: Span,
@@ -207,12 +238,16 @@ pub struct ModifierFlags {
     pub multiline: bool,
 }
 
+/// Backreference by index.
+/// e.g. `\1`, `\2`, `\3`
 #[derive(Debug)]
 pub struct IndexedReference {
     pub span: Span,
     pub index: u32,
 }
 
+/// Backreference by name.
+/// e.g. `\k<name>`
 #[derive(Debug)]
 pub struct NamedReference<'a> {
     pub span: Span,
