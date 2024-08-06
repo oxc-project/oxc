@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -67,6 +67,13 @@ impl Rule for ForDirection {
                     let update_direction = get_update_direction(update, counter);
                     if update_direction == wrong_direction {
                         let update_span = get_update_span(update);
+                        let start = match update {
+                            Expression::UpdateExpression(update) => update.argument.span().end,
+                            Expression::AssignmentExpression(update) => update.left.span().end,
+                            _ => return,
+                        };
+                        let end = start + 2;
+                        let span: Span = Span::new(start, end);
                         let new_operator_str = match update {
                             Expression::UpdateExpression(update) => match update.operator {
                                 UpdateOperator::Increment => "--",
@@ -81,13 +88,7 @@ impl Rule for ForDirection {
                         };
                         ctx.diagnostic_with_dangerous_fix(
                             for_direction_diagnostic(test.span, update_span),
-                            |fixer| {
-                                // ++ -- += -= are both 2 in length
-                                let start = update_span.start + 1;
-                                let end = update_span.start + 3;
-                                let span: Span = Span::new(start, end);
-                                fixer.replace(span, new_operator_str)
-                            },
+                            |fixer| fixer.replace(span, new_operator_str),
                         );
                     }
                 }
@@ -253,6 +254,9 @@ fn test() {
         ("for(var i = 10; i > 0; i+=1){}", "for(var i = 10; i > 0; i-=1){}", None),
         ("for(var i = 0; i < 10; i+=-1){}", "for(var i = 0; i < 10; i-=-1){}", None),
         ("for(var i = 10; i > 0; i-=-1){}", "for(var i = 10; i > 0; i+=-1){}", None),
+        // variables of different lengths
+        ("for(var ii = 0; ii < 10; ii--){}", "for(var ii = 0; ii < 10; ii++){}", None),
+        ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}", None),
     ];
 
     Tester::new(ForDirection::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
