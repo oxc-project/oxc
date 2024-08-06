@@ -1,13 +1,2240 @@
 commit: a1587416
 
 parser_test262 Summary:
-AST Parsed     : 45859/45859 (100.00%)
-Positive Passed: 45859/45859 (100.00%)
-Negative Passed: 3925/3929 (99.90%)
+AST Parsed     : 46466/46466 (100.00%)
+Positive Passed: 46376/46466 (99.81%)
+Negative Passed: 4301/4307 (99.86%)
 Expect Syntax Error: "language/import/import-assertions/json-invalid.js"
 Expect Syntax Error: "language/import/import-assertions/json-named-bindings.js"
 Expect Syntax Error: "language/import/import-attributes/json-invalid.js"
 Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
+Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4-u.js"
+Expect Syntax Error: "language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier-4.js"
+Expect to Parse: "annexB/built-ins/RegExp/incomplete_hex_unicode_escape.js"
+
+  × Invalid hexadecimal escape
+    ╭─[annexB/built-ins/RegExp/incomplete_hex_unicode_escape.js:13:9]
+ 12 │ // Hex escape
+ 13 │ assert(/\x/.test("x"), "/\\x/");
+    ·         ──
+ 14 │ assert(/\xa/.test("xa"), "/\\xa/");
+    ╰────
+
+  × Invalid hexadecimal escape
+    ╭─[annexB/built-ins/RegExp/incomplete_hex_unicode_escape.js:14:9]
+ 13 │ assert(/\x/.test("x"), "/\\x/");
+ 14 │ assert(/\xa/.test("xa"), "/\\xa/");
+    ·         ──
+ 15 │ 
+    ╰────
+Expect to Parse: "annexB/language/literals/regexp/class-escape.js"
+
+  × Invalid atom escape
+    ╭─[annexB/language/literals/regexp/class-escape.js:30:10]
+ 29 │ 
+ 30 │ match = /\c0/.exec('\x0f\x10\x11');
+    ·          ─
+ 31 │ assert.sameValue(match, null, '\\c0 outside of CharacterClass');
+    ╰────
+
+  × Invalid atom escape
+    ╭─[annexB/language/literals/regexp/class-escape.js:39:10]
+ 38 │ 
+ 39 │ match = /\c1/.exec('\x10\x11\x12');
+    ·          ─
+ 40 │ assert.sameValue(match, null, '\\c1 outside of CharacterClass');
+    ╰────
+
+  × Invalid atom escape
+    ╭─[annexB/language/literals/regexp/class-escape.js:48:10]
+ 47 │ 
+ 48 │ match = /\c8/.exec('\x17\x18\x19');
+    ·          ─
+ 49 │ assert.sameValue(match, null, '\\c8 outside of CharacterClass');
+    ╰────
+
+  × Invalid atom escape
+    ╭─[annexB/language/literals/regexp/class-escape.js:57:10]
+ 56 │ 
+ 57 │ match = /\c9/.exec('\x18\x19\x1a');
+    ·          ─
+ 58 │ assert.sameValue(match, null, '\\c9 outside of CharacterClass');
+    ╰────
+
+  × Invalid atom escape
+    ╭─[annexB/language/literals/regexp/class-escape.js:66:10]
+ 65 │ 
+ 66 │ match = /\c_/.exec('\x1e\x1f\x20');
+    ·          ─
+ 67 │ assert.sameValue(match, null, '\\c_ outside of CharacterClass');
+    ╰────
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-exec.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-group-property-enumeration-order.js"
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-match-indices.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-match.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-matchall.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-replace.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-replaceall.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-search.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-split.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/named-groups/duplicate-names-test.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/General_Category_-_Control.js"
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Control.js:34:25]
+ 33 │ testPropertyEscapes(
+ 34 │   /^\p{General_Category=cntrl}+$/u,
+    ·                         ─────
+ 35 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Control.js:49:11]
+ 48 │ testPropertyEscapes(
+ 49 │   /^\p{gc=cntrl}+$/u,
+    ·           ─────
+ 50 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Control.js:64:8]
+ 63 │ testPropertyEscapes(
+ 64 │   /^\p{cntrl}+$/u,
+    ·        ─────
+ 65 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Control.js:89:25]
+ 88 │ testPropertyEscapes(
+ 89 │   /^\P{General_Category=cntrl}+$/u,
+    ·                         ─────
+ 90 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Control.js:104:11]
+ 103 │ testPropertyEscapes(
+ 104 │   /^\P{gc=cntrl}+$/u,
+     ·           ─────
+ 105 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name or value
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Control.js:119:8]
+ 118 │ testPropertyEscapes(
+ 119 │   /^\P{cntrl}+$/u,
+     ·        ─────
+ 120 │   nonMatchSymbols,
+     ╰────
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/General_Category_-_Decimal_Number.js"
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Decimal_Number.js:96:25]
+ 95 │ testPropertyEscapes(
+ 96 │   /^\p{General_Category=digit}+$/u,
+    ·                         ─────
+ 97 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Decimal_Number.js:111:11]
+ 110 │ testPropertyEscapes(
+ 111 │   /^\p{gc=digit}+$/u,
+     ·           ─────
+ 112 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name or value
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Decimal_Number.js:126:8]
+ 125 │ testPropertyEscapes(
+ 126 │   /^\p{digit}+$/u,
+     ·        ─────
+ 127 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Decimal_Number.js:214:25]
+ 213 │ testPropertyEscapes(
+ 214 │   /^\P{General_Category=digit}+$/u,
+     ·                         ─────
+ 215 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Decimal_Number.js:229:11]
+ 228 │ testPropertyEscapes(
+ 229 │   /^\P{gc=digit}+$/u,
+     ·           ─────
+ 230 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name or value
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Decimal_Number.js:244:8]
+ 243 │ testPropertyEscapes(
+ 244 │   /^\P{digit}+$/u,
+     ·        ─────
+ 245 │   nonMatchSymbols,
+     ╰────
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/General_Category_-_Mark.js"
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Mark.js:343:25]
+ 342 │ testPropertyEscapes(
+ 343 │   /^\p{General_Category=Combining_Mark}+$/u,
+     ·                         ──────────────
+ 344 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Mark.js:358:11]
+ 357 │ testPropertyEscapes(
+ 358 │   /^\p{gc=Combining_Mark}+$/u,
+     ·           ──────────────
+ 359 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name or value
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Mark.js:373:8]
+ 372 │ testPropertyEscapes(
+ 373 │   /^\p{Combining_Mark}+$/u,
+     ·        ──────────────
+ 374 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Mark.js:708:25]
+ 707 │ testPropertyEscapes(
+ 708 │   /^\P{General_Category=Combining_Mark}+$/u,
+     ·                         ──────────────
+ 709 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Mark.js:723:11]
+ 722 │ testPropertyEscapes(
+ 723 │   /^\P{gc=Combining_Mark}+$/u,
+     ·           ──────────────
+ 724 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name or value
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Mark.js:738:8]
+ 737 │ testPropertyEscapes(
+ 738 │   /^\P{Combining_Mark}+$/u,
+     ·        ──────────────
+ 739 │   nonMatchSymbols,
+     ╰────
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/General_Category_-_Punctuation.js"
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Punctuation.js:224:25]
+ 223 │ testPropertyEscapes(
+ 224 │   /^\p{General_Category=punct}+$/u,
+     ·                         ─────
+ 225 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Punctuation.js:239:11]
+ 238 │ testPropertyEscapes(
+ 239 │   /^\p{gc=punct}+$/u,
+     ·           ─────
+ 240 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name or value
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Punctuation.js:254:8]
+ 253 │ testPropertyEscapes(
+ 254 │   /^\p{punct}+$/u,
+     ·        ─────
+ 255 │   matchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Punctuation.js:470:25]
+ 469 │ testPropertyEscapes(
+ 470 │   /^\P{General_Category=punct}+$/u,
+     ·                         ─────
+ 471 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Punctuation.js:485:11]
+ 484 │ testPropertyEscapes(
+ 485 │   /^\P{gc=punct}+$/u,
+     ·           ─────
+ 486 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name or value
+     ╭─[built-ins/RegExp/property-escapes/generated/General_Category_-_Punctuation.js:500:8]
+ 499 │ testPropertyEscapes(
+ 500 │   /^\P{punct}+$/u,
+     ·        ─────
+ 501 │   nonMatchSymbols,
+     ╰────
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/Script_-_Coptic.js"
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Coptic.js:35:15]
+ 34 │ testPropertyEscapes(
+ 35 │   /^\p{Script=Qaac}+$/u,
+    ·               ────
+ 36 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Coptic.js:50:11]
+ 49 │ testPropertyEscapes(
+ 50 │   /^\p{sc=Qaac}+$/u,
+    ·           ────
+ 51 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Coptic.js:77:15]
+ 76 │ testPropertyEscapes(
+ 77 │   /^\P{Script=Qaac}+$/u,
+    ·               ────
+ 78 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Coptic.js:92:11]
+ 91 │ testPropertyEscapes(
+ 92 │   /^\P{sc=Qaac}+$/u,
+    ·           ────
+ 93 │   nonMatchSymbols,
+    ╰────
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/Script_-_Inherited.js"
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Inherited.js:62:15]
+ 61 │ testPropertyEscapes(
+ 62 │   /^\p{Script=Qaai}+$/u,
+    ·               ────
+ 63 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Inherited.js:77:11]
+ 76 │ testPropertyEscapes(
+ 77 │   /^\p{sc=Qaai}+$/u,
+    ·           ────
+ 78 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Inherited.js:131:15]
+ 130 │ testPropertyEscapes(
+ 131 │   /^\P{Script=Qaai}+$/u,
+     ·               ────
+ 132 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/Script_-_Inherited.js:146:11]
+ 145 │ testPropertyEscapes(
+ 146 │   /^\P{sc=Qaai}+$/u,
+     ·           ────
+ 147 │   nonMatchSymbols,
+     ╰────
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Coptic.js"
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Coptic.js:36:26]
+ 35 │ testPropertyEscapes(
+ 36 │   /^\p{Script_Extensions=Qaac}+$/u,
+    ·                          ────
+ 37 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Coptic.js:51:12]
+ 50 │ testPropertyEscapes(
+ 51 │   /^\p{scx=Qaac}+$/u,
+    ·            ────
+ 52 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Coptic.js:79:26]
+ 78 │ testPropertyEscapes(
+ 79 │   /^\P{Script_Extensions=Qaac}+$/u,
+    ·                          ────
+ 80 │   nonMatchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Coptic.js:94:12]
+ 93 │ testPropertyEscapes(
+ 94 │   /^\P{scx=Qaac}+$/u,
+    ·            ────
+ 95 │   nonMatchSymbols,
+    ╰────
+Expect to Parse: "built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Inherited.js"
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Inherited.js:53:26]
+ 52 │ testPropertyEscapes(
+ 53 │   /^\p{Script_Extensions=Qaai}+$/u,
+    ·                          ────
+ 54 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Inherited.js:68:12]
+ 67 │ testPropertyEscapes(
+ 68 │   /^\p{scx=Qaai}+$/u,
+    ·            ────
+ 69 │   matchSymbols,
+    ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Inherited.js:113:26]
+ 112 │ testPropertyEscapes(
+ 113 │   /^\P{Script_Extensions=Qaai}+$/u,
+     ·                          ────
+ 114 │   nonMatchSymbols,
+     ╰────
+
+  × Invalid unicode property name
+     ╭─[built-ins/RegExp/property-escapes/generated/Script_Extensions_-_Inherited.js:128:12]
+ 127 │ testPropertyEscapes(
+ 128 │   /^\P{scx=Qaai}+$/u,
+     ·            ────
+ 129 │   nonMatchSymbols,
+     ╰────
+Expect to Parse: "built-ins/RegExp/prototype/exec/duplicate-named-groups-properties.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/prototype/exec/duplicate-named-indices-groups-properties.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-dotAll-property.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-dotAll-property.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?s:)/;
+    ·            ──
+ 37 │ assert(!re1.dotAll, "RegExp instance dotAll flag should not be set");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-dotAll-property.js:42:12]
+ 41 │ 
+ 42 │ var re3 = /(?s-:)/;
+    ·            ──
+ 43 │ assert(!re3.dotAll, "RegExp instance dotAll flag should not be set");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-ignoreCase-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-ignoreCase-flag.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?s:.es)/;
+    ·            ──
+ 43 │ assert(re1.test("aes"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-ignoreCase-flag.js:48:12]
+ 47 │ 
+ 48 │ var re2 = /(?s:.es)/i;
+    ·            ──
+ 49 │ assert(re2.test("aes"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-ignoreCase-flag.js:54:12]
+ 53 │ 
+ 54 │ var re3 = /(?s-:.es)/;
+    ·            ──
+ 55 │ assert(re3.test("aes"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-ignoreCase-flag.js:60:12]
+ 59 │ 
+ 60 │ var re4 = /(?s-:.es)/i;
+    ·            ──
+ 61 │ assert(re4.test("aes"), "s should match s in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-multiline-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-multiline-flag.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?s:.es$)/;
+    ·            ──
+ 43 │ assert(re1.test("\nes"), ". should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-multiline-flag.js:46:12]
+ 45 │ 
+ 46 │ var re2 = /(?s:.es$)/m;
+    ·            ──
+ 47 │ assert(re2.test("\nes"), ". should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-multiline-flag.js:50:12]
+ 49 │ 
+ 50 │ var re3 = /(?s-:.es$)/;
+    ·            ──
+ 51 │ assert(re3.test("\nes"), ". should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll-does-not-affect-multiline-flag.js:54:12]
+ 53 │ 
+ 54 │ var re4 = /(?s-:.es$)/m;
+    ·            ──
+ 55 │ assert(re4.test("\nes"), ". should match newline in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-dotAll.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?s:^.$)/;
+    ·            ──
+ 37 │ assert(re1.test("a"), "Pattern character '.' should match non-line terminators in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-dotAll.js:70:12]
+ 69 │ 
+ 70 │ var re3 = /(?s-:^.$)/;
+    ·            ──
+ 71 │ assert(re3.test("a"), "Pattern character '.' should match non-line terminators in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-backreferences.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-backreferences.js:42:15]
+ 41 │ 
+ 42 │ var re1 = /(a)(?i:\1)/;
+    ·               ──
+ 43 │ assert(!re1.test("AA"), "a should not match first A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-backreferences.js:48:15]
+ 47 │ 
+ 48 │ var re2 = /(a)(?i-:\1)/;
+    ·               ──
+ 49 │ assert(!re2.test("AA"), "a should not match first A");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterClasses.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterClasses.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?i:[ab])c/;
+    ·            ──
+ 43 │ assert(re1.test("ac"), "[ab] should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterClasses.js:48:12]
+ 47 │ 
+ 48 │ var re2 = /(?i-:[ab])c/;
+    ·            ──
+ 49 │ assert(re2.test("ac"), "[ab] should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterClasses.js:54:12]
+ 53 │ 
+ 54 │ var re3 = /(?i:[^ab])c/;
+    ·            ──
+ 55 │ assert(!re3.test("ac"), "[^ab] should not match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterClasses.js:60:12]
+ 59 │ 
+ 60 │ var re4 = /(?i-:[^ab])c/;
+    ·            ──
+ 61 │ assert(!re4.test("ac"), "[^ab] should not match a");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?i:\x61)b/;
+    ·            ──
+ 43 │ assert(re1.test("ab"), "\\x61 should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js:46:12]
+ 45 │ 
+ 46 │ var re2 = /(?i:\u0061)b/;
+    ·            ──
+ 47 │ assert(re2.test("ab"), "\\u0061 should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js:50:12]
+ 49 │ 
+ 50 │ var re3 = /(?i:\u{0061})b/u;
+    ·            ──
+ 51 │ assert(re3.test("ab"), "\\u0061 should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js:54:12]
+ 53 │ 
+ 54 │ var re4 = /(?i-:\x61)b/;
+    ·            ──
+ 55 │ assert(re4.test("ab"), "\\x61 should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js:58:12]
+ 57 │ 
+ 58 │ var re5 = /(?i-:\u0061)b/;
+    ·            ──
+ 59 │ assert(re5.test("ab"), "\\u0061 should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-characterEscapes.js:62:12]
+ 61 │ 
+ 62 │ var re6 = /(?i-:\u{0061})b/u;
+    ·            ──
+ 63 │ assert(re6.test("ab"), "\\u0061 should match a");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-b.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-b.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?i:\b)/;
+    ·            ──
+ 49 │ assert(re1.test("A"), "\\b should match after A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-b.js:54:12]
+ 53 │ 
+ 54 │ var re2 = /(?i:\b)/u;
+    ·            ──
+ 55 │ assert(re2.test("A"), "\\b should match after A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-b.js:62:12]
+ 61 │ 
+ 62 │ var re3 = /(?i-:\b)/;
+    ·            ──
+ 63 │ assert(re3.test("A"), "\\b should match after A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-b.js:68:12]
+ 67 │ 
+ 68 │ var re4 = /(?i-:\b)/u;
+    ·            ──
+ 69 │ assert(re4.test("A"), "\\b should match after A");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-p.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-p.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?i:\p{Lu})/u;
+    ·            ──
+ 49 │ assert(re1.test("A"), "\\p{Lu} should match A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-p.js:54:12]
+ 53 │ 
+ 54 │ var re2 = /(?i-:\p{Lu})/u;
+    ·            ──
+ 55 │ assert(re2.test("A"), "\\p{Lu} should match A");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-w.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-w.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?i:\w)/;
+    ·            ──
+ 49 │ assert(re1.test("A"), "\\w should match A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-w.js:54:12]
+ 53 │ 
+ 54 │ var re2 = /(?i:\w)/u;
+    ·            ──
+ 55 │ assert(re2.test("A"), "\\w should match A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-w.js:62:12]
+ 61 │ 
+ 62 │ var re3 = /(?i-:\w)/;
+    ·            ──
+ 63 │ assert(re3.test("A"), "\\w should match A");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-w.js:68:12]
+ 67 │ 
+ 68 │ var re4 = /(?i-:\w)/u;
+    ·            ──
+ 69 │ assert(re4.test("A"), "\\w should match A");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-b.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-b.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?i:Z\B)/u;
+    ·            ──
+ 49 │ assert(re1.test("Z\u017f"), "\\B should match between Z and \u017f");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-b.js:52:12]
+ 51 │ 
+ 52 │ var re2 = /(?i-:Z\B)/u;
+    ·            ──
+ 53 │ assert(re2.test("Z\u017f"), "\\B should match between Z and \u017f");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-p.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-p.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?i:\P{Lu})/u;
+    ·            ──
+ 49 │ assert(re1.test("A"), "\\P{Lu} should match A (ignores case)");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-p.js:55:12]
+ 54 │ 
+ 55 │ var re2 = /(?i-:\P{Lu})/u;
+    ·            ──
+ 56 │ assert(re2.test("A"), "\\P{Lu} should match A (ignores case)");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-w.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-w.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?i:\W)/u;
+    ·            ──
+ 49 │ assert(!re1.test("\u017f"), "\\W should not match \u017f");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-w.js:52:12]
+ 51 │ 
+ 52 │ var re2 = /(?i-:\W)/u;
+    ·            ──
+ 53 │ assert(!re2.test("\u017f"), "\\W should not match \u017f");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-dotAll-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-dotAll-flag.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?i:.es)/;
+    ·            ──
+ 43 │ assert(re1.test("aes"), ". should match a in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-dotAll-flag.js:48:12]
+ 47 │ 
+ 48 │ var re2 = /(?i:.es)/s;
+    ·            ──
+ 49 │ assert(re2.test("aes"), ". should match a in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-dotAll-flag.js:54:12]
+ 53 │ 
+ 54 │ var re3 = /(?i-:.es)/;
+    ·            ──
+ 55 │ assert(re3.test("aes"), ". should match a in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-dotAll-flag.js:60:12]
+ 59 │ 
+ 60 │ var re4 = /(?i-:.es)/s;
+    ·            ──
+ 61 │ assert(re4.test("aes"), ". should match a in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-ignoreCase-property.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-ignoreCase-property.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?i:)/;
+    ·            ──
+ 43 │ assert(!re1.ignoreCase, "RegExp instance ignoreCase property should not be set");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-ignoreCase-property.js:48:12]
+ 47 │ 
+ 48 │ var re3 = /(?i-:)/;
+    ·            ──
+ 49 │ assert(!re3.ignoreCase, "RegExp instance ignoreCase property should not be set");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-multiline-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-multiline-flag.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?i:es$)/;
+    ·            ──
+ 43 │ assert(re1.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-multiline-flag.js:48:12]
+ 47 │ 
+ 48 │ var re2 = /(?i:es$)/m;
+    ·            ──
+ 49 │ assert(re2.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-multiline-flag.js:54:12]
+ 53 │ 
+ 54 │ var re3 = /(?i-:es$)/;
+    ·            ──
+ 55 │ assert(re3.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase-does-not-affect-multiline-flag.js:60:12]
+ 59 │ 
+ 60 │ var re4 = /(?i-:es$)/m;
+    ·            ──
+ 61 │ assert(re4.test("es"), "s should match s in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-ignoreCase.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-ignoreCase.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?i:a)b/;
+    ·            ──
+ 37 │ assert(!re1.test("AB"), "b should not match B in AB");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-dotAll-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-dotAll-flag.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?m:es.$)/;
+    ·            ──
+ 43 │ assert(re1.test("esz\n"), "$ should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-dotAll-flag.js:46:12]
+ 45 │ 
+ 46 │ var re2 = /(?m:es.$)/s;
+    ·            ──
+ 47 │ assert(re2.test("esz\n"), "$ should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-dotAll-flag.js:50:12]
+ 49 │ 
+ 50 │ var re3 = /(?m-:es.$)/;
+    ·            ──
+ 51 │ assert(re3.test("esz\n"), "$ should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-dotAll-flag.js:54:12]
+ 53 │ 
+ 54 │ var re4 = /(?m-:es.$)/s;
+    ·            ──
+ 55 │ assert(re4.test("esz\n"), "$ should match newline in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-ignoreCase-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-ignoreCase-flag.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?m:es$)/;
+    ·            ──
+ 43 │ assert(re1.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-ignoreCase-flag.js:48:12]
+ 47 │ 
+ 48 │ var re2 = /(?m:es$)/i;
+    ·            ──
+ 49 │ assert(re2.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-ignoreCase-flag.js:54:12]
+ 53 │ 
+ 54 │ var re3 = /(?m-:es$)/;
+    ·            ──
+ 55 │ assert(re3.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-ignoreCase-flag.js:60:12]
+ 59 │ 
+ 60 │ var re4 = /(?m-:es$)/i;
+    ·            ──
+ 61 │ assert(re4.test("es"), "s should match s in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-multiline-property.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-multiline-property.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?m:)/;
+    ·            ──
+ 37 │ assert(!re1.multiline, "RegExp instance multiline flag should not be set");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline-does-not-affect-multiline-property.js:42:12]
+ 41 │ 
+ 42 │ var re3 = /(?m-:)/;
+    ·            ──
+ 43 │ assert(!re3.multiline, "RegExp instance multiline flag should not be set");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-multiline.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?m:es$)/;
+    ·            ──
+ 37 │ assert(re1.test("es\ns"), "$ should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-multiline.js:42:12]
+ 41 │ 
+ 42 │ var re3 = /(?m-:es$)/;
+    ·            ──
+ 43 │ assert(re3.test("es\ns"), "$ should match newline in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/add-remove-modifiers.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/add-remove-modifiers.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?m-i:^a$)/i;
+    ·            ──
+ 37 │ assert(!re1.test("A\n"), "Should not match 'A\\n'");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/changing-dotAll-flag-does-not-affect-dotAll-modifier.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/changing-dotAll-flag-does-not-affect-dotAll-modifier.js:42:23]
+ 41 │ 
+ 42 │ var re1 = new RegExp(/(?s:^.$)/s, "");
+    ·                       ──
+ 43 │ assert(re1.test("a"), "Pattern character '.' still should match non-line terminators in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/changing-dotAll-flag-does-not-affect-dotAll-modifier.js:59:23]
+ 58 │ 
+ 59 │ var re2 = new RegExp(/(?-s:^.$)/, "s");
+    ·                       ──
+ 60 │ assert(re2.test("a"), "Pattern character '.' still should match non-line terminators in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/changing-ignoreCase-flag-does-not-affect-ignoreCase-modifier.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/changing-ignoreCase-flag-does-not-affect-ignoreCase-modifier.js:42:23]
+ 41 │ 
+ 42 │ var re1 = new RegExp(/(?i:aB)/i, "");
+    ·                       ──
+ 43 │ assert(re1.test("AB"), "still should ignore case in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/changing-ignoreCase-flag-does-not-affect-ignoreCase-modifier.js:48:23]
+ 47 │ 
+ 48 │ var re2 = new RegExp(/(?-i:aB)/, "i");
+    ·                       ──
+ 49 │ assert(!re2.test("AB"), "still should preserve case in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/changing-multiline-flag-does-not-affect-multiline-modifier.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/changing-multiline-flag-does-not-affect-multiline-modifier.js:42:23]
+ 41 │ 
+ 42 │ var re1 = new RegExp(/(?m:es$)/m, "");
+    ·                       ──
+ 43 │ assert(re1.test("es"), "$ still should match end of input in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/changing-multiline-flag-does-not-affect-multiline-modifier.js:46:24]
+ 45 │ 
+ 46 │ var re2 = new RegExp(/^(?-m:es$)/, "m");
+    ·                        ──
+ 47 │ assert(re2.test("es"), "$ still should match end of input in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/nested-add-remove-modifiers.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nested-add-remove-modifiers.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?m:^(?-i:a)$)/i;
+    ·            ──
+ 37 │ assert(!re1.test("A\n"), "Should not match 'A\\n'");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-add-dotAll-within-remove-dotAll.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-add-dotAll-within-remove-dotAll.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-s:(?s:^.$))/s;
+    ·            ──
+ 37 │ assert(re1.test("a"), "Pattern character '.' should match non-line terminators in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-add-dotAll-within-remove-dotAll.js:53:12]
+ 52 │ 
+ 53 │ var re2 = /(?-s:(?s-:^.$))/s;
+    ·            ──
+ 54 │ assert(re2.test("a"), "Pattern character '.' should match non-line terminators in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-add-ignoreCase-within-remove-ignoreCase.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-add-ignoreCase-within-remove-ignoreCase.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-i:a(?i:b))c/i;
+    ·            ──
+ 37 │ assert(!re1.test("ABC"), "a should not match A in ABC");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-add-multiline-within-remove-multiline.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-add-multiline-within-remove-multiline.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-m:es(?m:$)|js$)/m;
+    ·            ──
+ 37 │ assert(re1.test("es\ns"), "$ should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-add-multiline-within-remove-multiline.js:41:12]
+ 40 │ 
+ 41 │ var re2 = /(?-m:es(?m-:$)|js$)/m;
+    ·            ──
+ 42 │ assert(re2.test("es\ns"), "$ should match newline in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-remove-dotAll-within-add-dotAll.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-remove-dotAll-within-add-dotAll.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?s:(?-s:^.$))/;
+    ·            ──
+ 37 │ assert(re1.test("a"), "Pattern character '.' should match non-line terminators in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-remove-dotAll-within-add-dotAll.js:53:12]
+ 52 │ 
+ 53 │ var re2 = /(?s-:(?-s:^.$))/;
+    ·            ──
+ 54 │ assert(re2.test("a"), "Pattern character '.' should match non-line terminators in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-remove-ignoreCase-within-add-ignoreCase.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-remove-ignoreCase-within-add-ignoreCase.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-i:a(?i:b))c/i;
+    ·            ──
+ 37 │ assert(!re1.test("ABC"), "a should not match A in ABC");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/nesting-remove-multiline-within-add-multiline.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-remove-multiline-within-add-multiline.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?m:es$|(?-m:js$))/;
+    ·            ──
+ 37 │ assert(re1.test("es\ns"), "first $ should match newline in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/nesting-remove-multiline-within-add-multiline.js:41:12]
+ 40 │ 
+ 41 │ var re2 = /(?m-:es$|(?-m:js$))/;
+    ·            ──
+ 42 │ assert(re2.test("es\ns"), "first $ should match newline in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-dotAll-property.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-dotAll-property.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-s:^.$)/s;
+    ·            ──
+ 37 │ assert(re1.dotAll, "RegExp instance dotAll flag should still be set");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-ignoreCase-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-ignoreCase-flag.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-s:.es)/s;
+    ·            ──
+ 37 │ assert(re1.test("aes"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-ignoreCase-flag.js:42:12]
+ 41 │ 
+ 42 │ var re2 = /(?-s:.es)/si;
+    ·            ──
+ 43 │ assert(re2.test("aes"), "s should match s in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-multiline-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-multiline-flag.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-s:.es$)/s;
+    ·            ──
+ 37 │ assert(re1.test("aes"), ". should match a in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-dotAll-does-not-affect-multiline-flag.js:42:12]
+ 41 │ 
+ 42 │ var re2 = /(?-s:.es$)/sm;
+    ·            ──
+ 43 │ assert(re2.test("aes"), ". should match a in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-dotAll.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-dotAll.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-s:^.$)/s;
+    ·            ──
+ 37 │ assert(re1.test("a"), "Pattern character '.' should match non-line terminators in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-backreferences.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-backreferences.js:36:15]
+ 35 │ 
+ 36 │ var re1 = /(a)(?-i:\1)/i;
+    ·               ──
+ 37 │ assert(re1.test("AA"), "a matches first A, so \\1 should match second A");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterClasses.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterClasses.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?-i:[ab])c/i;
+    ·            ──
+ 43 │ assert(re1.test("ac"), "[ab] should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterClasses.js:48:12]
+ 47 │ 
+ 48 │ var re2 = /(?-i:[^ab])c/i;
+    ·            ──
+ 49 │ assert(!re2.test("ac"), "[^ab] should not match a");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterEscapes.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterEscapes.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-i:\x61)b/i;
+    ·            ──
+ 37 │ assert(re1.test("ab"), "\\x61 should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterEscapes.js:41:12]
+ 40 │ 
+ 41 │ var re2 = /(?-i:\u0061)b/i;
+    ·            ──
+ 42 │ assert(re2.test("ab"), "\\u0061 should match a");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-characterEscapes.js:46:12]
+ 45 │ 
+ 46 │ var re3 = /(?-i:\u{0061})b/iu;
+    ·            ──
+ 47 │ assert(re3.test("ab"), "\\u0061 should match a");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-lower-b.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-lower-b.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?-i:\b)/ui;
+    ·            ──
+ 49 │ assert(!re1.test("\u017f"), "\\b should not match after \u017f");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-lower-p.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-lower-p.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?-i:\p{Lu})/ui;
+    ·            ──
+ 49 │ assert(re1.test("A"), "\\p{Lu} should match A");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-lower-w.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-lower-w.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?-i:\w)/ui;
+    ·            ──
+ 49 │ assert(!re1.test("\u017f"), "\\w should not match \u017f");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-upper-b.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-upper-b.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?-i:Z\B)/ui;
+    ·            ──
+ 49 │ assert(!re1.test("Z\u017f"), "\\B should not match between Z and \u017f");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-upper-p.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-upper-p.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?-i:\P{Lu})/ui;
+    ·            ──
+ 49 │ assert(!re1.test("A"), "\\P{Lu} should not match A");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-upper-w.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-affects-slash-upper-w.js:48:12]
+ 47 │ 
+ 48 │ var re1 = /(?-i:\W)/ui;
+    ·            ──
+ 49 │ assert(re1.test("\u017f"), "\\W should match \u017f");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-dotAll-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-dotAll-flag.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-i:.es)/i;
+    ·            ──
+ 37 │ assert(re1.test("aes"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-dotAll-flag.js:42:12]
+ 41 │ 
+ 42 │ var re2 = /(?-i:.es)/is;
+    ·            ──
+ 43 │ assert(re2.test("aes"), "s should match s in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-ignoreCase-property.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-ignoreCase-property.js:42:12]
+ 41 │ 
+ 42 │ var re1 = /(?-i:)/i;
+    ·            ──
+ 43 │ assert(re1.ignoreCase, "RegExp instance ignoreCase property should still be set");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-multiline-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-multiline-flag.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-i:es$)/i;
+    ·            ──
+ 37 │ assert(re1.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase-does-not-affect-multiline-flag.js:42:12]
+ 41 │ 
+ 42 │ var re2 = /(?-i:es$)/im;
+    ·            ──
+ 43 │ assert(re2.test("es"), "s should match s in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-ignoreCase.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-ignoreCase.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-i:fo)o/i;
+    ·            ──
+ 37 │ assert(!re1.test("FOO"), "Pattern should not match as modified group does not ignore case");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-dotAll-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-dotAll-flag.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-m:es.$)/m;
+    ·            ──
+ 37 │ assert(re1.test("esz"), ". should match z in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-dotAll-flag.js:42:12]
+ 41 │ 
+ 42 │ var re2 = /(?-m:es.$)/ms;
+    ·            ──
+ 43 │ assert(re2.test("esz"), ". should match z in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-ignoreCase-flag.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-ignoreCase-flag.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-m:es$)/m;
+    ·            ──
+ 37 │ assert(re1.test("es"), "s should match s in modified group");
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-ignoreCase-flag.js:42:12]
+ 41 │ 
+ 42 │ var re2 = /(?-m:es$)/mi;
+    ·            ──
+ 43 │ assert(re2.test("es"), "s should match s in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-multiline-property.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-multiline-does-not-affect-multiline-property.js:36:12]
+ 35 │ 
+ 36 │ var re1 = /(?-m:)/m;
+    ·            ──
+ 37 │ assert(re1.multiline, "RegExp instance multiline flag should still be set");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/remove-multiline.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/remove-multiline.js:36:13]
+ 35 │ 
+ 36 │ var re1 = /^(?-m:es$)/m;
+    ·             ──
+ 37 │ assert(!re1.test("\nes\ns"), "$ should not match newline in modified group");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:36:2]
+ 35 │ 
+ 36 │ /(?i-:)/;
+    ·  ──
+ 37 │ /(?is-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:37:2]
+ 36 │ /(?i-:)/;
+ 37 │ /(?is-:)/;
+    ·  ──
+ 38 │ /(?im-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:38:2]
+ 37 │ /(?is-:)/;
+ 38 │ /(?im-:)/;
+    ·  ──
+ 39 │ /(?s-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:39:2]
+ 38 │ /(?im-:)/;
+ 39 │ /(?s-:)/;
+    ·  ──
+ 40 │ /(?si-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:40:2]
+ 39 │ /(?s-:)/;
+ 40 │ /(?si-:)/;
+    ·  ──
+ 41 │ /(?sm-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:41:2]
+ 40 │ /(?si-:)/;
+ 41 │ /(?sm-:)/;
+    ·  ──
+ 42 │ /(?m-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:42:2]
+ 41 │ /(?sm-:)/;
+ 42 │ /(?m-:)/;
+    ·  ──
+ 43 │ /(?mi-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:43:2]
+ 42 │ /(?m-:)/;
+ 43 │ /(?mi-:)/;
+    ·  ──
+ 44 │ /(?ms-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:44:2]
+ 43 │ /(?mi-:)/;
+ 44 │ /(?ms-:)/;
+    ·  ──
+ 45 │ /(?ims-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:45:2]
+ 44 │ /(?ms-:)/;
+ 45 │ /(?ims-:)/;
+    ·  ──
+ 46 │ /(?ism-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:46:2]
+ 45 │ /(?ims-:)/;
+ 46 │ /(?ism-:)/;
+    ·  ──
+ 47 │ /(?sim-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:47:2]
+ 46 │ /(?ism-:)/;
+ 47 │ /(?sim-:)/;
+    ·  ──
+ 48 │ /(?smi-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:48:2]
+ 47 │ /(?sim-:)/;
+ 48 │ /(?smi-:)/;
+    ·  ──
+ 49 │ /(?mis-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:49:2]
+ 48 │ /(?smi-:)/;
+ 49 │ /(?mis-:)/;
+    ·  ──
+ 50 │ /(?msi-:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers-can-have-empty-remove-modifiers.js:50:2]
+ 49 │ /(?mis-:)/;
+ 50 │ /(?msi-:)/;
+    ·  ──
+ 51 │ new RegExp("(?i-:)");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:36:2]
+ 35 │ 
+ 36 │ /(?i-s:)/;
+    ·  ──
+ 37 │ /(?i-sm:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:37:2]
+ 36 │ /(?i-s:)/;
+ 37 │ /(?i-sm:)/;
+    ·  ──
+ 38 │ /(?i-m:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:38:2]
+ 37 │ /(?i-sm:)/;
+ 38 │ /(?i-m:)/;
+    ·  ──
+ 39 │ /(?i-ms:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:39:2]
+ 38 │ /(?i-m:)/;
+ 39 │ /(?i-ms:)/;
+    ·  ──
+ 40 │ /(?s-i:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:40:2]
+ 39 │ /(?i-ms:)/;
+ 40 │ /(?s-i:)/;
+    ·  ──
+ 41 │ /(?s-im:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:41:2]
+ 40 │ /(?s-i:)/;
+ 41 │ /(?s-im:)/;
+    ·  ──
+ 42 │ /(?s-m:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:42:2]
+ 41 │ /(?s-im:)/;
+ 42 │ /(?s-m:)/;
+    ·  ──
+ 43 │ /(?s-mi:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:43:2]
+ 42 │ /(?s-m:)/;
+ 43 │ /(?s-mi:)/;
+    ·  ──
+ 44 │ /(?m-i:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:44:2]
+ 43 │ /(?s-mi:)/;
+ 44 │ /(?m-i:)/;
+    ·  ──
+ 45 │ /(?m-is:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:45:2]
+ 44 │ /(?m-i:)/;
+ 45 │ /(?m-is:)/;
+    ·  ──
+ 46 │ /(?m-s:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:46:2]
+ 45 │ /(?m-is:)/;
+ 46 │ /(?m-s:)/;
+    ·  ──
+ 47 │ /(?m-si:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:47:2]
+ 46 │ /(?m-s:)/;
+ 47 │ /(?m-si:)/;
+    ·  ──
+ 48 │ /(?is-m:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:48:2]
+ 47 │ /(?m-si:)/;
+ 48 │ /(?is-m:)/;
+    ·  ──
+ 49 │ /(?im-s:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:49:2]
+ 48 │ /(?is-m:)/;
+ 49 │ /(?im-s:)/;
+    ·  ──
+ 50 │ /(?si-m:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:50:2]
+ 49 │ /(?im-s:)/;
+ 50 │ /(?si-m:)/;
+    ·  ──
+ 51 │ /(?sm-i:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:51:2]
+ 50 │ /(?si-m:)/;
+ 51 │ /(?sm-i:)/;
+    ·  ──
+ 52 │ /(?mi-s:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:52:2]
+ 51 │ /(?sm-i:)/;
+ 52 │ /(?mi-s:)/;
+    ·  ──
+ 53 │ /(?ms-i:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-and-remove-modifiers.js:53:2]
+ 52 │ /(?mi-s:)/;
+ 53 │ /(?ms-i:)/;
+    ·  ──
+ 54 │ new RegExp("(?i-s:)");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-nested.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-nested.js:36:2]
+ 35 │ 
+ 36 │ /(?i:(?i:))/;
+    ·  ──
+ 37 │ /(?s:(?s:))/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-nested.js:37:2]
+ 36 │ /(?i:(?i:))/;
+ 37 │ /(?s:(?s:))/;
+    ·  ──
+ 38 │ /(?m:(?m:))/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-nested.js:38:2]
+ 37 │ /(?s:(?s:))/;
+ 38 │ /(?m:(?m:))/;
+    ·  ──
+ 39 │ new RegExp("(?i:(?i:))");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:36:2]
+ 35 │ 
+ 36 │ /(?i:)/;
+    ·  ──
+ 37 │ /(?is:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:37:2]
+ 36 │ /(?i:)/;
+ 37 │ /(?is:)/;
+    ·  ──
+ 38 │ /(?im:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:38:2]
+ 37 │ /(?is:)/;
+ 38 │ /(?im:)/;
+    ·  ──
+ 39 │ /(?s:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:39:2]
+ 38 │ /(?im:)/;
+ 39 │ /(?s:)/;
+    ·  ──
+ 40 │ /(?si:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:40:2]
+ 39 │ /(?s:)/;
+ 40 │ /(?si:)/;
+    ·  ──
+ 41 │ /(?sm:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:41:2]
+ 40 │ /(?si:)/;
+ 41 │ /(?sm:)/;
+    ·  ──
+ 42 │ /(?m:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:42:2]
+ 41 │ /(?sm:)/;
+ 42 │ /(?m:)/;
+    ·  ──
+ 43 │ /(?mi:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:43:2]
+ 42 │ /(?m:)/;
+ 43 │ /(?mi:)/;
+    ·  ──
+ 44 │ /(?ms:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:44:2]
+ 43 │ /(?mi:)/;
+ 44 │ /(?ms:)/;
+    ·  ──
+ 45 │ /(?ims:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:45:2]
+ 44 │ /(?ms:)/;
+ 45 │ /(?ims:)/;
+    ·  ──
+ 46 │ /(?ism:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:46:2]
+ 45 │ /(?ims:)/;
+ 46 │ /(?ism:)/;
+    ·  ──
+ 47 │ /(?sim:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:47:2]
+ 46 │ /(?ism:)/;
+ 47 │ /(?sim:)/;
+    ·  ──
+ 48 │ /(?smi:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:48:2]
+ 47 │ /(?sim:)/;
+ 48 │ /(?smi:)/;
+    ·  ──
+ 49 │ /(?mis:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:49:2]
+ 48 │ /(?smi:)/;
+ 49 │ /(?mis:)/;
+    ·  ──
+ 50 │ /(?msi:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-not-set-as-flags.js:50:2]
+ 49 │ /(?mis:)/;
+ 50 │ /(?msi:)/;
+    ·  ──
+ 51 │ new RegExp("(?i:)");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-set-as-flags.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-set-as-flags.js:36:2]
+ 35 │ 
+ 36 │ /(?i:)/i;
+    ·  ──
+ 37 │ /(?s:)/s;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-set-as-flags.js:37:2]
+ 36 │ /(?i:)/i;
+ 37 │ /(?s:)/s;
+    ·  ──
+ 38 │ /(?m:)/m;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-set-as-flags.js:38:2]
+ 37 │ /(?s:)/s;
+ 38 │ /(?m:)/m;
+    ·  ──
+ 39 │ /(?ims:)/ims;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/add-modifiers-when-set-as-flags.js:39:2]
+ 38 │ /(?m:)/m;
+ 39 │ /(?ims:)/ims;
+    ·  ──
+ 40 │ new RegExp("(?i:)", "i");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-nested.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-nested.js:36:2]
+ 35 │ 
+ 36 │ /(?-i:(?-i:))/;
+    ·  ──
+ 37 │ /(?-s:(?-s:))/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-nested.js:37:2]
+ 36 │ /(?-i:(?-i:))/;
+ 37 │ /(?-s:(?-s:))/;
+    ·  ──
+ 38 │ /(?-m:(?-m:))/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-nested.js:38:2]
+ 37 │ /(?-s:(?-s:))/;
+ 38 │ /(?-m:(?-m:))/;
+    ·  ──
+ 39 │ new RegExp("(?-i:(?-i:))");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:36:2]
+ 35 │ 
+ 36 │ /(?-i:)/;
+    ·  ──
+ 37 │ /(?-is:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:37:2]
+ 36 │ /(?-i:)/;
+ 37 │ /(?-is:)/;
+    ·  ──
+ 38 │ /(?-im:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:38:2]
+ 37 │ /(?-is:)/;
+ 38 │ /(?-im:)/;
+    ·  ──
+ 39 │ /(?-s:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:39:2]
+ 38 │ /(?-im:)/;
+ 39 │ /(?-s:)/;
+    ·  ──
+ 40 │ /(?-si:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:40:2]
+ 39 │ /(?-s:)/;
+ 40 │ /(?-si:)/;
+    ·  ──
+ 41 │ /(?-sm:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:41:2]
+ 40 │ /(?-si:)/;
+ 41 │ /(?-sm:)/;
+    ·  ──
+ 42 │ /(?-m:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:42:2]
+ 41 │ /(?-sm:)/;
+ 42 │ /(?-m:)/;
+    ·  ──
+ 43 │ /(?-mi:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:43:2]
+ 42 │ /(?-m:)/;
+ 43 │ /(?-mi:)/;
+    ·  ──
+ 44 │ /(?-ms:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:44:2]
+ 43 │ /(?-mi:)/;
+ 44 │ /(?-ms:)/;
+    ·  ──
+ 45 │ /(?-ims:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:45:2]
+ 44 │ /(?-ms:)/;
+ 45 │ /(?-ims:)/;
+    ·  ──
+ 46 │ /(?-ism:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:46:2]
+ 45 │ /(?-ims:)/;
+ 46 │ /(?-ism:)/;
+    ·  ──
+ 47 │ /(?-smi:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:47:2]
+ 46 │ /(?-ism:)/;
+ 47 │ /(?-smi:)/;
+    ·  ──
+ 48 │ /(?-sim:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:48:2]
+ 47 │ /(?-smi:)/;
+ 48 │ /(?-sim:)/;
+    ·  ──
+ 49 │ /(?-mis:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:49:2]
+ 48 │ /(?-sim:)/;
+ 49 │ /(?-mis:)/;
+    ·  ──
+ 50 │ /(?-msi:)/;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-not-set-as-flags.js:50:2]
+ 49 │ /(?-mis:)/;
+ 50 │ /(?-msi:)/;
+    ·  ──
+ 51 │ new RegExp("(?-i:)");
+    ╰────
+Expect to Parse: "built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js"
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:36:2]
+ 35 │ 
+ 36 │ /(?-i:)/i;
+    ·  ──
+ 37 │ /(?-is:)/is;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:37:2]
+ 36 │ /(?-i:)/i;
+ 37 │ /(?-is:)/is;
+    ·  ──
+ 38 │ /(?-im:)/im;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:38:2]
+ 37 │ /(?-is:)/is;
+ 38 │ /(?-im:)/im;
+    ·  ──
+ 39 │ /(?-s:)/s;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:39:2]
+ 38 │ /(?-im:)/im;
+ 39 │ /(?-s:)/s;
+    ·  ──
+ 40 │ /(?-si:)/si;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:40:2]
+ 39 │ /(?-s:)/s;
+ 40 │ /(?-si:)/si;
+    ·  ──
+ 41 │ /(?-sm:)/sm;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:41:2]
+ 40 │ /(?-si:)/si;
+ 41 │ /(?-sm:)/sm;
+    ·  ──
+ 42 │ /(?-m:)/m;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:42:2]
+ 41 │ /(?-sm:)/sm;
+ 42 │ /(?-m:)/m;
+    ·  ──
+ 43 │ /(?-mi:)/mi;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:43:2]
+ 42 │ /(?-m:)/m;
+ 43 │ /(?-mi:)/mi;
+    ·  ──
+ 44 │ /(?-ms:)/ms;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:44:2]
+ 43 │ /(?-mi:)/mi;
+ 44 │ /(?-ms:)/ms;
+    ·  ──
+ 45 │ /(?-ims:)/ims;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:45:2]
+ 44 │ /(?-ms:)/ms;
+ 45 │ /(?-ims:)/ims;
+    ·  ──
+ 46 │ /(?-ism:)/ism;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:46:2]
+ 45 │ /(?-ims:)/ims;
+ 46 │ /(?-ism:)/ism;
+    ·  ──
+ 47 │ /(?-sim:)/sim;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:47:2]
+ 46 │ /(?-ism:)/ism;
+ 47 │ /(?-sim:)/sim;
+    ·  ──
+ 48 │ /(?-smi:)/smi;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:48:2]
+ 47 │ /(?-sim:)/sim;
+ 48 │ /(?-smi:)/smi;
+    ·  ──
+ 49 │ /(?-mis:)/mis;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:49:2]
+ 48 │ /(?-smi:)/smi;
+ 49 │ /(?-mis:)/mis;
+    ·  ──
+ 50 │ /(?-msi:)/msi;
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[built-ins/RegExp/regexp-modifiers/syntax/valid/remove-modifiers-when-set-as-flags.js:50:2]
+ 49 │ /(?-mis:)/mis;
+ 50 │ /(?-msi:)/msi;
+    ·  ──
+ 51 │ new RegExp("(?-i:)", "i");
+    ╰────
+Expect to Parse: "built-ins/RegExp/unicode_character_class_backspace_escape.js"
+
+  × Character class range out of order
+    ╭─[built-ins/RegExp/unicode_character_class_backspace_escape.js:20:12]
+ 19 │ assert(/[\b]/u.test('\u0008'));
+ 20 │ assert(/[\b-A]/u.test('A'));
+    ·            ──
+    ╰────
+Expect to Parse: "built-ins/String/prototype/match/duplicate-named-groups-properties.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/String/prototype/match/duplicate-named-indices-groups-properties.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "built-ins/String/prototype/split/separator-regexp.js"
+
+  × Invalid hexadecimal escape
+    ╭─[built-ins/String/prototype/split/separator-regexp.js:56:32]
+ 55 │ assert.compareArray("x".split(/[\b]/), ["x"], '"x".split(/[\\b]/) must return ["x"]');
+ 56 │ assert.compareArray("x".split(/\x/), ["", ""], '"x".split(/\\x/) must return ["", ""]');
+    ·                                ──
+ 57 │ assert.compareArray("x".split(/\X/), ["x"], '"x".split(/\\X/) must return ["x"]');
+    ╰────
+Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups-replace.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups-search.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+Expect to Parse: "staging/built-ins/RegExp/named-groups/duplicate-named-groups.js"
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
 
   × '0'-prefixed octal literals and octal escape sequences are deprecated
     ╭─[annexB/language/expressions/template-literal/legacy-octal-escape-sequence-strict.js:18:4]
@@ -60,6 +2287,1350 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
  14 │ for (var {a} = 0 in {});
     ·      ───────────
  15 │ 
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_F-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=F}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_F.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=F}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Invalid-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=Invalid}/u;
+    ·           ───────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Invalid.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=Invalid}/u;
+    ·           ───────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_N-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=N}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_N.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=N}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_No-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=No}/u;
+    ·           ──
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_No.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=No}/u;
+    ·           ──
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_T-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=T}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_T.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=T}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Y-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=Y}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Y.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=Y}/u;
+    ·           ─
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Yes-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{ASCII=Yes}/u;
+    ·           ───
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/binary-property-with-value-ASCII_-_Yes.js:18:11]
+ 17 │ 
+ 18 │ /\p{ASCII=Yes}/u;
+    ·           ───
+    ╰────
+
+  × Invalid character class range
+    ╭─[built-ins/RegExp/property-escapes/character-class-range-end.js:20:3]
+ 19 │ 
+ 20 │ /[--\p{Hex}]/u;
+    ·   ─────────
+    ╰────
+
+  × Invalid character class range
+    ╭─[built-ins/RegExp/property-escapes/character-class-range-no-dash-end.js:20:3]
+ 19 │ 
+ 20 │ /[\uFFFF-\p{Hex}]/u;
+    ·   ──────────────
+    ╰────
+
+  × Invalid character class range
+    ╭─[built-ins/RegExp/property-escapes/character-class-range-no-dash-start.js:20:3]
+ 19 │ 
+ 20 │ /[\p{Hex}-\uFFFF]/u;
+    ·   ──────────────
+    ╰────
+
+  × Invalid character class range
+    ╭─[built-ins/RegExp/property-escapes/character-class-range-start.js:20:3]
+ 19 │ 
+ 20 │ /[\p{Hex}--]/u;
+    ·   ─────────
+    ╰────
+
+  × Invalid character class
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{Basic_Emoji}]/v;
+    ·  ──────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{Basic_Emoji}/v;
+    ·  ───────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/Basic_Emoji-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{Basic_Emoji}/u;
+    ·     ───────────
+    ╰────
+
+  × Invalid character class
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{Emoji_Keycap_Sequence}]/v;
+    ·  ────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{Emoji_Keycap_Sequence}/v;
+    ·  ─────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/Emoji_Keycap_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{Emoji_Keycap_Sequence}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid character class
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji}]/v;
+    ·  ────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji}/v;
+    ·  ─────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid character class
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_Flag_Sequence}]/v;
+    ·  ──────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_Flag_Sequence}/v;
+    ·  ───────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Flag_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_Flag_Sequence}/u;
+    ·     ───────────────────────
+    ╰────
+
+  × Invalid character class
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_Modifier_Sequence}]/v;
+    ·  ──────────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_Modifier_Sequence}/v;
+    ·  ───────────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Modifier_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_Modifier_Sequence}/u;
+    ·     ───────────────────────────
+    ╰────
+
+  × Invalid character class
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_Tag_Sequence}]/v;
+    ·  ─────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_Tag_Sequence}/v;
+    ·  ──────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_Tag_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_Tag_Sequence}/u;
+    ·     ──────────────────────
+    ╰────
+
+  × Invalid character class
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-CharacterClass.js:20:2]
+ 19 │ 
+ 20 │ /[^\p{RGI_Emoji_ZWJ_Sequence}]/v;
+    ·  ─────────────────────────────
+    ╰────
+
+  × Invalid property name(negative + property of strings)
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-P.js:20:2]
+ 19 │ 
+ 20 │ /\P{RGI_Emoji_ZWJ_Sequence}/v;
+    ·  ──────────────────────────
+    ╰────
+
+  × `UnicodeSetsMode` is required for binary property of strings
+    ╭─[built-ins/RegExp/property-escapes/generated/strings/RGI_Emoji_ZWJ_Sequence-negative-u.js:20:5]
+ 19 │ 
+ 20 │ /\p{RGI_Emoji_ZWJ_Sequence}/u;
+    ·     ──────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Block-implicit-negated.js:21:5]
+ 20 │ 
+ 21 │ /\P{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Block-implicit.js:21:5]
+ 20 │ 
+ 21 │ /\p{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-implicit-negated.js:21:5]
+ 20 │ 
+ 21 │ /\P{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-implicit.js:21:5]
+ 20 │ 
+ 21 │ /\p{InAdlam}/u;
+    ·     ───────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script-negated.js:21:14]
+ 20 │ 
+ 21 │ /\P{InScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-In-prefix-Script.js:21:14]
+ 20 │ 
+ 21 │ /\p{InScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-Is-prefix-Script-negated.js:21:14]
+ 20 │ 
+ 21 │ /\P{IsScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-Is-prefix-Script.js:21:14]
+ 20 │ 
+ 21 │ /\p{IsScript=Adlam}/u;
+    ·              ─────
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-circumflex-negation-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{^General_Category=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-circumflex-negation.js:21:2]
+ 20 │ 
+ 21 │ /\p{^General_Category=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-empty-negated.js:21:3]
+ 20 │ 
+ 21 │ /[\p{}]/u;
+    ·   ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-empty.js:21:3]
+ 20 │ 
+ 21 │ /[\P{}]/u;
+    ·   ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-invalid-negated.js:21:6]
+ 20 │ 
+ 21 │ /[\P{invalid}]/u;
+    ·      ───────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-invalid.js:21:6]
+ 20 │ 
+ 21 │ /[\p{invalid}]/u;
+    ·      ───────
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-no-braces-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P/u;
+    ·  ──
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-no-braces-value-negated.js:21:2]
+ 20 │ 
+ 21 │ /\PL/u;
+    ·  ──
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-no-braces-value.js:21:2]
+ 20 │ 
+ 21 │ /\pL/u;
+    ·  ──
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-no-braces.js:21:2]
+ 20 │ 
+ 21 │ /\p/u;
+    ·  ──
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-separator-and-value-only-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-separator-and-value-only.js:21:2]
+ 20 │ 
+ 21 │ /\p{=Letter}/u;
+    ·  ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-separator-negated.js:21:5]
+ 20 │ 
+ 21 │ /\P{General_Category:Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-separator-only-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{=}/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-separator-only.js:21:2]
+ 20 │ 
+ 21 │ /\p{=}/u;
+    ·  ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-separator.js:21:5]
+ 20 │ 
+ 21 │ /\p{General_Category:Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-unclosed-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P{/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-unclosed.js:21:2]
+ 20 │ 
+ 21 │ /\p{/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-unopened-negated.js:21:2]
+ 20 │ 
+ 21 │ /\P}/u;
+    ·  ──
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/grammar-extension-unopened.js:21:2]
+ 20 │ 
+ 21 │ /\p}/u;
+    ·  ──
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-01-negated.js:18:2]
+ 17 │ 
+ 18 │ /\P{ General_Category=Uppercase_Letter }/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-01.js:18:2]
+ 17 │ 
+ 18 │ /\p{ General_Category=Uppercase_Letter }/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-02-negated.js:18:2]
+ 17 │ 
+ 18 │ /\P{ Lowercase }/u;
+    ·  ───
+    ╰────
+
+  × Unterminated unicode property escape
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-02.js:18:2]
+ 17 │ 
+ 18 │ /\p{ Lowercase }/u;
+    ·  ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-03-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{ANY}/u;
+    ·     ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-03.js:18:5]
+ 17 │ 
+ 18 │ /\p{ANY}/u;
+    ·     ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-04-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{ASSIGNED}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-04.js:18:5]
+ 17 │ 
+ 18 │ /\p{ASSIGNED}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-05-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-05.js:18:5]
+ 17 │ 
+ 18 │ /\p{Ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-06-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{General_Category = Uppercase_Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-06.js:18:5]
+ 17 │ 
+ 18 │ /\p{General_Category = Uppercase_Letter}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-07-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{_-_lOwEr_C-A_S-E_-_}/u;
+    ·     ─
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-07.js:18:5]
+ 17 │ 
+ 18 │ /\p{_-_lOwEr_C-A_S-E_-_}/u;
+    ·     ─
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-08-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{any}/u;
+    ·     ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-08.js:18:5]
+ 17 │ 
+ 18 │ /\p{any}/u;
+    ·     ───
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-09-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-09.js:18:5]
+ 17 │ 
+ 18 │ /\p{ascii}/u;
+    ·     ─────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-10-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{assigned}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-10.js:18:5]
+ 17 │ 
+ 18 │ /\p{assigned}/u;
+    ·     ────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-11-negated.js:18:8]
+ 17 │ 
+ 18 │ /\P{gC=uppercase_letter}/u;
+    ·        ────────────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-11.js:18:8]
+ 17 │ 
+ 18 │ /\p{gC=uppercase_letter}/u;
+    ·        ────────────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-12-negated.js:18:8]
+ 17 │ 
+ 18 │ /\P{gc=uppercaseletter}/u;
+    ·        ───────────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-12.js:18:8]
+ 17 │ 
+ 18 │ /\p{gc=uppercaseletter}/u;
+    ·        ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-13-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-13.js:18:5]
+ 17 │ 
+ 18 │ /\p{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-14-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/loose-matching-14.js:18:5]
+ 17 │ 
+ 18 │ /\p{lowercase}/u;
+    ·     ─────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-equals-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{General_Category=}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-equals.js:17:5]
+ 16 │ 
+ 17 │ /\p{General_Category=}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{General_Category}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-General_Category.js:17:5]
+ 16 │ 
+ 17 │ /\p{General_Category}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-equals-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script=}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-equals.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script=}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-equals-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script_Extensions=}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-equals.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script_Extensions=}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{Script_Extensions}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-binary-property-without-value-Script_Extensions.js:17:5]
+ 16 │ 
+ 17 │ /\p{Script_Extensions}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-existent-binary-property-negated.js:17:5]
+ 16 │ 
+ 17 │ /\P{UnknownBinaryProperty}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/non-existent-binary-property.js:17:5]
+ 16 │ 
+ 17 │ /\p{UnknownBinaryProperty}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-and-value-negated.js:18:17]
+ 17 │ 
+ 18 │ /\P{Line_Breakz=WAT}/u;
+    ·                 ───
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-and-value.js:18:17]
+ 17 │ 
+ 18 │ /\p{Line_Breakz=WAT}/u;
+    ·                 ───
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-existing-value-negated.js:17:17]
+ 16 │ 
+ 17 │ /\P{Line_Breakz=Alphabetic}/u;
+    ·                 ──────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-existing-value.js:17:17]
+ 16 │ 
+ 17 │ /\p{Line_Breakz=Alphabetic}/u;
+    ·                 ──────────
+    ╰────
+
+  × Could not parse the entire pattern
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-value-General_Category-negated.js:18:5]
+ 17 │ 
+ 18 │ /\\P{General_Category=WAT}/u;
+    ·     ▲
+    ╰────
+
+  × Could not parse the entire pattern
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-value-Script-negated.js:18:5]
+ 17 │ 
+ 18 │ /\\P{Script=FooBarBazInvalid}/u;
+    ·     ▲
+    ╰────
+
+  × Could not parse the entire pattern
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-value-Script.js:18:5]
+ 17 │ 
+ 18 │ /\\p{Script=FooBarBazInvalid}/u;
+    ·     ▲
+    ╰────
+
+  × Could not parse the entire pattern
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-value-Script_Extensions-negated.js:18:5]
+ 17 │ 
+ 18 │ /\\P{Script_Extensions=H_e_h}/u;
+    ·     ▲
+    ╰────
+
+  × Could not parse the entire pattern
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-value-Script_Extensions.js:18:5]
+ 17 │ 
+ 18 │ /\\p{Script_Extensions=H_e_h}/u;
+    ·     ▲
+    ╰────
+
+  × Could not parse the entire pattern
+    ╭─[built-ins/RegExp/property-escapes/non-existent-property-value-general-category.js:18:5]
+ 17 │ 
+ 18 │ /\\p{General_Category=WAT}/u;
+    ·     ▲
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Composition_Exclusion-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Composition_Exclusion}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Composition_Exclusion.js:18:5]
+ 17 │ 
+ 18 │ /\p{Composition_Exclusion}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFC-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFC}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFC.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFC}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFD-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFD}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFD.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFD}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKC-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFKC}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKC.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFKC}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKD-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Expands_On_NFKD}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Expands_On_NFKD.js:18:5]
+ 17 │ 
+ 18 │ /\p{Expands_On_NFKD}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-FC_NFKC_Closure-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-FC_NFKC_Closure.js:18:5]
+ 17 │ 
+ 18 │ /\p{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Full_Composition_Exclusion-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Full_Composition_Exclusion}/u;
+    ·     ──────────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Full_Composition_Exclusion.js:18:5]
+ 17 │ 
+ 18 │ /\p{Full_Composition_Exclusion}/u;
+    ·     ──────────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Grapheme_Link-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Grapheme_Link}/u;
+    ·     ─────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Grapheme_Link.js:18:5]
+ 17 │ 
+ 18 │ /\p{Grapheme_Link}/u;
+    ·     ─────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Hyphen-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Hyphen}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Hyphen.js:18:5]
+ 17 │ 
+ 18 │ /\p{Hyphen}/u;
+    ·     ──────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Alphabetic-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Alphabetic}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Alphabetic.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Alphabetic}/u;
+    ·     ────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Default_Ignorable_Code_Point-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Default_Ignorable_Code_Point}/u;
+    ·     ──────────────────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Default_Ignorable_Code_Point.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Default_Ignorable_Code_Point}/u;
+    ·     ──────────────────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Grapheme_Extend-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Grapheme_Extend}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Grapheme_Extend.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Grapheme_Extend}/u;
+    ·     ─────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Continue-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_ID_Continue}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Continue.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_ID_Continue}/u;
+    ·     ─────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Start-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_ID_Start}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_ID_Start.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_ID_Start}/u;
+    ·     ──────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Lowercase-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Lowercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Lowercase.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Lowercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Math-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Math}/u;
+    ·     ──────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Math.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Math}/u;
+    ·     ──────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Uppercase-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Other_Uppercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Other_Uppercase.js:18:5]
+ 17 │ 
+ 18 │ /\p{Other_Uppercase}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Prepended_Concatenation_Mark-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{Prepended_Concatenation_Mark}/u;
+    ·     ────────────────────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-binary-property-Prepended_Concatenation_Mark.js:18:5]
+ 17 │ 
+ 18 │ /\p{Prepended_Concatenation_Mark}/u;
+    ·     ────────────────────────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-Block-with-value-negated.js:18:11]
+ 17 │ 
+ 18 │ /\P{Block=Adlam}/u;
+    ·           ─────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-Block-with-value.js:18:11]
+ 17 │ 
+ 18 │ /\p{Block=Adlam}/u;
+    ·           ─────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-FC_NFKC_Closure-negated.js:18:5]
+ 17 │ 
+ 18 │ /\P{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-FC_NFKC_Closure.js:18:5]
+ 17 │ 
+ 18 │ /\p{FC_NFKC_Closure}/u;
+    ·     ───────────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-Line_Break-negated.js:18:16]
+ 17 │ 
+ 18 │ /\P{Line_Break=Alphabetic}/u;
+    ·                ──────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-Line_Break-with-value-negated.js:18:16]
+ 17 │ 
+ 18 │ /\P{Line_Break=Alphabetic}/u;
+    ·                ──────────
+    ╰────
+
+  × Invalid unicode property name
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-Line_Break-with-value.js:18:16]
+ 17 │ 
+ 18 │ /\p{Line_Break=Alphabetic}/u;
+    ·                ──────────
+    ╰────
+
+  × Invalid unicode property name or value
+    ╭─[built-ins/RegExp/property-escapes/unsupported-property-Line_Break.js:18:5]
+ 17 │ 
+ 18 │ /\p{Line_Break}/u;
+    ·     ──────────
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-01.js:19:3]
+ 18 │ 
+ 19 │ /[(]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-02.js:19:3]
+ 18 │ 
+ 19 │ /[)]/v;
+    ·   ▲
+    ╰────
+
+  × Unterminated character class
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-03.js:19:2]
+ 18 │ 
+ 19 │ /[[]/v;
+    ·  ───
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-04.js:19:3]
+ 18 │ 
+ 19 │ /[{]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-05.js:19:3]
+ 18 │ 
+ 19 │ /[}]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-06.js:19:3]
+ 18 │ 
+ 19 │ /[/]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-07.js:19:3]
+ 18 │ 
+ 19 │ /[-]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-08.js:19:3]
+ 18 │ 
+ 19 │ /[|]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-09.js:19:3]
+ 18 │ 
+ 19 │ /[&&]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-10.js:19:3]
+ 18 │ 
+ 19 │ /[!!]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-11.js:19:3]
+ 18 │ 
+ 19 │ /[##]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-12.js:19:3]
+ 18 │ 
+ 19 │ /[$$]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-13.js:19:3]
+ 18 │ 
+ 19 │ /[%%]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-14.js:19:3]
+ 18 │ 
+ 19 │ /[**]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-15.js:19:3]
+ 18 │ 
+ 19 │ /[++]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-16.js:19:3]
+ 18 │ 
+ 19 │ /[,,]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-17.js:19:3]
+ 18 │ 
+ 19 │ /[..]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-18.js:19:3]
+ 18 │ 
+ 19 │ /[::]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-19.js:19:3]
+ 18 │ 
+ 19 │ /[;;]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-20.js:19:3]
+ 18 │ 
+ 19 │ /[<<]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-21.js:19:3]
+ 18 │ 
+ 19 │ /[==]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-22.js:19:3]
+ 18 │ 
+ 19 │ /[>>]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-23.js:19:3]
+ 18 │ 
+ 19 │ /[??]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-24.js:19:3]
+ 18 │ 
+ 19 │ /[@@]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-25.js:19:3]
+ 18 │ 
+ 19 │ /[``]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-26.js:19:3]
+ 18 │ 
+ 19 │ /[~~]/v;
+    ·   ▲
+    ╰────
+
+  × Expected nonempty class set expression
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-27.js:19:4]
+ 18 │ 
+ 19 │ /[^^^]/v;
+    ·    ▲
+    ╰────
+
+  × Unterminated character class
+    ╭─[built-ins/RegExp/prototype/unicodeSets/breaking-change-from-u-to-v-28.js:19:2]
+ 18 │ 
+ 19 │ /[_^^]/v;
+    ·  ──
+    ╰────
+
+  × The 'u' and 'v' regular expression flags cannot be enabled at the same time
+    ╭─[built-ins/RegExp/prototype/unicodeSets/uv-flags.js:17:1]
+ 16 │ 
+ 17 │ /./uv;
+    · ─────
     ╰────
 
   × Cannot assign to 'arguments' in strict mode
@@ -19011,6 +22582,1379 @@ Expect Syntax Error: "language/import/import-attributes/json-named-bindings.js"
     ·  ▲
     ╰────
   help: Try insert a semicolon here
+
+  × Unterminated multiline comment
+    ╭─[language/literals/regexp/S7.8.5_A1.2_T1.js:23:1]
+ 22 │ 
+ 23 │ /*/
+    · ────
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A1.2_T2.js:26:1]
+ 25 │ 
+ 26 │ /\/
+    · ────
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A1.2_T3.js:27:1]
+ 26 │ ///
+ 27 │ .source;
+    · ─
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A1.2_T4.js:27:1]
+ 26 │ //
+ 27 │ .source;
+    · ─
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A1.3_T1.js:29:1]
+ 28 │ 
+ 29 │ /
+    · ──
+ 30 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A1.3_T1.js:31:1]
+ 30 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A1.3_T3.js:29:1]
+ 28 │ 
+ 29 │ /
+    · ──
+ 30 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A1.3_T3.js:31:1]
+ 30 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A1.5_T1.js:23:1]
+ 22 │ 
+ 23 │ /\
+    · ───
+ 24 │ /
+    ╰────
+
+  × Invalid atom escape
+    ╭─[language/literals/regexp/S7.8.5_A1.5_T1.js:23:2]
+ 22 │ 
+ 23 │ /\
+    ·  ─
+ 24 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A1.5_T1.js:25:1]
+ 24 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A1.5_T3.js:22:1]
+ 21 │ 
+ 22 │ /\
+    · ───
+ 23 │ /
+    ╰────
+
+  × Invalid atom escape
+    ╭─[language/literals/regexp/S7.8.5_A1.5_T3.js:22:2]
+ 21 │ 
+ 22 │ /\
+    ·  ─
+ 23 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A1.5_T3.js:24:1]
+ 23 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A2.2_T1.js:23:1]
+ 22 │ 
+ 23 │ /a\/
+    · ─────
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A2.2_T2.js:23:5]
+ 22 │ 
+ 23 │ /a//.source;
+    ·     ─
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A2.3_T1.js:32:1]
+ 31 │ 
+ 32 │ /a
+    · ───
+ 33 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A2.3_T1.js:34:1]
+ 33 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A2.3_T3.js:33:1]
+ 32 │ 
+ 33 │ /a
+    · ───
+ 34 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A2.3_T3.js:35:1]
+ 34 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A2.5_T1.js:28:1]
+ 27 │ 
+ 28 │ /a\
+    · ────
+ 29 │ /
+    ╰────
+
+  × Invalid atom escape
+    ╭─[language/literals/regexp/S7.8.5_A2.5_T1.js:28:3]
+ 27 │ 
+ 28 │ /a\
+    ·   ─
+ 29 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A2.5_T1.js:30:1]
+ 29 │ /
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/S7.8.5_A2.5_T3.js:28:1]
+ 27 │ 
+ 28 │ /a\
+    · ────
+ 29 │ /
+    ╰────
+
+  × Invalid atom escape
+    ╭─[language/literals/regexp/S7.8.5_A2.5_T3.js:28:3]
+ 27 │ 
+ 28 │ /a\
+    ·   ─
+ 29 │ /
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/S7.8.5_A2.5_T3.js:30:1]
+ 29 │ /
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-add-remove-i.js:19:2]
+ 18 │ 
+ 19 │ /(?i-i:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-add-remove-m.js:19:2]
+ 18 │ 
+ 19 │ /(?m-m:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-add-remove-multi-duplicate.js:19:2]
+ 18 │ 
+ 19 │ /(?ims-m:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-add-remove-s-escape.js:19:2]
+ 18 │ 
+ 19 │ /(?\u{0073}-s:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-add-remove-s.js:19:2]
+ 18 │ 
+ 19 │ /(?s-s:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-both-empty.js:19:2]
+ 18 │ 
+ 19 │ /(?-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-code-point-repeat-i-1.js:19:2]
+ 18 │ 
+ 19 │ /(?-ii:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-code-point-repeat-i-2.js:19:2]
+ 18 │ 
+ 19 │ /(?-imsi:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-no-colon-1.js:18:2]
+ 17 │ 
+ 18 │ /(?ms-i)/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-no-colon-2.js:18:2]
+ 17 │ 
+ 18 │ /(?-s)/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-no-colon-3.js:18:2]
+ 17 │ 
+ 18 │ /(?i-)/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-arbitrary.js:19:2]
+ 18 │ 
+ 19 │ /(?-1:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-i.js:19:2]
+ 18 │ 
+ 19 │ /(?-iͥ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-m.js:19:2]
+ 18 │ 
+ 19 │ /(?-mͫ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-combining-s.js:19:2]
+ 18 │ 
+ 19 │ /(?-s̀:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-d.js:19:2]
+ 18 │ 
+ 19 │ /(?-d:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-g.js:19:2]
+ 18 │ 
+ 19 │ /(?-g:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-display-1.js:19:2]
+ 18 │ 
+ 19 │ /(?-s :a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-display-2.js:19:2]
+ 18 │ 
+ 19 │ /(?-s‎:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-non-flag.js:19:2]
+ 18 │ 
+ 19 │ /(?-Q:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-u.js:19:2]
+ 18 │ 
+ 19 │ /(?-u:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-uppercase-I.js:19:2]
+ 18 │ 
+ 19 │ /(?-I:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-y.js:19:2]
+ 18 │ 
+ 19 │ /(?-y:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwj.js:19:2]
+ 18 │ 
+ 19 │ /(?-s‍:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwnbsp.js:19:2]
+ 18 │ 
+ 19 │ /(?-s﻿:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-other-code-point-zwnj.js:19:2]
+ 18 │ 
+ 19 │ /(?-s‌:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-i.js:19:2]
+ 18 │ 
+ 19 │ /(?i-i:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-m.js:19:2]
+ 18 │ 
+ 19 │ /(?m-m:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-multi-duplicate.js:19:2]
+ 18 │ 
+ 19 │ /(?m-ims:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-s-escape.js:19:2]
+ 18 │ 
+ 19 │ /(?s-\u{0073}:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-add-remove-s.js:19:2]
+ 18 │ 
+ 19 │ /(?s-s:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-code-point-repeat-i-1.js:19:2]
+ 18 │ 
+ 19 │ /(?ii-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-code-point-repeat-i-2.js:19:2]
+ 18 │ 
+ 19 │ /(?imsi-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-arbitrary.js:19:2]
+ 18 │ 
+ 19 │ /(?1-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-i.js:19:2]
+ 18 │ 
+ 19 │ /(?iͥ-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-m.js:19:2]
+ 18 │ 
+ 19 │ /(?mͫ-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-combining-s.js:19:2]
+ 18 │ 
+ 19 │ /(?s̀-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-d.js:19:2]
+ 18 │ 
+ 19 │ /(?d-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-g.js:19:2]
+ 18 │ 
+ 19 │ /(?g-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-display-1.js:19:2]
+ 18 │ 
+ 19 │ /(?s -:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-display-2.js:19:2]
+ 18 │ 
+ 19 │ /(?s‎-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-non-flag.js:19:2]
+ 18 │ 
+ 19 │ /(?Q-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-u.js:19:2]
+ 18 │ 
+ 19 │ /(?u-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-uppercase-I.js:19:2]
+ 18 │ 
+ 19 │ /(?I-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-y.js:19:2]
+ 18 │ 
+ 19 │ /(?y-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwj.js:19:2]
+ 18 │ 
+ 19 │ /(?s‍-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwnbsp.js:19:2]
+ 18 │ 
+ 19 │ /(?s﻿-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-other-code-point-zwnj.js:19:2]
+ 18 │ 
+ 19 │ /(?s‌-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-i.js:19:2]
+ 18 │ 
+ 19 │ /(?I-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-m.js:19:2]
+ 18 │ 
+ 19 │ /(?M-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-case-fold-s.js:19:2]
+ 18 │ 
+ 19 │ /(?S-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-unicode-case-fold-i.js:19:2]
+ 18 │ 
+ 19 │ /(?İ-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-reverse-should-not-unicode-case-fold-s.js:19:2]
+ 18 │ 
+ 19 │ /(?ſ-:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-i.js:19:2]
+ 18 │ 
+ 19 │ /(?-I:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-m.js:19:2]
+ 18 │ 
+ 19 │ /(?-M:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-should-not-case-fold-s.js:19:2]
+ 18 │ 
+ 19 │ /(?-S:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-should-not-unicode-case-fold-i.js:19:2]
+ 18 │ 
+ 19 │ /(?-İ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-arithmetic-modifiers-should-not-unicode-case-fold-s.js:19:2]
+ 18 │ 
+ 19 │ /(?-ſ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Unexpected flag G in regular expression literal
+    ╭─[language/literals/regexp/early-err-bad-flag.js:18:5]
+ 17 │ 
+ 18 │ /./G;
+    ·     ▲
+    ╰────
+
+  × Flag g is mentioned twice in regular expression literal
+    ╭─[language/literals/regexp/early-err-dup-flag.js:18:7]
+ 17 │ 
+ 18 │ /./gig;
+    ·       ▲
+    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[language/literals/regexp/early-err-flags-unicode-escape.js:18:4]
+ 17 │ 
+ 18 │ /./\u0067;
+    ·    ▲
+    ╰────
+  help: Try insert a semicolon here
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-code-point-repeat-i-1.js:19:2]
+ 18 │ 
+ 19 │ /(?ii:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-code-point-repeat-i-2.js:19:2]
+ 18 │ 
+ 19 │ /(?imsi:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-arbitrary.js:19:2]
+ 18 │ 
+ 19 │ /(?1:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-combining-i.js:19:2]
+ 18 │ 
+ 19 │ /(?iͥ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-combining-m.js:19:2]
+ 18 │ 
+ 19 │ /(?mͫ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-combining-s.js:19:2]
+ 18 │ 
+ 19 │ /(?s̀:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-d.js:19:2]
+ 18 │ 
+ 19 │ /(?d:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-g.js:19:2]
+ 18 │ 
+ 19 │ /(?g:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-non-display-1.js:19:2]
+ 18 │ 
+ 19 │ /(?s :a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-non-display-2.js:19:2]
+ 18 │ 
+ 19 │ /(?s‎:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-non-flag.js:19:2]
+ 18 │ 
+ 19 │ /(?Q:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-u.js:19:2]
+ 18 │ 
+ 19 │ /(?u:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-uppercase-I.js:19:2]
+ 18 │ 
+ 19 │ /(?I:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-y.js:19:2]
+ 18 │ 
+ 19 │ /(?y:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-zwj.js:19:2]
+ 18 │ 
+ 19 │ /(?s‍:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-zwnbsp.js:19:2]
+ 18 │ 
+ 19 │ /(?s﻿:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-other-code-point-zwnj.js:19:2]
+ 18 │ 
+ 19 │ /(?s‌:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-case-fold-i.js:19:2]
+ 18 │ 
+ 19 │ /(?I:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-case-fold-m.js:19:2]
+ 18 │ 
+ 19 │ /(?M:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-case-fold-s.js:19:2]
+ 18 │ 
+ 19 │ /(?S:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-unicode-case-fold-i.js:19:2]
+ 18 │ 
+ 19 │ /(?İ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-unicode-case-fold-s.js:19:2]
+ 18 │ 
+ 19 │ /(?ſ:a)//*{ global-modifiers }*/;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-unicode-escape-i.js:19:2]
+ 18 │ 
+ 19 │ /(?\u0069:a)/u /* i */;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-unicode-escape-m.js:19:2]
+ 18 │ 
+ 19 │ /(?\u006D:a)/u /* m */;
+    ·  ──
+    ╰────
+
+  × Capturing group name is missing
+    ╭─[language/literals/regexp/early-err-modifiers-should-not-unicode-escape-s.js:19:2]
+ 18 │ 
+ 19 │ /(?\u0073:a)/u /* s */;
+    ·  ──
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/early-err-pattern.js:17:2]
+ 16 │ 
+ 17 │ /?/;
+    ·  ─
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/invalid-braced-quantifier-exact.js:25:2]
+ 24 │ 
+ 25 │ /{2}/;
+    ·  ───
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/invalid-braced-quantifier-lower.js:25:2]
+ 24 │ 
+ 25 │ /{2,}/;
+    ·  ────
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/invalid-braced-quantifier-range.js:25:2]
+ 24 │ 
+ 25 │ /{2,3}/;
+    ·  ─────
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/invalid-optional-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.)?/;
+    ·         ─
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/invalid-optional-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.)?/;
+    ·         ─
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/invalid-range-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.){2,3}/;
+    ·         ─────
+    ╰────
+
+  × Invalid braced quantifier
+    ╭─[language/literals/regexp/invalid-range-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.){2,3}/;
+    ·         ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-2-u.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>a)\k<ab>/u;
+    ·         ──────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-2.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>a)\k<ab>/;
+    ·         ──────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-3-u.js:20:10]
+ 19 │ 
+ 20 │ /(?<ab>a)\k<a>/u;
+    ·          ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-3.js:20:10]
+ 19 │ 
+ 20 │ /(?<ab>a)\k<a>/;
+    ·          ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-4-u.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>(?<ab>a)/u;
+    ·  ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-4.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>(?<ab>a)/;
+    ·  ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-5.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>(?<b>x)/;
+    ·  ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-u.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>.)\k<b>/u;
+    ·         ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname-without-group-u.js:20:2]
+ 19 │ 
+ 20 │ /\k<a>/u;
+    ·  ─────
+    ╰────
+
+  × Group specifier is empty
+    ╭─[language/literals/regexp/named-groups/invalid-dangling-groupname.js:20:9]
+ 19 │ 
+ 20 │ /(?<a>.)\k<b>/;
+    ·         ─────
+    ╰────
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Duplicated group name
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-empty-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<>a)/u;
+    ·    ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-empty-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<>a)/;
+    ·    ─
+    ╰────
+
+  × Invalid atom escape
+    ╭─[language/literals/regexp/named-groups/invalid-identity-escape-in-capture-u.js:15:7]
+ 14 │ 
+ 15 │ /(?<a>\a)/u;
+    ·       ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-2-u.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<a/u;
+    ·           ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-2.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<a/;
+    ·           ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-3-u.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<>/u;
+    ·           ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-3.js:15:11]
+ 14 │ 
+ 15 │ /(?<a>.)\k<>/;
+    ·           ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-4.js:15:4]
+ 14 │ 
+ 15 │ /\k<a(?<a>a)/;
+    ·    ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-5.js:15:4]
+ 14 │ 
+ 15 │ /\k<a(?<a>.)/;
+    ·    ──
+    ╰────
+
+  × Invalid named reference
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-6.js:15:2]
+ 14 │ 
+ 15 │ /\k(?<a>.)/;
+    ·  ──
+    ╰────
+
+  × Invalid named reference
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-u.js:15:9]
+ 14 │ 
+ 15 │ /(?<a>.)\k/u;
+    ·         ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-2-u.js:15:4]
+ 14 │ 
+ 15 │ /\k<>/u;
+    ·    ─
+    ╰────
+
+  × Invalid named reference
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-3-u.js:15:2]
+ 14 │ 
+ 15 │ /\k/u;
+    ·  ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname-without-group-u.js:15:4]
+ 14 │ 
+ 15 │ /\k<a/u;
+    ·    ──
+    ╰────
+
+  × Invalid named reference
+    ╭─[language/literals/regexp/named-groups/invalid-incomplete-groupname.js:15:9]
+ 14 │ 
+ 15 │ /(?<a>.)\k/;
+    ·         ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-continue-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<$❞>a)/;
+    ·    ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<𐒤>a)/u;
+    ·    ─
+    ╰────
+
+  × Invalid surrogate pair
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-2.js:15:5]
+ 14 │ 
+ 15 │ /(?<𐒤>a)/;
+    ·     ─
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-3.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uD83D\uDF12>.)/;
+    ·      ────────────
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4-u.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uD801>.)/u;
+    ·      ──────
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-4.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uD801>.)/;
+    ·      ──────
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5-u.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uDCA4>.)/u;
+    ·      ──────
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-5.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\uDCA4>.)/;
+    ·      ──────
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-6.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\u{1F08B}>.)/;
+    ·      ─────────
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-7.js:15:6]
+ 14 │ 
+ 15 │ /(?<a\u{10FFFF}>.)/;
+    ·      ──────────
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<\>.)/u;
+    ·    ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-8.js:15:4]
+ 14 │ 
+ 15 │ /(?<\>.)/;
+    ·    ──
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-9-u.js:15:7]
+ 14 │ 
+ 15 │ /(?<a\u{110000}>.)/u;
+    ·       ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<❤>a)/u;
+    ·    ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-non-id-start-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<❤>a)/;
+    ·    ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-numeric-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<42a>a)/u;
+    ·    ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-numeric-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<42a>a)/;
+    ·    ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<:a>a)/u;
+    ·    ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-punctuator-starting-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<:a>a)/;
+    ·    ─
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<a:>a)/u;
+    ·    ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-punctuator-within-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<a:>a)/;
+    ·    ──
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-unterminated-groupspecifier-u.js:15:4]
+ 14 │ 
+ 15 │ /(?<aa)/u;
+    ·    ───
+    ╰────
+
+  × Unterminated capturing group name
+    ╭─[language/literals/regexp/named-groups/invalid-unterminated-groupspecifier.js:15:4]
+ 14 │ 
+ 15 │ /(?<aa)/;
+    ·    ───
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/regexp-first-char-no-line-separator.js:29:1]
+ 28 │ 
+ 29 │ / /
+    · ──
+ 30 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/regexp-first-char-no-line-separator.js:34:1]
+ 33 │ */
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/regexp-first-char-no-paragraph-separator.js:29:1]
+ 28 │ 
+ 29 │ / /
+    · ──
+ 30 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/regexp-first-char-no-paragraph-separator.js:34:1]
+ 33 │ */
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/regexp-source-char-no-line-separator.js:28:1]
+ 27 │ 
+ 28 │ /a\\ /
+    · ─────
+ 29 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/regexp-source-char-no-line-separator.js:33:1]
+ 32 │ */
+    ╰────
+
+  × Unterminated regular expression
+    ╭─[language/literals/regexp/regexp-source-char-no-paragraph-separator.js:29:1]
+ 28 │ 
+ 29 │ /a\\  /
+    · ─────
+ 30 │ 
+    ╰────
+
+  × Unexpected token
+    ╭─[language/literals/regexp/regexp-source-char-no-paragraph-separator.js:34:1]
+ 33 │ */
+    ╰────
+
+  × Invalid atom escape
+    ╭─[language/literals/regexp/u-invalid-class-escape.js:23:2]
+ 22 │ 
+ 23 │ /\c0/u;
+    ·  ─
+    ╰────
+
+  × Could not parse the entire pattern
+    ╭─[language/literals/regexp/u-invalid-extended-pattern-char.js:20:2]
+ 19 │ 
+ 20 │ /{/u;
+    ·  ▲
+    ╰────
+
+  × Invalid atom escape
+    ╭─[language/literals/regexp/u-invalid-identity-escape.js:22:2]
+ 21 │ 
+ 22 │ /\M/u;
+    ·  ─
+    ╰────
+
+  × Invalid indexed reference
+    ╭─[language/literals/regexp/u-invalid-legacy-octal-escape.js:25:2]
+ 24 │ 
+ 25 │ /\1/u;
+    ·  ──
+    ╰────
+
+  × Invalid character class range
+    ╭─[language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-a.js:32:3]
+ 31 │ 
+ 32 │ /[\d-a]/u;
+    ·   ────
+    ╰────
+
+  × Invalid character class range
+    ╭─[language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-ab.js:32:3]
+ 31 │ 
+ 32 │ /[\s-\d]/u;
+    ·   ─────
+    ╰────
+
+  × Invalid character class range
+    ╭─[language/literals/regexp/u-invalid-non-empty-class-ranges-no-dash-b.js:32:3]
+ 31 │ 
+ 32 │ /[%-\d]/u;
+    ·   ────
+    ╰────
+
+  × Invalid character class range
+    ╭─[language/literals/regexp/u-invalid-non-empty-class-ranges.js:31:3]
+ 30 │ 
+ 31 │ /[--\d]/u;
+    ·   ────
+    ╰────
+
+  × Invalid indexed reference
+    ╭─[language/literals/regexp/u-invalid-oob-decimal-escape.js:20:2]
+ 19 │ 
+ 20 │ /\8/u;
+    ·  ──
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-optional-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?=.)?/u;
+    ·        ─
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-optional-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.)?/u;
+    ·         ─
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-optional-negative-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?!.)?/u;
+    ·        ─
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-optional-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.)?/u;
+    ·         ─
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-range-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?=.){2,3}/u;
+    ·        ─────
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-range-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<=.){2,3}/u;
+    ·         ─────
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-range-negative-lookahead.js:20:8]
+ 19 │ 
+ 20 │ /.(?!.){2,3}/u;
+    ·        ─────
+    ╰────
+
+  × Lone `Quantifier` found, expected with `Atom`
+    ╭─[language/literals/regexp/u-invalid-range-negative-lookbehind.js:20:9]
+ 19 │ 
+ 20 │ /.(?<!.){2,3}/u;
+    ·         ─────
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/u-unicode-esc-bounds.js:20:3]
+ 19 │ 
+ 20 │ /\u{110000}/u;
+    ·   ─
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/u-unicode-esc-non-hex.js:15:3]
+ 14 │ 
+ 15 │ /\u{1,}/u;
+    ·   ─
+    ╰────
+
+  × Invalid unicode escape sequence
+    ╭─[language/literals/regexp/unicode-escape-nls-err.js:73:3]
+ 72 │ 
+ 73 │ /\u{1F_639}/u;
+    ·   ─
+    ╰────
 
   × Unterminated string
     ╭─[language/literals/string/S7.8.4_A1.1_T1.js:18:3]

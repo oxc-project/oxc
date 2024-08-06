@@ -336,12 +336,24 @@ impl<'a> ParserImpl<'a> {
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> RegExpLiteral<'a> {
+        use oxc_regexp_parser::{ParserOptions, PatternParser};
         let span = self.start_span();
 
         // split out pattern
         let (pattern_end, flags) = self.read_regex();
         let pattern_start = self.cur_token().start + 1; // +1 to exclude `/`
         let pattern = &self.source_text[pattern_start as usize..pattern_end as usize];
+
+        let options = match (flags.contains(RegExpFlags::U), flags.contains(RegExpFlags::V)) {
+            (_, true) => ParserOptions::default().with_unicode_sets_mode(),
+            (true, _) => ParserOptions::default().with_unicode_mode(),
+            _ => ParserOptions::default(),
+        }
+        .with_span_offset(pattern_start);
+
+        if let Err(diagnostic) = PatternParser::new(self.ast.allocator, pattern, options).parse() {
+            self.error(diagnostic);
+        }
 
         self.bump_any();
         self.ast.reg_exp_literal(
