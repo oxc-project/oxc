@@ -1097,7 +1097,7 @@ impl<'a> PatternParser<'a> {
                 let span_start = self.reader.span_position();
                 if self.reader.eat('&') {
                     return Err(OxcDiagnostic::error(
-                        "Unexpected `&` inside of class interseciton",
+                        "Unexpected `&` inside of class interseciton", // spellchecker:disable-line
                     )
                     .with_label(
                         self.span_factory.create(span_start, self.reader.span_position()),
@@ -1112,7 +1112,7 @@ impl<'a> PatternParser<'a> {
 
             let span_start = self.reader.span_position();
             return Err(OxcDiagnostic::error(
-                "Invalid character in character class set interseciton",
+                "Invalid character in character class set interseciton", // spellchecker:disable-line
             )
             .with_label(self.span_factory.create(span_start, self.reader.span_position())));
         }
