@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Refactor
+
+- d25dea7 parser: Use `ast_builder` in more places. (#4612) (rzvxa)
+
 ## [0.23.0] - 2024-08-01
 
 ### Features
