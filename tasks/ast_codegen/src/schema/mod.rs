@@ -137,7 +137,7 @@ fn lower_ast_enum(it @ rust::Enum { item, meta }: &rust::Enum, ctx: &crate::Earl
             .variants
             .iter()
             .filter(|it| !it.attrs.iter().any(|it| it.path().is_ident("inherit")))
-            .map(|var| lower_variant(var, ctx))
+            .map(|var| lower_variant(var, || it.ident().to_string(), ctx))
             .collect(),
         inherits: meta.inherits.iter().map(|it| lower_inherit(it, ctx)).collect(),
         has_lifetime: item.generics.lifetimes().count() > 0,
@@ -181,15 +181,21 @@ fn lower_ast_struct(
     }
 }
 
-fn lower_variant(variant: &syn::Variant, ctx: &crate::EarlyCtx) -> VariantDef {
+fn lower_variant<F>(variant: &syn::Variant, enum_dbg_name: F, ctx: &crate::EarlyCtx) -> VariantDef
+where
+    F: Fn() -> String,
+{
     VariantDef {
         name: variant.ident.to_string(),
-        discriminant: variant.discriminant.as_ref().map(|(_, disc)| match disc {
-            syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Int(lit), .. }) => {
-                lit.base10_parse().expect("invalid base10 enum discriminant")
-            }
-            _ => panic!("invalid enum discriminant"),
-        }),
+        discriminant: variant.discriminant.as_ref().map_or_else(
+            || panic!("expected explicit enum discriminants on {}", enum_dbg_name()),
+            |(_, disc)| match disc {
+                syn::Expr::Lit(syn::ExprLit { lit: syn::Lit::Int(lit), .. }) => {
+                    lit.base10_parse().expect("invalid base10 enum discriminant")
+                }
+                _ => panic!("invalid enum discriminant {:?} on {}", disc, enum_dbg_name()),
+            },
+        ),
         fields: variant.fields.iter().map(|fi| lower_field(fi, ctx)).collect(),
         markers: parse_inner_markers(&variant.attrs).unwrap(),
     }
@@ -199,7 +205,10 @@ fn lower_inherit(inherit: &rust::Inherit, ctx: &crate::EarlyCtx) -> InheritDef {
     match inherit {
         rust::Inherit::Linked { super_, variants } => InheritDef {
             super_: create_type_ref(super_, ctx),
-            variants: variants.iter().map(|var| lower_variant(var, ctx)).collect(),
+            variants: variants
+                .iter()
+                .map(|var| lower_variant(var, || super_.get_ident().inner_ident().to_string(), ctx))
+                .collect(),
         },
         rust::Inherit::Unlinked(_) => {
             panic!("`Unlinked` inherits can't be converted to a valid `InheritDef`!")

@@ -73,7 +73,7 @@ impl EnumDef {
 pub struct VariantDef {
     pub name: String,
     pub fields: Vec<FieldDef>,
-    pub discriminant: Option<u8>,
+    pub discriminant: u8,
     pub markers: InnerMarkers,
 }
 
