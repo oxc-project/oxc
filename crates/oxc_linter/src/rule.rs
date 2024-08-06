@@ -235,12 +235,48 @@ impl RuleWithSeverity {
 #[cfg(test)]
 mod test {
     use crate::rules::RULES;
+    use itertools::Itertools as _;
+    use markdown::{to_html_with_options, Options};
+    use oxc_allocator::Allocator;
+    use oxc_diagnostics::Error;
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
 
     #[test]
     fn ensure_documentation() {
         assert!(!RULES.is_empty());
+        let options = Options::gfm();
+        let source_type = SourceType::default().with_jsx(true).with_always_strict(true);
+
         for rule in RULES.iter() {
-            assert!(rule.documentation().is_some_and(|s| !s.is_empty()), "{}", rule.name());
+            let name = rule.name();
+            assert!(
+                rule.documentation().is_some_and(|s| !s.is_empty()),
+                "Rule '{name}' is missing documentation."
+            );
+            // will panic if provided invalid markdown
+            let html = to_html_with_options(rule.documentation().unwrap(), &options).unwrap();
+            assert!(!html.is_empty());
+
+            // convert HTML to JSX, then use the parser to ensure valid HTML was generated
+            let jsx =
+                format!("const Documentation = <>{}</>;", html.replace("class=", "className="));
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, &jsx, source_type).parse();
+
+            let has_errors = !ret.errors.is_empty();
+            let errors = ret
+                .errors
+                .into_iter()
+                .map(|error| Error::new(error).with_source_code(jsx.clone()))
+                .map(|e| format!("{e:?}"))
+                .join("\n\n");
+
+            assert!(
+                !ret.panicked && !has_errors,
+                "Documentation for rule '{name}' has invalid syntax: {errors}"
+            );
+            assert!(!ret.program.body.is_empty(), "Documentation for rule '{name}' is empty.");
         }
     }
 }

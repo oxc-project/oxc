@@ -1,0 +1,118 @@
+use markdown::{to_html, to_html_with_options, Options};
+use oxc_diagnostics::NamedSource;
+use scraper::{ElementRef, Html, Selector};
+use std::sync::{Arc, OnceLock};
+
+use oxc_allocator::Allocator;
+use oxc_linter::table::RuleTable;
+use oxc_parser::Parser;
+use oxc_span::SourceType;
+
+use super::{render_rule_docs_page, render_rules_table};
+
+static TABLE: OnceLock<RuleTable> = OnceLock::new();
+
+fn table() -> &'static RuleTable {
+    TABLE.get_or_init(|| RuleTable::new())
+}
+
+fn parse(filename: &str, jsx: &str) -> Result<(), String> {
+    let filename = format!("{filename}.tsx");
+    let source_type = SourceType::from_path(&filename).unwrap();
+    parse_type(&filename, jsx, source_type)
+}
+
+fn parse_type(filename: &str, source_text: &str, source_type: SourceType) -> Result<(), String> {
+    let alloc = Allocator::default();
+    let ret = Parser::new(&alloc, source_text, source_type).parse();
+
+    if ret.errors.is_empty() {
+        Ok(())
+    } else {
+        let num_errs = ret.errors.len();
+        let source = Arc::new(NamedSource::new(filename, source_text.to_string()));
+        ret.errors
+            .into_iter()
+            .map(|e| e.with_source_code(Arc::clone(&source)))
+            .for_each(|e| println!("{e:?}"));
+        Err(format!("{} errors occurred while parsing {filename}.jsx", num_errs))
+    }
+}
+
+#[test]
+fn test_rules_table() {
+    const PREFIX: &str = "/docs/guide/usage/linter/rules";
+    let rendered_table = render_rules_table(table(), PREFIX);
+    let html = to_html(&rendered_table);
+    let jsx = format!("const Table = () => <>{html}</>");
+    parse("rules-table", &jsx).unwrap();
+}
+
+#[test]
+fn test_doc_pages() {
+    let mut options = Options::gfm();
+    options.compile.allow_dangerous_html = true;
+
+    for section in &table().sections {
+        let category = section.category;
+        let code = Selector::parse("code").unwrap();
+
+        for row in &section.rows {
+            let filename = format!("{category}/{}/{}", row.plugin, row.name);
+            let docs = render_rule_docs_page(row).unwrap();
+            let docs = to_html_with_options(&docs, &options).unwrap();
+            let docs = if let Some(end_of_autogen_comment) = docs.find("-->") {
+                &docs[end_of_autogen_comment + 4..]
+            } else {
+                &docs
+            };
+
+            // ensure the docs are valid JSX
+            {
+                let jsx = format!("const Docs = () => <>{docs}</>");
+                parse(&filename, &jsx).unwrap();
+            }
+
+            // ensure code examples are valid
+            {
+                let html = Html::parse_fragment(&docs);
+                assert!(html.errors.is_empty(), "HTML parsing errors: {:#?}", html.errors);
+                for code_el in html.select(&code) {
+                    let inner = code_el.inner_html();
+                    assert!(
+                        !inner.trim().is_empty(),
+                        "Rule '{}' has an empty code snippet",
+                        row.name
+                    );
+                    let inner = inner.replace("&lt;", "<").replace("&gt;", ">");
+                    let filename = filename.clone() + "/code-snippet";
+                    let source_type = source_type_from_code_element(code_el);
+                    parse_type(&filename, &inner, source_type).unwrap();
+                }
+            }
+        }
+    }
+}
+
+fn default_source() -> SourceType {
+    SourceType::default().with_typescript(true).with_jsx(true).with_always_strict(true)
+}
+fn source_type_from_code_element(code: ElementRef) -> SourceType {
+    let Some(class) = code.attr("class") else {
+        return default_source();
+    };
+    let maybe_class = class.split('-').collect::<Vec<_>>();
+    let ["language", lang] = maybe_class.as_slice() else {
+        return default_source();
+    };
+
+    match *lang {
+        "javascript" | "js" => SourceType::default().with_always_strict(true),
+        "jsx" => SourceType::default().with_jsx(true).with_always_strict(true),
+        "typescript" | "ts" => SourceType::default().with_typescript(true).with_always_strict(true),
+        "tsx" => {
+            SourceType::default().with_typescript(true).with_jsx(true).with_always_strict(true)
+        }
+        _ => default_source(),
+    }
+}
