@@ -1045,7 +1045,9 @@ impl<'a> PatternParser<'a> {
             return self.parse_class_set_union(class_set_operand);
         }
 
-        unreachable!("Expected nonempty class set expression")
+        let span_start = self.reader.span_position();
+        Err(OxcDiagnostic::error("Expected nonempty class set expression")
+            .with_label(self.span_factory.create(span_start, self.reader.span_position())))
     }
 
     // ```
