@@ -1,5 +1,6 @@
 const AST_CRATE: &str = "crates/oxc_ast";
 const AST_SYNTAX: &str = "crates/oxc_syntax";
+const AST_SPAN: &str = "crates/oxc_span";
 #[allow(dead_code)]
 const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
 
@@ -252,8 +253,20 @@ fn files() -> impl std::iter::Iterator<Item = String> {
         format!("{AST_SYNTAX}/src/{path}.rs")
     }
 
-    vec![ast("literal"), ast("js"), ast("ts"), ast("jsx"), syntax("number"), syntax("operator")]
-        .into_iter()
+    fn span(path: &str) -> String {
+        format!("{AST_SPAN}/src/{path}.rs")
+    }
+
+    vec![
+        ast("literal"),
+        ast("js"),
+        ast("ts"),
+        ast("jsx"),
+        syntax("number"),
+        syntax("operator"),
+        span("source_type/types"),
+    ]
+    .into_iter()
 }
 
 fn write_generated_streams(

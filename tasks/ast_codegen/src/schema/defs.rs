@@ -93,9 +93,34 @@ pub struct InheritDef {
 pub struct FieldDef {
     /// `None` if unnamed
     pub name: Option<String>,
+    pub vis: Visibility,
     pub typ: TypeRef,
     pub markers: InnerMarkers,
     pub docs: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub enum Visibility {
+    None,
+    Pub,
+    /// rest of the restricted visibilities
+    Rest,
+}
+
+impl Visibility {
+    pub fn is_pub(&self) -> bool {
+        matches!(self, Self::Pub)
+    }
+}
+
+impl From<&syn::Visibility> for Visibility {
+    fn from(vis: &syn::Visibility) -> Self {
+        match vis {
+            syn::Visibility::Public(_) => Self::Pub,
+            syn::Visibility::Inherited => Self::None,
+            syn::Visibility::Restricted(_) => Self::Rest,
+        }
+    }
 }
 
 impl FieldDef {

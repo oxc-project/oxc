@@ -42,6 +42,7 @@ impl Generator for AssertLayouts {
                 endl!();
 
                 use crate::ast::*;
+                use oxc_span::*;
                 use oxc_syntax::{number::*, operator::*};
 
 
@@ -100,12 +101,14 @@ fn with_offsets_assertion(
 ) -> TokenStream {
     let Some(offsets) = offsets else { return tk };
 
-    let assertions = fields.iter().zip(offsets).map(|(field, offset)| {
-        let field = field.name.as_ref().map(|it| format_ident!("{it}"));
-        quote! {
-            assert!(offset_of!(#ty, #field) == #offset);
-        }
-    });
+    let assertions = fields.iter().zip(offsets).filter(|(field, _)| field.vis.is_pub()).map(
+        |(field, offset)| {
+            let field = field.name.as_ref().map(|it| format_ident!("{it}"));
+            quote! {
+                assert!(offset_of!(#ty, #field) == #offset);
+            }
+        },
+    );
     tk.extend(assertions);
     tk
 }

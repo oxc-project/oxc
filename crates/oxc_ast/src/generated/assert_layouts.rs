@@ -4,6 +4,7 @@
 use std::mem::{align_of, offset_of, size_of};
 
 use crate::ast::*;
+use oxc_span::*;
 use oxc_syntax::{number::*, operator::*};
 
 #[cfg(target_pointer_width = "64")]
@@ -1139,6 +1140,14 @@ const _: () = {
     assert!(align_of::<UnaryOperator>() == 1usize);
     assert!(size_of::<UpdateOperator>() == 1usize);
     assert!(align_of::<UpdateOperator>() == 1usize);
+    assert!(size_of::<SourceType>() == 4usize);
+    assert!(align_of::<SourceType>() == 1usize);
+    assert!(size_of::<Language>() == 1usize);
+    assert!(align_of::<Language>() == 1usize);
+    assert!(size_of::<ModuleKind>() == 1usize);
+    assert!(align_of::<ModuleKind>() == 1usize);
+    assert!(size_of::<LanguageVariant>() == 1usize);
+    assert!(align_of::<LanguageVariant>() == 1usize);
 };
 
 #[cfg(target_pointer_width = "32")]
@@ -2274,6 +2283,14 @@ const _: () = {
     assert!(align_of::<UnaryOperator>() == 1usize);
     assert!(size_of::<UpdateOperator>() == 1usize);
     assert!(align_of::<UpdateOperator>() == 1usize);
+    assert!(size_of::<SourceType>() == 4usize);
+    assert!(align_of::<SourceType>() == 1usize);
+    assert!(size_of::<Language>() == 1usize);
+    assert!(align_of::<Language>() == 1usize);
+    assert!(size_of::<ModuleKind>() == 1usize);
+    assert!(align_of::<ModuleKind>() == 1usize);
+    assert!(size_of::<LanguageVariant>() == 1usize);
+    assert!(align_of::<LanguageVariant>() == 1usize);
 };
 
 #[cfg(not(any(target_pointer_width = "64", target_pointer_width = "32")))]

@@ -360,7 +360,6 @@ lazy_static! {
         Cell<Option<ScopeId>>: { _ => Layout::known(4, 4, 0), },
         Cell<Option<SymbolId>>: { _ => Layout::known(4, 4, 0), },
         Cell<Option<ReferenceId>>: { _ => Layout::known(4, 4, 0), },
-        SourceType: { _ => Layout::known(4, 1, 1), },
         // Unsupported: this is a `bitflags` generated type, we don't expand macros
         ReferenceFlag: { _ => Layout::known(1, 1, 0), },
         // Unsupported: this is a `bitflags` generated type, we don't expand macros

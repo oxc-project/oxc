@@ -219,6 +219,7 @@ fn lower_inherit(inherit: &rust::Inherit, ctx: &crate::EarlyCtx) -> InheritDef {
 fn lower_field(field: &syn::Field, ctx: &crate::EarlyCtx) -> FieldDef {
     FieldDef {
         name: field.ident.as_ref().map(ToString::to_string),
+        vis: Visibility::from(&field.vis),
         typ: create_type_ref(&field.ty, ctx),
         markers: parse_inner_markers(&field.attrs).unwrap(),
         docs: get_docs(&field.attrs),
