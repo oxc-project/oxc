@@ -10,7 +10,7 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
     let ret = Parser::new(&allocator, source_text, source_type).parse();
     let program = allocator.alloc(ret.program);
     if remove_dead_code {
-        Compressor::new(&allocator, CompressOptions::dead_code_elimintation()).build(program);
+        Compressor::new(&allocator, CompressOptions::dead_code_elimination()).build(program);
     }
     CodeGenerator::new()
         .with_options(CodegenOptions { single_quote: true })
