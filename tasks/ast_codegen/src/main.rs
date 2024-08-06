@@ -1,9 +1,3 @@
-const AST_CRATE: &str = "crates/oxc_ast";
-const AST_SYNTAX: &str = "crates/oxc_syntax";
-const AST_SPAN: &str = "crates/oxc_span";
-#[allow(dead_code)]
-const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
-
 mod fmt;
 mod generators;
 mod layout;
@@ -31,6 +25,21 @@ use schema::{lower_ast_types, Schema, TypeDef};
 use util::{write_all_to, NormalizeError};
 
 use crate::generators::ImplGetSpanGenerator;
+
+static SOURCE_PATHS: &[&str] = &[
+    "oxc_ast/src/ast/literal.rs",
+    "oxc_ast/src/ast/js.rs",
+    "oxc_ast/src/ast/ts.rs",
+    "oxc_ast/src/ast/jsx.rs",
+    "oxc_syntax/src/number.rs",
+    "oxc_syntax/src/operator.rs",
+    "oxc_span/src/span/types.rs",
+    "oxc_span/src/source_type/types.rs",
+];
+
+const AST_CRATE: &str = "crates/oxc_ast";
+#[allow(dead_code)]
+const AST_MACROS_CRATE: &str = "crates/oxc_ast_macros";
 
 type Result<R> = std::result::Result<R, String>;
 type TypeId = usize;
@@ -245,29 +254,7 @@ impl AstCodegen {
 }
 
 fn files() -> impl std::iter::Iterator<Item = String> {
-    fn ast(path: &str) -> String {
-        format!("{AST_CRATE}/src/ast/{path}.rs")
-    }
-
-    fn syntax(path: &str) -> String {
-        format!("{AST_SYNTAX}/src/{path}.rs")
-    }
-
-    fn span(path: &str) -> String {
-        format!("{AST_SPAN}/src/{path}.rs")
-    }
-
-    vec![
-        ast("literal"),
-        ast("js"),
-        ast("ts"),
-        ast("jsx"),
-        syntax("number"),
-        syntax("operator"),
-        span("span/types"),
-        span("source_type/types"),
-    ]
-    .into_iter()
+    SOURCE_PATHS.iter().map(|path| format!("crates/{path}"))
 }
 
 fn write_generated_streams(
