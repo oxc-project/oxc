@@ -8,9 +8,7 @@ use std::{
 
 use miette::{LabeledSpan, SourceOffset, SourceSpan};
 #[cfg(feature = "serialize")]
-use serde::Serialize;
-#[cfg(feature = "serialize")]
-use tsify::Tsify;
+use ::{serde::Serialize, tsify::Tsify};
 
 /// An Empty span useful for creating AST nodes.
 pub const SPAN: Span = Span::new(0, 0);

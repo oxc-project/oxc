@@ -6,7 +6,7 @@ use ::{serde::Serialize, tsify::Tsify};
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 pub struct SourceType {
     /// JavaScript or TypeScript, default JavaScript
     pub(super) language: Language,
@@ -26,11 +26,11 @@ pub struct SourceType {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "lowercase"))]
+#[serde(rename_all = "lowercase")]
 pub enum Language {
     JavaScript = 0,
     TypeScript = 1,
-    #[cfg_attr(feature = "serialize", serde(rename = "typescriptDefinition"))]
+    #[serde(rename = "typescriptDefinition")]
     TypeScriptDefinition = 2,
 }
 
@@ -38,7 +38,7 @@ pub enum Language {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 pub enum ModuleKind {
     Script = 0,
     Module = 1,
@@ -48,7 +48,7 @@ pub enum ModuleKind {
 #[ast]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
-#[cfg_attr(feature = "serialize", serde(rename_all = "camelCase"))]
+#[serde(rename_all = "camelCase")]
 pub enum LanguageVariant {
     Standard = 0,
     Jsx = 1,
