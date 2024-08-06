@@ -286,13 +286,22 @@ impl<'a> TraverseCtx<'a> {
         self.scoping.find_scope_by_flags(finder)
     }
 
+    /// Create new scope as child of provided scope.
+    ///
+    /// `flags` provided are amended to inherit from parent scope's flags.
+    ///
+    /// This is a shortcut for `ctx.scoping.create_child_scope`.
+    pub fn create_child_scope(&mut self, parent_id: ScopeId, flags: ScopeFlags) -> ScopeId {
+        self.scoping.create_child_scope(parent_id, flags)
+    }
+
     /// Create new scope as child of current scope.
     ///
     /// `flags` provided are amended to inherit from parent scope's flags.
     ///
-    /// This is a shortcut for `ctx.scoping.create_scope_child_of_current`.
-    pub fn create_scope_child_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
-        self.scoping.create_scope_child_of_current(flags)
+    /// This is a shortcut for `ctx.scoping.create_child_scope_of_current`.
+    pub fn create_child_scope_of_current(&mut self, flags: ScopeFlags) -> ScopeId {
+        self.scoping.create_child_scope_of_current(flags)
     }
 
     /// Insert a scope into scope tree below a statement.

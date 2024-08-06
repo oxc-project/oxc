@@ -28,6 +28,7 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
     node: *mut Program<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_program(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_PROGRAM_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -36,7 +37,6 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_program(&mut *node, ctx);
     ctx.push_stack(Ancestor::ProgramHashbang(ancestor::ProgramWithoutHashbang(node)));
     if let Some(field) =
         &mut *((node as *mut u8).add(ancestor::OFFSET_PROGRAM_HASHBANG) as *mut Option<Hashbang>)
@@ -57,10 +57,10 @@ pub(crate) unsafe fn walk_program<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_program(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_program(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_expression<'a, Tr: Traverse<'a>>(
@@ -1403,6 +1403,7 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
     node: *mut BlockStatement<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_block_statement(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_BLOCK_STATEMENT_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -1411,7 +1412,6 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_block_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::BlockStatementBody(ancestor::BlockStatementWithoutBody(node)));
     walk_statements(
         traverser,
@@ -1419,10 +1419,10 @@ pub(crate) unsafe fn walk_block_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_block_statement(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_block_statement(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_declaration<'a, Tr: Traverse<'a>>(
@@ -1625,6 +1625,7 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
     node: *mut ForStatement<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_for_statement(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -1633,7 +1634,6 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_for_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::ForStatementInit(ancestor::ForStatementWithoutInit(node)));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FOR_STATEMENT_INIT)
         as *mut Option<ForStatementInit>)
@@ -1659,10 +1659,10 @@ pub(crate) unsafe fn walk_for_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_for_statement(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_for_statement(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_for_statement_init<'a, Tr: Traverse<'a>>(
@@ -1731,6 +1731,7 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
     node: *mut ForInStatement<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_for_in_statement(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_FOR_IN_STATEMENT_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -1739,7 +1740,6 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_for_in_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::ForInStatementLeft(ancestor::ForInStatementWithoutLeft(node)));
     walk_for_statement_left(
         traverser,
@@ -1759,10 +1759,10 @@ pub(crate) unsafe fn walk_for_in_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_for_in_statement(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_for_in_statement(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_for_statement_left<'a, Tr: Traverse<'a>>(
@@ -1800,6 +1800,7 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
     node: *mut ForOfStatement<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_for_of_statement(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_FOR_OF_STATEMENT_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -1808,7 +1809,6 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_for_of_statement(&mut *node, ctx);
     ctx.push_stack(Ancestor::ForOfStatementLeft(ancestor::ForOfStatementWithoutLeft(node)));
     walk_for_statement_left(
         traverser,
@@ -1828,10 +1828,10 @@ pub(crate) unsafe fn walk_for_of_statement<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_for_of_statement(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_for_of_statement(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_continue_statement<'a, Tr: Traverse<'a>>(
@@ -2036,6 +2036,7 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
     node: *mut CatchClause<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_catch_clause(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -2044,7 +2045,6 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_catch_clause(&mut *node, ctx);
     ctx.push_stack(Ancestor::CatchClauseParam(ancestor::CatchClauseWithoutParam(node)));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_CATCH_CLAUSE_PARAM)
         as *mut Option<CatchParameter>)
@@ -2059,10 +2059,10 @@ pub(crate) unsafe fn walk_catch_clause<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_catch_clause(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_catch_clause(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_catch_parameter<'a, Tr: Traverse<'a>>(
@@ -2253,6 +2253,7 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
     node: *mut Function<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_function(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_FUNCTION_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -2261,7 +2262,6 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_function(&mut *node, ctx);
     ctx.push_stack(Ancestor::FunctionId(ancestor::FunctionWithoutId(node)));
     if let Some(field) = &mut *((node as *mut u8).add(ancestor::OFFSET_FUNCTION_ID)
         as *mut Option<BindingIdentifier>)
@@ -2300,10 +2300,10 @@ pub(crate) unsafe fn walk_function<'a, Tr: Traverse<'a>>(
         walk_function_body(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_function(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_function(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_formal_parameters<'a, Tr: Traverse<'a>>(
@@ -2382,6 +2382,7 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
     node: *mut ArrowFunctionExpression<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_arrow_function_expression(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8)
         .add(ancestor::OFFSET_ARROW_FUNCTION_EXPRESSION_SCOPE_ID)
@@ -2391,7 +2392,6 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_arrow_function_expression(&mut *node, ctx);
     ctx.push_stack(Ancestor::ArrowFunctionExpressionTypeParameters(
         ancestor::ArrowFunctionExpressionWithoutTypeParameters(node),
     ));
@@ -2423,10 +2423,10 @@ pub(crate) unsafe fn walk_arrow_function_expression<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_arrow_function_expression(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_arrow_function_expression(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_yield_expression<'a, Tr: Traverse<'a>>(
@@ -2640,6 +2640,7 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
     node: *mut StaticBlock<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_static_block(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_STATIC_BLOCK_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -2648,7 +2649,6 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_static_block(&mut *node, ctx);
     ctx.push_stack(Ancestor::StaticBlockBody(ancestor::StaticBlockWithoutBody(node)));
     walk_statements(
         traverser,
@@ -2656,10 +2656,10 @@ pub(crate) unsafe fn walk_static_block<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_static_block(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_static_block(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_module_declaration<'a, Tr: Traverse<'a>>(
@@ -3928,6 +3928,7 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
     node: *mut TSConditionalType<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_ts_conditional_type(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_TS_CONDITIONAL_TYPE_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -3936,7 +3937,6 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_ts_conditional_type(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSConditionalTypeCheckType(
         ancestor::TSConditionalTypeWithoutCheckType(node),
     ));
@@ -3964,10 +3964,10 @@ pub(crate) unsafe fn walk_ts_conditional_type<'a, Tr: Traverse<'a>>(
         ctx,
     );
     ctx.pop_stack();
-    traverser.exit_ts_conditional_type(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_ts_conditional_type(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_union_type<'a, Tr: Traverse<'a>>(
@@ -4734,6 +4734,7 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
     node: *mut TSMethodSignature<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_ts_method_signature(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_TS_METHOD_SIGNATURE_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -4742,7 +4743,6 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_ts_method_signature(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSMethodSignatureKey(ancestor::TSMethodSignatureWithoutKey(node)));
     walk_property_key(
         traverser,
@@ -4778,10 +4778,10 @@ pub(crate) unsafe fn walk_ts_method_signature<'a, Tr: Traverse<'a>>(
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_ts_method_signature(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_ts_method_signature(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a>>(
@@ -4789,6 +4789,7 @@ pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a
     node: *mut TSConstructSignatureDeclaration<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_ts_construct_signature_declaration(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8)
         .add(ancestor::OFFSET_TS_CONSTRUCT_SIGNATURE_DECLARATION_SCOPE_ID)
@@ -4798,7 +4799,6 @@ pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_ts_construct_signature_declaration(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSConstructSignatureDeclarationParams(
         ancestor::TSConstructSignatureDeclarationWithoutParams(node),
     ));
@@ -4823,10 +4823,10 @@ pub(crate) unsafe fn walk_ts_construct_signature_declaration<'a, Tr: Traverse<'a
         walk_ts_type_parameter_declaration(traverser, (&mut **field) as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_ts_construct_signature_declaration(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_ts_construct_signature_declaration(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_index_signature_name<'a, Tr: Traverse<'a>>(
@@ -5262,6 +5262,7 @@ pub(crate) unsafe fn walk_ts_mapped_type<'a, Tr: Traverse<'a>>(
     node: *mut TSMappedType<'a>,
     ctx: &mut TraverseCtx<'a>,
 ) {
+    traverser.enter_ts_mapped_type(&mut *node, ctx);
     let mut previous_scope_id = None;
     if let Some(scope_id) = (*((node as *mut u8).add(ancestor::OFFSET_TS_MAPPED_TYPE_SCOPE_ID)
         as *mut Cell<Option<ScopeId>>))
@@ -5270,7 +5271,6 @@ pub(crate) unsafe fn walk_ts_mapped_type<'a, Tr: Traverse<'a>>(
         previous_scope_id = Some(ctx.current_scope_id());
         ctx.set_current_scope_id(scope_id);
     }
-    traverser.enter_ts_mapped_type(&mut *node, ctx);
     ctx.push_stack(Ancestor::TSMappedTypeTypeParameter(
         ancestor::TSMappedTypeWithoutTypeParameter(node),
     ));
@@ -5294,10 +5294,10 @@ pub(crate) unsafe fn walk_ts_mapped_type<'a, Tr: Traverse<'a>>(
         walk_ts_type(traverser, field as *mut _, ctx);
     }
     ctx.pop_stack();
-    traverser.exit_ts_mapped_type(&mut *node, ctx);
     if let Some(previous_scope_id) = previous_scope_id {
         ctx.set_current_scope_id(previous_scope_id);
     }
+    traverser.exit_ts_mapped_type(&mut *node, ctx);
 }
 
 pub(crate) unsafe fn walk_ts_template_literal_type<'a, Tr: Traverse<'a>>(
