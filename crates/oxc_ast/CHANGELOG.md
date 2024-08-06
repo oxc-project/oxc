@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+- b3b7028 ast: Implement missing Clone, Hash, and Display traits for literals (#4552) (DonIsaac)
+- 54047e0 ast: `GetSpanMut` trait (#4609) (overlookmotel)
+- eae401c ast, ast_macros: Apply stable repr to all `#[ast]` enums (#4373) (rzvxa)
+- 0c52c0d ast_codegen: Add alignment and size data to the schema. (#4615) (rzvxa)
+
+### Bug Fixes
+
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Documentation
+
+- c69ada4 ast: Improve AST node documentation (#4051) (Rintaro Itokawa)
+
+### Refactor
+
+- ba70001 ast: Put `assert_layouts.rs` behind `debug_assertions` (#4621) (rzvxa)
+
+### Testing
+
+- 49d5196 ast: Fix `assert_layouts.rs` offset tests on 32bit platforms. (#4620) (rzvxa)
+
 ## [0.23.0] - 2024-08-01
 
 ### Features

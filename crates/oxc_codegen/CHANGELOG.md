@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Bug Fixes
+
+- 4a56954 codegen: Print raw if value is number is Infinity (#4676) (Boshen)
+- a40a217 parser: Parse `assert` keyword in `TSImportAttributes` (#4610) (Boshen)
+
+### Performance
+
+- 8dd76e4 codegen: Reduce size of `LineOffsetTable` (#4643) (overlookmotel)
+- b8e6753 codegen: `u32` indexes in `LineOffsetTable` for source maps (#4641) (overlookmotel)
+
+### Refactor
+
+- e78cba6 minifier: Ast passes infrastructure (#4625) (Boshen)
+
 ## [0.23.0] - 2024-08-01
 
 - 27fd062 sourcemap: [**BREAKING**] Avoid passing `Result`s (#4541) (overlookmotel)
