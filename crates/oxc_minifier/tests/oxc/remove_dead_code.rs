@@ -18,9 +18,15 @@ fn print(source_text: &str, remove_dead_code: bool) -> String {
         .source_text
 }
 
-pub(crate) fn test(source_text: &str, expected: &str) {
+fn test(source_text: &str, expected: &str) {
     let minified = print(source_text, true);
     let expected = print(expected, false);
+    assert_eq!(minified, expected, "for source {source_text}");
+}
+
+fn test_same(source_text: &str) {
+    let minified = print(source_text, true);
+    let expected = print(source_text, false);
     assert_eq!(minified, expected, "for source {source_text}");
 }
 
@@ -117,6 +123,24 @@ fn dce_logical_expression() {
 
     test("const foo = false && bar()", "const foo = false");
     test("const foo = true && bar()", "const foo = bar()");
+}
+
+#[test]
+fn dce_var_hoisting() {
+    test_same(
+        "function f() {
+          return () => {
+            var x;
+          }
+        }",
+    );
+    test_same(
+        "function f() {
+          return function g() {
+            var x;
+          }
+        }",
+    );
 }
 
 // https://github.com/terser/terser/blob/master/test/compress/dead-code.js

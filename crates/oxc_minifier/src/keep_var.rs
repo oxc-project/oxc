@@ -21,6 +21,8 @@ impl<'a> Visit<'a> for KeepVar<'a> {
         /* skip functions */
     }
 
+    fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
+
     fn visit_class(&mut self, _it: &Class<'a>) {
         /* skip classes */
     }
