@@ -4,6 +4,23 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project does not adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) until v1.0.0.
 
+## [0.23.1] - 2024-08-06
+
+### Features
+
+- fd2d9da ast: Improve `AstKind::debug_name` (#4553) (DonIsaac)
+
+### Bug Fixes
+
+- 03c643a semantic: Incorrect `scope_id` for catch parameter symbols (#4659) (Dunqing)
+- 6c612d1 semantic/jsdoc: Handle whitespace absence (#4642) (leaysgur)
+- 0d2c41a semantic/jsdoc: Panic on parsing `type_name_comment`. (#4632) (rzvxa)
+
+### Refactor
+
+- 09d9822 semantic: Simplify setting scope flags (#4674) (overlookmotel)
+- 6e453db semantic: Simplify inherit scope flags from parent scope (#4664) (Dunqing)
+
 ## [0.23.0] - 2024-08-01
 
 ### Features
