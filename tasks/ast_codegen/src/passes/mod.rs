@@ -1,4 +1,3 @@
-mod build_schema;
 mod calc_layout;
 mod linker;
 
@@ -6,9 +5,8 @@ use std::collections::VecDeque;
 
 use itertools::Itertools;
 
-use crate::{schema::RType, CodegenCtx, Result};
+use crate::{rust_ast::AstType, EarlyCtx, Result};
 
-pub use build_schema::BuildSchema;
 pub use calc_layout::CalcLayout;
 pub use linker::Linker;
 
@@ -16,16 +14,16 @@ pub trait Pass {
     fn name(&self) -> &'static str;
 
     /// Returns false if can't resolve
-    fn once(&mut self, _ctx: &CodegenCtx) -> Result<bool> {
+    fn once(&mut self, _ctx: &EarlyCtx) -> Result<bool> {
         Ok(true)
     }
 
     /// Returns false if can't resolve
-    fn each(&mut self, _ty: &mut RType, _ctx: &CodegenCtx) -> Result<bool> {
+    fn each(&mut self, _ty: &mut AstType, _ctx: &EarlyCtx) -> Result<bool> {
         Ok(true)
     }
 
-    fn call(&mut self, ctx: &CodegenCtx) -> Result<bool> {
+    fn call(&mut self, ctx: &EarlyCtx) -> Result<bool> {
         // call once
         if !self.once(ctx)? {
             return Ok(false);
@@ -37,7 +35,7 @@ pub trait Pass {
             ctx.ident_table.iter().sorted_by_key(|it| it.1).map(|it| it.0).collect::<VecDeque<_>>();
 
         while let Some(next) = unresolved.pop_back() {
-            let next_id = *ctx.type_id(next).unwrap();
+            let next_id = ctx.type_id(next).unwrap();
 
             let val = &mut ctx.ty_table[next_id].borrow_mut();
 
@@ -53,13 +51,14 @@ macro_rules! define_pass {
     ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
         $vis struct $ident $($lifetime)? $($rest)*
         impl $($lifetime)? $crate::Runner for $ident $($lifetime)? {
+            type Context = $crate::EarlyCtx;
+            type Output = ();
             fn name(&self) -> &'static str {
                 $crate::Pass::name(self)
             }
 
-            fn run(&mut self, ctx: &$crate::CodegenCtx) -> $crate::Result<$crate::GeneratorOutput> {
-                self.call(ctx)?;
-                Ok($crate::GeneratorOutput::None)
+            fn run(&mut self, ctx: &Self::Context) -> $crate::Result<Self::Output> {
+                self.call(ctx).map(|_| ())
             }
         }
     };

@@ -46,22 +46,25 @@ pub use ast_kind::AstKindGenerator;
 pub use impl_get_span::ImplGetSpanGenerator;
 pub use visit::{VisitGenerator, VisitMutGenerator};
 
-use crate::{CodegenCtx, GeneratorOutput};
+use crate::{GeneratorOutput, LateCtx};
 
 pub trait Generator {
     fn name(&self) -> &'static str;
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput;
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput;
 }
 
 macro_rules! define_generator {
     ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
         $vis struct $ident $($lifetime)? $($rest)*
         impl $($lifetime)? $crate::Runner for $ident $($lifetime)? {
+            type Context = $crate::LateCtx;
+            type Output = $crate::GeneratorOutput;
+
             fn name(&self) -> &'static str {
                 $crate::Generator::name(self)
             }
 
-            fn run(&mut self, ctx: &$crate::CodegenCtx) -> $crate::Result<$crate::GeneratorOutput> {
+            fn run(&mut self, ctx: &$crate::LateCtx) -> $crate::Result<Self::Output> {
                 Ok(self.generate(ctx))
             }
         }

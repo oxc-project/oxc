@@ -1,10 +1,11 @@
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use syn::{PathArguments, Type};
+use syn::Type;
 
 use crate::{
-    defs::{FieldDef, TypeDef},
-    output, CodegenCtx, Generator, GeneratorOutput,
+    output,
+    schema::{FieldDef, ToType, TypeDef},
+    Generator, GeneratorOutput, LateCtx,
 };
 
 use super::{define_generator, generated_header};
@@ -18,23 +19,13 @@ impl Generator for AssertLayouts {
         stringify!(AssertLayouts)
     }
 
-    fn generate(&mut self, ctx: &CodegenCtx) -> GeneratorOutput {
+    fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let (assertions_64, assertions_32) = ctx
             .schema
-            .borrow()
             .definitions
             .iter()
             .map(|def| {
-                let typ =
-                    ctx.find(def.name()).and_then(|ty| ty.borrow().as_type()).map(|mut ty| {
-                        if let Type::Path(ty) = &mut ty {
-                            if let Some(seg) = ty.path.segments.first_mut() {
-                                seg.arguments = PathArguments::None;
-                            }
-                        }
-                        ty
-                    });
-                let typ = typ.unwrap();
+                let typ = def.to_type_elide();
                 assert_type(&typ, def)
             })
             .collect::<(Vec<TokenStream>, Vec<TokenStream>)>();
