@@ -1,14 +1,14 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{CompactStr, Span};
 use serde_json::Value;
 
 use self::listener_map::ListenerMap;
 use crate::{
     context::LintContext,
     rule::Rule,
-    utils::{ModuleFunctions, NodeListenerOptions, WhitelistModule},
+    utils::{ModuleFunctions, NodeListenerOptions, Set, WhitelistModule},
 };
 
 mod listener_map;
@@ -103,7 +103,7 @@ impl std::ops::Deref for NoSideEffectsInInitialization {
 
 #[derive(Debug, Default, Clone)]
 pub struct NoSideEffectsInInitiallizationOptions {
-    functions: Vec<String>,
+    functions: Set<CompactStr>,
     modules: Vec<WhitelistModule>,
 }
 
@@ -183,7 +183,7 @@ declare_oxc_lint!(
 
 impl Rule for NoSideEffectsInInitialization {
     fn from_configuration(value: serde_json::Value) -> Self {
-        let mut functions = vec![];
+        let mut functions: Vec<CompactStr> = vec![];
         let mut modules = vec![];
 
         if let Value::Array(arr) = value {
@@ -194,7 +194,7 @@ impl Rule for NoSideEffectsInInitialization {
 
                 // { "function": "Object.freeze" }
                 if let Some(name) = obj.get("function").and_then(Value::as_str) {
-                    functions.push(name.to_string());
+                    functions.push(name.into());
                     continue;
                 }
 
@@ -206,8 +206,8 @@ impl Rule for NoSideEffectsInInitialization {
                             let val = arr
                                 .iter()
                                 .filter_map(Value::as_str)
-                                .map(String::from)
-                                .collect::<Vec<_>>();
+                                .map(CompactStr::from)
+                                .collect::<Set<_>>();
                             Some(ModuleFunctions::Specific(val))
                         }
                         Some(Value::String(str)) => {
@@ -226,7 +226,10 @@ impl Rule for NoSideEffectsInInitialization {
             }
         }
 
-        Self(Box::new(NoSideEffectsInInitiallizationOptions { functions, modules }))
+        Self(Box::new(NoSideEffectsInInitiallizationOptions {
+            functions: functions.into(),
+            modules,
+        }))
     }
 
     fn run_once(&self, ctx: &LintContext) {

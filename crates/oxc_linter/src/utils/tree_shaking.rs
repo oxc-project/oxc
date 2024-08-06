@@ -10,7 +10,7 @@ use oxc_span::{CompactStr, GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, LogicalOperator, UnaryOperator};
 use rustc_hash::FxHashSet;
 
-use crate::LintContext;
+use crate::{utils::Set, LintContext};
 
 mod pure_functions;
 
@@ -21,7 +21,7 @@ pub struct NodeListenerOptions<'a, 'b> {
     pub has_valid_this: Cell<bool>,
     pub called_with_new: Cell<bool>,
     pub whitelist_modules: Option<&'b Vec<WhitelistModule>>,
-    pub whitelist_functions: Option<&'b Vec<String>>,
+    pub whitelist_functions: Option<&'b Set<CompactStr>>,
 }
 
 impl<'a, 'b> NodeListenerOptions<'a, 'b> {
@@ -41,7 +41,7 @@ impl<'a, 'b> NodeListenerOptions<'a, 'b> {
         Self { whitelist_modules: Some(whitelist_modules), ..self }
     }
 
-    pub fn with_whitelist_functions(self, whitelist_functions: &'b Vec<String>) -> Self {
+    pub fn with_whitelist_functions(self, whitelist_functions: &'b Set<CompactStr>) -> Self {
         Self { whitelist_functions: Some(whitelist_functions), ..self }
     }
 
@@ -64,7 +64,7 @@ pub struct WhitelistModule {
 pub enum ModuleFunctions {
     #[default]
     All,
-    Specific(Vec<String>),
+    Specific(Set<CompactStr>),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq)]
@@ -191,7 +191,7 @@ pub fn is_pure_function(function_name: &FunctionName, options: &NodeListenerOpti
     }
     let name = flatten_member_expr_if_possible(function_name);
 
-    if options.whitelist_functions.is_some_and(|whitelist| whitelist.contains(&name.to_string())) {
+    if options.whitelist_functions.is_some_and(|whitelist| whitelist.contains(&name)) {
         return true;
     }
 
@@ -338,7 +338,7 @@ pub fn is_function_side_effect_free(
             match &module.functions {
                 ModuleFunctions::All => return true,
                 ModuleFunctions::Specific(functions) => {
-                    return functions.contains(&name.to_string());
+                    return functions.contains_str(name);
                 }
             }
         }
