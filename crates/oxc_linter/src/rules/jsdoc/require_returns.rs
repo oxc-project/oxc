@@ -226,12 +226,12 @@ impl Rule for RequireReturns {
             let jsdoc_tags = jsdocs.iter().flat_map(JSDoc::tags).collect::<Vec<_>>();
             let resolved_returns_tag_name = settings.resolve_tag_name("returns");
 
-            if is_missing_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
+            if is_missing_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(missing_returns_diagnostic(*func_span));
                 continue;
             }
 
-            if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, &resolved_returns_tag_name) {
+            if let Some(span) = is_duplicated_returns_tag(&jsdoc_tags, resolved_returns_tag_name) {
                 ctx.diagnostic(duplicate_returns_diagnostic(span));
             }
         }

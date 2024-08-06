@@ -195,7 +195,7 @@ impl Rule for BanTsComment {
                             if !re.is_match(description) {
                                 ctx.diagnostic(comment_description_not_match_pattern(
                                     directive,
-                                    &re.to_string(),
+                                    re.as_str(),
                                     comm.span,
                                 ));
                             }

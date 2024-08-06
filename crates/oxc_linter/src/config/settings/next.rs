@@ -1,3 +1,5 @@
+use std::borrow::Cow;
+
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -9,10 +11,10 @@ pub struct NextPluginSettings {
 }
 
 impl NextPluginSettings {
-    pub fn get_root_dirs(&self) -> Vec<String> {
+    pub fn get_root_dirs(&self) -> Cow<'_, [String]> {
         match &self.root_dir {
-            OneOrMany::One(val) => vec![val.clone()],
-            OneOrMany::Many(vec) => vec.clone(),
+            OneOrMany::One(val) => Cow::Owned(vec![val.clone()]),
+            OneOrMany::Many(vec) => Cow::Borrowed(vec),
         }
     }
 }
