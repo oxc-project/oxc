@@ -74,6 +74,7 @@ impl<'a> React<'a> {
             self.refresh.transform_program(program, ctx);
         }
     }
+
     pub fn transform_program_on_exit(
         &mut self,
         program: &mut Program<'a>,
@@ -84,6 +85,16 @@ impl<'a> React<'a> {
         }
         if self.jsx_plugin {
             self.jsx.transform_program_on_exit(program, ctx);
+        }
+    }
+
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if self.refresh_plugin {
+            self.refresh.transform_statements_on_exit(stmts, ctx);
         }
     }
 

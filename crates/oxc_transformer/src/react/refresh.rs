@@ -2,14 +2,17 @@ use std::cell::Cell;
 
 use oxc_ast::{
     ast::{
-        BindingIdentifier, Declaration, ExportDefaultDeclarationKind, Expression, Function,
-        IdentifierReference, Program, Statement, TSTypeAnnotation, TSTypeParameterInstantiation,
-        VariableDeclaration, VariableDeclarationKind,
+        BindingIdentifier, CallExpression, Declaration, ExportDefaultDeclarationKind, Expression,
+        Function, FunctionBody, IdentifierReference, Program, Statement, TSTypeAnnotation,
+        TSTypeParameterInstantiation, VariableDeclaration, VariableDeclarationKind,
+        VariableDeclarator,
     },
     match_expression,
+    visit::walk::walk_variable_declarator,
+    Visit,
 };
-use oxc_semantic::{ReferenceFlag, SymbolFlags, SymbolId};
-use oxc_span::{Atom, GetSpan, SPAN};
+use oxc_semantic::{ReferenceFlag, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
+use oxc_span::{Atom, GetSpan, Span, SPAN};
 use oxc_syntax::operator::AssignmentOperator;
 use oxc_traverse::TraverseCtx;
 
@@ -313,6 +316,64 @@ impl<'a> ReactRefresh<'a> {
         }
     }
 
+    pub fn transform_statements_on_exit(
+        &mut self,
+        stmts: &mut oxc_allocator::Vec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        // TODO: check is there any function declaration
+        let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len());
+        for mut stmt in stmts.drain(..) {
+            match stmt {
+                Statement::FunctionDeclaration(ref mut func) => {
+                    if let Some((init_sig_statement, bind_sig_statement)) =
+                        self.transform_function_on_exit(func, ctx)
+                    {
+                        new_stmts.push(init_sig_statement);
+                        new_stmts.push(stmt);
+                        new_stmts.push(bind_sig_statement);
+                        continue;
+                    }
+                }
+                Statement::ExportNamedDeclaration(ref mut export_decl) => {
+                    if let Some(Declaration::FunctionDeclaration(func)) =
+                        &mut export_decl.declaration
+                    {
+                        if let Some((init_sig_statement, bind_sig_statement)) =
+                            self.transform_function_on_exit(func, ctx)
+                        {
+                            new_stmts.push(init_sig_statement);
+                            new_stmts.push(stmt);
+                            new_stmts.push(bind_sig_statement);
+                            continue;
+                        }
+                    }
+                }
+                Statement::ExportDefaultDeclaration(ref mut export_decl) => {
+                    if let ExportDefaultDeclarationKind::FunctionDeclaration(func) =
+                        &mut export_decl.declaration
+                    {
+                        if func.id.is_some() {
+                            if let Some((init_sig_statement, bind_sig_statement)) =
+                                self.transform_function_on_exit(func, ctx)
+                            {
+                                new_stmts.push(init_sig_statement);
+                                new_stmts.push(stmt);
+                                new_stmts.push(bind_sig_statement);
+                                continue;
+                            }
+                        }
+                    }
+                }
+                _ => {}
+            }
+
+            new_stmts.push(stmt);
+        }
+
+        *stmts = new_stmts;
+    }
+
     fn transform_function_declaration(
         &mut self,
         func: &mut Function<'a>,
@@ -391,8 +452,201 @@ impl<'a> ReactRefresh<'a> {
 
         Some(self.create_assignment_expression(id, ctx))
     }
+
+    pub fn transform_function_on_exit(
+        &mut self,
+        func: &mut Function<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<(Statement<'a>, Statement<'a>)> {
+        let id = func.id.as_ref().unwrap();
+
+        let signature_key =
+            CalculateSignatureKey::new(self.ctx.source_text, func.scope_id.get().unwrap(), ctx)
+                .calculate(func.body.as_ref().unwrap())?;
+
+        let symbol_id =
+            ctx.generate_uid("s", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
+
+        let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+
+        let binding_identifier = BindingIdentifier {
+            span: id.span,
+            name: symbol_name.clone(),
+            symbol_id: Cell::new(Some(symbol_id)),
+        };
+
+        let identifier_reference =
+            ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
+
+        let sig_identifier_reference = ctx.create_reference_id(
+            SPAN,
+            self.refresh_sig.clone(),
+            Some(symbol_id),
+            ReferenceFlag::Read,
+        );
+
+        // _s();
+        let call_expression = ctx.ast.statement_expression(
+            SPAN,
+            ctx.ast.expression_call(
+                SPAN,
+                ctx.ast.vec(),
+                ctx.ast.expression_from_identifier_reference(identifier_reference.clone()),
+                Option::<TSTypeParameterInstantiation>::None,
+                false,
+            ),
+        );
+
+        if let Some(body) = func.body.as_mut() {
+            body.statements.insert(0, call_expression);
+        }
+
+        // _s = refresh_sig();
+        let init_sig_statement = ctx.ast.statement_declaration(ctx.ast.declaration_variable(
+            SPAN,
+            VariableDeclarationKind::Var,
+            ctx.ast.vec1(ctx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Var,
+                ctx.ast.binding_pattern(
+                    ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier),
+                    Option::<TSTypeAnnotation>::None,
+                    false,
+                ),
+                Some(ctx.ast.expression_call(
+                    SPAN,
+                    ctx.ast.vec(),
+                    ctx.ast.expression_from_identifier_reference(sig_identifier_reference.clone()),
+                    Option::<TSTypeParameterInstantiation>::None,
+                    false,
+                )),
+                false,
+            )),
+            false,
+        ));
+
+        // _s(App, signature);
+        let id_identifier =
+            ctx.create_reference_id(SPAN, id.name.clone(), Some(symbol_id), ReferenceFlag::Read);
+        let bind_sig_statement = ctx.ast.statement_expression(
+            SPAN,
+            ctx.ast.expression_call(
+                SPAN,
+                {
+                    let mut items = ctx.ast.vec();
+                    items.push(ctx.ast.argument_expression(
+                        ctx.ast.expression_from_identifier_reference(id_identifier),
+                    ));
+                    items.push(ctx.ast.argument_expression(
+                        ctx.ast.expression_string_literal(SPAN, ctx.ast.atom(&signature_key)),
+                    ));
+                    items
+                },
+                ctx.ast.expression_from_identifier_reference(identifier_reference),
+                Option::<TSTypeParameterInstantiation>::None,
+                false,
+            ),
+        );
+
+        Some((init_sig_statement, bind_sig_statement))
+    }
+}
+
+struct CalculateSignatureKey<'a, 'b> {
+    key: String,
+    source_text: &'a str,
+    ctx: &'b mut TraverseCtx<'a>,
+    current_scope_id: ScopeId,
+    declarator_id_span: Option<Span>,
+}
+
+impl<'a, 'b> CalculateSignatureKey<'a, 'b> {
+    pub fn new(source_text: &'a str, scope_id: ScopeId, ctx: &'b mut TraverseCtx<'a>) -> Self {
+        Self {
+            key: String::new(),
+            ctx,
+            source_text,
+            current_scope_id: scope_id,
+            declarator_id_span: None,
+        }
+    }
+
+    pub fn calculate(mut self, body: &FunctionBody<'a>) -> Option<String> {
+        for statement in &body.statements {
+            self.visit_statement(statement);
+        }
+
+        if self.key.is_empty() {
+            return None;
+        }
+
+        Some(self.key)
+    }
+}
+
+impl<'a, 'b> Visit<'a> for CalculateSignatureKey<'a, 'b> {
+    fn enter_scope(&mut self, _flags: ScopeFlags, scope_id: &Cell<Option<oxc_semantic::ScopeId>>) {
+        self.current_scope_id = scope_id.get().unwrap();
+    }
+
+    fn visit_statements(&mut self, _stmt: &oxc_allocator::Vec<'a, Statement<'a>>) {
+        // We don't need calculate any signature in nested scopes
+    }
+
+    fn visit_variable_declarator(&mut self, declarator: &VariableDeclarator<'a>) {
+        if matches!(declarator.init, Some(Expression::CallExpression(_))) {
+            self.declarator_id_span = Some(declarator.id.span());
+        }
+        walk_variable_declarator(self, declarator);
+        // We doesn't check the call expression is the hook,
+        // So we need to reset the declarator_id_span after visiting the variable declarator.
+        self.declarator_id_span = None;
+    }
+
+    fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
+        if !self.ctx.scopes().get_flags(self.current_scope_id).is_function() {
+            return;
+        }
+
+        let name = match &call_expr.callee {
+            Expression::Identifier(ident) => Some(ident.name.clone()),
+            Expression::StaticMemberExpression(ref member) => Some(member.property.name.clone()),
+            _ => None,
+        };
+
+        let Some(name) = name else {
+            return;
+        };
+
+        if !is_use_hook_name(&name) {
+            return;
+        }
+
+        let args = &call_expr.arguments;
+        let args_key = if name == "useState" && args.len() > 0 {
+            args[0].span().source_text(self.source_text)
+        } else if name == "useReducer" && args.len() > 1 {
+            args[1].span().source_text(self.source_text)
+        } else {
+            ""
+        };
+
+        if !self.key.is_empty() {
+            self.key.push_str("\\n");
+        }
+        self.key.push_str(&format!(
+            "{name}{{{}{}{args_key}{}}}",
+            self.declarator_id_span.take().map_or("", |span| span.source_text(self.source_text)),
+            if args_key.is_empty() { "" } else { "(" },
+            if args_key.is_empty() { "" } else { ")" }
+        ));
+    }
 }
 
 fn is_componentish_name(name: &str) -> bool {
     name.chars().next().unwrap().is_ascii_uppercase()
+}
+
+fn is_use_hook_name(name: &str) -> bool {
+    name.starts_with("use") && name.chars().nth(3).unwrap().is_ascii_uppercase()
 }
