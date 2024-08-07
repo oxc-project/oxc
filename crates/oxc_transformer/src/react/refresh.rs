@@ -337,34 +337,61 @@ impl<'a> ReactRefresh<'a> {
         let mut new_stmts = ctx.ast.vec_with_capacity(stmts.len() + 1);
 
         for mut stmt in stmts.drain(..) {
-            let bind_sig_statement = match &mut stmt {
-                Statement::FunctionDeclaration(func) => self.transform_function_on_exit(func, ctx),
+            match &mut stmt {
+                Statement::FunctionDeclaration(func) => {
+                    let bind_sig_statements = self.transform_function_on_exit(func, ctx);
+                    new_stmts.push(stmt);
+                    new_stmts.extend(bind_sig_statements);
+                }
+                Statement::VariableDeclaration(decl) => {
+                    let bind_sig_statements =
+                        self.transform_variable_declaration_on_exit(decl, ctx);
+                    new_stmts.push(stmt);
+                    new_stmts.extend(bind_sig_statements);
+                }
                 Statement::ExportNamedDeclaration(export_decl) => {
                     if let Some(Declaration::FunctionDeclaration(func)) =
                         &mut export_decl.declaration
                     {
-                        self.transform_function_on_exit(func, ctx)
+                        let bind_sig_statements = self.transform_function_on_exit(func, ctx);
+                        new_stmts.push(stmt);
+                        new_stmts.extend(bind_sig_statements);
+                    } else if let Some(Declaration::VariableDeclaration(decl)) =
+                        &mut export_decl.declaration
+                    {
+                        let bind_sig_statements =
+                            self.transform_variable_declaration_on_exit(decl, ctx);
+                        new_stmts.push(stmt);
+                        new_stmts.extend(bind_sig_statements);
                     } else {
-                        None
+                        new_stmts.push(stmt);
                     }
                 }
                 Statement::ExportDefaultDeclaration(export_decl) => {
                     match &mut export_decl.declaration {
-                        ExportDefaultDeclarationKind::FunctionDeclaration(func)
-                            if func.id.is_some() =>
-                        {
-                            self.transform_function_on_exit(func, ctx)
+                        ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
+                            if func.id.is_some() {
+                                if let Some(bind_sig_statement) =
+                                    self.transform_function_on_exit(func, ctx)
+                                {
+                                    new_stmts.push(stmt);
+                                    new_stmts.push(bind_sig_statement);
+                                } else {
+                                    new_stmts.push(stmt);
+                                }
+                            } else {
+                                new_stmts.push(stmt);
+                            }
                         }
-                        _ => None,
+                        _ => {
+                            new_stmts.push(stmt);
+                        }
                     }
                 }
-                _ => None,
+                _ => {
+                    new_stmts.push(stmt);
+                }
             };
-
-            new_stmts.push(stmt);
-            if let Some(bind_sig) = bind_sig_statement {
-                new_stmts.push(bind_sig);
-            }
         }
 
         let declarations = self.signature_declarator_items.pop().unwrap();
@@ -394,69 +421,6 @@ impl<'a> ReactRefresh<'a> {
 
         if !is_componentish_name(&id.name) {
             return None;
-        }
-
-        Some(self.create_assignment_expression(id, ctx))
-    }
-
-    pub fn transform_variable_declaration(
-        &mut self,
-        decl: &mut VariableDeclaration<'a>,
-        ctx: &mut TraverseCtx<'a>,
-    ) -> Option<Statement<'a>> {
-        if decl.declarations.len() != 1 {
-            return None;
-        }
-
-        let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
-        let init = declarator.init.as_mut()?;
-        let id = declarator.id.get_binding_identifier()?;
-
-        if !is_componentish_name(&id.name) {
-            return None;
-        }
-
-        match init {
-            // Likely component definitions.
-            Expression::ArrowFunctionExpression(arrow) => {
-                // () => () => {}
-                if arrow.get_expression().is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))) {
-                    return None;
-                }
-            }
-            Expression::FunctionExpression(_)
-            // Maybe something like styled.div`...`
-            | Expression::TaggedTemplateExpression(_) => {
-                // Special case when a variable would get an inferred name:
-                // let Foo = () => {}
-                // let Foo = function() {}
-                // let Foo = styled.div``;
-                // We'll register it on next line so that
-                // we don't mess up the inferred 'Foo' function name.
-                // (eg: with @babel/plugin-transform-react-display-name or
-                // babel-plugin-styled-components)
-            }
-            Expression::CallExpression(call_expr) => {
-                if matches!(call_expr.callee, Expression::ImportExpression(_))
-                    || call_expr.is_require_call()
-                {
-                    return None;
-                }
-
-                // Maybe a HOC.
-                // Try to determine if this is some form of import.
-                let found_inside = self.replace_inner_components(&id.name, init, true, ctx);
-                if !found_inside {
-                    return None;
-                }
-
-                // See if this identifier is used in JSX. Then it's a component.
-                // TODO:
-                // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
-            }
-            _ => {
-                return None;
-            }
         }
 
         Some(self.create_assignment_expression(id, ctx))
@@ -552,6 +516,190 @@ impl<'a> ReactRefresh<'a> {
         );
 
         Some(bind_sig_statement)
+    }
+
+    pub fn transform_variable_declaration(
+        &mut self,
+        decl: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> Option<Statement<'a>> {
+        if decl.declarations.len() != 1 {
+            return None;
+        }
+
+        let declarator = decl.declarations.first_mut().unwrap_or_else(|| unreachable!());
+        let init = declarator.init.as_mut()?;
+        let id = declarator.id.get_binding_identifier()?;
+
+        if !is_componentish_name(&id.name) {
+            return None;
+        }
+
+        match init {
+            // Likely component definitions.
+            Expression::ArrowFunctionExpression(arrow) => {
+                // () => () => {}
+                if arrow.get_expression().is_some_and(|expr| matches!(expr, Expression::ArrowFunctionExpression(_))) {
+                    return None;
+                }
+            }
+            Expression::FunctionExpression(_)
+            // Maybe something like styled.div`...`
+            | Expression::TaggedTemplateExpression(_) => {
+                // Special case when a variable would get an inferred name:
+                // let Foo = () => {}
+                // let Foo = function() {}
+                // let Foo = styled.div``;
+                // We'll register it on next line so that
+                // we don't mess up the inferred 'Foo' function name.
+                // (eg: with @babel/plugin-transform-react-display-name or
+                // babel-plugin-styled-components)
+            }
+            Expression::CallExpression(call_expr) => {
+                if matches!(call_expr.callee, Expression::ImportExpression(_))
+                    || call_expr.is_require_call()
+                {
+                    return None;
+                }
+
+                // Maybe a HOC.
+                // Try to determine if this is some form of import.
+                let found_inside = self.replace_inner_components(&id.name, init, true, ctx);
+                if !found_inside {
+                    return None;
+                }
+
+                // See if this identifier is used in JSX. Then it's a component.
+                // TODO:
+                // https://github.com/facebook/react/blob/ba6a9e94edf0db3ad96432804f9931ce9dc89fec/packages/react-refresh/src/ReactFreshBabelPlugin.js#L161-L199
+            }
+            _ => {
+                return None;
+            }
+        }
+
+        Some(self.create_assignment_expression(id, ctx))
+    }
+
+    pub fn transform_variable_declaration_on_exit(
+        &mut self,
+        decl: &mut VariableDeclaration<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> oxc_allocator::Vec<'a, Statement<'a>> {
+        let mut bind_sig_statements = ctx.ast.vec();
+
+        for declarator in decl.declarations.iter_mut() {
+            let Some(id) = declarator.id.get_binding_identifier() else {
+                continue;
+            };
+
+            let Some(init) = declarator.init.as_mut() else {
+                continue;
+            };
+
+            let (scope_id, body) = match init {
+                Expression::FunctionExpression(func) => {
+                    (func.scope_id.get(), func.body.as_mut().unwrap())
+                }
+                Expression::ArrowFunctionExpression(arrow) => {
+                    (arrow.scope_id.get(), &mut arrow.body)
+                }
+                _ => {
+                    continue;
+                }
+            };
+
+            let Some(arguments) =
+                CalculateSignatureKey::new(self.ctx.source_text, scope_id.unwrap(), ctx)
+                    .calculate(body)
+            else {
+                continue;
+            };
+
+            let symbol_id =
+                ctx.generate_uid("s", ctx.current_scope_id(), SymbolFlags::FunctionScopedVariable);
+
+            let symbol_name = ctx.ast.atom(ctx.symbols().get_name(symbol_id));
+
+            let binding_identifier = BindingIdentifier {
+                span: id.span,
+                name: symbol_name.clone(),
+                symbol_id: Cell::new(Some(symbol_id)),
+            };
+
+            let identifier_reference =
+                ctx.create_reference_id(SPAN, symbol_name, Some(symbol_id), ReferenceFlag::Read);
+
+            let sig_identifier_reference = ctx.create_reference_id(
+                SPAN,
+                self.refresh_sig.clone(),
+                Some(symbol_id),
+                ReferenceFlag::Read,
+            );
+
+            // _s();
+            let call_expression = ctx.ast.statement_expression(
+                SPAN,
+                ctx.ast.expression_call(
+                    SPAN,
+                    ctx.ast.vec(),
+                    ctx.ast.expression_from_identifier_reference(identifier_reference.clone()),
+                    Option::<TSTypeParameterInstantiation>::None,
+                    false,
+                ),
+            );
+
+            body.statements.insert(0, call_expression);
+
+            // _s = refresh_sig();
+            self.signature_declarator_items.last_mut().unwrap().push(ctx.ast.variable_declarator(
+                SPAN,
+                VariableDeclarationKind::Var,
+                ctx.ast.binding_pattern(
+                    ctx.ast.binding_pattern_kind_from_binding_identifier(binding_identifier),
+                    Option::<TSTypeAnnotation>::None,
+                    false,
+                ),
+                Some(ctx.ast.expression_call(
+                    SPAN,
+                    ctx.ast.vec(),
+                    ctx.ast.expression_from_identifier_reference(sig_identifier_reference.clone()),
+                    Option::<TSTypeParameterInstantiation>::None,
+                    false,
+                )),
+                false,
+            ));
+
+            // _s(App, signature_key, false, function() { return [] });
+            //                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ custom hooks only
+            let id_identifier = ctx.create_reference_id(
+                SPAN,
+                id.name.clone(),
+                Some(symbol_id),
+                ReferenceFlag::Read,
+            );
+            let bind_sig_statement = ctx.ast.statement_expression(
+                SPAN,
+                ctx.ast.expression_call(
+                    SPAN,
+                    {
+                        let mut items = ctx.ast.vec();
+                        items.push(ctx.ast.argument_expression(
+                            ctx.ast.expression_from_identifier_reference(id_identifier),
+                        ));
+                        items.extend(arguments);
+                        items
+                    },
+                    ctx.ast.expression_from_identifier_reference(identifier_reference),
+                    Option::<TSTypeParameterInstantiation>::None,
+                    false,
+                ),
+            );
+
+            bind_sig_statements.push(bind_sig_statement);
+        }
+
+        bind_sig_statements
     }
 }
 
