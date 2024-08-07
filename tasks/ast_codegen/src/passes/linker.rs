@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use syn::parse_quote;
 
-use crate::{codegen::EarlyCtx, rust_ast::Inherit, util::NormalizeError};
+use crate::{rust_ast::Inherit, util::NormalizeError, EarlyCtx};
 
 use super::{define_pass, AstType, Pass, Result};
 

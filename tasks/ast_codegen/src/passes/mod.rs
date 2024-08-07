@@ -1,6 +1,8 @@
 use std::collections::VecDeque;
 
-use crate::{codegen::EarlyCtx, rust_ast::AstType, Result};
+use itertools::Itertools;
+
+use crate::{rust_ast::AstType, EarlyCtx, Result};
 
 mod calc_layout;
 mod linker;
@@ -28,13 +30,13 @@ pub trait Pass {
 
         // call each
         // we sort by `TypeId` so we always have the same ordering as how it is written in the rust.
-        let mut unresolved = ctx.chronological_idents().collect::<VecDeque<_>>();
+        let mut unresolved =
+            ctx.ident_table.iter().sorted_by_key(|it| it.1).map(|it| it.0).collect::<VecDeque<_>>();
 
         while let Some(next) = unresolved.pop_back() {
             let next_id = ctx.type_id(next).unwrap();
 
-            let ast_ref = ctx.ast_ref(next_id);
-            let val = &mut ast_ref.borrow_mut();
+            let val = &mut ctx.ty_table[next_id].borrow_mut();
 
             if !self.each(val, ctx)? {
                 unresolved.push_front(next);
@@ -47,8 +49,8 @@ pub trait Pass {
 macro_rules! define_pass {
     ($vis:vis struct $ident:ident $($lifetime:lifetime)? $($rest:tt)*) => {
         $vis struct $ident $($lifetime)? $($rest)*
-        impl $($lifetime)? $crate::codegen::Runner for $ident $($lifetime)? {
-            type Context = $crate::codegen::EarlyCtx;
+        impl $($lifetime)? $crate::Runner for $ident $($lifetime)? {
+            type Context = $crate::EarlyCtx;
             type Output = ();
             fn name(&self) -> &'static str {
                 $crate::Pass::name(self)

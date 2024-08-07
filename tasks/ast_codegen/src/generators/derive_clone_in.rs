@@ -4,10 +4,9 @@ use quote::{format_ident, quote};
 use syn::Ident;
 
 use crate::{
-    codegen::LateCtx,
     output,
     schema::{EnumDef, GetIdent, StructDef, TypeDef},
-    GeneratorOutput,
+    GeneratorOutput, LateCtx,
 };
 
 use super::{define_generator, generated_header, Generator};
@@ -23,8 +22,9 @@ impl Generator for DeriveCloneIn {
 
     fn generate(&mut self, ctx: &LateCtx) -> GeneratorOutput {
         let impls: Vec<TokenStream> = ctx
-            .schema()
-            .into_iter()
+            .schema
+            .definitions
+            .iter()
             .filter(|def| def.generates_derive("CloneIn"))
             .map(|def| match &def {
                 TypeDef::Enum(it) => derive_enum(it),
