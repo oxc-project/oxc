@@ -16,15 +16,13 @@ mod util;
 
 use fmt::{cargo_fmt, pprint};
 use generators::{
-    AssertLayouts, AstBuilderGenerator, AstKindGenerator, DeriveCloneIn, Generator, VisitGenerator,
-    VisitMutGenerator,
+    AssertLayouts, AstBuilderGenerator, AstKindGenerator, DeriveCloneIn, DeriveGetSpan,
+    DeriveGetSpanMut, Generator, VisitGenerator, VisitMutGenerator,
 };
 use passes::{CalcLayout, Linker, Pass};
 use rust_ast::AstRef;
 use schema::{lower_ast_types, Schema, TypeDef};
 use util::{write_all_to, NormalizeError};
-
-use crate::generators::ImplGetSpanGenerator;
 
 static SOURCE_PATHS: &[&str] = &[
     "oxc_ast/src/ast/literal.rs",
@@ -298,7 +296,8 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         .gen(AstKindGenerator)
         .gen(AstBuilderGenerator)
         .gen(DeriveCloneIn)
-        .gen(ImplGetSpanGenerator)
+        .gen(DeriveGetSpan)
+        .gen(DeriveGetSpanMut)
         .gen(VisitGenerator)
         .gen(VisitMutGenerator)
         .generate()?;

@@ -42,7 +42,8 @@ mod generated {
     pub mod ast_builder;
     pub mod ast_kind;
     pub mod derive_clone_in;
-    pub mod span;
+    pub mod derive_get_span;
+    pub mod derive_get_span_mut;
     pub mod visit;
     pub mod visit_mut;
 }
