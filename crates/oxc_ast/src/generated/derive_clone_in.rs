@@ -92,67 +92,65 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Expression<'old_alloc> {
     type Cloned = Expression<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => Expression::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => Expression::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => Expression::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => Expression::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => Expression::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => Expression::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => Expression::TemplateLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => Expression::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => Expression::MetaProperty(it.clone_in(alloc)),
+            Self::Super(it) => Expression::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => Expression::ArrayExpression(it.clone_in(alloc)),
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                Expression::ArrowFunctionExpression(it.clone_in(alloc))
             }
-            Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
-            }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
+            Self::AssignmentExpression(it) => Expression::AssignmentExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => Expression::AwaitExpression(it.clone_in(alloc)),
+            Self::BinaryExpression(it) => Expression::BinaryExpression(it.clone_in(alloc)),
+            Self::CallExpression(it) => Expression::CallExpression(it.clone_in(alloc)),
+            Self::ChainExpression(it) => Expression::ChainExpression(it.clone_in(alloc)),
+            Self::ClassExpression(it) => Expression::ClassExpression(it.clone_in(alloc)),
             Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
+                Expression::ConditionalExpression(it.clone_in(alloc))
             }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => Expression::FunctionExpression(it.clone_in(alloc)),
+            Self::ImportExpression(it) => Expression::ImportExpression(it.clone_in(alloc)),
+            Self::LogicalExpression(it) => Expression::LogicalExpression(it.clone_in(alloc)),
+            Self::NewExpression(it) => Expression::NewExpression(it.clone_in(alloc)),
+            Self::ObjectExpression(it) => Expression::ObjectExpression(it.clone_in(alloc)),
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                Expression::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => Expression::SequenceExpression(it.clone_in(alloc)),
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                Expression::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => Expression::ThisExpression(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => Expression::UnaryExpression(it.clone_in(alloc)),
+            Self::UpdateExpression(it) => Expression::UpdateExpression(it.clone_in(alloc)),
+            Self::YieldExpression(it) => Expression::YieldExpression(it.clone_in(alloc)),
+            Self::PrivateInExpression(it) => Expression::PrivateInExpression(it.clone_in(alloc)),
+            Self::JSXElement(it) => Expression::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => Expression::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => Expression::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                Expression::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => Expression::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => Expression::TSNonNullExpression(it.clone_in(alloc)),
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                Expression::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                Expression::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                Expression::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                Expression::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -217,69 +215,103 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ArrayExpressionElement<'old
     type Cloned = ArrayExpressionElement<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::SpreadElement(it) => Self::Cloned::SpreadElement(it.clone_in(alloc)),
-            Self::Elision(it) => Self::Cloned::Elision(it.clone_in(alloc)),
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::SpreadElement(it) => ArrayExpressionElement::SpreadElement(it.clone_in(alloc)),
+            Self::Elision(it) => ArrayExpressionElement::Elision(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => ArrayExpressionElement::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => ArrayExpressionElement::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => ArrayExpressionElement::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => ArrayExpressionElement::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => ArrayExpressionElement::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => ArrayExpressionElement::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => {
+                ArrayExpressionElement::TemplateLiteral(it.clone_in(alloc))
+            }
+            Self::Identifier(it) => ArrayExpressionElement::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => ArrayExpressionElement::MetaProperty(it.clone_in(alloc)),
+            Self::Super(it) => ArrayExpressionElement::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => {
+                ArrayExpressionElement::ArrayExpression(it.clone_in(alloc))
+            }
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                ArrayExpressionElement::ArrowFunctionExpression(it.clone_in(alloc))
             }
             Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
+                ArrayExpressionElement::AssignmentExpression(it.clone_in(alloc))
             }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => {
+                ArrayExpressionElement::AwaitExpression(it.clone_in(alloc))
+            }
+            Self::BinaryExpression(it) => {
+                ArrayExpressionElement::BinaryExpression(it.clone_in(alloc))
+            }
+            Self::CallExpression(it) => ArrayExpressionElement::CallExpression(it.clone_in(alloc)),
+            Self::ChainExpression(it) => {
+                ArrayExpressionElement::ChainExpression(it.clone_in(alloc))
+            }
+            Self::ClassExpression(it) => {
+                ArrayExpressionElement::ClassExpression(it.clone_in(alloc))
+            }
             Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
+                ArrayExpressionElement::ConditionalExpression(it.clone_in(alloc))
             }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => {
+                ArrayExpressionElement::FunctionExpression(it.clone_in(alloc))
+            }
+            Self::ImportExpression(it) => {
+                ArrayExpressionElement::ImportExpression(it.clone_in(alloc))
+            }
+            Self::LogicalExpression(it) => {
+                ArrayExpressionElement::LogicalExpression(it.clone_in(alloc))
+            }
+            Self::NewExpression(it) => ArrayExpressionElement::NewExpression(it.clone_in(alloc)),
+            Self::ObjectExpression(it) => {
+                ArrayExpressionElement::ObjectExpression(it.clone_in(alloc))
+            }
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                ArrayExpressionElement::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => {
+                ArrayExpressionElement::SequenceExpression(it.clone_in(alloc))
+            }
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                ArrayExpressionElement::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => ArrayExpressionElement::ThisExpression(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => {
+                ArrayExpressionElement::UnaryExpression(it.clone_in(alloc))
+            }
+            Self::UpdateExpression(it) => {
+                ArrayExpressionElement::UpdateExpression(it.clone_in(alloc))
+            }
+            Self::YieldExpression(it) => {
+                ArrayExpressionElement::YieldExpression(it.clone_in(alloc))
+            }
+            Self::PrivateInExpression(it) => {
+                ArrayExpressionElement::PrivateInExpression(it.clone_in(alloc))
+            }
+            Self::JSXElement(it) => ArrayExpressionElement::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => ArrayExpressionElement::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => ArrayExpressionElement::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                ArrayExpressionElement::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => {
+                ArrayExpressionElement::TSTypeAssertion(it.clone_in(alloc))
+            }
+            Self::TSNonNullExpression(it) => {
+                ArrayExpressionElement::TSNonNullExpression(it.clone_in(alloc))
+            }
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                ArrayExpressionElement::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                ArrayExpressionElement::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                ArrayExpressionElement::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                ArrayExpressionElement::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -307,8 +339,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ObjectPropertyKind<'old_all
     type Cloned = ObjectPropertyKind<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::ObjectProperty(it) => Self::Cloned::ObjectProperty(it.clone_in(alloc)),
-            Self::SpreadProperty(it) => Self::Cloned::SpreadProperty(it.clone_in(alloc)),
+            Self::ObjectProperty(it) => ObjectPropertyKind::ObjectProperty(it.clone_in(alloc)),
+            Self::SpreadProperty(it) => ObjectPropertyKind::SpreadProperty(it.clone_in(alloc)),
         }
     }
 }
@@ -333,69 +365,67 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for PropertyKey<'old_alloc> {
     type Cloned = PropertyKey<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::StaticIdentifier(it) => Self::Cloned::StaticIdentifier(it.clone_in(alloc)),
-            Self::PrivateIdentifier(it) => Self::Cloned::PrivateIdentifier(it.clone_in(alloc)),
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::StaticIdentifier(it) => PropertyKey::StaticIdentifier(it.clone_in(alloc)),
+            Self::PrivateIdentifier(it) => PropertyKey::PrivateIdentifier(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => PropertyKey::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => PropertyKey::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => PropertyKey::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => PropertyKey::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => PropertyKey::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => PropertyKey::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => PropertyKey::TemplateLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => PropertyKey::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => PropertyKey::MetaProperty(it.clone_in(alloc)),
+            Self::Super(it) => PropertyKey::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => PropertyKey::ArrayExpression(it.clone_in(alloc)),
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                PropertyKey::ArrowFunctionExpression(it.clone_in(alloc))
             }
-            Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
-            }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
+            Self::AssignmentExpression(it) => PropertyKey::AssignmentExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => PropertyKey::AwaitExpression(it.clone_in(alloc)),
+            Self::BinaryExpression(it) => PropertyKey::BinaryExpression(it.clone_in(alloc)),
+            Self::CallExpression(it) => PropertyKey::CallExpression(it.clone_in(alloc)),
+            Self::ChainExpression(it) => PropertyKey::ChainExpression(it.clone_in(alloc)),
+            Self::ClassExpression(it) => PropertyKey::ClassExpression(it.clone_in(alloc)),
             Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
+                PropertyKey::ConditionalExpression(it.clone_in(alloc))
             }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => PropertyKey::FunctionExpression(it.clone_in(alloc)),
+            Self::ImportExpression(it) => PropertyKey::ImportExpression(it.clone_in(alloc)),
+            Self::LogicalExpression(it) => PropertyKey::LogicalExpression(it.clone_in(alloc)),
+            Self::NewExpression(it) => PropertyKey::NewExpression(it.clone_in(alloc)),
+            Self::ObjectExpression(it) => PropertyKey::ObjectExpression(it.clone_in(alloc)),
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                PropertyKey::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => PropertyKey::SequenceExpression(it.clone_in(alloc)),
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                PropertyKey::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => PropertyKey::ThisExpression(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => PropertyKey::UnaryExpression(it.clone_in(alloc)),
+            Self::UpdateExpression(it) => PropertyKey::UpdateExpression(it.clone_in(alloc)),
+            Self::YieldExpression(it) => PropertyKey::YieldExpression(it.clone_in(alloc)),
+            Self::PrivateInExpression(it) => PropertyKey::PrivateInExpression(it.clone_in(alloc)),
+            Self::JSXElement(it) => PropertyKey::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => PropertyKey::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => PropertyKey::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                PropertyKey::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => PropertyKey::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => PropertyKey::TSNonNullExpression(it.clone_in(alloc)),
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                PropertyKey::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                PropertyKey::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                PropertyKey::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                PropertyKey::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -405,9 +435,9 @@ impl<'alloc> CloneIn<'alloc> for PropertyKind {
     type Cloned = PropertyKind;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Init => Self::Cloned::Init,
-            Self::Get => Self::Cloned::Get,
-            Self::Set => Self::Cloned::Set,
+            Self::Init => PropertyKind::Init,
+            Self::Get => PropertyKind::Get,
+            Self::Set => PropertyKind::Set,
         }
     }
 }
@@ -458,13 +488,13 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for MemberExpression<'old_alloc
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                MemberExpression::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                MemberExpression::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                MemberExpression::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -553,68 +583,62 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Argument<'old_alloc> {
     type Cloned = Argument<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::SpreadElement(it) => Self::Cloned::SpreadElement(it.clone_in(alloc)),
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::SpreadElement(it) => Argument::SpreadElement(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => Argument::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => Argument::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => Argument::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => Argument::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => Argument::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => Argument::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => Argument::TemplateLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => Argument::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => Argument::MetaProperty(it.clone_in(alloc)),
+            Self::Super(it) => Argument::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => Argument::ArrayExpression(it.clone_in(alloc)),
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                Argument::ArrowFunctionExpression(it.clone_in(alloc))
             }
-            Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
-            }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
-            Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
-            }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::AssignmentExpression(it) => Argument::AssignmentExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => Argument::AwaitExpression(it.clone_in(alloc)),
+            Self::BinaryExpression(it) => Argument::BinaryExpression(it.clone_in(alloc)),
+            Self::CallExpression(it) => Argument::CallExpression(it.clone_in(alloc)),
+            Self::ChainExpression(it) => Argument::ChainExpression(it.clone_in(alloc)),
+            Self::ClassExpression(it) => Argument::ClassExpression(it.clone_in(alloc)),
+            Self::ConditionalExpression(it) => Argument::ConditionalExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => Argument::FunctionExpression(it.clone_in(alloc)),
+            Self::ImportExpression(it) => Argument::ImportExpression(it.clone_in(alloc)),
+            Self::LogicalExpression(it) => Argument::LogicalExpression(it.clone_in(alloc)),
+            Self::NewExpression(it) => Argument::NewExpression(it.clone_in(alloc)),
+            Self::ObjectExpression(it) => Argument::ObjectExpression(it.clone_in(alloc)),
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                Argument::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => Argument::SequenceExpression(it.clone_in(alloc)),
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                Argument::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
-            Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
-            }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => Argument::ThisExpression(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => Argument::UnaryExpression(it.clone_in(alloc)),
+            Self::UpdateExpression(it) => Argument::UpdateExpression(it.clone_in(alloc)),
+            Self::YieldExpression(it) => Argument::YieldExpression(it.clone_in(alloc)),
+            Self::PrivateInExpression(it) => Argument::PrivateInExpression(it.clone_in(alloc)),
+            Self::JSXElement(it) => Argument::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => Argument::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => Argument::TSAsExpression(it.clone_in(alloc)),
+            Self::TSSatisfiesExpression(it) => Argument::TSSatisfiesExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => Argument::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => Argument::TSNonNullExpression(it.clone_in(alloc)),
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                Argument::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                Argument::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                Argument::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                Argument::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -708,31 +732,33 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for AssignmentTarget<'old_alloc
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::AssignmentTargetIdentifier(it) => {
-                Self::Cloned::AssignmentTargetIdentifier(it.clone_in(alloc))
+                AssignmentTarget::AssignmentTargetIdentifier(it.clone_in(alloc))
             }
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => AssignmentTarget::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                AssignmentTarget::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => {
+                AssignmentTarget::TSNonNullExpression(it.clone_in(alloc))
+            }
+            Self::TSTypeAssertion(it) => AssignmentTarget::TSTypeAssertion(it.clone_in(alloc)),
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                AssignmentTarget::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                AssignmentTarget::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                AssignmentTarget::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                AssignmentTarget::PrivateFieldExpression(it.clone_in(alloc))
             }
             Self::ArrayAssignmentTarget(it) => {
-                Self::Cloned::ArrayAssignmentTarget(it.clone_in(alloc))
+                AssignmentTarget::ArrayAssignmentTarget(it.clone_in(alloc))
             }
             Self::ObjectAssignmentTarget(it) => {
-                Self::Cloned::ObjectAssignmentTarget(it.clone_in(alloc))
+                AssignmentTarget::ObjectAssignmentTarget(it.clone_in(alloc))
             }
         }
     }
@@ -743,25 +769,29 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for SimpleAssignmentTarget<'old
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::AssignmentTargetIdentifier(it) => {
-                Self::Cloned::AssignmentTargetIdentifier(it.clone_in(alloc))
+                SimpleAssignmentTarget::AssignmentTargetIdentifier(it.clone_in(alloc))
             }
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => SimpleAssignmentTarget::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                SimpleAssignmentTarget::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => {
+                SimpleAssignmentTarget::TSNonNullExpression(it.clone_in(alloc))
+            }
+            Self::TSTypeAssertion(it) => {
+                SimpleAssignmentTarget::TSTypeAssertion(it.clone_in(alloc))
+            }
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                SimpleAssignmentTarget::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                SimpleAssignmentTarget::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                SimpleAssignmentTarget::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                SimpleAssignmentTarget::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -772,10 +802,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for AssignmentTargetPattern<'ol
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::ArrayAssignmentTarget(it) => {
-                Self::Cloned::ArrayAssignmentTarget(it.clone_in(alloc))
+                AssignmentTargetPattern::ArrayAssignmentTarget(it.clone_in(alloc))
             }
             Self::ObjectAssignmentTarget(it) => {
-                Self::Cloned::ObjectAssignmentTarget(it.clone_in(alloc))
+                AssignmentTargetPattern::ObjectAssignmentTarget(it.clone_in(alloc))
             }
         }
     }
@@ -819,34 +849,40 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for AssignmentTargetMaybeDefaul
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::AssignmentTargetWithDefault(it) => {
-                Self::Cloned::AssignmentTargetWithDefault(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(it.clone_in(alloc))
             }
             Self::AssignmentTargetIdentifier(it) => {
-                Self::Cloned::AssignmentTargetIdentifier(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::AssignmentTargetIdentifier(it.clone_in(alloc))
             }
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => {
+                AssignmentTargetMaybeDefault::TSAsExpression(it.clone_in(alloc))
+            }
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => {
+                AssignmentTargetMaybeDefault::TSNonNullExpression(it.clone_in(alloc))
+            }
+            Self::TSTypeAssertion(it) => {
+                AssignmentTargetMaybeDefault::TSTypeAssertion(it.clone_in(alloc))
+            }
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::PrivateFieldExpression(it.clone_in(alloc))
             }
             Self::ArrayAssignmentTarget(it) => {
-                Self::Cloned::ArrayAssignmentTarget(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::ArrayAssignmentTarget(it.clone_in(alloc))
             }
             Self::ObjectAssignmentTarget(it) => {
-                Self::Cloned::ObjectAssignmentTarget(it.clone_in(alloc))
+                AssignmentTargetMaybeDefault::ObjectAssignmentTarget(it.clone_in(alloc))
             }
         }
     }
@@ -868,10 +904,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for AssignmentTargetProperty<'o
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::AssignmentTargetPropertyIdentifier(it) => {
-                Self::Cloned::AssignmentTargetPropertyIdentifier(it.clone_in(alloc))
+                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(it.clone_in(alloc))
             }
             Self::AssignmentTargetPropertyProperty(it) => {
-                Self::Cloned::AssignmentTargetPropertyProperty(it.clone_in(alloc))
+                AssignmentTargetProperty::AssignmentTargetPropertyProperty(it.clone_in(alloc))
             }
         }
     }
@@ -939,15 +975,15 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ChainElement<'old_alloc> {
     type Cloned = ChainElement<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
+            Self::CallExpression(it) => ChainElement::CallExpression(it.clone_in(alloc)),
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                ChainElement::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                ChainElement::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                ChainElement::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -967,52 +1003,50 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Statement<'old_alloc> {
     type Cloned = Statement<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::BlockStatement(it) => Self::Cloned::BlockStatement(it.clone_in(alloc)),
-            Self::BreakStatement(it) => Self::Cloned::BreakStatement(it.clone_in(alloc)),
-            Self::ContinueStatement(it) => Self::Cloned::ContinueStatement(it.clone_in(alloc)),
-            Self::DebuggerStatement(it) => Self::Cloned::DebuggerStatement(it.clone_in(alloc)),
-            Self::DoWhileStatement(it) => Self::Cloned::DoWhileStatement(it.clone_in(alloc)),
-            Self::EmptyStatement(it) => Self::Cloned::EmptyStatement(it.clone_in(alloc)),
-            Self::ExpressionStatement(it) => Self::Cloned::ExpressionStatement(it.clone_in(alloc)),
-            Self::ForInStatement(it) => Self::Cloned::ForInStatement(it.clone_in(alloc)),
-            Self::ForOfStatement(it) => Self::Cloned::ForOfStatement(it.clone_in(alloc)),
-            Self::ForStatement(it) => Self::Cloned::ForStatement(it.clone_in(alloc)),
-            Self::IfStatement(it) => Self::Cloned::IfStatement(it.clone_in(alloc)),
-            Self::LabeledStatement(it) => Self::Cloned::LabeledStatement(it.clone_in(alloc)),
-            Self::ReturnStatement(it) => Self::Cloned::ReturnStatement(it.clone_in(alloc)),
-            Self::SwitchStatement(it) => Self::Cloned::SwitchStatement(it.clone_in(alloc)),
-            Self::ThrowStatement(it) => Self::Cloned::ThrowStatement(it.clone_in(alloc)),
-            Self::TryStatement(it) => Self::Cloned::TryStatement(it.clone_in(alloc)),
-            Self::WhileStatement(it) => Self::Cloned::WhileStatement(it.clone_in(alloc)),
-            Self::WithStatement(it) => Self::Cloned::WithStatement(it.clone_in(alloc)),
-            Self::VariableDeclaration(it) => Self::Cloned::VariableDeclaration(it.clone_in(alloc)),
-            Self::FunctionDeclaration(it) => Self::Cloned::FunctionDeclaration(it.clone_in(alloc)),
-            Self::ClassDeclaration(it) => Self::Cloned::ClassDeclaration(it.clone_in(alloc)),
-            Self::UsingDeclaration(it) => Self::Cloned::UsingDeclaration(it.clone_in(alloc)),
+            Self::BlockStatement(it) => Statement::BlockStatement(it.clone_in(alloc)),
+            Self::BreakStatement(it) => Statement::BreakStatement(it.clone_in(alloc)),
+            Self::ContinueStatement(it) => Statement::ContinueStatement(it.clone_in(alloc)),
+            Self::DebuggerStatement(it) => Statement::DebuggerStatement(it.clone_in(alloc)),
+            Self::DoWhileStatement(it) => Statement::DoWhileStatement(it.clone_in(alloc)),
+            Self::EmptyStatement(it) => Statement::EmptyStatement(it.clone_in(alloc)),
+            Self::ExpressionStatement(it) => Statement::ExpressionStatement(it.clone_in(alloc)),
+            Self::ForInStatement(it) => Statement::ForInStatement(it.clone_in(alloc)),
+            Self::ForOfStatement(it) => Statement::ForOfStatement(it.clone_in(alloc)),
+            Self::ForStatement(it) => Statement::ForStatement(it.clone_in(alloc)),
+            Self::IfStatement(it) => Statement::IfStatement(it.clone_in(alloc)),
+            Self::LabeledStatement(it) => Statement::LabeledStatement(it.clone_in(alloc)),
+            Self::ReturnStatement(it) => Statement::ReturnStatement(it.clone_in(alloc)),
+            Self::SwitchStatement(it) => Statement::SwitchStatement(it.clone_in(alloc)),
+            Self::ThrowStatement(it) => Statement::ThrowStatement(it.clone_in(alloc)),
+            Self::TryStatement(it) => Statement::TryStatement(it.clone_in(alloc)),
+            Self::WhileStatement(it) => Statement::WhileStatement(it.clone_in(alloc)),
+            Self::WithStatement(it) => Statement::WithStatement(it.clone_in(alloc)),
+            Self::VariableDeclaration(it) => Statement::VariableDeclaration(it.clone_in(alloc)),
+            Self::FunctionDeclaration(it) => Statement::FunctionDeclaration(it.clone_in(alloc)),
+            Self::ClassDeclaration(it) => Statement::ClassDeclaration(it.clone_in(alloc)),
+            Self::UsingDeclaration(it) => Statement::UsingDeclaration(it.clone_in(alloc)),
             Self::TSTypeAliasDeclaration(it) => {
-                Self::Cloned::TSTypeAliasDeclaration(it.clone_in(alloc))
+                Statement::TSTypeAliasDeclaration(it.clone_in(alloc))
             }
             Self::TSInterfaceDeclaration(it) => {
-                Self::Cloned::TSInterfaceDeclaration(it.clone_in(alloc))
+                Statement::TSInterfaceDeclaration(it.clone_in(alloc))
             }
-            Self::TSEnumDeclaration(it) => Self::Cloned::TSEnumDeclaration(it.clone_in(alloc)),
-            Self::TSModuleDeclaration(it) => Self::Cloned::TSModuleDeclaration(it.clone_in(alloc)),
+            Self::TSEnumDeclaration(it) => Statement::TSEnumDeclaration(it.clone_in(alloc)),
+            Self::TSModuleDeclaration(it) => Statement::TSModuleDeclaration(it.clone_in(alloc)),
             Self::TSImportEqualsDeclaration(it) => {
-                Self::Cloned::TSImportEqualsDeclaration(it.clone_in(alloc))
+                Statement::TSImportEqualsDeclaration(it.clone_in(alloc))
             }
-            Self::ImportDeclaration(it) => Self::Cloned::ImportDeclaration(it.clone_in(alloc)),
-            Self::ExportAllDeclaration(it) => {
-                Self::Cloned::ExportAllDeclaration(it.clone_in(alloc))
-            }
+            Self::ImportDeclaration(it) => Statement::ImportDeclaration(it.clone_in(alloc)),
+            Self::ExportAllDeclaration(it) => Statement::ExportAllDeclaration(it.clone_in(alloc)),
             Self::ExportDefaultDeclaration(it) => {
-                Self::Cloned::ExportDefaultDeclaration(it.clone_in(alloc))
+                Statement::ExportDefaultDeclaration(it.clone_in(alloc))
             }
             Self::ExportNamedDeclaration(it) => {
-                Self::Cloned::ExportNamedDeclaration(it.clone_in(alloc))
+                Statement::ExportNamedDeclaration(it.clone_in(alloc))
             }
-            Self::TSExportAssignment(it) => Self::Cloned::TSExportAssignment(it.clone_in(alloc)),
+            Self::TSExportAssignment(it) => Statement::TSExportAssignment(it.clone_in(alloc)),
             Self::TSNamespaceExportDeclaration(it) => {
-                Self::Cloned::TSNamespaceExportDeclaration(it.clone_in(alloc))
+                Statement::TSNamespaceExportDeclaration(it.clone_in(alloc))
             }
         }
     }
@@ -1051,20 +1085,20 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for Declaration<'old_alloc> {
     type Cloned = Declaration<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::VariableDeclaration(it) => Self::Cloned::VariableDeclaration(it.clone_in(alloc)),
-            Self::FunctionDeclaration(it) => Self::Cloned::FunctionDeclaration(it.clone_in(alloc)),
-            Self::ClassDeclaration(it) => Self::Cloned::ClassDeclaration(it.clone_in(alloc)),
-            Self::UsingDeclaration(it) => Self::Cloned::UsingDeclaration(it.clone_in(alloc)),
+            Self::VariableDeclaration(it) => Declaration::VariableDeclaration(it.clone_in(alloc)),
+            Self::FunctionDeclaration(it) => Declaration::FunctionDeclaration(it.clone_in(alloc)),
+            Self::ClassDeclaration(it) => Declaration::ClassDeclaration(it.clone_in(alloc)),
+            Self::UsingDeclaration(it) => Declaration::UsingDeclaration(it.clone_in(alloc)),
             Self::TSTypeAliasDeclaration(it) => {
-                Self::Cloned::TSTypeAliasDeclaration(it.clone_in(alloc))
+                Declaration::TSTypeAliasDeclaration(it.clone_in(alloc))
             }
             Self::TSInterfaceDeclaration(it) => {
-                Self::Cloned::TSInterfaceDeclaration(it.clone_in(alloc))
+                Declaration::TSInterfaceDeclaration(it.clone_in(alloc))
             }
-            Self::TSEnumDeclaration(it) => Self::Cloned::TSEnumDeclaration(it.clone_in(alloc)),
-            Self::TSModuleDeclaration(it) => Self::Cloned::TSModuleDeclaration(it.clone_in(alloc)),
+            Self::TSEnumDeclaration(it) => Declaration::TSEnumDeclaration(it.clone_in(alloc)),
+            Self::TSModuleDeclaration(it) => Declaration::TSModuleDeclaration(it.clone_in(alloc)),
             Self::TSImportEqualsDeclaration(it) => {
-                Self::Cloned::TSImportEqualsDeclaration(it.clone_in(alloc))
+                Declaration::TSImportEqualsDeclaration(it.clone_in(alloc))
             }
         }
     }
@@ -1086,9 +1120,9 @@ impl<'alloc> CloneIn<'alloc> for VariableDeclarationKind {
     type Cloned = VariableDeclarationKind;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Var => Self::Cloned::Var,
-            Self::Const => Self::Cloned::Const,
-            Self::Let => Self::Cloned::Let,
+            Self::Var => VariableDeclarationKind::Var,
+            Self::Const => VariableDeclarationKind::Const,
+            Self::Let => VariableDeclarationKind::Let,
         }
     }
 }
@@ -1186,69 +1220,79 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ForStatementInit<'old_alloc
     type Cloned = ForStatementInit<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::VariableDeclaration(it) => Self::Cloned::VariableDeclaration(it.clone_in(alloc)),
-            Self::UsingDeclaration(it) => Self::Cloned::UsingDeclaration(it.clone_in(alloc)),
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::VariableDeclaration(it) => {
+                ForStatementInit::VariableDeclaration(it.clone_in(alloc))
+            }
+            Self::UsingDeclaration(it) => ForStatementInit::UsingDeclaration(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => ForStatementInit::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => ForStatementInit::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => ForStatementInit::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => ForStatementInit::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => ForStatementInit::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => ForStatementInit::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => ForStatementInit::TemplateLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => ForStatementInit::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => ForStatementInit::MetaProperty(it.clone_in(alloc)),
+            Self::Super(it) => ForStatementInit::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => ForStatementInit::ArrayExpression(it.clone_in(alloc)),
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                ForStatementInit::ArrowFunctionExpression(it.clone_in(alloc))
             }
             Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
+                ForStatementInit::AssignmentExpression(it.clone_in(alloc))
             }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => ForStatementInit::AwaitExpression(it.clone_in(alloc)),
+            Self::BinaryExpression(it) => ForStatementInit::BinaryExpression(it.clone_in(alloc)),
+            Self::CallExpression(it) => ForStatementInit::CallExpression(it.clone_in(alloc)),
+            Self::ChainExpression(it) => ForStatementInit::ChainExpression(it.clone_in(alloc)),
+            Self::ClassExpression(it) => ForStatementInit::ClassExpression(it.clone_in(alloc)),
             Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
+                ForStatementInit::ConditionalExpression(it.clone_in(alloc))
             }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => {
+                ForStatementInit::FunctionExpression(it.clone_in(alloc))
+            }
+            Self::ImportExpression(it) => ForStatementInit::ImportExpression(it.clone_in(alloc)),
+            Self::LogicalExpression(it) => ForStatementInit::LogicalExpression(it.clone_in(alloc)),
+            Self::NewExpression(it) => ForStatementInit::NewExpression(it.clone_in(alloc)),
+            Self::ObjectExpression(it) => ForStatementInit::ObjectExpression(it.clone_in(alloc)),
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                ForStatementInit::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => {
+                ForStatementInit::SequenceExpression(it.clone_in(alloc))
+            }
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                ForStatementInit::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => ForStatementInit::ThisExpression(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => ForStatementInit::UnaryExpression(it.clone_in(alloc)),
+            Self::UpdateExpression(it) => ForStatementInit::UpdateExpression(it.clone_in(alloc)),
+            Self::YieldExpression(it) => ForStatementInit::YieldExpression(it.clone_in(alloc)),
+            Self::PrivateInExpression(it) => {
+                ForStatementInit::PrivateInExpression(it.clone_in(alloc))
+            }
+            Self::JSXElement(it) => ForStatementInit::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => ForStatementInit::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => ForStatementInit::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                ForStatementInit::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => ForStatementInit::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => {
+                ForStatementInit::TSNonNullExpression(it.clone_in(alloc))
+            }
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                ForStatementInit::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                ForStatementInit::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                ForStatementInit::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                ForStatementInit::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -1271,34 +1315,38 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ForStatementLeft<'old_alloc
     type Cloned = ForStatementLeft<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::VariableDeclaration(it) => Self::Cloned::VariableDeclaration(it.clone_in(alloc)),
-            Self::UsingDeclaration(it) => Self::Cloned::UsingDeclaration(it.clone_in(alloc)),
+            Self::VariableDeclaration(it) => {
+                ForStatementLeft::VariableDeclaration(it.clone_in(alloc))
+            }
+            Self::UsingDeclaration(it) => ForStatementLeft::UsingDeclaration(it.clone_in(alloc)),
             Self::AssignmentTargetIdentifier(it) => {
-                Self::Cloned::AssignmentTargetIdentifier(it.clone_in(alloc))
+                ForStatementLeft::AssignmentTargetIdentifier(it.clone_in(alloc))
             }
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => ForStatementLeft::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                ForStatementLeft::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => {
+                ForStatementLeft::TSNonNullExpression(it.clone_in(alloc))
+            }
+            Self::TSTypeAssertion(it) => ForStatementLeft::TSTypeAssertion(it.clone_in(alloc)),
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                ForStatementLeft::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                ForStatementLeft::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                ForStatementLeft::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                ForStatementLeft::PrivateFieldExpression(it.clone_in(alloc))
             }
             Self::ArrayAssignmentTarget(it) => {
-                Self::Cloned::ArrayAssignmentTarget(it.clone_in(alloc))
+                ForStatementLeft::ArrayAssignmentTarget(it.clone_in(alloc))
             }
             Self::ObjectAssignmentTarget(it) => {
-                Self::Cloned::ObjectAssignmentTarget(it.clone_in(alloc))
+                ForStatementLeft::ObjectAssignmentTarget(it.clone_in(alloc))
             }
         }
     }
@@ -1444,10 +1492,14 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for BindingPatternKind<'old_all
     type Cloned = BindingPatternKind<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::BindingIdentifier(it) => Self::Cloned::BindingIdentifier(it.clone_in(alloc)),
-            Self::ObjectPattern(it) => Self::Cloned::ObjectPattern(it.clone_in(alloc)),
-            Self::ArrayPattern(it) => Self::Cloned::ArrayPattern(it.clone_in(alloc)),
-            Self::AssignmentPattern(it) => Self::Cloned::AssignmentPattern(it.clone_in(alloc)),
+            Self::BindingIdentifier(it) => {
+                BindingPatternKind::BindingIdentifier(it.clone_in(alloc))
+            }
+            Self::ObjectPattern(it) => BindingPatternKind::ObjectPattern(it.clone_in(alloc)),
+            Self::ArrayPattern(it) => BindingPatternKind::ArrayPattern(it.clone_in(alloc)),
+            Self::AssignmentPattern(it) => {
+                BindingPatternKind::AssignmentPattern(it.clone_in(alloc))
+            }
         }
     }
 }
@@ -1532,10 +1584,10 @@ impl<'alloc> CloneIn<'alloc> for FunctionType {
     type Cloned = FunctionType;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::FunctionDeclaration => Self::Cloned::FunctionDeclaration,
-            Self::FunctionExpression => Self::Cloned::FunctionExpression,
-            Self::TSDeclareFunction => Self::Cloned::TSDeclareFunction,
-            Self::TSEmptyBodyFunctionExpression => Self::Cloned::TSEmptyBodyFunctionExpression,
+            Self::FunctionDeclaration => FunctionType::FunctionDeclaration,
+            Self::FunctionExpression => FunctionType::FunctionExpression,
+            Self::TSDeclareFunction => FunctionType::TSDeclareFunction,
+            Self::TSEmptyBodyFunctionExpression => FunctionType::TSEmptyBodyFunctionExpression,
         }
     }
 }
@@ -1570,10 +1622,10 @@ impl<'alloc> CloneIn<'alloc> for FormalParameterKind {
     type Cloned = FormalParameterKind;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::FormalParameter => Self::Cloned::FormalParameter,
-            Self::UniqueFormalParameters => Self::Cloned::UniqueFormalParameters,
-            Self::ArrowFormalParameters => Self::Cloned::ArrowFormalParameters,
-            Self::Signature => Self::Cloned::Signature,
+            Self::FormalParameter => FormalParameterKind::FormalParameter,
+            Self::UniqueFormalParameters => FormalParameterKind::UniqueFormalParameters,
+            Self::ArrowFormalParameters => FormalParameterKind::ArrowFormalParameters,
+            Self::Signature => FormalParameterKind::Signature,
         }
     }
 }
@@ -1640,8 +1692,8 @@ impl<'alloc> CloneIn<'alloc> for ClassType {
     type Cloned = ClassType;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::ClassDeclaration => Self::Cloned::ClassDeclaration,
-            Self::ClassExpression => Self::Cloned::ClassExpression,
+            Self::ClassDeclaration => ClassType::ClassDeclaration,
+            Self::ClassExpression => ClassType::ClassExpression,
         }
     }
 }
@@ -1657,11 +1709,11 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ClassElement<'old_alloc> {
     type Cloned = ClassElement<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::StaticBlock(it) => Self::Cloned::StaticBlock(it.clone_in(alloc)),
-            Self::MethodDefinition(it) => Self::Cloned::MethodDefinition(it.clone_in(alloc)),
-            Self::PropertyDefinition(it) => Self::Cloned::PropertyDefinition(it.clone_in(alloc)),
-            Self::AccessorProperty(it) => Self::Cloned::AccessorProperty(it.clone_in(alloc)),
-            Self::TSIndexSignature(it) => Self::Cloned::TSIndexSignature(it.clone_in(alloc)),
+            Self::StaticBlock(it) => ClassElement::StaticBlock(it.clone_in(alloc)),
+            Self::MethodDefinition(it) => ClassElement::MethodDefinition(it.clone_in(alloc)),
+            Self::PropertyDefinition(it) => ClassElement::PropertyDefinition(it.clone_in(alloc)),
+            Self::AccessorProperty(it) => ClassElement::AccessorProperty(it.clone_in(alloc)),
+            Self::TSIndexSignature(it) => ClassElement::TSIndexSignature(it.clone_in(alloc)),
         }
     }
 }
@@ -1689,8 +1741,8 @@ impl<'alloc> CloneIn<'alloc> for MethodDefinitionType {
     type Cloned = MethodDefinitionType;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::MethodDefinition => Self::Cloned::MethodDefinition,
-            Self::TSAbstractMethodDefinition => Self::Cloned::TSAbstractMethodDefinition,
+            Self::MethodDefinition => MethodDefinitionType::MethodDefinition,
+            Self::TSAbstractMethodDefinition => MethodDefinitionType::TSAbstractMethodDefinition,
         }
     }
 }
@@ -1721,8 +1773,10 @@ impl<'alloc> CloneIn<'alloc> for PropertyDefinitionType {
     type Cloned = PropertyDefinitionType;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::PropertyDefinition => Self::Cloned::PropertyDefinition,
-            Self::TSAbstractPropertyDefinition => Self::Cloned::TSAbstractPropertyDefinition,
+            Self::PropertyDefinition => PropertyDefinitionType::PropertyDefinition,
+            Self::TSAbstractPropertyDefinition => {
+                PropertyDefinitionType::TSAbstractPropertyDefinition
+            }
         }
     }
 }
@@ -1731,10 +1785,10 @@ impl<'alloc> CloneIn<'alloc> for MethodDefinitionKind {
     type Cloned = MethodDefinitionKind;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Constructor => Self::Cloned::Constructor,
-            Self::Method => Self::Cloned::Method,
-            Self::Get => Self::Cloned::Get,
-            Self::Set => Self::Cloned::Set,
+            Self::Constructor => MethodDefinitionKind::Constructor,
+            Self::Method => MethodDefinitionKind::Method,
+            Self::Get => MethodDefinitionKind::Get,
+            Self::Set => MethodDefinitionKind::Set,
         }
     }
 }
@@ -1761,19 +1815,21 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ModuleDeclaration<'old_allo
     type Cloned = ModuleDeclaration<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::ImportDeclaration(it) => Self::Cloned::ImportDeclaration(it.clone_in(alloc)),
+            Self::ImportDeclaration(it) => ModuleDeclaration::ImportDeclaration(it.clone_in(alloc)),
             Self::ExportAllDeclaration(it) => {
-                Self::Cloned::ExportAllDeclaration(it.clone_in(alloc))
+                ModuleDeclaration::ExportAllDeclaration(it.clone_in(alloc))
             }
             Self::ExportDefaultDeclaration(it) => {
-                Self::Cloned::ExportDefaultDeclaration(it.clone_in(alloc))
+                ModuleDeclaration::ExportDefaultDeclaration(it.clone_in(alloc))
             }
             Self::ExportNamedDeclaration(it) => {
-                Self::Cloned::ExportNamedDeclaration(it.clone_in(alloc))
+                ModuleDeclaration::ExportNamedDeclaration(it.clone_in(alloc))
             }
-            Self::TSExportAssignment(it) => Self::Cloned::TSExportAssignment(it.clone_in(alloc)),
+            Self::TSExportAssignment(it) => {
+                ModuleDeclaration::TSExportAssignment(it.clone_in(alloc))
+            }
             Self::TSNamespaceExportDeclaration(it) => {
-                Self::Cloned::TSNamespaceExportDeclaration(it.clone_in(alloc))
+                ModuleDeclaration::TSNamespaceExportDeclaration(it.clone_in(alloc))
             }
         }
     }
@@ -1783,8 +1839,8 @@ impl<'alloc> CloneIn<'alloc> for AccessorPropertyType {
     type Cloned = AccessorPropertyType;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::AccessorProperty => Self::Cloned::AccessorProperty,
-            Self::TSAbstractAccessorProperty => Self::Cloned::TSAbstractAccessorProperty,
+            Self::AccessorProperty => AccessorPropertyType::AccessorProperty,
+            Self::TSAbstractAccessorProperty => AccessorPropertyType::TSAbstractAccessorProperty,
         }
     }
 }
@@ -1832,12 +1888,14 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ImportDeclarationSpecifier<
     type Cloned = ImportDeclarationSpecifier<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::ImportSpecifier(it) => Self::Cloned::ImportSpecifier(it.clone_in(alloc)),
+            Self::ImportSpecifier(it) => {
+                ImportDeclarationSpecifier::ImportSpecifier(it.clone_in(alloc))
+            }
             Self::ImportDefaultSpecifier(it) => {
-                Self::Cloned::ImportDefaultSpecifier(it.clone_in(alloc))
+                ImportDeclarationSpecifier::ImportDefaultSpecifier(it.clone_in(alloc))
             }
             Self::ImportNamespaceSpecifier(it) => {
-                Self::Cloned::ImportNamespaceSpecifier(it.clone_in(alloc))
+                ImportDeclarationSpecifier::ImportNamespaceSpecifier(it.clone_in(alloc))
             }
         }
     }
@@ -1901,8 +1959,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ImportAttributeKey<'old_all
     type Cloned = ImportAttributeKey<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => ImportAttributeKey::Identifier(it.clone_in(alloc)),
+            Self::StringLiteral(it) => ImportAttributeKey::StringLiteral(it.clone_in(alloc)),
         }
     }
 }
@@ -1961,72 +2019,130 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ExportDefaultDeclarationKin
     type Cloned = ExportDefaultDeclarationKind<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::FunctionDeclaration(it) => Self::Cloned::FunctionDeclaration(it.clone_in(alloc)),
-            Self::ClassDeclaration(it) => Self::Cloned::ClassDeclaration(it.clone_in(alloc)),
-            Self::TSInterfaceDeclaration(it) => {
-                Self::Cloned::TSInterfaceDeclaration(it.clone_in(alloc))
+            Self::FunctionDeclaration(it) => {
+                ExportDefaultDeclarationKind::FunctionDeclaration(it.clone_in(alloc))
             }
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::ClassDeclaration(it) => {
+                ExportDefaultDeclarationKind::ClassDeclaration(it.clone_in(alloc))
+            }
+            Self::TSInterfaceDeclaration(it) => {
+                ExportDefaultDeclarationKind::TSInterfaceDeclaration(it.clone_in(alloc))
+            }
+            Self::BooleanLiteral(it) => {
+                ExportDefaultDeclarationKind::BooleanLiteral(it.clone_in(alloc))
+            }
+            Self::NullLiteral(it) => ExportDefaultDeclarationKind::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => {
+                ExportDefaultDeclarationKind::NumericLiteral(it.clone_in(alloc))
+            }
+            Self::BigIntLiteral(it) => {
+                ExportDefaultDeclarationKind::BigIntLiteral(it.clone_in(alloc))
+            }
+            Self::RegExpLiteral(it) => {
+                ExportDefaultDeclarationKind::RegExpLiteral(it.clone_in(alloc))
+            }
+            Self::StringLiteral(it) => {
+                ExportDefaultDeclarationKind::StringLiteral(it.clone_in(alloc))
+            }
+            Self::TemplateLiteral(it) => {
+                ExportDefaultDeclarationKind::TemplateLiteral(it.clone_in(alloc))
+            }
+            Self::Identifier(it) => ExportDefaultDeclarationKind::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => {
+                ExportDefaultDeclarationKind::MetaProperty(it.clone_in(alloc))
+            }
+            Self::Super(it) => ExportDefaultDeclarationKind::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => {
+                ExportDefaultDeclarationKind::ArrayExpression(it.clone_in(alloc))
+            }
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::ArrowFunctionExpression(it.clone_in(alloc))
             }
             Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::AssignmentExpression(it.clone_in(alloc))
             }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => {
+                ExportDefaultDeclarationKind::AwaitExpression(it.clone_in(alloc))
+            }
+            Self::BinaryExpression(it) => {
+                ExportDefaultDeclarationKind::BinaryExpression(it.clone_in(alloc))
+            }
+            Self::CallExpression(it) => {
+                ExportDefaultDeclarationKind::CallExpression(it.clone_in(alloc))
+            }
+            Self::ChainExpression(it) => {
+                ExportDefaultDeclarationKind::ChainExpression(it.clone_in(alloc))
+            }
+            Self::ClassExpression(it) => {
+                ExportDefaultDeclarationKind::ClassExpression(it.clone_in(alloc))
+            }
             Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::ConditionalExpression(it.clone_in(alloc))
             }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => {
+                ExportDefaultDeclarationKind::FunctionExpression(it.clone_in(alloc))
+            }
+            Self::ImportExpression(it) => {
+                ExportDefaultDeclarationKind::ImportExpression(it.clone_in(alloc))
+            }
+            Self::LogicalExpression(it) => {
+                ExportDefaultDeclarationKind::LogicalExpression(it.clone_in(alloc))
+            }
+            Self::NewExpression(it) => {
+                ExportDefaultDeclarationKind::NewExpression(it.clone_in(alloc))
+            }
+            Self::ObjectExpression(it) => {
+                ExportDefaultDeclarationKind::ObjectExpression(it.clone_in(alloc))
+            }
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => {
+                ExportDefaultDeclarationKind::SequenceExpression(it.clone_in(alloc))
+            }
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => {
+                ExportDefaultDeclarationKind::ThisExpression(it.clone_in(alloc))
+            }
+            Self::UnaryExpression(it) => {
+                ExportDefaultDeclarationKind::UnaryExpression(it.clone_in(alloc))
+            }
+            Self::UpdateExpression(it) => {
+                ExportDefaultDeclarationKind::UpdateExpression(it.clone_in(alloc))
+            }
+            Self::YieldExpression(it) => {
+                ExportDefaultDeclarationKind::YieldExpression(it.clone_in(alloc))
+            }
+            Self::PrivateInExpression(it) => {
+                ExportDefaultDeclarationKind::PrivateInExpression(it.clone_in(alloc))
+            }
+            Self::JSXElement(it) => ExportDefaultDeclarationKind::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => ExportDefaultDeclarationKind::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => {
+                ExportDefaultDeclarationKind::TSAsExpression(it.clone_in(alloc))
+            }
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => {
+                ExportDefaultDeclarationKind::TSTypeAssertion(it.clone_in(alloc))
+            }
+            Self::TSNonNullExpression(it) => {
+                ExportDefaultDeclarationKind::TSNonNullExpression(it.clone_in(alloc))
+            }
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                ExportDefaultDeclarationKind::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -2036,9 +2152,11 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for ModuleExportName<'old_alloc
     type Cloned = ModuleExportName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::IdentifierName(it) => Self::Cloned::IdentifierName(it.clone_in(alloc)),
-            Self::IdentifierReference(it) => Self::Cloned::IdentifierReference(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
+            Self::IdentifierName(it) => ModuleExportName::IdentifierName(it.clone_in(alloc)),
+            Self::IdentifierReference(it) => {
+                ModuleExportName::IdentifierReference(it.clone_in(alloc))
+            }
+            Self::StringLiteral(it) => ModuleExportName::StringLiteral(it.clone_in(alloc)),
         }
     }
 }
@@ -2083,75 +2201,85 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSEnumMemberName<'old_alloc
     type Cloned = TSEnumMemberName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::StaticIdentifier(it) => Self::Cloned::StaticIdentifier(it.clone_in(alloc)),
-            Self::StaticStringLiteral(it) => Self::Cloned::StaticStringLiteral(it.clone_in(alloc)),
+            Self::StaticIdentifier(it) => TSEnumMemberName::StaticIdentifier(it.clone_in(alloc)),
+            Self::StaticStringLiteral(it) => {
+                TSEnumMemberName::StaticStringLiteral(it.clone_in(alloc))
+            }
             Self::StaticTemplateLiteral(it) => {
-                Self::Cloned::StaticTemplateLiteral(it.clone_in(alloc))
+                TSEnumMemberName::StaticTemplateLiteral(it.clone_in(alloc))
             }
             Self::StaticNumericLiteral(it) => {
-                Self::Cloned::StaticNumericLiteral(it.clone_in(alloc))
+                TSEnumMemberName::StaticNumericLiteral(it.clone_in(alloc))
             }
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => TSEnumMemberName::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => TSEnumMemberName::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => TSEnumMemberName::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => TSEnumMemberName::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => TSEnumMemberName::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => TSEnumMemberName::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => TSEnumMemberName::TemplateLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => TSEnumMemberName::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => TSEnumMemberName::MetaProperty(it.clone_in(alloc)),
+            Self::Super(it) => TSEnumMemberName::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => TSEnumMemberName::ArrayExpression(it.clone_in(alloc)),
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                TSEnumMemberName::ArrowFunctionExpression(it.clone_in(alloc))
             }
             Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
+                TSEnumMemberName::AssignmentExpression(it.clone_in(alloc))
             }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => TSEnumMemberName::AwaitExpression(it.clone_in(alloc)),
+            Self::BinaryExpression(it) => TSEnumMemberName::BinaryExpression(it.clone_in(alloc)),
+            Self::CallExpression(it) => TSEnumMemberName::CallExpression(it.clone_in(alloc)),
+            Self::ChainExpression(it) => TSEnumMemberName::ChainExpression(it.clone_in(alloc)),
+            Self::ClassExpression(it) => TSEnumMemberName::ClassExpression(it.clone_in(alloc)),
             Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
+                TSEnumMemberName::ConditionalExpression(it.clone_in(alloc))
             }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => {
+                TSEnumMemberName::FunctionExpression(it.clone_in(alloc))
+            }
+            Self::ImportExpression(it) => TSEnumMemberName::ImportExpression(it.clone_in(alloc)),
+            Self::LogicalExpression(it) => TSEnumMemberName::LogicalExpression(it.clone_in(alloc)),
+            Self::NewExpression(it) => TSEnumMemberName::NewExpression(it.clone_in(alloc)),
+            Self::ObjectExpression(it) => TSEnumMemberName::ObjectExpression(it.clone_in(alloc)),
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                TSEnumMemberName::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => {
+                TSEnumMemberName::SequenceExpression(it.clone_in(alloc))
+            }
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                TSEnumMemberName::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => TSEnumMemberName::ThisExpression(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => TSEnumMemberName::UnaryExpression(it.clone_in(alloc)),
+            Self::UpdateExpression(it) => TSEnumMemberName::UpdateExpression(it.clone_in(alloc)),
+            Self::YieldExpression(it) => TSEnumMemberName::YieldExpression(it.clone_in(alloc)),
+            Self::PrivateInExpression(it) => {
+                TSEnumMemberName::PrivateInExpression(it.clone_in(alloc))
+            }
+            Self::JSXElement(it) => TSEnumMemberName::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => TSEnumMemberName::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => TSEnumMemberName::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                TSEnumMemberName::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => TSEnumMemberName::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => {
+                TSEnumMemberName::TSNonNullExpression(it.clone_in(alloc))
+            }
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                TSEnumMemberName::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                TSEnumMemberName::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                TSEnumMemberName::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                TSEnumMemberName::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -2178,14 +2306,14 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSLiteral<'old_alloc> {
     type Cloned = TSLiteral<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => TSLiteral::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => TSLiteral::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => TSLiteral::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => TSLiteral::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => TSLiteral::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => TSLiteral::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => TSLiteral::TemplateLiteral(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => TSLiteral::UnaryExpression(it.clone_in(alloc)),
         }
     }
 }
@@ -2194,48 +2322,44 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSType<'old_alloc> {
     type Cloned = TSType<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::TSAnyKeyword(it) => Self::Cloned::TSAnyKeyword(it.clone_in(alloc)),
-            Self::TSBigIntKeyword(it) => Self::Cloned::TSBigIntKeyword(it.clone_in(alloc)),
-            Self::TSBooleanKeyword(it) => Self::Cloned::TSBooleanKeyword(it.clone_in(alloc)),
-            Self::TSIntrinsicKeyword(it) => Self::Cloned::TSIntrinsicKeyword(it.clone_in(alloc)),
-            Self::TSNeverKeyword(it) => Self::Cloned::TSNeverKeyword(it.clone_in(alloc)),
-            Self::TSNullKeyword(it) => Self::Cloned::TSNullKeyword(it.clone_in(alloc)),
-            Self::TSNumberKeyword(it) => Self::Cloned::TSNumberKeyword(it.clone_in(alloc)),
-            Self::TSObjectKeyword(it) => Self::Cloned::TSObjectKeyword(it.clone_in(alloc)),
-            Self::TSStringKeyword(it) => Self::Cloned::TSStringKeyword(it.clone_in(alloc)),
-            Self::TSSymbolKeyword(it) => Self::Cloned::TSSymbolKeyword(it.clone_in(alloc)),
-            Self::TSUndefinedKeyword(it) => Self::Cloned::TSUndefinedKeyword(it.clone_in(alloc)),
-            Self::TSUnknownKeyword(it) => Self::Cloned::TSUnknownKeyword(it.clone_in(alloc)),
-            Self::TSVoidKeyword(it) => Self::Cloned::TSVoidKeyword(it.clone_in(alloc)),
-            Self::TSArrayType(it) => Self::Cloned::TSArrayType(it.clone_in(alloc)),
-            Self::TSConditionalType(it) => Self::Cloned::TSConditionalType(it.clone_in(alloc)),
-            Self::TSConstructorType(it) => Self::Cloned::TSConstructorType(it.clone_in(alloc)),
-            Self::TSFunctionType(it) => Self::Cloned::TSFunctionType(it.clone_in(alloc)),
-            Self::TSImportType(it) => Self::Cloned::TSImportType(it.clone_in(alloc)),
-            Self::TSIndexedAccessType(it) => Self::Cloned::TSIndexedAccessType(it.clone_in(alloc)),
-            Self::TSInferType(it) => Self::Cloned::TSInferType(it.clone_in(alloc)),
-            Self::TSIntersectionType(it) => Self::Cloned::TSIntersectionType(it.clone_in(alloc)),
-            Self::TSLiteralType(it) => Self::Cloned::TSLiteralType(it.clone_in(alloc)),
-            Self::TSMappedType(it) => Self::Cloned::TSMappedType(it.clone_in(alloc)),
-            Self::TSNamedTupleMember(it) => Self::Cloned::TSNamedTupleMember(it.clone_in(alloc)),
-            Self::TSQualifiedName(it) => Self::Cloned::TSQualifiedName(it.clone_in(alloc)),
-            Self::TSTemplateLiteralType(it) => {
-                Self::Cloned::TSTemplateLiteralType(it.clone_in(alloc))
-            }
-            Self::TSThisType(it) => Self::Cloned::TSThisType(it.clone_in(alloc)),
-            Self::TSTupleType(it) => Self::Cloned::TSTupleType(it.clone_in(alloc)),
-            Self::TSTypeLiteral(it) => Self::Cloned::TSTypeLiteral(it.clone_in(alloc)),
-            Self::TSTypeOperatorType(it) => Self::Cloned::TSTypeOperatorType(it.clone_in(alloc)),
-            Self::TSTypePredicate(it) => Self::Cloned::TSTypePredicate(it.clone_in(alloc)),
-            Self::TSTypeQuery(it) => Self::Cloned::TSTypeQuery(it.clone_in(alloc)),
-            Self::TSTypeReference(it) => Self::Cloned::TSTypeReference(it.clone_in(alloc)),
-            Self::TSUnionType(it) => Self::Cloned::TSUnionType(it.clone_in(alloc)),
-            Self::TSParenthesizedType(it) => Self::Cloned::TSParenthesizedType(it.clone_in(alloc)),
-            Self::JSDocNullableType(it) => Self::Cloned::JSDocNullableType(it.clone_in(alloc)),
-            Self::JSDocNonNullableType(it) => {
-                Self::Cloned::JSDocNonNullableType(it.clone_in(alloc))
-            }
-            Self::JSDocUnknownType(it) => Self::Cloned::JSDocUnknownType(it.clone_in(alloc)),
+            Self::TSAnyKeyword(it) => TSType::TSAnyKeyword(it.clone_in(alloc)),
+            Self::TSBigIntKeyword(it) => TSType::TSBigIntKeyword(it.clone_in(alloc)),
+            Self::TSBooleanKeyword(it) => TSType::TSBooleanKeyword(it.clone_in(alloc)),
+            Self::TSIntrinsicKeyword(it) => TSType::TSIntrinsicKeyword(it.clone_in(alloc)),
+            Self::TSNeverKeyword(it) => TSType::TSNeverKeyword(it.clone_in(alloc)),
+            Self::TSNullKeyword(it) => TSType::TSNullKeyword(it.clone_in(alloc)),
+            Self::TSNumberKeyword(it) => TSType::TSNumberKeyword(it.clone_in(alloc)),
+            Self::TSObjectKeyword(it) => TSType::TSObjectKeyword(it.clone_in(alloc)),
+            Self::TSStringKeyword(it) => TSType::TSStringKeyword(it.clone_in(alloc)),
+            Self::TSSymbolKeyword(it) => TSType::TSSymbolKeyword(it.clone_in(alloc)),
+            Self::TSUndefinedKeyword(it) => TSType::TSUndefinedKeyword(it.clone_in(alloc)),
+            Self::TSUnknownKeyword(it) => TSType::TSUnknownKeyword(it.clone_in(alloc)),
+            Self::TSVoidKeyword(it) => TSType::TSVoidKeyword(it.clone_in(alloc)),
+            Self::TSArrayType(it) => TSType::TSArrayType(it.clone_in(alloc)),
+            Self::TSConditionalType(it) => TSType::TSConditionalType(it.clone_in(alloc)),
+            Self::TSConstructorType(it) => TSType::TSConstructorType(it.clone_in(alloc)),
+            Self::TSFunctionType(it) => TSType::TSFunctionType(it.clone_in(alloc)),
+            Self::TSImportType(it) => TSType::TSImportType(it.clone_in(alloc)),
+            Self::TSIndexedAccessType(it) => TSType::TSIndexedAccessType(it.clone_in(alloc)),
+            Self::TSInferType(it) => TSType::TSInferType(it.clone_in(alloc)),
+            Self::TSIntersectionType(it) => TSType::TSIntersectionType(it.clone_in(alloc)),
+            Self::TSLiteralType(it) => TSType::TSLiteralType(it.clone_in(alloc)),
+            Self::TSMappedType(it) => TSType::TSMappedType(it.clone_in(alloc)),
+            Self::TSNamedTupleMember(it) => TSType::TSNamedTupleMember(it.clone_in(alloc)),
+            Self::TSQualifiedName(it) => TSType::TSQualifiedName(it.clone_in(alloc)),
+            Self::TSTemplateLiteralType(it) => TSType::TSTemplateLiteralType(it.clone_in(alloc)),
+            Self::TSThisType(it) => TSType::TSThisType(it.clone_in(alloc)),
+            Self::TSTupleType(it) => TSType::TSTupleType(it.clone_in(alloc)),
+            Self::TSTypeLiteral(it) => TSType::TSTypeLiteral(it.clone_in(alloc)),
+            Self::TSTypeOperatorType(it) => TSType::TSTypeOperatorType(it.clone_in(alloc)),
+            Self::TSTypePredicate(it) => TSType::TSTypePredicate(it.clone_in(alloc)),
+            Self::TSTypeQuery(it) => TSType::TSTypeQuery(it.clone_in(alloc)),
+            Self::TSTypeReference(it) => TSType::TSTypeReference(it.clone_in(alloc)),
+            Self::TSUnionType(it) => TSType::TSUnionType(it.clone_in(alloc)),
+            Self::TSParenthesizedType(it) => TSType::TSParenthesizedType(it.clone_in(alloc)),
+            Self::JSDocNullableType(it) => TSType::JSDocNullableType(it.clone_in(alloc)),
+            Self::JSDocNonNullableType(it) => TSType::JSDocNonNullableType(it.clone_in(alloc)),
+            Self::JSDocUnknownType(it) => TSType::JSDocUnknownType(it.clone_in(alloc)),
         }
     }
 }
@@ -2293,9 +2417,9 @@ impl<'alloc> CloneIn<'alloc> for TSTypeOperatorOperator {
     type Cloned = TSTypeOperatorOperator;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Keyof => Self::Cloned::Keyof,
-            Self::Unique => Self::Cloned::Unique,
-            Self::Readonly => Self::Cloned::Readonly,
+            Self::Keyof => TSTypeOperatorOperator::Keyof,
+            Self::Unique => TSTypeOperatorOperator::Unique,
+            Self::Readonly => TSTypeOperatorOperator::Readonly,
         }
     }
 }
@@ -2367,50 +2491,54 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSTupleElement<'old_alloc> 
     type Cloned = TSTupleElement<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::TSOptionalType(it) => Self::Cloned::TSOptionalType(it.clone_in(alloc)),
-            Self::TSRestType(it) => Self::Cloned::TSRestType(it.clone_in(alloc)),
-            Self::TSAnyKeyword(it) => Self::Cloned::TSAnyKeyword(it.clone_in(alloc)),
-            Self::TSBigIntKeyword(it) => Self::Cloned::TSBigIntKeyword(it.clone_in(alloc)),
-            Self::TSBooleanKeyword(it) => Self::Cloned::TSBooleanKeyword(it.clone_in(alloc)),
-            Self::TSIntrinsicKeyword(it) => Self::Cloned::TSIntrinsicKeyword(it.clone_in(alloc)),
-            Self::TSNeverKeyword(it) => Self::Cloned::TSNeverKeyword(it.clone_in(alloc)),
-            Self::TSNullKeyword(it) => Self::Cloned::TSNullKeyword(it.clone_in(alloc)),
-            Self::TSNumberKeyword(it) => Self::Cloned::TSNumberKeyword(it.clone_in(alloc)),
-            Self::TSObjectKeyword(it) => Self::Cloned::TSObjectKeyword(it.clone_in(alloc)),
-            Self::TSStringKeyword(it) => Self::Cloned::TSStringKeyword(it.clone_in(alloc)),
-            Self::TSSymbolKeyword(it) => Self::Cloned::TSSymbolKeyword(it.clone_in(alloc)),
-            Self::TSUndefinedKeyword(it) => Self::Cloned::TSUndefinedKeyword(it.clone_in(alloc)),
-            Self::TSUnknownKeyword(it) => Self::Cloned::TSUnknownKeyword(it.clone_in(alloc)),
-            Self::TSVoidKeyword(it) => Self::Cloned::TSVoidKeyword(it.clone_in(alloc)),
-            Self::TSArrayType(it) => Self::Cloned::TSArrayType(it.clone_in(alloc)),
-            Self::TSConditionalType(it) => Self::Cloned::TSConditionalType(it.clone_in(alloc)),
-            Self::TSConstructorType(it) => Self::Cloned::TSConstructorType(it.clone_in(alloc)),
-            Self::TSFunctionType(it) => Self::Cloned::TSFunctionType(it.clone_in(alloc)),
-            Self::TSImportType(it) => Self::Cloned::TSImportType(it.clone_in(alloc)),
-            Self::TSIndexedAccessType(it) => Self::Cloned::TSIndexedAccessType(it.clone_in(alloc)),
-            Self::TSInferType(it) => Self::Cloned::TSInferType(it.clone_in(alloc)),
-            Self::TSIntersectionType(it) => Self::Cloned::TSIntersectionType(it.clone_in(alloc)),
-            Self::TSLiteralType(it) => Self::Cloned::TSLiteralType(it.clone_in(alloc)),
-            Self::TSMappedType(it) => Self::Cloned::TSMappedType(it.clone_in(alloc)),
-            Self::TSNamedTupleMember(it) => Self::Cloned::TSNamedTupleMember(it.clone_in(alloc)),
-            Self::TSQualifiedName(it) => Self::Cloned::TSQualifiedName(it.clone_in(alloc)),
+            Self::TSOptionalType(it) => TSTupleElement::TSOptionalType(it.clone_in(alloc)),
+            Self::TSRestType(it) => TSTupleElement::TSRestType(it.clone_in(alloc)),
+            Self::TSAnyKeyword(it) => TSTupleElement::TSAnyKeyword(it.clone_in(alloc)),
+            Self::TSBigIntKeyword(it) => TSTupleElement::TSBigIntKeyword(it.clone_in(alloc)),
+            Self::TSBooleanKeyword(it) => TSTupleElement::TSBooleanKeyword(it.clone_in(alloc)),
+            Self::TSIntrinsicKeyword(it) => TSTupleElement::TSIntrinsicKeyword(it.clone_in(alloc)),
+            Self::TSNeverKeyword(it) => TSTupleElement::TSNeverKeyword(it.clone_in(alloc)),
+            Self::TSNullKeyword(it) => TSTupleElement::TSNullKeyword(it.clone_in(alloc)),
+            Self::TSNumberKeyword(it) => TSTupleElement::TSNumberKeyword(it.clone_in(alloc)),
+            Self::TSObjectKeyword(it) => TSTupleElement::TSObjectKeyword(it.clone_in(alloc)),
+            Self::TSStringKeyword(it) => TSTupleElement::TSStringKeyword(it.clone_in(alloc)),
+            Self::TSSymbolKeyword(it) => TSTupleElement::TSSymbolKeyword(it.clone_in(alloc)),
+            Self::TSUndefinedKeyword(it) => TSTupleElement::TSUndefinedKeyword(it.clone_in(alloc)),
+            Self::TSUnknownKeyword(it) => TSTupleElement::TSUnknownKeyword(it.clone_in(alloc)),
+            Self::TSVoidKeyword(it) => TSTupleElement::TSVoidKeyword(it.clone_in(alloc)),
+            Self::TSArrayType(it) => TSTupleElement::TSArrayType(it.clone_in(alloc)),
+            Self::TSConditionalType(it) => TSTupleElement::TSConditionalType(it.clone_in(alloc)),
+            Self::TSConstructorType(it) => TSTupleElement::TSConstructorType(it.clone_in(alloc)),
+            Self::TSFunctionType(it) => TSTupleElement::TSFunctionType(it.clone_in(alloc)),
+            Self::TSImportType(it) => TSTupleElement::TSImportType(it.clone_in(alloc)),
+            Self::TSIndexedAccessType(it) => {
+                TSTupleElement::TSIndexedAccessType(it.clone_in(alloc))
+            }
+            Self::TSInferType(it) => TSTupleElement::TSInferType(it.clone_in(alloc)),
+            Self::TSIntersectionType(it) => TSTupleElement::TSIntersectionType(it.clone_in(alloc)),
+            Self::TSLiteralType(it) => TSTupleElement::TSLiteralType(it.clone_in(alloc)),
+            Self::TSMappedType(it) => TSTupleElement::TSMappedType(it.clone_in(alloc)),
+            Self::TSNamedTupleMember(it) => TSTupleElement::TSNamedTupleMember(it.clone_in(alloc)),
+            Self::TSQualifiedName(it) => TSTupleElement::TSQualifiedName(it.clone_in(alloc)),
             Self::TSTemplateLiteralType(it) => {
-                Self::Cloned::TSTemplateLiteralType(it.clone_in(alloc))
+                TSTupleElement::TSTemplateLiteralType(it.clone_in(alloc))
             }
-            Self::TSThisType(it) => Self::Cloned::TSThisType(it.clone_in(alloc)),
-            Self::TSTupleType(it) => Self::Cloned::TSTupleType(it.clone_in(alloc)),
-            Self::TSTypeLiteral(it) => Self::Cloned::TSTypeLiteral(it.clone_in(alloc)),
-            Self::TSTypeOperatorType(it) => Self::Cloned::TSTypeOperatorType(it.clone_in(alloc)),
-            Self::TSTypePredicate(it) => Self::Cloned::TSTypePredicate(it.clone_in(alloc)),
-            Self::TSTypeQuery(it) => Self::Cloned::TSTypeQuery(it.clone_in(alloc)),
-            Self::TSTypeReference(it) => Self::Cloned::TSTypeReference(it.clone_in(alloc)),
-            Self::TSUnionType(it) => Self::Cloned::TSUnionType(it.clone_in(alloc)),
-            Self::TSParenthesizedType(it) => Self::Cloned::TSParenthesizedType(it.clone_in(alloc)),
-            Self::JSDocNullableType(it) => Self::Cloned::JSDocNullableType(it.clone_in(alloc)),
+            Self::TSThisType(it) => TSTupleElement::TSThisType(it.clone_in(alloc)),
+            Self::TSTupleType(it) => TSTupleElement::TSTupleType(it.clone_in(alloc)),
+            Self::TSTypeLiteral(it) => TSTupleElement::TSTypeLiteral(it.clone_in(alloc)),
+            Self::TSTypeOperatorType(it) => TSTupleElement::TSTypeOperatorType(it.clone_in(alloc)),
+            Self::TSTypePredicate(it) => TSTupleElement::TSTypePredicate(it.clone_in(alloc)),
+            Self::TSTypeQuery(it) => TSTupleElement::TSTypeQuery(it.clone_in(alloc)),
+            Self::TSTypeReference(it) => TSTupleElement::TSTypeReference(it.clone_in(alloc)),
+            Self::TSUnionType(it) => TSTupleElement::TSUnionType(it.clone_in(alloc)),
+            Self::TSParenthesizedType(it) => {
+                TSTupleElement::TSParenthesizedType(it.clone_in(alloc))
+            }
+            Self::JSDocNullableType(it) => TSTupleElement::JSDocNullableType(it.clone_in(alloc)),
             Self::JSDocNonNullableType(it) => {
-                Self::Cloned::JSDocNonNullableType(it.clone_in(alloc))
+                TSTupleElement::JSDocNonNullableType(it.clone_in(alloc))
             }
-            Self::JSDocUnknownType(it) => Self::Cloned::JSDocUnknownType(it.clone_in(alloc)),
+            Self::JSDocUnknownType(it) => TSTupleElement::JSDocUnknownType(it.clone_in(alloc)),
         }
     }
 }
@@ -2528,8 +2656,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSTypeName<'old_alloc> {
     type Cloned = TSTypeName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::IdentifierReference(it) => Self::Cloned::IdentifierReference(it.clone_in(alloc)),
-            Self::QualifiedName(it) => Self::Cloned::QualifiedName(it.clone_in(alloc)),
+            Self::IdentifierReference(it) => TSTypeName::IdentifierReference(it.clone_in(alloc)),
+            Self::QualifiedName(it) => TSTypeName::QualifiedName(it.clone_in(alloc)),
         }
     }
 }
@@ -2598,9 +2726,9 @@ impl<'alloc> CloneIn<'alloc> for TSAccessibility {
     type Cloned = TSAccessibility;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Private => Self::Cloned::Private,
-            Self::Protected => Self::Cloned::Protected,
-            Self::Public => Self::Cloned::Public,
+            Self::Private => TSAccessibility::Private,
+            Self::Protected => TSAccessibility::Protected,
+            Self::Public => TSAccessibility::Public,
         }
     }
 }
@@ -2656,15 +2784,15 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSSignature<'old_alloc> {
     type Cloned = TSSignature<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::TSIndexSignature(it) => Self::Cloned::TSIndexSignature(it.clone_in(alloc)),
-            Self::TSPropertySignature(it) => Self::Cloned::TSPropertySignature(it.clone_in(alloc)),
+            Self::TSIndexSignature(it) => TSSignature::TSIndexSignature(it.clone_in(alloc)),
+            Self::TSPropertySignature(it) => TSSignature::TSPropertySignature(it.clone_in(alloc)),
             Self::TSCallSignatureDeclaration(it) => {
-                Self::Cloned::TSCallSignatureDeclaration(it.clone_in(alloc))
+                TSSignature::TSCallSignatureDeclaration(it.clone_in(alloc))
             }
             Self::TSConstructSignatureDeclaration(it) => {
-                Self::Cloned::TSConstructSignatureDeclaration(it.clone_in(alloc))
+                TSSignature::TSConstructSignatureDeclaration(it.clone_in(alloc))
             }
-            Self::TSMethodSignature(it) => Self::Cloned::TSMethodSignature(it.clone_in(alloc)),
+            Self::TSMethodSignature(it) => TSSignature::TSMethodSignature(it.clone_in(alloc)),
         }
     }
 }
@@ -2698,9 +2826,9 @@ impl<'alloc> CloneIn<'alloc> for TSMethodSignatureKind {
     type Cloned = TSMethodSignatureKind;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Method => Self::Cloned::Method,
-            Self::Get => Self::Cloned::Get,
-            Self::Set => Self::Cloned::Set,
+            Self::Method => TSMethodSignatureKind::Method,
+            Self::Get => TSMethodSignatureKind::Get,
+            Self::Set => TSMethodSignatureKind::Set,
         }
     }
 }
@@ -2774,8 +2902,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSTypePredicateName<'old_al
     type Cloned = TSTypePredicateName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::This(it) => Self::Cloned::This(it.clone_in(alloc)),
+            Self::Identifier(it) => TSTypePredicateName::Identifier(it.clone_in(alloc)),
+            Self::This(it) => TSTypePredicateName::This(it.clone_in(alloc)),
         }
     }
 }
@@ -2798,9 +2926,9 @@ impl<'alloc> CloneIn<'alloc> for TSModuleDeclarationKind {
     type Cloned = TSModuleDeclarationKind;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Global => Self::Cloned::Global,
-            Self::Module => Self::Cloned::Module,
-            Self::Namespace => Self::Cloned::Namespace,
+            Self::Global => TSModuleDeclarationKind::Global,
+            Self::Module => TSModuleDeclarationKind::Module,
+            Self::Namespace => TSModuleDeclarationKind::Namespace,
         }
     }
 }
@@ -2809,8 +2937,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationName<'ol
     type Cloned = TSModuleDeclarationName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => TSModuleDeclarationName::Identifier(it.clone_in(alloc)),
+            Self::StringLiteral(it) => TSModuleDeclarationName::StringLiteral(it.clone_in(alloc)),
         }
     }
 }
@@ -2819,8 +2947,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSModuleDeclarationBody<'ol
     type Cloned = TSModuleDeclarationBody<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::TSModuleDeclaration(it) => Self::Cloned::TSModuleDeclaration(it.clone_in(alloc)),
-            Self::TSModuleBlock(it) => Self::Cloned::TSModuleBlock(it.clone_in(alloc)),
+            Self::TSModuleDeclaration(it) => {
+                TSModuleDeclarationBody::TSModuleDeclaration(it.clone_in(alloc))
+            }
+            Self::TSModuleBlock(it) => TSModuleDeclarationBody::TSModuleBlock(it.clone_in(alloc)),
         }
     }
 }
@@ -2868,9 +2998,11 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSTypeQueryExprName<'old_al
     type Cloned = TSTypeQueryExprName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::TSImportType(it) => Self::Cloned::TSImportType(it.clone_in(alloc)),
-            Self::IdentifierReference(it) => Self::Cloned::IdentifierReference(it.clone_in(alloc)),
-            Self::QualifiedName(it) => Self::Cloned::QualifiedName(it.clone_in(alloc)),
+            Self::TSImportType(it) => TSTypeQueryExprName::TSImportType(it.clone_in(alloc)),
+            Self::IdentifierReference(it) => {
+                TSTypeQueryExprName::IdentifierReference(it.clone_in(alloc))
+            }
+            Self::QualifiedName(it) => TSTypeQueryExprName::QualifiedName(it.clone_in(alloc)),
         }
     }
 }
@@ -2915,8 +3047,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSImportAttributeName<'old_
     type Cloned = TSImportAttributeName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => TSImportAttributeName::Identifier(it.clone_in(alloc)),
+            Self::StringLiteral(it) => TSImportAttributeName::StringLiteral(it.clone_in(alloc)),
         }
     }
 }
@@ -2966,10 +3098,10 @@ impl<'alloc> CloneIn<'alloc> for TSMappedTypeModifierOperator {
     type Cloned = TSMappedTypeModifierOperator;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::True => Self::Cloned::True,
-            Self::Plus => Self::Cloned::Plus,
-            Self::Minus => Self::Cloned::Minus,
-            Self::None => Self::Cloned::None,
+            Self::True => TSMappedTypeModifierOperator::True,
+            Self::Plus => TSMappedTypeModifierOperator::Plus,
+            Self::Minus => TSMappedTypeModifierOperator::Minus,
+            Self::None => TSMappedTypeModifierOperator::None,
         }
     }
 }
@@ -3035,10 +3167,12 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for TSModuleReference<'old_allo
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
             Self::ExternalModuleReference(it) => {
-                Self::Cloned::ExternalModuleReference(it.clone_in(alloc))
+                TSModuleReference::ExternalModuleReference(it.clone_in(alloc))
             }
-            Self::IdentifierReference(it) => Self::Cloned::IdentifierReference(it.clone_in(alloc)),
-            Self::QualifiedName(it) => Self::Cloned::QualifiedName(it.clone_in(alloc)),
+            Self::IdentifierReference(it) => {
+                TSModuleReference::IdentifierReference(it.clone_in(alloc))
+            }
+            Self::QualifiedName(it) => TSModuleReference::QualifiedName(it.clone_in(alloc)),
         }
     }
 }
@@ -3105,8 +3239,8 @@ impl<'alloc> CloneIn<'alloc> for ImportOrExportKind {
     type Cloned = ImportOrExportKind;
     fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Value => Self::Cloned::Value,
-            Self::Type => Self::Cloned::Type,
+            Self::Value => ImportOrExportKind::Value,
+            Self::Type => ImportOrExportKind::Type,
         }
     }
 }
@@ -3202,9 +3336,9 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXElementName<'old_alloc> 
     type Cloned = JSXElementName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::NamespacedName(it) => Self::Cloned::NamespacedName(it.clone_in(alloc)),
-            Self::MemberExpression(it) => Self::Cloned::MemberExpression(it.clone_in(alloc)),
+            Self::Identifier(it) => JSXElementName::Identifier(it.clone_in(alloc)),
+            Self::NamespacedName(it) => JSXElementName::NamespacedName(it.clone_in(alloc)),
+            Self::MemberExpression(it) => JSXElementName::MemberExpression(it.clone_in(alloc)),
         }
     }
 }
@@ -3235,8 +3369,10 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXMemberExpressionObject<'
     type Cloned = JSXMemberExpressionObject<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MemberExpression(it) => Self::Cloned::MemberExpression(it.clone_in(alloc)),
+            Self::Identifier(it) => JSXMemberExpressionObject::Identifier(it.clone_in(alloc)),
+            Self::MemberExpression(it) => {
+                JSXMemberExpressionObject::MemberExpression(it.clone_in(alloc))
+            }
         }
     }
 }
@@ -3255,68 +3391,68 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXExpression<'old_alloc> {
     type Cloned = JSXExpression<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::EmptyExpression(it) => Self::Cloned::EmptyExpression(it.clone_in(alloc)),
-            Self::BooleanLiteral(it) => Self::Cloned::BooleanLiteral(it.clone_in(alloc)),
-            Self::NullLiteral(it) => Self::Cloned::NullLiteral(it.clone_in(alloc)),
-            Self::NumericLiteral(it) => Self::Cloned::NumericLiteral(it.clone_in(alloc)),
-            Self::BigIntLiteral(it) => Self::Cloned::BigIntLiteral(it.clone_in(alloc)),
-            Self::RegExpLiteral(it) => Self::Cloned::RegExpLiteral(it.clone_in(alloc)),
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::TemplateLiteral(it) => Self::Cloned::TemplateLiteral(it.clone_in(alloc)),
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::MetaProperty(it) => Self::Cloned::MetaProperty(it.clone_in(alloc)),
-            Self::Super(it) => Self::Cloned::Super(it.clone_in(alloc)),
-            Self::ArrayExpression(it) => Self::Cloned::ArrayExpression(it.clone_in(alloc)),
+            Self::EmptyExpression(it) => JSXExpression::EmptyExpression(it.clone_in(alloc)),
+            Self::BooleanLiteral(it) => JSXExpression::BooleanLiteral(it.clone_in(alloc)),
+            Self::NullLiteral(it) => JSXExpression::NullLiteral(it.clone_in(alloc)),
+            Self::NumericLiteral(it) => JSXExpression::NumericLiteral(it.clone_in(alloc)),
+            Self::BigIntLiteral(it) => JSXExpression::BigIntLiteral(it.clone_in(alloc)),
+            Self::RegExpLiteral(it) => JSXExpression::RegExpLiteral(it.clone_in(alloc)),
+            Self::StringLiteral(it) => JSXExpression::StringLiteral(it.clone_in(alloc)),
+            Self::TemplateLiteral(it) => JSXExpression::TemplateLiteral(it.clone_in(alloc)),
+            Self::Identifier(it) => JSXExpression::Identifier(it.clone_in(alloc)),
+            Self::MetaProperty(it) => JSXExpression::MetaProperty(it.clone_in(alloc)),
+            Self::Super(it) => JSXExpression::Super(it.clone_in(alloc)),
+            Self::ArrayExpression(it) => JSXExpression::ArrayExpression(it.clone_in(alloc)),
             Self::ArrowFunctionExpression(it) => {
-                Self::Cloned::ArrowFunctionExpression(it.clone_in(alloc))
+                JSXExpression::ArrowFunctionExpression(it.clone_in(alloc))
             }
             Self::AssignmentExpression(it) => {
-                Self::Cloned::AssignmentExpression(it.clone_in(alloc))
+                JSXExpression::AssignmentExpression(it.clone_in(alloc))
             }
-            Self::AwaitExpression(it) => Self::Cloned::AwaitExpression(it.clone_in(alloc)),
-            Self::BinaryExpression(it) => Self::Cloned::BinaryExpression(it.clone_in(alloc)),
-            Self::CallExpression(it) => Self::Cloned::CallExpression(it.clone_in(alloc)),
-            Self::ChainExpression(it) => Self::Cloned::ChainExpression(it.clone_in(alloc)),
-            Self::ClassExpression(it) => Self::Cloned::ClassExpression(it.clone_in(alloc)),
+            Self::AwaitExpression(it) => JSXExpression::AwaitExpression(it.clone_in(alloc)),
+            Self::BinaryExpression(it) => JSXExpression::BinaryExpression(it.clone_in(alloc)),
+            Self::CallExpression(it) => JSXExpression::CallExpression(it.clone_in(alloc)),
+            Self::ChainExpression(it) => JSXExpression::ChainExpression(it.clone_in(alloc)),
+            Self::ClassExpression(it) => JSXExpression::ClassExpression(it.clone_in(alloc)),
             Self::ConditionalExpression(it) => {
-                Self::Cloned::ConditionalExpression(it.clone_in(alloc))
+                JSXExpression::ConditionalExpression(it.clone_in(alloc))
             }
-            Self::FunctionExpression(it) => Self::Cloned::FunctionExpression(it.clone_in(alloc)),
-            Self::ImportExpression(it) => Self::Cloned::ImportExpression(it.clone_in(alloc)),
-            Self::LogicalExpression(it) => Self::Cloned::LogicalExpression(it.clone_in(alloc)),
-            Self::NewExpression(it) => Self::Cloned::NewExpression(it.clone_in(alloc)),
-            Self::ObjectExpression(it) => Self::Cloned::ObjectExpression(it.clone_in(alloc)),
+            Self::FunctionExpression(it) => JSXExpression::FunctionExpression(it.clone_in(alloc)),
+            Self::ImportExpression(it) => JSXExpression::ImportExpression(it.clone_in(alloc)),
+            Self::LogicalExpression(it) => JSXExpression::LogicalExpression(it.clone_in(alloc)),
+            Self::NewExpression(it) => JSXExpression::NewExpression(it.clone_in(alloc)),
+            Self::ObjectExpression(it) => JSXExpression::ObjectExpression(it.clone_in(alloc)),
             Self::ParenthesizedExpression(it) => {
-                Self::Cloned::ParenthesizedExpression(it.clone_in(alloc))
+                JSXExpression::ParenthesizedExpression(it.clone_in(alloc))
             }
-            Self::SequenceExpression(it) => Self::Cloned::SequenceExpression(it.clone_in(alloc)),
+            Self::SequenceExpression(it) => JSXExpression::SequenceExpression(it.clone_in(alloc)),
             Self::TaggedTemplateExpression(it) => {
-                Self::Cloned::TaggedTemplateExpression(it.clone_in(alloc))
+                JSXExpression::TaggedTemplateExpression(it.clone_in(alloc))
             }
-            Self::ThisExpression(it) => Self::Cloned::ThisExpression(it.clone_in(alloc)),
-            Self::UnaryExpression(it) => Self::Cloned::UnaryExpression(it.clone_in(alloc)),
-            Self::UpdateExpression(it) => Self::Cloned::UpdateExpression(it.clone_in(alloc)),
-            Self::YieldExpression(it) => Self::Cloned::YieldExpression(it.clone_in(alloc)),
-            Self::PrivateInExpression(it) => Self::Cloned::PrivateInExpression(it.clone_in(alloc)),
-            Self::JSXElement(it) => Self::Cloned::JSXElement(it.clone_in(alloc)),
-            Self::JSXFragment(it) => Self::Cloned::JSXFragment(it.clone_in(alloc)),
-            Self::TSAsExpression(it) => Self::Cloned::TSAsExpression(it.clone_in(alloc)),
+            Self::ThisExpression(it) => JSXExpression::ThisExpression(it.clone_in(alloc)),
+            Self::UnaryExpression(it) => JSXExpression::UnaryExpression(it.clone_in(alloc)),
+            Self::UpdateExpression(it) => JSXExpression::UpdateExpression(it.clone_in(alloc)),
+            Self::YieldExpression(it) => JSXExpression::YieldExpression(it.clone_in(alloc)),
+            Self::PrivateInExpression(it) => JSXExpression::PrivateInExpression(it.clone_in(alloc)),
+            Self::JSXElement(it) => JSXExpression::JSXElement(it.clone_in(alloc)),
+            Self::JSXFragment(it) => JSXExpression::JSXFragment(it.clone_in(alloc)),
+            Self::TSAsExpression(it) => JSXExpression::TSAsExpression(it.clone_in(alloc)),
             Self::TSSatisfiesExpression(it) => {
-                Self::Cloned::TSSatisfiesExpression(it.clone_in(alloc))
+                JSXExpression::TSSatisfiesExpression(it.clone_in(alloc))
             }
-            Self::TSTypeAssertion(it) => Self::Cloned::TSTypeAssertion(it.clone_in(alloc)),
-            Self::TSNonNullExpression(it) => Self::Cloned::TSNonNullExpression(it.clone_in(alloc)),
+            Self::TSTypeAssertion(it) => JSXExpression::TSTypeAssertion(it.clone_in(alloc)),
+            Self::TSNonNullExpression(it) => JSXExpression::TSNonNullExpression(it.clone_in(alloc)),
             Self::TSInstantiationExpression(it) => {
-                Self::Cloned::TSInstantiationExpression(it.clone_in(alloc))
+                JSXExpression::TSInstantiationExpression(it.clone_in(alloc))
             }
             Self::ComputedMemberExpression(it) => {
-                Self::Cloned::ComputedMemberExpression(it.clone_in(alloc))
+                JSXExpression::ComputedMemberExpression(it.clone_in(alloc))
             }
             Self::StaticMemberExpression(it) => {
-                Self::Cloned::StaticMemberExpression(it.clone_in(alloc))
+                JSXExpression::StaticMemberExpression(it.clone_in(alloc))
             }
             Self::PrivateFieldExpression(it) => {
-                Self::Cloned::PrivateFieldExpression(it.clone_in(alloc))
+                JSXExpression::PrivateFieldExpression(it.clone_in(alloc))
             }
         }
     }
@@ -3333,8 +3469,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXAttributeItem<'old_alloc
     type Cloned = JSXAttributeItem<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Attribute(it) => Self::Cloned::Attribute(it.clone_in(alloc)),
-            Self::SpreadAttribute(it) => Self::Cloned::SpreadAttribute(it.clone_in(alloc)),
+            Self::Attribute(it) => JSXAttributeItem::Attribute(it.clone_in(alloc)),
+            Self::SpreadAttribute(it) => JSXAttributeItem::SpreadAttribute(it.clone_in(alloc)),
         }
     }
 }
@@ -3364,8 +3500,8 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXAttributeName<'old_alloc
     type Cloned = JSXAttributeName<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Identifier(it) => Self::Cloned::Identifier(it.clone_in(alloc)),
-            Self::NamespacedName(it) => Self::Cloned::NamespacedName(it.clone_in(alloc)),
+            Self::Identifier(it) => JSXAttributeName::Identifier(it.clone_in(alloc)),
+            Self::NamespacedName(it) => JSXAttributeName::NamespacedName(it.clone_in(alloc)),
         }
     }
 }
@@ -3374,10 +3510,12 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXAttributeValue<'old_allo
     type Cloned = JSXAttributeValue<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::StringLiteral(it) => Self::Cloned::StringLiteral(it.clone_in(alloc)),
-            Self::ExpressionContainer(it) => Self::Cloned::ExpressionContainer(it.clone_in(alloc)),
-            Self::Element(it) => Self::Cloned::Element(it.clone_in(alloc)),
-            Self::Fragment(it) => Self::Cloned::Fragment(it.clone_in(alloc)),
+            Self::StringLiteral(it) => JSXAttributeValue::StringLiteral(it.clone_in(alloc)),
+            Self::ExpressionContainer(it) => {
+                JSXAttributeValue::ExpressionContainer(it.clone_in(alloc))
+            }
+            Self::Element(it) => JSXAttributeValue::Element(it.clone_in(alloc)),
+            Self::Fragment(it) => JSXAttributeValue::Fragment(it.clone_in(alloc)),
         }
     }
 }
@@ -3393,11 +3531,11 @@ impl<'old_alloc, 'new_alloc> CloneIn<'new_alloc> for JSXChild<'old_alloc> {
     type Cloned = JSXChild<'new_alloc>;
     fn clone_in(&self, alloc: &'new_alloc Allocator) -> Self::Cloned {
         match self {
-            Self::Text(it) => Self::Cloned::Text(it.clone_in(alloc)),
-            Self::Element(it) => Self::Cloned::Element(it.clone_in(alloc)),
-            Self::Fragment(it) => Self::Cloned::Fragment(it.clone_in(alloc)),
-            Self::ExpressionContainer(it) => Self::Cloned::ExpressionContainer(it.clone_in(alloc)),
-            Self::Spread(it) => Self::Cloned::Spread(it.clone_in(alloc)),
+            Self::Text(it) => JSXChild::Text(it.clone_in(alloc)),
+            Self::Element(it) => JSXChild::Element(it.clone_in(alloc)),
+            Self::Fragment(it) => JSXChild::Fragment(it.clone_in(alloc)),
+            Self::ExpressionContainer(it) => JSXChild::ExpressionContainer(it.clone_in(alloc)),
+            Self::Spread(it) => JSXChild::Spread(it.clone_in(alloc)),
         }
     }
 }
