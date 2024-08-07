@@ -38,6 +38,7 @@ use super::{inherit_variants, js::*, literal::*, ts::*};
 /// See: [JSX Syntax](https://facebook.github.io/jsx/)
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXElement<'a> {
@@ -65,6 +66,7 @@ pub struct JSXElement<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXOpeningElement<'a> {
@@ -90,6 +92,7 @@ pub struct JSXOpeningElement<'a> {
 /// Closing tag in a [`JSXElement`]. Not all JSX elements have a closing tag.
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXClosingElement<'a> {
@@ -108,6 +111,7 @@ pub struct JSXClosingElement<'a> {
 /// See: [`React.Fragment`](https://react.dev/reference/react/Fragment)
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub struct JSXFragment<'a> {
@@ -121,6 +125,7 @@ pub struct JSXFragment<'a> {
 /// JSX Opening Fragment (`<>`)
 #[ast]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXOpeningFragment {
@@ -131,6 +136,7 @@ pub struct JSXOpeningFragment {
 /// JSX Closing Fragment (`</>`)
 #[ast]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXClosingFragment {
@@ -141,6 +147,7 @@ pub struct JSXClosingFragment {
 /// JSX Element Name
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXElementName<'a> {
@@ -161,6 +168,7 @@ pub enum JSXElementName<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXNamespacedName<'a> {
@@ -189,6 +197,7 @@ pub struct JSXNamespacedName<'a> {
 /// [`member expression`]: JSXMemberExpressionObject::MemberExpression
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXMemberExpression<'a> {
@@ -202,6 +211,7 @@ pub struct JSXMemberExpression<'a> {
 
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXMemberExpressionObject<'a> {
@@ -224,6 +234,7 @@ pub enum JSXMemberExpressionObject<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXExpressionContainer<'a> {
@@ -241,6 +252,7 @@ inherit_variants! {
 /// [`ast` module docs]: `super`
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXExpression<'a> {
@@ -253,6 +265,7 @@ pub enum JSXExpression<'a> {
 /// An empty JSX expression (`{}`)
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXEmptyExpression {
@@ -265,6 +278,7 @@ pub struct JSXEmptyExpression {
 /// JSX Attributes
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeItem<'a> {
@@ -281,6 +295,7 @@ pub enum JSXAttributeItem<'a> {
 /// //                 name ^^^ ^^^^ value
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXAttribute<'a> {
@@ -299,6 +314,7 @@ pub struct JSXAttribute<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXSpreadAttribute<'a> {
@@ -312,6 +328,7 @@ pub struct JSXSpreadAttribute<'a> {
 /// Part of a [`JSXAttribute`].
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeName<'a> {
@@ -324,6 +341,7 @@ pub enum JSXAttributeName<'a> {
 /// Part of a [`JSXAttribute`].
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXAttributeValue<'a> {
@@ -340,6 +358,7 @@ pub enum JSXAttributeValue<'a> {
 /// [`IdentifierName`]: super::IdentifierName
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXIdentifier<'a> {
@@ -355,6 +374,7 @@ pub struct JSXIdentifier<'a> {
 /// Part of a [`JSXElement`].
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(untagged)]
 pub enum JSXChild<'a> {
@@ -375,6 +395,7 @@ pub enum JSXChild<'a> {
 /// Variant of [`JSXChild`] that represents an object spread (`{...expression}`).
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXSpreadChild<'a> {
@@ -395,6 +416,7 @@ pub struct JSXSpreadChild<'a> {
 /// ```
 #[ast(visit)]
 #[derive(Debug, Hash)]
+#[generate_derive(CloneIn)]
 #[cfg_attr(feature = "serialize", derive(Serialize, Tsify))]
 #[serde(tag = "type")]
 pub struct JSXText<'a> {
