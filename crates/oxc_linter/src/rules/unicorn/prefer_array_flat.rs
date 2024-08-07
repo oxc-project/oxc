@@ -31,7 +31,7 @@ pub struct PreferArrayFlat;
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// Prefers `Array#flat()` over legacy techniques to flatten arrays.    ///
+    /// Prefers `Array#flat()` over legacy techniques to flatten arrays.
     ///
     /// ### Why is this bad?
     ///
@@ -57,7 +57,8 @@ declare_oxc_lint!(
     /// const foo = [maybeArray].flat();
     /// ```
     PreferArrayFlat,
-    pedantic
+    pedantic,
+    pending
 );
 
 impl Rule for PreferArrayFlat {

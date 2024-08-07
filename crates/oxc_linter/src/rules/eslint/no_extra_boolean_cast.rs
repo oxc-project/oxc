@@ -44,7 +44,10 @@ declare_oxc_lint!(
     /// if (!!foo || bar) {}
     /// ```
     NoExtraBooleanCast,
-    correctness
+    correctness,
+    // a suggestion could be added. Note that lacking !! can mess up TS type
+    // narrowing sometimes, so it should not be an autofix
+    pending
 );
 
 impl Rule for NoExtraBooleanCast {

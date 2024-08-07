@@ -43,7 +43,8 @@ declare_oxc_lint!(
     ///
     /// ```
     TextEncodingIdentifierCase,
-    style
+    style,
+    pending
 );
 
 impl Rule for TextEncodingIdentifierCase {

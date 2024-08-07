@@ -19,7 +19,11 @@ declare_oxc_lint!(
     /// Disallow the use of the __iterator__ property
     ///
     /// ### Why is this bad?
-    /// The __iterator__ property was a SpiderMonkey extension to JavaScript that could be used to create custom iterators that are compatible with JavaScript’s for in and for each constructs. However, this property is now obsolete, so it should not be used. Here’s an example of how this used to work:
+    /// The __iterator__ property was a SpiderMonkey extension to JavaScript
+    /// that could be used to create custom iterators that are compatible with
+    /// JavaScript’s for in and for each constructs. However, this property is
+    /// now obsolete, so it should not be used. Here’s an example of how this
+    /// used to work:
     ///
     /// ### Example
     /// ```javascript

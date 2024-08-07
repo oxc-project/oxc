@@ -51,6 +51,7 @@ declare_oxc_lint!(
     /// ```
     PreferModernMathApis,
     restriction,
+    pending
 );
 
 impl Rule for PreferModernMathApis {
