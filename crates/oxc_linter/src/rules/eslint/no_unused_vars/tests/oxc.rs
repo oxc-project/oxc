@@ -440,6 +440,7 @@ fn test_arguments() {
     ];
     let fail = vec![
         ("function foo(a) {} foo()", None),
+        ("function foo(a: number) {} foo()", None),
         ("function foo({ a }, b) { return b } foo()", Some(json!([{ "args": "after-used" }]))),
     ];
 
