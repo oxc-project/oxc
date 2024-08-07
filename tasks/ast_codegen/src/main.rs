@@ -25,14 +25,14 @@ use schema::{lower_ast_types, Schema, TypeDef};
 use util::{write_all_to, NormalizeError};
 
 static SOURCE_PATHS: &[&str] = &[
-    "oxc_ast/src/ast/literal.rs",
-    "oxc_ast/src/ast/js.rs",
-    "oxc_ast/src/ast/ts.rs",
-    "oxc_ast/src/ast/jsx.rs",
-    "oxc_syntax/src/number.rs",
-    "oxc_syntax/src/operator.rs",
-    "oxc_span/src/span/types.rs",
-    "oxc_span/src/source_type/types.rs",
+    "crates/oxc_ast/src/ast/literal.rs",
+    "crates/oxc_ast/src/ast/js.rs",
+    "crates/oxc_ast/src/ast/ts.rs",
+    "crates/oxc_ast/src/ast/jsx.rs",
+    "crates/oxc_syntax/src/number.rs",
+    "crates/oxc_syntax/src/operator.rs",
+    "crates/oxc_span/src/span/types.rs",
+    "crates/oxc_span/src/source_type/types.rs",
 ];
 
 const AST_CRATE: &str = "crates/oxc_ast";
@@ -44,6 +44,18 @@ type TypeId = usize;
 type TypeTable = Vec<AstRef>;
 type DefTable = Vec<TypeDef>;
 type IdentTable = HashMap<String, TypeId>;
+
+#[derive(Debug, Bpaf)]
+pub struct CliOptions {
+    /// Runs all generators but won't write anything down.
+    #[bpaf(switch)]
+    dry_run: bool,
+    /// Don't run cargo fmt at the end
+    #[bpaf(switch)]
+    no_fmt: bool,
+    /// Path of output `schema.json`.
+    schema: Option<std::path::PathBuf>,
+}
 
 #[derive(Default)]
 struct AstCodegen {
@@ -251,44 +263,12 @@ impl AstCodegen {
     }
 }
 
-fn files() -> impl std::iter::Iterator<Item = String> {
-    SOURCE_PATHS.iter().map(|path| format!("crates/{path}"))
-}
-
-fn write_generated_streams(
-    streams: impl IntoIterator<Item = GeneratedStream>,
-) -> std::io::Result<()> {
-    for (path, stream) in streams {
-        let content = pprint(&stream);
-        write_all_to(content.as_bytes(), path.into_os_string().to_str().unwrap())?;
-    }
-    Ok(())
-}
-
-fn write_data_streams(streams: impl IntoIterator<Item = DataStream>) -> std::io::Result<()> {
-    for (path, content) in streams {
-        write_all_to(&content, path.into_os_string().to_str().unwrap())?;
-    }
-    Ok(())
-}
-
-#[derive(Debug, Bpaf)]
-pub struct CliOptions {
-    /// Runs all generators but won't write anything down.
-    #[bpaf(switch)]
-    dry_run: bool,
-    /// Don't run cargo fmt at the end
-    #[bpaf(switch)]
-    no_fmt: bool,
-    /// Path of output `schema.json`.
-    schema: Option<std::path::PathBuf>,
-}
-
 #[allow(clippy::print_stdout)]
 fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let cli_options = cli_options().run();
 
-    let CodegenResult { outputs, schema } = files()
+    let CodegenResult { outputs, schema } = SOURCE_PATHS
+        .iter()
         .fold(AstCodegen::default(), AstCodegen::add_file)
         .pass(Linker)
         .pass(CalcLayout)
@@ -309,8 +289,12 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         outputs.into_iter().partition(|it| matches!(it.1, GeneratorOutput::Data(_)));
 
     if !cli_options.dry_run {
-        write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?;
-        write_data_streams(binaries.into_iter().map(|it| it.1.into_data()))?;
+        let side_effects =
+            write_generated_streams(streams.into_iter().map(|it| it.1.into_stream()))?
+                .into_iter()
+                .chain(write_data_streams(binaries.into_iter().map(|it| it.1.into_data()))?)
+                .collect();
+        write_ci_filter(SOURCE_PATHS, side_effects, ".github/.generated_ast_watch_list.yml")?;
     }
 
     if !cli_options.no_fmt {
@@ -328,4 +312,62 @@ fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 
 fn output(krate: &str, path: &str) -> PathBuf {
     std::path::PathBuf::from_iter(vec![krate, "src", "generated", path])
+}
+
+/// Writes all streams and returns a vector pointing to side-effects written on the disk
+fn write_generated_streams(
+    streams: impl IntoIterator<Item = GeneratedStream>,
+) -> std::io::Result<Vec<String>> {
+    streams
+        .into_iter()
+        .map(|(path, stream)| {
+            let path = path.into_os_string();
+            let path = path.to_str().unwrap();
+            let content = pprint(&stream);
+            write_all_to(content.as_bytes(), path)?;
+            Ok(path.to_string().replace('\\', "/"))
+        })
+        .collect()
+}
+
+/// Writes all streams and returns a vector pointing to side-effects written on the disk
+fn write_data_streams(
+    streams: impl IntoIterator<Item = DataStream>,
+) -> std::io::Result<Vec<String>> {
+    streams
+        .into_iter()
+        .map(|(path, stream)| {
+            let path = path.into_os_string();
+            let path = path.to_str().unwrap();
+            write_all_to(&stream, path)?;
+            Ok(path.to_string().replace('\\', "/"))
+        })
+        .collect()
+}
+
+fn write_ci_filter(
+    inputs: &[&str],
+    side_effects: Vec<String>,
+    output_path: &str,
+) -> std::io::Result<()> {
+    let file = file!().replace('\\', "/");
+    let mut output = format!(
+        "\
+        # To edit this generated file you have to edit `{file}`\n\
+        # Auto-generated code, DO NOT EDIT DIRECTLY!\n\n\
+        src:"
+    );
+    let mut push_item = |path: &str| output.push_str(format!("\n  - '{path}'").as_str());
+
+    for input in inputs {
+        push_item(input);
+    }
+
+    for side_effect in side_effects {
+        push_item(side_effect.as_str());
+    }
+
+    push_item("tasks/ast_codegen/src/**");
+
+    write_all_to(output.as_bytes(), output_path)
 }
