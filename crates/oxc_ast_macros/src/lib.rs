@@ -53,3 +53,32 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 pub fn ast_derive(_item: TokenStream) -> TokenStream {
     TokenStream::new()
 }
+
+/// Derive macro generating an impl of the trait `CloneIn`.
+///
+/// NOTE: This is an internal macro!
+/// # Panics
+///
+#[proc_macro_derive(CloneIn)]
+pub fn derive_clone_in(item: TokenStream) -> TokenStream {
+    let item = syn::parse_macro_input!(item as syn::Item);
+    match &item {
+        syn::Item::Struct(syn::ItemStruct { ident, generics, .. })
+        | syn::Item::Enum(syn::ItemEnum { ident, generics, .. })
+            if generics.params.is_empty() =>
+        {
+            quote! {
+                #[automatically_derived]
+                impl<'alloc> ::oxc_allocator::CloneIn<'alloc> for #ident {
+                    type Cloned = #ident;
+
+                    fn clone_in(&self, _: &'alloc ::oxc_allocator::Allocator) -> Self::Cloned {
+                        std::clone::Clone::clone(self)
+                    }
+                }
+            }
+            .into()
+        }
+        _ => panic!("At the moment `CloneIn` derive macro only works for types without lifetimes and/or generic params"),
+    }
+}

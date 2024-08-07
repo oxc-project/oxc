@@ -1,5 +1,6 @@
 use bitflags::bitflags;
 use nonmax::NonMaxU32;
+use oxc_ast_macros::CloneIn;
 #[cfg(feature = "serialize")]
 use serde::{Serialize, Serializer};
 
@@ -45,7 +46,7 @@ export type ReferenceFlag = {
 "#;
 
 bitflags! {
-    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+    #[derive(Debug, Default, Clone, Copy, Eq, PartialEq, CloneIn)]
     #[cfg_attr(feature = "serialize", derive(Serialize))]
     pub struct ReferenceFlag: u8 {
         const None = 0;
