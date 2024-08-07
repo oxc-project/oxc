@@ -7,7 +7,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, UnaryOperator, UpdateOperator};
 
 use crate::{context::LintContext, rule::Rule, AstNode};
@@ -38,7 +38,8 @@ declare_oxc_lint!(
     /// for (var = 10; i >= 0; i++) {}
     /// ```
     ForDirection,
-    correctness
+    correctness,
+    dangerous_fix
 );
 
 impl Rule for ForDirection {
@@ -66,7 +67,35 @@ impl Rule for ForDirection {
                     let update_direction = get_update_direction(update, counter);
                     if update_direction == wrong_direction {
                         let update_span = get_update_span(update);
-                        ctx.diagnostic(for_direction_diagnostic(test.span, update_span));
+                        ctx.diagnostic_with_dangerous_fix(
+                            for_direction_diagnostic(test.span, update_span),
+                            |fixer| {
+                                let mut start: u32 = 0;
+                                if let Expression::UpdateExpression(update) = update {
+                                    start = update.argument.span().end;
+                                } else if let Expression::AssignmentExpression(update) = update {
+                                    start = update.left.span().end;
+                                }
+                                let end = start + 2;
+                                let span = Span::new(start, end);
+                                let mut new_operator_str = "";
+                                if let Expression::UpdateExpression(update) = update {
+                                    if let UpdateOperator::Increment = update.operator {
+                                        new_operator_str = "--";
+                                    } else if let UpdateOperator::Decrement = update.operator {
+                                        new_operator_str = "++";
+                                    }
+                                } else if let Expression::AssignmentExpression(update) = update {
+                                    if let AssignmentOperator::Addition = update.operator {
+                                        new_operator_str = "-=";
+                                    } else if let AssignmentOperator::Subtraction = update.operator
+                                    {
+                                        new_operator_str = "+=";
+                                    }
+                                }
+                                fixer.replace(span, new_operator_str)
+                            },
+                        );
                     }
                 }
             }
@@ -224,5 +253,17 @@ fn test() {
         ("for(var i = 0; 10 > i; i-=1){}", None),
     ];
 
-    Tester::new(ForDirection::NAME, pass, fail).test_and_snapshot();
+    let fix = vec![
+        ("for(var i = 0; i < 10; i--){}", "for(var i = 0; i < 10; i++){}", None),
+        ("for(var i = 10; i > 0; i++){}", "for(var i = 10; i > 0; i--){}", None),
+        ("for(var i = 0; i < 10; i-=1){}", "for(var i = 0; i < 10; i+=1){}", None),
+        ("for(var i = 10; i > 0; i+=1){}", "for(var i = 10; i > 0; i-=1){}", None),
+        ("for(var i = 0; i < 10; i+=-1){}", "for(var i = 0; i < 10; i-=-1){}", None),
+        ("for(var i = 10; i > 0; i-=-1){}", "for(var i = 10; i > 0; i+=-1){}", None),
+        // variables of different lengths
+        ("for(var ii = 0; ii < 10; ii--){}", "for(var ii = 0; ii < 10; ii++){}", None),
+        ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}", None),
+    ];
+
+    Tester::new(ForDirection::NAME, pass, fail).expect_fix(fix).test_and_snapshot();
 }
