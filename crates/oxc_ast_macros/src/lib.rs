@@ -49,7 +49,7 @@ pub fn ast(_args: TokenStream, input: TokenStream) -> TokenStream {
 /// Does not generate any code.
 /// Only purpose is to allow using `#[scope]`, `#[visit]`, and other attrs in the AST node type defs.
 /// These "marker" attributes are used in codegen.
-#[proc_macro_derive(Ast, attributes(scope, visit, span, serde, tsify))]
+#[proc_macro_derive(Ast, attributes(scope, visit, span, serde, tsify, generate_derive))]
 pub fn ast_derive(_item: TokenStream) -> TokenStream {
     TokenStream::new()
 }

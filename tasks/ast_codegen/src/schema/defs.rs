@@ -26,6 +26,15 @@ impl TypeDef {
     pub fn visitable(&self) -> bool {
         with_either!(self, it => it.visitable)
     }
+
+    pub fn generated_derives(&self) -> &Vec<String> {
+        with_either!(self, it => &it.generated_derives)
+    }
+
+    pub fn generates_derive(&self, derive: &str) -> bool {
+        let generated_derives = self.generated_derives();
+        generated_derives.iter().any(|it| it == derive)
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -41,6 +50,7 @@ pub struct StructDef {
     pub size_32: usize,
     pub align_32: usize,
     pub offsets_32: Option<Vec<usize>>,
+    pub generated_derives: Vec<String>,
     #[serde(skip)]
     pub markers: OuterMarkers,
 }
@@ -60,6 +70,7 @@ pub struct EnumDef {
     pub size_32: usize,
     pub align_32: usize,
     pub offsets_32: Option<Vec<usize>>,
+    pub generated_derives: Vec<String>,
 }
 
 impl EnumDef {
