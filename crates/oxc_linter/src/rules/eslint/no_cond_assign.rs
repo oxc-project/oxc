@@ -68,7 +68,6 @@ impl Rule for NoCondAssign {
             AstKind::AssignmentExpression(expr) if self.config == NoCondAssignConfig::Always => {
                 for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
                     match ctx.nodes().kind(node_id) {
-                        AstKind::BlockStatement(_) => break,
                         AstKind::IfStatement(_)
                         | AstKind::WhileStatement(_)
                         | AstKind::DoWhileStatement(_)
@@ -78,7 +77,8 @@ impl Rule for NoCondAssign {
                         }
                         AstKind::Function(_)
                         | AstKind::ArrowFunctionExpression(_)
-                        | AstKind::Program(_) => break,
+                        | AstKind::Program(_)
+                        | AstKind::BlockStatement(_) => break,
                         _ => {}
                     }
                 }
