@@ -59,10 +59,10 @@ fn derive_enum(def: &EnumDef) -> TokenStream {
             .map(|var| {
                 let ident = var.ident();
                 if var.is_unit() {
-                    quote!(Self :: #ident => Self :: Cloned :: #ident)
+                    quote!(Self :: #ident => #ty_ident :: #ident)
                 } else {
                     used_alloc = true;
-                    quote!(Self :: #ident(it) => Self :: Cloned :: #ident(it.clone_in(alloc)))
+                    quote!(Self :: #ident(it) => #ty_ident :: #ident(it.clone_in(alloc)))
                 }
             })
             .collect_vec();
