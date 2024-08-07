@@ -68,6 +68,7 @@ impl Rule for NoCondAssign {
             AstKind::AssignmentExpression(expr) if self.config == NoCondAssignConfig::Always => {
                 for node_id in ctx.nodes().ancestors(node.id()).skip(1) {
                     match ctx.nodes().kind(node_id) {
+                        AstKind::BlockStatement(_) => break,
                         AstKind::IfStatement(_)
                         | AstKind::WhileStatement(_)
                         | AstKind::DoWhileStatement(_)
@@ -159,6 +160,11 @@ fn test() {
         ("switch (foo) { case a = b: bar(); }", Some(serde_json::json!(["except-parens"]))),
         ("switch (foo) { case a = b: bar(); }", Some(serde_json::json!(["always"]))),
         ("switch (foo) { case baz + (a = b): bar(); }", Some(serde_json::json!(["always"]))),
+        // not in condition
+        ("if (obj.key) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("for (;;) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("while (obj.key) { (obj.key=false) }", Some(serde_json::json!(["always"]))),
+        ("do { (obj.key=false) } while (obj.key)", Some(serde_json::json!(["always"]))),
     ];
 
     let fail = vec![
