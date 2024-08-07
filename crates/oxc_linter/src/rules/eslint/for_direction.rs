@@ -70,13 +70,20 @@ impl Rule for ForDirection {
                         ctx.diagnostic_with_dangerous_fix(
                             for_direction_diagnostic(test.span, update_span),
                             |fixer| {
-                                let mut start: u32 = 0;
+                                let mut start = 0;
+                                let mut end = 0;
                                 if let Expression::UpdateExpression(update) = update {
-                                    start = update.argument.span().end;
+                                    if update.span().start == update.argument.span().start {
+                                        start = update.argument.span().end;
+                                        end = update.span().end;
+                                    } else {
+                                        start = update.span().start;
+                                        end = update.argument.span().start;
+                                    }
                                 } else if let Expression::AssignmentExpression(update) = update {
                                     start = update.left.span().end;
+                                    end = update.right.span().start;
                                 }
-                                let end = start + 2;
                                 let span = Span::new(start, end);
                                 let mut new_operator_str = "";
                                 if let Expression::UpdateExpression(update) = update {
@@ -260,6 +267,9 @@ fn test() {
         ("for(var i = 10; i > 0; i+=1){}", "for(var i = 10; i > 0; i-=1){}", None),
         ("for(var i = 0; i < 10; i+=-1){}", "for(var i = 0; i < 10; i-=-1){}", None),
         ("for(var i = 10; i > 0; i-=-1){}", "for(var i = 10; i > 0; i+=-1){}", None),
+        ("for(var i = 0; i < 10; --i){}", "for(var i = 0; i < 10; ++i){}", None),
+        ("for(var i = 0; i < 10; -- i){}", "for(var i = 0; i < 10; ++i){}", None),
+        ("for(var i = 0; i < 10; i -= 1){}", "for(var i = 0; i < 10; i+=1){}", None),
         // variables of different lengths
         ("for(var ii = 0; ii < 10; ii--){}", "for(var ii = 0; ii < 10; ii++){}", None),
         ("for(var ii = 10; ii > 0; ii+=1){}", "for(var ii = 10; ii > 0; ii-=1){}", None),
