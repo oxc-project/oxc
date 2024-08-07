@@ -126,8 +126,29 @@ impl<'a> TSType<'a> {
 }
 
 impl TSAccessibility {
-    pub fn is_private(&self) -> bool {
-        matches!(self, TSAccessibility::Private)
+    #[inline]
+    pub fn is_private(self) -> bool {
+        matches!(self, Self::Private)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Public => "public",
+            Self::Private => "private",
+            Self::Protected => "protected",
+        }
+    }
+}
+
+impl From<TSAccessibility> for &'static str {
+    fn from(accessibility: TSAccessibility) -> Self {
+        accessibility.as_str()
+    }
+}
+
+impl fmt::Display for TSAccessibility {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
